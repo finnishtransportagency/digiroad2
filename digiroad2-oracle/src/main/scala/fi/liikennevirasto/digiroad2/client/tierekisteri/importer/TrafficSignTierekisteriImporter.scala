@@ -34,7 +34,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   private val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val signPlacementPublicId = "opposite_side_sign"
-  private val mainSingText="main_sign_text"
+  private val mainSignText="main_sign_text"
 
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels, TrafficSignTypeGroup.InformationSigns)
 
@@ -42,7 +42,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     val trafficType = trAssetData.assetType
     val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(trafficType.OTHvalue.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimplePointAssetProperty(mainSingText, Seq(PropertyValue(trAssetData.assetValue)))
+      case true => SimplePointAssetProperty(mainSignText, Seq(PropertyValue(trAssetData.assetValue)))
       case _ => SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(trAssetData.assetValue)))
     }
 
