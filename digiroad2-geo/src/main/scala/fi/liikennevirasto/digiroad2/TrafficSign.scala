@@ -3149,7 +3149,7 @@ object LocationSpecifier {
   case object LengthwiseRelativeToTrafficFlow extends LocationSpecifier { def value = 5; def description = "Pitkittäin ajosuuntaan nähden" }
 
   /*English description: On road or street network, for example parking area or courtyard*/
-  case object OnRoadOrStreetNetwork extends LocationSpecifier { def value = 6; def description = "Tie- ja katuverkon puolella, esimerkiksi parkkialueella tai piha-alueella" }
+  case object OnRoadOrStreetNetwork extends LocationSpecifier { def value = 6; def description = "Tie tai katuverkon ulkopuolella, esimerkiksi parkkialueella tai piha-alueella" }
   case object Unknown extends LocationSpecifier { def value = 99; def description = "Ei tiedossa" }
 }
 
