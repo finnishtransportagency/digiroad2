@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{asset, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddressException}
+import org.joda.time.LocalDate
 
 import scala.util.Try
 
@@ -49,6 +50,30 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
               None
           case _ => eventbus.publish("asset:saved", asset)
         }
+      case _ => None
+    }
+  }
+  override def publishExpiringEvent(publishInfo: AbstractPublishInfo):Unit ={
+    publishInfo.asset match {
+      case Some(asset) =>
+        val expiredAsset=massTransitStopDao.
+        fetchPointAssets(massTransitStopDao.withId(asset.id))
+        eventbus.publish("asset:expired", expiredAsset.head)
+      case _ => None
+    }
+  }
+  override def publishDeleteEvent(publishInfo: AbstractPublishInfo): Unit = {
+    publishInfo.asset match {
+      case Some(asset) =>
+        val updateProperties:Seq[Property] = asset.propertyData.map(property =>
+            if (property.publicId == "viimeinen_voimassaolopaiva") {
+              property.copy(values = Seq(PropertyValue(propertyValue = LocalDate.now().toString)))
+            }else{
+              property
+            }
+        )
+        val updateAsset = asset.copy(propertyData = updateProperties)
+        eventbus.publish("asset:expired", updateAsset)
       case _ => None
     }
   }
@@ -155,5 +180,6 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       case _ => (false, None)
     }
   }
+
 }
 

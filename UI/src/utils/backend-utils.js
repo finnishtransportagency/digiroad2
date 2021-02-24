@@ -10,6 +10,15 @@
         });
     };
 
+    function validateBoundingBox (boundingBox,urlObject){
+      if(! _.isNaN(boundingBox[0])){
+        return urlObject;
+      }{
+        console.log("Invalid boundingBox "+urlObject.url);
+        return {url:null};
+      }
+    }
+
       this.getAssetEnumeratedPropertyValues = function(typeId) {
           $.getJSON('api/enumeratedPropertyValues/'+typeId, function (enumeratedPropertyValues) {
               eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: typeId, enumeratedPropertyValues: enumeratedPropertyValues});
@@ -29,27 +38,27 @@
     };
 
     this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/roadlinks?bbox=' + boundingBox
-      };
+      });
     });
 
     this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox) {
-        return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/roadlinks/history?bbox=' + boundingBox
-      };
+      });
     });
 
     this.getRoadLinksWithComplementary = createCallbackRequestor(function (boundingBox) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/roadlinks/complementaries?bbox=' + boundingBox
-      };
+      });
     });
 
     this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/manoeuvres?bbox=' + boundingBox
-      };
+      });
     });
 
     this.updateManoeuvreDetails = function(details, success, failure) {
@@ -127,33 +136,33 @@
     };
 
     this.getAssetsWithCallback = createCallbackRequestor(function(boundingBox) {
-      return {
-        url: 'api/massTransitStops?bbox=' + boundingBox
-      };
+      return validateBoundingBox(boundingBox,{
+      url: 'api/massTransitStops?bbox=' + boundingBox
+      });
     });
 
     this.getAssetsWithCallbackServiceStops = createCallbackRequestor(function(boundingBox) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/massServiceStops?bbox=' + boundingBox
-      };
+      });
     });
 
     this.getLightAssetsWithCallback = latestResponseRequestor(function(boundingBox, type) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/pointassets/light?type=' + type + '&bbox=' + boundingBox
-      };
+      });
     });
 
     this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
-      };
+      });
     });
 
     this.getSpeedLimitsHistory = latestResponseRequestor(function(boundingBox) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/speedlimits/history?bbox=' + boundingBox
-      };
+      });
     });
 
     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
@@ -221,9 +230,9 @@
     };
 
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/' + endPointName + '?bbox=' + boundingBox
-      };
+      });
     });
 
     this.getPointAssetById = latestResponseRequestor(function(id, endPointName) {
@@ -233,9 +242,9 @@
     });
 
     this.getGroupedPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeIds) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/groupedPointAssets?bbox=' + boundingBox + '&typeIds=' + typeIds
-      };
+      });
     });
 
     this.createPointAsset = function(asset, endPointName) {
@@ -268,52 +277,52 @@
     }, 1000);
 
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
-      };
+      });
     });
 
     this.getLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom, withWalkingCycling) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom + '&withWalkingCycling=' + withWalkingCycling
-      };
+      });
     });
 
     this.getViewOnlyLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom, withWalkingCycling) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/lanes/viewOnlyLanes?bbox=' + boundingBox + '&zoom=' + zoom + '&withWalkingCycling=' + withWalkingCycling
-      };
+      });
     });
 
     this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
-      };
+      });
     });
 
     this.getReadOnlyLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/linearassets/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
-      };
+      });
     });
 
     this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/linearassets/massLimitation/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
-      };
+      });
     });
 
     this.getServiceRoadAssets = latestResponseRequestor(function(boundingBox, withRoadAddress, zoom) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/serviceRoad?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
-      };
+      });
     });
 
 
     this.getServiceRoadAssetsWithComplementary = latestResponseRequestor(function(boundingBox, withRoadAddress, zoom) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/serviceRoad/complementary?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
-      };
+      });
     });
 
     this.updateLaneAssets = _.throttle(function(data, success, failure) {
@@ -634,9 +643,9 @@
     };
 
     this.getMunicipalityByBoundingBox = latestResponseRequestor(function(boundingBox) {
-      return {
+      return validateBoundingBox(boundingBox,{
         url: 'api/getMunicipalityInfo?bbox=' + boundingBox
-      };
+      });
     });
 
     this.getVerificationInfo = latestResponseRequestor(function(municipality, typeId) {
@@ -874,13 +883,19 @@
         if (request)
           request.abort();
 
-        request = $.ajax(getParameters.apply(undefined, arguments)).done(function (result) {
-          deferred.resolve(result);
-          eventbus.trigger('loadingBar:hide');
-        }).fail(function () {
-          eventbus.trigger('loadingBar:hide');
-        });
-        return deferred;
+        var parameter= getParameters.apply(undefined, arguments);
+        if(parameter.url !==null){
+          request = $.ajax(getParameters.apply(undefined, arguments)).done(function (result) {
+            deferred.resolve(result);
+            eventbus.trigger('loadingBar:hide');
+          }).fail(function () {
+            eventbus.trigger('loadingBar:hide');
+          });
+          return deferred;
+        }else{
+          console.log('Http request failed.');
+          return deferred;
+        }
       }
 
       return function() {

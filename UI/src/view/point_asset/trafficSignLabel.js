@@ -433,7 +433,7 @@
         var labelMaxLength = me.getLabelProperty(this).getMaxLength();
         return this.value || (this.additionalInfo && this.additionalInfo.length <= labelMaxLength);
       };
-  
+
     var validateNumber = function () {
       var labelMaxLength = me.getLabelProperty(this).getMaxLength();
       return this.value && !isNaN(this.value) && this.value.length <= labelMaxLength;
@@ -513,10 +513,11 @@
         } else additionalInfo = '';
 
         var panels = _.map(getProperties(asset, "additional_panel"), function(panel){
+          var panelValue = panel.panelValue ? panel.panelValue : panel.text;
           return {
-            value: panel.panelValue,
+            value: panelValue,
             type: parseInt(panel.panelType),
-            additionalInfo:  panel.panelInfo
+            additionalInfo: ''
           };
         });
         panels.unshift({
