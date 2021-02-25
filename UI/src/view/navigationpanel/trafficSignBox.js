@@ -14,28 +14,28 @@
       }).join('').concat ([
         '<div class="panel-section">' +
         '   <div class="checkbox">' +
-        '     <label><input name="generalWarningSigns" type="checkbox" /> Varoitusmerkit</label> <br>' +
+        '     <label><input name="generalWarningSigns" type="checkbox" checked="checked" /> Varoitusmerkit</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus ja väistämismerkit</label>' +
+        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" checked="checked" /> Etuajo-oikeus ja väistämismerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kielto- ja rajoitusmerkit</label>' +
+        '     <label><input name="prohibitionsAndRestrictions" type="checkbox" checked="checked" /> Kielto- ja rajoitusmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
+        '     <label><input name="mandatorySigns" type="checkbox" checked="checked" /> Määräysmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="regulatorySigns" type="checkbox" /> Sääntömerkit</label> <br>' +
+        '     <label><input name="regulatorySigns" type="checkbox" checked="checked" /> Sääntömerkit</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="informationSigns" type="checkbox" /> Opastusmerkit</label>' +
+        '     <label><input name="informationSigns" type="checkbox" checked="checked" /> Opastusmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="serviceSigns" type="checkbox" /> Palvelukohteet</label>' +
+        '     <label><input name="serviceSigns" type="checkbox" checked="checked" /> Palvelukohteet</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="otherSigns" type="checkbox" /> Muut merkit</label>' +
+        '     <label><input name="otherSigns" type="checkbox" checked="checked" /> Muut merkit</label>' +
         '   </div>' +
         '</div>'].join(''));
     };
