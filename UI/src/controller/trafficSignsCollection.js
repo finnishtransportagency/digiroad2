@@ -5,14 +5,14 @@
     this.trafficSignsAsset = [];
 
     var trafficSignsShowing = {
-      generalWarningSigns: false,
-      priorityAndGiveWaySigns: false,
-      prohibitionsAndRestrictions: false,
-      mandatorySigns: false,
-      regulatorySigns: false,
-      informationSigns: false,
-      serviceSigns: false,
-      otherSigns: false,
+      generalWarningSigns: true,
+      priorityAndGiveWaySigns: true,
+      prohibitionsAndRestrictions: true,
+      mandatorySigns: true,
+      regulatorySigns: true,
+      informationSigns: true,
+      serviceSigns: true,
+      otherSigns: true,
       additionalPanels: false
       };
 
