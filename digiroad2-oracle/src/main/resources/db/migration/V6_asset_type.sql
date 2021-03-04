@@ -1,7 +1,4 @@
-SET client_encoding TO 'UTF8';
-SET synchronous_commit TO off;
 
-TRUNCATE TABLE asset_type;
 INSERT INTO asset_type (id,name,geometry_type,created_date,created_by,modified_date,modified_by,verifiable)  VALUES (10,E'Bussipysäkit',E'point','2021-02-24 16:36:46.898627',E'automatic_import',NULL,NULL,1);
 INSERT INTO asset_type (id,name,geometry_type,created_date,created_by,modified_date,modified_by,verifiable)  VALUES (20,E'Nopeusrajoitukset',E'linear','2021-02-24 16:36:52.398129',NULL,NULL,NULL,1);
 INSERT INTO asset_type (id,name,geometry_type,created_date,created_by,modified_date,modified_by,verifiable)  VALUES (30,E'Kokonaispainorajoitukset',E'linear','2021-02-24 16:36:58.698688',NULL,NULL,NULL,1);
