@@ -431,7 +431,7 @@ CREATE TABLE manoeuvre_element
 
 CREATE TABLE manoeuvre_element_history
 (
-    manoeuvre_id numeric(38) NOT NULL,
+    manoeuvre_id bigint NOT NULL,
     element_type integer     NOT NULL,
     mml_id       bigint,
     link_id      numeric(38),
