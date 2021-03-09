@@ -446,7 +446,7 @@ CREATE TABLE manoeuvre_exceptions
 
 CREATE TABLE manoeuvre_exceptions_history
 (
-    manoeuvre_id   numeric(38) NOT NULL,
+    manoeuvre_id   bigint NOT NULL,
     exception_type smallint    NOT NULL
 );
 
