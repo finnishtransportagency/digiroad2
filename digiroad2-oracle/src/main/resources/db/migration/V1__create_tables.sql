@@ -510,7 +510,7 @@ CREATE TABLE multiple_choice_value_history
 
 CREATE TABLE municipality
 (
-    id                 bigint NOT NULL,
+    id                 numeric(22) NOT NULL,
     name_fi            varchar(128),
     name_sv            varchar(128),
     ely_nro            bigint,
