@@ -87,4 +87,4 @@ drop sequence if exists national_bus_stop_id_seq cascade;
 drop sequence if exists primary_key_seq cascade;
 drop sequence if exists user_notification_seq cascade;
 
-drop type if exists ROAD_LINK_VARRAY cascade;
+---drop type if exists ROAD_LINK_VARRAY cascade;
