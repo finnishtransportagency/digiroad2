@@ -1,0 +1,8 @@
+--Delete project links
+DELETE FROM PROJECT_LINK WHERE PROJECT_ID IN (SELECT ID FROM PROJECT WHERE STATE NOT IN (1,2,4,99));
+
+--Delete reserved parts for the deleted project_link's
+DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID IN (SELECT ID FROM PROJECT WHERE STATE NOT IN (1,2,4,99));
+
+--Add new column that will save the road_address_id that links to the project_link
+ALTER TABLE PROJECT_LINK ADD ROAD_ADDRESS_ID NUMBER REFERENCES ROAD_ADDRESS(ID);

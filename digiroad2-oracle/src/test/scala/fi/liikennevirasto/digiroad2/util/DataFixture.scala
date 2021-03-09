@@ -237,8 +237,17 @@ object DataFixture {
   }
 
   def tearDown() {
-    flyway.clean()
+    // flyway.clean()
+    // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
+    SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
+    try {
+      //SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
+    } catch {
+      case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
+    }
   }
+
+
 
   def setUpTest() {
     migrateAll()
@@ -2521,11 +2530,12 @@ object DataFixture {
     args.headOption match {
       case Some("test") =>
         tearDown()
-        setUpTest()
+        migrateAll()
+        /*setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         TrafficSignTestData.createTestData
-        ServicePointTestData.createTestData
+        ServicePointTestData.createTestData*/
       case Some("import_roadlink_data") =>
         importRoadLinkData()
       case Some("repair") =>

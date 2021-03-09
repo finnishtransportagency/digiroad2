@@ -19,8 +19,13 @@ object SqlScriptRunner {
   }
 
   def readScriptStatements(path: String, filename: String): Seq[String] = {
+    val source: BufferedSource = Source.fromFile(path + filename)(Codec.UTF8)
+    readScriptStatements(source)
+  }
+
+  def readScriptStatements(source: BufferedSource): Seq[String] = {
     val commentR = """\/\*.*\*\/""".r
-    val withComments = Source.fromFile(path + filename)(Codec.UTF8).getLines.filterNot(_.trim.startsWith("--")).mkString
+    val withComments = source.getLines.filterNot(_.trim.startsWith("--")).mkString
     commentR.replaceAllIn(withComments, "").split(";")
   }
 

@@ -1,0 +1,2 @@
+Alter Table PROJECT Modify (ELY NULL);
+UPDATE PROJECT SET ELY = null WHERE ELY=0;

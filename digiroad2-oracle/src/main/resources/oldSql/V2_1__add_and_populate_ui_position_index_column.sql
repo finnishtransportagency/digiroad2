@@ -1,0 +1,26 @@
+alter table property add (ui_position_index number(4) default 9999 not null);
+
+update property set ui_position_index = 30 where name_fi = 'Nimi suomeksi';
+update property set ui_position_index = 40 where name_fi = 'Nimi ruotsiksi';
+update property set ui_position_index = 45 where name_fi = 'Tietojen ylläpitäjä';
+update property set ui_position_index = 50 where name_fi = 'Ylläpitäjän tunnus';
+update property set ui_position_index = 60 where name_fi = 'Matkustajatunnus';
+update property set ui_position_index = 61 where name_fi = 'Maastokoordinaatti X';
+update property set ui_position_index = 62 where name_fi = 'Maastokoordinaatti Y';
+update property set ui_position_index = 63 where name_fi = 'Maastokoordinaatti Z';
+update property set ui_position_index = 64 where name_fi = 'Liikennöintisuunta';
+update property set ui_position_index = 66 where name_fi = 'Liikennöintisuuntima';
+update property set ui_position_index = 90 where name_fi = 'Pysäkin tyyppi';
+update property set ui_position_index = 100 where name_fi = 'Varusteet (Aikataulu)';
+update property set ui_position_index = 101 where name_fi = 'Varusteet (Katos)';
+update property set ui_position_index = 102 where name_fi = 'Varusteet (Mainoskatos)';
+update property set ui_position_index = 103 where name_fi = 'Varusteet (Penkki)';
+update property set ui_position_index = 104 where name_fi = 'Varusteet (Pyöräteline)';
+update property set ui_position_index = 105 where name_fi = 'Varusteet (Sähköinen aikataulunäyttö)';
+update property set ui_position_index = 106 where name_fi = 'Varusteet (Valaistus)';
+update property set ui_position_index = 110 where name_fi = 'Esteettömyys liikuntarajoitteiselle';
+update property set ui_position_index = 120 where name_fi = 'Saattomahdollisuus henkilöautolla';
+update property set ui_position_index = 130 where name_fi = 'Liityntäpysäköintipaikkojen määrä';
+update property set ui_position_index = 190 where name_fi = 'Pysäkin omistaja';
+update property set ui_position_index = 210 where name_fi = 'Palauteosoite';
+update property set ui_position_index = 220 where name_fi = 'Lisätiedot';

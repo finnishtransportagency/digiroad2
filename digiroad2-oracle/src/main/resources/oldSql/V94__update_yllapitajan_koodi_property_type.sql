@@ -1,0 +1,1 @@
+update property set property_type = 'read_only_text' where public_id = 'yllapitajan_koodi' and asset_type_id = 10;

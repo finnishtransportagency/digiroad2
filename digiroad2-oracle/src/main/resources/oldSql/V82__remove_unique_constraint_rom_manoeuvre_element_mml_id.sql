@@ -1,0 +1,1 @@
+drop index MANOEUVRE_ELEMENT_MML_IDX;

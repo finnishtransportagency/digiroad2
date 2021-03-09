@@ -1,0 +1,1 @@
+update LOCALIZED_STRING set value_fi = 'Omistajan tunnus', modified_by='db_migration_v2.13', created_date = sysdate  where value_fi = 'Ylläpitäjän koodi';

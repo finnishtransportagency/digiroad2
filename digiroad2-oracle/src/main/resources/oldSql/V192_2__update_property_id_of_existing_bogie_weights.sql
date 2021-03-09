@@ -1,0 +1,3 @@
+	UPDATE NUMBER_PROPERTY_VALUE num SET PROPERTY_ID = (SELECT ID FROM property WHERE public_id = 'bogie_weight_2_axel') WHERE ASSET_ID IN (SELECT a.id FROM ASSET a
+  JOIN NUMBER_PROPERTY_VALUE npv ON PROPERTY_ID = (SELECT ID FROM property WHERE public_id = 'mittarajoitus') AND a.id = npv.ASSET_ID
+  WHERE A.ASSET_TYPE_ID = 60);
