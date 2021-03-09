@@ -27,5 +27,6 @@ or
 `./stop-postgis.sh`
 
 **Clean the data:**
-
 `docker volume rm postgis_data` 
+
+After changing postgres env variable delete old volume.
