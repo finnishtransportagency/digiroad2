@@ -313,7 +313,7 @@ CREATE TABLE lane_history
 CREATE TABLE lane_history_attribute
 (
     id              bigint NOT NULL,
-    lane_history_id numeric(38),
+    lane_history_id bigint,
     name            varchar(128),
     value           varchar(128),
     required        char(1) DEFAULT '0',
