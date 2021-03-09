@@ -57,7 +57,7 @@ CREATE TABLE asset
     bearing            bigint,
     valid_from         timestamp,
     valid_to           timestamp,
-    geometry           geometry(POINTZM,3067),
+    geometry           geometry,
     municipality_code  bigint,
     floating           char(1) DEFAULT '0',
     area               numeric(38),
@@ -78,7 +78,7 @@ CREATE TABLE asset_history
     bearing            bigint,
     valid_from         timestamp,
     valid_to           timestamp,
-    geometry           geometry(GEOMETRY,4326),
+    geometry           geometry,
     municipality_code  bigint,
     floating           char(1) DEFAULT '0',
     area               numeric(38),
@@ -176,7 +176,7 @@ CREATE TABLE ely
     id       smallint     NOT NULL,
     name_fi  varchar(512) NOT NULL,
     name_sv  varchar(512) NOT NULL,
-    geometry geometry( POINT,3067),
+    geometry geometry,
     zoom     smallint
 );
 
@@ -515,7 +515,7 @@ CREATE TABLE municipality
     name_sv            varchar(128),
     ely_nro            bigint,
     road_maintainer_id bigint,
-    geometry           geometry( POINT,3067),
+    geometry           geometry,
     zoom               smallint
 );
 
@@ -656,7 +656,7 @@ CREATE TABLE road_link_attributes
 CREATE TABLE service_area
 (
     id       smallint NOT NULL,
-    geometry geometry( POINT,3067),
+    geometry geometry,
     zoom     smallint
 );
 
