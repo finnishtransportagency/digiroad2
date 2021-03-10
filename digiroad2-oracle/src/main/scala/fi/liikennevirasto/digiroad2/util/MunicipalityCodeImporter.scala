@@ -63,9 +63,13 @@ class MunicipalityCodeImporter {
             case "9" => 1
             case "0" => 0
           }
+          val point= s"POINT(${elems(5).toDouble.toString} ${elems(6).toDouble.toString})"
           sqlu"""
-          update municipality set geometry = MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1, 1, 1), MDSYS.SDO_ORDINATE_ARRAY(${elems(5).toDouble},${elems(6).toDouble}, 0, 0)), zoom = ${elems(7).toInt}
-                 where id = ${elems(0).toInt}""".execute
+          UPDATE MUNICIPALITY
+          SET GEOMETRY = ST_GEOMFROMTEXT($point,3067),
+          ZOOM = ${elems(7).toInt}
+          WHERE ID = ${elems(0).toInt}
+          """.execute
         })
       } catch {
         case  npe: NullPointerException => {
@@ -75,6 +79,8 @@ class MunicipalityCodeImporter {
     }
   }
 
+
+  // this totally redundant piece of code
   private[this] def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val cfg = new BoneCPConfig(localProperties)

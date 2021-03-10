@@ -2512,7 +2512,7 @@ object DataFixture {
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
+    if (!username.startsWith("digiroad2")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")
@@ -2530,12 +2530,11 @@ object DataFixture {
     args.headOption match {
       case Some("test") =>
         tearDown()
-        migrateAll()
-        /*setUpTest()
+        setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         TrafficSignTestData.createTestData
-        ServicePointTestData.createTestData*/
+        ServicePointTestData.createTestData
       case Some("import_roadlink_data") =>
         importRoadLinkData()
       case Some("repair") =>
