@@ -1,1 +1,0 @@
-CREATE INDEX plink_road_address_idx ON PROJECT_LINK(road_address_id);

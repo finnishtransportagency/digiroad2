@@ -1,2 +1,0 @@
-DROP TRIGGER project_link_reserved;
-DROP TRIGGER road_address_chk_overlap;
