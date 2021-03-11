@@ -23,7 +23,7 @@ INSERT INTO NUMBER_PROPERTY_VALUE (ID, ASSET_ID,"VALUE",PROPERTY_ID) values (nex
 INSERT INTO ASSET (ID,ASSET_TYPE_ID,FLOATING,CREATED_BY) values (nextval('siilinjarvi_key_seq'),110,0,'testfixture');
 INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (nextval('siilinjarvi_lrm_key_seq'), 5169764, null, 0.000, 380.551, 1);
 INSERT INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (currval('siilinjarvi_key_seq'),currval('siilinjarvi_lrm_key_seq'));
-INSERT INTO SINGLE_CHOICE_VALUE (ASSET_ID, ENUMERATED_VALUE_ID, PROPERTY_ID, MODIFIED_DATE) VALUES (currval('siilinjarvi_key_seq'), 300274, (select id from property where public_id = 'paallysteluokka'), SYSDATE);
+INSERT INTO SINGLE_CHOICE_VALUE (ASSET_ID, ENUMERATED_VALUE_ID, PROPERTY_ID, MODIFIED_DATE) VALUES (currval('siilinjarvi_key_seq'), 300274, (select id from property where public_id = 'paallysteluokka'), current_timestamp);
 -- Thawing; Cases 1&2 (3 old links combined):  OLD_ID: 2225999, OLD_ID: 2226035, OLD_ID: 2226036  --> NEW_ID: 6564314
 INSERT INTO ASSET (ID,ASSET_TYPE_ID,FLOATING,CREATED_BY) values (nextval('siilinjarvi_key_seq'),130,0,'testfixture');
 INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (nextval('siilinjarvi_lrm_key_seq'), 2225999, null, 0.000, 20.551, 1);
