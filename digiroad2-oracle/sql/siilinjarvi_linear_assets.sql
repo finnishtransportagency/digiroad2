@@ -13,8 +13,6 @@ create sequence siilinjarvi_lrm_key_seq
   increment by 1
   cache 100
   cycle;
-nextval('siilinjarvi_lrm_key_seq')
-currval('siilinjarvi_lrm_key_seq')
 INSERT ALL
 -- Lit Road; Cases 5&6 (divided): OLD_ID: 5169516 --> NEW_ID: 6565223, NEW_ID: 6565226
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING,CREATED_BY) values (nextval('siilinjarvi_key_seq'),100,0,'testfixture')
