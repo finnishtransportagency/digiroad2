@@ -8,7 +8,7 @@ VALUES (nextval('user_notification_seq'), 'Regione expetenda vituperatoribus mei
 
 
 INSERT INTO USER_NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
-VALUES ( nextval('user_notification_seq'), add_months(sysdate, -1),
+VALUES ( nextval('user_notification_seq'), add_months(current_timestamp, -1),
 'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam.',
 '<p>Mea facete efficiantur ei, vix an dicat interesset! Laudem consectetuer concludaturque has an? Ius at dicant libris vituperata. His ' ||
 'suavitate comprehensam ea? Ea diam nominati theophrastus vel, mea eleifend forensibus cu, consul delenit interpretaris vim no.<//p><p>Eirmod ' ||
@@ -18,7 +18,7 @@ VALUES ( nextval('user_notification_seq'), add_months(sysdate, -1),
 'insolens liberavisse id.<//p>');
 
 INSERT INTO USER_NOTIFICATION (ID, CREATED_DATE, HEADING,  CONTENT)
-VALUES ( nextval('user_notification_seq'), (sysdate - interval '1' day ),
+VALUES ( nextval('user_notification_seq'), (current_timestamp - interval '1' day ),
 'Eum solum fuisset at, amet verear ut mea! Ea eam noster oblique, mel id illum praesent, audire probatus splendide id est. Qui augue sensibus ' ||
 'deterruisset cu, ea dissentiunt complectitur usu.',
 'Pri te mediocrem adipiscing, est ea lobortis quaestio electram. Mea in dissentias reformidans signiferumque, no eam melius tincidunt. At nam.' ||
