@@ -2451,9 +2451,12 @@ object DataFixture {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setInitVersion("-1")
-    flyway.setInitOnMigrate(true)
     flyway.setLocations("db.migration")
     flyway
+  }
+
+  def flywayInit() {
+    flyway.init()
   }
 
   def migrateTo(version: String) = {
@@ -2471,7 +2474,7 @@ object DataFixture {
     // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
     SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
     try {
-      //SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
+      SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
     } catch {
       case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
     }
@@ -2533,6 +2536,10 @@ object DataFixture {
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
+      case Some("flyway_init") =>
+        flywayInit()
+      case Some("flyway_migrate") =>
+        migrateAll()
       case Some("import_roadlink_data") =>
         importRoadLinkData()
       case Some("repair") =>

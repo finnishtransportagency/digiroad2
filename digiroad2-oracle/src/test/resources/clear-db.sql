@@ -77,9 +77,6 @@ drop table if exists validity_period_property_value cascade;
 drop table if exists vallu_xml_ids cascade;
 drop table if exists val_period_property_value_hist cascade;
 
-drop table if exists schema_version cascade;
-
-
 drop sequence if exists grouped_id_seq cascade;
 drop sequence if exists lrm_position_primary_key_seq cascade;
 drop sequence if exists manoeuvre_id_seq cascade;
