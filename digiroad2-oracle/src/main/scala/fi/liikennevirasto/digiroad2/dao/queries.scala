@@ -97,14 +97,10 @@ object Queries {
   def updateAssetGeometry(id: Long, point: Point): Unit = {
     val x = point.x
     val y = point.y
+    val pointGeometry =s"POINT($x $y 0 0)"
     sqlu"""
       UPDATE asset
-        SET geometry = MDSYS.SDO_GEOMETRY(4401,
-                                          3067,
-                                          NULL,
-                                          MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                                          MDSYS.SDO_ORDINATE_ARRAY($x, $y, 0, 0)
-                                         )
+        SET geometry = ST_GeomFromText($pointGeometry,3067)
         WHERE id = $id
     """.execute
   }
