@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="DataFixture reset" type="Application" factoryName="Application">
+  <configuration default="false" name="DataFixture migrate" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="fi.liikennevirasto.digiroad2.util.DataFixture" />
     <module name="digiroad2-oracle" />
     <option name="PROGRAM_PARAMETERS" value="flyway_migrate" />
