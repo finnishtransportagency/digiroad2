@@ -110,7 +110,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get critical asset types info"){
     runWithRollback {
-      val id = sql"""select nextval('primary_key_seq') from dual""".as[Long].first
+      val id = sql"""select nextval('primary_key_seq')""".as[Long].first
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id, 235, 10, (current_timestamp - interval '1' year), 'testuser')""".execute
       sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)

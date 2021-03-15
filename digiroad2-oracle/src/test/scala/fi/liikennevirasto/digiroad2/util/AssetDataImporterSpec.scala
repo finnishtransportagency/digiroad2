@@ -730,13 +730,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val endMeasure = segment.endMeasure
       val linkId = segment.linkId
       sqlu"""
-        insert all
-          into lrm_position(id, start_measure, end_measure, link_id, side_code)
-          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, 1)
+         insert into lrm_position(id, start_measure, end_measure, link_id, side_code)
+          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, 1);
 
-          into asset_link(asset_id, position_id)
-          values ($speedLimitId, $lrmPositionId)
-        select * from dual
+         insert into asset_link(asset_id, position_id)
+          values ($speedLimitId, $lrmPositionId);
       """.execute
     }
     speedLimitId
@@ -787,7 +785,6 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   private def getDateTimeNowFromDatabase() ={
     sql"""
-          select SYSTIMESTAMP from dual
-      """.as[(DateTime)].list
+          select CURRENT_TIMESTAMP""".as[(DateTime)].list
   }
 }

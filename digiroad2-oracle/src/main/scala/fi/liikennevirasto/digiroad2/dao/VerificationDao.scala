@@ -179,7 +179,7 @@ class VerificationDao {
   }
 
   def insertAssetTypeVerification(municipalityId: Int, assetTypeId: Int, username: String): Long = {
-    val id = sql"""select nextval('primary_key_seq') from dual""".as[Long].first
+    val id = sql"""select nextval('primary_key_seq')""".as[Long].first
     sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
            values ($id, $municipalityId, $assetTypeId, current_timestamp, $username)
       """.execute
@@ -187,7 +187,7 @@ class VerificationDao {
   }
   def insertAssetTypeVerification(municipalityId: Int, assetTypeId: Int, verifiedBy: Option[String], lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAsset: Int, refreshDate: Option[DateTime], suggestedAssets: String): Long = {
     val verifiedDate = if(verifiedBy.nonEmpty) "current_timestamp" else "null"
-    val id = sql"""select nextval('primary_key_seq') from dual""".as[Long].first
+    val id = sql"""select nextval('primary_key_seq')""".as[Long].first
     sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_by, verified_date, last_user_modification, last_date_modification, number_of_assets, refresh_date, suggested_assets)
            values ($id, $municipalityId, $assetTypeId, $verifiedBy, #$verifiedDate, $lastUserModification, $lastDateModification, $numberOfAsset, $refreshDate, $suggestedAssets)
       """.execute

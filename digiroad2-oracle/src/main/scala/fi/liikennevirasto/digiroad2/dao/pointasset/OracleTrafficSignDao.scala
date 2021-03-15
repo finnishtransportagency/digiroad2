@@ -245,17 +245,14 @@ object OracleTrafficSignDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
-        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing}, $floating)
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
+        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing}, $floating);
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
-        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
+        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection});
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
@@ -268,17 +265,14 @@ object OracleTrafficSignDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
-        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing})
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
+        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing});
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
-        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
+        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection});
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
@@ -291,17 +285,14 @@ object OracleTrafficSignDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $username, current_timestamp)
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
+        values ($id, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $username, current_timestamp);
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code, modified_date)
-        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, current_timestamp)
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code, modified_date)
+        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, current_timestamp);
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 

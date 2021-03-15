@@ -257,17 +257,12 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     val lanePositionId = Sequences.nextPrimaryKeySeqValue
 
     sqlu"""
-        INSERT ALL
-          INTO LANE (id, lane_code, created_date, created_by, municipality_code)
-          VALUES ($laneId, ${newIncomeLane.laneCode}, current_timestamp, $username, ${newIncomeLane.municipalityCode} )
-
-          INTO LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
+        INSERT  INTO LANE (id, lane_code, created_date, created_by, municipality_code)
+          VALUES ($laneId, ${newIncomeLane.laneCode}, current_timestamp, $username, ${newIncomeLane.municipalityCode} );
+         INSERT INTO LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
           VALUES ( $lanePositionId, ${newIncomeLane.sideCode}, ${newIncomeLane.startMeasure}, ${newIncomeLane.endMeasure},
-                   ${newIncomeLane.linkId}, ${newIncomeLane.vvhTimeStamp})
-
-          INTO LANE_LINK (lane_id, lane_position_id)
-          VALUES ($laneId, $lanePositionId )
-        SELECT * FROM dual
+                   ${newIncomeLane.linkId}, ${newIncomeLane.vvhTimeStamp});
+        INSERT INTO LANE_LINK (lane_id, lane_position_id)VALUES ($laneId, $lanePositionId );
       """.execute
 
     laneId

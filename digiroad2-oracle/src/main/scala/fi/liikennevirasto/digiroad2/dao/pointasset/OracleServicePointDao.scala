@@ -72,10 +72,9 @@ object OracleServicePointDao {
   def create(servicePoint: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     val servicePointId = Sequences.nextPrimaryKeySeqValue
     sqlu"""
-      insert all
+      insert
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($servicePointId, 250, $username, current_timestamp, $municipalityCode)
-      select * from dual
+        values ($servicePointId, 250, $username, current_timestamp, $municipalityCode);
     """.execute
     Queries.updateAssetGeometry(servicePointId, Point(servicePoint.lon, servicePoint.lat))
     servicePoint.services.foreach { service =>

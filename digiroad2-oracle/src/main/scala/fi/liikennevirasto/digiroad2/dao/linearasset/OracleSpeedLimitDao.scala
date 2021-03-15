@@ -359,9 +359,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def persistUnknownSpeedLimits(limits: Seq[UnknownSpeedLimit]): Unit = {
     val statement = dynamicSession.prepareStatement(
       """
-        insert into unknown_speed_limit (link_id, municipality_code, administrative_class)
-        select ?, ?, ?
-        from dual
+        insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ( ?, ?, ?)
         where not exists (select * from unknown_speed_limit where link_id = ?)
       """)
     try {
@@ -454,16 +452,14 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
     val insertAll =
       s"""
-       insert all
-         into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
-         values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate)
+         insert into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
+         values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate);
 
-         into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
-         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value})
+         insert into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
+         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value});
 
-         into asset_link(asset_id, position_id)
-         values ($assetId, $lrmPositionId)
-       select * from dual
+         insert into asset_link(asset_id, position_id)
+         values ($assetId, $lrmPositionId);
       """
     Q.updateNA(insertAll).execute
 

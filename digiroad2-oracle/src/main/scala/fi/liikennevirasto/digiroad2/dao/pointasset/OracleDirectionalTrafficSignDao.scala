@@ -148,14 +148,12 @@ object OracleDirectionalTrafficSignDao {
 
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
-        values ($id, 240, $username, current_timestamp, $municipality, ${sign.bearing}, $floating)
-        into lrm_position(id, start_measure, end_measure, link_id, side_code)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection})
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
+        values ($id, 240, $username, current_timestamp, $municipality, ${sign.bearing}, $floating);
+        insert into lrm_position(id, start_measure, end_measure, link_id, side_code)
+        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection});
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
 
@@ -169,14 +167,12 @@ object OracleDirectionalTrafficSignDao {
 
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, current_timestamp)
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp)
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+       insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
+        values ($id, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, current_timestamp);
+        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
+        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
+       insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
 
