@@ -980,6 +980,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Updates incomplete road link list (incomplete = functional class or link type missing). Used by RoadLinkService.updateRoadLinkChanges.
     */
+    //TODO rethink this part of code to work with postgist
   protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
     def setIncompleteness(incompleteLink: IncompleteLink) {
       sqlu"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)

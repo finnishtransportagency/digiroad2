@@ -580,16 +580,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     val insertAll =
       s"""
-       insert all
-         into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
-         values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate)
+        insert into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
+         values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate);
 
-         into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
-         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value})
+        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
+         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value});
 
-         into asset_link(asset_id, position_id)
-         values ($assetId, $lrmPositionId)
-       select * from dual
+       insert into asset_link(asset_id, position_id)
+         values ($assetId, $lrmPositionId);
       """
     Q.updateNA(insertAll).execute
 
@@ -748,42 +746,37 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     if (fromUpdate) {
       verifiedDateFromUpdate match {
         case Some(value) => sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom)
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource)
+      insert  into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom);
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+      insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+
+     insert   into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
         case None => sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, #$verifiedDate, $informationSource, #$geom)
+       insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, #$verifiedDate, $informationSource, #$geom);
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource)
+       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+      insert  into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
       }
     } else {
       sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
-      values ($id, $typeId, $username, current_timestamp, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom)
+     insert into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
+      values ($id, $typeId, $username, current_timestamp, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom);
 
-      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource)
+      insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
 
-      into asset_link(asset_id, position_id)
-      values ($id, $lrmPositionId)
-      select * from dual
+      insert into asset_link(asset_id, position_id)
+      values ($id, $lrmPositionId);
         """.execute
     }
 

@@ -69,24 +69,24 @@ object Queries {
     }
   }
 
-  def nextPrimaryKeyId = sql"select nextval('primary_key_seq') from dual"
+  def nextPrimaryKeyId = sql"select nextval('primary_key_seq')"
 
-  def nextNationalBusStopId = sql"select nextval('national_bus_stop_id_seq') from dual"
+  def nextNationalBusStopId = sql"select nextval('national_bus_stop_id_seq')"
 
-  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_nextval('primary_key_seq') from dual"
+  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_nextval('primary_key_seq')"
 
-  def nextGroupedId = sql"select nextval('grouped_id_seq') from dual"
+  def nextGroupedId = sql"select nextval('grouped_id_seq')"
 //redundant
-  def nextViitePrimaryKeyId = sql"select nextval('viite_general_seq') from dual"
+  def nextViitePrimaryKeyId = sql"select nextval('viite_general_seq')"
   //redundant
-  def nextCommonHistoryValue = sql"select nextval('common_history_seq') from dual"
+  def nextCommonHistoryValue = sql"select nextval('common_history_seq') "
   //redundant
   def fetchViitePrimaryKeyId(len: Int) = {
-    sql"""select nextval('viite_general_seq') from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('viite_general_seq') from generate_series(1,$len)""".as[Long].list
   }
 
   def fetchLrmPositionIds(len: Int) = {
-    sql"""SELECT nextval('lrm_position_primary_key_seq') FROM dual connect by level <= $len""".as[Long].list
+    sql"""SELECT nextval('lrm_position_primary_key_seq') from generate_series(1,$len)""".as[Long].list
   }
 
   def updateAssetModified(assetId: Long, updater: String) =

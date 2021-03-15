@@ -80,7 +80,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
-    val manoeuvreId = sql"select nextval('manoeuvre_id_seq') from dual".as[Long].first
+    val manoeuvreId = sql"select nextval('manoeuvre_id_seq')".as[Long].first
     val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
     sqlu"""
              insert into manoeuvre(id, type, created_date, created_by, additional_info, traffic_sign_id, suggested)
@@ -113,7 +113,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
   def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDateOpt: Option[DateTime]): Long = {
-    val manoeuvreId = sql"select nextval('manoeuvre_id_seq') from dual".as[Long].first
+    val manoeuvreId = sql"select nextval('manoeuvre_id_seq')".as[Long].first
     val additionalInfo = additionalInfoOpt match {
       case Some(additionalValue) => additionalValue
       case _ => oldManoeuvreRow.additionalInfo
@@ -155,9 +155,8 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
 
   def addManoeuvreExceptions(manoeuvreId: Long, exceptions: Seq[Int]) {
     if (exceptions.nonEmpty) {
-      val query = s"insert all " +
-        exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
-        s"select * from dual"
+      val query = s"insert into manoeuvre_exceptions (manoeuvre_id, exception_type)" +
+        exceptions.map { exception => s"values ($manoeuvreId, $exception)"}.mkString +
       Q.updateNA(query).execute
     }
   }
