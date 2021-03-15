@@ -6,6 +6,12 @@ Docker Compose installs and starts the PostGIS database server for local Digiroa
 - Username: digiroad2
 - Password: digiroad2
 
+bonecp config:
+
+bonecp.jdbcUrl=jdbc:postgresql://localhost:5432/digiroad2
+bonecp.username=digiroad2
+bonecp.password=digiroad2
+
 **Start the postgis server:**
 
 `docker-compose up`
