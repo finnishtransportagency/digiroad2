@@ -36,7 +36,7 @@ class AssetReporterDAO {
         JOIN ASSET_LINK al ON a.id = al.asset_id
         JOIN LRM_POSITION pos ON al.position_id = pos.id
         JOIN #$idTableName i ON i.id = pos.link_id
-      WHERE (a.valid_to IS NULL OR a.valid_to > SYSDATE)
+      WHERE (a.valid_to IS NULL OR a.valid_to > current_timestamp)
       AND at2.GEOMETRY_TYPE = 'linear'
       #$filter
       """.as[AssetReport](getResult).list
@@ -62,7 +62,7 @@ class AssetReporterDAO {
             CASE WHEN m.MODIFIED_BY IS NULL THEN m.CREATED_BY ELSE m.MODIFIED_BY END AS UPDATED_BY,
             CASE WHEN m.MODIFIED_DATE IS NULL THEN m.CREATED_DATE ELSE m.MODIFIED_DATE END AS UPDATED_DATE
       FROM MANOEUVRE m
-      WHERE (m.valid_to IS NULL OR m.valid_to > SYSDATE)
+      WHERE (m.valid_to IS NULL OR m.valid_to > current_timestamp)
       AND EXISTS
         (SELECT * FROM MANOEUVRE_ELEMENT me
           JOIN #$idTableName i ON i.id = me.link_id OR i.id = me.dest_link_id
@@ -81,7 +81,7 @@ class AssetReporterDAO {
         JOIN ASSET_LINK al ON a.id = al.asset_id
         JOIN LRM_POSITION pos ON al.position_id = pos.id
         JOIN #$idTableName i ON i.id = pos.link_id
-      WHERE (a.valid_to IS NULL OR a.valid_to > SYSDATE)
+      WHERE (a.valid_to IS NULL OR a.valid_to > current_timestamp)
       AND at2.GEOMETRY_TYPE = 'point'
       AND a.asset_type_id IN (#${assetTypesList.mkString(",")})
       """.as[AssetReport](getResult).list
@@ -96,7 +96,7 @@ class AssetReporterDAO {
       FROM ASSET a
         JOIN ASSET_TYPE at2 ON at2.id = a.asset_type_id
         JOIN #$idTableName i ON i.id = a.municipality_code
-      WHERE (a.valid_to IS NULL OR a.valid_to > SYSDATE)
+      WHERE (a.valid_to IS NULL OR a.valid_to > current_timestamp)
       AND a.asset_type_id = ${ServicePoints.typeId}
       """.as[AssetReport](getResult).list
     }
@@ -105,7 +105,7 @@ class AssetReporterDAO {
   def getTotalTrafficSignNewLaw(municipalityCode: Int): Int = {
     sql"""SELECT COUNT(a.ID)
       FROM ASSET a
-      WHERE (a.valid_to IS NULL OR a.valid_to > sysdate)
+      WHERE (a.valid_to IS NULL OR a.valid_to > current_timestamp)
       AND a.created_date >= TO_DATE('01/06/2020 00:00:00', 'DD/MM/YYYY HH24:MI:SS')
       AND a.asset_type_id = #${TrafficSigns.typeId}
       AND a.municipality_code = #$municipalityCode""".as[Int].first

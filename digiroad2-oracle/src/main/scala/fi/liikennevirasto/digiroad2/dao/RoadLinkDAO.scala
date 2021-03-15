@@ -62,7 +62,7 @@ sealed trait RoadLinkDAO{
   def updateValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long]): Unit = {
       sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username
                where link_id = ${linkProperty.linkId}""".execute
   }
@@ -70,7 +70,7 @@ sealed trait RoadLinkDAO{
   def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
     sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username
                where link_id = ${linkProperty.linkId}""".execute
   }
@@ -78,7 +78,7 @@ sealed trait RoadLinkDAO{
   def updateValues(linkId: Long, username: Option[String], value: Int): Unit = {
     sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username
                where link_id = $linkId""".execute
   }
@@ -91,11 +91,11 @@ sealed trait RoadLinkDAO{
     }
 
     sqlu"""update #$table
-                 set valid_to = SYSDATE - 1,
+                 set valid_to = current_timestamp - 1,
                      modified_by = $username
                      #$withTimeStamp
                  where link_id = $linkId
-                    and (valid_to is null or valid_to > sysdate)
+                    and (valid_to is null or valid_to > current_timestamp)
         """.execute
   }
 
@@ -237,7 +237,7 @@ object RoadLinkDAO{
     override def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
       sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username,
                    link_type = ${linkProperty.linkType.value}
                where link_id = ${linkProperty.linkId}""".execute
@@ -279,7 +279,7 @@ object RoadLinkDAO{
     def column: String = AdministrativeClass
 
     override def getExistingValue(linkId: Long): Option[Int]= {
-      sql"""select #$column from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[Int].firstOption
+      sql"""select #$column from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > current_timestamp) """.as[Int].firstOption
     }
 
     def getValue(linkProperty: LinkProperties): Int ={
@@ -300,7 +300,7 @@ object RoadLinkDAO{
 
     override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
       sqlu"""update #$table
-                 set valid_to = SYSDATE - 1,
+                 set valid_to = current_timestamp - 1,
                      modified_by = $username
                  where link_id = $linkId""".execute
     }
@@ -351,7 +351,7 @@ object RoadLinkDAO{
         case _ => ""
       }
 
-      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate #$withTimeStamp) """.as[(String, String)].list.toMap
+      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > current_timestamp #$withTimeStamp) """.as[(String, String)].list.toMap
     }
 
     def insertAttributeValueByChanges(linkId: Long, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
@@ -361,12 +361,12 @@ object RoadLinkDAO{
     }
 
     def getAllExistingDistinctValues(attributeName: String) : List[String] = {
-      sql"""select distinct value from #$table where name = $attributeName and (valid_to is null or valid_to > sysdate)""".as[String].list
+      sql"""select distinct value from #$table where name = $attributeName and (valid_to is null or valid_to > current_timestamp)""".as[String].list
     }
 
     def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, Long)] = {
       sql"""select value, link_id from #$table where name = $attributeName
-           and (valid_to is null or valid_to > sysdate) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
+           and (valid_to is null or valid_to > current_timestamp) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
     }
 
     def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String, mmlId: Option[Long]): Unit = {
@@ -379,22 +379,22 @@ object RoadLinkDAO{
       sqlu"""
             update road_link_attributes set
               value = $value,
-              modified_date = sysdate,
+              modified_date = current_timestamp,
               modified_by = $username
             where link_id = ${linkProperty.linkId}
             	and name = $attributeName
-            	and (valid_to is null or valid_to > sysdate)
+            	and (valid_to is null or valid_to > current_timestamp)
           """.execute
     }
 
     def expireAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String): Unit = {
       sqlu"""
             update road_link_attributes
-            set valid_to = sysdate - 1,
+            set valid_to = current_timestamp - 1,
                 modified_by = $username
             where link_id = ${linkProperty.linkId}
             	and name = $attributeName
-              and (valid_to is null or valid_to > sysdate)
+              and (valid_to is null or valid_to > current_timestamp)
           """.execute
     }
 

@@ -1231,7 +1231,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""DELETE FROM ASSET_LINK""".execute
       assetData.foreach {
         case (id, _, createdDate, createdBy, _) =>
-          sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, sysdate, '0')""".execute
+          sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, current_timestamp, '0')""".execute
           if (fifties.contains(id)) {
             sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 50 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
           } else {
@@ -1293,7 +1293,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val lrmData = data.map(_._2)
     assetData.foreach {
       case (id, _, createdDate, createdBy, _) =>
-        sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, sysdate, '0')""".execute
+        sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, current_timestamp, '0')""".execute
         sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = $speed and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
     }
     lrmData.foreach {
@@ -1352,7 +1352,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""DELETE FROM ASSET_LINK""".execute
       assetData.foreach {
         case (id, _, createdDate, createdBy, _) =>
-          sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, sysdate, '0')""".execute
+          sqlu"""Insert into ASSET (ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,VALID_FROM,FLOATING) values ($id,'20',to_timestamp($createdDate,'DD.MM.RRRR HH24:MI:SS'),$createdBy, current_timestamp, '0')""".execute
           if (eighties.contains(id)) {
             sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT $id,(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
           } else {

@@ -27,7 +27,7 @@ object OracleWidthLimitDao {
         join single_choice_value scv on a.id = scv.asset_id
         left join enumerated_value ev on ev.id = scv.enumerated_value_id
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
     StaticQuery.queryNA[WidthLimit](queryWithFilter).iterator.toSeq
   }
 
@@ -37,7 +37,7 @@ object OracleWidthLimitDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, $typeId, $username, sysdate, $municipality)
+        values ($id, $typeId, $username, current_timestamp, $municipality)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
         values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value})

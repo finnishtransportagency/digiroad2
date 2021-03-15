@@ -74,7 +74,7 @@ object OracleServicePointDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($servicePointId, 250, $username, sysdate, $municipalityCode)
+        values ($servicePointId, 250, $username, current_timestamp, $municipalityCode)
       select * from dual
     """.execute
     Queries.updateAssetGeometry(servicePointId, Point(servicePoint.lon, servicePoint.lat))
@@ -94,7 +94,7 @@ object OracleServicePointDao {
   def update(assetId: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, user: String) = {
     sqlu"""
            UPDATE asset
-            SET municipality_code = $municipalityCode, modified_by = $user, modified_date = sysdate
+            SET municipality_code = $municipalityCode, modified_by = $user, modified_date = current_timestamp
             WHERE id = $assetId""".execute
     sqlu"""delete from SERVICE_POINT_VALUE where ASSET_ID = $assetId""".execute
     Queries.updateAssetGeometry(assetId, Point(updatedAsset.lon, updatedAsset.lat))
@@ -113,7 +113,7 @@ object OracleServicePointDao {
 
   def expire(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).first
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
   def get: Set[ServicePoint] = {
@@ -150,7 +150,7 @@ object OracleServicePointDao {
          left join multiple_choice_value mcv ON mcv.asset_id = a.id and mcv.property_id = p.id AND p.PROPERTY_TYPE = 'checkbox'
          left join enumerated_value ev on (ev.property_id = p.id AND mcv.enumerated_value_id = ev.id)
          where a.ASSET_TYPE_ID = 250
-         and (a.valid_to > sysdate or a.valid_to is null)
+         and (a.valid_to > current_timestamp or a.valid_to is null)
       $withFilter
     """
 

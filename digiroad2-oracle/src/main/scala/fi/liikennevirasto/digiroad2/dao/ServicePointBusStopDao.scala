@@ -116,7 +116,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
             select '1'
             from multiple_choice_value aux_mc
             join enumerated_value aux_e on aux_mc.enumerated_value_id = aux_e.id and aux_e.value = '7'
-            where aux_mc.asset_id = a.id) and (a.valid_to > sysdate or a.valid_to is null)
+            where aux_mc.asset_id = a.id) and (a.valid_to > current_timestamp or a.valid_to is null)
       """
     queryToServicePoint(queryFilter(query))
   }

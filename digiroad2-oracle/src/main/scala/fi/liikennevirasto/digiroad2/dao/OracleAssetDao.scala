@@ -45,7 +45,7 @@ class OracleAssetDao {
     * @param id Represets the id of the asset
     */
   def expireAssetsById (id: Long): Unit = {
-    sqlu"update asset set valid_to = sysdate - 1/86400 where id = $id".execute
+    sqlu"update asset set valid_to = current_timestamp - 1/86400 where id = $id".execute
   }
 
   /**
@@ -58,13 +58,13 @@ class OracleAssetDao {
   def expireAssetByTypeAndLinkId(typeId: Long, linkIds: Seq[Long]): Unit = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sqlu"""
-         update asset set valid_to = sysdate - 1/86400 where id in (
+         update asset set valid_to = current_timestamp - 1/86400 where id in (
           select a.id
           from asset a
           join asset_link al on al.asset_id = a.id
           join lrm_position lrm on lrm.id = al.position_id
           join  #$idTableName i on i.id = lrm.link_id
-          where a.asset_type_id = $typeId AND (a.valid_to IS NULL OR a.valid_to > SYSDATE ) AND a.floating = 0
+          where a.asset_type_id = $typeId AND (a.valid_to IS NULL OR a.valid_to > current_timestamp ) AND a.floating = 0
          )
       """.execute
     }
@@ -96,7 +96,7 @@ class OracleAssetDao {
          join ASSET_LINK AL on AL.ASSET_ID = A.ID
          join LRM_POSITION lrm on lrm.ID = AL.POSITION_ID
          join  #$idTableName i on i.id = lrm.link_id
-         where A.ASSET_TYPE_ID = $typeId AND (A.valid_to IS NULL OR A.valid_to > SYSDATE ) """.as[Long].list
+         where A.ASSET_TYPE_ID = $typeId AND (A.valid_to IS NULL OR A.valid_to > current_timestamp ) """.as[Long].list
     }
   }
 
@@ -107,7 +107,7 @@ class OracleAssetDao {
             join asset_link al on al.asset_id = a.id
             join lrm_position lp on lp.id = al.position_id
             join #$idTableName i on i.id = lp.link_id
-            where a.asset_type_id in (#${assetTypeId.mkString(",")}) and (a.valid_to is null or a.valid_to > sysdate)""".as[AssetLink].list
+            where a.asset_type_id in (#${assetTypeId.mkString(",")}) and (a.valid_to is null or a.valid_to > current_timestamp)""".as[AssetLink].list
     }
   }
 
@@ -125,7 +125,7 @@ class OracleAssetDao {
 
   def expireWithoutTransaction(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).first
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
   def getExpiredAssetsByRoadLinkAndTypeIdAndBetweenDates(roadLinksFromMunicipalities: Set[Long], assetTypeIdsToRestore: Seq[Int], startDate: String, endDate: String) = {
@@ -145,7 +145,7 @@ class OracleAssetDao {
     MassQuery.withIds(assetsToBeRestored) { idTableName =>
       sqlu"""
           update asset
-          set modified_date = sysdate, modified_by = $username, valid_to = null
+          set modified_date = current_timestamp, modified_by = $username, valid_to = null
           where id in (select id from #$idTableName)
     """.execute
     }

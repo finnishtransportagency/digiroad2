@@ -52,14 +52,14 @@ class FeedbackDao {
    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
       sqlu"""
           insert into feedback (id, created_by, created_date, subject, body, status, status_date)
-          values ($id, ${createdBy}, sysdate, ${subject},
-                ${body},${status}, sysdate)""".execute
+          values ($id, ${createdBy}, current_timestamp, ${subject},
+                ${body},${status}, current_timestamp)""".execute
     id
   }
 
   def updateFeedback(id: Long): Long = {
     sqlu"""
-          update feedback set status = 1, status_date = sysdate where id = ${id} """.execute
+          update feedback set status = 1, status_date = current_timestamp where id = ${id} """.execute
     id
   }
 }

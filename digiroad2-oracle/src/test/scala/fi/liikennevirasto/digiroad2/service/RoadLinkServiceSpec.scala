@@ -1072,7 +1072,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadLinkAttributes =
         sql"""
-              Select name, value From road_link_attributes where link_id = 1 and (valid_to is null or valid_to > sysdate)
+              Select name, value From road_link_attributes where link_id = 1 and (valid_to is null or valid_to > current_timestamp)
         """.as[(String, String)].list
 
       roadLinkAttributes should be (Empty)

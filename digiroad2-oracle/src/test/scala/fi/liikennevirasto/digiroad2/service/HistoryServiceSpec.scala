@@ -20,7 +20,7 @@ class HistoryServiceSpec extends FunSuite with Matchers {
     sqlu"""
         INSERT ALL
           INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
-            VALUES (1, ${ServicePoints.typeId}, #$testSQLTimestamp, $testUser, SYSDATE)
+            VALUES (1, ${ServicePoints.typeId}, #$testSQLTimestamp, $testUser, current_timestamp)
           INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
             VALUES (2, ${ServicePoints.typeId}, #$testSQLTimestamp, $testUser, #$testSQLTimestamp)
 

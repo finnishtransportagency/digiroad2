@@ -57,7 +57,7 @@ object OracleRailwayCrossingDao {
          left join enumerated_value ev on (ev.property_id = p.id AND (scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.id))
          left join text_property_value tpv on (tpv.property_id = p.id AND tpv.asset_id = a.id)
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null) "
     queryToRailwayCrossing(queryWithFilter)
   }
 
@@ -141,7 +141,7 @@ object OracleRailwayCrossingDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 230, $username, sysdate, $municipality)
+        values ($id, 230, $username, current_timestamp, $municipality)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
         values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value})
@@ -164,10 +164,10 @@ object OracleRailwayCrossingDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, 230, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, sysdate)
+        values ($id, 230, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
-        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value}, sysdate)
+        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

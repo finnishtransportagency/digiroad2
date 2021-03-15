@@ -13,12 +13,12 @@ class HistoryDAO {
   def getExpiredAssetsIdsByAssetTypeIdAndYearGap(assetTypeId: Int, yearGap: Int) = {
     sql"""SELECT ID FROM ASSET
             WHERE ASSET_TYPE_ID = $assetTypeId
-            AND EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM SYSDATE) - $yearGap""".as[Long].list
+            AND EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM current_timestamp) - $yearGap""".as[Long].list
   }
 
   def getExpiredManoeuvresIdsByYearGap(yearGap: Int) = {
     sql"""SELECT ID FROM MANOEUVRE
-            WHERE EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM SYSDATE) - $yearGap""".as[Long].list
+            WHERE EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM current_timestamp) - $yearGap""".as[Long].list
   }
 
   def copyAssetToHistory(assetId: Long, assetType: AssetTypeInfo) = {
