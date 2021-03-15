@@ -25,7 +25,7 @@ class ImportLogDAO {
   }
 
   def create(username: String, fileName: String, importType: String): Long = {
-    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+    val id = sql"""select nextval('primary_key_seq') from dual""".as[Long].first
     sqlu"""
         insert into import_log(id, file_name, import_type, created_by)
         values ($id, $fileName, $importType, $username)

@@ -69,24 +69,24 @@ object Queries {
     }
   }
 
-  def nextPrimaryKeyId = sql"select primary_key_seq.nextval from dual"
+  def nextPrimaryKeyId = sql"select nextval('primary_key_seq') from dual"
 
-  def nextNationalBusStopId = sql"select national_bus_stop_id_seq.nextval from dual"
+  def nextNationalBusStopId = sql"select nextval('national_bus_stop_id_seq') from dual"
 
-  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_primary_key_seq.nextval from dual"
+  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_nextval('primary_key_seq') from dual"
 
-  def nextGroupedId = sql"select grouped_id_seq.nextval from dual"
-
-  def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
-
-  def nextCommonHistoryValue = sql"select common_history_seq.nextval from dual"
-
+  def nextGroupedId = sql"select nextval('grouped_id_seq') from dual"
+//redundant
+  def nextViitePrimaryKeyId = sql"select nextval('viite_general_seq') from dual"
+  //redundant
+  def nextCommonHistoryValue = sql"select nextval('common_history_seq') from dual"
+  //redundant
   def fetchViitePrimaryKeyId(len: Int) = {
-    sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
+    sql"""select nextval('viite_general_seq') from dual connect by level <= $len""".as[Long].list
   }
 
   def fetchLrmPositionIds(len: Int) = {
-    sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= $len""".as[Long].list
+    sql"""SELECT nextval('lrm_position_primary_key_seq') FROM dual connect by level <= $len""".as[Long].list
   }
 
   def updateAssetModified(assetId: Long, updater: String) =
@@ -132,7 +132,7 @@ object Queries {
   def insertMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_date, grouped_id)
-      values (primary_key_seq.nextval, $propertyId, $assetId,
+      values (nextval('primary_key_seq'), $propertyId, $assetId,
         (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), current_timestamp, $groupedId)
     """
 
@@ -146,7 +146,7 @@ object Queries {
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = Some(0)) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date, grouped_id)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, current_timestamp, $groupedId)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $valueFi, current_timestamp, $groupedId)
     """
   }
 
@@ -171,21 +171,21 @@ object Queries {
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value)
     """
   }
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Double) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value)
     """
   }
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = Some(0)) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value, grouped_id)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value, $groupedId)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value, $groupedId)
     """
   }
 
@@ -213,7 +213,7 @@ object Queries {
   def insertDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) = {
     sqlu"""
       insert into date_property_value(id, property_id, asset_id, date_time)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $dateTime)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $dateTime)
     """
   }
 
@@ -226,7 +226,7 @@ object Queries {
   def insertValidityPeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
     sqlu"""
       insert into validity_period_property_value(id, property_id, asset_id, type, period_week_day, start_hour, end_hour, start_minute, end_minute)
-      values (primary_key_seq.nextval, $propertyId, $assetId, ${validityPeriodValue.periodType}, ${validityPeriodValue.days}, ${validityPeriodValue.startHour},
+      values (nextval('primary_key_seq'), $propertyId, $assetId, ${validityPeriodValue.periodType}, ${validityPeriodValue.days}, ${validityPeriodValue.startHour},
       ${validityPeriodValue.endHour}, ${validityPeriodValue.startMinute}, ${validityPeriodValue.endMinute})
     """
   }
@@ -409,7 +409,7 @@ object Queries {
   def insertDatePeriodProperty(assetId: Long, propertyId: Long, startDate: DateTime, endDate: DateTime) = {
     sqlu"""
       insert into date_period_value(id, property_id, asset_id, start_date, end_date)
-      values (primary_key_seq.nextval, $propertyId, $assetId, ${startDate}, ${endDate})
+      values (nextval('primary_key_seq'), $propertyId, $assetId, ${startDate}, ${endDate})
     """
   }
 

@@ -49,7 +49,7 @@ class FeedbackDao {
   }
 
   def insertFeedback(createdBy: String, body: String, subject: String, status: Boolean): Long = {
-   val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+   val id = sql"""select nextval('primary_key_seq') from dual""".as[Long].first
       sqlu"""
           insert into feedback (id, created_by, created_date, subject, body, status, status_date)
           values ($id, ${createdBy}, current_timestamp, ${subject},

@@ -771,7 +771,7 @@ class AssetDataImporter {
 def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value)
     """.execute
   }
 
@@ -1148,7 +1148,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def createTextPropertyValue(assetId: Long, propertyVal: Int, vname : String) = {
       sqlu"""
         INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-        VALUES(primary_key_seq.nextval,$assetId,$propertyVal,$vname,'vvh_generated')
+        VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,'vvh_generated')
       """.execute
     }
 
@@ -1162,7 +1162,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def createTextPropertyValue(assetId: Long, propertyVal: Long, vname : String, modifiedBy: String) = {
       sqlu"""
           INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-          VALUES(primary_key_seq.nextval,$assetId,$propertyVal,$vname,$modifiedBy)
+          VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,$modifiedBy)
         """.execute
     }
 
@@ -1178,7 +1178,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       if(notExist){
         sqlu"""
           INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-          VALUES(primary_key_seq.nextval,$assetId,$propertyVal,$vname,$modifiedBy)
+          VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,$modifiedBy)
         """.execute
       }else{
         sqlu"update text_property_value set value_fi = $vname, modified_date = current_timestamp, modified_by = $modifiedBy where asset_id = $assetId and property_id = $propertyVal".execute

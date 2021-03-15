@@ -95,7 +95,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
 
     sqlu"""
         INSERT INTO LANE_HISTORY_ATTRIBUTE
-           SELECT primary_key_seq.nextval, $laneHistoryId, NAME, VALUE, REQUIRED, CREATED_DATE, CREATED_BY,
+           SELECT nextval('primary_key_seq'), $laneHistoryId, NAME, VALUE, REQUIRED, CREATED_DATE, CREATED_BY,
                          MODIFIED_DATE, MODIFIED_BY FROM LANE_ATTRIBUTE WHERE LANE_ID = $oldLaneId
       """.execute
 
