@@ -33,13 +33,13 @@ class OracleUserProvider extends UserProvider {
       OracleDatabase.withDynSession {
         sqlu"""
         insert into service_user (id, username, configuration, name, created_at)
-        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, sysdate)
+        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, current_timestamp)
       """.execute
       }
     }else {
         sqlu"""
         insert into service_user (id, username, configuration, name, created_at)
-        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, sysdate)
+        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, current_timestamp)
       """.execute
       }
   }
@@ -74,7 +74,7 @@ class OracleUserProvider extends UserProvider {
 
   def saveUser(user: User): User = {
     OracleDatabase.withDynSession {
-      sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name}, modified_at = sysdate where lower(username) = ${user.username.toLowerCase}""".execute
+      sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name}, modified_at = current_timestamp where lower(username) = ${user.username.toLowerCase}""".execute
       user
     }
   }

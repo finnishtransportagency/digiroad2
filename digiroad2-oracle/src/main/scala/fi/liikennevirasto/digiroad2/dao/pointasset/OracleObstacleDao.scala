@@ -49,7 +49,7 @@ object OracleObstacleDao {
       case
         when ev.name_fi is not null then ev.name_fi
         else null
-      end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
+      end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
@@ -67,7 +67,7 @@ object OracleObstacleDao {
 
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String, withDynSession: Boolean = false): Seq[Obstacle] = {
-    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
     if (withDynSession) {
       OracleDatabase.withDynSession {
         queryToObstacle(queryWithFilter)
@@ -174,7 +174,7 @@ object OracleObstacleDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 220, $username, sysdate, $municipality)
+        values ($id, 220, $username, current_timestamp, $municipality)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
         values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value})
@@ -197,10 +197,10 @@ object OracleObstacleDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, ${Obstacles.typeId}, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, sysdate)
+        values ($id, ${Obstacles.typeId}, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
-        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value}, sysdate)
+        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value}, current_timestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -255,7 +255,7 @@ object OracleObstacleDao {
               when ev.name_fi is not null then ev.name_fi
               else null
         end as display_value, a.created_by, a.created_date, a.modified_by,
-        a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
+        a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source
        from asset a
        join asset_link al on a.id = al.asset_id
        join lrm_position pos on al.position_id = pos.id
@@ -266,7 +266,7 @@ object OracleObstacleDao {
     """
 
     val queryWithFilter = query + s"where a.asset_type_id = 220 and a.floating = $floating and " +
-      s"(a.valid_to > sysdate or a.valid_to is null) and a.id > $lastIdUpdate order by a.id asc) where ROWNUM <= $batchSize"
+      s"(a.valid_to > current_timestamp or a.valid_to is null) and a.id > $lastIdUpdate order by a.id asc) where ROWNUM <= $batchSize"
     queryToObstacle(queryWithFilter)
   }
 

@@ -16,11 +16,11 @@ class VerificationDao {
     val verifiedAssetTypes =
       sql"""
           SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS typeId, atype.name AS assetName,
-          (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END) AS verified, atype.geometry_type, mv.last_user_modification,
+          (CASE WHEN MONTHS_BETWEEN(current_timestamp, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END) AS verified, atype.geometry_type, mv.last_user_modification,
            mv.last_date_modification, mv.number_of_assets, mv.refresh_date, REGEXP_COUNT(mv.suggested_assets , ',') + 1 as countSuggested
            FROM municipality m
            JOIN asset_type atype ON atype.verifiable = 1
-           LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
+           LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > current_timestamp
            WHERE m.id = $municipalityId
            """.as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, String, Option[String], Option[DateTime], Int, Option[DateTime], Option[Int])].list
     verifiedAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, verified, geometryType, lastUserModification, lastDateModification, numberOfAsset, refreshDate, suggestedAssetsCount) =>
@@ -50,7 +50,7 @@ class VerificationDao {
       sql"""
            Select a.asset_type_id , count(a.id)
                 from asset_type atype
-                JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and (a.valid_to IS NULL OR a.valid_to > SYSDATE )
+                JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and (a.valid_to IS NULL OR a.valid_to > current_timestamp )
                 join property p on p.asset_type_id = a.asset_type_id and p.property_type = 'checkbox' and p.public_id = 'suggest_box'
                 join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id
                 join enumerated_value ev on ev.property_id = p.id and ev.value != 1 AND ev.id = mcv.ENUMERATED_VALUE_ID
@@ -68,7 +68,7 @@ class VerificationDao {
           select /*+ PARALLEL */ atype.id AS typeId, a.modified_date, a.modified_by,
           ROW_NUMBER () OVER (PARTITION BY a.asset_type_id ORDER BY a.modified_date desc nulls last) AS rownumber
           from asset_type atype
-          JOIN asset a ON a.ASSET_TYPE_ID = atype.ID  AND (a.VALID_TO IS NULL OR a.valid_to > sysdate)
+          JOIN asset a ON a.ASSET_TYPE_ID = atype.ID  AND (a.VALID_TO IS NULL OR a.valid_to > current_timestamp)
           where atype.verifiable = 1
           and a.municipality_code = $municipalityId
           and atype.GEOMETRY_TYPE = 'point'
@@ -116,7 +116,7 @@ class VerificationDao {
         join property p on p.asset_type_id = a.asset_type_id and p.property_type = 'checkbox' and p.public_id = 'suggest_box'
         join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id
         join enumerated_value ev on ev.property_id = p.id and ev.value = 1 and ev.id = mcv.enumerated_value_id and  lrm.link_id in (select id from #$idTableName)
-        where (a.valid_to IS NULL OR a.valid_to > SYSDATE)
+        where (a.valid_to IS NULL OR a.valid_to > current_timestamp)
         """.as[(Long, Int)].list
     }
   }
@@ -129,7 +129,7 @@ class VerificationDao {
       join property p on p.asset_type_id = a.asset_type_id and p.property_type = 'checkbox' and p.public_id = 'suggest_box'
       join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id
       join enumerated_value ev on ev.property_id = p.id and ev.value = 1 and ev.id = mcv.enumerated_value_id
-      where a.municipality_code = #$municipalityCode and (a.valid_to IS NULL OR a.valid_to > SYSDATE)
+      where a.municipality_code = #$municipalityCode and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
     """.as[(Long, Int)].list
   }
 
@@ -138,7 +138,7 @@ class VerificationDao {
       sql"""
           SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
                 (CASE
-                    WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears
+                    WHEN MONTHS_BETWEEN(current_timestamp, mv.verified_date) < $TwoYears
                       THEN 1
                       ELSE 0
                 END) AS verified, atype.GEOMETRY_TYPE, mv.number_of_assets AS counting
@@ -181,12 +181,12 @@ class VerificationDao {
   def insertAssetTypeVerification(municipalityId: Int, assetTypeId: Int, username: String): Long = {
     val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
     sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)
-           values ($id, $municipalityId, $assetTypeId, sysdate, $username)
+           values ($id, $municipalityId, $assetTypeId, current_timestamp, $username)
       """.execute
     id
   }
   def insertAssetTypeVerification(municipalityId: Int, assetTypeId: Int, verifiedBy: Option[String], lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAsset: Int, refreshDate: Option[DateTime], suggestedAssets: String): Long = {
-    val verifiedDate = if(verifiedBy.nonEmpty) "sysdate" else "null"
+    val verifiedDate = if(verifiedBy.nonEmpty) "current_timestamp" else "null"
     val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
     sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_by, verified_date, last_user_modification, last_date_modification, number_of_assets, refresh_date, suggested_assets)
            values ($id, $municipalityId, $assetTypeId, $verifiedBy, #$verifiedDate, $lastUserModification, $lastDateModification, $numberOfAsset, $refreshDate, $suggestedAssets)
@@ -209,7 +209,7 @@ class VerificationDao {
 
   def expireAssetTypeVerification(municipalityCode: Int, assetTypeCode: Int, userName: String) = {
     sqlu"""update municipality_verification mv
-           set valid_to = sysdate, modified_by = $userName
+           set valid_to = current_timestamp, modified_by = $userName
            where mv.municipality_id = $municipalityCode
            and mv.asset_type_id = $assetTypeCode
            and valid_to is null

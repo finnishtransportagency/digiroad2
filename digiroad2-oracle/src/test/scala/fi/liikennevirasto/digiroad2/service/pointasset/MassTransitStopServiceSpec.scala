@@ -949,7 +949,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $updatedAssetId""".as[(Long, Int, String, String)].firstOption
       newAsset should be (Some(updatedAssetId, municipalityCode, null, null))
 
-      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $oldAssetId""".as[(Boolean)].firstOption
+      val expired = sql"""select case when a.valid_to <= current_timestamp then 1 else 0 end as expired from asset a where id = $oldAssetId""".as[(Boolean)].firstOption
       expired should be(Some(true))
     }
   }
@@ -979,7 +979,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val updatedAssetId = service.updateExistingById(assetId, Some(Position(0, 50, linkId, Some(0))), Set(), "test",  (_, _) => Unit).id
       updatedAssetId should be(assetId)
 
-      val expired = sql"""select case when a.valid_to <= sysdate then 1 else 0 end as expired from asset a where id = $assetId""".as[(Boolean)].firstOption
+      val expired = sql"""select case when a.valid_to <= current_timestamp then 1 else 0 end as expired from asset a where id = $assetId""".as[(Boolean)].firstOption
       expired should be(Some(false))
     }
   }

@@ -649,7 +649,7 @@ object DataFixture {
               val rightPoint = Point(stopPoint.x + boundsOffset, stopPoint.y + boundsOffset, 0)
               val bounds = BoundingRectangle(leftPoint, rightPoint)
               val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-              val filter = s" where $boundingBoxFilter and a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > sysdate)"
+              val filter = s" where $boundingBoxFilter and a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > current_timestamp)"
               val persistedStops = OracleDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
                 filter(stop => TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(Some(stop))).
                 filterNot(hasLiviIdPropertyValue)

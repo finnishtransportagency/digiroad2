@@ -42,7 +42,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   def deleteManoeuvre(username: String, id: Long) = {
     sqlu"""
              update manoeuvre
-             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             set valid_to = current_timestamp, modified_date = current_timestamp, modified_by = $username
              where id = $id
           """.execute
     id
@@ -52,17 +52,17 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     val username = "automatic_trafficSign_deleted"
     sqlu"""
              update manoeuvre
-             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
+             set valid_to = current_timestamp, modified_date = current_timestamp, modified_by = $username
              where traffic_sign_id = $trafficSignId
           """.execute
     trafficSignId
   }
 
   def deleteManoeuvreByTrafficSign(queryFilter: String => String, username: Option[String]) : Unit = {
-    val modified = username match { case Some(user) => s", modified_by = '$user',  modified_date = sysdate" case _ => ""}
+    val modified = username match { case Some(user) => s", modified_by = '$user',  modified_date = current_timestamp" case _ => ""}
     val query = s"""
           update manoeuvre
-             set valid_to = sysdate $modified
+             set valid_to = current_timestamp $modified
              where traffic_sign_id in (
              select a.id
               from asset a
@@ -74,7 +74,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   def expireManoeuvre(id: Long) = {
     sqlu"""
              update manoeuvre
-             set valid_to = sysdate
+             set valid_to = current_timestamp
              where id = $id
           """.execute
   }
@@ -84,7 +84,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
     sqlu"""
              insert into manoeuvre(id, type, created_date, created_by, additional_info, traffic_sign_id, suggested)
-             values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo, ${manoeuvre.trafficSignId}, ${manoeuvre.isSuggested})
+             values ($manoeuvreId, 2, current_timestamp, $userName, $additionalInfo, ${manoeuvre.trafficSignId}, ${manoeuvre.isSuggested})
           """.execute
 
     val linkPairs = manoeuvre.linkIds.zip(manoeuvre.linkIds.tail)
@@ -128,7 +128,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       case _ =>
         sqlu"""
             insert into manoeuvre(id, type, created_by, created_date, additional_info, modified_by, modified_date)
-            values ($manoeuvreId, 2, ${oldManoeuvreRow.createdBy}, ${oldManoeuvreRow.createdDate}, $additionalInfo, $userName, sysdate)
+            values ($manoeuvreId, 2, ${oldManoeuvreRow.createdBy}, ${oldManoeuvreRow.createdDate}, $additionalInfo, $userName, current_timestamp)
           """.execute
     }
 
@@ -201,7 +201,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE (valid_to is null OR valid_to > SYSDATE) AND
+            WHERE (valid_to is null OR valid_to > current_timestamp) AND
                 EXISTS (SELECT k.manoeuvre_id
                                FROM MANOEUVRE_ELEMENT k
                                join #$idTableName i on i.id = k.link_id
@@ -220,7 +220,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE (valid_to is null OR valid_to > SYSDATE) AND
+            WHERE (valid_to is null OR valid_to > current_timestamp) AND
                 EXISTS (SELECT k.manoeuvre_id
                                FROM MANOEUVRE_ELEMENT k
                                join #$idTableName i on i.id = k.link_id
@@ -239,7 +239,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
-            WHERE m.id = $id and (valid_to > SYSDATE OR valid_to is null)"""
+            WHERE m.id = $id and (valid_to > current_timestamp OR valid_to is null)"""
         .as[(Long, Long, Long, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
     manoeuvre.map(row =>
       PersistedManoeuvreRow(row._1, row._2, row._3, row._4, row._5, row._6, row._7, row._8, row._9, row._10))
@@ -296,7 +296,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       case _ =>
         sqlu"""
            update manoeuvre
-           set modified_date = sysdate
+           set modified_date = current_timestamp
            , modified_by = $username
            where id = $manoeuvreId
         """.execute

@@ -61,7 +61,7 @@ object OracleTrafficSignDao {
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
                 lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
-               ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color, case when a.valid_to <= sysdate then 1 else 0 end as expired
+               ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color, case when a.valid_to <= current_timestamp then 1 else 0 end as expired
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -76,7 +76,7 @@ object OracleTrafficSignDao {
       """
 
   def fetchByFilter(queryFilter: String => String): Seq[PersistedTrafficSign] = {
-    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
     queryToPersistedTrafficSign(queryWithFilter)
   }
 
@@ -148,7 +148,7 @@ object OracleTrafficSignDao {
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
                lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
-               ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color, case when a.valid_to <= sysdate then 1 else 0 end as expired
+               ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color, case when a.valid_to <= current_timestamp then 1 else 0 end as expired
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -160,7 +160,7 @@ object OracleTrafficSignDao {
         left join enumerated_value ev on scv.enumerated_value_id = ev.id
         left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
         where a.asset_type_id = 300
-        and (a.valid_to > sysdate or a.valid_to is null)
+        and (a.valid_to > current_timestamp or a.valid_to is null)
       """.as[TrafficSignRow](getTrafficSignRow).list
     }
     groupTrafficSign(rows)
@@ -247,7 +247,7 @@ object OracleTrafficSignDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
-        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing}, $floating)
+        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing}, $floating)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})
@@ -270,7 +270,7 @@ object OracleTrafficSignDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
-        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing})
+        values ($id, 300, $username, current_timestamp, $municipality, ${trafficSign.bearing})
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})
@@ -293,10 +293,10 @@ object OracleTrafficSignDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $username, sysdate)
+        values ($id, 300, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${trafficSign.bearing}, $username, current_timestamp)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code, modified_date)
-        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, sysdate)
+        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection}, current_timestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -362,7 +362,7 @@ object OracleTrafficSignDao {
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
     """
   }
 
@@ -492,7 +492,7 @@ object OracleTrafficSignDao {
   def expireAssetsByMunicipality(municipalities: Set[Int]) : Unit = {
     if (municipalities.nonEmpty) {
       sqlu"""
-        update asset set valid_to = sysdate - 1/86400
+        update asset set valid_to = current_timestamp - 1/86400
         where asset_type_id = ${TrafficSigns.typeId}
         and created_by != 'batch_process_trafficSigns'
         and municipality_code in (#${municipalities.mkString(",")})""".execute
@@ -502,14 +502,14 @@ object OracleTrafficSignDao {
   def expire(linkIds: Set[Long], username: String): Unit = {
     MassQuery.withIds(linkIds) { idTableName =>
       sqlu"""
-         update asset set valid_to = sysdate - 1/86400 where id in (
+         update asset set valid_to = current_timestamp - 1/86400 where id in (
           select a.id
           from asset a
           join asset_link al on al.asset_id = a.id
           join lrm_position lrm on lrm.id = al.position_id
           join  #$idTableName i on i.id = lrm.link_id
           where a.asset_type_id = ${TrafficSigns.typeId}
-          AND (a.valid_to IS NULL OR a.valid_to > SYSDATE )
+          AND (a.valid_to IS NULL OR a.valid_to > current_timestamp )
           AND a.created_by = $username
          )
       """.execute
@@ -517,13 +517,13 @@ object OracleTrafficSignDao {
   }
 
   def expireWithoutTransaction(queryFilter: String => String, username: Option[String]) : Unit = {
-    val modifiedBy = username match {case Some(user) => s", modified_date = sysdate , modified_by = '$user'" case _ => "" }
+    val modifiedBy = username match {case Some(user) => s", modified_date = current_timestamp , modified_by = '$user'" case _ => "" }
     val query = s"""
           update asset
-          set valid_to = sysdate $modifiedBy
+          set valid_to = current_timestamp $modifiedBy
           where asset_type_id = ${TrafficSigns.typeId}
           """
-    StaticQuery.updateNA(queryFilter(query) + " and (valid_to IS NULL OR valid_to > SYSDATE)").execute
+    StaticQuery.updateNA(queryFilter(query) + " and (valid_to IS NULL OR valid_to > current_timestamp)").execute
   }
 
   def expireAssetByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String]) : Unit = {
@@ -531,7 +531,7 @@ object OracleTrafficSignDao {
     val filterByUsername = if(username.isEmpty) "" else s"and created_by = $username"
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sqlu"""
-         update asset set valid_to = sysdate - 1/86400
+         update asset set valid_to = current_timestamp - 1/86400
          where id in (
           select a.id
           from asset a
@@ -542,7 +542,7 @@ object OracleTrafficSignDao {
           join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice' and public_id = 'trafficSigns_type'
           join enumerated_value ev on scv.enumerated_value_id = ev.id
           where a.asset_type_id = #${TrafficSigns.typeId}
-          and (a.valid_to is null or a.valid_to > SYSDATE )
+          and (a.valid_to is null or a.valid_to > current_timestamp )
           and a.floating = 0
           #$trafficSignType
           #$filterByUsername

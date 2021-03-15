@@ -277,7 +277,7 @@ trait MassTransitStopService extends PointAssetOperations {
           join lrm_position lrm on al.position_id = lrm.id
           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'kellumisen_syy'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate)"""
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > current_timestamp)"""
 
     val queryFilter = isOperator match {
       case Some(false) =>

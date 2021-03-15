@@ -28,7 +28,7 @@ class DynamicLinearAssetDao {
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterFloating = if (includeFloating) "" else " and a.floating = 0"
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
@@ -41,7 +41,7 @@ class DynamicLinearAssetDao {
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -79,7 +79,7 @@ class DynamicLinearAssetDao {
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -457,7 +457,7 @@ class DynamicLinearAssetDao {
           pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
           a.created_by, a.created_date, a.modified_by, a.modified_date,
           case
-            when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
+            when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
             pos.modified_date as pos_modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source,
             DENSE_RANK() over (ORDER BY a.id) line_number
           from asset a

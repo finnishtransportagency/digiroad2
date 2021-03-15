@@ -92,7 +92,7 @@ class OraclePedestrianCrossingDao() {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 200, $username, sysdate, ${municipality})
+        values ($id, 200, $username, current_timestamp, ${municipality})
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${mValue}, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value})
@@ -116,10 +116,10 @@ class OraclePedestrianCrossingDao() {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, 200, $createdByFromUpdate, $createdDateTimeFromUpdate, ${municipality}, $username, sysdate)
+        values ($id, 200, $createdByFromUpdate, $createdDateTimeFromUpdate, ${municipality}, $username, current_timestamp)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
-        values ($lrmPositionId, ${mValue}, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value}, sysdate)
+        values ($lrmPositionId, ${mValue}, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -133,7 +133,7 @@ class OraclePedestrianCrossingDao() {
   }
 
   def fetchByFilter(queryFilter: String => String): Seq[PedestrianCrossing] = {
-    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
     queryToPedestrian(queryWithFilter)
   }
 
@@ -164,7 +164,7 @@ class OraclePedestrianCrossingDao() {
         when ev.name_fi is not null then ev.name_fi
           else null
          end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date,
-      case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
+      case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
@@ -175,7 +175,7 @@ class OraclePedestrianCrossingDao() {
   }
 
   def fetchPedestrianCrossingByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val query =
       """
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
@@ -183,7 +183,7 @@ class OraclePedestrianCrossingDao() {
             when ev.name_fi is not null then ev.name_fi
             else null
           end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date,
-          case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
+          case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id

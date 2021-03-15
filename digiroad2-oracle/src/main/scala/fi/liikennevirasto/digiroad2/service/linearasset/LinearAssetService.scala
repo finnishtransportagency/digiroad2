@@ -682,7 +682,7 @@ trait LinearAssetOperations {
   }
 
   /**
-    * Mark VALID_TO field of old asset to sysdate and create a new asset.
+    * Mark VALID_TO field of old asset to current_timestamp and create a new asset.
     * Copy all the data from old asset except the properties that changed, modifiedBy and modifiedAt.
     */
   protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String,

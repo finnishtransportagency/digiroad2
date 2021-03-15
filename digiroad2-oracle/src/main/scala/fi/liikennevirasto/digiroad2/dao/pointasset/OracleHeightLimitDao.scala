@@ -24,7 +24,7 @@ object OracleHeightLimitDao {
         join lrm_position lrm on al.position_id = lrm.id
         left join number_property_value npv on npv.asset_id = a.id
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null) "
     StaticQuery.queryNA[HeightLimit](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
@@ -34,7 +34,7 @@ object OracleHeightLimitDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, $typeId, $username, sysdate, $municipality)
+        values ($id, $typeId, $username, current_timestamp, $municipality)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
         values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value})

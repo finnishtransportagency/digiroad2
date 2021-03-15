@@ -70,7 +70,7 @@ class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId6, $assetTypeId, 'read_only_text', 0, $testUser, 'test_data_text', null)""".execute
       sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by)
-            VALUES ($propId7, $assetId, $propId6, $textValue, sysdate, $testUser)""".execute
+            VALUES ($propId7, $assetId, $propId6, $textValue, current_timestamp, $testUser)""".execute
 
       val persistedAssets = dao.fetchDynamicLinearAssetsByLinkIds(999, Seq(linkId))
 

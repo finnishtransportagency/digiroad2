@@ -91,7 +91,7 @@ object Queries {
 
   def updateAssetModified(assetId: Long, updater: String) =
     sqlu"""
-      update asset set modified_by = $updater, modified_date = SYSDATE where id = $assetId
+      update asset set modified_by = $updater, modified_date = current_timestamp where id = $assetId
     """
 
   def updateAssetGeometry(id: Long, point: Point): Unit = {
@@ -118,7 +118,7 @@ object Queries {
     """
 
   def expireAsset(id: Long, username: String): Unit = {
-    sqlu"""update ASSET set VALID_TO = sysdate, MODIFIED_BY = $username, modified_date = sysdate where id = $id""".execute
+    sqlu"""update ASSET set VALID_TO = current_timestamp, MODIFIED_BY = $username, modified_date = current_timestamp where id = $id""".execute
   }
 
   def propertyIdByPublicIdAndTypeId = "select id from property where public_id = ? and asset_type_id = ?"
@@ -137,7 +137,7 @@ object Queries {
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_date, grouped_id)
       values (primary_key_seq.nextval, $propertyId, $assetId,
-        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE, $groupedId)
+        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), current_timestamp, $groupedId)
     """
 
   def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
@@ -150,7 +150,7 @@ object Queries {
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = Some(0)) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date, grouped_id)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, SYSDATE, $groupedId)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, current_timestamp, $groupedId)
     """
   }
 
@@ -247,14 +247,14 @@ object Queries {
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
     """
   }
 
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Double, groupedId: Option[Long]) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, grouped_id)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE, $groupedId)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp, $groupedId)
     """
   }
 
@@ -382,12 +382,12 @@ object Queries {
   def getDistinctRoadNumbers(filterRoadAddresses : Boolean) : Seq[Int] = {
     if(filterRoadAddresses){
       sql"""
-      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000)) and floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
+      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000)) and floating = '0' AND (end_date < current_timestamp OR end_date IS NULL) order by road_number
       """.as[Int].list
     }
     else{
       sql"""
-       select distinct road_number from road_address where floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
+       select distinct road_number from road_address where floating = '0' AND (end_date < current_timestamp OR end_date IS NULL) order by road_number
       """.as[Int].list
     }
   }
@@ -448,7 +448,7 @@ object Queries {
   }
 
   def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
-    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = current_timestamp, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE INACCURATE_ASSET SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE INCOMPLETE_LINK SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
