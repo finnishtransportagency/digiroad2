@@ -37,7 +37,7 @@ sealed trait RoadLinkDAO{
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
     sqlu"""insert into #$table (id, link_id, #$column, modified_by )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, $value, $username
+                   select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
                    from dual
                    where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
@@ -45,14 +45,14 @@ sealed trait RoadLinkDAO{
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
     sqlu"""insert into #$table (id, link_id, #$column, modified_by )
-                   select primary_key_seq.nextval, $linkId, $value, $username
+                   select nextval('primary_key_seq'), $linkId, $value, $username
                    from dual
                    where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
     sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
-                 select primary_key_seq.nextval, ${linkId}, $value,
+                 select nextval('primary_key_seq'), ${linkId}, $value,
                  to_timestamp_tz($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
                  from dual
                  where not exists (select * from #$table where link_id = $linkId)""".execute
@@ -229,7 +229,7 @@ object RoadLinkDAO{
 
     override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
       sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type)
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
+                   select nextval('primary_key_seq'), ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
                    from dual
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
@@ -293,7 +293,7 @@ object RoadLinkDAO{
     override def insertValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
       val vvhValue = getVVHValue(vvhRoadLink)
       sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
+                   select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
                    from dual
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
@@ -310,7 +310,7 @@ object RoadLinkDAO{
       val vvhValue = getVVHValue(vvhRoadLink)
 
       sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
+                   select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
                    from dual
                    where exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
 
@@ -356,7 +356,7 @@ object RoadLinkDAO{
 
     def insertAttributeValueByChanges(linkId: Long, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
       sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, adjusted_timestamp)
-             select primary_key_seq.nextval, $linkId, $attributeName, $value, $username, $changeTimeStamp
+             select nextval('primary_key_seq'), $linkId, $attributeName, $value, $username, $changeTimeStamp
               from dual""".execute
     }
 
@@ -371,7 +371,7 @@ object RoadLinkDAO{
 
     def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String, mmlId: Option[Long]): Unit = {
       sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, mml_id )
-             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username, $mmlId
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $attributeName, $value, $username, $mmlId
               from dual""".execute
     }
 

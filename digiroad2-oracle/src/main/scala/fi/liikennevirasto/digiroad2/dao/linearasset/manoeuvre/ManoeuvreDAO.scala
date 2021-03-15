@@ -80,7 +80,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
-    val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
+    val manoeuvreId = sql"select nextval('manoeuvre_id_seq') from dual".as[Long].first
     val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
     sqlu"""
              insert into manoeuvre(id, type, created_date, created_by, additional_info, traffic_sign_id, suggested)
@@ -113,7 +113,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
   def createManoeuvreForUpdate(userName: String, oldManoeuvreRow: PersistedManoeuvreRow, additionalInfoOpt: Option[String], modifiedDateOpt: Option[DateTime]): Long = {
-    val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
+    val manoeuvreId = sql"select nextval('manoeuvre_id_seq') from dual".as[Long].first
     val additionalInfo = additionalInfoOpt match {
       case Some(additionalValue) => additionalValue
       case _ => oldManoeuvreRow.additionalInfo
@@ -146,7 +146,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
 
     sqlu"""
              insert into manoeuvre_validity_period(id, manoeuvre_id, type, start_hour, end_hour, start_minute, end_minute)
-             select primary_key_seq.nextval, $manoeuvreId, type, start_hour, end_hour, start_minute, end_minute
+             select nextval('primary_key_seq'), $manoeuvreId, type, start_hour, end_hour, start_minute, end_minute
              from manoeuvre_validity_period where manoeuvre_Id = ${oldManoeuvreRow.id}
           """.execute
 
@@ -166,7 +166,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     validityPeriods.foreach { case ValidityPeriod(startHour, endHour, days, startMinute, endMinute) =>
       sqlu"""
         insert into manoeuvre_validity_period (id, manoeuvre_id, start_hour, end_hour, type, start_minute, end_minute)
-        values (primary_key_seq.nextval, $manoeuvreId, $startHour, $endHour, ${days.value}, $startMinute, $endMinute)
+        values (nextval('primary_key_seq'), $manoeuvreId, $startHour, $endHour, ${days.value}, $startMinute, $endMinute)
       """.execute
     }
   }
