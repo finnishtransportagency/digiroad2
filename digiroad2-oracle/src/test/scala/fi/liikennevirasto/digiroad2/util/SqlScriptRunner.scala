@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
-import scala.io.{Codec, Source}
+import scala.io.{BufferedSource, Codec, Source}
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.{StaticQuery => Q}
 import Database.dynamicSession
@@ -12,13 +12,20 @@ object SqlScriptRunner {
     executeStatements(filenames.flatMap(readScriptStatements("./digiroad2-oracle/sql/", _)))
   }
 
-  def runViiteScripts(filenames: Seq[String]) {
-    executeStatements(filenames.flatMap(readScriptStatements("./digiroad2-viite/sql/", _)))
+  def runScriptInClasspath(filename: String): Unit = {
+    val src: BufferedSource = Source.fromInputStream(getClass.getResourceAsStream(filename))
+    val statements = readScriptStatements(src)
+    executeStatements(statements)
   }
 
   def readScriptStatements(path: String, filename: String): Seq[String] = {
+    val source: BufferedSource = Source.fromFile(path + filename)(Codec.UTF8)
+    readScriptStatements(source)
+  }
+
+  def readScriptStatements(source: BufferedSource): Seq[String] = {
     val commentR = """\/\*.*\*\/""".r
-    val withComments = Source.fromFile(path + filename)(Codec.UTF8).getLines.filterNot(_.trim.startsWith("--")).mkString
+    val withComments = source.getLines.filterNot(_.trim.startsWith("--")).mkString
     commentR.replaceAllIn(withComments, "").split(";")
   }
 

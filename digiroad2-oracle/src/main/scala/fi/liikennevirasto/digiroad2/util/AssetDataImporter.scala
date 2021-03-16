@@ -764,7 +764,7 @@ class AssetDataImporter {
   def insertTextPropertyData(propertyId: Long, assetId: Long, text:String) {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $text, ' ', $Modifier)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $text, ' ', $Modifier)
     """.execute
   }
 
@@ -791,7 +791,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   def insertMultipleChoiceValue(propertyId: Long, assetId: Long, value: Int) {
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_by)
-      values (primary_key_seq.nextval, $propertyId, $assetId,
+      values (nextval('primary_key_seq'), $propertyId, $assetId,
         (select id from enumerated_value where value = $value and property_id = $propertyId), $Modifier)
     """.execute
   }

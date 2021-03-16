@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Flyway init" type="SbtRunConfiguration" factoryName="sbt Task" singleton="true">
+        <setting name="tasks" value="&quot;project digiroad2-oracle&quot; &quot;test:run-main fi.liikennevirasto.digiroad2.util.DataFixture flyway_init&quot;" />
+        <setting name="vmparams" value="-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled" />
+        <setting name="workingDir" value="$PROJECT_DIR$" />
+        <envs />
+        <method />
+    </configuration>
+</component>

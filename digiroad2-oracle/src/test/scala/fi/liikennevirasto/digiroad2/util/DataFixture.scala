@@ -217,59 +217,6 @@ object DataFixture {
       throw new RuntimeException(s"cannot find property $name")
   }
 
-  def flyway: Flyway = {
-    val flyway = new Flyway()
-    flyway.setDataSource(ds)
-    flyway.setInitVersion("-1")
-    flyway.setInitOnMigrate(true)
-    flyway.setLocations("db.migration")
-    flyway
-  }
-
-  def migrateTo(version: String) = {
-    val migrator = flyway
-    migrator.setTarget(version.toString)
-    migrator.migrate()
-  }
-
-  def migrateAll() = {
-    flyway.migrate()
-  }
-
-  def tearDown() {
-    flyway.clean()
-  }
-
-  def setUpTest() {
-    migrateAll()
-    importMunicipalityCodes()
-    updateMunicipalities()
-    SqlScriptRunner.runScripts(List(
-      "insert_test_fixture.sql",
-      "insert_users.sql",
-      "kauniainen_production_speed_limits.sql",
-      "kauniainen_total_weight_limits.sql",
-      "kauniainen_manoeuvres.sql",
-      "kauniainen_functional_classes.sql",
-      "kauniainen_traffic_directions.sql",
-      "kauniainen_link_types.sql",
-      "test_fixture_sequences.sql",
-      "kauniainen_lit_roads.sql",
-      "kauniainen_vehicle_prohibitions.sql",
-      "kauniainen_paved_roads.sql",
-      "kauniainen_pedestrian_crossings.sql",
-      "kauniainen_obstacles.sql",
-      "kauniainen_european_roads.sql",
-      "kauniainen_exit_numbers.sql",
-      "kauniainen_traffic_lights.sql",
-      "kauniainen_railway_crossings.sql",
-      "kauniainen_traffic_signs.sql",
-      "kauniainen_maximum_x7_restrictions.sql",
-      "user_notification_examples.sql",
-      "siilinjarvi_verificationService_test_data.sql"
-    ))
-  }
-
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -2500,10 +2447,73 @@ object DataFixture {
     "ServiceSigns" ->  TrafficSignTypeGroup.ServiceSigns
   )
 
+  def flyway: Flyway = {
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setInitVersion("-1")
+    flyway.setLocations("db.migration")
+    flyway
+  }
+
+  def flywayInit() {
+    flyway.init()
+  }
+
+  def migrateTo(version: String) = {
+    val migrator = flyway
+    migrator.setTarget(version.toString)
+    migrator.migrate()
+  }
+
+  def migrateAll() = {
+    flyway.migrate()
+  }
+
+  def tearDown() {
+    // flyway.clean()
+    // This old version of Flyway tries to drop the postgis extension too, so we clean the database manually instead
+    SqlScriptRunner.runScriptInClasspath("/clear-db.sql")
+    try {
+      SqlScriptRunner.executeStatement("delete from schema_version where version_rank > 1")
+    } catch {
+      case e: Exception => println(s"Failed to reset schema_version table: ${e.getMessage}")
+    }
+  }
+
+  def setUpTest() {
+    migrateAll()
+    importMunicipalityCodes()
+    updateMunicipalities()
+    SqlScriptRunner.runScripts(List(
+      "insert_test_fixture.sql",
+      "insert_users.sql",
+      "kauniainen_production_speed_limits.sql",
+      "kauniainen_total_weight_limits.sql",
+      "kauniainen_manoeuvres.sql",
+      "kauniainen_functional_classes.sql",
+      "kauniainen_traffic_directions.sql",
+      "kauniainen_link_types.sql",
+      "test_fixture_sequences.sql",
+      "kauniainen_lit_roads.sql",
+      "kauniainen_vehicle_prohibitions.sql",
+      "kauniainen_paved_roads.sql",
+      "kauniainen_pedestrian_crossings.sql",
+      "kauniainen_obstacles.sql",
+      "kauniainen_european_roads.sql",
+      "kauniainen_exit_numbers.sql",
+      "kauniainen_traffic_lights.sql",
+      "kauniainen_railway_crossings.sql",
+      "kauniainen_traffic_signs.sql",
+      "kauniainen_maximum_x7_restrictions.sql",
+      "user_notification_examples.sql",
+      "siilinjarvi_verificationService_test_data.sql"
+    ))
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
+    if (!username.startsWith("digiroad2")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*************************************************************************************")
@@ -2526,6 +2536,10 @@ object DataFixture {
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         TrafficSignTestData.createTestData
         ServicePointTestData.createTestData
+      case Some("flyway_init") =>
+        flywayInit()
+      case Some("flyway_migrate") =>
+        migrateAll()
       case Some("import_roadlink_data") =>
         importRoadLinkData()
       case Some("repair") =>

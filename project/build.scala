@@ -72,11 +72,10 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
-        "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
-        "com.oracle" % "sdoapi" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoapi/11.2.0/sdoapi-11.2.0.jar",
-        "com.oracle" % "sdoutl" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoutl/11.2.0/sdoutl-11.2.0.jar",
         "javax.mail" % "javax.mail-api" % "1.6.1",
-        "com.sun.mail" % "javax.mail" % "1.6.1"
+        "com.sun.mail" % "javax.mail" % "1.6.1",
+        "org.postgresql" % "postgresql" % "42.2.5",
+        "net.postgis" % "postgis-jdbc" % "2.3.0"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,

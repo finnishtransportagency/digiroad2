@@ -1,1 +1,0 @@
-ALTER TABLE PROJECT ADD add_info varchar2(1000);
