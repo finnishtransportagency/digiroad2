@@ -14,7 +14,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
   test("create and get new asset on InaccurateAsset table") {
     OracleDatabase.withDynTransaction {
-      val speedLimitTestAsset = sql"""select id from asset where rownum = 1 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].first
+      val speedLimitTestAsset = sql"""select id from asset limit 1 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].first
       inaccurateAssetDao.createInaccurateAsset(speedLimitTestAsset, speedLimitAssetTypeID, municipalityCode, Municipality)
 
       val inaccurateAssetInfo = inaccurateAssetDao.getInaccurateAssetById(speedLimitTestAsset)
@@ -27,7 +27,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
   test("delete and get new asset on InaccurateAsset table") {
     OracleDatabase.withDynTransaction {
-      val speedLimitTestAsset = sql"""select id from asset where rownum = 1 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].first
+      val speedLimitTestAsset = sql"""select id from asset limit 1 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].first
       inaccurateAssetDao.createInaccurateAsset(speedLimitTestAsset, speedLimitAssetTypeID, municipalityCode, Municipality)
 
       val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetById(speedLimitTestAsset)
@@ -43,7 +43,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
   test("get inaccurate assets by Type Id") {
     OracleDatabase.withDynTransaction {
-      val listSpeedLimit = sql"""select id from asset where rownum <= 5 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
+      val listSpeedLimit = sql"""select id from asset LIMIT 5 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
       listSpeedLimit.foreach{speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
       }
@@ -61,7 +61,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
     val authorizedMunicipalitiesList = Set(235, 300)
 
     OracleDatabase.withDynTransaction {
-      val listSpeedLimit = sql"""select id from asset where rownum <= 5 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
+      val listSpeedLimit = sql"""select id from asset where LIMIT 5 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
       listSpeedLimit.foreach{speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
       }
@@ -78,7 +78,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
   test("delete all asset related with some type id on InaccurateAsset table") {
     OracleDatabase.withDynTransaction {
-      val listSpeedLimit = sql"""select id from asset where rownum <= 10 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
+      val listSpeedLimit = sql"""select id from asset limit 10 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
       listSpeedLimit.foreach { speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, State)
       }
@@ -97,7 +97,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
   test("delete all asset on InaccurateAsset table") {
     OracleDatabase.withDynTransaction {
-      val listSpeedLimit = sql"""select id from asset where rownum <= 10 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
+      val listSpeedLimit = sql"""select id from asset limit 10 and asset_type_id = $speedLimitAssetTypeID order by id""".as[Long].list
       listSpeedLimit.foreach { speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
       }
