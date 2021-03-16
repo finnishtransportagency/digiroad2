@@ -87,7 +87,7 @@ sealed trait RoadLinkDAO{
     }
 
     sqlu"""update #$table
-                 set valid_to = current_timestamp - 1,
+                 set valid_to = current_timestamp - INTERVAL'1 DAYS',
                      modified_by = $username
                      #$withTimeStamp
                  where link_id = $linkId
@@ -294,7 +294,7 @@ object RoadLinkDAO{
 
     override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
       sqlu"""update #$table
-                 set valid_to = current_timestamp - 1,
+                 set valid_to = current_timestamp - INTERVAL'1 DAYS',
                      modified_by = $username
                  where link_id = $linkId""".execute
     }
@@ -381,7 +381,7 @@ object RoadLinkDAO{
     def expireAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String): Unit = {
       sqlu"""
             update road_link_attributes
-            set valid_to = current_timestamp - 1,
+            set valid_to = current_timestamp - INTERVAL'1 DAYS',
                 modified_by = $username
             where link_id = ${linkProperty.linkId}
             	and name = $attributeName

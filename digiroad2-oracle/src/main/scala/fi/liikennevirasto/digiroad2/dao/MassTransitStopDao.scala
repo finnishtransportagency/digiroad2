@@ -442,7 +442,7 @@ class MassTransitStopDao {
   def expireMassTransitStop(username: String, id: Long) = {
     sqlu"""
              update asset
-             set valid_to = current_timestamp -1, modified_date = current_timestamp, modified_by = $username
+             set valid_to = current_timestamp -INTERVAL'1 DAYS', modified_date = current_timestamp, modified_by = $username
              where id = $id
           """.execute
   }

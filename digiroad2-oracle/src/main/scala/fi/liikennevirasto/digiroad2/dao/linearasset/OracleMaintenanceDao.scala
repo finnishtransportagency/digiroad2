@@ -112,13 +112,13 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def expireAllMaintenanceAssets(typeId: Int): Unit = {
-    sqlu"update asset set valid_to = current_timestamp - 1/86400 where asset_type_id = $typeId".execute
+    sqlu"update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where asset_type_id = $typeId".execute
   }
 
   def expireMaintenanceAssetsByLinkids(linkIds: Seq[Long], typeId: Int): Unit = {
     linkIds.foreach { linkId =>
       sqlu"""
-          update asset set valid_to = current_timestamp - 1/86400
+          update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
             where id in
             (SELECT a.id
                FROM asset a, asset_link al, lrm_position lp

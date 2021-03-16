@@ -483,7 +483,7 @@ object OracleTrafficSignDao {
   def expireAssetsByMunicipality(municipalities: Set[Int]) : Unit = {
     if (municipalities.nonEmpty) {
       sqlu"""
-        update asset set valid_to = current_timestamp - 1/86400
+        update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
         where asset_type_id = ${TrafficSigns.typeId}
         and created_by != 'batch_process_trafficSigns'
         and municipality_code in (#${municipalities.mkString(",")})""".execute
@@ -493,7 +493,7 @@ object OracleTrafficSignDao {
   def expire(linkIds: Set[Long], username: String): Unit = {
     MassQuery.withIds(linkIds) { idTableName =>
       sqlu"""
-         update asset set valid_to = current_timestamp - 1/86400 where id in (
+         update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where id in (
           select a.id
           from asset a
           join asset_link al on al.asset_id = a.id
@@ -522,7 +522,7 @@ object OracleTrafficSignDao {
     val filterByUsername = if(username.isEmpty) "" else s"and created_by = $username"
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sqlu"""
-         update asset set valid_to = current_timestamp - 1/86400
+         update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
          where id in (
           select a.id
           from asset a

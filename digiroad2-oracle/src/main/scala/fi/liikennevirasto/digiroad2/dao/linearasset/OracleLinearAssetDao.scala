@@ -963,7 +963,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * @param typeId Represets the id of the type given (for example 110 is the typeId used for pavement information)
     */
   def expireAllAssetsByTypeId (typeId: Int): Unit = {
-    sqlu"update asset set valid_to = current_timestamp - 1/86400 where asset_type_id = $typeId".execute
+    sqlu"update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where asset_type_id = $typeId".execute
   }
 
   def getIds (assetType: Int, linkId: Long): Seq[Long] = {
