@@ -36,33 +36,29 @@ sealed trait RoadLinkDAO{
   }
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, $value, $username
-                   from dual
+    sqlu"""insert into #$table (id, link_id, #$column, modified_by ) values(
+           nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username)
                    where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
 
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by )
-                   select primary_key_seq.nextval, $linkId, $value, $username
-                   from dual
+    sqlu"""insert into #$table (id, link_id, #$column, modified_by ) values(
+           nextval('primary_key_seq'), $linkId, $value, $username)
                    where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)
-                 select primary_key_seq.nextval, ${linkId}, $value,
-                 to_timestamp_tz($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
-                 from dual
-                 where not exists (select * from #$table where link_id = $linkId)""".execute
+    sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)values(
+           nextval('primary_key_seq'), ${linkId}, $value,to_timestamp_tz($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
+    )            where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
 
   def updateValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long]): Unit = {
       sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username
                where link_id = ${linkProperty.linkId}""".execute
   }
@@ -70,7 +66,7 @@ sealed trait RoadLinkDAO{
   def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
     sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username
                where link_id = ${linkProperty.linkId}""".execute
   }
@@ -78,7 +74,7 @@ sealed trait RoadLinkDAO{
   def updateValues(linkId: Long, username: Option[String], value: Int): Unit = {
     sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username
                where link_id = $linkId""".execute
   }
@@ -91,11 +87,11 @@ sealed trait RoadLinkDAO{
     }
 
     sqlu"""update #$table
-                 set valid_to = SYSDATE - 1,
+                 set valid_to = current_timestamp - INTERVAL'1 DAYS',
                      modified_by = $username
                      #$withTimeStamp
                  where link_id = $linkId
-                    and (valid_to is null or valid_to > sysdate)
+                    and (valid_to is null or valid_to > current_timestamp)
         """.execute
   }
 
@@ -228,16 +224,15 @@ object RoadLinkDAO{
     }
 
     override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-      sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type)
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
-                   from dual
+      sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type) values (
+             nextval('primary_key_seq'), ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value})
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
     override def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
       sqlu"""update #$table
                set #$column = $value,
-                   modified_date = SYSDATE,
+                   modified_date = current_timestamp,
                    modified_by = $username,
                    link_type = ${linkProperty.linkType.value}
                where link_id = ${linkProperty.linkId}""".execute
@@ -279,7 +274,7 @@ object RoadLinkDAO{
     def column: String = AdministrativeClass
 
     override def getExistingValue(linkId: Long): Option[Int]= {
-      sql"""select #$column from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[Int].firstOption
+      sql"""select #$column from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > current_timestamp) """.as[Int].firstOption
     }
 
     def getValue(linkProperty: LinkProperties): Int ={
@@ -292,15 +287,14 @@ object RoadLinkDAO{
 
     override def insertValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
       val vvhValue = getVVHValue(vvhRoadLink)
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
-                   from dual
-                   where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass ) values(
+             nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue})
+              where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
     override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
       sqlu"""update #$table
-                 set valid_to = SYSDATE - 1,
+                 set valid_to = current_timestamp - INTERVAL'1 DAYS',
                      modified_by = $username
                  where link_id = $linkId""".execute
     }
@@ -309,9 +303,8 @@ object RoadLinkDAO{
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
 
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-                   select primary_key_seq.nextval, ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
-                   from dual
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass ) values (
+             nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue)
                    where exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
 
     }
@@ -351,50 +344,48 @@ object RoadLinkDAO{
         case _ => ""
       }
 
-      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate #$withTimeStamp) """.as[(String, String)].list.toMap
+      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > current_timestamp #$withTimeStamp) """.as[(String, String)].list.toMap
     }
 
     def insertAttributeValueByChanges(linkId: Long, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
-      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, adjusted_timestamp)
-             select primary_key_seq.nextval, $linkId, $attributeName, $value, $username, $changeTimeStamp
-              from dual""".execute
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, adjusted_timestamp)values(
+             nextval('primary_key_seq'), $linkId, $attributeName, $value, $username, $changeTimeStamp)""".execute
     }
 
     def getAllExistingDistinctValues(attributeName: String) : List[String] = {
-      sql"""select distinct value from #$table where name = $attributeName and (valid_to is null or valid_to > sysdate)""".as[String].list
+      sql"""select distinct value from #$table where name = $attributeName and (valid_to is null or valid_to > current_timestamp)""".as[String].list
     }
 
     def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, Long)] = {
       sql"""select value, link_id from #$table where name = $attributeName
-           and (valid_to is null or valid_to > sysdate) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
+           and (valid_to is null or valid_to > current_timestamp) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
     }
 
     def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String, mmlId: Option[Long]): Unit = {
-      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, mml_id )
-             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username, $mmlId
-              from dual""".execute
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, mml_id )values (
+             nextval('primary_key_seq'), ${linkProperty.linkId}, $attributeName, $value, $username, $mmlId)""".execute
     }
 
     def updateAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
       sqlu"""
             update road_link_attributes set
               value = $value,
-              modified_date = sysdate,
+              modified_date = current_timestamp,
               modified_by = $username
             where link_id = ${linkProperty.linkId}
             	and name = $attributeName
-            	and (valid_to is null or valid_to > sysdate)
+            	and (valid_to is null or valid_to > current_timestamp)
           """.execute
     }
 
     def expireAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String): Unit = {
       sqlu"""
             update road_link_attributes
-            set valid_to = sysdate - 1,
+            set valid_to = current_timestamp - INTERVAL'1 DAYS',
                 modified_by = $username
             where link_id = ${linkProperty.linkId}
             	and name = $attributeName
-              and (valid_to is null or valid_to > sysdate)
+              and (valid_to is null or valid_to > current_timestamp)
           """.execute
     }
 

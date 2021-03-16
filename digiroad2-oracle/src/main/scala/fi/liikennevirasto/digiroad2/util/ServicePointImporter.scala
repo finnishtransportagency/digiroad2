@@ -27,7 +27,7 @@ object ServicePointImporter {
     val vvhClient = new VVHClient(vvhServiceHost)
 
     OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
       val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (id, asset_id, type, name, additional_info, parking_place_count, type_extension) values (?,?,?,?,?,?,?)")
 
       println(s"*** Importing ${servicePoints.length} service points in $totalGroupCount groups of $groupSize each")

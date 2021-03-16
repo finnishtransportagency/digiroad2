@@ -24,7 +24,7 @@ object OracleWeightLimitDao {
         join lrm_position pos on al.position_id = pos.id
         left join number_property_value npv on npv.asset_id = a.id
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
     StaticQuery.queryNA[WeightLimit](queryWithFilter).iterator.toSeq
   }
 
@@ -32,17 +32,14 @@ object OracleWeightLimitDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, $typeId, $username, sysdate, $municipality)
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($id, $typeId, $username, current_timestamp, $municipality);
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
-        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value})
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
+        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value});
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
     insertNumberProperty(id, getLimitPropertyId, asset.limit).execute

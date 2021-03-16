@@ -237,7 +237,7 @@ trait  PointAssetOperations{
           join municipality m on a.municipality_code = m.id
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-          where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > sysdate)"""
+          where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > current_timestamp)"""
 
     StaticQuery.queryNA[(Long, String, Long, Option[Long])](addQueryFilter(query)).list
   }
@@ -374,16 +374,16 @@ trait  PointAssetOperations{
   }
 
   def expireWithoutTransaction(id: Long): Int = {
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
   def expireWithoutTransaction(id: Long, username: String): Int = {
     Queries.updateAssetModified(id, username).first
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
   def expireWithoutTransaction(ids: Seq[Long], username: String): Unit = {
-    val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = sysdate, modified_by = ? where id = ?")
+    val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = current_timestamp, modified_by = ? where id = ?")
 
     ids.foreach { id =>
       expireAsset.setString(1, username)
@@ -424,7 +424,7 @@ trait  PointAssetOperations{
   }
 
   protected def withValidAssets(filter: String)(query: String): String = {
-    withFilter(s"$filter and (a.valid_to is null or a.valid_to > sysdate) and a.valid_from < sysdate")(query)
+    withFilter(s"$filter and (a.valid_to is null or a.valid_to > current_timestamp) and a.valid_from < current_timestamp")(query)
   }
 
   protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: PersistedAsset => (T, Option[FloatingReason]))

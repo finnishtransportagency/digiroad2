@@ -116,7 +116,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
             select '1'
             from multiple_choice_value aux_mc
             join enumerated_value aux_e on aux_mc.enumerated_value_id = aux_e.id and aux_e.value = '7'
-            where aux_mc.asset_id = a.id) and (a.valid_to > sysdate or a.valid_to is null)
+            where aux_mc.asset_id = a.id) and (a.valid_to > current_timestamp or a.valid_to is null)
       """
     queryToServicePoint(queryFilter(query))
   }
@@ -147,10 +147,10 @@ class ServicePointBusStopDao extends MassTransitStopDao {
   }
 
   def insertAsset(id: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int): Unit = {
-    sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry)
-           select $id, national_bus_stop_id_seq.nextval, $typeId, $creator, $municipalityCode,
+    sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry) values (
+           $id, nextval('national_bus_stop_id_seq'), $typeId, $creator, $municipalityCode,
            MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0))
-           from dual
+    )
       """.execute
   }
 

@@ -59,7 +59,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
   private def query(): String = {
     """SELECT l.id, l.new_id, l.old_id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure,
     l.created_by, l.created_date, l.modified_by, l.modified_date,
-    CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
+    CASE WHEN l.valid_to <= current_timestamp THEN 1 ELSE 0 END AS expired,
     pos.adjusted_timestamp, pos.modified_date,
     la.name, la.value, l.municipality_code, l.lane_code,
     l.history_created_date, l.history_created_by
@@ -79,7 +79,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
 
     sqlu"""
         INSERT INTO LANE_HISTORY
-          SELECT $laneHistoryId, $newLaneIdToRelate, l.*, sysdate, $username FROM LANE l WHERE id = $oldLaneId
+          SELECT $laneHistoryId, $newLaneIdToRelate, l.*, current_timestamp, $username FROM LANE l WHERE id = $oldLaneId
       """.execute
 
     sqlu"""
@@ -95,7 +95,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
 
     sqlu"""
         INSERT INTO LANE_HISTORY_ATTRIBUTE
-           SELECT primary_key_seq.nextval, $laneHistoryId, NAME, VALUE, REQUIRED, CREATED_DATE, CREATED_BY,
+           SELECT nextval('primary_key_seq'), $laneHistoryId, NAME, VALUE, REQUIRED, CREATED_DATE, CREATED_BY,
                          MODIFIED_DATE, MODIFIED_BY FROM LANE_ATTRIBUTE WHERE LANE_ID = $oldLaneId
       """.execute
 
@@ -105,9 +105,9 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
   def expireHistoryLane(historyLaneId: Long, username: String): Unit = {
     sqlu"""
            UPDATE LANE_HISTORY
-           SET EXPIRED_DATE = sysdate,
+           SET EXPIRED_DATE = current_timestamp,
                EXPIRED_BY = $username,
-               VALID_TO = sysdate
+               VALID_TO = current_timestamp
            WHERE id = $historyLaneId
     """.execute
   }
@@ -152,7 +152,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
   }
 
   def fetchAllHistoryLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedHistoryLane] = {
-    val filterExpired = s" (l.valid_to > sysdate OR l.valid_to IS NULL ) "
+    val filterExpired = s" (l.valid_to > current_timestamp OR l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
 
     val whereClause = (includeExpired, laneCodeFilter.nonEmpty) match {

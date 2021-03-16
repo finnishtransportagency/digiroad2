@@ -759,7 +759,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             left join traffic_direction t on i.id = t.link_id
             left join functional_class f on i.id = f.link_id
             left join link_type l on i.id = l.link_id
-            left join administrative_class a on i.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > sysdate)
+            left join administrative_class a on i.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
       """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],
@@ -980,10 +980,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Updates incomplete road link list (incomplete = functional class or link type missing). Used by RoadLinkService.updateRoadLinkChanges.
     */
+    //TODO rethink this part of code to work with postgist
   protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
     def setIncompleteness(incompleteLink: IncompleteLink) {
       sqlu"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)
-                 select primary_key_seq.nextval, ${incompleteLink.linkId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value} from dual
+                 select nextval('primary_key_seq'), ${incompleteLink.linkId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value} from dual
                  where not exists (select * from incomplete_link where link_id = ${incompleteLink.linkId})""".execute
     }
     incompleteLinks.foreach(setIncompleteness)

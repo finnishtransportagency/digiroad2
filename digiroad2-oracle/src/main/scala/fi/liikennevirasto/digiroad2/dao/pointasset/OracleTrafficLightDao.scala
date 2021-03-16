@@ -70,7 +70,7 @@ object OracleTrafficLightDao {
         left join number_property_value npv on npv.asset_id = a.id and npv.property_id = p.id and p.property_type = 'number'
         left join enumerated_value ev on scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.id
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
     queryToTrafficLight(queryWithFilter)
   }
 
@@ -174,16 +174,14 @@ object OracleTrafficLightDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 280, $username, sysdate, ${municipality})
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($id, 280, $username, current_timestamp, ${municipality});
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value})
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value});
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
 
@@ -196,16 +194,14 @@ object OracleTrafficLightDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, 280, $createdByFromUpdate, $createdDateTimeFromUpdate, ${municipality}, $username, sysdate)
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
+        values ($id, 280, $createdByFromUpdate, $createdDateTimeFromUpdate, ${municipality}, $username, current_timestamp);
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
-        values ($lrmPositionId, ${mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value}, sysdate)
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
+        values ($lrmPositionId, ${mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
 

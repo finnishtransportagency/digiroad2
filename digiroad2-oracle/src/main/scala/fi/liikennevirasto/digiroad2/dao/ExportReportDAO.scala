@@ -50,7 +50,7 @@ class ExportReportDAO {
 
 
   def create(username: String, fileName: String, exportType: String, municipalities: String): Long = {
-    val id = sql"""SELECT primary_key_seq.nextval FROM dual""".as[Long].first
+    val id = sql"""SELECT nextval('primary_key_seq')""".as[Long].first
 
     sqlu"""INSERT INTO export_report(id, file_name, exported_assets, municipalities, created_by)
            VALUES ($id, $fileName, $exportType, $municipalities, $username)

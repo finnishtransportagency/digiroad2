@@ -105,7 +105,7 @@ class MassTransitStopDao {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-    val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
+    val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > current_timestamp))"
     val nearestStops = fetchPointAssets(withFilter(filter)).
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
 
@@ -442,7 +442,7 @@ class MassTransitStopDao {
   def expireMassTransitStop(username: String, id: Long) = {
     sqlu"""
              update asset
-             set valid_to = sysdate -1, modified_date = sysdate, modified_by = $username
+             set valid_to = current_timestamp -INTERVAL'1 DAYS', modified_date = current_timestamp, modified_by = $username
              where id = $id
           """.execute
   }
@@ -626,7 +626,7 @@ class MassTransitStopDao {
   }
 
   def withTerminalId(terminalId: Long)(query: String): String = {
-    query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > sysdate)"
+    query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > current_timestamp)"
   }
 
   def withNationalId(nationalId: Long)(query: String): String = {
@@ -642,7 +642,7 @@ class MassTransitStopDao {
         select count(*)
         from asset a
           left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
-        where a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > sysdate) and tbs.terminal_asset_id = $assetId
+        where a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > current_timestamp) and tbs.terminal_asset_id = $assetId
       """.as[Int].first
   }
   def getPropertiesWithMaxSize(assetTypeId: Long): Map[String, Int] = {
@@ -658,7 +658,7 @@ class MassTransitStopDao {
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id
-          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate) and e.value = 6"""
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > current_timestamp) and e.value = 6"""
 
     val queryFilter = isOperator match {
       case Some(false) =>
@@ -675,7 +675,7 @@ class MassTransitStopDao {
   def insertValluXmlIds(assetId: Long): Unit = {
     sqlu"""
            insert into vallu_xml_ids(id, asset_id)
-           values (primary_key_seq.nextval, $assetId)
+           values (nextval('primary_key_seq'), $assetId)
       """.execute
   }
 

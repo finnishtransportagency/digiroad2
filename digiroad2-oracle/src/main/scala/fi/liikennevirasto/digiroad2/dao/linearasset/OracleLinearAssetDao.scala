@@ -190,7 +190,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       sql"""
         select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -211,7 +211,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -231,12 +231,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
   def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -252,7 +252,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[Long], includeExpired: Boolean = false): Seq[AssetLink] = {
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id
@@ -288,7 +288,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
             join lrm_position pos on al.position_id = pos.id
             join #$idTableName i on i.id = pos.link_id
             group by pos.link_id) asset_lk on asset_lk.link_id = pos.link_id and asset_lk.modified_date = a.modified_date
-        where asset_type_id = $assetTypeId and a.floating = 0 and  a.valid_to is not null and a.valid_to < sysdate"""
+        where asset_type_id = $assetTypeId and a.floating = 0 and  a.valid_to is not null and a.valid_to < current_timestamp"""
         .as[(Long, Long, Option[DateTime], Option[String])].list
       assets.map { case(id, linkId, modifiedDate, modifiedBy) =>
         AssetLastModification(id, linkId, modifiedBy, modifiedDate)
@@ -304,7 +304,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -313,7 +313,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join #$idTableName i on i.id = pos.link_id
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to > sysdate or a.valid_to is null)
+          and (a.valid_to > current_timestamp or a.valid_to is null)
           and a.floating = 0"""
         .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
@@ -359,7 +359,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                pe.type,
                pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired,
                pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
                pvp.end_minute, pv.additional_info, pos.link_source, a.verified_by, a.verified_date, a.information_source, e.value as suggested
           from asset a
@@ -373,7 +373,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
           left join enumerated_value e on mc.enumerated_value_id = e.id
           where a.asset_type_id = $prohibitionAssetTypeId
-          and (a.valid_to > sysdate or a.valid_to is null)
+          and (a.valid_to > current_timestamp or a.valid_to is null)
           #$floatingFilter""".as[ProhibitionsRow].list
     }
 
@@ -394,7 +394,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                pe.type,
                pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired,
                pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
                pvp.end_minute, pv.additional_info, pos.link_source,
                a.verified_by, a.verified_date, a.information_source, e.value as suggested
@@ -409,7 +409,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
           left join enumerated_value e on mc.enumerated_value_id = e.id
           where a.asset_type_id = $prohibitionAssetTypeId
-          and (a.valid_to > sysdate or a.valid_to is null)
+          and (a.valid_to > current_timestamp or a.valid_to is null)
           #$floatingFilter"""
         .as[ProhibitionsRow].list
     }
@@ -434,7 +434,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         from (
           select a.id as asset_id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
                  a.created_by, a.created_date, a.modified_by, a.modified_date,
-                 case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
+                 case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
                  pos.modified_date as pos_modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source,
                  DENSE_RANK() over (ORDER BY a.id) line_number
             from asset a
@@ -467,7 +467,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
     sql"""
-         SELECT case when a.valid_to <= sysdate then 1 else 0 end as expired, CASE WHEN a.valid_to IS NULL THEN 1 ELSE NULL END AS value, a.asset_type_id, t.X, t.Y, t2.X, t2.Y, pos.side_code
+         SELECT case when a.valid_to <= current_timestamp then 1 else 0 end as expired, CASE WHEN a.valid_to IS NULL THEN 1 ELSE NULL END AS value, a.asset_type_id, t.X, t.Y, t2.X, t2.Y, pos.side_code
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -498,7 +498,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         from (
           select a.id as asset_id, pos.link_id, pos.side_code, pv.id as pv_id, pv.type as pv_type, pvp.type as pvp_type, pvp.start_hour, pvp.end_hour,
                  pe.type as pe_type, pos.start_measure, pos.end_measure, a.created_by, a.created_date, a.modified_by, a.modified_date,
-                 case when a.valid_to <= sysdate then 1 else 0 end as expired,
+                 case when a.valid_to <= current_timestamp then 1 else 0 end as expired,
                  pos.adjusted_timestamp, pos.modified_date as pos_modified_date, pvp.start_minute,
                  pvp.end_minute, pv.additional_info, pos.link_source,
                  a.verified_by, a.verified_date, a.information_source, e.value as suggested,
@@ -565,7 +565,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     val creationDate = createdDate match {
       case Some(datetime) => s"""TO_TIMESTAMP_TZ('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
-      case None => "sysdate"
+      case None => "current_timestamp"
     }
 
     val modifiedDate = modifiedAt match {
@@ -580,16 +580,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     val insertAll =
       s"""
-       insert all
-         into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
-         values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate)
+        insert into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
+         values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate);
 
-         into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
-         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, SYSDATE, ${linkSource.value})
+        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
+         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value});
 
-         into asset_link(asset_id, position_id)
-         values ($assetId, $lrmPositionId)
-       select * from dual
+       insert into asset_link(asset_id, position_id)
+         values ($assetId, $lrmPositionId);
       """
     Q.updateNA(insertAll).execute
 
@@ -608,7 +606,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       set
         start_measure = $startMeasure,
         end_measure = $endMeasure,
-        modified_date = SYSDATE
+        modified_date = current_timestamp
       where id = (
         select lrm.id
           from asset a
@@ -629,7 +627,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       set
         start_measure = $startMeasure,
         end_measure = $endMeasure,
-        modified_date = SYSDATE,
+        modified_date = current_timestamp,
         adjusted_timestamp = $vvhTimestamp
       where id = (
         select lrm.id
@@ -642,7 +640,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     sqlu"""
       update ASSET
       set modified_by = $username,
-          modified_date = SYSDATE
+          modified_date = current_timestamp
       where id = $id
     """.execute
   }
@@ -688,7 +686,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def updateExpiration(id: Long, expired: Boolean, username: String) = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = if (expired) {
-      sqlu"update asset set valid_to = sysdate where id = $id".first
+      sqlu"update asset set valid_to = current_timestamp where id = $id".first
     } else {
       sqlu"update asset set valid_to = null where id = $id".first
     }
@@ -705,7 +703,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def updateExpiration(id: Long): Option[Long] = {
 
     val propertiesUpdated =
-      sqlu"update asset set valid_to = sysdate where id = $id".first
+      sqlu"update asset set valid_to = current_timestamp where id = $id".first
 
     if (propertiesUpdated == 1) {
       Some(id)
@@ -722,8 +720,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                         verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq()): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if (expired) "sysdate" else "null"
-    val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
+    val validTo = if (expired) "current_timestamp" else "null"
+    val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "current_timestamp"
 
     val geom: String = if (geometry.nonEmpty) {
       val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
@@ -748,42 +746,37 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     if (fromUpdate) {
       verifiedDateFromUpdate match {
         case Some(value) => sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom)
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
+      insert  into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom);
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+      insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+
+     insert   into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
         case None => sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, #$verifiedDate, $informationSource, #$geom)
+       insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, #$verifiedDate, $informationSource, #$geom);
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
+       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+      insert  into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
       }
     } else {
       sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
-      values ($id, $typeId, $username, sysdate, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom)
+     insert into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
+      values ($id, $typeId, $username, current_timestamp, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom);
 
-      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
+      insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
 
-      into asset_link(asset_id, position_id)
-      values ($id, $lrmPositionId)
-      select * from dual
+      insert into asset_link(asset_id, position_id)
+      values ($id, $lrmPositionId);
         """.execute
     }
 
@@ -795,11 +788,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
 
   def expireConnectedByLinearAsset(id: Long) : Unit =
-    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and linear_asset_id = $id""".execute
+    sqlu"""update connected_asset set valid_to = current_timestamp where valid_to is not null and linear_asset_id = $id""".execute
 
 
   def expireConnectedByPointAsset(id: Long) : Unit = {
-    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and point_asset_id = $id""".execute
+    sqlu"""update connected_asset set valid_to = current_timestamp where valid_to is not null and point_asset_id = $id""".execute
   }
 
   def getLastExecutionDateOfConnectedAsset(typeId: Int): Option[DateTime] = {
@@ -970,7 +963,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * @param typeId Represets the id of the type given (for example 110 is the typeId used for pavement information)
     */
   def expireAllAssetsByTypeId (typeId: Int): Unit = {
-    sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
+    sqlu"update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where asset_type_id = $typeId".execute
   }
 
   def getIds (assetType: Int, linkId: Long): Seq[Long] = {
@@ -989,7 +982,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join asset_link al on al.asset_id = a.id
           join lrm_position lrm on lrm.id = al.position_id
           where a.asset_type_id = $typeId
-          and (a.valid_to IS NULL OR a.valid_to > SYSDATE )
+          and (a.valid_to IS NULL OR a.valid_to > current_timestamp )
           and a.floating = 0
           and a.id = $assetId
       """.as[(Long, Double, Double)].firstOption
@@ -997,7 +990,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def updateVerifiedInfo(ids: Set[Long], verifiedBy: String): Unit = {
-    sqlu"update asset set verified_by = $verifiedBy, verified_date = sysdate where id in (#${ids.mkString(",")})".execute
+    sqlu"update asset set verified_by = $verifiedBy, verified_date = current_timestamp where id in (#${ids.mkString(",")})".execute
   }
 
   def getUnVerifiedLinearAsset(assetTypeId: Int): List[(Long, Long)] = {
@@ -1008,10 +1001,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join ASSET_LINK al on a.id = al.asset_id
           join LRM_POSITION pos on al.position_id = pos.id
           where a.asset_type_id = $assetTypeId
-          and (valid_to is NULL OR valid_to >= SYSDATE)
-          and (a.created_by in ('dr1_conversion', 'dr1conversion') OR MONTHS_BETWEEN(sysdate, a.created_date) > $TwoYears)
+          and (valid_to is NULL OR valid_to >= current_timestamp)
+          and (a.created_by in ('dr1_conversion', 'dr1conversion') OR MONTHS_BETWEEN(current_timestamp, a.created_date) > $TwoYears)
           and (a.modified_date is NULL OR (a.modified_date is NOT NULL and a.modified_by = 'vvh_generated'))
-          and (a.verified_date is NULL OR MONTHS_BETWEEN(sysdate, a.verified_date) > $TwoYears)
+          and (a.verified_date is NULL OR MONTHS_BETWEEN(current_timestamp, a.verified_date) > $TwoYears)
           and a.floating = 0
       """.as[(Long, Long)].list
   }
@@ -1020,8 +1013,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val modifiedBy = username match { case Some(user) => s", modified_by = '$user' " case _ => ""}
     val query = s"""
           update asset aux
-          set valid_to = sysdate, modified_date = sysdate  $modifiedBy
-          Where (aux.valid_to IS NULL OR aux.valid_to > SYSDATE )
+          set valid_to = current_timestamp, modified_date = current_timestamp  $modifiedBy
+          Where (aux.valid_to IS NULL OR aux.valid_to > current_timestamp )
           and exists ( select 1
                        from connected_asset con
                        join asset a on a.id = con.connected_asset_id
@@ -1038,7 +1031,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          from asset a
          join connected_asset ca on a.id = ca.linear_asset_id
          join asset a1 on ca.point_asset_id = a1.id and a1.asset_type_id = ${TrafficSigns.typeId}
-         where  (a.valid_to is null or a.valid_to > sysdate)
+         where  (a.valid_to is null or a.valid_to > current_timestamp)
          and a.created_by = 'automatic_trafficSign_created'
          and a.asset_type_id = $assetTypeId
          and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1)

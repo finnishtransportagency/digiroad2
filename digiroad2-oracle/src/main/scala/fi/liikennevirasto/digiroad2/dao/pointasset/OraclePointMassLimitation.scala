@@ -27,7 +27,7 @@ class OraclePointMassLimitationDao {
         left join number_property_value npv on npv.asset_id = a.id
       """
     val queryWithFilter = queryFilter(query) +
-      s" and (a.valid_to > sysdate or a.valid_to is null) and a.asset_type_id in (${assetTypes.mkString(",")})"
+      s" and (a.valid_to > current_timestamp or a.valid_to is null) and a.asset_type_id in (${assetTypes.mkString(",")})"
     StaticQuery.queryNA[WeightGroupLimitation](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
