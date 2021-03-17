@@ -105,6 +105,8 @@ object Queries {
     """.execute
   }
 
+  def pointGeometry(lon: Double, lat: Double): String ={s"POINT($lon $lat 0 0)"}
+
   def insertAsset(assetId: Long, externalId: Long,
                   assetTypeId: Long, bearing: Int,
                   creator: String, municipalityCode: Int) =

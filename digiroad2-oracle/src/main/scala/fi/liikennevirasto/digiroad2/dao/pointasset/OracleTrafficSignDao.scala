@@ -336,18 +336,7 @@ object OracleTrafficSignDao {
   }
 
   def updateAssetGeometry(id: Long, point: Point): Unit = {
-    val x = point.x
-    val y = point.y
-    sqlu"""
-      UPDATE asset
-        SET geometry = MDSYS.SDO_GEOMETRY(4401,
-                                          3067,
-                                          NULL,
-                                          MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                                          MDSYS.SDO_ORDINATE_ARRAY($x, $y, 0, 0)
-                                         )
-        WHERE id = $id
-    """.execute
+    Queries.updateAssetGeometry(id,point)
   }
 
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
