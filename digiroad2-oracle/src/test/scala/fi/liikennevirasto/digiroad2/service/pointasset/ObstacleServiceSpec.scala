@@ -257,11 +257,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
 
       sqlu"""
-            UPDATE asset SET geometry = MDSYS.SDO_GEOMETRY(4401,
-              3067,
-              NULL,
-              MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-              MDSYS.SDO_ORDINATE_ARRAY(374443.764141219, 6677245.28337185, 0, 0))
+            UPDATE asset
+               SET geometry = ST_GeomFromText('POINT(374443.764141219 6677245.28337185 0 0)',3067)
             WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
           """.execute
 

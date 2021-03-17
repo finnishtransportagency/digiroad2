@@ -147,9 +147,10 @@ class ServicePointBusStopDao extends MassTransitStopDao {
   }
 
   def insertAsset(id: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int): Unit = {
+    val pointGeometry =Queries.pointGeometry(lon,lat)
     sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry) values (
            $id, nextval('national_bus_stop_id_seq'), $typeId, $creator, $municipalityCode,
-           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0))
+           ST_GeomFromText($pointGeometry,3067)
     )
       """.execute
   }
