@@ -105,6 +105,10 @@ object Queries {
     """.execute
   }
 
+  def linearGeometry(startPoint: Point, endPoint: Point,assetLength:Double): String ={
+    s"LINESTRING($startPoint.x $startPoint.y 0.0 0.0,$endPoint.x $endPoint.y 0.0 $assetLength)"
+  }
+
   def insertAsset(assetId: Long, externalId: Long,
                   assetTypeId: Long, bearing: Int,
                   creator: String, municipalityCode: Int) =
