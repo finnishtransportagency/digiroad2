@@ -89,22 +89,11 @@ object OracleDatabase {
     val rightTopX = bounds.rightTop.x
     val rightTopY = bounds.rightTop.y
     s"""
-        mdsys.sdo_filter($geometryColumn,
-                         sdo_cs.viewport_transform(
-                         mdsys.sdo_geometry(
-                         2003,
-                         0,
-                         NULL,
-                         mdsys.sdo_elem_info_array(1,1003,3),
-                         mdsys.sdo_ordinate_array($leftBottomX,
-                                                  $leftBottomY,
-                                                  $rightTopX,
-                                                  $rightTopY)
-                         ),
-                         3067
-                         ),
-                         'querytype=WINDOW'
-                         ) = 'TRUE'
+      $geometryColumn && ST_MakeEnvelope($leftBottomX,
+                                         $leftBottomY,
+                                         $rightTopX,
+                                         $rightTopY,
+                                         3067)
     """
   }
 }
