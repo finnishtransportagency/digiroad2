@@ -156,7 +156,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   def addManoeuvreExceptions(manoeuvreId: Long, exceptions: Seq[Int]) {
     if (exceptions.nonEmpty) {
       val query = s"insert into manoeuvre_exceptions (manoeuvre_id, exception_type)" +
-        exceptions.map { exception => s"values ($manoeuvreId, $exception)"}.mkString +
+        exceptions.map { exception => s"values ($manoeuvreId, $exception)"}.mkString
       Q.updateNA(query).execute
     }
   }
