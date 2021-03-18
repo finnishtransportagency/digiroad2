@@ -113,12 +113,8 @@ class OracleAssetDao {
 
   def updateAssetsWithGeometry(asset: AssetLink, startPoint: Point, endPoint: Point) = {
     val assetLength = asset.endMeasure - asset.startMeasure
-    sqlu"""UPDATE asset
-          SET geometry = MDSYS.SDO_GEOMETRY(4002,
-                                            3067,
-                                            NULL,
-                                            MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-                                            MDSYS.SDO_ORDINATE_ARRAY(${startPoint.x},${startPoint.y},0,0.0,${endPoint.x},${endPoint.y},0,${assetLength}))
+    val line = Queries.linearGeometry(startPoint,endPoint, assetLength)
+    sqlu"""UPDATE asset SET geometry = ST_GeomFromText($line, 3067)
           WHERE id = ${asset.id}
       """.execute
   }
