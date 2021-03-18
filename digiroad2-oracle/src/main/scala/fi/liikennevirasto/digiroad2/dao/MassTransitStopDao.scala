@@ -521,20 +521,22 @@ class MassTransitStopDao {
 
   def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
     val typeId = 10
+    val pointGeometry =Queries.pointGeometry(lon,lat)
     sqlu"""
            insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
            values ($id, $nationalId, $typeId, $bearing, $creator, $municipalityCode,
-           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
+          ST_GeomFromText($pointGeometry,3067),
            $floating)
       """.execute
   }
 
   def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
     val typeId = 10
+    val pointGeometry =Queries.pointGeometry(lon,lat)
     sqlu"""
            insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry, floating)
            values ($id, $nationalId, $typeId, $creator, $municipalityCode,
-           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
+           ST_GeomFromText($pointGeometry,3067),
            $floating)
       """.execute
   }
