@@ -49,7 +49,7 @@ object OracleTrafficLightDao {
         case
           when ev.name_fi is not null then ev.name_fi
           when tpv.value_fi is not null then tpv.value_fi
-          when npv.value is not null then to_char(npv.value)
+          when npv.value is not null then cast(npv.value as text)
           else null
         end as display_value,
         case

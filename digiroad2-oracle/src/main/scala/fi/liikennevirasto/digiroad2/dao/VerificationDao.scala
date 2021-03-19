@@ -229,7 +229,7 @@ class VerificationDao {
       sql"""
            select assetTypeId, modifiedBy, modifiedDate
            from (
-              select a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, max(TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss')) as modifiedDate
+              select a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, max(TO_DATE(TO_CHAR( a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss')) as modifiedDate
               from asset a
               join asset_link al on a.id = al.asset_id
               join lrm_position lrm on lrm.id = al.position_id
@@ -259,7 +259,7 @@ class VerificationDao {
     val modifiedAssets = sql"""
         select assetTypeId, modifiedBy, modifiedDate
         from (
-          select db.asset_type_id as assetTypeId, db.modified_by as modifiedBy, max(to_date(to_char(db.last_modified_date, 'yyyy-mm-dd'), 'yyyy-mm-dd hh24:mi:ss')) as modifiedDate
+          select db.asset_type_id as assetTypeId, db.modified_by as modifiedBy, max(to_date(to_char( db.last_modified_date, 'yyyy-mm-dd'), 'yyyy-mm-dd hh24:mi:ss')) as modifiedDate
           from dashboard_info db
           where db.municipality_id in (#${municipalityCodes.mkString(",")})
           group by db.asset_type_id, db.modified_by, db.municipality_id

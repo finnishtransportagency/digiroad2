@@ -1022,7 +1022,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
   def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int, lastCreationDate: Option[DateTime]): List[(Long, Int)] = {
     val municipalityFilter = if(municipalities.isEmpty) "" else s" and a1.municipality_code in (${municipalities.mkString(",")}) "
-
+    val sinceString = lastCreationDate.get.toString("yyyy-MM-dd")
     sql"""select a.id, a1.municipality_code
          from asset a
          join connected_asset ca on a.id = ca.linear_asset_id
@@ -1030,10 +1030,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          where  (a.valid_to is null or a.valid_to > current_timestamp)
          and a.created_by = 'automatic_trafficSign_created'
          and a.asset_type_id = $assetTypeId
-         and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1)
+         and ca.created_date >  TO_DATE($sinceString, 'YYYY-MM-DD hh24:mi:ss')-INTERVAL'1 MONTH'
          #$municipalityFilter""".as[(Long, Int)].list
   }
-
   def getLinksWithExpiredAssets(linkIds: Seq[Long], assetType: Int): Seq[Long] = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""

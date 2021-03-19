@@ -29,7 +29,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                     select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
                     case
                     when tp.value_fi is not null then tp.value_fi
-                    when e.value is not null then to_char(e.value)
+                    when e.value is not null then cast(e.value as text)
                     else null
                     end as value,
                     a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -170,7 +170,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def getUncheckedMaintenanceRoad(areas: Option[Set[Int]]): List[(Long, String)] = {
     val optionalAreas = areas.map(_.mkString(","))
     val uncheckedQuery = """
-          Select a.id, case when a.area is null then 'Unknown' else TO_CHAR(a.area) end
+          Select a.id, case when a.area is null then 'Unknown' else cast(a.area as text) end
           from asset a
           left join property p on a.asset_type_id = p.asset_type_id and public_id = 'huoltotie_tarkistettu'
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id
