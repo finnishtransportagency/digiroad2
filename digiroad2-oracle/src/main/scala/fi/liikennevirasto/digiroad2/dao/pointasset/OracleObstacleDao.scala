@@ -128,7 +128,7 @@ object OracleObstacleDao {
 
     val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
      s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
-     s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+     s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
     }
@@ -260,7 +260,7 @@ object OracleObstacleDao {
     """
 
     val queryWithFilter = query + s"where a.asset_type_id = 220 and a.floating = $floating and " +
-      s"(a.valid_to > current_timestamp or a.valid_to is null) and a.id > $lastIdUpdate order by a.id asc) where ROWNUM <= $batchSize"
+      s"(a.valid_to > current_timestamp or a.valid_to is null) and a.id > $lastIdUpdate order by a.id asc) derivedAsset limit $batchSize"
     queryToObstacle(queryWithFilter)
   }
 

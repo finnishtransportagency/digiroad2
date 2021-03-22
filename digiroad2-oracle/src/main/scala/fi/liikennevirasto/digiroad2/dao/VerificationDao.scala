@@ -227,7 +227,7 @@ class VerificationDao {
   def getModifiedAssetTypes(linkIds : Set[Long]) : List[LatestModificationInfo] = {
     val modifiedAssetTypes = MassQuery.withIds(linkIds) { idTableName =>
       sql"""
-           select assetTypeId, modifiedBy, modifiedDate
+           select derivedDashboard.assetTypeId, derivedDashboard.modifiedBy, derivedDashboard.modifiedDate
            from (
               select a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, max(TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss')) as modifiedDate
               from asset a
@@ -239,7 +239,7 @@ class VerificationDao {
               and lrm.link_id in (select id from #$idTableName)
               group by a.asset_type_id, a.modified_by
               order by max(a.modified_date) desc, a.asset_type_id, a.modified_by
-              ) limit 4""".as[(Int, Option[String], Option[DateTime])].list
+              ) derivedDashboard limit 4""".as[(Int, Option[String], Option[DateTime])].list
       }
     modifiedAssetTypes.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
       LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)
@@ -257,14 +257,14 @@ class VerificationDao {
 
   def getDashboardInfo(municipalityCodes: Set[Int]): List[LatestModificationInfo] = {
     val modifiedAssets = sql"""
-        select assetTypeId, modifiedBy, modifiedDate
+        select derivedDashboard.assetTypeId, derivedDashboard.modifiedBy, derivedDashboard.modifiedDate
         from (
           select db.asset_type_id as assetTypeId, db.modified_by as modifiedBy, max(to_date(to_char(db.last_modified_date, 'yyyy-mm-dd'), 'yyyy-mm-dd hh24:mi:ss')) as modifiedDate
           from dashboard_info db
           where db.municipality_id in (#${municipalityCodes.mkString(",")})
           group by db.asset_type_id, db.modified_by, db.municipality_id
           order by max(db.last_modified_date) desc, db.asset_type_id, db.modified_by
-        ) where limit 4""".as[(Int, Option[String], Option[DateTime])].list
+        ) derivedDashboard limit 4""".as[(Int, Option[String], Option[DateTime])].list
 
     modifiedAssets.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
       LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)

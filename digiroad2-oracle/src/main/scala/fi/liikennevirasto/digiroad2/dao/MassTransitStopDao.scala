@@ -70,7 +70,7 @@ class MassTransitStopDao {
         s"select id, external_id, asset_type_id, bearing, side_code, valid_from, valid_to, geometry, municipality_code, floating, "+
         s" adjusted_timestamp, p_id, public_id, property_type, required, max_value_length, value, display_value, lrm_id, start_measure, "+
         s" end_measure, link_id, created_date, created_by, modified_date, modified_by, position_wgs84, link_source, terminal_asset_id "+
-        s" from ( ${queryFilter(query.replace("from asset a", counter))} ) WHERE line_number between $startNum and $endNum "
+        s" from ( ${queryFilter(query.replace("from asset a", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum "
 
       case _ => queryFilter(queryFetchPointAssets())
     }

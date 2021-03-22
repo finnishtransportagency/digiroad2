@@ -69,8 +69,8 @@ object LinkIdImporter {
                select *
                from (select a.*, rownum rnum
                       from (select distinct mml_id from #$tableName) a
-                      where rownum <= $max
-                ) where rnum >= $min
+                      limit $max
+                ) derivedMml where rnum >= $min
           """.as[Long].list
         val links = vvhClient.roadLinkData.fetchByMmlIds(mmlIds.toSet)
         links.foreach { link =>

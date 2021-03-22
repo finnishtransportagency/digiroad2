@@ -452,7 +452,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
            )
            and a.floating = 0
            #$withAutoAdjustFilter
-           )#$recordLimit"""
+           ) derivedAsset #$recordLimit"""
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
     assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
@@ -521,7 +521,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
             (a.created_date > $sinceDate and a.created_date <= $untilDate)
           )
           #$withAutoAdjustFilter
-       ) #$recordLimit""".as[ProhibitionsRow].list
+       ) derivedAsset #$recordLimit""".as[ProhibitionsRow].list
 
     groupProhibitionsResult(assets, assetTypeId)
   }
@@ -795,7 +795,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     sql"""select * from (
             select max(greatest( coalesce(con.created_date, con.modified_date , con.valid_to))) as lastExecutionDate
               from connected_asset con
-              join asset a on a.id = con.linear_asset_id and a.asset_type_id = $typeId)
+              join asset a on a.id = con.linear_asset_id and a.asset_type_id = $typeId) derivedConnectedAsset
           where lastExecutionDate is not null
           """.as[DateTime].firstOption
   }

@@ -104,7 +104,7 @@ object OracleTrafficSignDao {
         s"property_type, required, value, display_value, created_by, created_date, modified_by, modified_date, link_source, " +
         s"bearing, side_code, additional_sign_type, additional_sign_value, additional_sign_info, form_position, " +
         s"additional_sign_text, additional_sign_size, additional_sign_coating_type, additional_sign_panel_color, expired" +
-        s" from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+        s" from ( ${queryFilter(query().replace("from", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
     }

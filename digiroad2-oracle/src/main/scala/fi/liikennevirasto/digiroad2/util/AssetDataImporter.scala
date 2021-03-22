@@ -829,7 +829,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                          left join text_property_value tv on tv.property_id = p.id and tv.asset_id = a.id
                          left join number_property_value np on np.property_id = p.id and np.asset_id = a.id
                          where a.asset_type_id = 10
-                 group by  a.id, a.floating)
+                 group by  a.id, a.floating) derivedAsset
                  where liviId is not NULL
       """.as[(Long, Int, String, Int)].list
     }
