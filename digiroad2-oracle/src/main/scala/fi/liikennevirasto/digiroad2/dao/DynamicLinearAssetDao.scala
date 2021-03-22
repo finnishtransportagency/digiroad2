@@ -35,8 +35,8 @@ class DynamicLinearAssetDao {
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
-               when np.value is not null then to_char(np.value)
-               when e.value is not null then to_char(e.value)
+               when np.value is not null then cast(np.value as text)
+               when e.value is not null then cast(e.value as text)
                when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
                else null
          end as value,
@@ -73,8 +73,8 @@ class DynamicLinearAssetDao {
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
-               when np.value is not null then to_char(np.value)
-               when e.value is not null then to_char(e.value)
+               when np.value is not null then cast(np.value as text)
+               when e.value is not null then cast(e.value as text)
                when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
                else null
          end as value,
@@ -449,8 +449,8 @@ class DynamicLinearAssetDao {
           select a.id as asset_id, pos.link_id, pos.side_code,
           case
             when tp.value_fi is not null then tp.value_fi
-            when np.value is not null then to_char(np.value)
-            when e.value is not null then to_char(e.value)
+            when np.value is not null then cast(np.value as text)
+            when e.value is not null then cast(e.value as text)
             when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
             else null
           end as value,

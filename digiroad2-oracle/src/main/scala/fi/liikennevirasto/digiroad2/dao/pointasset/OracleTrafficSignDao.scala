@@ -57,7 +57,7 @@ object OracleTrafficSignDao {
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi
                 when dpv.date_time is not null then to_char(dpv.date_time, 'DD.MM.YYYY')
-                when npv.value is not null then to_char(npv.value)
+                when npv.value is not null then cast(npv.value as text)
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
                 lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
