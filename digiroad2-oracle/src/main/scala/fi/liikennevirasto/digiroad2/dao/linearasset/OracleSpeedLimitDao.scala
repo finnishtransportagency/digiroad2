@@ -334,7 +334,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
               (a.created_date > $sinceDate and a.created_date <= $untilDate)
             )
             #$withAutoAdjustFilter
-        ) #$recordLimit
+        ) derivedAsset #$recordLimit
     """.as[SpeedLimitRow].list
 
     groupSpeedLimitsResult(speedLimitRows)

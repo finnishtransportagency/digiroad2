@@ -480,7 +480,7 @@ class DynamicLinearAssetDao {
           )
           and a.floating = 0
           #$withAutoAdjustFilter
-        ) #$recordLimit"""
+        ) derivedAsset #$recordLimit"""
       .as[(Long, Long, Int, Option[String], Double, Double, String, String, Boolean, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
       val groupedAssets = assets.groupBy(_._1)

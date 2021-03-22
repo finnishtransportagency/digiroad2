@@ -239,7 +239,7 @@ class VerificationDao {
               and lrm.link_id in (select id from #$idTableName)
               group by a.asset_type_id, a.modified_by
               order by max(a.modified_date) desc, a.asset_type_id, a.modified_by
-              ) limit 4""".as[(Int, Option[String], Option[DateTime])].list
+              ) derivedDashboard limit 4""".as[(Int, Option[String], Option[DateTime])].list
       }
     modifiedAssetTypes.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
       LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)
@@ -264,7 +264,7 @@ class VerificationDao {
           where db.municipality_id in (#${municipalityCodes.mkString(",")})
           group by db.asset_type_id, db.modified_by, db.municipality_id
           order by max(db.last_modified_date) desc, db.asset_type_id, db.modified_by
-        ) where limit 4""".as[(Int, Option[String], Option[DateTime])].list
+        ) derivedDashboard limit 4""".as[(Int, Option[String], Option[DateTime])].list
 
     modifiedAssets.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
       LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)
