@@ -27,9 +27,9 @@ object RoadLinkDataImporter {
 
   private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int, Int)]) {
     val statement = dynamicSession.prepareStatement("""
-        insert into functional_class(id, link_id, functional_class, modified_date, modified_by) values(
-        nextval('primary_key_seq'), ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
-        ) where not exists (select * from functional_class where link_id = ?)
+        insert into functional_class(id, link_id, functional_class, modified_date, modified_by)
+         select nextval('primary_key_seq'), ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
+         where not exists (select * from functional_class where link_id = ?)
       """)
     functionalClasses
       .foreach { x =>
@@ -44,8 +44,8 @@ object RoadLinkDataImporter {
 
   private def insertLinkTypes(data: List[(Long, Int, Int, Int)]) = {
     val statement = dynamicSession.prepareStatement("""
-        insert into link_type(link_id, link_type, modified_date, modified_by) values(
-        ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion')
+        insert into link_type(link_id, link_type, modified_date, modified_by)
+        select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion')
         where not exists (select * from link_type where link_id = ?)
       """)
     data
@@ -62,9 +62,7 @@ object RoadLinkDataImporter {
   private def insertTrafficDirections(data: List[(Long, Int, Int, Int)]) = {
     val statement = dynamicSession.prepareStatement("""
         insert into traffic_direction(link_id, traffic_direction, modified_date, modified_by)
-        values (
-        ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
-        )
+        select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         where not exists (select * from traffic_direction where link_id = ?)
       """)
     data

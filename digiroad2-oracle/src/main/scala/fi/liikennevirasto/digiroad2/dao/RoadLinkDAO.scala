@@ -36,22 +36,22 @@ sealed trait RoadLinkDAO{
   }
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by ) values(
-           nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username)
-                   where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
+    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+            select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username)
+            where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
 
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by ) values(
-           nextval('primary_key_seq'), $linkId, $value, $username)
-                   where not exists (select * from #$table where link_id = $linkId)""".execute
+    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+            select nextval('primary_key_seq'), $linkId, $value, $username)
+            where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)values(
-           nextval('primary_key_seq'), ${linkId}, $value,to_timestamp_tz($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
-    )            where not exists (select * from #$table where link_id = $linkId)""".execute
+    sqlu""" insert into #$table (id, link_id, #$column, modified_date, modified_by)
+            select nextval('primary_key_seq'), ${linkId}, $value,to_timestamp_tz($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
+    )       where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
 
