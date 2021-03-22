@@ -227,7 +227,7 @@ class VerificationDao {
   def getModifiedAssetTypes(linkIds : Set[Long]) : List[LatestModificationInfo] = {
     val modifiedAssetTypes = MassQuery.withIds(linkIds) { idTableName =>
       sql"""
-           select derivedDashboard.assetTypeId, derivedDashboard.modifiedBy, derivedDashboard.modifiedDate
+           select assetTypeId, modifiedBy, modifiedDate
            from (
               select a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, max(TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss')) as modifiedDate
               from asset a
@@ -257,7 +257,7 @@ class VerificationDao {
 
   def getDashboardInfo(municipalityCodes: Set[Int]): List[LatestModificationInfo] = {
     val modifiedAssets = sql"""
-        select derivedDashboard.assetTypeId, derivedDashboard.modifiedBy, derivedDashboard.modifiedDate
+        select assetTypeId, modifiedBy, modifiedDate
         from (
           select db.asset_type_id as assetTypeId, db.modified_by as modifiedBy, max(to_date(to_char(db.last_modified_date, 'yyyy-mm-dd'), 'yyyy-mm-dd hh24:mi:ss')) as modifiedDate
           from dashboard_info db
