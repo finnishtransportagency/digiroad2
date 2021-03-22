@@ -984,7 +984,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
     def setIncompleteness(incompleteLink: IncompleteLink) {
       sqlu"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)
-                 select nextval('primary_key_seq'), ${incompleteLink.linkId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value} from dual
+             select nextval('primary_key_seq'), ${incompleteLink.linkId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value}
                  where not exists (select * from incomplete_link where link_id = ${incompleteLink.linkId})""".execute
     }
     incompleteLinks.foreach(setIncompleteness)
