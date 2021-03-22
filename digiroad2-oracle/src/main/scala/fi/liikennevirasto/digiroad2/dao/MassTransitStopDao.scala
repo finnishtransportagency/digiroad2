@@ -39,7 +39,7 @@ class MassTransitStopDao {
         case
           when e.name_fi is not null then e.name_fi
           when tp.value_fi is not null then tp.value_fi
-          when np.value is not null then  cast(np.value as text)
+          when np.value is not null then cast(np.value as text)
           else null
         end as display_value,
         lrm.id as lrm_id, lrm.start_measure, lrm.end_measure, lrm.link_id,

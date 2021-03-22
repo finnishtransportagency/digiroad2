@@ -1030,7 +1030,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          where  (a.valid_to is null or a.valid_to > current_timestamp)
          and a.created_by = 'automatic_trafficSign_created'
          and a.asset_type_id = $assetTypeId
-         and ca.created_date >  TO_DATE($sinceString, 'YYYY-MM-DD hh24:mi:ss')-INTERVAL'1 MONTH'
+         and ca.created_date > TO_DATE($sinceString, 'YYYY-MM-DD hh24:mi:ss')-INTERVAL'1 MONTH'
          #$municipalityFilter""".as[(Long, Int)].list
   }
   def getLinksWithExpiredAssets(linkIds: Seq[Long], assetType: Int): Seq[Long] = {
