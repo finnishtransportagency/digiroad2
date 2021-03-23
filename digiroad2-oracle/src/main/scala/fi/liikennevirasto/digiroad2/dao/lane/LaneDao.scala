@@ -118,7 +118,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
                 JOIN lane_attribute la ON la.lane_id = l.id
                 WHERE ((l.modified_date > $querySinceDate and l.modified_date <= $queryUntilDate) or
                 (l.created_date > $querySinceDate and l.created_date <= $queryUntilDate))
-                $withAutoAdjustFilter)"""
+                $withAutoAdjustFilter) derivedLane"""
 
     val lanesRow = StaticQuery.queryNA[LaneRow](query)(getLaneAsset).iterator.toSeq
     convertLaneRowToPersistedLane(lanesRow)
