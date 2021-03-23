@@ -16,7 +16,7 @@ class VerificationDao {
     val verifiedAssetTypes =
       sql"""
           SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS typeId, atype.name AS assetName,
-          (CASE WHEN MONTHS_BETWEEN(current_timestamp, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END) AS verified, atype.geometry_type, mv.last_user_modification,
+          (CASE WHEN (extract(month from age(current_timestamp, mv.verified_date)) < $TwoYears) THEN 1 ELSE 0 END) AS verified, atype.geometry_type, mv.last_user_modification,
            mv.last_date_modification, mv.number_of_assets, mv.refresh_date, REGEXP_COUNT(mv.suggested_assets , ',') + 1 as countSuggested
            FROM municipality m
            JOIN asset_type atype ON atype.verifiable = 1
@@ -138,7 +138,7 @@ class VerificationDao {
       sql"""
           SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
                 (CASE
-                    WHEN MONTHS_BETWEEN(current_timestamp, mv.verified_date) < $TwoYears
+                    WHEN (extract(month from age(current_timestamp, mv.verified_date)) < $TwoYears)
                       THEN 1
                       ELSE 0
                 END) AS verified, atype.GEOMETRY_TYPE, mv.number_of_assets AS counting
