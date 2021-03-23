@@ -1001,7 +1001,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           and (a.created_by in ('dr1_conversion', 'dr1conversion') OR (extract(month from age(current_timestamp, a.created_date)) > $TwoYears))
           and (a.modified_date is NULL OR (a.modified_date is NOT NULL and a.modified_by = 'vvh_generated'))
           and (a.verified_date is NULL OR (extract(month from age(current_timestamp, a.verified_date)) > $TwoYears))
-          and a.floating = '0';
+          and a.floating = '0'
       """.as[(Long, Long)].list
   }
 
