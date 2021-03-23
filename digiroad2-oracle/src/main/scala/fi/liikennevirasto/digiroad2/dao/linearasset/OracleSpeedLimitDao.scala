@@ -359,8 +359,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def persistUnknownSpeedLimits(limits: Seq[UnknownSpeedLimit]): Unit = {
     val statement = dynamicSession.prepareStatement(
       """
-        insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ( ?, ?, ?)
-        where not exists (select * from unknown_speed_limit where link_id = ?)
+        insert into unknown_speed_limit (link_id, municipality_code, administrative_class)
+        select ?, ?, ? where not exists (select * from unknown_speed_limit where link_id = ?)
       """)
     try {
       limits.foreach { limit =>
