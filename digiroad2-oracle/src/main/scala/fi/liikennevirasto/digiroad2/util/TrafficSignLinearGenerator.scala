@@ -7,11 +7,11 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirec
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{Value, _}
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -29,9 +29,9 @@ trait TrafficSignLinearGenerator {
 
   def vvhClient: VVHClient
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   val assetType: Int
   case object TrafficSignSerializer extends CustomSerializer[Property](format =>
@@ -99,7 +99,7 @@ trait TrafficSignLinearGenerator {
     new TrafficSignService(roadLinkService, eventbus)
   }
 
-  lazy val oracleLinearAssetDao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+  lazy val postGisLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   lazy val dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
   def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Value]
@@ -238,13 +238,13 @@ trait TrafficSignLinearGenerator {
     if (debbuger) println("segmentsConverter")
     val connectedTrafficSignIds =
       if (existingAssets.nonEmpty)
-        oracleLinearAssetDao.getConnectedAssetFromLinearAsset(existingAssets.map(_.id))
+        postGisLinearAssetDao.getConnectedAssetFromLinearAsset(existingAssets.map(_.id))
       else
         Seq()
 
     val signIdsGroupedByAssetId = connectedTrafficSignIds.groupBy(_._1)
     val trafficSigns = if (connectedTrafficSignIds.nonEmpty)
-      oracleLinearAssetDao.getTrafficSignsToProcessById(connectedTrafficSignIds.map(_._2))
+      postGisLinearAssetDao.getTrafficSignsToProcessById(connectedTrafficSignIds.map(_._2))
     else Seq()
 
     val existingWithoutSignsRelation = existingAssets.filter(_.value.isDefined).flatMap { asset =>
@@ -367,7 +367,7 @@ trait TrafficSignLinearGenerator {
 
     toDelete.foreach { asset =>
       linearAssetService.expireAsset(assetType, asset.id, username, true, false)
-      oracleLinearAssetDao.expireConnectedByLinearAsset(asset.id)
+      postGisLinearAssetDao.expireConnectedByLinearAsset(asset.id)
     }
 
     if(createdValue.nonEmpty)
@@ -408,7 +408,7 @@ trait TrafficSignLinearGenerator {
   protected def createAssetRelation(linearAssetId: Long, trafficSignId: Long): Unit = {
     if (debbuger) println("createAssetRelation")
     try {
-      oracleLinearAssetDao.insertConnectedAsset(linearAssetId, trafficSignId)
+      postGisLinearAssetDao.insertConnectedAsset(linearAssetId, trafficSignId)
     } catch {
       case ex: SQLIntegrityConstraintViolationException => print("") //the key already exist with a valid date
       case e: Exception => print("SQL Exception ")
@@ -420,12 +420,12 @@ trait TrafficSignLinearGenerator {
     if (debbuger) println(s"deleteLinearAssets ${existingSeg.size}")
     existingSeg.foreach { asset =>
       linearAssetService.expireAsset(assetType, asset.oldAssetId.get, userUpdate, true, false)
-      oracleLinearAssetDao.expireConnectedByLinearAsset(asset.oldAssetId.get)
+      postGisLinearAssetDao.expireConnectedByLinearAsset(asset.oldAssetId.get)
     }
   }
 
   def updateRelation(newSeg: TrafficSignToLinear, oldSeg: TrafficSignToLinear): Unit = {
-    oldSeg.signId.diff(newSeg.signId).foreach(sign => oracleLinearAssetDao.expireConnectedByPointAsset(sign))
+    oldSeg.signId.diff(newSeg.signId).foreach(sign => postGisLinearAssetDao.expireConnectedByPointAsset(sign))
     newSeg.signId.diff(oldSeg.signId).foreach(sign => createAssetRelation(oldSeg.oldAssetId.get, sign))
   }
 
@@ -605,7 +605,7 @@ trait TrafficSignLinearGenerator {
           applyChangesBySegments(allSegments, existingSegments)
 
           if (trafficSigns.nonEmpty)
-            oracleLinearAssetDao.deleteTrafficSignsToProcess(trafficSigns.map(_.id), assetType)
+            postGisLinearAssetDao.deleteTrafficSignsToProcess(trafficSigns.map(_.id), assetType)
 
           roadLinksWithSameName
         } else
@@ -624,7 +624,7 @@ trait TrafficSignLinearGenerator {
     println(DateTime.now() + "\n")
 
     val roadLinks = withDynTransaction {
-      val trafficSignsToProcess = oracleLinearAssetDao.getTrafficSignsToProcess(assetType)
+      val trafficSignsToProcess = postGisLinearAssetDao.getTrafficSignsToProcess(assetType)
 
       val trafficSigns = if(trafficSignsToProcess.nonEmpty) trafficSignService.fetchPointAssetsWithExpired(withFilter(s"Where a.id in (${trafficSignsToProcess.mkString(",")}) ")) else Seq()
       val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(trafficSigns.map(_.linkId).toSet, false).filter(_.administrativeClass != State)
@@ -640,7 +640,7 @@ trait TrafficSignLinearGenerator {
       //Remove the table sign added on State Road
       val trafficSignsToDelete = trafficSigns.diff(trafficSignsToTransform) ++ trafficSigns.filter(_.expired)
       if (trafficSignsToDelete.nonEmpty)
-        oracleLinearAssetDao.deleteTrafficSignsToProcess(trafficSignsToDelete.map(_.id), assetType)
+        postGisLinearAssetDao.deleteTrafficSignsToProcess(trafficSignsToDelete.map(_.id), assetType)
 
       roadLinks
     }
@@ -658,7 +658,7 @@ trait TrafficSignLinearGenerator {
     println("")
 
     val roadLinks = withDynTransaction {
-      val trafficSignsToProcess = oracleLinearAssetDao.getTrafficSignsToProcess(assetType)
+      val trafficSignsToProcess = postGisLinearAssetDao.getTrafficSignsToProcess(assetType)
 
       val trafficSigns = if(trafficSignsToProcess.nonEmpty) trafficSignService.fetchByFilterWithExpiredByIds(trafficSignsToProcess.toSet) else Seq()
       val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(trafficSigns.map(_.linkId).toSet, false).filter(_.administrativeClass != State)
@@ -674,7 +674,7 @@ trait TrafficSignLinearGenerator {
       //Remove the table sign added on State Road
       val trafficSignsToDelete = trafficSigns.diff(trafficSignsToTransform) ++ trafficSigns.filter(_.expired)
       if (trafficSignsToDelete.nonEmpty)
-        oracleLinearAssetDao.deleteTrafficSignsToProcess(trafficSignsToDelete.map(_.id), assetType)
+        postGisLinearAssetDao.deleteTrafficSignsToProcess(trafficSignsToDelete.map(_.id), assetType)
 
       roadLinks
     }
@@ -727,12 +727,12 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
     if (debbuger) println("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
-        val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
-        oracleLinearAssetDao.fetchProhibitionsByIds(assetType, assetIds.toSet)
+        val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+        postGisLinearAssetDao.fetchProhibitionsByIds(assetType, assetIds.toSet)
       }
     } else {
-      val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
-      oracleLinearAssetDao.fetchProhibitionsByIds(assetType, assetIds.toSet)
+      val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+      postGisLinearAssetDao.fetchProhibitionsByIds(assetType, assetIds.toSet)
     }
   }
 
@@ -767,7 +767,7 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
 
     groupedAssetsToUpdate.values.foreach { value =>
       prohibitionService.updateWithoutTransaction(value.map(_._1), Prohibitions(value.flatMap(_._2)), username)
-      oracleLinearAssetDao.expireConnectedByPointAsset(trafficSign.id)
+      postGisLinearAssetDao.expireConnectedByPointAsset(trafficSign.id)
     }
   }
 
@@ -865,11 +865,11 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
     if (debbuger) println("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
-        val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+        val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
         dynamicLinearAssetService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
       }
     } else {
-      val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+      val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
       dynamicLinearAssetService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
     }
   }
@@ -1015,7 +1015,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
 
     groupedAssetsToUpdate.values.foreach { value =>
       parkingProhibitionService.updateWithoutTransaction(value.map(_._1), DynamicValue(DynamicAssetValue(value.flatMap(_._2))), username)
-      oracleLinearAssetDao.expireConnectedByPointAsset(trafficSign.id)
+      postGisLinearAssetDao.expireConnectedByPointAsset(trafficSign.id)
     }
   }
 
@@ -1035,11 +1035,11 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
     if (debbuger) println("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
-        val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+        val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(assetIds.toSet)
       }
     } else {
-      val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+      val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
       dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(assetIds.toSet)
     }
   }
@@ -1121,11 +1121,11 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     if (debbuger) println("fetchTrafficSignRelatedAssets")
     if (withTransaction) {
       withDynTransaction {
-        val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+        val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
         roadWorkService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
       }
     } else {
-      val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+      val assetIds = postGisLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
       roadWorkService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
     }
   }
@@ -1186,7 +1186,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
 
     toDelete.foreach { asset =>
       linearAssetService.expireAsset(assetType, asset.id, username, true, false)
-      oracleLinearAssetDao.expireConnectedByLinearAsset(asset.id)
+      postGisLinearAssetDao.expireConnectedByLinearAsset(asset.id)
     }
 
     assetToUpdate(toUpdate, trafficSign, createdValue.get, userUpdate)
@@ -1202,7 +1202,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
 
     groupedAssetsToUpdate.values.foreach { value =>
       roadWorkService.updateWithoutTransaction(value.map(_._1), DynamicValue(DynamicAssetValue(value.flatMap(_._2))), username)
-      oracleLinearAssetDao.expireConnectedByPointAsset(trafficSign.id)
+      postGisLinearAssetDao.expireConnectedByPointAsset(trafficSign.id)
     }
   }
 

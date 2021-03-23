@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, _}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
@@ -39,14 +39,14 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mVLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-  val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
+  val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
 
   val multiTypePropSeq = DynamicAssetValue(
@@ -93,12 +93,12 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
+    override def dao: PostGISLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
+    override def assetDao: PostGISAssetDao = mockAssetDao
     def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
@@ -112,12 +112,12 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
   object ServiceWithDao extends DynamicLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
+    override def assetDao: PostGISAssetDao = mockAssetDao
     override def dynamicLinearAssetDao: DynamicLinearAssetDao = mVLinearAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")

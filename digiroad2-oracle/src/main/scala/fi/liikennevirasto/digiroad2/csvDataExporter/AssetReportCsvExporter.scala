@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.csvDataExporter
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, DateParser, Lanes, Manoeuvres, Municipality, ServicePoints, TrafficSigns}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Status}
@@ -24,8 +24,8 @@ case object LinearAssets extends SpecialAssetsTypeValues {val id = 3}
 
 
 class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, userProviderImpl: UserProvider) extends CsvDataExporter(eventBusImpl: DigiroadEventBus){
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   val assetReporterDAO = new AssetReporterDAO()
   val municipalityDao = new MunicipalityDao()
   val userProvider: UserProvider = userProviderImpl

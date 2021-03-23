@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
@@ -20,18 +20,18 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 object sTestTransactions {
-  def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
+  def runWithRollback(ds: DataSource = PostGISDatabase.ds)(f: => Unit): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
   }
-  def withDynTransaction[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+  def withDynTransaction[T](ds: DataSource = PostGISDatabase.ds)(f: => T): T = {
     Database.forDataSource(ds).withDynTransaction {
       f
     }
   }
-  def withDynSession[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+  def withDynSession[T](ds: DataSource = PostGISDatabase.ds)(f: => T): T = {
     Database.forDataSource(ds).withDynSession {
       f
     }
@@ -49,7 +49,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
 

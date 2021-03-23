@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Modification, PropertyValue}
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.dao.Queries.PropertyRow
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopRow
 import org.scalatest.{FunSuite, MustMatchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -14,7 +14,7 @@ import slick.jdbc.{StaticQuery => Q}
 class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
   val massTransitStopDao = new MassTransitStopDao
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   test("bearing description is correct") {
     massTransitStopDao.getBearingDescription(2, Some(316)) must equal("Pohjoinen")
@@ -66,7 +66,7 @@ class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
   }
 
   test("Delete all MassTransitStop data by Id") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val idToDelete = sql"""select ID from asset where asset_type_id = 10 and valid_to > = current_timestamp and rownum = 1""".as[Long].first
       massTransitStopDao.deleteAllMassTransitStopData(idToDelete)
 

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.ConversionDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -15,7 +15,7 @@ object RoadLinkDataImporter {
         .list
     }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       println("insert functional classes")
       insertFunctionalClasses(existingRoadLinkData)
       println("insert link types")

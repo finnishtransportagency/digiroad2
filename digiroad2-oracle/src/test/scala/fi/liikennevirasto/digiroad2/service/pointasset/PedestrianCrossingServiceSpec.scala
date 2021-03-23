@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -38,7 +38,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   val service = new PedestrianCrossingService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
-    override lazy val dao: OraclePedestrianCrossingDao = new OraclePedestrianCrossingDao()
+    override lazy val dao: PostGISPedestrianCrossingDao = new PostGISPedestrianCrossingDao()
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)

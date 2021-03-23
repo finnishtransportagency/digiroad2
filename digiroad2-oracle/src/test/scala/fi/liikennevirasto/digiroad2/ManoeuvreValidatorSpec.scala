@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -35,7 +35,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   val manoeuvreValidator = new TestManoeuvreValidator
 
   test("restriction sign without a match asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -58,7 +58,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("left turn sign restriction with a match asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 0.0), Point(10, 5.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 10.0), Point(10.0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -84,7 +84,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("turn right sign restriction with a match asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, .0), Point(10, 5.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 10.0), Point(10.0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -110,7 +110,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("turn U sign restriction with a match asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, .0), Point(10, 5.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 10.0), Point(10.0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -139,7 +139,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("turn U sign restriction with a left manoeuvre asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, .0), Point(10, 5.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 10.0), Point(10.0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -168,7 +168,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("turn right sign restriction with a match asset only after a roadLink intersection") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 0.0), Point(10, 5.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 10.0), Point(10.0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -198,7 +198,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("turn right sign restriction with a match asset after 50 meter") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0, 10), Point(10, 10)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10, 10), Point(55, 10)), 45.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(55, 10), Point(70, 10)), 15.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))

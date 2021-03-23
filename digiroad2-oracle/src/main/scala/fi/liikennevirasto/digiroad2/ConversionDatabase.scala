@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 import slick.jdbc.{PositionedResult, GetResult}
 
@@ -26,7 +26,7 @@ object ConversionDatabase {
   }
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
+    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/conversion.bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
 }

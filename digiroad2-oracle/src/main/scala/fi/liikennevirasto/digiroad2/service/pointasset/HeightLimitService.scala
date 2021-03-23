@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, TrHeightLimit}
-import fi.liikennevirasto.digiroad2.dao.pointasset.OracleHeightLimitDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISHeightLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
@@ -37,7 +37,7 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
   }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[HeightLimit] = {
-    OracleHeightLimitDao.fetchByFilter(queryFilter)
+    PostGISHeightLimitDao.fetchByFilter(queryFilter)
   }
 
   override def create(asset: IncomingHeightLimit, username: String, roadLink: RoadLink, newTransaction: Boolean) = throw new UnsupportedOperationException("Not Supported Method")

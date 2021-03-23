@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
@@ -57,7 +57,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l, true)).thenReturn(Some(roadLinkForSeparation))
   val vvhRoadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
-  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleSpeedLimitDao = {
+  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): PostGISSpeedLimitDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -72,7 +72,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
+    new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
   }
 
 
@@ -81,7 +81,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
   }
 
-  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: OracleSpeedLimitDao) = {
+  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, dao: PostGISSpeedLimitDao) = {
     val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.vvhClient).toList)
     val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(speedLimitId).find { link => link._1 == linkId }.get._3)
     expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
@@ -300,7 +300,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
@@ -358,7 +358,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, lrm2) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 25.000, ${SideCode.TowardsDigitizing.value})""".execute
@@ -441,7 +441,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, lrm2) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 15.000, ${SideCode.BothDirections.value})""".execute
@@ -524,7 +524,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000),
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
@@ -587,7 +587,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 3, Some(0), Some(10), Some(5), Some(15), 144000000),
       ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 4, null, null, Some(0), Some(5), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
@@ -640,7 +640,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 7, Some(0), Some(20), Some(0), Some(15), 144000000),
       ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 8, Some(15), Some(20), null, null, 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
@@ -693,7 +693,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 7, Some(5), Some(20), Some(0), Some(15), 144000000),
       ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 8, Some(0), Some(5), null, null, 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
@@ -751,7 +751,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000),
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
@@ -865,7 +865,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 13, Some(0), Some(30), Some(0), Some(20), 144000000),
       ChangeInfo(Some(oldLinkId), Some(oldLinkId), 12345, 14, null, null, Some(20), Some(50), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 30.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
@@ -914,7 +914,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val changeInfo = Seq()
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18040875',null,'20',to_timestamp('28.10.2014 15:36:02','DD.MM.YYYY HH24:MI:SS'),'dr1_conversion',null,null,null,null,null,null,235,'0')""".execute
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18040876',null,'20',to_timestamp('28.10.2014 15:36:17','DD.MM.YYYY HH24:MI:SS'),'dr1_conversion',null,null,null,null,null,null,235,'0')""".execute
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18040877',null,'20',to_timestamp('28.10.2014 15:36:02','DD.MM.YYYY HH24:MI:SS'),'dr1_conversion',null,null,null,null,null,null,235,'0')""".execute
@@ -1042,7 +1042,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val changeInfo = Seq(ChangeInfo(None, Option(oldLinkId), 0, 4, None, None, Option(0.0), Option(2.5802222500000003), 1461325625000L),
       ChangeInfo(Option(oldLinkId), Option(oldLinkId), 0, 3, Option(0.0), Option(422.63448371), Option(2.5802222500000003), Option(424.55709429), 1461325625000L))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050499',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.YYYY HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050501',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.YYYY HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
 
@@ -1089,7 +1089,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val changeInfo = Seq()
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050499',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.YYYY HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050501',null,'20',to_timestamp('20.04.2016 13:16:01','DD.MM.YYYY HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
       sqlu"""Insert into ASSET (ID,EXTERNAL_ID,ASSET_TYPE_ID,CREATED_DATE,CREATED_BY,MODIFIED_DATE,MODIFIED_BY,BEARING,VALID_FROM,VALID_TO,GEOMETRY,MUNICIPALITY_CODE,FLOATING) values ('18050503',null,'20',to_timestamp('20.04.2016 13:16:02','DD.MM.YYYY HH24:MI:SS'),'k127773',null,null,null,null,null,null,235,'0')""".execute
@@ -1227,7 +1227,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val fifties = Seq("1850798", "22696668", "22696716", "22696720")
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""DELETE FROM ASSET_LINK""".execute
       assetData.foreach {
         case (id, _, createdDate, createdBy, _) =>
@@ -1348,7 +1348,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     val eighties = Seq("2263876")
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""DELETE FROM ASSET_LINK""".execute
       assetData.foreach {
         case (id, _, createdDate, createdBy, _) =>
@@ -1436,7 +1436,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val roadLink2 = RoadLink(200, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
     val roadLink3 = RoadLink(300, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 7, TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
@@ -1491,7 +1491,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
@@ -1543,7 +1543,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
       sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
@@ -1585,7 +1585,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val oldLinkId = 5000
     val municipalityCode = 235
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""INSERT INTO UNKNOWN_SPEED_LIMIT (MUNICIPALITY_CODE, ADMINISTRATIVE_CLASS, LINK_ID) VALUES ($municipalityCode, ${Municipality.value}, $oldLinkId)""".execute
 
       service.purgeUnknown(Set(), Seq(oldLinkId))

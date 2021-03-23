@@ -7,7 +7,7 @@ import org.json4s.jackson.Serialization._
 import java.util.UUID
 
 import fi.liikennevirasto.digiroad2.AuthenticatedApiSpec
-import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
+import fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
 
 class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -75,7 +75,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
         }
       }
     } finally {
-      val provider = new OracleUserProvider
+      val provider = new PostGISUserProvider
       provider.deleteUser("newuser")
       provider.deleteUser("testEly")
       putJsonWithUserAuth("/userconfig/user/municipality766_749/municipalities", write(List(766, 749)), Map("Content-type" -> "application/json")) {}

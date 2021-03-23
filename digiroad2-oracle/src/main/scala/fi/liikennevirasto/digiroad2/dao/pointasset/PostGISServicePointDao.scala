@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -57,7 +57,7 @@ case class ServicePointRow(id: Long,
                           municipalityCode: Int,
                           property: PropertyRow)
 
-object OracleServicePointDao {
+object PostGISServicePointDao {
   private def createOrUpdateServicePoint(servicePoint: IncomingServicePoint, id: Long): Unit ={
     servicePoint.propertyData.map(propertyWithTypeAndId(ServicePoints.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
@@ -128,7 +128,7 @@ object OracleServicePointDao {
   }
 
   def get(bounds: BoundingRectangle): Set[ServicePoint] = {
-    val bboxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+    val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
     getWithFilter(bboxFilter)
   }
 

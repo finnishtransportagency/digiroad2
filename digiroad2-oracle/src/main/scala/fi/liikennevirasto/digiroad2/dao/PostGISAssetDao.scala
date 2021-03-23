@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.TrafficSigns
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -11,7 +11,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class AssetLink(id: Long, linkId: Long, startMeasure: Double, endMeasure: Double)
 
-class OracleAssetDao {
+class PostGISAssetDao {
 
   implicit val getAssetLink = new GetResult[AssetLink] {
     def apply(r: PositionedResult) = {

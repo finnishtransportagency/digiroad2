@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -20,7 +20,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   type PersistedAsset = PedestrianCrossing
 
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  lazy val dao = new OraclePedestrianCrossingDao()
+  lazy val dao = new PostGISPedestrianCrossingDao()
 
   override def typeId: Int = 200
 

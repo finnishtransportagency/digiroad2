@@ -8,7 +8,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -41,7 +41,7 @@ case class Obstacle(id: Long, linkId: Long,
                     expired: Boolean = false,
                     linkSource: LinkGeomSource) extends PersistedPoint
 
-object OracleObstacleDao {
+object PostGISObstacleDao {
 
   private def query() = {
     """
@@ -69,7 +69,7 @@ object OracleObstacleDao {
   def fetchByFilter(queryFilter: String => String, withDynSession: Boolean = false): Seq[Obstacle] = {
     val queryWithFilter = queryFilter(query()) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
     if (withDynSession) {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         queryToObstacle(queryWithFilter)
       }
     } else {

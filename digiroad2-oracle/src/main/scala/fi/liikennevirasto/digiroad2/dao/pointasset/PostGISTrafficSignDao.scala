@@ -9,7 +9,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -47,7 +47,7 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           additionalPanel: Option[AdditionalPanelRow] = None,
                           expired: Boolean = false)
 
-object OracleTrafficSignDao {
+object PostGISTrafficSignDao {
 
   private def query() =
     """
@@ -115,7 +115,7 @@ object OracleTrafficSignDao {
   def fetchByRadius(position : Point, meters: Int): Seq[PersistedTrafficSign] = {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
     val filter = s"Where a.asset_type_id = 300 and $boundingBoxFilter"
     fetchByFilter(query => query + filter).
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)

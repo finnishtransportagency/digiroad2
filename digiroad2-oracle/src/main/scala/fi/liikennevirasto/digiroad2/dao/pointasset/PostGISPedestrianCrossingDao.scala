@@ -41,7 +41,7 @@ case class PedestrianCrossing(id: Long, linkId: Long,
                               linkSource: LinkGeomSource) extends PersistedPoint
 
 
-class OraclePedestrianCrossingDao() {
+class PostGISPedestrianCrossingDao() {
 
   private def createOrUpdatePedestrianCrossing(crossing: IncomingPedestrianCrossing, id: Long): Unit ={
     crossing.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>

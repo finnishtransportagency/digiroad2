@@ -6,7 +6,7 @@ import java.util.{Base64, NoSuchElementException}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
   def MassQueryThreshold = 500
   case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
 
@@ -263,7 +263,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
 
     /**
-    * Returns data for municipality validation. Used by OracleSpeedLimitDao.splitSpeedLimit.
+    * Returns data for municipality validation. Used by PostGISSpeedLimitDao.splitSpeedLimit.
     */
   def getLinksWithLengthFromVVH(id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
     val assetTypeId = SpeedLimitAsset.typeId
@@ -341,7 +341,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
   /**
-    * Returns m-values and side code by asset id. Used by OracleSpeedLimitDao.splitSpeedLimit.
+    * Returns m-values and side code by asset id. Used by PostGISSpeedLimitDao.splitSpeedLimit.
     */
   def getLinkGeometryData(id: Long): (Double, Double, SideCode, Long) = {
     sql"""
@@ -405,7 +405,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
   }
   /**
-    * Saves enumerated value to db. Used by OracleSpeedLimitDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.
+    * Saves enumerated value to db. Used by PostGISSpeedLimitDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.
     */
   def insertSingleChoiceValue(assetId: Long, valuePropertyId: String, value: Int): Unit  = {
     val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply(valuePropertyId, SpeedLimitAsset.typeId).first
@@ -413,7 +413,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
   /**
-    * Saves enumerated value to db. Used by OracleSpeedLimitDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.
+    * Saves enumerated value to db. Used by PostGISSpeedLimitDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.
     */
   def insertMultipleChoiceValue(assetId: Long, valuePropertyId: String, value: Int): Unit  = {
     val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply(valuePropertyId, SpeedLimitAsset.typeId).first
@@ -500,7 +500,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
   /**
-    * Updates m-values and vvh time stamp in db. Used by OracleSpeedLimitDao.splitSpeedLimit.
+    * Updates m-values and vvh time stamp in db. Used by PostGISSpeedLimitDao.splitSpeedLimit.
     */
   def updateMValues(id: Long, linkMeasures: (Double, Double), vvhTimeStamp: Option[Long] = None): Unit = {
     val (startMeasure, endMeasure) = linkMeasures

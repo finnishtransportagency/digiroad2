@@ -2,12 +2,12 @@ package fi.liikennevirasto.digiroad2.dao
 
 import java.time.LocalDate
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.Configuration
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-class OracleUserProviderSpec extends FunSuite with Matchers {
+class PostGISUserProviderSpec extends FunSuite with Matchers {
 
     val testUserName = "Oracleuserprovidertest"
     val north = 1000
@@ -16,10 +16,10 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
     val newEast = 6000
     val municipalityNumber = 235
 
-  val provider = new OracleUserProvider
+  val provider = new PostGISUserProvider
 
   test("create and get user") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       provider.getUser(testUserName, false) shouldBe (None)
       provider.createUser(testUserName, Configuration(north = Some(1000)), newTransaction = false)
       val user = provider.getUser(testUserName, false).get
@@ -30,7 +30,7 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
   }
 
     test("update user last notification date field without update modified_date") {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
      provider.getUser(testUserName, false) should be(None)
       provider.createUser(testUserName, Configuration(municipalityNumber = Some(municipalityNumber)), newTransaction = false)
       val user = provider.getUser(testUserName, false).get
@@ -46,7 +46,7 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
     }
 
     test("update current user default map location") {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
       provider.getUser(testUserName, false) should be(None)
       provider.createUser(testUserName, Configuration(east = Some(east), north = Some(north)), newTransaction = false)
       val user = provider.getUser(testUserName, false).get
@@ -62,7 +62,7 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
     }
 
     test("update user last login date field") {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
       provider.getUser(testUserName, false) should be(None)
       provider.createUser(testUserName, Configuration(municipalityNumber = Some(municipalityNumber)), newTransaction = false)
       val user = provider.getUser(testUserName, false).get

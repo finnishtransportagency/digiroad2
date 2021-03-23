@@ -1,18 +1,19 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingAxleWeightLimit, WeightLimit}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrailerTruckWeightLimit, WeightLimit}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, TrAxleWeightLimit}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, TrTrailerTruckWeightLimit}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
-object OracleAxleWeightLimitDao {
-  val typeId = TrAxleWeightLimit.typeId
+object PostGISTrailerTruckWeightLimitDao {
+  val typeId = TrTrailerTruckWeightLimit.typeId
 
   def fetchByFilter(queryFilter: String => String): Seq[WeightLimit] = {
     val query =
@@ -25,10 +26,10 @@ object OracleAxleWeightLimitDao {
         left join number_property_value npv on npv.asset_id = a.id
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null)"
-    StaticQuery.queryNA[WeightLimit](queryWithFilter)(getPointAsset).iterator.toSeq
+    StaticQuery.queryNA[WeightLimit](queryWithFilter).iterator.toSeq
   }
 
-  def create(asset: IncomingAxleWeightLimit, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
+  def create(asset: IncomingTrailerTruckWeightLimit, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -47,11 +48,11 @@ object OracleAxleWeightLimitDao {
   }
 
   private def getLimitPropertyId: Long = {
-    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("suurin_sallittu_akselimassa").first
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("yhdistelman_suurin_sallittu_massa").first
   }
 
   implicit val getPointAsset = new GetResult[WeightLimit] {
-    def apply(r: PositionedResult): WeightLimit = {
+    def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get

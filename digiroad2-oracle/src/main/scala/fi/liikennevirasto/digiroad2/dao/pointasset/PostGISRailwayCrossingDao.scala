@@ -37,7 +37,7 @@ case class RailwayCrossing(id: Long, linkId: Long,
                            modifiedAt: Option[DateTime] = None,
                            linkSource: LinkGeomSource) extends PersistedPointAsset
 
-object OracleRailwayCrossingDao {
+object PostGISRailwayCrossingDao {
   // This works as long as there are only two properties of different types for railway crossings
   def fetchByFilter(queryFilter: String => String): Seq[RailwayCrossing] = {
     val query =

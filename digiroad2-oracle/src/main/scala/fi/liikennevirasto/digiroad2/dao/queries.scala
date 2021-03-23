@@ -359,7 +359,7 @@ object Queries {
     """.as[(String, String)].list.toMap
     propertyNames.filter(_._1 != null)
   }
-
+// no used
   def storeGeometry(geometry: JGeometry, conn: Connection): STRUCT = {
     JGeometry.store(geometry, bonecpToInternalConnection(conn))
   }

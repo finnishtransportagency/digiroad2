@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitS
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.User
@@ -50,7 +50,7 @@ class MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl:
 
     } catch {
       case e: Exception =>
-        OracleDatabase.withDynTransaction  {
+        PostGISDatabase.withDynTransaction  {
         importLogDao.update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
         }
       }
@@ -68,9 +68,9 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
-      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+      override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
       override val tierekisteriClient: TierekisteriMassTransitStopClient = tierekisteriMassTransitStopClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -348,8 +348,8 @@ trait CsvOperations extends MassTransitStopCsvImporter {
 }
 
 class Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = vvhClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
@@ -367,8 +367,8 @@ class Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
 }
 
 class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = vvhClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
@@ -416,8 +416,8 @@ class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
 }
 
 class PositionUpdater (vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl

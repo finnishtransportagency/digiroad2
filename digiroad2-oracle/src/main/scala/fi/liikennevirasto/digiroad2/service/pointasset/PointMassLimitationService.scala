@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPointMassLimitationDao
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
@@ -26,9 +26,9 @@ case class WeightGroupLimitation(id: Long,
                                 propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
 
 
-class PointMassLimitationService(roadLinkService: RoadLinkService, dao: OraclePointMassLimitationDao) {
+class PointMassLimitationService(roadLinkService: RoadLinkService, dao: PostGISPointMassLimitationDao) {
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   val pointMassLimitationTypes = Seq(TrTrailerTruckWeightLimit.typeId,
     TrAxleWeightLimit.typeId, TrWeightLimit.typeId, TrBogieWeightLimit.typeId)
@@ -40,7 +40,7 @@ class PointMassLimitationService(roadLinkService: RoadLinkService, dao: OraclePo
 
   def getByRoadLinks(typeIds: Seq[Int], bounds: BoundingRectangle): Seq[MassLimitationPointAsset] = {
     withDynTransaction {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where $boundingBoxFilter"
       val assets = dao.fetchByBoundingBox(typeIds, withFilter(filter))
 

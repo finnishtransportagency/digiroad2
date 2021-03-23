@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue, InformationSource, LinkGeomSource, MaintenanceRoadAsset}
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, PersistedLinearAsset}
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
-class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
   def fetchPotentialServiceRoads(includeFloating: Boolean = false, includeExpire: Boolean = false ): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else " and a.floating = 0"

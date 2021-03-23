@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -98,7 +98,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
   def massLimitationWithoutMatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
 
       val propTrafficSign = Seq(
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
@@ -120,7 +120,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   }
 
   def massLimitationWithMatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val propTrafficSign = Seq(
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
@@ -141,7 +141,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   }
 
   def massLimitationWithMismatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val propTrafficSign = Seq(
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("300"))),
@@ -163,7 +163,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   }
 
   def massLimitationWithMatchedAssetAfter50meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val propTrafficSign = Seq(
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
@@ -186,7 +186,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   }
 
   def massLimitationWithMatchedAssetAfter500meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
 
       val propTrafficSign = Seq(
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
@@ -246,7 +246,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
 
 
   test("bogieWeightLimit traffic sign without additional have an asset with 2 and 3 axle") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val propTrafficSign = Seq(
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
         Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
@@ -267,7 +267,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("bogieWeightLimit traffic sign with additional have an asset with 2 and 3 axle") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val propTrafficSign = Seq(
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
         Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("15000"))),

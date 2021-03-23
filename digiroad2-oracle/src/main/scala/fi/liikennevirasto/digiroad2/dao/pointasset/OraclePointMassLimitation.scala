@@ -13,7 +13,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
 
-class OraclePointMassLimitationDao {
+class PostGISPointMassLimitationDao {
 
 
   def fetchByBoundingBox(assetTypes: Seq[Int], queryFilter: String => String): Seq[WeightGroupLimitation] = {

@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 object ServicePointTestData {
   def createTestData() = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""
         insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600059,250,'dr2_test_data',235);
         insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600060,250,'dr2_test_data',235);

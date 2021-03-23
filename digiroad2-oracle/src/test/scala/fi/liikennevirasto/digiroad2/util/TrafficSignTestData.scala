@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 object TrafficSignTestData {
   def createTestData() = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""
           insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600053,240,'dr2_test_data',235);
           insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600054,240,'dr2_test_data',235);
