@@ -303,8 +303,8 @@ object RoadLinkDAO{
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
 
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass ) values (
-             nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue)
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue)
                    where exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
 
     }
