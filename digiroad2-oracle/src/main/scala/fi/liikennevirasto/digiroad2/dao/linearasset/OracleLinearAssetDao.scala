@@ -730,7 +730,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       if (geom.nonEmpty) {
         val assetLength = measures.endMeasure - measures.startMeasure
         val line = Queries.linearGeometry(Point(geom.head.x,geom.head.y),Point(geom.last.x,geom.last.y), assetLength)
-        s"""ST_GeomFromText($line, 3067)"""
+        s"""ST_GeomFromText('$line', 3067)"""
       } else {
         "null"
       }

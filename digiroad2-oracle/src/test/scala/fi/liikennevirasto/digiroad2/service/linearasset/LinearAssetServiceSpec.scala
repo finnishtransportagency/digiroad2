@@ -804,7 +804,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     }
 
     OracleDatabase.withDynTransaction {
-      val (assetId, assetMunicipalityCode) = sql"""select ID, MUNICIPALITY_CODE from asset where asset_type_id = 10 and valid_to > = current_timestamp offset 1 limit 1""".as[(Int, Int)].first
+      val (assetId, assetMunicipalityCode) = sql"""select ID, MUNICIPALITY_CODE from asset where asset_type_id = 10 and valid_to >= current_timestamp offset 1 limit 1""".as[(Int, Int)].first
       val municipalityCode = service.getMunicipalityCodeByAssetId(assetId)
       municipalityCode should be(assetMunicipalityCode)
     }
