@@ -17,7 +17,7 @@ class VerificationDao {
       sql"""
           SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS typeId, atype.name AS assetName,
           (CASE WHEN (extract(month from age(current_timestamp, mv.verified_date)) < $TwoYears) THEN 1 ELSE 0 END) AS verified, atype.geometry_type, mv.last_user_modification,
-           mv.last_date_modification, mv.number_of_assets, mv.refresh_date, REGEXP_COUNT(mv.suggested_assets , ',') + 1 as countSuggested
+           mv.last_date_modification, mv.number_of_assets, mv.refresh_date, array_length(string_to_array(mv.suggested_assets, ','), 1) as countSuggested
            FROM municipality m
            JOIN asset_type atype ON atype.verifiable = 1
            LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > current_timestamp
@@ -248,7 +248,7 @@ class VerificationDao {
 
   def getNumberSuggestedAssetNumber(municipalityCode: Set[Int]) : Long = {
     sql"""
-      select SUM(REGEXP_COUNT(suggested_assets , ',') + 1)
+      select SUM(array_length(string_to_array(suggested_assets, ','), 1))
       from municipality_verification
       where valid_to is null
       and municipality_id in (#${municipalityCode.mkString(",")})
