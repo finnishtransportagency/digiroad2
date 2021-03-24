@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
+import fi.liikennevirasto.digiroad2.dao.Queries.objectToPoint
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult}
@@ -16,7 +16,7 @@ class MunicipalityDao {
   implicit val getMapViewZoom = new GetResult[MapViewZoom] {
     def apply(r: PositionedResult) = {
 
-      val geometry = r.nextBytesOption().map(bytesToPoint).get
+      val geometry = r.nextObjectOption().map(objectToPoint).get
       val zoom = r.nextInt()
 
       MapViewZoom(geometry, zoom)

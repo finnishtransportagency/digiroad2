@@ -836,7 +836,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   }
 
   def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
-    implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
+    implicit val getPoint = GetResult(r => objectToPoint(r.nextObject))
     sql"""
       select a.id, lrm.link_id, geometry, lrm.start_measure, np.value
       from

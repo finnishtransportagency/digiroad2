@@ -155,7 +155,7 @@ class MassTransitStopDao {
       val validityDirection = r.nextInt
       val validFrom = r.nextDateOption.map(new LocalDate(_))
       val validTo = r.nextDateOption.map(new LocalDate(_))
-      val point = r.nextBytesOption.map(bytesToPoint)
+      val point = r.nextObjectOption().map(objectToPoint)
       val municipalityCode = r.nextInt()
       val persistedFloating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()
@@ -180,7 +180,7 @@ class MassTransitStopDao {
       val linkId = r.nextLong
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      val wgsPoint = r.nextObjectOption().map(objectToPoint)
       val linkSource = r.nextInt
       val terminalId = r.nextLongOption
       MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,

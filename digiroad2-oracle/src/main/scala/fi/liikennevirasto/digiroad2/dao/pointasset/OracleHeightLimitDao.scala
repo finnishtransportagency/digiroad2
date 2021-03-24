@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, TrHeightLimit}
-import fi.liikennevirasto.digiroad2.dao.Queries.{bytesToPoint, insertNumberProperty, updateAssetGeometry}
+import fi.liikennevirasto.digiroad2.dao.Queries.{objectToPoint, insertNumberProperty, updateAssetGeometry}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, IncomingHeightLimit}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -54,7 +54,7 @@ object OracleHeightLimitDao {
     def apply(r: PositionedResult): HeightLimit = {
       val id = r.nextLong()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()

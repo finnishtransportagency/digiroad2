@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, TrWidthLimit}
-import fi.liikennevirasto.digiroad2.dao.Queries.{bytesToPoint, insertNumberProperty, insertSingleChoiceProperty, updateAssetGeometry}
+import fi.liikennevirasto.digiroad2.dao.Queries.{ insertNumberProperty, insertSingleChoiceProperty, updateAssetGeometry}
 import fi.liikennevirasto.digiroad2.service.pointasset.{WidthLimitReason, IncomingWidthLimit, WidthLimit}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
@@ -62,7 +62,7 @@ object OracleWidthLimitDao {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = Queries.objectToPoint(r.nextObjectOption())
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()

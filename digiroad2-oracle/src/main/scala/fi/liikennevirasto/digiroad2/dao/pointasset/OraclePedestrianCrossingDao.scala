@@ -197,7 +197,7 @@ class OraclePedestrianCrossingDao() {
     def apply(r: PositionedResult) : PedestrianCrossingRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()
