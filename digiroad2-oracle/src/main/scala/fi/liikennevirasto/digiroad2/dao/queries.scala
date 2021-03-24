@@ -428,7 +428,7 @@ object Queries {
       val additionalInfo = r.nextStringOption()
       val modifiedDate = r.nextStringOption()
       val municipalityCode = r.nextInt()
-      val point = Queries.objectToPoint(r.nextObjectOption())
+      val point = r.nextObjectOption().map(objectToPoint).get
 
       LorryParkingInDATEX2(servicePointId, serviceId, parkingType, parkingTypeMeaning, name, additionalInfo, point.x, point.y, modifiedDate, municipalityCode)
     }
