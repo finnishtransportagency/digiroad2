@@ -73,7 +73,7 @@ object Queries {
 
   def nextNationalBusStopId = sql"select nextval('national_bus_stop_id_seq')"
 
-  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_nextval('primary_key_seq')"
+  def nextLrmPositionPrimaryKeyId = sql"select nextval('lrm_position_primary_key_seq')"
 
   def nextGroupedId = sql"select nextval('grouped_id_seq')"
 
@@ -98,7 +98,11 @@ object Queries {
   }
 
   def linearGeometry(startPoint: Point, endPoint: Point,assetLength:Double): String ={
-    s"LINESTRING($startPoint.x $startPoint.y 0.0 0.0,$endPoint.x $endPoint.y 0.0 $assetLength)"
+    val startPointX =startPoint.x.toString
+    val startPointY =startPoint.y.toString
+    val endPointX =endPoint.x.toString
+    val endPointY =endPoint.x.toString
+    s"LINESTRING($startPointX $startPointY 0.0 0.0,$endPointX $endPointY 0.0 $assetLength)"
   }
 
   def pointGeometry(lon: Double, lat: Double): String ={s"POINT($lon $lat 0 0)"}
