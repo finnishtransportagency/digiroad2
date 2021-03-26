@@ -554,7 +554,7 @@ CREATE TABLE number_property_value
     id          bigint NOT NULL,
     asset_id    bigint NOT NULL,
     property_id bigint NOT NULL,
-    value       bigint,
+    value       numeric,
     grouped_id  bigint DEFAULT 0
 );
 
