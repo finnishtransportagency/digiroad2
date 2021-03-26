@@ -181,7 +181,7 @@ CREATE TABLE enumerated_value
 (
     id            bigint       NOT NULL,
     property_id   bigint       NOT NULL,
-    value         bigint,
+    value         numeric,
     name_fi       varchar(512) NOT NULL,
     name_sv       varchar(512),
     image_id      bigint,
