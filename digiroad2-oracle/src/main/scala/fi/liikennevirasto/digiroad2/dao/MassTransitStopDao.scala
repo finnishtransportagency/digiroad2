@@ -447,22 +447,6 @@ class MassTransitStopDao {
           """.execute
   }
 
-  //TODO: Fixme. Is distinct needed?
-  def getPropertyDescription(propertyPublicId : String, value: String) = {
-    sql"""
-       Select distinct
-         case
-                 when e.name_fi is not null then e.name_fi
-                 when tp.value_fi is not null then tp.value_fi
-                 when np.value is not null then cast(np.value as text)
-                 else null
-               end as display_value
-       From PROPERTY p left join ENUMERATED_VALUE e on e.PROPERTY_ID = p.ID left join TEXT_PROPERTY_VALUE tp on
-         tp.PROPERTY_ID = p.ID left join NUMBER_PROPERTY_VALUE np on np.PROPERTY_ID = p.ID
-       Where p.PUBLIC_ID = $propertyPublicId And e.value = $value
-      """.as[String].list
-  }
-
   def deleteAllMassTransitStopData(assetId: Long): Unit ={
     sqlu"""Delete From Single_Choice_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Multiple_Choice_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
