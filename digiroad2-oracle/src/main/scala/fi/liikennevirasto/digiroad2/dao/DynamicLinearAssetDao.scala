@@ -27,7 +27,7 @@ class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val filterFloating = if (includeFloating) "" else " and a.floating = 0"
+    val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
@@ -92,7 +92,7 @@ class DynamicLinearAssetDao {
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          where a.floating = 0 """.as[DynamicAssetRow](getDynamicAssetRow).list
+          where a.floating = '0' """.as[DynamicAssetRow](getDynamicAssetRow).list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -478,7 +478,7 @@ class DynamicLinearAssetDao {
             or
             (a.created_date > $sinceDate and a.created_date <= $untilDate)
           )
-          and a.floating = 0
+          and a.floating = '0'
           #$withAutoAdjustFilter
         ) derivedAsset #$recordLimit"""
       .as[(Long, Long, Int, Option[String], Double, Double, String, String, Boolean, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list

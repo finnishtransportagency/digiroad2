@@ -25,7 +25,7 @@ class FeedbackDao {
   }
 
   def byStatus(status: Boolean)(query: String): String = {
-    val feedbackFilter = if (status) " status = 1 " else " status = 0 "
+    val feedbackFilter = if (status) " status = '1' " else " status = '0' "
     query + s"where $feedbackFilter"
   }
 
@@ -59,7 +59,7 @@ class FeedbackDao {
 
   def updateFeedback(id: Long): Long = {
     sqlu"""
-          update feedback set status = 1, status_date = current_timestamp where id = ${id} """.execute
+          update feedback set status = '1', status_date = current_timestamp where id = ${id} """.execute
     id
   }
 }

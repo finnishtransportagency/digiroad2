@@ -372,7 +372,7 @@ class AssetDataImporter {
   }
 
   def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+    val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
       sql"""
@@ -845,7 +845,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 1 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '1' and a.municipality_code = $municipality
       """.as[(Long, Long, Point, Double, Option[Int])].list
   }
 
@@ -858,7 +858,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 0 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '0' and a.municipality_code = $municipality
       """.as[(Long, Long, Option[Int])].list
   }
 
