@@ -44,7 +44,7 @@ class MassTransitStopDao {
         end as display_value,
         lrm.id as lrm_id, lrm.start_measure, lrm.end_measure, lrm.link_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
-        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, lrm.link_source,
+        ST_Transform(a.geometry, 4326) AS position_wgs84, lrm.link_source,
         tbs.terminal_asset_id as terminal_asset_id
         from asset a
           join asset_link al on a.id = al.asset_id
