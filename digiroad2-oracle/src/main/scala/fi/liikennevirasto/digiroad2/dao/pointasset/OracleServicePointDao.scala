@@ -206,7 +206,7 @@ object OracleServicePointDao {
   implicit val getServicePoint = new GetResult[ServicePointRow] {
     def apply(r: PositionedResult) : ServicePointRow = {
       val id = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()

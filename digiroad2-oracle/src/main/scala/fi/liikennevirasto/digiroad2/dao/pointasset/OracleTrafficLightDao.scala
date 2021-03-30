@@ -131,7 +131,7 @@ object OracleTrafficLightDao {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()
