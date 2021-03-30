@@ -459,7 +459,7 @@ class MassTransitStopDao {
                end as display_value
        From PROPERTY p left join ENUMERATED_VALUE e on e.PROPERTY_ID = p.ID left join TEXT_PROPERTY_VALUE tp on
          tp.PROPERTY_ID = p.ID left join NUMBER_PROPERTY_VALUE np on np.PROPERTY_ID = p.ID
-       Where p.PUBLIC_ID = $propertyPublicId And e.value = $value
+       Where p.PUBLIC_ID = $propertyPublicId And e.value = cast($value as numeric)
       """.as[String].list
   }
 
