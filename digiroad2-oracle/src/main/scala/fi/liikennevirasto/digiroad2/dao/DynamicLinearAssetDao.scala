@@ -337,7 +337,7 @@ class DynamicLinearAssetDao {
 
   def getAssetRequiredProperties(typeId: Int): Map[String, String] ={
     val requiredProperties =
-      sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
+      sql"""select public_id, property_type from property where asset_type_id = $typeId and required = '1'""".as[(String, String)].iterator.toMap
 
     requiredProperties
   }

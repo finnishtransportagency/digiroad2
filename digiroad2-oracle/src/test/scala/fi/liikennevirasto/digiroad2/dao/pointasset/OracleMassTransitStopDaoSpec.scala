@@ -67,7 +67,7 @@ class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
 
   test("Delete all MassTransitStop data by Id") {
     OracleDatabase.withDynTransaction {
-      val idToDelete = sql"""select ID from asset where asset_type_id = 10 and valid_to > = current_timestamp and rownum = 1""".as[Long].first
+      val idToDelete = sql"""select ID from asset where asset_type_id = 10 and valid_to >= current_timestamp offset 1 limit 1""".as[Long].first
       massTransitStopDao.deleteAllMassTransitStopData(idToDelete)
 
       val deleted = sql"""select case when COUNT(ID) = 0 then 1 else 0 end as deleted from asset where id = $idToDelete""".as[(Boolean)].firstOption

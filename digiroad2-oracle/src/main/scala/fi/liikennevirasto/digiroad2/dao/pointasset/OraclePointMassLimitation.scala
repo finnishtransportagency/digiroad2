@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.PersistedPointAsset
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.service.pointasset.{WeightGroupLimitation}
@@ -36,7 +35,7 @@ class OraclePointMassLimitationDao {
       val id = r.nextLong()
       val typeId = r.nextInt()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()

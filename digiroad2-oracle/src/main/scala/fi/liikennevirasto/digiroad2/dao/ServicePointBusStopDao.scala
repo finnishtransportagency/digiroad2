@@ -50,7 +50,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
       val assetTypeId = r.nextLong
       val validFrom = r.nextDateOption.map(new LocalDate(_))
       val validTo = r.nextDateOption.map(new LocalDate(_))
-      val point = r.nextBytesOption.map(bytesToPoint)
+      val point = r.nextObjectOption().map(objectToPoint)
       val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString

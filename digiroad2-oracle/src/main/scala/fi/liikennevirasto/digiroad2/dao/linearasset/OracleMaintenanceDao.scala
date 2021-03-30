@@ -8,7 +8,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries.{DynamicPropertyRow, bytesToPoint}
+import fi.liikennevirasto.digiroad2.dao.Queries.DynamicPropertyRow
 import fi.liikennevirasto.digiroad2.dao.{DynamicAssetRow, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures

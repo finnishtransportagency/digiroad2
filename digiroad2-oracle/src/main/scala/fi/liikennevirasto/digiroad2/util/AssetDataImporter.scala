@@ -617,7 +617,7 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 #$multiSegmentFilter
+        where a.asset_type_id = $typeId and floating = '0' #$multiSegmentFilter
       """.as[(Int, Int)].first
     }
   }
@@ -638,7 +638,7 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+        where a.asset_type_id = $typeId and floating = '0' and (select count(*) from asset_link where asset_id = a.id) > 1
       """.as[(Int, Int)].first
     }
   }
@@ -656,7 +656,7 @@ class AssetDataImporter {
             join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
             join enumerated_value e on s.enumerated_value_id = e.id
             where a.asset_type_id = 20
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Option[Int], Double, Double, Int)].list
@@ -684,7 +684,7 @@ class AssetDataImporter {
             join lrm_position pos on al.position_id = pos.id
             left join number_property_value n on a.id = n.asset_id
             where a.asset_type_id = $typeId
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int], Int)].list
@@ -755,7 +755,7 @@ class AssetDataImporter {
   def unfloatLinearAssets(): Unit = {
     withDynTransaction {
       sqlu"""
-        update asset a set floating=0
+        update asset a set floating='0'
         where a.asset_type_id in (30,40,50,60,70,80,90,100)
         and (select count(*) from asset_link where asset_id = a.id) > 1""".execute
     }
@@ -836,7 +836,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   }
 
   def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
-    implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
+    implicit val getPoint = GetResult(r => objectToPoint(r.nextObject))
     sql"""
       select a.id, lrm.link_id, geometry, lrm.start_measure, np.value
       from
@@ -930,7 +930,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
     val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
-    sqlu"""update asset set floating = 1 where id = $id""".execute
+    sqlu"""update asset set floating = '1' where id = $id""".execute
     id
   }
 
