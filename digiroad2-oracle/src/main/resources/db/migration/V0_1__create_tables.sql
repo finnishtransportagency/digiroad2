@@ -181,7 +181,7 @@ CREATE TABLE enumerated_value
 (
     id            bigint       NOT NULL,
     property_id   bigint       NOT NULL,
-    value         bigint,
+    value         numeric,
     name_fi       varchar(512) NOT NULL,
     name_sv       varchar(512),
     image_id      bigint,
@@ -554,7 +554,7 @@ CREATE TABLE number_property_value
     id          bigint NOT NULL,
     asset_id    bigint NOT NULL,
     property_id bigint NOT NULL,
-    value       bigint,
+    value       numeric,
     grouped_id  bigint DEFAULT 0
 );
 
@@ -563,7 +563,7 @@ CREATE TABLE number_property_value_history
     id          bigint NOT NULL,
     asset_id    bigint NOT NULL,
     property_id bigint NOT NULL,
-    value       bigint,
+    value       numeric,
     grouped_id  bigint DEFAULT 0
 );
 
