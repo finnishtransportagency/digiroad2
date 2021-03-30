@@ -1315,7 +1315,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val trStop = TierekisteriMassTransitStop(85755, "livi114873", rad, TRRoadSide.Unknown, StopType.Unknown, false,
         equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 8, 1))
 
-      sqlu"""update asset set floating=1 where id = 300008""".execute
+      sqlu"""update asset set floating='1' where id = 300008""".execute
       sqlu"""update text_property_value set value_fi='livi114873' where asset_id = 300008 and value_fi = 'OTHJ85755'""".execute
       when(mockTierekisteriClient.fetchMassTransitStop("livi114873")).thenReturn(Some(trStop))
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)

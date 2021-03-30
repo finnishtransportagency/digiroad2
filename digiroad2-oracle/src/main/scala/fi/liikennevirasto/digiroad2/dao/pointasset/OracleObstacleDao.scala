@@ -259,7 +259,7 @@ object OracleObstacleDao {
        left join enumerated_value ev on scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.ID
     """
 
-    val queryWithFilter = query + s"where a.asset_type_id = 220 and a.floating = $floating and " +
+    val queryWithFilter = query + s"where a.asset_type_id = 220 and a.floating = cast($floating as boolean) and " +
       s"(a.valid_to > current_timestamp or a.valid_to is null) and a.id > $lastIdUpdate order by a.id asc) derivedAsset limit $batchSize"
     queryToObstacle(queryWithFilter)
   }
