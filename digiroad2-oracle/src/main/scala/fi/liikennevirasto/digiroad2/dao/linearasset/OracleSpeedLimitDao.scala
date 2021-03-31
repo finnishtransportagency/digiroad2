@@ -76,7 +76,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-		   where a.asset_type_id = 20 and floating = 0 #$queryFilter""".as[SpeedLimitRow].list
+		   where a.asset_type_id = 20 and floating = '0' #$queryFilter""".as[SpeedLimitRow].list
     }
     groupSpeedLimitsResult(speedLimitRows)
   }
@@ -325,7 +325,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
             left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
             left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
             where a.asset_type_id = 20
-            and floating = 0
+            and floating = '0'
             and (
               (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
               or
@@ -475,7 +475,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def setFloating(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
-        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute
+        sqlu"""update asset set floating = '1' where id in (select id from #$idTableName)""".execute
       }
     }
   }
@@ -636,7 +636,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def floatLinearAssets(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
-        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute
+        sqlu"""update asset set floating = '1' where id in (select id from #$idTableName)""".execute
       }
     }
   }

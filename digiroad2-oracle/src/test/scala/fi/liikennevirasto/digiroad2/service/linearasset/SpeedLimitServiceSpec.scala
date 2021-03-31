@@ -303,7 +303,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -362,11 +362,11 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val (lrm1, lrm2) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 25.000, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId, null, 0.000, 25.000, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -445,11 +445,11 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val (lrm1, lrm2) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 15.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId, null, 15.000, 25.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -528,15 +528,15 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId2, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset2,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId3, null, 0.000, 5.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset3,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset3,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset3,$lrm3)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -590,7 +590,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -643,7 +643,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -696,7 +696,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 20.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -755,15 +755,15 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset1,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset1,$speedLimitAssetTypeId,'0',TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId2, null, 0.000, 10.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset2,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset2,$speedLimitAssetTypeId,'0',TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId3, null, 0.000, 5.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset3,$speedLimitAssetTypeId,0,TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, modified_date, modified_by) values ($asset3,$speedLimitAssetTypeId,'0',TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset3,$lrm3)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -868,7 +868,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val (lrm1, asset1) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, null, 0.000, 30.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset1,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = $speedLimitAssetTypeId AND p.id = ev.property_id AND ev.value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
@@ -1494,7 +1494,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
       sqlu"""
             insert into single_choice_value (asset_id,enumerated_value_id,property_id)
@@ -1546,7 +1546,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure, side_code) VALUES ($lrm, $oldLinkId, null, 0.000, 25.000, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,0)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) values ($asset,$speedLimitAssetTypeId,'0')""".execute
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
       sqlu"""
             insert into single_choice_value (asset_id,enumerated_value_id,property_id)

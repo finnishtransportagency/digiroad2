@@ -372,7 +372,7 @@ class AssetDataImporter {
   }
 
   def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+    val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
       sql"""
@@ -617,7 +617,7 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 #$multiSegmentFilter
+        where a.asset_type_id = $typeId and floating = '0' #$multiSegmentFilter
       """.as[(Int, Int)].first
     }
   }
@@ -638,7 +638,7 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+        where a.asset_type_id = $typeId and floating = '0' and (select count(*) from asset_link where asset_id = a.id) > 1
       """.as[(Int, Int)].first
     }
   }
@@ -656,7 +656,7 @@ class AssetDataImporter {
             join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
             join enumerated_value e on s.enumerated_value_id = e.id
             where a.asset_type_id = 20
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Option[Int], Double, Double, Int)].list
@@ -684,7 +684,7 @@ class AssetDataImporter {
             join lrm_position pos on al.position_id = pos.id
             left join number_property_value n on a.id = n.asset_id
             where a.asset_type_id = $typeId
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int], Int)].list
@@ -755,7 +755,7 @@ class AssetDataImporter {
   def unfloatLinearAssets(): Unit = {
     withDynTransaction {
       sqlu"""
-        update asset a set floating=0
+        update asset a set floating='0'
         where a.asset_type_id in (30,40,50,60,70,80,90,100)
         and (select count(*) from asset_link where asset_id = a.id) > 1""".execute
     }
@@ -845,7 +845,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 1 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '1' and a.municipality_code = $municipality
       """.as[(Long, Long, Point, Double, Option[Int])].list
   }
 
@@ -858,7 +858,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 0 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '0' and a.municipality_code = $municipality
       """.as[(Long, Long, Option[Int])].list
   }
 
@@ -930,7 +930,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
     val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
-    sqlu"""update asset set floating = 1 where id = $id""".execute
+    sqlu"""update asset set floating = '1' where id = $id""".execute
     id
   }
 

@@ -126,7 +126,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
-    val filter = s"where a.asset_type_id = $typeId and floating = 0 and " +
+    val filter = s"where a.asset_type_id = $typeId and floating = '0' and " +
       s"exists (select * from single_choice_value scv2, enumerated_value ev2 where a.id = scv2.asset_id and scv2.enumerated_value_id = ev2.id and ev2.value in (${trafficSignTypes.mkString(",")})) and (" +
       s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
       s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or "+

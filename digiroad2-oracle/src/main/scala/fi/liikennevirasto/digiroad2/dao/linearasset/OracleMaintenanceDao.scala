@@ -18,7 +18,7 @@ import slick.jdbc.StaticQuery.interpolation
 class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
   def fetchPotentialServiceRoads(includeFloating: Boolean = false, includeExpire: Boolean = false ): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else " and a.floating = 0"
+    val floatingFilter = if (includeFloating) "" else " and a.floating = '0'"
     val expiredFilter = if (includeExpire) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     var valueToBeFetch = "9"
     var propNameFi = "Potentiaalinen kayttooikeus"

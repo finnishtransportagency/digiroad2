@@ -523,7 +523,7 @@ object OracleTrafficSignDao {
           join enumerated_value ev on scv.enumerated_value_id = ev.id
           where a.asset_type_id = #${TrafficSigns.typeId}
           and (a.valid_to is null or a.valid_to > current_timestamp )
-          and a.floating = 0
+          and a.floating = '0'
           #$trafficSignType
           #$filterByUsername
          )
