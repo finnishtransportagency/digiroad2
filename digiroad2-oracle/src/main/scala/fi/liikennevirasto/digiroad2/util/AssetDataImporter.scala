@@ -699,7 +699,7 @@ class AssetDataImporter {
       if (assetsIdsToExpire.size > 0) {
         val assetsIdsToExpireString = assetsIdsToExpire.mkString(",")
         sqlu"""update asset
-               set modified_by = 'expired_splitted_linearasset', modified_date = current_timestamp, valid_to = current_timestamp
+               set modified_by = 'expired_splitted_linearasset', modified_date = current_timestamp, valid_to = current_timestamp-INTERVAL'1 DAYS'
                where id in (#$assetsIdsToExpireString)""".execute
       }
       println(s"removed ${assetsIdsToExpire.size} multilink assets")
