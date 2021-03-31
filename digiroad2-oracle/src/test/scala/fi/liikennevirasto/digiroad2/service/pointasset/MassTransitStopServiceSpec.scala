@@ -549,8 +549,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val assetId = 300000
       val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
-      sqlu"""update text_property_value set value_fi='' where id = $propertyValueId""".execute
-      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
+      sqlu"""update text_property_value set value_fi=null where id = cast($propertyValueId as bigint)""".execute
+      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = cast($propertyValueId as bigint)""".as[String].list
       dbResult.size should be(1)
       dbResult.head should be(null)
       val properties = List(
@@ -572,8 +572,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val assetId = 300000
       val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
-      sqlu"""update text_property_value set value_fi='livi123' where id = $propertyValueId""".execute
-      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
+      sqlu"""update text_property_value set value_fi='livi123' where id = cast($propertyValueId AS bigint)""".execute
+      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = cast($propertyValueId AS bigint)""".as[String].list
       dbResult.size should be(1)
       dbResult.head should be("livi123")
       val properties = List(
@@ -629,8 +629,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val floating = sql"""
             select a.floating from asset a
             where a.id = 300002
-      """.as[Int].firstOption
-      floating should be(Some(0))
+      """.as[Boolean].firstOption
+      floating should be(Some(false))
     }
   }
 
@@ -1370,8 +1370,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val assetId = 300000
       val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
-      sqlu"""delete from text_property_value where id = $propertyValueId""".execute
-      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
+      sqlu"""delete from text_property_value where id = cast($propertyValueId AS bigint)""".execute
+      val dbResult = sql"""SELECT value_fi FROM text_property_value where id = cast($propertyValueId AS bigint)""".as[String].list
       dbResult.size should be(0)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
             (RoadAddress(Option("235"), 1, 1, Track.Combined, 0), RoadSide.Left)
