@@ -299,7 +299,7 @@ object Queries {
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
-      sqlu"update lrm_position set #$propertyColumn = $value where id = (select position_id from asset_link where asset_id = $assetId)"
+      sqlu"update lrm_position set #$propertyColumn = cast($value as numeric) where id = (select position_id from asset_link where asset_id = $assetId)"
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
