@@ -58,7 +58,7 @@ class OracleAssetDao {
   def expireAssetByTypeAndLinkId(typeId: Long, linkIds: Seq[Long]): Unit = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sqlu"""
-         update asset set valid_to = INTERVAL'1 SECOND' where id in (
+         update asset set valid_to =current_timestamp - INTERVAL'1 SECOND' where id in (
           select a.id
           from asset a
           join asset_link al on al.asset_id = a.id
