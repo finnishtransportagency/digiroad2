@@ -299,7 +299,7 @@ object Queries {
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
-      sqlu"update lrm_position set #$propertyColumn = $value where id = (select position_id from asset_link where asset_id = $assetId)"
+      sqlu"update lrm_position set #$propertyColumn = cast($value as numeric) where id = (select position_id from asset_link where asset_id = $assetId)"
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
@@ -372,25 +372,6 @@ object Queries {
     sql"""
       select id from municipality where ROAD_MAINTAINER_ID != 0
       """.as[Int].list
-  }
-
-  def getDistinctRoadNumbers(filterRoadAddresses : Boolean) : Seq[Int] = {
-    if(filterRoadAddresses){
-      sql"""
-      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000)) and floating = '0' AND (end_date < current_timestamp OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-    else{
-      sql"""
-       select distinct road_number from road_address where floating = '0' AND (end_date < current_timestamp OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-  }
-
-  def getLinkIdsByRoadNumber(roadNumber: Int) : Set[Long] = {
-    sql"""
-       select distinct pos.LINK_ID from road_address ra join LRM_POSITION pos on ra.lrm_position_id = pos.id where ra.road_number = $roadNumber
-      """.as[Long].list.toSet
   }
 
   def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {

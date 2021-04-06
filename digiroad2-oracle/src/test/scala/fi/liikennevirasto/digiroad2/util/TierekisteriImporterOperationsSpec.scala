@@ -1294,9 +1294,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
         asset.sideCode should be(SideCode.TowardsDigitizing.value)
         asset.createdBy should be(Some("batch_process_stateSpeedLimit"))
       }
-      assets.sortBy(_.startMeasure)
-      assets.head.value should be (Some(NumericValue(80)))
-      assets.last.value should be (Some(NumericValue(50)))
+      val sortedAsset=assets.sortBy(_.startMeasure)
+      sortedAsset.head.value should be (Some(NumericValue(80)))
+      sortedAsset.last.value should be (Some(NumericValue(50)))
 
     }
   }

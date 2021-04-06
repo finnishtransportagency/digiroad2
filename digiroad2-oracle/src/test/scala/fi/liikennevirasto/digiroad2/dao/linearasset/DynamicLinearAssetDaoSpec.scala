@@ -79,9 +79,9 @@ class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
 
       val assetValues = persistedAssets.head.value.get.asInstanceOf[DynamicValue].value.properties
       assetValues.filter(_.publicId == "test_data_text").flatMap(_.values).head should be (DynamicPropertyValue(textValue))
-      assetValues.filter(_.publicId == "test_multiple_choice").flatMap(_.values) should be (Seq(DynamicPropertyValue(enumeratedValue2_value.toString()), DynamicPropertyValue(enumeratedValue1_value.toString())))
+      assetValues.filter(_.publicId == "test_multiple_choice").flatMap(_.values).sortBy(_.value.toString)  should be (Seq(DynamicPropertyValue(enumeratedValue1_value.toString()), DynamicPropertyValue(enumeratedValue2_value.toString())))
       assetValues.filter(_.publicId == "test_single_choice").flatMap(_.values).head should be (DynamicPropertyValue(enumeratedValue1_value.toString()))
-      assetValues.filter(_.publicId == "test_data_number").flatMap(_.values) should be (Seq(DynamicPropertyValue(numberValue1.toString), DynamicPropertyValue(numberValue2.toString)))
+      assetValues.filter(_.publicId == "test_data_number").flatMap(_.values).sortBy(_.value.toString)  should be (Seq(DynamicPropertyValue(numberValue1.toString), DynamicPropertyValue(numberValue2.toString)))
     }
   }
 

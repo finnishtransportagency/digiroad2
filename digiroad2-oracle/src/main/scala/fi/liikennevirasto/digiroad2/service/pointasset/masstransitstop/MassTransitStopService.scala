@@ -490,7 +490,7 @@ trait MassTransitStopService extends PointAssetOperations {
       Map[String, String]("liitetyt_pysakit" -> PropertyTypes.MultipleChoice)
     } else {
       val requiredProperties = withDynSession {
-        sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
+        sql"""select public_id, property_type from property where asset_type_id = $typeId and required = '1' """.as[(String, String)].iterator.toMap
       }
       val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
       requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
