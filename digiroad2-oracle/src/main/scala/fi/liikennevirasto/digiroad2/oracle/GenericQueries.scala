@@ -29,9 +29,9 @@ object GenericQueries {
     sql"""
       select p.public_id, p.property_type, p.required, ls.value_fi,
       case
-        when e.value is not null then to_char(e.value)
+        when e.value is not null then cast(e.value as text)
         when tp.value_fi is not null then tp.value_fi
-        when np.value is not null then to_char(np.value)
+        when np.value is not null then cast(np.value as text)
       else null
       end as value, e.name_fi
       from asset_type a

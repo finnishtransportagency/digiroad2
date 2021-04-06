@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Grunt Test" type="js.build_tools.grunt" factoryName="Grunt.js">
+        <node-interpreter value="project" />
+        <gruntfile value="$PROJECT_DIR$/gruntfile.js" />
+        <tasks>
+            <task value="test" />
+        </tasks>
+        <arguments value="--debug-brk" />
+        <envs />
+        <method />
+    </configuration>
+</component>

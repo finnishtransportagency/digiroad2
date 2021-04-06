@@ -8,7 +8,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries.{DynamicPropertyRow, bytesToPoint}
+import fi.liikennevirasto.digiroad2.dao.Queries.DynamicPropertyRow
 import fi.liikennevirasto.digiroad2.dao.{DynamicAssetRow, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -18,8 +18,8 @@ import slick.jdbc.StaticQuery.interpolation
 class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
   def fetchPotentialServiceRoads(includeFloating: Boolean = false, includeExpire: Boolean = false ): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else " and a.floating = 0"
-    val expiredFilter = if (includeExpire) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val floatingFilter = if (includeFloating) "" else " and a.floating = '0'"
+    val expiredFilter = if (includeExpire) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     var valueToBeFetch = "9"
     var propNameFi = "Potentiaalinen kayttooikeus"
 
@@ -29,11 +29,11 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                     select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
                     case
                     when tp.value_fi is not null then tp.value_fi
-                    when e.value is not null then to_char(e.value)
+                    when e.value is not null then cast(e.value as text)
                     else null
                     end as value,
                     a.created_by, a.created_date, a.modified_by, a.modified_date,
-                    case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+                    case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                     pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
                    from asset a
                      join asset_link al on a.id = al.asset_id
@@ -112,13 +112,13 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def expireAllMaintenanceAssets(typeId: Int): Unit = {
-    sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
+    sqlu"update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where asset_type_id = $typeId".execute
   }
 
   def expireMaintenanceAssetsByLinkids(linkIds: Seq[Long], typeId: Int): Unit = {
     linkIds.foreach { linkId =>
       sqlu"""
-          update asset set valid_to = sysdate - 1/86400
+          update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
             where id in
             (SELECT a.id
                FROM asset a, asset_link al, lrm_position lp
@@ -140,32 +140,28 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), area: Int): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if (expired) "sysdate" else "null"
+    val validTo = if (expired) "current_timestamp" else "null"
     if (fromUpdate) {
       sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, area)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, SYSDATE, $area)
+       insert into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, area)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $area);
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, SYSDATE, $vvhTimeStamp, $linkSource)
+       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
 
-        into asset_link(asset_id, position_id)
+       insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
-      select * from dual
     """.execute
     } else {
       sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, area)
-      values ($id, $typeId, $username, sysdate, #$validTo, $area)
+      insert into asset(id, asset_type_id, created_by, created_date, valid_to, area)
+      values ($id, $typeId, $username, current_timestamp, #$validTo, $area);
 
-      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, SYSDATE, $vvhTimeStamp, $linkSource)
+      insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
 
-      into asset_link(asset_id, position_id)
-      values ($id, $lrmPositionId)
-      select * from dual
+      insert into asset_link(asset_id, position_id)
+      values ($id, $lrmPositionId);
         """.execute
     }
     id
@@ -174,13 +170,13 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def getUncheckedMaintenanceRoad(areas: Option[Set[Int]]): List[(Long, String)] = {
     val optionalAreas = areas.map(_.mkString(","))
     val uncheckedQuery = """
-          Select a.id, case when a.area is null then 'Unknown' else TO_CHAR(a.area) end
+          Select a.id, case when a.area is null then 'Unknown' else cast(a.area as text) end
           from asset a
           left join property p on a.asset_type_id = p.asset_type_id and public_id = 'huoltotie_tarkistettu'
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id
           join enumerated_value e on e.id = mc.enumerated_value_id and e.value = 0
           where a.asset_type_id = 290
-          and(valid_to is NULL OR valid_to > SYSDATE)"""
+          and(valid_to is NULL OR valid_to > current_timestamp)"""
 
     val sql = optionalAreas match {
       case Some(area) => uncheckedQuery + s" and a.area in ($area)"

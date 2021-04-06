@@ -60,7 +60,7 @@ object OracleDatabase {
   }
 
   def setSessionLanguage() {
-    sqlu"""alter session set nls_language = 'american'""".execute
+    //sqlu"""alter session set nls_language = 'american'""".execute
   }
 
   def jodaToSqlDate(jodaDate: LocalDate): Date = {
@@ -68,7 +68,7 @@ object OracleDatabase {
   }
 
   def initDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
+    Class.forName("org.postgresql.Driver")
     val cfg = new BoneCPConfig(localProperties)
     new BoneCPDataSource(cfg)
   }
@@ -89,22 +89,11 @@ object OracleDatabase {
     val rightTopX = bounds.rightTop.x
     val rightTopY = bounds.rightTop.y
     s"""
-        mdsys.sdo_filter($geometryColumn,
-                         sdo_cs.viewport_transform(
-                         mdsys.sdo_geometry(
-                         2003,
-                         0,
-                         NULL,
-                         mdsys.sdo_elem_info_array(1,1003,3),
-                         mdsys.sdo_ordinate_array($leftBottomX,
-                                                  $leftBottomY,
-                                                  $rightTopX,
-                                                  $rightTopY)
-                         ),
-                         3067
-                         ),
-                         'querytype=WINDOW'
-                         ) = 'TRUE'
+      $geometryColumn && ST_MakeEnvelope($leftBottomX,
+                                         $leftBottomY,
+                                         $rightTopX,
+                                         $rightTopY,
+                                         3067)
     """
   }
 }

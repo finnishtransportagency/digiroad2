@@ -715,12 +715,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     sqlu"""
       insert
         into asset(id, asset_type_id, created_by, created_date)
-        values ($speedLimitId, $typeId, $creator, sysdate)
+        values ($speedLimitId, $typeId, $creator, current_timestamp)
     """.execute
 
     if (expired) {
       sqlu"""
-        update asset set valid_to = sysdate where id = $speedLimitId
+        update asset set valid_to = current_timestamp where id = $speedLimitId
       """.execute
     }
 
@@ -730,13 +730,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val endMeasure = segment.endMeasure
       val linkId = segment.linkId
       sqlu"""
-        insert all
-          into lrm_position(id, start_measure, end_measure, link_id, side_code)
-          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, 1)
+         insert into lrm_position(id, start_measure, end_measure, link_id, side_code)
+          values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, 1);
 
-          into asset_link(asset_id, position_id)
-          values ($speedLimitId, $lrmPositionId)
-        select * from dual
+         insert into asset_link(asset_id, position_id)
+          values ($speedLimitId, $lrmPositionId);
       """.execute
     }
     speedLimitId
@@ -747,7 +745,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
       """.execute
   }
 
@@ -787,7 +785,6 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   private def getDateTimeNowFromDatabase() ={
     sql"""
-          select SYSTIMESTAMP from dual
-      """.as[(DateTime)].list
+          select CURRENT_TIMESTAMP""".as[(DateTime)].list
   }
 }

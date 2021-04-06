@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.PersistedPointAsset
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.service.pointasset.{WeightGroupLimitation}
@@ -27,7 +26,7 @@ class OraclePointMassLimitationDao {
         left join number_property_value npv on npv.asset_id = a.id
       """
     val queryWithFilter = queryFilter(query) +
-      s" and (a.valid_to > sysdate or a.valid_to is null) and a.asset_type_id in (${assetTypes.mkString(",")})"
+      s" and (a.valid_to > current_timestamp or a.valid_to is null) and a.asset_type_id in (${assetTypes.mkString(",")})"
     StaticQuery.queryNA[WeightGroupLimitation](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
@@ -36,7 +35,7 @@ class OraclePointMassLimitationDao {
       val id = r.nextLong()
       val typeId = r.nextInt()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()

@@ -62,7 +62,7 @@ object OracleDirectionalTrafficSignDao {
          left join multiple_choice_value mcv ON mcv.asset_id = a.id and mcv.property_id = p.id AND p.PROPERTY_TYPE = 'checkbox'
          left join enumerated_value ev on  mcv.ENUMERATED_VALUE_ID = ev.ID
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null) "
     queryToDirectionalTrafficSign(queryWithFilter)
   }
 
@@ -113,7 +113,7 @@ object OracleDirectionalTrafficSignDao {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()
@@ -148,14 +148,12 @@ object OracleDirectionalTrafficSignDao {
 
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
-        values ($id, 240, $username, sysdate, $municipality, ${sign.bearing}, $floating)
-        into lrm_position(id, start_measure, end_measure, link_id, side_code)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection})
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
+        values ($id, 240, $username, current_timestamp, $municipality, ${sign.bearing}, $floating);
+        insert into lrm_position(id, start_measure, end_measure, link_id, side_code)
+        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection});
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
 
@@ -169,14 +167,12 @@ object OracleDirectionalTrafficSignDao {
 
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
-        values ($id, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, sysdate)
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
-        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection}, sysdate)
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
+       insert into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, modified_by, modified_date)
+        values ($id, 240, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, ${sign.bearing}, $username, current_timestamp);
+        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
+        values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection}, current_timestamp);
+       insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
 
@@ -217,7 +213,7 @@ object OracleDirectionalTrafficSignDao {
   }
 
   def updateVerifiedInfo(assetId: Long, user: String): Long = {
-    sqlu"""update asset set verified_by = $user, verified_date = sysdate where id = $assetId""".execute
+    sqlu"""update asset set verified_by = $user, verified_date = current_timestamp where id = $assetId""".execute
     assetId
   }
 

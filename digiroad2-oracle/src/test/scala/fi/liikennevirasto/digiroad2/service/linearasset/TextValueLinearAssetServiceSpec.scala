@@ -110,9 +110,9 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       val lrm = Sequences.nextLrmPositionPrimaryKeySeqValue
       val assetId = Sequences.nextPrimaryKeySeqValue
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) values ($lrm, $oldLinkId, 0, 25.000, 1)""".execute
-      sqlu"""insert into asset (id, asset_type_id, created_date, created_by) values ($assetId, $assetTypeId, SYSDATE, 'dr2_test_data')""".execute
+      sqlu"""insert into asset (id, asset_type_id, created_date, created_by) values ($assetId, $assetTypeId, current_timestamp, 'dr2_test_data')""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrm)""".execute
-      sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values ($assetId, $assetId, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', sysdate, 'dr2_test_data')""".execute
+      sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values ($assetId, $assetId, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', current_timestamp, 'dr2_test_data')""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = ServiceWithDao.getByBoundingBox(assetTypeId, boundingBox).toList

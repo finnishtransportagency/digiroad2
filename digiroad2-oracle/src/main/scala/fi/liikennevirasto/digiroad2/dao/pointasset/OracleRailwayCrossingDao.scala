@@ -57,7 +57,7 @@ object OracleRailwayCrossingDao {
          left join enumerated_value ev on (ev.property_id = p.id AND (scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.id))
          left join text_property_value tpv on (tpv.property_id = p.id AND tpv.asset_id = a.id)
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null) "
+    val queryWithFilter = queryFilter(query) + " and (a.valid_to > current_timestamp or a.valid_to is null) "
     queryToRailwayCrossing(queryWithFilter)
   }
 
@@ -107,7 +107,7 @@ object OracleRailwayCrossingDao {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val linkId = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
       val vvhTimeStamp = r.nextLong()
@@ -139,17 +139,14 @@ object OracleRailwayCrossingDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 230, $username, sysdate, $municipality)
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code)
+        values ($id, 230, $username, current_timestamp, $municipality);
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
-        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value})
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
+        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value});
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
 
@@ -162,17 +159,14 @@ object OracleRailwayCrossingDao {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, 230, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, sysdate)
+        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
+        values ($id, 230, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp);
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
-        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value}, sysdate)
+        insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
+        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
 
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-
-      select * from dual
+        insert into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId);
     """.execute
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
 

@@ -72,10 +72,9 @@ object OracleServicePointDao {
   def create(servicePoint: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     val servicePointId = Sequences.nextPrimaryKeySeqValue
     sqlu"""
-      insert all
+      insert
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($servicePointId, 250, $username, sysdate, $municipalityCode)
-      select * from dual
+        values ($servicePointId, 250, $username, current_timestamp, $municipalityCode);
     """.execute
     Queries.updateAssetGeometry(servicePointId, Point(servicePoint.lon, servicePoint.lat))
     servicePoint.services.foreach { service =>
@@ -94,7 +93,7 @@ object OracleServicePointDao {
   def update(assetId: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, user: String) = {
     sqlu"""
            UPDATE asset
-            SET municipality_code = $municipalityCode, modified_by = $user, modified_date = sysdate
+            SET municipality_code = $municipalityCode, modified_by = $user, modified_date = current_timestamp
             WHERE id = $assetId""".execute
     sqlu"""delete from SERVICE_POINT_VALUE where ASSET_ID = $assetId""".execute
     Queries.updateAssetGeometry(assetId, Point(updatedAsset.lon, updatedAsset.lat))
@@ -113,7 +112,7 @@ object OracleServicePointDao {
 
   def expire(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).first
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
   def get: Set[ServicePoint] = {
@@ -150,7 +149,7 @@ object OracleServicePointDao {
          left join multiple_choice_value mcv ON mcv.asset_id = a.id and mcv.property_id = p.id AND p.PROPERTY_TYPE = 'checkbox'
          left join enumerated_value ev on (ev.property_id = p.id AND mcv.enumerated_value_id = ev.id)
          where a.ASSET_TYPE_ID = 250
-         and (a.valid_to > sysdate or a.valid_to is null)
+         and (a.valid_to > current_timestamp or a.valid_to is null)
       $withFilter
     """
 
@@ -207,7 +206,7 @@ object OracleServicePointDao {
   implicit val getServicePoint = new GetResult[ServicePointRow] {
     def apply(r: PositionedResult) : ServicePointRow = {
       val id = r.nextLong()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
