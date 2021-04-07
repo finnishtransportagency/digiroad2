@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import org.joda.time.format.{DateTimeFormat, PeriodFormat}
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
@@ -43,8 +42,6 @@ AssetDataImporter {
                            roadLinkId: Long,
                            municipalityCode: Int,
                            bearing: Double)
-  case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
-                            rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
   case class PropertyWrapper(shelterTypePropertyId: Long, accessibilityPropertyId: Long, administratorPropertyId: Long,
                              busStopAssetTypeId: Long, busStopTypePropertyId: Long, busStopLiViPropertyId: Long, busStopSuggestedPropertyId: Long)
@@ -86,12 +83,6 @@ class AssetDataImporter {
 
   def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-
-  implicit object SetStruct extends SetParameter[STRUCT] {
-    def apply(v: STRUCT, pp: PositionedParameters) {
-      pp.setObject(v, java.sql.Types.STRUCT)
-    }
-  }
 
   def time[A](f: => A) = {
     val s = System.nanoTime
