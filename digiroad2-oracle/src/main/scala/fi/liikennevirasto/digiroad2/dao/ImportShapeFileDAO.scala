@@ -32,6 +32,7 @@ object ImportShapeFileDAO {
     }
   }
 
+  //Tables are generated when doing shapefile import by some other tool.
   def getCyclingAndWalkingInfo(municipalityCode: Int): Seq[CyclingAndWalking] = {
     sql"""
       select distinct LINK_ID, KAPY_POHJA from KAPY_POHJADATA_GEOMETRY where KUNTAKOODI = $municipalityCode and KAPY_POHJA IS NOT NULL
