@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 
-//TODO no used in dataFixture anymore, we should remove this part of code
+// no used in dataFixture anymore
 object ServicePointImporter {
   def importServicePoints(database: DatabaseDef, vvhServiceHost: String): Unit =  {
     val servicePoints = database.withDynSession {

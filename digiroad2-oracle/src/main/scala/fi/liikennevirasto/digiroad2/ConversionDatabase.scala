@@ -8,7 +8,7 @@ import slick.jdbc.{PositionedResult, GetResult}
 
 object ConversionDatabase {
 
-  //TODO this is only needed in ServicePointImporter, ServicePointImporter itself has no real used anymore
+  //this is only needed in ServicePointImporter, ServicePointImporter itself has no real used anymore
   implicit object GetPointSeq extends GetResult[Seq[Point]] {
     def apply(rs: PositionedResult) = toPoints(rs.nextBytes())
   }
