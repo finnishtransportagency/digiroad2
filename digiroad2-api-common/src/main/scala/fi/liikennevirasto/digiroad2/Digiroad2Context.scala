@@ -35,15 +35,17 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case (massTransitStop: PersistedMassTransitStop) => persistedAssetChanges(massTransitStop)
+    case (massTransitStop: PersistedMassTransitStop,deleteEvent:Boolean) => persistedAssetChanges(massTransitStop,deleteEvent)
     case _                                          => println("received unknown message")
   }
 
-  def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
+  def persistedAssetChanges(busStop: PersistedMassTransitStop,deleteEvent:Boolean = false) = {
     withDynSession {
       val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
       val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
       ValluSender.postToVallu(massTransitStop)
-      massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
+      if(!deleteEvent)
+        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
     }
   }
 }
