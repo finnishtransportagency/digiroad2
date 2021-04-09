@@ -9,7 +9,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class PostGISUserProviderSpec extends FunSuite with Matchers {
 
-    val testUserName = "Oracleuserprovidertest"
+    val testUserName = "PostGISuserprovidertest"
     val north = 1000
     val east = 3000
     val newNorth = 2000
