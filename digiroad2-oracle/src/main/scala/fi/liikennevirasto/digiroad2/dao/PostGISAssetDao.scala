@@ -58,13 +58,13 @@ class PostGISAssetDao {
   def expireAssetByTypeAndLinkId(typeId: Long, linkIds: Seq[Long]): Unit = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sqlu"""
-         update asset set valid_to = INTERVAL'1 SECOND' where id in (
+         update asset set valid_to =current_timestamp - INTERVAL'1 SECOND' where id in (
           select a.id
           from asset a
           join asset_link al on al.asset_id = a.id
           join lrm_position lrm on lrm.id = al.position_id
           join  #$idTableName i on i.id = lrm.link_id
-          where a.asset_type_id = $typeId AND (a.valid_to IS NULL OR a.valid_to > current_timestamp ) AND a.floating = 0
+          where a.asset_type_id = $typeId AND (a.valid_to IS NULL OR a.valid_to > current_timestamp ) AND a.floating = '0'
          )
       """.execute
     }

@@ -56,7 +56,7 @@ CREATE TABLE asset
     valid_to           timestamp,
     geometry           geometry,
     municipality_code  bigint,
-    floating           char(1) DEFAULT '0',
+    floating           boolean DEFAULT '0',
     area               numeric(38),
     verified_by        varchar(128),
     verified_date      timestamp,
@@ -77,7 +77,7 @@ CREATE TABLE asset_history
     valid_to           timestamp,
     geometry           geometry,
     municipality_code  bigint,
-    floating           char(1) DEFAULT '0',
+    floating           boolean DEFAULT '0',
     area               numeric(38),
     verified_by        varchar(128),
     verified_date      timestamp,
@@ -181,7 +181,7 @@ CREATE TABLE enumerated_value
 (
     id            bigint       NOT NULL,
     property_id   bigint       NOT NULL,
-    value         bigint,
+    value         numeric,
     name_fi       varchar(512) NOT NULL,
     name_sv       varchar(512),
     image_id      bigint,
@@ -216,7 +216,7 @@ CREATE TABLE feedback
     created_date timestamp NOT NULL DEFAULT current_timestamp,
     subject      varchar(128),
     body         varchar(4000),
-    status       char(1)   DEFAULT '0',
+    status       boolean DEFAULT '0',
     status_date  timestamp DEFAULT current_timestamp
 );
 
@@ -281,7 +281,7 @@ CREATE TABLE lane_attribute
     lane_id       bigint,
     name          varchar(128),
     value         varchar(128),
-    required      char(1) DEFAULT '0',
+    required      boolean DEFAULT '0',
     created_date  timestamp,
     created_by    varchar(128),
     modified_date timestamp,
@@ -313,7 +313,7 @@ CREATE TABLE lane_history_attribute
     lane_history_id bigint,
     name            varchar(128),
     value           varchar(128),
-    required        char(1) DEFAULT '0',
+    required        boolean DEFAULT '0',
     created_date    timestamp,
     created_by      varchar(128),
     modified_date   timestamp,
@@ -414,7 +414,7 @@ CREATE TABLE manoeuvre
     created_by      varchar(128),
     created_date    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     traffic_sign_id bigint,
-    suggested       char(1)   DEFAULT '0'
+    suggested       boolean DEFAULT '0'
 );
 
 CREATE TABLE manoeuvre_element
@@ -458,7 +458,7 @@ CREATE TABLE manoeuvre_history
     created_by      varchar(128),
     created_date    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     traffic_sign_id bigint,
-    suggested       char(1)   DEFAULT '0'
+    suggested       boolean DEFAULT '0'
 );
 
 CREATE TABLE manoeuvre_validity_period
@@ -554,7 +554,7 @@ CREATE TABLE number_property_value
     id          bigint NOT NULL,
     asset_id    bigint NOT NULL,
     property_id bigint NOT NULL,
-    value       bigint,
+    value       numeric,
     grouped_id  bigint DEFAULT 0
 );
 
@@ -563,7 +563,7 @@ CREATE TABLE number_property_value_history
     id          bigint NOT NULL,
     asset_id    bigint NOT NULL,
     property_id bigint NOT NULL,
-    value       bigint,
+    value       numeric,
     grouped_id  bigint DEFAULT 0
 );
 
@@ -624,7 +624,7 @@ CREATE TABLE property
     id                       bigint    NOT NULL,
     asset_type_id            bigint    NOT NULL,
     property_type            varchar(128),
-    required                 char(1) DEFAULT '0',
+    required                 boolean DEFAULT '0',
     created_date             timestamp NOT NULL DEFAULT current_timestamp,
     created_by               varchar(128),
     modified_date            timestamp,
@@ -666,7 +666,7 @@ CREATE TABLE service_point_value
     parking_place_count bigint,
     name                varchar(128),
     type_extension      bigint,
-    is_authority_data   char(1),
+    is_authority_data   boolean DEFAULT NULL,
     weight_limit        bigint
 );
 
@@ -679,7 +679,7 @@ CREATE TABLE service_point_value_history
     parking_place_count bigint,
     name                varchar(128),
     type_extension      bigint,
-    is_authority_data   char(1),
+    is_authority_data   boolean DEFAULT NULL,
     weight_limit        bigint
 );
 

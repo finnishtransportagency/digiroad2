@@ -492,7 +492,6 @@ object DataFixture {
         _ match {
           case (assetId, linkId, point, mValue, None) =>
             val roadlink = roadLinks.find(_.linkId == linkId)
-            //val point = bytesToPoint(geometry)
             PointAssetOperations.isFloating(municipalityCode = municipality, lon = point.x, lat = point.y,
               mValue = mValue, roadLink = roadlink) match {
               case (isFloating, Some(reason)) =>

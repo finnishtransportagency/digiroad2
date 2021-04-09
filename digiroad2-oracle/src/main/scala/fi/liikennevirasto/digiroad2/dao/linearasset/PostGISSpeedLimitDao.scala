@@ -76,7 +76,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-		   where a.asset_type_id = 20 and floating = 0 #$queryFilter""".as[SpeedLimitRow].list
+		   where a.asset_type_id = 20 and floating = '0' #$queryFilter""".as[SpeedLimitRow].list
     }
     groupSpeedLimitsResult(speedLimitRows)
   }
@@ -325,7 +325,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
             left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
             left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
             where a.asset_type_id = 20
-            and floating = 0
+            and floating = '0'
             and (
               (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
               or
@@ -359,8 +359,8 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def persistUnknownSpeedLimits(limits: Seq[UnknownSpeedLimit]): Unit = {
     val statement = dynamicSession.prepareStatement(
       """
-        insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ( ?, ?, ?)
-        where not exists (select * from unknown_speed_limit where link_id = ?)
+        insert into unknown_speed_limit (link_id, municipality_code, administrative_class)
+        select ?, ?, ? where not exists (select * from unknown_speed_limit where link_id = ?)
       """)
     try {
       limits.foreach { limit =>
@@ -436,12 +436,12 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val sideCodeValue = sideCode.value
 
     val creationDate = createdDate match {
-      case Some(datetime) => s"""TO_TIMESTAMP_TZ('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
       case None => "current_timestamp"
     }
 
     val modifiedDate = modifiedAt match {
-      case Some(datetime) => s"""TO_TIMESTAMP_TZ('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
       case None => "NULL"
     }
 
@@ -475,7 +475,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def setFloating(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
-        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute
+        sqlu"""update asset set floating = '1' where id in (select id from #$idTableName)""".execute
       }
     }
   }
@@ -636,7 +636,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def floatLinearAssets(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
-        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute
+        sqlu"""update asset set floating = '1' where id in (select id from #$idTableName)""".execute
       }
     }
   }

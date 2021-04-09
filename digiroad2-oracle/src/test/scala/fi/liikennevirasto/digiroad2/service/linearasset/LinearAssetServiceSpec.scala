@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao, Sequences}
-import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
@@ -40,21 +40,21 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-  val mockLinearAssetDao: PostGISLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
+  val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-  val mockAssetDao: PostGISAssetDao = MockitoSugar.mock[PostGISAssetDao]
+  val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: PostGISLinearAssetDao = mockLinearAssetDao
+    override def dao: OracleLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: PostGISAssetDao = mockAssetDao
+    override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
@@ -68,12 +68,12 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   object ServiceWithDao extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: PostGISLinearAssetDao = linearAssetDao
+    override def dao: OracleLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: PostGISAssetDao = mockAssetDao
+    override def assetDao: OracleAssetDao = mockAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
@@ -221,7 +221,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000),
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.BothDirections.value})""".execute
@@ -284,7 +284,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val lrm1 = Sequences.nextLrmPositionPrimaryKeySeqValue
       val asset1 = Sequences.nextPrimaryKeySeqValue
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, 0.0, 25.0, 1)""".execute
@@ -363,7 +363,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val lrm1 = Sequences.nextLrmPositionPrimaryKeySeqValue
       val asset1 = Sequences.nextPrimaryKeySeqValue
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, 5.0, 15.0, ${SideCode.BothDirections.value})""".execute
@@ -439,7 +439,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000),
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.BothDirections.value})""".execute
@@ -525,7 +525,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
@@ -595,7 +595,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
@@ -649,7 +649,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(200), SideCode.AgainstDigitizing.value, 0, None), LengthLimit.typeId),
       TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(300), SideCode.AgainstDigitizing.value, 0, None), WidthLimit.typeId))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       assetsInfo.foreach(testSideCodeAdjustment)
 
       dynamicSession.rollback()
@@ -698,7 +698,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val oldLinkId2 = 1235
     val assetTypeId = 100
     val vvhTimeStamp = 14440000
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val asset1 = Sequences.nextPrimaryKeySeqValue
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
@@ -760,7 +760,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       ChangeInfo(Some(oldLinkId1), None, 1204467577, 8, Some(0), Some(81.53683273), None, None, 1461970812000L),
       ChangeInfo(Some(oldLinkId1), None, 1204467577, 8, Some(164.92962409), Some(165.37927110999999), None, None, 1461970812000L))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId1)""".execute
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code, adjusted_timestamp) VALUES ($lrm, $oldLinkId1, 0.0, 83.715, ${SideCode.BothDirections.value}, 1)""".execute
@@ -803,8 +803,8 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    PostGISDatabase.withDynTransaction {
-      val (assetId, assetMunicipalityCode) = sql"""select ID, MUNICIPALITY_CODE from asset where asset_type_id = 10 and valid_to > = current_timestamp and rownum = 1""".as[(Int, Int)].first
+    OracleDatabase.withDynTransaction {
+      val (assetId, assetMunicipalityCode) = sql"""select ID, MUNICIPALITY_CODE from asset where asset_type_id = 10 and valid_to >= current_timestamp offset 1 limit 1""".as[(Int, Int)].first
       val municipalityCode = service.getMunicipalityCodeByAssetId(assetId)
       municipalityCode should be(assetMunicipalityCode)
     }
@@ -820,7 +820,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val roadLink3 = RoadLink(300, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 7, TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
     val heightLimitAssetId = 70
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
@@ -855,7 +855,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val roadLink1 = RoadLink(1611374, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
     val totalWeightLimitAssetId = 30
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
 
       //Linear assets that have been changed in OTH between given date values Before Update
@@ -914,7 +914,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val changeInfo = Seq(
       ChangeInfo(Some(oldLinkId), Some(newLinkId), 1204467577, 1, Some(0), Some(150), Some(100), Some(200), 1461970812000L))
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId)""".execute
       sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code, adjusted_timestamp) VALUES ($lrm, $oldLinkId, 0.0, 150.0, ${SideCode.BothDirections.value}, 1)""".execute

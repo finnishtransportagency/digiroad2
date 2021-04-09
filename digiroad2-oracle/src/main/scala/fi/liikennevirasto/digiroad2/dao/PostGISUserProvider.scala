@@ -4,7 +4,6 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.json4s._
 import org.json4s.jackson.Serialization

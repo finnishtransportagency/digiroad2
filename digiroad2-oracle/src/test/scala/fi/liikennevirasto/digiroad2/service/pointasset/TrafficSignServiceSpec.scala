@@ -570,10 +570,10 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
-      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId,0, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId,'0', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, 300153, 300144, timestamp '2016-12-17 19:01:13.000000', null)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11,(select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 19:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
@@ -590,16 +590,16 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
-      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId, 1, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId, '1', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, 300153, 300144, timestamp '2016-12-17 19:01:13.000000', null)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, (select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 19:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$trafficSignsTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$trafficSignsTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(2, 300153, 300144, timestamp '2016-12-17 20:01:13.000000', null)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(2, (select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 20:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())

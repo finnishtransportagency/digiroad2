@@ -7,8 +7,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import _root_.oracle.spatial.geometry.JGeometry
-import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.joda.time.{DateTime, LocalDate}
@@ -19,6 +17,8 @@ import slick.jdbc.StaticQuery._
 import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
 import Q._
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import org.postgis.PGgeometry
+import org.postgresql.util.PGobject
 import java.util.Locale
 
 
@@ -35,15 +35,16 @@ object Queries {
   case class AdditionalPanelRow(publicId: String, propertyType: String, panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, panelText: String, panelSize: Int, panelCoatingType: Int, panelColor: Int)
   case class DynamicPropertyRow(publicId: String, propertyType: String, required: Boolean = false, propertyValue: Option[Any])
 
-  def bytesToPoint(bytes: Array[Byte]): Point = {
-    val geometry = JGeometry.load(bytes)
-    val point = geometry.getPoint()
-    Point(point(0), point(1))
+  def objectToPoint(geometry: Object): Point = {
+    val pgObject = geometry.asInstanceOf[PGobject]
+    val geom = PGgeometry.geomFromString(pgObject.getValue)
+    val point =geom.getFirstPoint
+    Point(point.x, point.y)
   }
 
   implicit val getPoint = new GetResult[Point] {
     def apply(r: PositionedResult) = {
-      bytesToPoint(r.nextBytes)
+      objectToPoint(r.nextObject())
     }
   }
 
@@ -73,17 +74,9 @@ object Queries {
 
   def nextNationalBusStopId = sql"select nextval('national_bus_stop_id_seq')"
 
-  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_nextval('primary_key_seq')"
+  def nextLrmPositionPrimaryKeyId = sql"select nextval('lrm_position_primary_key_seq')"
 
   def nextGroupedId = sql"select nextval('grouped_id_seq')"
-//redundant
-  def nextViitePrimaryKeyId = sql"select nextval('viite_general_seq')"
-  //redundant
-  def nextCommonHistoryValue = sql"select nextval('common_history_seq') "
-  //redundant
-  def fetchViitePrimaryKeyId(len: Int) = {
-    sql"""select nextval('viite_general_seq') from generate_series(1,$len)""".as[Long].list
-  }
 
   def fetchLrmPositionIds(len: Int) = {
     sql"""SELECT nextval('lrm_position_primary_key_seq') from generate_series(1,$len)""".as[Long].list
@@ -106,7 +99,11 @@ object Queries {
   }
 
   def linearGeometry(startPoint: Point, endPoint: Point,assetLength:Double): String ={
-    s"LINESTRING($startPoint.x $startPoint.y 0.0 0.0,$endPoint.x $endPoint.y 0.0 $assetLength)"
+    val startPointX =startPoint.x.toString
+    val startPointY =startPoint.y.toString
+    val endPointX =endPoint.x.toString
+    val endPointY =endPoint.x.toString
+    s"LINESTRING($startPointX $startPointY 0.0 0.0,$endPointX $endPointY 0.0 $assetLength)"
   }
 
   def pointGeometry(lon: Double, lat: Double): String ={s"POINT($lon $lat 0 0)"}
@@ -302,7 +299,7 @@ object Queries {
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
-      sqlu"update lrm_position set #$propertyColumn = $value where id = (select position_id from asset_link where asset_id = $assetId)"
+      sqlu"update lrm_position set #$propertyColumn = cast($value as numeric) where id = (select position_id from asset_link where asset_id = $assetId)"
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
@@ -359,10 +356,6 @@ object Queries {
     """.as[(String, String)].list.toMap
     propertyNames.filter(_._1 != null)
   }
-// no used
-  def storeGeometry(geometry: JGeometry, conn: Connection): STRUCT = {
-    JGeometry.store(geometry, bonecpToInternalConnection(conn))
-  }
 
   def collectedQuery[R](qc: QueryCollector)(implicit rconv: GetResult[R], pconv: SetParameter[IndexedSeq[Any]]): List[R] = {
     Q.query[IndexedSeq[Any], R](qc.sql).apply(qc.params).list
@@ -379,25 +372,6 @@ object Queries {
     sql"""
       select id from municipality where ROAD_MAINTAINER_ID != 0
       """.as[Int].list
-  }
-
-  def getDistinctRoadNumbers(filterRoadAddresses : Boolean) : Seq[Int] = {
-    if(filterRoadAddresses){
-      sql"""
-      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000)) and floating = '0' AND (end_date < current_timestamp OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-    else{
-      sql"""
-       select distinct road_number from road_address where floating = '0' AND (end_date < current_timestamp OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-  }
-
-  def getLinkIdsByRoadNumber(roadNumber: Int) : Set[Long] = {
-    sql"""
-       select distinct pos.LINK_ID from road_address ra join LRM_POSITION pos on ra.lrm_position_id = pos.id where ra.road_number = $roadNumber
-      """.as[Long].list.toSet
   }
 
   def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {
@@ -439,7 +413,7 @@ object Queries {
       val additionalInfo = r.nextStringOption()
       val modifiedDate = r.nextStringOption()
       val municipalityCode = r.nextInt()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
 
       LorryParkingInDATEX2(servicePointId, serviceId, parkingType, parkingTypeMeaning, name, additionalInfo, point.x, point.y, modifiedDate, municipalityCode)
     }

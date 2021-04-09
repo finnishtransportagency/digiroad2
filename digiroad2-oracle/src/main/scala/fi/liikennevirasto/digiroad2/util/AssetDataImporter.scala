@@ -15,10 +15,10 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISObstacleDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
@@ -55,7 +55,7 @@ AssetDataImporter {
 
   case object TemporaryTables extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/import.bonecp.properties"))
+      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/import.bonecp.properties"))
       new BoneCPDataSource(cfg)
     }
 
@@ -64,7 +64,7 @@ AssetDataImporter {
 
   case object Conversion extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/conversion.bonecp.properties"))
+      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
       new BoneCPDataSource(cfg)
     }
 
@@ -84,8 +84,8 @@ class AssetDataImporter {
 
   val Modifier = "dr1conversion"
 
-  def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   implicit object SetStruct extends SetParameter[STRUCT] {
     def apply(v: STRUCT, pp: PositionedParameters) {
@@ -142,7 +142,7 @@ class AssetDataImporter {
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, floating, CREATED_DATE, CREATED_BY) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
       val propertyPS = dynamicSession.prepareStatement("insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, ?, ?)")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
@@ -224,7 +224,7 @@ class AssetDataImporter {
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
 
-    val insertCount = PostGISDatabase.withDynTransaction {
+    val insertCount = OracleDatabase.withDynTransaction {
       insertProhibitions(typeId, conversionResults)
     }
     println(s"*** Persisted $insertCount linear assets in ${humanReadableDurationSince(startTime)}")
@@ -372,7 +372,7 @@ class AssetDataImporter {
   }
 
   def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+    val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
       sql"""
@@ -419,7 +419,7 @@ class AssetDataImporter {
   }
 
   def importHazmatProhibitions() = {
-    PostGISDatabase.withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val assetIds =
         sql"""
           select a.id from asset a
@@ -470,7 +470,7 @@ class AssetDataImporter {
   }
 
   def getTypeProperties = {
-    PostGISDatabase.withDynSession {
+    OracleDatabase.withDynSession {
       val shelterTypePropertyId = sql"select p.id from property p where p.public_id = 'katos'".as[Long].first
       val accessibilityPropertyId = sql"select p.id from property p where p.public_id = 'esteettomyys_liikuntarajoitteiselle'".as[Long].first
       val administratorPropertyId = sql"select p.id from property p where p.public_id = 'tietojen_yllapitaja'".as[Long].first
@@ -484,7 +484,7 @@ class AssetDataImporter {
   }
 
   def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
-    PostGISDatabase.withDynSession {
+    OracleDatabase.withDynSession {
       val assetId = busStop.assetId.getOrElse(Sequences.nextPrimaryKeySeqValue)
 
       sqlu"""
@@ -514,7 +514,7 @@ class AssetDataImporter {
 
   def adjustToNewDigitization(vvhHost: String) = {
     val vvhClient = new VVHClient(vvhHost)
-    val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
+    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[Long]()
 
     withDynTransaction {
@@ -617,7 +617,7 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 #$multiSegmentFilter
+        where a.asset_type_id = $typeId and floating = '0' #$multiSegmentFilter
       """.as[(Int, Int)].first
     }
   }
@@ -638,13 +638,13 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+        where a.asset_type_id = $typeId and floating = '0' and (select count(*) from asset_link where asset_id = a.id) > 1
       """.as[(Int, Int)].first
     }
   }
 
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
-    val dao = new PostGISSpeedLimitDao(null, null)
+    val dao = new OracleSpeedLimitDao(null, null)
 
     withDynTransaction {
       val speedLimitLinks = sql"""
@@ -656,7 +656,7 @@ class AssetDataImporter {
             join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
             join enumerated_value e on s.enumerated_value_id = e.id
             where a.asset_type_id = 20
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Option[Int], Double, Double, Int)].list
@@ -674,7 +674,7 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
-    val dao = new PostGISLinearAssetDao(null, null)
+    val dao = new OracleLinearAssetDao(null, null)
 
     withDynTransaction {
       val linearAssetLinks = sql"""
@@ -684,7 +684,7 @@ class AssetDataImporter {
             join lrm_position pos on al.position_id = pos.id
             left join number_property_value n on a.id = n.asset_id
             where a.asset_type_id = $typeId
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int], Int)].list
@@ -699,7 +699,7 @@ class AssetDataImporter {
       if (assetsIdsToExpire.size > 0) {
         val assetsIdsToExpireString = assetsIdsToExpire.mkString(",")
         sqlu"""update asset
-               set modified_by = 'expired_splitted_linearasset', modified_date = current_timestamp, valid_to = current_timestamp
+               set modified_by = 'expired_splitted_linearasset', modified_date = current_timestamp, valid_to = current_timestamp-INTERVAL'1 DAYS'
                where id in (#$assetsIdsToExpireString)""".execute
       }
       println(s"removed ${assetsIdsToExpire.size} multilink assets")
@@ -755,7 +755,7 @@ class AssetDataImporter {
   def unfloatLinearAssets(): Unit = {
     withDynTransaction {
       sqlu"""
-        update asset a set floating=0
+        update asset a set floating='0'
         where a.asset_type_id in (30,40,50,60,70,80,90,100)
         and (select count(*) from asset_link where asset_id = a.id) > 1""".execute
     }
@@ -836,7 +836,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   }
 
   def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
-    implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
+    implicit val getPoint = GetResult(r => objectToPoint(r.nextObject))
     sql"""
       select a.id, lrm.link_id, geometry, lrm.start_measure, np.value
       from
@@ -845,7 +845,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 1 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '1' and a.municipality_code = $municipality
       """.as[(Long, Long, Point, Double, Option[Int])].list
   }
 
@@ -858,7 +858,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 0 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '0' and a.municipality_code = $municipality
       """.as[(Long, Long, Option[Int])].list
   }
 
@@ -929,12 +929,11 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def getPropertyId: Long = {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
-    val id = PostGISObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
-    sqlu"""update asset set floating = 1 where id = $id""".execute
+    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
+    sqlu"""update asset set floating = '1' where id = $id""".execute
     id
   }
 
-  // this is redundant
   private[this] def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val cfg = new BoneCPConfig(localProperties)

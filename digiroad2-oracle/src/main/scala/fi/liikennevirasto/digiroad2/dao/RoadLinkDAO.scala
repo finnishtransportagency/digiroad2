@@ -36,22 +36,22 @@ sealed trait RoadLinkDAO{
   }
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by ) values(
-           nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username)
-                   where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
+    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+            select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
+            where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
 
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by ) values(
-           nextval('primary_key_seq'), $linkId, $value, $username)
-                   where not exists (select * from #$table where link_id = $linkId)""".execute
+    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+            select nextval('primary_key_seq'), $linkId, $value, $username
+            where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_date, modified_by)values(
-           nextval('primary_key_seq'), ${linkId}, $value,to_timestamp_tz($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
-    )            where not exists (select * from #$table where link_id = $linkId)""".execute
+    sqlu""" insert into #$table (id, link_id, #$column, modified_date, modified_by)
+            select nextval('primary_key_seq'), ${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
+           where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
 
@@ -224,8 +224,8 @@ object RoadLinkDAO{
     }
 
     override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-      sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type) values (
-             nextval('primary_key_seq'), ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value})
+      sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type)
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
@@ -287,8 +287,8 @@ object RoadLinkDAO{
 
     override def insertValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
       val vvhValue = getVVHValue(vvhRoadLink)
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass ) values(
-             nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue})
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
@@ -303,8 +303,8 @@ object RoadLinkDAO{
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
 
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass ) values (
-             nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue)
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
                    where exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
 
     }

@@ -8,7 +8,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries.{DynamicPropertyRow, bytesToPoint}
+import fi.liikennevirasto.digiroad2.dao.Queries.DynamicPropertyRow
 import fi.liikennevirasto.digiroad2.dao.{DynamicAssetRow, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -18,7 +18,7 @@ import slick.jdbc.StaticQuery.interpolation
 class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
   def fetchPotentialServiceRoads(includeFloating: Boolean = false, includeExpire: Boolean = false ): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else " and a.floating = 0"
+    val floatingFilter = if (includeFloating) "" else " and a.floating = '0'"
     val expiredFilter = if (includeExpire) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     var valueToBeFetch = "9"
     var propNameFi = "Potentiaalinen kayttooikeus"

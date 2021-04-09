@@ -67,7 +67,7 @@ object LinkIdImporter {
         val mmlIds =
           sql"""
                select *
-               from (select a.*, rownum rnum
+               from (select a.*, row_number() OVER() rnum
                       from (select distinct mml_id from #$tableName) a
                       limit $max
                 ) derivedMml where rnum >= $min
