@@ -1,12 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import org.joda.time.format.{DateTimeFormat, PeriodFormat}
+import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -15,10 +14,10 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
@@ -55,7 +54,7 @@ AssetDataImporter {
 
   case object TemporaryTables extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/import.bonecp.properties"))
+      val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/import.bonecp.properties"))
       new BoneCPDataSource(cfg)
     }
 
@@ -64,7 +63,7 @@ AssetDataImporter {
 
   case object Conversion extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
+      val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/conversion.bonecp.properties"))
       new BoneCPDataSource(cfg)
     }
 
@@ -84,8 +83,8 @@ class AssetDataImporter {
 
   val Modifier = "dr1conversion"
 
-  def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   implicit object SetStruct extends SetParameter[STRUCT] {
     def apply(v: STRUCT, pp: PositionedParameters) {
@@ -142,7 +141,7 @@ class AssetDataImporter {
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, floating, CREATED_DATE, CREATED_BY) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
       val propertyPS = dynamicSession.prepareStatement("insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, ?, ?)")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
@@ -224,7 +223,7 @@ class AssetDataImporter {
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
 
-    val insertCount = OracleDatabase.withDynTransaction {
+    val insertCount = PostGISDatabase.withDynTransaction {
       insertProhibitions(typeId, conversionResults)
     }
     println(s"*** Persisted $insertCount linear assets in ${humanReadableDurationSince(startTime)}")
@@ -419,7 +418,7 @@ class AssetDataImporter {
   }
 
   def importHazmatProhibitions() = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val assetIds =
         sql"""
           select a.id from asset a
@@ -470,7 +469,7 @@ class AssetDataImporter {
   }
 
   def getTypeProperties = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       val shelterTypePropertyId = sql"select p.id from property p where p.public_id = 'katos'".as[Long].first
       val accessibilityPropertyId = sql"select p.id from property p where p.public_id = 'esteettomyys_liikuntarajoitteiselle'".as[Long].first
       val administratorPropertyId = sql"select p.id from property p where p.public_id = 'tietojen_yllapitaja'".as[Long].first
@@ -484,7 +483,7 @@ class AssetDataImporter {
   }
 
   def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       val assetId = busStop.assetId.getOrElse(Sequences.nextPrimaryKeySeqValue)
 
       sqlu"""
@@ -514,7 +513,7 @@ class AssetDataImporter {
 
   def adjustToNewDigitization(vvhHost: String) = {
     val vvhClient = new VVHClient(vvhHost)
-    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
+    val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[Long]()
 
     withDynTransaction {
@@ -644,7 +643,7 @@ class AssetDataImporter {
   }
 
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
 
     withDynTransaction {
       val speedLimitLinks = sql"""
@@ -674,7 +673,7 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
 
     withDynTransaction {
       val linearAssetLinks = sql"""
@@ -929,7 +928,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def getPropertyId: Long = {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
-    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
+    val id = PostGISObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
     sqlu"""update asset set floating = '1' where id = $id""".execute
     id
   }
