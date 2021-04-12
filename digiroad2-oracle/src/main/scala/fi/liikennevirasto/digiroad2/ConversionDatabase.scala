@@ -6,6 +6,8 @@ import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
 import slick.jdbc.{GetResult, PositionedResult}
 
+import scala.collection.mutable.ListBuffer
+
 object ConversionDatabase {
   implicit object GetPointSeq extends GetResult[Seq[Point]] {
     def apply(rs: PositionedResult) = toPoints(rs.nextObject())
@@ -21,12 +23,12 @@ object ConversionDatabase {
     }
     else {
       val geom = PGgeometry.geomFromString(geometry.getValue)
-      val listOfPoint=List[Point]()
+      val listOfPoint=ListBuffer[Point]()
       for (i <- 0 until geom.numPoints() ){
         val point =geom.getPoint(i)
-        Point(point.x,point.y) :: listOfPoint
+        listOfPoint += Point(point.x,point.y)
       }
-      listOfPoint.reverse
+      listOfPoint.toList
     }
   }
 
