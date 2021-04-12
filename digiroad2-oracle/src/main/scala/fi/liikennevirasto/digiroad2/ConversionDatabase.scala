@@ -1,27 +1,32 @@
 package fi.liikennevirasto.digiroad2
 
-import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-
-import slick.jdbc.{PositionedResult, GetResult}
+import org.postgis.PGgeometry
+import org.postgresql.util.PGobject
+import slick.jdbc.{GetResult, PositionedResult}
 
 object ConversionDatabase {
   implicit object GetPointSeq extends GetResult[Seq[Point]] {
-    def apply(rs: PositionedResult) = toPoints(rs.nextBytes())
+    def apply(rs: PositionedResult) = toPoints(rs.nextObject())
   }
 
-  private def toPoints(bytes: Array[Byte]): Seq[Point] = {
-    val geometry = JGeometry.load(bytes)
+  private def toPoints(bytes: Object): Seq[Point] = {
+    val geometry = bytes.asInstanceOf[PGobject]
     if (geometry == null) Nil
-    else if(geometry.isPoint) {
-      val point = geometry.getPoint
-      List(Point(point(0), point(1)))
+    else if(geometry.getValue.nonEmpty) {
+      val geom = PGgeometry.geomFromString(geometry.getValue)
+      val point = geom.getFirstPoint
+      List(Point(point.x, point.y))
     }
     else {
-      geometry.getOrdinatesArray.grouped(2).map { point ⇒
-        Point(point(0), point(1))
-      }.toList
+      val geom = PGgeometry.geomFromString(geometry.getValue)
+      val listOfPoint=List[Point]()
+      for (i <- 0 until geom.numPoints() ){
+        val point =geom.getPoint(i)
+        Point(point.x,point.y) :: listOfPoint
+      }
+      listOfPoint.reverse
     }
   }
 
