@@ -44,7 +44,7 @@ case class DirectionalTrafficSign(id: Long, linkId: Long,
                                   geometry: Seq[Point] = Nil,
                                   linkSource: LinkGeomSource) extends PersistedPointAsset
 
-object OracleDirectionalTrafficSignDao {
+object PostGISDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
     val query =
       s"""

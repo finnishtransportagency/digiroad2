@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriWeightLimitAssetClient, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import org.mockito.ArgumentMatchers.any
@@ -15,7 +15,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
 
-  val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
+  val mockAssetDao: PostGISAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriWeightLimitAssetClient = MockitoSugar.mock[TierekisteriWeightLimitAssetClient]
@@ -30,7 +30,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
     override def assetName: String = "assetTest"
     override type TierekisteriClientType = TierekisteriAssetDataClient
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriAssetDataClient = mockTierekisteriAssetDataClient
@@ -61,7 +61,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
     override def assetName: String = "assetTest"
     override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriWeightLimitAssetClient = mockTierekisteriWeightLimitAssetClient

@@ -41,7 +41,7 @@ trait WeightLimitService extends PointAssetOperations {
   }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleWeightLimitDao.fetchByFilter(queryFilter)
+    PostGISWeightLimitDao.fetchByFilter(queryFilter)
   }
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedAsset] =  { throw new UnsupportedOperationException("Not Supported Method") }
@@ -60,7 +60,7 @@ class TotalWeightLimitService(val roadLinkService: RoadLinkService) extends Weig
   override def typeId: Int = TrWeightLimit.typeId
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleWeightLimitDao.fetchByFilter(queryFilter)
+    PostGISWeightLimitDao.fetchByFilter(queryFilter)
   }
 }
 
@@ -69,7 +69,7 @@ class AxleWeightLimitService(val roadLinkService: RoadLinkService) extends Weigh
   override def typeId: Int = TrAxleWeightLimit.typeId
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleAxleWeightLimitDao.fetchByFilter(queryFilter)
+    PostGISAxleWeightLimitDao.fetchByFilter(queryFilter)
   }
 }
 
@@ -78,7 +78,7 @@ class BogieWeightLimitService(val roadLinkService: RoadLinkService) extends Weig
   override def typeId: Int = TrBogieWeightLimit.typeId
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleBogieWeightLimitDao.fetchByFilter(queryFilter)
+    PostGISBogieWeightLimitDao.fetchByFilter(queryFilter)
   }
 }
 
@@ -87,7 +87,7 @@ class TrailerTruckWeightLimitService(val roadLinkService: RoadLinkService) exten
   override def typeId: Int = TrTrailerTruckWeightLimit.typeId
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WeightLimit] = {
-    OracleTrailerTruckWeightLimitDao.fetchByFilter(queryFilter)
+    PostGISTrailerTruckWeightLimitDao.fetchByFilter(queryFilter)
   }
 }
 

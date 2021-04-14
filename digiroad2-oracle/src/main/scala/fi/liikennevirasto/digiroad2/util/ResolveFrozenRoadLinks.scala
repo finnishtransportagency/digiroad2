@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.format.DateTimeFormat
@@ -350,12 +350,12 @@ trait ResolvingFrozenRoadLinks {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
 
       municipalities.foreach { municipality =>
-        OracleDatabase.withDynTransaction {
+        PostGISDatabase.withDynTransaction {
           val (toCreate, missing) = processing(municipality)
 
           val cleanningResult = cleaning(missing, toCreate)

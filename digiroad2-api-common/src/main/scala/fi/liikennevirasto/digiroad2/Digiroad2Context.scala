@@ -6,15 +6,15 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPointMassLimitationDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.lane.{LaneFiller, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.middleware.{CsvDataExporterInfo, CsvDataImporterInfo, DataExportManager, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
@@ -480,8 +480,8 @@ object Digiroad2Context {
     new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
   }
 
-  lazy val linearAssetDao: OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val linearAssetDao: PostGISLinearAssetDao = {
+    new PostGISLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
@@ -563,8 +563,8 @@ object Digiroad2Context {
 
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
-      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
@@ -674,7 +674,7 @@ object Digiroad2Context {
   }
 
   lazy val pointMassLimitationService: PointMassLimitationService = {
-    new PointMassLimitationService(roadLinkService, new OraclePointMassLimitationDao)
+    new PointMassLimitationService(roadLinkService, new PostGISPointMassLimitationDao)
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()

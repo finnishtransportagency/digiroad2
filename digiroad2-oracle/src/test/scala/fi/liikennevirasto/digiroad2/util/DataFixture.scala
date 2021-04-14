@@ -14,14 +14,14 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
-import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, _}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
+import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, _}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
-import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase._
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset.{RoadWorkService, _}
@@ -115,8 +115,8 @@ object DataFixture {
 
   lazy val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
-      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -133,8 +133,8 @@ object DataFixture {
     new VKMGeometryTransform()
   }
 
-  lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val oracleLinearAssetDao : PostGISLinearAssetDao = {
+    new PostGISLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
@@ -167,8 +167,8 @@ object DataFixture {
       HttpClientBuilder.create().build())
   }
 
-  lazy val assetDao : OracleAssetDao = {
-    new OracleAssetDao()
+  lazy val assetDao : PostGISAssetDao = {
+    new PostGISAssetDao()
   }
 
   lazy val dynamicLinearAssetDao : DynamicLinearAssetDao = {
@@ -179,8 +179,8 @@ object DataFixture {
     new DynamicLinearAssetService(roadLinkService, new DummyEventBus)
   }
 
-  lazy val speedLimitDao: OracleSpeedLimitDao = {
-    new OracleSpeedLimitDao(null, null)
+  lazy val speedLimitDao: PostGISSpeedLimitDao = {
+    new PostGISSpeedLimitDao(null, null)
   }
 
   lazy val verificationService: VerificationService = {
@@ -447,14 +447,14 @@ object DataFixture {
     println(DateTime.now())
 
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
     }
 
     val floatingReasonPublicId = "kellumisen_syy"
     val administrationClassPublicId = "linkin_hallinnollinen_luokka"
 
-    OracleDatabase.withDynTransaction{
+    PostGISDatabase.withDynTransaction{
 
       val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
       val administrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
@@ -538,13 +538,13 @@ object DataFixture {
     println(DateTime.now())
 
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
     val administrationClassPublicId = "linkin_hallinnollinen_luokka"
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
 
       val administrationClassPropertyId = dataImporter.getPropertyTypeByPublicId(administrationClassPublicId)
 
@@ -580,7 +580,7 @@ object DataFixture {
     val trBusStops = tierekisteriClient.fetchActiveMassTransitStops().
       filterNot(stop => existingLiviIds.contains(stop.liviId))
 
-    val liviIdPropertyId = OracleDatabase.withDynSession {dataImporter.getPropertyTypeByPublicId("yllapitajan_koodi")}
+    val liviIdPropertyId = PostGISDatabase.withDynSession {dataImporter.getPropertyTypeByPublicId("yllapitajan_koodi")}
 
     println("Processing %d TR bus stops".format(trBusStops.length))
 
@@ -594,9 +594,9 @@ object DataFixture {
               val leftPoint = Point(stopPoint.x - boundsOffset, stopPoint.y -boundsOffset, 0)
               val rightPoint = Point(stopPoint.x + boundsOffset, stopPoint.y + boundsOffset, 0)
               val bounds = BoundingRectangle(leftPoint, rightPoint)
-              val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+              val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
               val filter = s" where $boundingBoxFilter and a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > current_timestamp)"
-              val persistedStops = OracleDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
+              val persistedStops = PostGISDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
                 filter(stop => TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(Some(stop))).
                 filterNot(hasLiviIdPropertyValue)
 
@@ -621,7 +621,7 @@ object DataFixture {
 
     val nearestBusStops = busStops.groupBy(busStop => busStop.othBusStop.linkId).mapValues(busStop => busStop.minBy(_.distance)).values
 
-    OracleDatabase.withDynTransaction{
+    PostGISDatabase.withDynTransaction{
       nearestBusStops.foreach{
         nearestBusStop =>
           println("Persist livi Id "+nearestBusStop.trBusStop.liviId+" at OTH bus stop id "+nearestBusStop.othBusStop.id+" with national id "+nearestBusStop.othBusStop.nationalId+" and distance "+nearestBusStop.distance)
@@ -710,7 +710,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -784,7 +784,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -830,7 +830,7 @@ object DataFixture {
   }
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
@@ -847,7 +847,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -865,7 +865,7 @@ object DataFixture {
 
       println ("Total roadlink by municipality -> " + roadLinks.size)
 
-      OracleDatabase.withDynTransaction{
+      PostGISDatabase.withDynTransaction{
         //Obtain all existing RoadLinkId by AssetType and roadLinks
         val assetCreated = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
 
@@ -936,7 +936,7 @@ object DataFixture {
     println("\nFill Road Width in missing and incomplete road links")
     println(DateTime.now())
 
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {
@@ -950,7 +950,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -962,7 +962,7 @@ object DataFixture {
       val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
       println("Road links with MTKClass valid -> " + roadWithMTKClass.size)
 
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadWithMTKClass.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
         println("Existing assets -> " + existingAssets.size)
 
@@ -1043,7 +1043,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -1055,7 +1055,7 @@ object DataFixture {
       //Obtain all RoadLink by municipality
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
 
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         //Obtain all existing RoadLinkId by AssetType and roadLinks
         val assets = dataImporter.getAssetsByLinkIds(MaintenanceRoadTypeId, roadLinks.map(_.linkId), includeExpire = true)
 
@@ -1090,7 +1090,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -1199,7 +1199,7 @@ object DataFixture {
 
     //    Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -1208,7 +1208,7 @@ object DataFixture {
       println("Fetching roadlinks")
       val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
 
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
 
         val roadWithMTKClass = roadLinks.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
         println("Fetching assets")
@@ -1263,7 +1263,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -1272,7 +1272,7 @@ object DataFixture {
       println("Fetching roadlinks")
       val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
 
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
 
         println("Fetching assets")
         val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, roadLinks.map(_.linkId)).filterNot(_.expired)
@@ -1305,7 +1305,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -1324,7 +1324,7 @@ object DataFixture {
           val (roadLinkWithTrafficDirection, trafficChanges) = RoundaboutProcessor.setTrafficDirection(roundabout)
           trafficChanges.trafficDirectionChanges.foreach {
             trafficChange =>
-              OracleDatabase.withDynTransaction {
+              PostGISDatabase.withDynTransaction {
 
                 roadLinkWithTrafficDirection.find(_.linkId == trafficChange.linkId) match {
                   case Some(roadLink) =>
@@ -1356,7 +1356,7 @@ object DataFixture {
     //Get All Municipalities
     println(s"Obtaining Municipalities")
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -1400,11 +1400,11 @@ object DataFixture {
 
     //Get all municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession{
+      PostGISDatabase.withDynSession{
         Queries.getMunicipalities
       }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
         println("")
         println(DateTime.now())
@@ -1468,74 +1468,74 @@ object DataFixture {
     println(DateTime.now())
 
     val municipalities: Seq[Int] = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
     }
 
     // Fetch property ID's.
     val sign_material_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("sign_material")
       }
     }
 
     val size_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("size")
       }
     }
 
     val structure_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("structure")
       }
     }
 
     val life_cycle_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("life_cycle")
       }
     }
 
     val repair_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("urgency_of_repair")
       }
     }
 
     val damage_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("type_of_damage")
       }
     }
 
     val lane_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("lane_type")
       }
     }
 
     val coating_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("coating_type")
       }
     }
 
     val locationSpecifier_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("location_specifier")
       }
     }
 
     val condition_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("condition")
       }
     }
 
     val old_trafficSign_code_propertyId: Long = {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getPropertyIdByPublicId("old_traffic_code")
       }
     }
@@ -1548,18 +1548,18 @@ object DataFixture {
           val createdDate = trafficSign.createdAt.get
           val migrationDate = DateTime.parse("2020-05-14T15:32:46", DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss"))
           if (createdDate.isBefore(migrationDate)) {
-            OracleDatabase.withDynTransaction {
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "structure", structure_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "life_cycle", life_cycle_propertyId, "single_choice", propertyValues = Seq(PropertyValue("3", Some("Käytössä pysyvästi"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "urgency_of_repair", repair_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "type_of_damage", damage_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "lane_type", lane_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "coating_type", coating_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "condition", condition_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "location_specifier", locationSpecifier_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "old_traffic_code", old_trafficSign_code_propertyId, "checkbox", propertyValues = Seq(PropertyValue("1", Some("Väärä"), false)))
+            PostGISDatabase.withDynTransaction {
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "structure", structure_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "life_cycle", life_cycle_propertyId, "single_choice", propertyValues = Seq(PropertyValue("3", Some("Käytössä pysyvästi"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "urgency_of_repair", repair_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "type_of_damage", damage_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "lane_type", lane_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "coating_type", coating_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "condition", condition_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "location_specifier", locationSpecifier_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "old_traffic_code", old_trafficSign_code_propertyId, "checkbox", propertyValues = Seq(PropertyValue("1", Some("Väärä"), false)))
               Queries.updateAdditionalPanelProperties(trafficSign.id)
             }
           }
@@ -1577,7 +1577,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -1597,7 +1597,7 @@ object DataFixture {
         val trafficSignsInRadius = trafficSignService.getTrafficSignsByDistance(sign, groupedAssets, 10)
 
         if (trafficSignsInRadius.size > 1) {
-          OracleDatabase.withDynTransaction {
+          PostGISDatabase.withDynTransaction {
             val latestModifiedAsset = trafficSignService.getLatestModifiedAsset(trafficSignsInRadius)
 
             println("")
@@ -1622,7 +1622,7 @@ object DataFixture {
 
     val assetTypes = Set(DamagedByThaw.typeId, LitRoad.typeId, NumberOfLanes.typeId, TotalWeightLimit.typeId)
     //Get All Municipalities
-    val municipalities: Seq[Int] =  OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] =  PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
 
@@ -1632,7 +1632,7 @@ object DataFixture {
         println(s"Obtaining all Road Links for Municipality: $municipality")
         val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)._1
         println(s"End of roadLinks fetch for Municipality: $municipality")
-        OracleDatabase.withDynTransaction {
+        PostGISDatabase.withDynTransaction {
           println("Fetching assets")
           val assets = assetDao.getAssetsByTypesAndLinkId(assetTypes, roadLinks.map(_.linkId))
           println(s"Number of fetched assets: ${assets.length}")
@@ -1659,11 +1659,11 @@ object DataFixture {
     println(DateTime.now())
     val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession { Queries.getMunicipalities  }
 
     municipalities.foreach { municipality =>
       println(s"Obtaining all Road Links for Municipality: $municipality")
-      val roadLinksWithAssets =  OracleDatabase.withDynTransaction {
+      val roadLinksWithAssets =  PostGISDatabase.withDynTransaction {
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
         val linkIds = roadLinks.map(_.linkId)
 
@@ -1700,7 +1700,7 @@ object DataFixture {
     val stopsToUpdateFloatingReason = trStops.filter(stop => terminated.map(_.liviId).contains(stop._3))
     val stopsToRemoveFloatingReason = floatingTerminated.filter(stop => active.map(_.liviId).contains(stop._3))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       stopsToUpdateFloatingReason.foreach(stop => massTransitStopService.updateFloating(stop._1, floating = true, Some(FloatingReason.TerminatedRoad)))
 
       if(stopsToRemoveFloatingReason.nonEmpty)
@@ -1719,11 +1719,11 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Obtaining all Road Links and unknown SpeedLimits for Municipality: $municipality")
 
@@ -1761,9 +1761,9 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession { Queries.getMunicipalities  }
     println(s"Municipality_code; AssetId; StartMeasure; EndMeasure; SideCode; Value; linkId, LinkType; AdministrativeClass")
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
 
         val roads = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
@@ -1805,10 +1805,10 @@ object DataFixture {
     }
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
 
@@ -1859,7 +1859,7 @@ object DataFixture {
     val functionalClassValue = 5
     val sinceDate = Some("20190101") //Format required YYYYMMDD
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val linkIdsOverridden = FunctionalClassDao.getLinkIdByValue(functionalClassValue, sinceDate).toSet
       val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIdsOverridden, false).filter(_.administrativeClass == State)
 
@@ -1880,10 +1880,10 @@ object DataFixture {
     val functionalClassValue = 99
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(rl => rl.administrativeClass == State && rl.functionalClass == functionalClassValue)
 
@@ -1901,17 +1901,17 @@ object DataFixture {
     println("\nStart process to add new obstacles by using the table created by the shapefile import")
     println(DateTime.now())
     println("")
-    val userProvider: UserProvider = new OracleUserProvider
+    val userProvider: UserProvider = new PostGISUserProvider
     val user = userProvider.getUser("k903846").get
     val minimumDistanceFromRoadLink: Double = 3.0
     val username = "batch_to_add_obstacles"
 
     println("\nGetting all obstacles information from the table created by the shapefile import")
-    val obstaclesInformation: Seq[ObstacleShapefile] = OracleDatabase.withDynSession {
+    val obstaclesInformation: Seq[ObstacleShapefile] = PostGISDatabase.withDynSession {
       ImportShapeFileDAO.getObstaclesFromShapefileTable
     }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       obstaclesInformation.foreach { obstacle =>
         println("")
         println("Creating a obstacle with coordinates -> " + "x:" + obstacle.lon + " y:" + obstacle.lat)
@@ -1953,11 +1953,11 @@ object DataFixture {
     val username = "batch_to_import_cycling_walking"
     val assetType = asset.CyclingAndWalking.typeId
 
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
         val cyclingAndWalkingInfo = ImportShapeFileDAO.getCyclingAndWalkingInfo(municipality)
@@ -2001,10 +2001,10 @@ object DataFixture {
     println("\nStart process to remove additional roles from operators users")
     println(DateTime.now())
 
-    val userProvider: UserProvider = new OracleUserProvider
+    val userProvider: UserProvider = new PostGISUserProvider
     println("\nGetting operators with additional roles")
 
-    val users: Seq[User] = OracleDatabase.withDynSession {
+    val users: Seq[User] = PostGISDatabase.withDynSession {
       userProvider.getUsers()
     }
 
@@ -2061,8 +2061,8 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
-    OracleDatabase.withDynTransaction {
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession { Queries.getMunicipalities  }
+    PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
@@ -2084,7 +2084,7 @@ object DataFixture {
     println()
 
     val datex2Generator = new Datex2Generator()
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val lorryParkingInfo = Queries.getLorryParkingToTransform()
       datex2Generator.convertToDatex2(lorryParkingInfo)
     }
@@ -2104,7 +2104,7 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -2113,7 +2113,7 @@ object DataFixture {
       println("Fetching roadlinks")
       val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
 
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         println("Fetching assets")
         val existingAssets =
           roadWorkService.enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(RoadWorksAsset.typeId, roadLinks.map(_.linkId))).filterNot(_.expired)
@@ -2158,7 +2158,7 @@ object DataFixture {
     println("")
     println("linkId;koordinaatti_x;koordinaatti_y;type;value;additionalInformation;linkSource;muokattu_viimeksi;id;trafficDirection;m_value")
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession{
+      PostGISDatabase.withDynSession{
         Queries.getMunicipalities
       }
     withDynTransaction{
@@ -2186,7 +2186,7 @@ object DataFixture {
     println(DateTime.now())
     println("")
 
-    OracleDatabase.withDynTransaction{
+    PostGISDatabase.withDynTransaction{
       Queries.mergeMunicipalities(municipalityToDelete, municipalityToMerge)
     }
 
@@ -2216,13 +2216,13 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
 
 
     municipalities.foreach { municipality =>
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         println("\nWorking at Municipailty: " + municipality)
         val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
         val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
@@ -2295,7 +2295,7 @@ object DataFixture {
     println("\nUpdating last modified assets information")
     println(DateTime.now())
 
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities }
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession { Queries.getMunicipalities }
 
     println("\n")
     println("Municipalities fetched after: " + DateTime.now())
@@ -2303,7 +2303,7 @@ object DataFixture {
 
 
     municipalities.foreach { municipality =>
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         println("Working on municipality " + municipality)
         val municipalityRoadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).toSet
         val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinks.map(_.linkId))
@@ -2330,7 +2330,7 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities }
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession { Queries.getMunicipalities }
 
     val newCsvFile = new File("private_road_association_information.csv")
     val bw = new BufferedWriter(new FileWriter(newCsvFile))
@@ -2369,7 +2369,7 @@ object DataFixture {
   }
 
   def GetAccessRightID(linkId:Long):String ={
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
      val response= LinkAttributesDao.getExistingValues(linkId).getOrElse("ACCESS_RIGHT_ID", "")
       response
     }
@@ -2394,7 +2394,7 @@ object DataFixture {
       .map(_.linkId).toSet
     println(s"All road links obtained")
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       println(s"Fetching all assets wrongfully expired in TR import")
       val expiredAssets = assetDao.getExpiredAssetsByRoadLinkAndTypeIdAndBetweenDates(roadLinksFromMunicipalities, assetTypeIdsToRestore, startDate, endDate)
       println(s"All assets fetched")
@@ -2415,7 +2415,7 @@ object DataFixture {
     val yearGap = 2 //current and previous X years are to maintain (1 = until one year ago, 2 = until two years ago, etc.)
 
     assetTypes.foreach { at =>
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         println(s"\nFetching all relevant expired assets with asset type ${at.typeId}")
 
         val assetIds = historyService.getExpiredAssetsIdsByAssetTypeAndYearGap(at, yearGap)

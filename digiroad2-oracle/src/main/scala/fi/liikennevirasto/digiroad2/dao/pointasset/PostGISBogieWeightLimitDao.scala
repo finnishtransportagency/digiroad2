@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-object OracleBogieWeightLimitDao {
+object PostGISBogieWeightLimitDao {
   val typeId = TrBogieWeightLimit.typeId
 
   def fetchByFilter(queryFilter: String => String): Seq[WeightLimit] = {

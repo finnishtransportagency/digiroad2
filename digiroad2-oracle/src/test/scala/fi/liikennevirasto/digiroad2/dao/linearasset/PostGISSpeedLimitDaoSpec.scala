@@ -18,11 +18,11 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation
 
-class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
+class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleSpeedLimitDao = {
+  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): PostGISSpeedLimitDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -37,7 +37,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
+    new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
@@ -65,7 +65,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new OracleSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
+      val dao = new PostGISSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
@@ -80,7 +80,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new OracleSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
+      val dao = new PostGISSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
@@ -178,7 +178,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit mass query") {
     val ids = Seq.range(1L, 500L).toSet
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
@@ -186,7 +186,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit no mass query") {
     val ids = Seq.range(1L, 2L).toSet
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
@@ -194,14 +194,14 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit empty set must not crash") {
     val ids = Set():Set[Long]
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
   }
 
   test("speed limit no set must not crash") {
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(None)
     }

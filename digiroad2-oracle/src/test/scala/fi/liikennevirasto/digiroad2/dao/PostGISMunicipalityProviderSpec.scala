@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.dao
 
 import org.scalatest.{FunSuite, Matchers, Tag}
 
-class OracleMunicipalityProviderSpec extends FunSuite with Matchers {
-  val provider = new OracleMunicipalityProvider
+class PostGISMunicipalityProviderSpec extends FunSuite with Matchers {
+  val provider = new PostGISMunicipalityProvider
   val elyCodeForLappi = Set(1)
   val elyCodeForAhvenanmaa = Set(0)
   val elyCodesForLappiAndAhvenanmaa = elyCodeForLappi ++ elyCodeForAhvenanmaa

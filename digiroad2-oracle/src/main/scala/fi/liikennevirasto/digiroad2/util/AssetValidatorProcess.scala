@@ -6,8 +6,8 @@ import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset, State}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.{AssetServiceValidator, _}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
@@ -100,10 +100,10 @@ object AssetValidatorProcess {
   def verifyInaccurateSpeedLimits(): Unit = {
     println("Start inaccurate SpeedLimit verification\n")
     println(DateTime.now())
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
 
     //Expire all inaccuratedAssets
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
 
       //Get All Municipalities

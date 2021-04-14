@@ -4,9 +4,9 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.PedestrianCrossings
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriPedestrianCrossingAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePedestrianCrossingDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 import org.apache.http.impl.client.HttpClientBuilder
 
@@ -15,10 +15,10 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
   override def typeId: Int = PedestrianCrossings.typeId
   override def assetName: String = PedestrianCrossings.label
   override type TierekisteriClientType = TierekisteriPedestrianCrossingAssetClient
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  lazy val dao = new OraclePedestrianCrossingDao()
+  lazy val dao = new PostGISPedestrianCrossingDao()
 
   override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,

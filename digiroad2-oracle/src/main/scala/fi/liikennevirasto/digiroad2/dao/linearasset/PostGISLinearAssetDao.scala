@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -30,7 +30,7 @@ case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[Stri
 case class AssetLink(id: Long, linkId: Long)
 
 
-class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
+class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -465,7 +465,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case Some(LinkGeomSource.NormalLinkInterface) => s" and pos.link_source = ${LinkGeomSource.NormalLinkInterface.value}"
       case _ => ""
     }
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+    val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
     sql"""
          SELECT case when a.valid_to <= current_timestamp then 1 else 0 end as expired, CASE WHEN a.valid_to IS NULL THEN 1 ELSE NULL END AS value, a.asset_type_id, t.X, t.Y, t2.X, t2.Y, pos.side_code
           from asset a
@@ -597,7 +597,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
-    * Updates m-values in db. Used by OracleLinearAssetDao.splitSpeedLimit, LinearAssetService.persistMValueAdjustments and LinearAssetService.split.
+    * Updates m-values in db. Used by PostGISLinearAssetDao.splitSpeedLimit, LinearAssetService.persistMValueAdjustments and LinearAssetService.split.
     */
   def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
@@ -923,7 +923,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
-    * Saves prohibition value to db. Used by OracleLinearAssetDao.updateProhibitionValue and LinearAssetService.createWithoutTransaction.
+    * Saves prohibition value to db. Used by PostGISLinearAssetDao.updateProhibitionValue and LinearAssetService.createWithoutTransaction.
     */
   def insertProhibitionValue(assetId: Long, typeId: Int, value: Prohibitions): Unit = {
     val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", typeId).first

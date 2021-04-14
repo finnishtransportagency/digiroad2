@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
@@ -14,7 +14,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 case class StartUpParameters(userId: Long, username: String, configuration: Configuration,  municipalityId: Long, municipalityGeometry: Point, municipalityZoom: Int,
                              elyId: Long, elyGeometry: Point, elyZoom: Int, serviceAreaId: Long, serviceAreaGeometry: Point, serviceAreaZoom: Int)
 
-class OracleUserProvider extends UserProvider {
+class PostGISUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit val getUser = new GetResult[User] {
     def apply(r: PositionedResult) = {
@@ -29,7 +29,7 @@ class OracleUserProvider extends UserProvider {
 
   def createUser(username: String, config: Configuration, name: Option[String] = None, newTransaction: Boolean = true) = {
     if (newTransaction) {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         sqlu"""
         insert into service_user (id, username, configuration, name, created_at)
         values (nextval('primary_key_seq'), ${username.toLowerCase}, ${write(config)}, $name, current_timestamp)
@@ -51,7 +51,7 @@ class OracleUserProvider extends UserProvider {
     if (username == null) return None
 
     if (newTransaction) {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         sql"""select id, username, configuration, name from service_user where lower(username) = ${username.toLowerCase}""".as[User].firstOption
       }
     } else {
@@ -61,7 +61,7 @@ class OracleUserProvider extends UserProvider {
 
   def updateUserConfiguration(user: User, newTransaction: Boolean = true): User = {
     if (newTransaction) {
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name} where lower(username) = ${user.username.toLowerCase}""".execute
         user
       }
@@ -72,20 +72,20 @@ class OracleUserProvider extends UserProvider {
   }
 
   def saveUser(user: User): User = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name}, modified_at = current_timestamp where lower(username) = ${user.username.toLowerCase}""".execute
       user
     }
   }
 
   def deleteUser(username: String) = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sqlu"""delete from service_user where lower(username) = ${username.toLowerCase}""".execute
     }
   }
 
   def getUserArea(userAreaId: Int): Seq[Point] = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sql"""select x, y, z from table(sdo_util.getvertices((select geometry from authorized_area where kpalue = $userAreaId))) order by id""".as[Point].list
     }
   }

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.DummyEventBus
-import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
+import fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest._
@@ -13,7 +13,7 @@ import scala.language.implicitConversions
 class AssetPropertyServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val MunicipalityKauniainen = 235
   val TestAssetTypeId = 10
-  val userProvider = new OracleUserProvider
+  val userProvider = new PostGISUserProvider
 
   val passThroughTransaction = new DatabaseTransaction {
     override def withDynTransaction[T](f: => T): T = f
