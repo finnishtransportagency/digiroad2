@@ -76,7 +76,7 @@ trait TrafficSignLinearGenerator {
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val eventbus: DigiroadEventBus = {

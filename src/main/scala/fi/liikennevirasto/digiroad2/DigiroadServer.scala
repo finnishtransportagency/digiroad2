@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+
 import java.lang.management.ManagementFactory
 import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
 import org.eclipse.jetty.jmx.MBeanContainer
@@ -71,8 +72,8 @@ class VKMProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    val vkmUrl: String = properties.getProperty("digiroad2.VKMUrl")
+    properties.load(getClass.getResourceAsStream("/env.properties"))
+    val vkmUrl: String = properties.getProperty(Digiroad2Properties.vkmUrl)
     java.net.URI.create(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
   }
 

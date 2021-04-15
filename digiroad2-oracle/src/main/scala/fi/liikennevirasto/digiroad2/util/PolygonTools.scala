@@ -24,7 +24,7 @@ class PolygonTools {
     props
   }
   lazy val userProvider: UserProvider = {
-    Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
   /**

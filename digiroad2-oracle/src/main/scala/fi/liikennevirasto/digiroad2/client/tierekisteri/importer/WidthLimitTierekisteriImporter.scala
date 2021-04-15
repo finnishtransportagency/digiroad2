@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.OracleWidthLimitDao
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingWidthLimit
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.impl.client.HttpClientBuilder
 
 class WidthLimitTierekisteriImporter extends PointAssetTierekisteriImporterOperations {
@@ -18,7 +19,7 @@ class WidthLimitTierekisteriImporter extends PointAssetTierekisteriImporterOpera
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriWidthLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriWidthLimitAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 

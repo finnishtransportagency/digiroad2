@@ -26,7 +26,7 @@ trait ResolvingFrozenRoadLinks {
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val roadAddressService: RoadAddressService = {
@@ -42,7 +42,7 @@ trait ResolvingFrozenRoadLinks {
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {

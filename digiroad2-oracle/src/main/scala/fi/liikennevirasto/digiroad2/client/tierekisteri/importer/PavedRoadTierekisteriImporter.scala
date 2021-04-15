@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -18,7 +19,7 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
   override type TierekisteriClientType = TierekisteriPavedRoadAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override val tierekisteriClient = new TierekisteriPavedRoadAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriPavedRoadAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetDataClient, TierekisteriHeightLimitAssetClient, TierekisteriWeightLimitAssetClient, TierekisteriWeightLimitData}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, Track}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, LinearAssetService, LinearAssetTypes, Measures}
@@ -100,7 +100,7 @@ trait TierekisteriPointConversionImporter extends TierekisteriAssetImporterOpera
 
 trait WeightConversionTierekisteriImporter extends TierekisteriPointConversionImporter {
   override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
-  override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
@@ -186,7 +186,7 @@ class BogieWeightLimitImporter  extends WeightConversionTierekisteriImporter {
 
 class HeightLimitImporter extends TierekisteriPointConversionImporter {
   override type TierekisteriClientType = TierekisteriHeightLimitAssetClient
-  override val tierekisteriClient = new TierekisteriHeightLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriHeightLimitAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 

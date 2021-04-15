@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.asset.ServicePointsClass.{Unknown => _, _}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 sealed trait Status {
   def value : Int
@@ -64,8 +65,8 @@ trait CsvDataImporterOperations {
   }
 
   lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriMassTransitStopClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty(Digiroad2Properties.tierekisteriEnabled.toString).toBoolean,
       HttpClientBuilder.create().build)
   }
 

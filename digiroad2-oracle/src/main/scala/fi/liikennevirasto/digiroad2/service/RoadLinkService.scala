@@ -1545,8 +1545,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   private val cacheDirectory = {
     val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.cache.directory", "/tmp/digiroad.cache")
+    properties.load(getClass.getResourceAsStream("/env.properties"))
+    properties.getProperty(Digiroad2Properties.cacheDirecroty)
   }
 
   def geometryToBoundingBox(s: Seq[Point], delta: Vector3d) = {

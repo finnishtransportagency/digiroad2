@@ -11,6 +11,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -23,7 +24,7 @@ class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImport
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriCarryingCapacityAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriCarryingCapacityAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 

@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.impl.client.HttpClientBuilder
 
 
@@ -20,7 +21,7 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
 
   lazy val dao = new OraclePedestrianCrossingDao()
 
-  override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 

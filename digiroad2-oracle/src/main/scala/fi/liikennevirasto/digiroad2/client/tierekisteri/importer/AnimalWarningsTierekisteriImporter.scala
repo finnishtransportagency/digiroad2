@@ -10,6 +10,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -18,7 +19,7 @@ class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporter
   override type TierekisteriClientType = TierekisteriAnimalWarningsAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override val tierekisteriClient = new TierekisteriAnimalWarningsAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  override val tierekisteriClient = new TierekisteriAnimalWarningsAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 

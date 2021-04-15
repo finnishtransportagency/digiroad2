@@ -18,7 +18,7 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   val geomFact= new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
   val wKTParser = new WKTReader()
-  val vvhClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+  val vvhClient = new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
 
   lazy val properties: Properties = {
     val props = new Properties()

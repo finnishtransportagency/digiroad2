@@ -151,8 +151,8 @@ class VKMGeometryTransform {
 
   private def vkmBaseUrl = {
     val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl") + "/viitekehysmuunnin/"
+    properties.load(getClass.getResourceAsStream("/env.properties"))
+    properties.getProperty(Digiroad2Properties.vkmUrl) + "/viitekehysmuunnin/"
   }
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {

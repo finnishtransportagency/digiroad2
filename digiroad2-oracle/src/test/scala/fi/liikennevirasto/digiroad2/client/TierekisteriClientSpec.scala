@@ -24,31 +24,39 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   lazy val dr2properties: Properties = {
     val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props.load(getClass.getResourceAsStream("/env.properties"))
     props
   }
 
+  protected def getProperty(name: String) = {
+    val property = dr2properties.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name")
+  }
+
   lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriMassTransitStopClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient = {
-    new TierekisteriTrafficVolumeAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriTrafficVolumeAssetClient(getProperty(Digiroad2Properties.tierekisteriViiteRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriRoadWidthAsset: TierekisteriRoadWidthAssetClient = {
-    new TierekisteriRoadWidthAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriRoadWidthAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriLightingAsset: TierekisteriLightingAssetClient = {
-    new TierekisteriLightingAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriLightingAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
@@ -61,56 +69,56 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   lazy val tierekisteriTrafficSignAsset: TierekisteriTrafficSignAssetClient = {
-    new TierekisteriTrafficSignAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriTrafficSignAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriSpeedLimitTrafficSignAsset: TierekisteriTrafficSignAssetSpeedLimitClient = {
-    new TierekisteriTrafficSignAssetSpeedLimitClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriTrafficSignAssetSpeedLimitClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriPavedRoadAsset: TierekisteriPavedRoadAssetClient = {
-    new TierekisteriPavedRoadAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriPavedRoadAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriMassTransitLaneAsset: TierekisteriMassTransitLaneAssetClient = {
-    new TierekisteriMassTransitLaneAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriMassTransitLaneAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriEuropeanRoadAsset: TierekisteriEuropeanRoadAssetClient = {
-    new TierekisteriEuropeanRoadAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriEuropeanRoadAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriSpeedLimitAsset: TierekisteriSpeedLimitAssetClient = {
-    new TierekisteriSpeedLimitAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriSpeedLimitAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriWinterCareClass: TierekisteriWinterCareClassAssetClient = {
-    new TierekisteriWinterCareClassAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriWinterCareClassAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriGreenCareClass: TierekisteriGreenCareClassAssetClient = {
-    new TierekisteriGreenCareClassAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriGreenCareClassAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriAnimalWarningsAsset: TierekisteriAnimalWarningsAssetClient = {
-    new TierekisteriAnimalWarningsAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriAnimalWarningsAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
@@ -123,15 +131,15 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       isAdditionalPanel || isSpeedLimitSign
     }
 
-    new SpeedLimitTrafficSignClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new SpeedLimitTrafficSignClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())(filterCondition)
   }
 
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
-    val url = dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint")
+    val url = getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint)
     val request = new HttpGet(url)
     request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
     val client = HttpClientBuilder.create().build()
@@ -418,8 +426,8 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   test("Returning only mandatory fields from Tierekisteri should be accepted") {
     val httpClient = MockitoSugar.mock[CloseableHttpClient]
     val trClient =  new TierekisteriMassTransitStopClient(
-      dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       httpClient)
     val response = MockitoSugar.mock[CloseableHttpResponse]
     when(response.getStatusLine).thenReturn(new StatusLine {override def getStatusCode: Int = 200

@@ -24,6 +24,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, JsonSerializer}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
@@ -317,7 +318,7 @@ object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
     val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props.load(getClass.getResourceAsStream("/env.properties"))
     props
   }
   lazy val revisionInfo: Properties = {
@@ -445,7 +446,7 @@ object Digiroad2Context {
 
 
   lazy val authenticationTestModeEnabled: Boolean = {
-    properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
+    properties.getProperty(Digiroad2Properties.authenticationTestMode)
   }
 
   lazy val assetPropertyService: AssetPropertyService = {
@@ -461,23 +462,23 @@ object Digiroad2Context {
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val municipalityProvider: MunicipalityProvider = {
-    Class.forName(properties.getProperty("digiroad2.municipalityProvider")).newInstance().asInstanceOf[MunicipalityProvider]
+    Class.forName(Digiroad2Properties.municipalityProvider).newInstance().asInstanceOf[MunicipalityProvider]
   }
 
   lazy val eventbus: DigiroadEventBus = {
-    Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
+    Class.forName(Digiroad2Properties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(getProperty(Digiroad2Properties.viiteRestApiEndPoint), HttpClientBuilder.create().build())
   }
 
   lazy val linearAssetDao: OracleLinearAssetDao = {
@@ -485,8 +486,8 @@ object Digiroad2Context {
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriMassTransitStopClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+      getProperty(Digiroad2Properties.tierekisteriEnabled.toString).toBoolean, //alussa getProperty("digiroad2.tierekisteri.enabled") -> type mismatch required string, found boolean
       HttpClientBuilder.create().build)
   }
 

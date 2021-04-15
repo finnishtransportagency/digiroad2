@@ -1,12 +1,11 @@
 package fi.liikennevirasto.digiroad2.service.feedback
 
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{Email, EmailOperations}
 import fi.liikennevirasto.digiroad2.dao.feedback.FeedbackDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, SmtpPropertyReader}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -126,7 +125,7 @@ class FeedbackDataService extends Feedback {
   override def from: String = "oth-feedback-data@no-reply.com"
   override def subject: String = "Aineistopalaute"
   override def body: String = ""
-  def directLink: String = getProperty("digiroad2.feedbackAssetsEndPoint")
+  def directLink: String = getProperty(Digiroad2Properties.feedbackAssetsEndPoint)
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
     val ids = body.assetId.getOrElse(Seq.empty[Long]).mkString(",")
