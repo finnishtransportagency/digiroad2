@@ -446,7 +446,7 @@ object Digiroad2Context {
 
 
   lazy val authenticationTestModeEnabled: Boolean = {
-    properties.getProperty(Digiroad2Properties.authenticationTestMode)
+    Digiroad2Properties.authenticationTestMode
   }
 
   lazy val assetPropertyService: AssetPropertyService = {
@@ -478,7 +478,7 @@ object Digiroad2Context {
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(getProperty(Digiroad2Properties.viiteRestApiEndPoint), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val linearAssetDao: OracleLinearAssetDao = {

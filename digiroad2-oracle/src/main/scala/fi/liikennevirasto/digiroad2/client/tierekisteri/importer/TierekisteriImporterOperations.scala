@@ -38,7 +38,7 @@ trait TierekisteriImporterOperations {
   }
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
   lazy val roadAddressService : RoadAddressService = new RoadAddressService(viiteClient)
-  lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty(Digiroad2Properties.viiteRestApiEndPoint), HttpClientBuilder.create().build()) }
+  lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
   lazy val roadLinkTempDAO: RoadLinkTempDAO = new RoadLinkTempDAO
 

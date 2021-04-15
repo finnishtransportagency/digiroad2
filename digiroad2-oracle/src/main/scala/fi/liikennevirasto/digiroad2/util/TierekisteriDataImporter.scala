@@ -208,7 +208,7 @@ object TierekisteriDataImporter {
 
   //TODO delete this client after migrate the import asset to TierekisteriImporterOperations
   lazy val tierekisteriTrafficVolumeAssetClient : TierekisteriTrafficVolumeAssetClient = {
-    new TierekisteriTrafficVolumeAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
+    new TierekisteriTrafficVolumeAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
