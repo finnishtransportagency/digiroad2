@@ -382,17 +382,15 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   def expireLanesByLinkId(linkIds: Set[Long], username: String) = {
     MassQuery.withIds(linkIds) { idTableName =>
       sqlu"""
-         MERGE
-         INTO LANE l
-         USING (SELECT ll.LANE_ID
+         UPDATE LANE SET
+           VALID_TO = current_timestamp,
+           EXPIRED_DATE = current_timestamp,
+           EXPIRED_BY = $username
+         WHERE
+           ID IN (SELECT ll.LANE_ID
                 FROM LANE_LINK ll
                 JOIN LANE_POSITION lp ON lp.ID = ll.LANE_POSITION_ID
-                JOIN #$idTableName i ON i.id = lp.LINK_ID
-              ) src
-        ON ( src.LANE_ID = l.ID )
-        WHEN MATCHED THEN
-          UPDATE
-          SET l.VALID_TO = current_timestamp, l.EXPIRED_DATE = current_timestamp, l.EXPIRED_BY = $username
+                JOIN #$idTableName i ON i.id = lp.LINK_ID)
       """.execute
 
     }
