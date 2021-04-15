@@ -5,12 +5,14 @@ import org.slf4j.LoggerFactory
 import java.util.Properties
 
 trait Digiroad2Properties {
+  val speedLimitProvider: String
   val userProvider: String
   val municipalityProvider: String
   val eventBus: String
   val useVVHGeometry: String
   val vvhServiceHost: String
   val vvhRestApiEndPoint: String
+  val vvhProdRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
   val viiteRestApiEndPoint: String
   val tierekisteriRestApiEndPoint: String
@@ -59,12 +61,14 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
     props
   }
 
+  val speedLimitProvider: String = scala.util.Properties.envOrElse("speedLimitProvider", null)
   val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
   val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
   val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
   val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
   val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
+  val vvhProdRestApiEndPoint: String = scala.util.Properties.envOrElse("VVHProdRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
   val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
@@ -146,12 +150,14 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
     props
   }
 
+  override val speedLimitProvider: String = envProps.getProperty("speedLimitProvider")
   override val userProvider: String = envProps.getProperty("userProvider")
   override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
   override val eventBus: String = envProps.getProperty("eventBus")
   override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
   override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
   override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
+  override val vvhProdRestApiEndPoint: String = envProps.getProperty("VVHProdRestApiEndPoint")
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val viiteRestApiEndPoint: String = envProps.getProperty("viiteRestApiEndPoint", "http://localhost:9080/api/viite/")
   override val tierekisteriRestApiEndPoint: String = envProps.getProperty("tierekisteriRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
@@ -233,12 +239,14 @@ object Digiroad2Properties {
     }
   }
 
+  lazy val speedLimitProvider: String = properties.speedLimitProvider
   lazy val userProvider: String = properties.userProvider
   lazy val municipalityProvider: String = properties.municipalityProvider
   lazy val eventBus: String = properties.eventBus
   lazy val useVVHGeometry: String = properties.useVVHGeometry
   lazy val vvhServiceHost: String = properties.vvhServiceHost
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
+  lazy val vvhProdRestApiEndPoint: String = properties.vvhProdRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
   lazy val tierekisteriRestApiEndPoint: String = properties.tierekisteriRestApiEndPoint
