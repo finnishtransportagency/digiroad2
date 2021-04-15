@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
@@ -42,8 +41,6 @@ AssetDataImporter {
                            roadLinkId: Long,
                            municipalityCode: Int,
                            bearing: Double)
-  case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
-                            rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
   case class PropertyWrapper(shelterTypePropertyId: Long, accessibilityPropertyId: Long, administratorPropertyId: Long,
                              busStopAssetTypeId: Long, busStopTypePropertyId: Long, busStopLiViPropertyId: Long, busStopSuggestedPropertyId: Long)
@@ -79,18 +76,12 @@ AssetDataImporter {
 
 class AssetDataImporter {
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val ds: DataSource = initDataSource
 
   val Modifier = "dr1conversion"
 
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
-  implicit object SetStruct extends SetParameter[STRUCT] {
-    def apply(v: STRUCT, pp: PositionedParameters) {
-      pp.setObject(v, java.sql.Types.STRUCT)
-    }
-  }
 
   def time[A](f: => A) = {
     val s = System.nanoTime
@@ -931,12 +922,6 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     val id = PostGISObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
     sqlu"""update asset set floating = '1' where id = $id""".execute
     id
-  }
-
-  private[this] def initDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
-    val cfg = new BoneCPConfig(localProperties)
-    new BoneCPDataSource(cfg)
   }
 
   lazy val localProperties: Properties = {

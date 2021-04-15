@@ -31,7 +31,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val speedLimitDao = new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
-  val oracleAssetDao = new PostGISAssetDao
+  val postGISAssetDao = new PostGISAssetDao
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
   val mockMassTransitLaneClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]

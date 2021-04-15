@@ -11,7 +11,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
-class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
+class PostGISMassTransitStopDaoSpec extends FunSuite with MustMatchers {
   val massTransitStopDao = new MassTransitStopDao
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
