@@ -334,18 +334,18 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
   def updateLaneAttributes(laneId: Long, props: LaneProperty, username: String ): Unit = {
     val finalValue = props.values.head.value.toString
-    val query =sql" SELECT LANE_ID FROM LANE_ATTRIBUTE WHERE name = ${props.publicId} AND lane_id = $laneId ".as[Long].firstOption
+    val laneQuery = sql" SELECT LANE_ID FROM LANE_ATTRIBUTE WHERE name = ${props.publicId} AND lane_id = $laneId ".as[Long].firstOption
 
-    if (!query.isEmpty) {
+    if (!laneQuery.isEmpty) {
       sqlu"""
           UPDATE LANE_ATTRIBUTE SET VALUE = $finalValue, MODIFIED_BY = $username, MODIFIED_DATE = current_timestamp
-         WHERE LANE_ID =  $laneId
-         AND NAME = ${props.publicId}
+            WHERE LANE_ID =  $laneId
+            AND NAME = ${props.publicId}
        """.execute
     }else {
       sqlu"""
-         INSERT INTO LANE_ATTRIBUTE (id, lane_id, name, value, created_date, created_by)
-         VALUES( ${Sequences.nextPrimaryKeySeqValue}, $laneId, ${props.publicId}, $finalValue, current_timestamp, $username)
+          INSERT INTO LANE_ATTRIBUTE (id, lane_id, name, value, created_date, created_by)
+            VALUES( ${Sequences.nextPrimaryKeySeqValue}, $laneId, ${props.publicId}, $finalValue, current_timestamp, $username)
        """.execute
     }
 
