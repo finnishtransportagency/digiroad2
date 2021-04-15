@@ -14,7 +14,7 @@ import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
 import org.scalatra.json.JacksonJsonSupport
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.dao.ImportLogDAO
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProvider = Digiroad2Context.userProvider, val eventBus: DigiroadEventBus = Digiroad2Context.eventbus)
@@ -179,7 +179,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     getLogById(newLogId)
   }
 
-  def createNewLog(username: String, fileName: String, jobName: String) : Long =  OracleDatabase.withDynTransaction {importLogDao.create(username, fileName, jobName)}
+  def createNewLog(username: String, fileName: String, jobName: String) : Long =  PostGISDatabase.withDynTransaction {importLogDao.create(username, fileName, jobName)}
 
-  def getLogById(id: Long) : Option[ImportStatusInfo] =  OracleDatabase.withDynTransaction {importLogDao.get(id)}
+  def getLogById(id: Long) : Option[ImportStatusInfo] =  PostGISDatabase.withDynTransaction {importLogDao.get(id)}
 }

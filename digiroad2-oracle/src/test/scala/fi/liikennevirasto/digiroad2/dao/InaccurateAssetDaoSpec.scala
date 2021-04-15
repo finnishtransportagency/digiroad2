@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset, State}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -13,7 +13,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
   val inaccurateAssetDao = new InaccurateAssetDAO
 
   test("create and get new asset on InaccurateAsset table") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val speedLimitTestAsset = sql"""select id from asset where asset_type_id = $speedLimitAssetTypeID order by id limit 1""".as[Long].first
       inaccurateAssetDao.createInaccurateAsset(speedLimitTestAsset, speedLimitAssetTypeID, municipalityCode, Municipality)
 
@@ -26,7 +26,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("delete and get new asset on InaccurateAsset table") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val speedLimitTestAsset = sql"""select id from asset where asset_type_id = $speedLimitAssetTypeID order by id limit 1""".as[Long].first
       inaccurateAssetDao.createInaccurateAsset(speedLimitTestAsset, speedLimitAssetTypeID, municipalityCode, Municipality)
 
@@ -42,7 +42,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("get inaccurate assets by Type Id") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val listSpeedLimit = sql"""select id from asset where asset_type_id = $speedLimitAssetTypeID order by id limit 5""".as[Long].list
       listSpeedLimit.foreach{speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
@@ -60,7 +60,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
   test("get inaccurate assets by Type Id and with Authorized Municipalities List") {
     val authorizedMunicipalitiesList = Set(235, 300)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val listSpeedLimit = sql"""select id from asset where asset_type_id = $speedLimitAssetTypeID order by id limit 5 """.as[Long].list
       listSpeedLimit.foreach{speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
@@ -77,7 +77,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
 
 
   test("delete all asset related with some type id on InaccurateAsset table") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val listSpeedLimit = sql"""select id from asset where asset_type_id = $speedLimitAssetTypeID order by id limit 10""".as[Long].list
       listSpeedLimit.foreach { speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, State)
@@ -96,7 +96,7 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("delete all asset on InaccurateAsset table") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val listSpeedLimit = sql"""select id from asset where asset_type_id = $speedLimitAssetTypeID order by id limit 10""".as[Long].list
       listSpeedLimit.foreach { speedLimitId =>
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)

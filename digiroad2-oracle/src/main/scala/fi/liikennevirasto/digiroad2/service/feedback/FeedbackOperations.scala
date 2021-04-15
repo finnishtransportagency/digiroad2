@@ -5,7 +5,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{Email, EmailOperations}
 import fi.liikennevirasto.digiroad2.dao.feedback.FeedbackDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -20,8 +20,8 @@ trait Feedback {
 
   val logger = LoggerFactory.getLogger(getClass)
   private val smtpProp = new SmtpPropertyReader
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def dao: FeedbackDao
   def emailOperations: EmailOperations
   def to: String = smtpProp.getDestination

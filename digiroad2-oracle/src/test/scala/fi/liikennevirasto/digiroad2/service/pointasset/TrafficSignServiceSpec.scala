@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, Queries}
+import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -41,7 +41,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   val batchProcessName = "batch_process_trafficSigns"
   private val typePublicId = "trafficSigns_type"
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
+  val mockUserProvider = MockitoSugar.mock[PostGISUserProvider]
   val vvHRoadlink1 = Seq(VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val vvHRoadlink2 = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvHRoadlink1.map(toRoadLink))

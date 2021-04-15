@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.PedestrianCrossingValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -22,11 +22,11 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
-  val mockPedestrianCrossingDao: OraclePedestrianCrossingDao = MockitoSugar.mock[OraclePedestrianCrossingDao]
+  val mockPedestrianCrossingDao: PostGISPedestrianCrossingDao = MockitoSugar.mock[PostGISPedestrianCrossingDao]
 
 
   class TestPedestrianCrossingValidator extends PedestrianCrossingValidator {
-    override lazy val dao: OraclePedestrianCrossingDao = mockPedestrianCrossingDao
+    override lazy val dao: PostGISPedestrianCrossingDao = mockPedestrianCrossingDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
   }
@@ -42,7 +42,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
   test("Pedestrian crossing traffic sign without match asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
 
       val propTrafficSign = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.BothDirections.value, None, NormalLinkInterface)
@@ -58,7 +58,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic sign have a correct asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val propTrafficSign = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -77,7 +77,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic sign without a match asset only after 50m") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val propTrafficSign = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1002l, 12, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -98,7 +98,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic filter nearest asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
 
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
@@ -119,7 +119,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic filter further asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
 
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
@@ -140,7 +140,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic (AgainstDigitizing) in roadLink filter nearest asset TowardDigitalization") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
 
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
@@ -164,7 +164,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic (TowardsDigitizing) in roadLink filter nearest asset AgainstDigitizing") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -187,7 +187,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic (AgainstDigitizing) in roadLink filter nearest asset AgainstDigitizing") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -210,7 +210,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   }
 
   test("Pedestrian crossing traffic (TowardsDigitizing) in roadLink filter nearest asset TowardDigitalization") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))

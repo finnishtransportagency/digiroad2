@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -50,7 +50,7 @@ sealed trait RoadLinkDAO{
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
     sqlu""" insert into #$table (id, link_id, #$column, modified_date, modified_by)
-            select nextval('primary_key_seq'), ${linkId}, $value,to_timestamp_tz($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
+            select nextval('primary_key_seq'), ${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
            where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
@@ -123,8 +123,8 @@ class MunicipalityApi(val vvhClient: VVHClient,
     basicAuth
   }
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def awsDao: AwsDao = new AwsDao
 
   final val AwsUser = "AwsUpdater"
@@ -354,7 +354,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
 //    try {
       val listDatasets: List[Dataset] = parsedBody.extractOrElse[List[Dataset]](throw new ClassCastException)
 
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         val datasetFeaturesWithoutIds: Map[String, Option[Int]] = listDatasets.flatMap(dataset =>
           Map(dataset.datasetId -> validateAndInsertDataset(dataset))).toMap
 

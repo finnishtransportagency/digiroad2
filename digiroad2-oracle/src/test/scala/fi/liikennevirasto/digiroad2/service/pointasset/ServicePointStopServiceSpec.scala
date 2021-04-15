@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProper
 import fi.liikennevirasto.digiroad2.dao.ServicePoint
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{NewMassTransitStop, ServicePointStopService}
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 
@@ -32,7 +32,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
   }
 
   test("Create new Service Point as mass transit stop"){
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val createdServicePointId = testMassTransitStopService.create(dummyPoint.x, dummyPoint.y, dummyProperties, "ServicePointBusStopServiceSpec", 749, false)
       val createdServicePoint = testMassTransitStopService.fetchAsset(createdServicePointId)
 
@@ -50,7 +50,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
   }
 
   test("Update Service Point as mass transit stop"){
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val createdServicePointId = testMassTransitStopService.create(dummyPoint.x, dummyPoint.y, dummyProperties, "ServicePointBusStopServiceSpec", 749, false)
       val createdServicePoint = testMassTransitStopService.fetchAsset(createdServicePointId)
 
@@ -72,7 +72,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
   }
 
   test("Delete Service Point as mass transit stop"){
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val createdServicePointId = testMassTransitStopService.create(dummyPoint.x, dummyPoint.y, dummyProperties, "ServicePointBusStopServiceSpec", 749, false)
       val createdServicePoint = testMassTransitStopService.fetchAsset(createdServicePointId)
 

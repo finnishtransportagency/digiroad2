@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficLight
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 import scala.util.Try
 
@@ -40,7 +40,7 @@ case class TrafficLight(id: Long, linkId: Long,
                         modifiedAt: Option[DateTime] = None,
                         linkSource: LinkGeomSource) extends PersistedPointAsset
 
-object OracleTrafficLightDao {
+object PostGISTrafficLightDao {
   def fetchByFilter(queryFilter: String => String): Seq[TrafficLight] = {
 
     val query =
@@ -311,7 +311,7 @@ object OracleTrafficLightDao {
   def fetchByRadius(position : Point, meters: Int): Seq[TrafficLight] = {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
     val filter = s"Where a.asset_type_id = 280 and $boundingBoxFilter"
     fetchByFilter(query => query + filter).
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)

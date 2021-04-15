@@ -4,10 +4,10 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, OracleLinearAssetDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, PostGISLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
@@ -26,10 +26,10 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
   val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
@@ -54,7 +54,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
@@ -277,7 +277,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(linkId1), Some(newLinkId), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
     )
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
@@ -314,7 +314,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
       RoadLink(linkId2, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, Nil))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
@@ -400,7 +400,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def dao: OracleLinearAssetDao = mockLinearAssetDao
+      override def dao: PostGISLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
       override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
@@ -439,7 +439,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def dao: OracleLinearAssetDao = mockLinearAssetDao
+      override def dao: PostGISLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
       override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
@@ -480,7 +480,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
     val newLinearAsset = NewLinearAsset(1l, 0, 10, roadWidthValues, SideCode.AgainstDigitizing.value, 0, None)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
       val id = ServiceWithDao.create(Seq(newLinearAsset), RoadWidth.typeId, "sideCode_adjust").head
       val original = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head

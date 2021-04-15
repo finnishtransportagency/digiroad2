@@ -7,8 +7,8 @@ import fi.liikennevirasto.digiroad2.asset.{AnimalWarningsType, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
@@ -20,7 +20,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
-  val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
+  val mockAssetDao: PostGISAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
@@ -29,9 +29,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
-  val speedLimitDao = new OracleSpeedLimitDao(mockVVHClient, mockRoadLinkService)
-  val oracleAssetDao = new OracleAssetDao
+  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val speedLimitDao = new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
+  val oracleAssetDao = new PostGISAssetDao
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
   val mockMassTransitLaneClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
@@ -70,7 +70,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
     override def assetName: String = "assetTest"
     override type TierekisteriClientType = TierekisteriAssetDataClient
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
@@ -93,7 +93,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestSpeedLimitsTierekisteriImporter extends StateSpeedLimitTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient = mockTRTrafficSignsLimitSpeedLimitClient
@@ -119,7 +119,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestLitRoadOperations extends LitRoadTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriLightingAssetClient = mockTRClient
@@ -129,7 +129,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestPavedRoadOperations extends PavedRoadTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriPavedRoadAssetClient = mockTRPavedRoadClient
@@ -148,7 +148,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   class TestMassTransitLaneOperations extends MassTransitLaneTierekisteriImporter {
 
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneClient
@@ -160,7 +160,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestDamageByThawOperations extends DamagedByThawTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriDamagedByThawAssetClient = mockTRDamageByThawClient
@@ -170,7 +170,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestEuropeanRoadOperations extends EuropeanRoadTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriEuropeanRoadAssetClient = mockTREuropeanRoadClient
@@ -180,7 +180,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestSpeedLimitAssetOperations extends SpeedLimitTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriSpeedLimitAssetClient = mockTRSpeedLimitAssetClient
@@ -190,7 +190,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestCareClassOperations extends CareClassTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -201,7 +201,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestCarryingCapacityOperations extends CarryingCapacityTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriCarryingCapacityAssetClient = mockTRCarryingCapacityClient
@@ -211,7 +211,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestTrafficSignTierekisteriImporter extends TrafficSignTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriTrafficSignAssetClient = mockTRTrafficSignsLimitClient
@@ -229,7 +229,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
     override def assetName: String = "assetTest"
     override type TierekisteriClientType = TierekisteriAssetDataClient
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriAssetDataClient = mockTierekisteriAssetDataClient
@@ -251,7 +251,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestAnimalWarningsOperations extends AnimalWarningsTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val assetDao: PostGISAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriAnimalWarningsAssetClient = mockTRAnimalWarningsClient

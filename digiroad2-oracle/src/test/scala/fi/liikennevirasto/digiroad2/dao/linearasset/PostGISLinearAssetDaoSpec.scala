@@ -17,11 +17,11 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation
 
-class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
+class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
+  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): PostGISLinearAssetDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -36,7 +36,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+    new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
@@ -72,7 +72,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch simple prohibition without validity periods or exceptions") {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty, ""))
 
@@ -90,7 +90,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period") {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, ""))
 
@@ -108,7 +108,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period and exceptions") {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), ""))
@@ -127,7 +127,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period, exceptions and additional information") {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), "test value string"))
@@ -146,7 +146,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch multiple prohibitions") {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val linkId1 = 1l
     val linkId2 = 2l
     val linkId3 = 3l
@@ -186,7 +186,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("all entities should be expired") {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
     val typeId = 110
     val linkId = 99999
     runWithRollback {

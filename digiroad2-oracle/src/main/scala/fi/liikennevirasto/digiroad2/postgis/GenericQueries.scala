@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.oracle
+package fi.liikennevirasto.digiroad2.postgis
 
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 import org.slf4j.LoggerFactory

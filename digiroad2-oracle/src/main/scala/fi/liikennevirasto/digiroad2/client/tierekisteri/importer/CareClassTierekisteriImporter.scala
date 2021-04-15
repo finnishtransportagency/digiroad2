@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, 
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
 import slick.driver.JdbcDriver.backend.Database
@@ -24,8 +24,8 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
 
   override def typeId: Int = CareClass.typeId
   override def assetName: String = "careClass"
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   lazy val greenCareTierekisteriClient: TierekisteriGreenCareClassAssetClient  =
     new TierekisteriGreenCareClassAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),

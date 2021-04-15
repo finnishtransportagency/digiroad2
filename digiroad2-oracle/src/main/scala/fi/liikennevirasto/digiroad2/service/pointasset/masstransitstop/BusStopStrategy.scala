@@ -73,7 +73,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
             }
         )
         val updateAsset = asset.copy(propertyData = updateProperties)
-        eventbus.publish("asset:expired", updateAsset)
+        eventbus.publish("asset:expired", (updateAsset,true))
       case _ => None
     }
   }

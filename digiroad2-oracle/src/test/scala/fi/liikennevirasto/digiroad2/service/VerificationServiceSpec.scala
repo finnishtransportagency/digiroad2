@@ -4,7 +4,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences, VerificationDao}
 import fi.liikennevirasto.digiroad2.linearasset.TinyRoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -19,7 +19,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   val verificationDao = new VerificationDao
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
 
