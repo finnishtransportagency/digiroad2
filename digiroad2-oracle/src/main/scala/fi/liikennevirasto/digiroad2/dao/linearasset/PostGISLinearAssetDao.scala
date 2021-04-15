@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId}
@@ -16,7 +15,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 import scala.language.implicitConversions
 
@@ -33,38 +32,6 @@ case class AssetLink(id: Long, linkId: Long)
 class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
   val logger: Logger = LoggerFactory.getLogger(getClass)
-
-  /**
-    * No usages in OTH.
-    */
-  implicit object GetByteArray extends GetResult[Array[Byte]] {
-    def apply(rs: PositionedResult) = rs.nextBytes()
-  }
-
-  /**
-    * No usages in OTH.
-    */
-  implicit object GetSideCode extends GetResult[SideCode] {
-    def apply(rs: PositionedResult) = SideCode(rs.nextInt())
-  }
-
-  /**
-    * No usages in OTH.
-    */
-  implicit object SetStruct extends SetParameter[STRUCT] {
-    def apply(v: STRUCT, pp: PositionedParameters) {
-      pp.setObject(v, java.sql.Types.STRUCT)
-    }
-  }
-
-  /**
-    * No usages in OTH.
-    */
-  implicit val SetParameterFromLong: SetParameter[Seq[Long]] = new SetParameter[Seq[Long]] {
-    def apply(seq: Seq[Long], p: PositionedParameters): Unit = {
-      seq.foreach(p.setLong)
-    }
-  }
 
   implicit val getProhibitionsRow: GetResult[ProhibitionsRow] = new GetResult[ProhibitionsRow] {
     def apply(r: PositionedResult) : ProhibitionsRow = {

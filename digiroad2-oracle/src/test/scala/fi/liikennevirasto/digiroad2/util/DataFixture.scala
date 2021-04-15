@@ -133,7 +133,7 @@ object DataFixture {
     new VKMGeometryTransform()
   }
 
-  lazy val oracleLinearAssetDao : PostGISLinearAssetDao = {
+  lazy val postGISLinearAssetDao : PostGISLinearAssetDao = {
     new PostGISLinearAssetDao(vvhClient, roadLinkService)
   }
 
@@ -1064,7 +1064,7 @@ object DataFixture {
         assets.foreach { asset =>
           try {
             val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
-            assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+            assets.foreach(asset => postGISLinearAssetDao.updateArea(asset._1, area))
           } catch {
             case ex: Exception => {
               println(s"""asset id ${asset._1} in link id ${asset._2} as failed with the following exception ${ex.getMessage}""")
@@ -1212,7 +1212,7 @@ object DataFixture {
 
         val roadWithMTKClass = roadLinks.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
         println("Fetching assets")
-        val existingAssets = oracleLinearAssetDao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        val existingAssets = postGISLinearAssetDao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
 
         println(s"Number of existing assets: ${existingAssets.length}")
         println(s"Start updating assets with Information Source")
@@ -1220,7 +1220,7 @@ object DataFixture {
         existingAssets.foreach { asset =>
           if(asset.createdBy.contains("vvh_mtkclass_default") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))){
             if(!asset.informationSource.contains(MunicipalityMaintenainer))
-              oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+              postGISLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
           }
           else{
             if(( (asset.createdBy.contains("dr1_conversion") || asset.createdBy.contains("vvh_generated"))&& asset.modifiedBy.isEmpty)  ||
@@ -1228,19 +1228,19 @@ object DataFixture {
               if(!asset.informationSource.contains(MunicipalityMaintenainer)) {
                 if (roadWithMTKClass.exists(_.linkId == asset.linkId)) {
                   println(s"Asset with ${asset.id} created by dr1_conversion or vvh_generated and with valid MTKCLASS")
-                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
+                  postGISLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MmlNls)
                 } else
-                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
+                  postGISLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
               }
             }
             else {
               if (asset.createdBy.contains("batch_process_roadWidth") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
                 if (!asset.informationSource.contains(MunicipalityMaintenainer))
-                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, RoadRegistry)
+                  postGISLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, RoadRegistry)
               }
               else{
                 if( isKIdentifier(asset.createdBy) || isKIdentifier(asset.modifiedBy) )
-                  oracleLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
+                  postGISLinearAssetDao.updateInformationSource(RoadWidth.typeId, asset.id, MunicipalityMaintenainer)
 
                 else
                   println(s"Asset with ${asset.id} not updated with Information Source")
@@ -1282,13 +1282,13 @@ object DataFixture {
 
         existingAssets.foreach { asset =>
           if (asset.createdBy.contains("batch_process_pavedRoad") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
-            oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, RoadRegistry)
+            postGISLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, RoadRegistry)
           } else {
             if (isKIdentifier(asset.createdBy) || isKIdentifier(asset.modifiedBy)) {
-              oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MunicipalityMaintenainer)
+              postGISLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MunicipalityMaintenainer)
             } else {
               if (asset.createdBy.contains("vvh_generated") && (asset.modifiedBy.isEmpty || asset.modifiedBy.contains("vvh_generated"))) {
-                oracleLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MmlNls)
+                postGISLinearAssetDao.updateInformationSource(PavedRoad.typeId, asset.id, MmlNls)
               } else
                 println(s"Asset with ${asset.id} not updated with Information Source")
             }
@@ -1667,7 +1667,7 @@ object DataFixture {
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
         val linkIds = roadLinks.map(_.linkId)
 
-        val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
+        val existingAssets = postGISLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
         roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
       }
       roadLinksWithAssets.foreach { roadLink =>
