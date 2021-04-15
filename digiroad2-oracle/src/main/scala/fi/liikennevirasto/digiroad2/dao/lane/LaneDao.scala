@@ -334,18 +334,21 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
   def updateLaneAttributes(laneId: Long, props: LaneProperty, username: String ): Unit = {
     val finalValue = props.values.head.value.toString
+    val laneQuery = sql" SELECT LANE_ID FROM LANE_ATTRIBUTE WHERE name = ${props.publicId} AND lane_id = $laneId ".as[Long].firstOption
 
-    sqlu"""MERGE INTO LANE_ATTRIBUTE
-          USING dual
-          ON ( name = ${props.publicId} AND LANE_ID =  $laneId )
-          WHEN MATCHED THEN
-            UPDATE SET VALUE = $finalValue, MODIFIED_BY = $username, MODIFIED_DATE = current_timestamp
+    if (!laneQuery.isEmpty) {
+      sqlu"""
+          UPDATE LANE_ATTRIBUTE SET VALUE = $finalValue, MODIFIED_BY = $username, MODIFIED_DATE = current_timestamp
             WHERE LANE_ID =  $laneId
             AND NAME = ${props.publicId}
-          WHEN NOT MATCHED THEN
-            INSERT (id, lane_id, name, value, created_date, created_by)
+       """.execute
+    }else {
+      sqlu"""
+          INSERT INTO LANE_ATTRIBUTE (id, lane_id, name, value, created_date, created_by)
             VALUES( ${Sequences.nextPrimaryKeySeqValue}, $laneId, ${props.publicId}, $finalValue, current_timestamp, $username)
-    """.execute
+       """.execute
+    }
+
   }
 
   def deleteLaneAttribute(laneId: Long, props: LaneProperty): Unit = {
@@ -379,17 +382,15 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   def expireLanesByLinkId(linkIds: Set[Long], username: String) = {
     MassQuery.withIds(linkIds) { idTableName =>
       sqlu"""
-         MERGE
-         INTO LANE l
-         USING (SELECT ll.LANE_ID
+         UPDATE LANE SET
+           VALID_TO = current_timestamp,
+           EXPIRED_DATE = current_timestamp,
+           EXPIRED_BY = $username
+         WHERE
+           ID IN (SELECT ll.LANE_ID
                 FROM LANE_LINK ll
                 JOIN LANE_POSITION lp ON lp.ID = ll.LANE_POSITION_ID
-                JOIN #$idTableName i ON i.id = lp.LINK_ID
-              ) src
-        ON ( src.LANE_ID = l.ID )
-        WHEN MATCHED THEN
-          UPDATE
-          SET l.VALID_TO = current_timestamp, l.EXPIRED_DATE = current_timestamp, l.EXPIRED_BY = $username
+                JOIN #$idTableName i ON i.id = lp.LINK_ID)
       """.execute
 
     }

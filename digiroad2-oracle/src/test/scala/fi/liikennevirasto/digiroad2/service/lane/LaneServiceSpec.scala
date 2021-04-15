@@ -1122,6 +1122,16 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
+  test("Testing expiring lane by linkId"){
+    runWithRollback {
+      val laneToBeCreated = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val createdLaneID = ServiceWithDao.create(Seq(laneToBeCreated), Set(100L), 2, usernameTest).head
+      laneDao.expireLanesByLinkId(Set(100L), usernameTest)
+      val laneId = laneDao.fetchLanesByIds(Set(createdLaneID))
+      laneId.head.expired should be(true)
+    }
+  }
+
   test("Adjust lanes: Create missing main lane 21 and adjust side codes of lanes 11 and 12"){
     runWithRollback {
       val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -1278,6 +1288,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lanesChanged.map(_.lane.id) should be(Seq(lane11Id, lane11Id))
     }
   }
+
 
   test("Lane Change: Show 2 Add and 1 expire"){
     runWithRollback {
