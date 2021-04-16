@@ -1,6 +1,6 @@
 FROM openjdk:8u191-jre-alpine
 ENV initialRamPercentage="-XX:InitialRAMPercentage=50.0"
-ENV maxRamPercentage="-XX:MaxRAMPercentage=80.0"
+ENV maxRamPercentage="-XX:MaxRAMPercentage=95.0"
 ENV otherParameter="-Djava.security.egd=file:/dev/./urandom -Duser.timezone=Europe/Helsinki -XX:-OmitStackTraceInFastThrow"
 ENV javaParameter="${initialRam} ${maxRamPercentage} ${otherParameter}"
 RUN apk --no-cache add curl
