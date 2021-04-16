@@ -38,24 +38,18 @@ trait Digiroad2Properties {
   val authenticationServiceRoadBasicPassword: String
   val authenticationMunicipalityBasicUsername: String
   val authenticationMunicipalityBasicPassword: String
+  val revision: String
   val latestDeploy: String
   val env: String
 
-  val bonecpProperties: Properties
 
+  val bonecpProperties: Properties
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String
   def getAuthenticationBasicPassword(baseAuth: String = ""): String
 }
 
 class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
-
-  private lazy val revisionProperties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/revision.properties"))
-    props
-  }
-
   val speedLimitProvider: String = scala.util.Properties.envOrElse("speedLimitProvider", null)
   val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
   val municipalityProvider: String = scala.util.Properties.envOrElse("municipalityProvider", null)
@@ -89,7 +83,8 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val authenticationServiceRoadBasicPassword: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null)
   val authenticationMunicipalityBasicUsername: String = scala.util.Properties.envOrElse("authentication.municipality.basic.username", null)
   val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication.municipality.basic.password", null)
-  val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
+  val revision: String = scala.util.Properties.envOrElse("revision", null)
+  val latestDeploy: String = scala.util.Properties.envOrElse("latestDeploy", null)
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
 
   lazy val bonecpProperties: Properties = {
@@ -119,12 +114,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   private lazy val envProps: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/env.properties"))
-    props
-  }
-
-  private lazy val revisionProperties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/revision.properties"))
     props
   }
 
@@ -161,7 +150,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
   override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
   override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
-  override val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
+  override val revision: String = envProps.getProperty("revision")
+  override val latestDeploy: String = envProps.getProperty("latestDeploy")
   override val env: String = envProps.getProperty("env")
 
   override lazy val bonecpProperties: Properties = {
@@ -233,6 +223,7 @@ object Digiroad2Properties {
   lazy val authenticationServiceRoadBasicPassword: String = properties.authenticationServiceRoadBasicPassword
   lazy val authenticationMunicipalityBasicUsername: String = properties.authenticationMunicipalityBasicUsername
   lazy val authenticationMunicipalityBasicPassword: String = properties.authenticationMunicipalityBasicPassword
+  lazy val revision: String = properties.revision
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
 

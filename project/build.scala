@@ -1,6 +1,6 @@
 import io.gatling.sbt.GatlingPlugin
 import sbt._
-import sbt.Keys._
+import sbt.Keys.{unmanagedResourceDirectories, _}
 import org.scalatra.sbt._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.MergeStrategy
@@ -13,8 +13,7 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
-  val env = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
-  val testEnv = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
+
   lazy val geoJar = Project (
     Digiroad2GeoName,
     file(Digiroad2GeoName),
@@ -77,9 +76,7 @@ object Digiroad2Build extends Build {
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0"
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(geoJar)
 
@@ -114,9 +111,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(geoJar, oracleJar)
 
@@ -151,9 +146,7 @@ object Digiroad2Build extends Build {
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(geoJar, oracleJar, commonApiJar % "compile->compile;test->test")
 
@@ -194,9 +187,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "container;compile",
         "org.eclipse.jetty" % "jetty-jmx" % "9.2.15.v20160210" % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
+      )
     )
   ) dependsOn(geoJar, oracleJar, commonApiJar, othApiJar) aggregate
     (geoJar, oracleJar, commonApiJar, othApiJar)
@@ -214,6 +205,7 @@ object Digiroad2Build extends Build {
     mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     {
       case x if x.endsWith("about.html") => MergeStrategy.discard
+      case x if x.endsWith("env.properties") => MergeStrategy.discard
       case x => old(x)
     } }
   )
