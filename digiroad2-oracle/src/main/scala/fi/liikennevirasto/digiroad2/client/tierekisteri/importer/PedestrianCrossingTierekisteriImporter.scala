@@ -21,8 +21,8 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
 
   lazy val dao = new OraclePedestrianCrossingDao()
 
-  override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
 

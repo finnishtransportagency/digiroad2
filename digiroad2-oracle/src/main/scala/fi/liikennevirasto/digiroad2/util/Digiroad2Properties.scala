@@ -32,22 +32,17 @@ trait Digiroad2Properties {
   val bonecpJdbcUrl: String
   val bonecpUsername: String
   val bonecpPassword: String
-  val conversionBonecpJdbcUrl: String
-  val conversionBonecpUsername: String
-  val conversionBonecpPassword: String
   val authenticationBasicUsername: String
   val authenticationBasicPassword: String
   val authenticationServiceRoadBasicUsername: String
   val authenticationServiceRoadBasicPassword: String
   val authenticationMunicipalityBasicUsername: String
   val authenticationMunicipalityBasicPassword: String
-  val viitetierekisteriUsername: String
-  val viitetierekisteriPassword: String
   val latestDeploy: String
   val env: String
 
   val bonecpProperties: Properties
-  val conversionBonecpProperties: Properties
+
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String
   def getAuthenticationBasicPassword(baseAuth: String = ""): String
@@ -109,18 +104,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
     props
   }
 
-  lazy val conversionBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", conversionBonecpJdbcUrl)
-      props.setProperty("bonecp.username", conversionBonecpUsername)
-      props.setProperty("bonecp.password", conversionBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
-    }
-    props
-  }
-
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username", null)
   }
@@ -172,17 +155,12 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
   override val bonecpUsername: String = envProps.getProperty("bonecp.username")
   override val bonecpPassword: String = envProps.getProperty("bonecp.password")
-  override val conversionBonecpJdbcUrl: String = envProps.getProperty("conversion.bonecp.jdbcUrl")
-  override val conversionBonecpUsername: String = envProps.getProperty("conversion.bonecp.username")
-  override val conversionBonecpPassword: String = envProps.getProperty("conversion.bonecp.password")
   override val authenticationBasicUsername: String = envProps.getProperty("authentication.basic.username")
   override val authenticationBasicPassword: String = envProps.getProperty("authentication.basic.password")
   override val authenticationServiceRoadBasicUsername: String = envProps.getProperty("authentication.serviceRoad.basic.username")
   override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
   override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
   override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
-  override val viitetierekisteriUsername: String = envProps.getProperty("viiteTierekisteri.username")
-  override val viitetierekisteriPassword: String = envProps.getProperty("viiteTierekisteri.password")
   override val latestDeploy: String = revisionProperties.getProperty("latestDeploy")
   override val env: String = envProps.getProperty("env")
 
@@ -198,18 +176,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
     props
   }
 
-  override lazy val conversionBonecpProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.setProperty("bonecp.jdbcUrl", conversionBonecpJdbcUrl)
-      props.setProperty("bonecp.username", conversionBonecpUsername)
-      props.setProperty("bonecp.password", conversionBonecpPassword)
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load conversion bonecp properties for env: " + env, e)
-    }
-    props
-  }
-
   override def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username")
   }
@@ -220,7 +186,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
 }
 
 /**
-  * ViiteProperties will get the properties from the environment variables by default.
+  * Digiroad2Properties will get the properties from the environment variables by default.
   * If env.properties is found in classpath, then the properties are read from that property file.
   */
 object Digiroad2Properties {
@@ -261,22 +227,16 @@ object Digiroad2Properties {
   lazy val bonecpJdbcUrl: String = properties.bonecpJdbcUrl
   lazy val bonecpUsername: String = properties.bonecpUsername
   lazy val bonecpPassword: String = properties.bonecpPassword
-  lazy val conversionBonecpJdbcUrl: String = properties.conversionBonecpJdbcUrl
-  lazy val conversionBonecpUsername: String = properties.conversionBonecpUsername
-  lazy val conversionBonecpPassword: String = properties.conversionBonecpPassword
   lazy val authenticationBasicUsername: String = properties.authenticationBasicUsername
   lazy val authenticationBasicPassword: String = properties.authenticationBasicPassword
   lazy val authenticationServiceRoadBasicUsername: String = properties.authenticationServiceRoadBasicUsername
   lazy val authenticationServiceRoadBasicPassword: String = properties.authenticationServiceRoadBasicPassword
   lazy val authenticationMunicipalityBasicUsername: String = properties.authenticationMunicipalityBasicUsername
   lazy val authenticationMunicipalityBasicPassword: String = properties.authenticationMunicipalityBasicPassword
-  lazy val viitetierekisteriUsername: String = properties.viitetierekisteriUsername
-  lazy val viitetierekisteriPassword: String = properties.viitetierekisteriPassword
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val env: String = properties.env
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties
-  lazy val conversionBonecpProperties: Properties = properties.conversionBonecpProperties
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)

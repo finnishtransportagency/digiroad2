@@ -69,8 +69,8 @@ object DataFixture {
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
@@ -142,14 +142,14 @@ object DataFixture {
   }
 
   lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {
-    new TierekisteriLightingAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriLightingAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriRoadWidthAsset : TierekisteriRoadWidthAssetClient = {
-    new TierekisteriRoadWidthAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriRoadWidthAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
@@ -162,8 +162,8 @@ object DataFixture {
   }
 
   lazy val tierekisteriSpeedLimitAsset : TierekisteriSpeedLimitAssetClient = {
-    new TierekisteriSpeedLimitAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriSpeedLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 

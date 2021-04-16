@@ -20,21 +20,21 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
 
   override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]) = throw new UnsupportedOperationException("Not supported method")
 
-  override val tierekisteriClient = new TierekisteriTrafficSignAssetSpeedLimitClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriTrafficSignAssetSpeedLimitClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
 
   lazy val tierekisteriClientUA: TierekisteriUrbanAreaClient = {
-    new TierekisteriUrbanAreaClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriUrbanAreaClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriClientTelematicSpeedLimit: TierekisteriTelematicSpeedLimitClient = {
-    new TierekisteriTelematicSpeedLimitClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriTelematicSpeedLimitClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 

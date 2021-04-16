@@ -27,8 +27,8 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   override type TierekisteriClientType = TierekisteriTrafficSignAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override val tierekisteriClient = new TierekisteriTrafficSignAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriTrafficSignAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   private val typePublicId = "trafficSigns_type"
@@ -248,8 +248,8 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
   def trafficSignsInGroup(trafficSignGroup: TrafficSignTypeGroup) = TrafficSignType.apply(trafficSignGroup)
   def filterCondition(assetNumber : Int): Boolean = TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.AdditionalPanels || TrafficSignType.applyTRValue(assetNumber).group == trafficSignGroup
 
-  override val tierekisteriClient = new TierekisteriTrafficSignGroupClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriTrafficSignGroupClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())(filterCondition)
 
   override def expireAssetsFromAllMunicipalitiesExcept(municipalitiesToIgnore: Seq[Int] = Seq.empty[Int]) : Unit = {
@@ -277,8 +277,8 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
 
 class TrafficSignSpeedLimitTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
   override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
-  override val tierekisteriClient = new SpeedLimitTrafficSignClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new SpeedLimitTrafficSignClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())(filterCondition)
 }
 

@@ -65,8 +65,8 @@ trait CsvDataImporterOperations {
   }
 
   lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty(Digiroad2Properties.tierekisteriEnabled.toString).toBoolean,
+    new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build)
   }
 

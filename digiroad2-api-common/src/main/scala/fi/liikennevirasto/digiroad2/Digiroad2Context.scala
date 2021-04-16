@@ -486,8 +486,8 @@ object Digiroad2Context {
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      getProperty(Digiroad2Properties.tierekisteriEnabled.toString).toBoolean, //alussa getProperty("digiroad2.tierekisteri.enabled") -> type mismatch required string, found boolean
+    new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build)
   }
 

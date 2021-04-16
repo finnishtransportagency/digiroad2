@@ -28,14 +28,14 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   lazy val greenCareTierekisteriClient: TierekisteriGreenCareClassAssetClient  =
-    new TierekisteriGreenCareClassAssetClient(dr2properties.getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriGreenCareClassAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
 
 
   lazy val winterCareTierekisteriClient: TierekisteriWinterCareClassAssetClient =
-    new TierekisteriWinterCareClassAssetClient(dr2properties.getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriWinterCareClassAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
 
   val trAssetTypeClients: Seq[TierekisteriAssetDataClient] = Seq(greenCareTierekisteriClient, winterCareTierekisteriClient)

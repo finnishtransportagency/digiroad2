@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory
 object ValluSender extends AssetPropertiesReader {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
-  val sendingEnabled = Digiroad2Context.getProperty(Digiroad2Properties.valluServerSendingEnabled.toString).toBoolean
-  val address = Digiroad2Context.getProperty(Digiroad2Properties.valluServerAddress)
+  val sendingEnabled = Digiroad2Properties.valluServerSendingEnabled
+  val address = Digiroad2Properties.valluServerAddress
 
   val config = RequestConfig.custom()
     .setSocketTimeout(60 * 1000)

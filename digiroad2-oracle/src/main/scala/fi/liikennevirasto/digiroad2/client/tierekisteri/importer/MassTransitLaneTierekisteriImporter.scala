@@ -17,8 +17,8 @@ class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporte
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriMassTransitLaneAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriMassTransitLaneAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   protected override def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {

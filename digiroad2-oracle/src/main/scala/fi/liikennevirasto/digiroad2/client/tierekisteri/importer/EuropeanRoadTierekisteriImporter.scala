@@ -17,8 +17,8 @@ class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOp
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriEuropeanRoadAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriEuropeanRoadAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
 

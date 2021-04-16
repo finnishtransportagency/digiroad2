@@ -25,20 +25,6 @@ object TierekisteriDataImporter {
     props
   }
 
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/env.properties"))
-    props
-  }
-
-  protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
-
   lazy val vvhClient: VVHClient = {
     new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
@@ -209,7 +195,7 @@ object TierekisteriDataImporter {
   //TODO delete this client after migrate the import asset to TierekisteriImporterOperations
   lazy val tierekisteriTrafficVolumeAssetClient : TierekisteriTrafficVolumeAssetClient = {
     new TierekisteriTrafficVolumeAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 

@@ -100,8 +100,8 @@ trait TierekisteriPointConversionImporter extends TierekisteriAssetImporterOpera
 
 trait WeightConversionTierekisteriImporter extends TierekisteriPointConversionImporter {
   override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
-  override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   override val allowedVerticalLevel: Seq[Int] = Seq(1,2,3,4)
@@ -186,8 +186,8 @@ class BogieWeightLimitImporter  extends WeightConversionTierekisteriImporter {
 
 class HeightLimitImporter extends TierekisteriPointConversionImporter {
   override type TierekisteriClientType = TierekisteriHeightLimitAssetClient
-  override val tierekisteriClient = new TierekisteriHeightLimitAssetClient(getProperty(Digiroad2Properties.tierekisteriRestApiEndPoint),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriHeightLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   override def typeId : Int = HeightLimit.typeId

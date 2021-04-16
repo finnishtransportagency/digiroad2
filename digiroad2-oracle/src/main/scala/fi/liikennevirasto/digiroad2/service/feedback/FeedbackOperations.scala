@@ -125,7 +125,7 @@ class FeedbackDataService extends Feedback {
   override def from: String = "oth-feedback-data@no-reply.com"
   override def subject: String = "Aineistopalaute"
   override def body: String = ""
-  def directLink: String = getProperty(Digiroad2Properties.feedbackAssetsEndPoint)
+  def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
     val ids = body.assetId.getOrElse(Seq.empty[Long]).mkString(",")
