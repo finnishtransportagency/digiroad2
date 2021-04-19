@@ -26,9 +26,7 @@ trait Digiroad2Properties {
   val httpProxySet: Boolean
   val httpProxyHost: String
   val httpNonProxyHosts: String
-  val importOnlyCurrent: Boolean
   val authenticationTestMode: Boolean
-  val authenticationTestUser: String
   val bonecpJdbcUrl: String
   val bonecpUsername: String
   val bonecpPassword: String
@@ -72,17 +70,15 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
-  val valluServerAddress: String = scala.util.Properties.envOrElse("vallu.server.address", "http://localhost:9002")
-  val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", "/tmp/digiroad.cache")
-  val feedbackAssetsEndPoint: String = scala.util.Properties.envOrElse("feedbackAssetsEndPoint", "http://localhost:9001/index.html")
-  val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
+  val valluServerAddress: String = scala.util.Properties.envOrElse("vallu.server.address", null)
+  val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", null)
+  val feedbackAssetsEndPoint: String = scala.util.Properties.envOrElse("feedbackAssetsEndPoint", null)
+  val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", null)
   val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "true").toBoolean
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
-  val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", "")
-  val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
-  val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "false").toBoolean
-  val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)
+  val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", null)
+  val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "true").toBoolean
   val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
   val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp.username", null)
   val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp.password", null)
@@ -135,30 +131,28 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
     props
   }
 
-  override val speedLimitProvider: String = envProps.getProperty("speedLimitProvider")
-  override val userProvider: String = envProps.getProperty("userProvider")
-  override val municipalityProvider: String = envProps.getProperty("municipalityProvider")
-  override val eventBus: String = envProps.getProperty("eventBus")
-  override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
-  override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
-  override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
-  override val vvhProdRestApiEndPoint: String = envProps.getProperty("VVHProdRestApiEndPoint")
-  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
-  override val viiteRestApiEndPoint: String = envProps.getProperty("viiteRestApiEndPoint", "http://localhost:9080/api/viite/")
-  override val tierekisteriRestApiEndPoint: String = envProps.getProperty("tierekisteriRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  override val vkmUrl: String = envProps.getProperty("vkmUrl")
-  override val valluServerSengindEnabled: Boolean = envProps.getProperty("vallu.server.sending_enabled", "true").toBoolean
-  override val valluServerAddress: String = envProps.getProperty("vallu.server.address", "http://localhost:9002")
-  override val cacheDirectory: String = envProps.getProperty("cache.directory", "/tmp/digiroad.cache")
-  override val feedbackAssetsEndPoint: String = envProps.getProperty("feedbackAssetsEndPoint", "http://localhost:9001/index.html")
-  override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-  override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "true").toBoolean
+  override val speedLimitProvider: String = envProps.getProperty("digiroad2.speedLimitProvider")
+  override val userProvider: String = envProps.getProperty("digiroad2.userProvider")
+  override val municipalityProvider: String = envProps.getProperty("digiroad2.municipalityProvider")
+  override val eventBus: String = envProps.getProperty("digiroad2.eventBus")
+  override val useVVHGeometry: String = envProps.getProperty("digiroad2.useVVHGeometry")
+  override val vvhServiceHost: String = envProps.getProperty("digiroad2.vvhServiceHost")
+  override val vvhRestApiEndPoint: String = envProps.getProperty("digiroad2.vvhRestApiEndPoint")
+  override val vvhProdRestApiEndPoint: String = envProps.getProperty("digiroad2.VVHProdRestApiEndPoint")
+  override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("digiroad2.vvhRoadlink.frozen", "false").toBoolean
+  override val viiteRestApiEndPoint: String = envProps.getProperty("digiroad2.viiteRestApiEndPoint")
+  override val tierekisteriRestApiEndPoint: String = envProps.getProperty("digiroad2.tierekisteriRestApiEndPoint")
+  override val vkmUrl: String = envProps.getProperty("digiroad2.vkmUrl")
+  override val valluServerSengindEnabled: Boolean = envProps.getProperty("digiroad2.vallu.server.sending_enabled", "true").toBoolean
+  override val valluServerAddress: String = envProps.getProperty("digiroad2.vallu.server.address")
+  override val cacheDirectory: String = envProps.getProperty("digiroad2.cache.directory")
+  override val feedbackAssetsEndPoint: String = envProps.getProperty("digiroad2.feedbackAssetsEndPoint")
+  override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+  override val tierekisteriEnabled: Boolean = envProps.getProperty("digiroad2.tierekisteri.enabled", "true").toBoolean
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
   override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
   override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
-  override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
-  override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "false").toBoolean
-  override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
+  override val authenticationTestMode: Boolean = envProps.getProperty("digiroad2.authenticationTestMode", "true").toBoolean
   override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
   override val bonecpUsername: String = envProps.getProperty("bonecp.username")
   override val bonecpPassword: String = envProps.getProperty("bonecp.password")
@@ -168,8 +162,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
   override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
   override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
-  override val revision: String = envProps.getProperty("revision")
-  override val latestDeploy: String = envProps.getProperty("latestDeploy")
+  override val revision: String = envProps.getProperty("digiroad2.revision")
+  override val latestDeploy: String = envProps.getProperty("digiroad2.latestDeploy")
   override val tierekisteriUsername: String = envProps.getProperty("tierekisteri.username")
   override val tierekisteriPassword: String = envProps.getProperty("tierekisteri.password")
   override val viiteUsername: String = envProps.getProperty("viite.username")
@@ -238,9 +232,7 @@ object Digiroad2Properties {
   lazy val httpProxySet: Boolean = properties.httpProxySet
   lazy val httpProxyHost: String = properties.httpProxyHost
   lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
-  lazy val importOnlyCurrent: Boolean = properties.importOnlyCurrent
   lazy val authenticationTestMode: Boolean = properties.authenticationTestMode
-  lazy val authenticationTestUser: String = properties.authenticationTestUser
   lazy val bonecpJdbcUrl: String = properties.bonecpJdbcUrl
   lazy val bonecpUsername: String = properties.bonecpUsername
   lazy val bonecpPassword: String = properties.bonecpPassword
