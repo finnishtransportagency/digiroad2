@@ -32,6 +32,24 @@ Parameters:
 
 Resources:
 
+  geotools-19Repo:
+    Type: 'AWS::S3::Bucket'
+  geotools-19RepoBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref geotools-19Repo
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Sub "${geotools-19Repo.Arn}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
+
   CodePipelineArtifactStoreBucket:
     Type: 'AWS::S3::Bucket'
 
@@ -196,17 +214,17 @@ Resources:
 
   CodeBuildRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
       Path: /
       RoleName: !Sub "${ApplicationName}-${GitRepositoryName}-${GitBranchName}-codebuild-role"
-      AssumeRolePolicyDocument: 
+      AssumeRolePolicyDocument:
         Statement:
           - Effect: "Allow"
-            Principal: 
+            Principal:
               Service: "codebuild.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      Policies: 
+      Policies:
         - PolicyName: !Sub "${ApplicationName}-${GitRepositoryName}-${GitBranchName}-codebuild-policy"
           PolicyDocument:
             Statement:
@@ -236,7 +254,7 @@ Resources:
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
               - Effect: "Allow"
-                Resource: 
+                Resource:
                   - !Sub "arn:aws:s3:::${CodePipelineArtifactStoreBucket}/*"
                 Action:
                   - "s3:GetObject"
@@ -245,5 +263,5 @@ Resources:
 
   ECRRepo:
     Type: AWS::ECR::Repository
-    Properties: 
+    Properties:
       RepositoryName: !Ref EcrRepositoryName
