@@ -32,12 +32,12 @@ Parameters:
 
 Resources:
 
-  geotools-19Repo:
+  GeoToolsRepo:
     Type: 'AWS::S3::Bucket'
   geotools-19RepoBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
-      Bucket: !Ref geotools-19Repo
+      Bucket: !Ref GeoToolsRepo
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -45,10 +45,11 @@ Resources:
             Effect: Deny
             Principal: '*'
             Action: 's3:*'
-            Resource: !Sub "${geotools-19Repo.Arn}/*"
+            Resource: !Sub "${GeoToolsRepo.Arn}/*"
             Condition:
               Bool:
                 'aws:SecureTransport': false
+
 
   CodePipelineArtifactStoreBucket:
     Type: 'AWS::S3::Bucket'
@@ -208,6 +209,8 @@ Resources:
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
           - Name: ECS_SERVICE_NAME
             Value: !Ref ApplicationName
+          - Name: GEOTOOLURL
+            Value: "s3://${GeoToolsRepo}/"
       Artifacts:
         Name: !Ref ApplicationName
         Type: CODEPIPELINE
