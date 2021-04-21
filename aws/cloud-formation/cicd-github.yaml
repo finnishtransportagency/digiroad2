@@ -34,7 +34,7 @@ Resources:
 
   GeoToolsRepo:
     Type: 'AWS::S3::Bucket'
-  geotools-19RepoBucketPolicy:
+  GeoToolsRepoBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
       Bucket: !Ref GeoToolsRepo
@@ -162,8 +162,8 @@ Resources:
                 - codepipeline.amazonaws.com
             Action: 'sts:AssumeRole'
       Path: /
-      Policies:
-        - PolicyName: !Sub "${ApplicationName}-${GitRepositoryName}-${GitBranchName}-codepipeline-policy"
+      Policies: #Testidigiroad
+        - PolicyName: !Sub "${ApplicationName}-codepipeline-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -219,7 +219,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       Path: /
-      RoleName: !Sub "${ApplicationName}-${GitRepositoryName}-${GitBranchName}-codebuild-role"
+      RoleName: !Sub "${ApplicationName}-codebuild-role"
       AssumeRolePolicyDocument:
         Statement:
           - Effect: "Allow"
@@ -228,7 +228,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
-        - PolicyName: !Sub "${ApplicationName}-${GitRepositoryName}-${GitBranchName}-codebuild-policy"
+        - PolicyName: !Sub "${ApplicationName}-codebuild-policy"
           PolicyDocument:
             Statement:
               - Effect: "Allow"
