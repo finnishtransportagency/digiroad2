@@ -2,6 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   Based on AWS template from https://docs.aws.amazon.com/codepipeline/latest/userguide/samples/codepipeline-github-events-yaml.zip
 Parameters:
+  PipelineName:
+    Description: Pipeline name
+    Type: String
   ApplicationName:
     Description: Application name
     Type: String
@@ -50,7 +53,6 @@ Resources:
               Bool:
                 'aws:SecureTransport': false
 
-
   CodePipelineArtifactStoreBucket:
     Type: 'AWS::S3::Bucket'
 
@@ -96,7 +98,7 @@ Resources:
   AppPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
-      Name: github-events-pipeline
+      Name: ${PipelineName}
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
@@ -162,7 +164,7 @@ Resources:
                 - codepipeline.amazonaws.com
             Action: 'sts:AssumeRole'
       Path: /
-      Policies: #Testidigiroad
+      Policies:
         - PolicyName: !Sub "${ApplicationName}-codepipeline-policy"
           PolicyDocument:
             Version: 2012-10-17
