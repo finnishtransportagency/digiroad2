@@ -55,7 +55,7 @@ AssetDataImporter {
 
   case object TemporaryTables extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/import.bonecp.properties"))
+      val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
       new BoneCPDataSource(cfg)
     }
 
@@ -64,7 +64,7 @@ AssetDataImporter {
 
   case object Conversion extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
+      val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
       new BoneCPDataSource(cfg)
     }
 

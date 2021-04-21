@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences, VerificationDao}
 import fi.liikennevirasto.digiroad2.linearasset.TinyRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, TestTransactions}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -19,7 +19,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   val verificationDao = new VerificationDao
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 

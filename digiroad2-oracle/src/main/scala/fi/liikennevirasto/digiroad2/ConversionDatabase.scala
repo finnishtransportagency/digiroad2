@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2
 import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-
-import slick.jdbc.{PositionedResult, GetResult}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import slick.jdbc.{GetResult, PositionedResult}
 
 object ConversionDatabase {
   implicit object GetPointSeq extends GetResult[Seq[Point]] {
@@ -26,7 +26,7 @@ object ConversionDatabase {
   }
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 }

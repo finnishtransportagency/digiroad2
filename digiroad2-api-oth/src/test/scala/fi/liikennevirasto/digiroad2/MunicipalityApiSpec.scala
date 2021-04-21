@@ -10,6 +10,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+
 import javax.sql.DataSource
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
@@ -49,7 +51,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 

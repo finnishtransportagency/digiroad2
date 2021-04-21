@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -59,7 +59,7 @@ trait LinearAssetOperations {
   def assetFiller: AssetFiller = new AssetFiller
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 
