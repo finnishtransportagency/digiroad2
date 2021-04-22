@@ -47,6 +47,8 @@ Resources:
 
   GeoToolsRepo:
     Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: geotoolsrepo
   GeoToolsRepoBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
@@ -108,7 +110,7 @@ Resources:
   AppPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
-      Name: ${PipelineName}
+      Name: !Ref PipelineName
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
@@ -223,12 +225,12 @@ Resources:
             Value: !Ref ApplicationName
           - Name: GEO_TOOL_URL
             Value: "s3://${GeoToolsRepo}/"
-          - Name: bonecp.jdbcUrl
-            Values: !Ref TestDatabaseString
-          - Name: bonecp.username
-            Values: !Ref TestDatabaseUser
-          - Name: bonecp.password
-            Values: !Ref TestDatabasePassword
+          - Name: BONECP_JDBCURL
+            Value: !Ref TestDatabaseString
+          - Name: BONECP_USERNAME
+            Value: !Ref TestDatabaseUser
+          - Name: BONECP_PASSWORD
+            Value: !Ref TestDatabasePassword
       Artifacts:
         Name: !Ref ApplicationName
         Type: CODEPIPELINE
@@ -282,10 +284,10 @@ Resources:
                   - "s3:GetObjectVersion"
                   - "s3:PutObject"
               - Effect: "Allow"
-                  Resource:
-                    - !Sub "arn:aws:s3:::${GeoToolsRepo}/*"
-                  Action:
-                    - "s3:GetObject"
+                Resource:
+                  - !Sub "arn:aws:s3:::${GeoToolsRepo}/*"
+                Action:
+                  - "s3:GetObject"
 
   ECRRepo:
     Type: AWS::ECR::Repository
