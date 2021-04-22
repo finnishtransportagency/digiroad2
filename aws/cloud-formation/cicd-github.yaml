@@ -18,13 +18,13 @@ Parameters:
     Description: ECR image name
     Type: String
     AllowedPattern: "^[a-z0-9]+$"
-  TestDatabase:
+  TestDatabaseString:
     Description: Database for running test
     Type: String
-  TEST_DATABASE_USER:
+  TestDatabaseUser:
     Description: username
     Type: String
-  TEST_DATABASE_PASSWORD:
+  TestDatabasePassword:
     Description: password
     Type: String
 
@@ -223,11 +223,11 @@ Resources:
             Value: !Ref ApplicationName
           - Name: GEO_TOOL_URL
             Value: "s3://${GeoToolsRepo}/"
-          - Name: TEST_DATABASE
-            Values: !Ref TestDatabase
-          - Name: TEST_DATABASE_USER
+          - Name: bonecp.jdbcUrl
+            Values: !Ref TestDatabaseString
+          - Name: bonecp.username
             Values: !Ref TestDatabaseUser
-          - Name: TEST_DATABASE_PASSWORD
+          - Name: bonecp.password
             Values: !Ref TestDatabasePassword
       Artifacts:
         Name: !Ref ApplicationName
