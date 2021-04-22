@@ -18,6 +18,16 @@ Parameters:
     Description: ECR image name
     Type: String
     AllowedPattern: "^[a-z0-9]+$"
+  TestDatabase:
+    Description: Database for running test
+    Type: String
+  TEST_DATABASE_USER:
+    Description: username
+    Type: String
+  TEST_DATABASE_PASSWORD:
+    Description: password
+    Type: String
+
   GitBranchName:
     Description: GitHub branch name
     Type: String
@@ -211,8 +221,14 @@ Resources:
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
           - Name: ECS_SERVICE_NAME
             Value: !Ref ApplicationName
-          - Name: GEOTOOLURL
+          - Name: GEO_TOOL_URL
             Value: "s3://${GeoToolsRepo}/"
+          - Name: TEST_DATABASE
+            Values: !Ref TestDatabase
+          - Name: TEST_DATABASE_USER
+            Values: !Ref TestDatabaseUser
+          - Name: TEST_DATABASE_PASSWORD
+            Values: !Ref TestDatabasePassword
       Artifacts:
         Name: !Ref ApplicationName
         Type: CODEPIPELINE
