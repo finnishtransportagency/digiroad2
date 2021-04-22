@@ -224,7 +224,7 @@ Resources:
           - Name: ECS_SERVICE_NAME
             Value: !Ref ApplicationName
           - Name: GEO_TOOL_URL
-            Value: "s3://${GeoToolsRepo}/"
+            Value: !GetAtt GeoToolsRepo.Arn
           - Name: BONECP_JDBCURL
             Value: !Ref TestDatabaseString
           - Name: BONECP_USERNAME
