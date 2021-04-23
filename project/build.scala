@@ -17,7 +17,7 @@ object Digiroad2Build extends Build {
   val testEnv = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
 
   // Get build id to check if executing in aws environment.
-  val awsBuildId: String = scala.util.Properties.envOrElse("AWS_BUILD_ENV", null)
+  val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
 
   lazy val geoJar =awsBuildId match {
     case null => {

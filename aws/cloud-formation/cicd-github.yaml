@@ -231,8 +231,6 @@ Resources:
             Value: !Ref TestDatabaseUser
           - Name: BONECP_PASSWORD
             Value: !Ref TestDatabasePassword
-          - Name: AWS_BUILD_ENV
-            Value: "aws_codebuild"
       Artifacts:
         Name: !Ref ApplicationName
         Type: CODEPIPELINE
