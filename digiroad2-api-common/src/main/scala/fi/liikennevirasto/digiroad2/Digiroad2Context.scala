@@ -321,11 +321,6 @@ object Digiroad2Context {
     props.load(getClass.getResourceAsStream("/env.properties"))
     props
   }
-  lazy val revisionInfo: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/revision.properties"))
-    props
-  }
 
   val system = ActorSystem("Digiroad2")
 
@@ -556,10 +551,10 @@ object Digiroad2Context {
   }
 
   lazy val revision: String = {
-    revisionInfo.getProperty("digiroad2.revision")
+    Digiroad2Properties.revision
   }
   lazy val deploy_date: String = {
-    revisionInfo.getProperty("digiroad2.latestDeploy")
+    Digiroad2Properties.latestDeploy
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
