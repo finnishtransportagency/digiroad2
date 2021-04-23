@@ -3,7 +3,7 @@ Description: >
   Based on AWS template from https://docs.aws.amazon.com/codepipeline/latest/userguide/samples/codepipeline-github-events-yaml.zip
 Parameters:
   PipelineName:
-    Description: Pipeline name
+    Description: Pipeline name, no capital letter
     Type: String
   ApplicationName:
     Description: Application name
@@ -27,7 +27,6 @@ Parameters:
   TestDatabasePassword:
     Description: password
     Type: String
-
   GitBranchName:
     Description: GitHub branch name
     Type: String
@@ -44,11 +43,10 @@ Parameters:
     MinLength: 20
 
 Resources:
-
   GeoToolsRepo:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: geotoolsrepo
+      BucketName: "${PipelineName}-geotools-repo"
   GeoToolsRepoBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
@@ -67,6 +65,8 @@ Resources:
 
   CodePipelineArtifactStoreBucket:
     Type: 'AWS::S3::Bucket'
+    Properties:
+    BucketName: "${PipelineName}-artifact-store-bucket"
 
   CodePipelineArtifactStoreBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
@@ -167,6 +167,7 @@ Resources:
   CodePipelineServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
+      RoleName: !Sub "${PipelineName}-codepipeline-role"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -177,7 +178,7 @@ Resources:
             Action: 'sts:AssumeRole'
       Path: /
       Policies:
-        - PolicyName: !Sub "${ApplicationName}-codepipeline-policy"
+        - PolicyName: !Sub "${PipelineName}-codepipeline-policy"
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -239,7 +240,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       Path: /
-      RoleName: !Sub "${ApplicationName}-codebuild-role"
+      RoleName: !Sub "${PipelineName}-codebuild-role"
       AssumeRolePolicyDocument:
         Statement:
           - Effect: "Allow"
@@ -248,7 +249,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
-        - PolicyName: !Sub "${ApplicationName}-codebuild-policy"
+        - PolicyName: !Sub "${PipelineName}-codebuild-policy"
           PolicyDocument:
             Statement:
               - Effect: "Allow"
