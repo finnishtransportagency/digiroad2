@@ -232,6 +232,10 @@ Resources:
             Value: !Ref TestDatabaseUser
           - Name: BONECP_PASSWORD
             Value: !Ref TestDatabasePassword
+          - Name: TIEREKISTERI
+            Value: TIEREKISTERI
+          - Name: VVH
+            Value: VVH
       Artifacts:
         Name: !Ref ApplicationName
         Type: CODEPIPELINE
