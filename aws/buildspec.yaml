@@ -1,0 +1,44 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto8
+    commands:
+      - echo "deb https://dl.bintray.com/sbt/debian /" | tee -a  /etc/apt/sources.list.d/sbt.list
+      - apt-get update
+      - apt-get install sbt
+      - npm install -g yarn
+      - npm install && yarn install --ignore-engines
+      - npm install -g grunt-cli
+  pre_build:
+    commands:
+      - pip install --upgrade awscli
+      - $(aws ecr get-login --no-include-email --region eu-west-1) #aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
+      - mkdir digiroad2-geo/lib
+      - echo $GEO_TOOL_URL
+      - aws s3 cp "s3://$GEO_TOOL_URL/gt-graph-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://$GEO_TOOL_URL/gt-main-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://$GEO_TOOL_URL/gt-api-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://$GEO_TOOL_URL/gt-referencing-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://$GEO_TOOL_URL/gt-metadata-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://$GEO_TOOL_URL/gt-opengis-19.0.jar" ./digiroad2-geo/lib
+      - aws s3 cp "s3://$GEO_TOOL_URL/jts-core-1.14.0.jar" ./digiroad2-geo/lib
+  build:
+    commands:
+      # - grunt test
+      # - sbt test
+      - grunt deploy
+      - sbt clean
+      - sbt assembly
+      - docker build -f aws/fargate/Dockerfile -t $ECR_REPOSITORY_NAME:latest .
+      - echo Post-build started on `date`
+      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:latest
+      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+      - docker push $ECR_REPOSITORY_URI:latest
+      - docker push $ECR_REPOSITORY_URI:$CODEBUILD_BUILD_NUMBER
+  post_build:
+    commands:
+      - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_SERVICE_NAME $REPOSITORY:latest > imagedefinitions.json
+artiacts:
+  files: imagedefinitions.json
