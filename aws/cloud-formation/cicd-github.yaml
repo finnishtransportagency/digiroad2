@@ -43,30 +43,11 @@ Parameters:
     MinLength: 20
 
 Resources:
-  GeoToolsRepo:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: "${PipelineName}-geotools-repo"
-  GeoToolsRepoBucketPolicy:
-    Type: 'AWS::S3::BucketPolicy'
-    Properties:
-      Bucket: !Ref GeoToolsRepo
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: DenyInsecureConnections
-            Effect: Deny
-            Principal: '*'
-            Action: 's3:*'
-            Resource: !Sub "${GeoToolsRepo.Arn}/*"
-            Condition:
-              Bool:
-                'aws:SecureTransport': false
 
   CodePipelineArtifactStoreBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-    BucketName: "${PipelineName}-artifact-store-bucket"
+      BucketName: !Sub "${PipelineName}-artifact-store-bucket"
 
   CodePipelineArtifactStoreBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
@@ -224,8 +205,6 @@ Resources:
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
           - Name: ECS_SERVICE_NAME
             Value: !Ref ApplicationName
-          - Name: GEO_TOOL_URL
-            Value: !Ref GeoToolsRepo
           - Name: BONECP_JDBCURL
             Value: !Ref TestDatabaseString
           - Name: BONECP_USERNAME
@@ -293,7 +272,6 @@ Resources:
                   - !Sub "arn:aws:s3:::${GeoToolsRepo}/*"
                 Action:
                   - "s3:GetObject"
-
   ECRRepo:
     Type: AWS::ECR::Repository
     Properties:

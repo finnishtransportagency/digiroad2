@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Storage which are needed to complete other task
+Resources:
+  GeoToolsRepo:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: geotools-repo
+  GeoToolsRepoBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref GeoToolsRepo
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Sub "${GeoToolsRepo.Arn}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
+  ECRRepoForBuildOpenjdk:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "openjdk_8u191-jre-alpine"
