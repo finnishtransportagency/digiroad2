@@ -244,6 +244,18 @@ Resources:
             Value: false
           - Name: http.proxySet
             Value: false
+          - Name: authentication.basic.username
+            Value: kalpa
+          - Name: authentication.basic.password
+            Value: kalpa
+          - Name: authentication.serviceRoad.basic.username
+            Value: kalpa
+          - Name: authentication.serviceRoad.basic.password
+            Value: kalpa
+          - Name: authentication.municipality.basic.username
+            Value: kalpa
+          - Name: authentication.municipality.basic.password
+            Value: kalpa
 
       Artifacts:
         Name: !Ref ApplicationName
