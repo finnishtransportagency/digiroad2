@@ -1,0 +1,50 @@
+[
+  {
+    "ParameterKey": "PipelineName",
+    "ParameterValue": "test"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "testidigiroad"
+  },
+  {
+    "ParameterKey": "TestDatabaseString",
+    "ParameterValue": "testidigiroad"
+  },
+  {
+    "ParameterKey": "TestDatabaseUser",
+    "ParameterValue": "testidigiroad"
+  },
+  {
+    "ParameterKey": "TestDatabasePassword",
+    "ParameterValue": "testidigiroad"
+  },
+  {
+    "ParameterKey": "EcsClusterName",
+    "ParameterValue": "testidigiroadscluster"
+  },
+  {
+    "ParameterKey": "EcsServiceName",
+    "ParameterValue": "testidigiroadsService"
+  },
+  {
+    "ParameterKey": "EcrRepositoryName",
+    "ParameterValue": "testidigiroad"
+  },
+  {
+    "ParameterKey": "GitBranchName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "GitRepositoryName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "GitHubOwner",
+    "ParameterValue": "finnishtransportagency"
+  },
+  {
+    "ParameterKey": "GitHubWebhookSecret",
+    "ParameterValue": ""
+  }
+]
