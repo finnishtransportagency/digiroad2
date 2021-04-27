@@ -46,7 +46,7 @@ pip install requests bs4 boto3 pytz
 
 Peruskäyttötapa, kun haluataan kredentiaalit jollekin Väyläviraston AWS-tilille, on seuraava:
 ```
-python vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 783354560127 --role ViiteAdmin --region eu-west-1
+python aws/login/vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 475079312496 --role DigiroadOthAdmin --region eu-west-1
 ```
 Eli ```--username``` -parametrina annetaan Väyläviraston käyttäjätunnus. ```--account``` -parametrina annetaan AWS-tilin numero, jolle ollaan menossa. ```--role``` -parametrina annetaan AWS-tilin roolin nimi, jolle ollaan menossa.
 
