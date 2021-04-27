@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Based on AWS template from https://docs.aws.amazon.com/codepipeline/latest/userguide/samples/codepipeline-github-events-yaml.zip
+  Based on vaylas cicd-github.yaml template
 Parameters:
   PipelineName:
     Description: Pipeline name, no capital letter
@@ -206,16 +206,45 @@ Resources:
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
           - Name: ECS_SERVICE_NAME
             Value: !Ref ApplicationName
-          - Name: BONECP_JDBCURL
+          - Name: bonecp_jdbcurl
             Value: !Ref TestDatabaseString
-          - Name: BONECP_USERNAME
+          - Name: bonecp_username
             Value: !Ref TestDatabaseUser
-          - Name: BONECP_PASSWORD
+          - Name: bonecp_password
             Value: !Ref TestDatabasePassword
-          - Name: TIEREKISTERI
-            Value: TIEREKISTERI
-          - Name: VVH
-            Value: VVH
+          - Name: featureProvider
+            Value: fi.liikennevirasto.digiroad2.service.AssetPropertyService
+          - Name: speedLimitProvider
+            Value: fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
+          - Name: userProvider
+            Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
+          - Name: digiroad2.municipalityProvider
+            Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
+          - Name: digiroad2.eventBus
+            Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
+          - Name: digiroad2.useVVHGeometry
+            Value: true
+          - Name: digiroad2.VVHServiceHost
+            Value: localhost:6080
+          - Name: digiroad2.VVHRestApiEndPoint
+            Value: http://localhost:6080/arcgis/rest/services/VVH_OTH_DEV/
+          - Name: digiroad2.VVHRoadlink.frozen
+            Value: false
+          - Name: digiroad2.viiteRestApiEndPoint
+            Value: http://localhost:9080/api/viite/
+          - Name: digiroad2.authenticationTestMode
+            Value: true
+          - Name: digiroad2.tierekisteriViiteRestApiEndPoint
+            Value: http://localhost:8080/api/tierekisteri/
+          - Name: digiroad2.tierekisteriRestApiEndPoint
+            Value: http://localhost:8080/api/tierekisteri/
+          - Name: digiroad2.tierekisteri.enabled
+            Value: false
+          - Name: digiroad2.vallu.server.sending_enabled
+            Value: false
+          - Name: http.proxySet
+            Value: false
+
       Artifacts:
         Name: !Ref ApplicationName
         Type: CODEPIPELINE
