@@ -5,7 +5,7 @@ phases:
     runtime-versions:
       java: corretto8
     commands:
-      - echo "deb https://dl.bintray.com/sbt/debian /" | tee -a  /etc/apt/sources.list.d/sbt.list
+      - echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee -a  /etc/apt/sources.list.d/sbt.list
       - apt-get update
       - apt-get install sbt
       - npm install -g yarn
