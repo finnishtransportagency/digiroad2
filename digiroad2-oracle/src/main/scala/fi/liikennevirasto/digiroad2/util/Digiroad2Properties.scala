@@ -12,7 +12,6 @@ trait Digiroad2Properties {
   val useVVHGeometry: String
   val vvhServiceHost: String
   val vvhRestApiEndPoint: String
-  val vvhProdRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
   val viiteRestApiEndPoint: String
   val tierekisteriRestApiEndPoint: String
@@ -25,6 +24,7 @@ trait Digiroad2Properties {
   val tierekisteriEnabled: Boolean
   val httpProxySet: Boolean
   val httpProxyHost: String
+  val httpProxyPort: String
   val httpNonProxyHosts: String
   val authenticationTestMode: Boolean
   val bonecpJdbcUrl: String
@@ -64,7 +64,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val useVVHGeometry: String = scala.util.Properties.envOrElse("useVVHGeometry", null)
   val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
-  val vvhProdRestApiEndPoint: String = scala.util.Properties.envOrElse("VVHProdRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
   val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
@@ -77,6 +76,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "true").toBoolean
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
+  val httpProxyPort: String = scala.util.Properties.envOrElse("http.proxyPort", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", null)
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "true").toBoolean
   val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
@@ -138,7 +138,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
   override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
   override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
-  override val vvhProdRestApiEndPoint: String = envProps.getProperty("VVHProdRestApiEndPoint")
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val viiteRestApiEndPoint: String = envProps.getProperty("viiteRestApiEndPoint")
   override val tierekisteriRestApiEndPoint: String = envProps.getProperty("tierekisteriRestApiEndPoint")
@@ -151,6 +150,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "true").toBoolean
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
   override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
+  override val httpProxyPort: String = envProps.getProperty("http.proxyPort")
   override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "true").toBoolean
   override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
@@ -219,7 +219,6 @@ object Digiroad2Properties {
   lazy val useVVHGeometry: String = properties.useVVHGeometry
   lazy val vvhServiceHost: String = properties.vvhServiceHost
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
-  lazy val vvhProdRestApiEndPoint: String = properties.vvhProdRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
   lazy val tierekisteriRestApiEndPoint: String = properties.tierekisteriRestApiEndPoint
@@ -232,6 +231,7 @@ object Digiroad2Properties {
   lazy val tierekisteriEnabled: Boolean = properties.tierekisteriEnabled
   lazy val httpProxySet: Boolean = properties.httpProxySet
   lazy val httpProxyHost: String = properties.httpProxyHost
+  lazy val httpProxyPort: String = properties.httpProxyPort
   lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
   lazy val authenticationTestMode: Boolean = properties.authenticationTestMode
   lazy val bonecpJdbcUrl: String = properties.bonecpJdbcUrl
