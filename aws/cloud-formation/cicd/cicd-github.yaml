@@ -251,9 +251,9 @@ Resources:
             Value: kalpa
           - Name: authentication.municipality.basic.password
             Value: kalpa
-          - Name: !Sub
-            - '[{ "name": "bonecp.password","value": "${bonecp_password}","type": "PARAMETER_STORE" }]'
-            - bonecp_password: "/test/bonecp.password"
+          - Name: bonecp.password
+            Value: "/test/bonecp.password"
+            Type: PARAMETER_STORE
 
       Artifacts:
         Name: !Ref ApplicationName
