@@ -24,9 +24,6 @@ Parameters:
   TestDatabaseUser:
     Description: username
     Type: String
-  TestDatabasePassword:
-    Description: password
-    Type: String
   GitBranchName:
     Description: GitHub branch name
     Type: String
@@ -210,37 +207,35 @@ Resources:
             Value: !Ref TestDatabaseString
           - Name: bonecp_username
             Value: !Ref TestDatabaseUser
-          - Name: bonecp_password
-            Value: !Ref TestDatabasePassword
           - Name: featureProvider
             Value: fi.liikennevirasto.digiroad2.service.AssetPropertyService
           - Name: speedLimitProvider
             Value: fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
           - Name: userProvider
             Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
-          - Name: digiroad2.municipalityProvider
+          - Name: municipalityProvider
             Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
-          - Name: digiroad2.eventBus
+          - Name: eventBus
             Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
-          - Name: digiroad2.useVVHGeometry
+          - Name: useVVHGeometry
             Value: true
-          - Name: digiroad2.VVHServiceHost
+          - Name: VVHServiceHost
             Value: localhost:6080
-          - Name: digiroad2.VVHRestApiEndPoint
+          - Name: VVHRestApiEndPoint
             Value: http://localhost:6080/arcgis/rest/services/VVH_OTH_DEV/
-          - Name: digiroad2.VVHRoadlink.frozen
+          - Name: VVHRoadlink.frozen
             Value: false
-          - Name: digiroad2.viiteRestApiEndPoint
+          - Name: viiteRestApiEndPoint
             Value: http://localhost:9080/api/viite/
-          - Name: digiroad2.authenticationTestMode
+          - Name: authenticationTestMode
             Value: true
-          - Name: digiroad2.tierekisteriViiteRestApiEndPoint
+          - Name: tierekisteriViiteRestApiEndPoint
             Value: http://localhost:8080/api/tierekisteri/
-          - Name: digiroad2.tierekisteriRestApiEndPoint
+          - Name: tierekisteriRestApiEndPoint
             Value: http://localhost:8080/api/tierekisteri/
-          - Name: digiroad2.tierekisteri.enabled
+          - Name: tierekisteri.enabled
             Value: false
-          - Name: digiroad2.vallu.server.sending_enabled
+          - Name: vallu.server.sending_enabled
             Value: false
           - Name: http.proxySet
             Value: false
@@ -256,6 +251,9 @@ Resources:
             Value: kalpa
           - Name: authentication.municipality.basic.password
             Value: kalpa
+          - Name: !Sub
+            - '[{ "name": "bonecp.password","value": "${bonecp_password}","type": "PARAMETER_STORE" }]'
+            - bonecp_password: "/test/bonecp.password"
 
       Artifacts:
         Name: !Ref ApplicationName
@@ -296,6 +294,7 @@ Resources:
                   - "ecr:UploadLayerPart"
                   - "ecr:CompleteLayerUpload"
                   - "ecr:PutImage"
+                  - "ssm:GetParameters"
               - Effect: "Allow"
                 Resource: "*"
                 Action:
