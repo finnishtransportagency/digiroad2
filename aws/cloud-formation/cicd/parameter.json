@@ -16,10 +16,6 @@
     "ParameterValue": "testidigiroad"
   },
   {
-    "ParameterKey": "TestDatabasePassword",
-    "ParameterValue": "testidigiroad"
-  },
-  {
     "ParameterKey": "EcsClusterName",
     "ParameterValue": "testidigiroadscluster"
   },
