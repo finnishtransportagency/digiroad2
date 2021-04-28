@@ -1,4 +1,5 @@
-FROM openjdk:8u191-jre-alpine
+ARG image="openjdk:8u191-jre-alpine"
+FROM ${image}
 ENV initialRamPercentage="-XX:InitialRAMPercentage=50.0"
 ENV maxRamPercentage="-XX:MaxRAMPercentage=95.0"
 ENV otherParameter="-Djava.security.egd=file:/dev/./urandom -Duser.timezone=Europe/Helsinki -XX:-OmitStackTraceInFastThrow"
