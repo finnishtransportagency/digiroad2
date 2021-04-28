@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: ECS Fargate service in private subnets
 Parameters:
+  ##Digiroad-OTH-kehitys
   NetworkStackName:
     Description: Name of the network stack
     Type: String
@@ -13,6 +14,14 @@ Parameters:
   DevDatabaseUser:
     Description: Database user
     Type: String
+  ServiceCPU:
+    Description: Service CPU, vayla defaut is 256
+    Default: 256
+    Type: number
+  ServiceMemory:
+    Description: Service memory, vayla defaut is 512
+    Default: 512
+    Type: number
   Environment:
     Description: "Environment of the application, that these resources are created for. Used when tagging the resources"
     Type: String
@@ -94,8 +103,8 @@ Resources:
     Properties:
       Family: !Ref ApplicationName
       # Adjust these according to the needs of your applications containers
-      Cpu: 256
-      Memory: 512
+      Cpu: !Ref ServiceCPU
+      Memory: !Ref ServiceMemory
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       # TaskRoleArn: # Enable and create this role, if your container needs access to other AWS services like SQS, SES, DynamoDB etc.
       NetworkMode: awsvpc # This is the only possible option with Fargate mode, but set here to remind of this behaviour
@@ -186,10 +195,6 @@ Resources:
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.old.password"
             - Name: viite.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
-            - Name: viite.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
-            - Name: viite.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
 
           Essential: true # One of the container need to be essential. So, if you'd add another container in this task, it's Essential -value should be false.
           LogConfiguration:
@@ -199,7 +204,7 @@ Resources:
               awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: ecs
           # Adjust this according to the need of your container
-          Memory: 512
+          Memory: !Ref ServiceMemory
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref ApplicationName, 'ECS-Task']]
