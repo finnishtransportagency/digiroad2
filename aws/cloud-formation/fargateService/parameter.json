@@ -1,0 +1,54 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad"
+  },
+  {
+    "ParameterKey": "DevDatabaseURL",
+    "ParameterValue": "test"
+  },
+  {
+    "ParameterKey": "DevDatabaseUser",
+    "ParameterValue": "test"
+  },
+  {
+    "ParameterKey": "ServiceCPU",
+    "ParameterValue": 256
+  },
+  {
+    "ParameterKey": "ServiceMemory",
+    "ParameterValue": 512
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "test"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "digiroad"
+  },
+  {
+    "ParameterKey": "ContainerTag",
+    "ParameterValue": "lates"
+  },
+  {
+    "ParameterKey": "ContainerPort",
+    "ParameterValue": 80
+  },
+  {
+    "ParameterKey": "RepositoryURI",
+    "ParameterValue": "test"
+  },
+  {
+    "ParameterKey": "LoadBalancerSecurityGroup",
+    "ParameterValue": "sg-04cdc6aa401693969"
+  },
+  {
+    "ParameterKey": "ECSSecurityGroup",
+    "ParameterValue": "sg-04cdc6aa401693969"
+  }
+]
