@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriAnimalWarningsAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database

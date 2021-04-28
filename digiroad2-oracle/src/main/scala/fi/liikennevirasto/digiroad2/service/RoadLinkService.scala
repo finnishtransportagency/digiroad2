@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util._
@@ -98,8 +98,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   //No road name found
   val roadWithoutName = "tuntematon tienimi"
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter  _)
   implicit val getDateTime = new GetResult[DateTime] {

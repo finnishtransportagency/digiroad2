@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriPavedRoadAss
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
@@ -17,8 +17,8 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
   override def typeId: Int = PavedRoad.typeId
   override def assetName = "pavedRoad"
   override type TierekisteriClientType = TierekisteriPavedRoadAssetClient
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override val tierekisteriClient = new TierekisteriPavedRoadAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
     Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
@@ -48,8 +48,8 @@ trait ImportResult {
 }
 
 trait CsvDataImporterOperations {
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
   def eventBus: DigiroadEventBus
@@ -100,31 +100,31 @@ trait CsvDataImporterOperations {
   val importLogDao: ImportLogDAO = new ImportLogDAO
 
     def getImportById(id: Long) : Option[ImportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         importLogDao.get(id)
       }
     }
 
     def getByUser(username: String) : Seq[ImportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         importLogDao.getByUser(username)
       }
     }
 
     def getById(id: Long) : Option[ImportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         importLogDao.get(id)
       }
     }
 
     def getByIds(ids: Set[Long]) : Seq[ImportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         importLogDao.getByIds(ids)
       }
     }
 
     def update(id: Long, status: Status, content: Option[String] = None) : Long  = {
-      OracleDatabase.withDynTransaction {
+      PostGISDatabase.withDynTransaction {
         importLogDao.update(id, status, content)
       }
     }
@@ -135,8 +135,8 @@ trait CsvDataImporterOperations {
 }
 
 class CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporterOperations {
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl

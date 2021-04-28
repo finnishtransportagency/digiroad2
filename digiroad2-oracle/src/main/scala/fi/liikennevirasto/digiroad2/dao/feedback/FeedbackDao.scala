@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao.feedback
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import slick.jdbc.StaticQuery.interpolation
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.service.feedback.FeedbackInfo

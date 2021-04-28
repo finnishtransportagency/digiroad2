@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, MassTransitStopAsset, Modification, Property, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.dao.{Sequences, ServicePoint, ServicePointBusStopDao}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.User
 
 case class PersistedPublicTransportStop(id: Long, nationalId: Long, stopTypes: Seq[Int], municipalityCode: Int, lon: Double, lat: Double, validityPeriod: Option[String],
@@ -15,8 +15,8 @@ case class PersistedPublicTransportStop(id: Long, nationalId: Long, stopTypes: S
 class ServicePointStopService(eventbus: DigiroadEventBus) {
   lazy val servicePointBusStopDao = new ServicePointBusStopDao()
 
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def withId(id: Long)(query: String): String = {
     query + s" and a.id = $id"
@@ -85,7 +85,7 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[ServicePoint] = {
     withDynSession {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"and a.asset_type_id = ${MassTransitStopAsset.typeId} and $boundingBoxFilter"
       servicePointBusStopDao.fetchAsset(withFilter(filter))
     }

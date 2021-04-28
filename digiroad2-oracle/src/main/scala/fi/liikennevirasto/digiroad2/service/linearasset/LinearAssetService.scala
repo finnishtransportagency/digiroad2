@@ -7,12 +7,12 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISTrafficSignDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, PolygonTools}
@@ -47,15 +47,15 @@ case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
 case class Measures(startMeasure: Double, endMeasure: Double)
 
 trait LinearAssetOperations {
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
-  def dao: OracleLinearAssetDao
+  def dao: PostGISLinearAssetDao
   def municipalityDao: MunicipalityDao
   def eventBus: DigiroadEventBus
   def polygonTools : PolygonTools
-  def assetDao: OracleAssetDao
+  def assetDao: PostGISAssetDao
   def assetFiller: AssetFiller = new AssetFiller
 
   lazy val dataSource = {
@@ -865,7 +865,7 @@ trait LinearAssetOperations {
   def expireImportRoadLinksVVHtoOTH(assetTypeId: Int): Unit = {
     //Get all municipalities for search VVH Roadlinks
     val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
+      PostGISDatabase.withDynSession {
         Queries.getMunicipalities
       }
 
@@ -950,12 +950,12 @@ trait LinearAssetOperations {
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools : PolygonTools = new PolygonTools()
-  override def assetDao: OracleAssetDao = new OracleAssetDao
+  override def assetDao: PostGISAssetDao = new PostGISAssetDao
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 

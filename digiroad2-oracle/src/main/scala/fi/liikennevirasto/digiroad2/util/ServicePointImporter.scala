@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
@@ -26,7 +26,7 @@ object ServicePointImporter {
     val totalGroupCount = groupedServicePoints.length
     val vvhClient = new VVHClient(vvhServiceHost)
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
       val servicePointPS = dynamicSession.prepareStatement("insert into service_point_value (id, asset_id, type, name, additional_info, parking_place_count, type_extension) values (?,?,?,?,?,?,?)")
 

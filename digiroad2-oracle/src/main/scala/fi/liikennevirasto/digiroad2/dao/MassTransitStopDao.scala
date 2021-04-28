@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.model.LRMPosition
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{LightGeometryMassTransitStop, MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
@@ -104,7 +104,7 @@ class MassTransitStopDao {
   def fetchByRadius(position : Point, meters: Int, terminalIdOption: Option[Long] = None): Seq[PersistedMassTransitStop] = {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
     val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > current_timestamp))"
     val nearestStops = fetchPointAssets(withFilter(filter)).
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)

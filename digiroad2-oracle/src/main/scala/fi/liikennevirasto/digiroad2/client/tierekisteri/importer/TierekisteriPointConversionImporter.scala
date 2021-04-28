@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetDataCl
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, Track}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, LinearAssetService, LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 
@@ -15,9 +15,9 @@ trait TierekisteriPointConversionImporter extends TierekisteriAssetImporterOpera
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
   lazy val dynamicLinearAssetService: DynamicLinearAssetService = new DynamicLinearAssetService(roadLinkService, eventbus)
 
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   val tierekisteriClient: TierekisteriClientType
   val radiusDistance = 50 //meter

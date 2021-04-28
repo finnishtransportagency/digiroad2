@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.VerificationDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -20,8 +20,8 @@ case class SuggestedAssetsStructure(municipalityName: String, municipalityCode: 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def dao: VerificationDao = new VerificationDao
 
   def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Seq[VerificationInfo] = {

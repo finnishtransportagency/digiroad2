@@ -7,10 +7,10 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, 
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, RoadSide, Track}
@@ -36,7 +36,7 @@ trait TierekisteriImporterOperations {
   lazy val userProvider: UserProvider = {
     Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
-  lazy val assetDao: OracleAssetDao = new OracleAssetDao
+  lazy val assetDao: PostGISAssetDao = new PostGISAssetDao
   lazy val roadAddressService : RoadAddressService = new RoadAddressService(viiteClient)
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -325,7 +325,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         //If in the future this process get slow we can start using the returned sections
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
-        val vkmRoadAddress = OracleDatabase.withDynSession(roadLinkTempDAO.getByRoadNumber(roadNumber.toInt))
+        val vkmRoadAddress = PostGISDatabase.withDynSession(roadLinkTempDAO.getByRoadNumber(roadNumber.toInt))
 
         val mappedRoadAddresses = (roadAddresses ++ vkmToVVHRoadLink(vkmRoadAddress)).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
         val mappedRoadLinks = getRoadLinks((roadAddresses.map(ra => ra.linkId)++ vkmRoadAddress.map(_.linkId)).toSet, Some(State))

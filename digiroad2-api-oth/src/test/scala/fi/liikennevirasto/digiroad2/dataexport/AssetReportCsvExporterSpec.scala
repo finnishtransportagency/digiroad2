@@ -5,10 +5,10 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.csvDataExporter.AssetReportCsvExporter
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleUserProvider}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISUserProvider}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import javax.sql.DataSource
@@ -21,18 +21,18 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 object sTestTransactions {
-  def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
+  def runWithRollback(ds: DataSource = PostGISDatabase.ds)(f: => Unit): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
   }
-  def withDynTransaction[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+  def withDynTransaction[T](ds: DataSource = PostGISDatabase.ds)(f: => T): T = {
     Database.forDataSource(ds).withDynTransaction {
       f
     }
   }
-  def withDynSession[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+  def withDynSession[T](ds: DataSource = PostGISDatabase.ds)(f: => T): T = {
     Database.forDataSource(ds).withDynSession {
       f
     }
@@ -57,7 +57,7 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockAssetReporterDAO = MockitoSugar.mock[AssetReporterDAO]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
+  val mockUserProvider = MockitoSugar.mock[PostGISUserProvider]
 
   val csvDataExporter = new CsvDataExporter( mockEventBus )
 

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, RoadSide, Track}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -15,8 +15,8 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
   override def typeId: Int = StateSpeedLimit.typeId
   override def assetName: String = "stateSpeedLimit"
   override type TierekisteriClientType = TierekisteriTrafficSignAssetSpeedLimitClient
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]) = throw new UnsupportedOperationException("Not supported method")
 

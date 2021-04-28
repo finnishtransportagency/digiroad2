@@ -8,9 +8,9 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolum
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.OracleAssetDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.PostGISAssetDao
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -37,12 +37,12 @@ object TierekisteriDataImporter {
     new LinearAssetService(roadLinkService, new DummyEventBus)
   }
 
-  lazy val assetDao : OracleAssetDao = {
-    new OracleAssetDao()
+  lazy val assetDao : PostGISAssetDao = {
+    new PostGISAssetDao()
   }
 
-  lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val postGisLinearAssetDao : PostGISLinearAssetDao = {
+    new PostGISLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
@@ -187,7 +187,7 @@ object TierekisteriDataImporter {
   }
 
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
-    OracleDatabase.withDynSession{
+    PostGISDatabase.withDynSession{
       tierekisteriAssetImporter.getLastExecutionDate
     }
   }
@@ -211,8 +211,8 @@ object TierekisteriDataImporter {
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
     val trafficVolumeId = TrafficVolume.typeId
     println("\nExpiring Traffic Volume From OTH Database")
-    OracleDatabase.withDynSession {
-      oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId)
+    PostGISDatabase.withDynSession {
+      postGisLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId)
     }
     println("\nTraffic Volume data Expired")
 
@@ -235,7 +235,7 @@ object TierekisteriDataImporter {
         val allRoadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
 
         r.foreach { tr =>
-          OracleDatabase.withDynTransaction {
+          PostGISDatabase.withDynTransaction {
 
             println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + tr.roadNumber + " " + tr.startRoadPartNumber + " " + tr.startAddressMValue + " " + tr.endAddressMValue)
             //This was a direct migration from the where clause on the previous RoadAddressDAO query

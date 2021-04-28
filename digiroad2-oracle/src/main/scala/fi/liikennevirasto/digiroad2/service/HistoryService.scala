@@ -2,14 +2,14 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres}
 import fi.liikennevirasto.digiroad2.dao.HistoryDAO
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 /**
   * This class performs operations related to assets history
   */
 class HistoryService {
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def historyDao: HistoryDAO = new HistoryDAO
 
   /**

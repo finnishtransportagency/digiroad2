@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriSpeedLimitAs
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitValue
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.impl.client.HttpClientBuilder
@@ -17,8 +17,8 @@ class SpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOper
   override def typeId: Int = SpeedLimitAsset.typeId
   override def assetName = "speedlimit"
   override type TierekisteriClientType = TierekisteriSpeedLimitAssetClient
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   override val tierekisteriClient = new TierekisteriSpeedLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
     Digiroad2Properties.tierekisteriEnabled,

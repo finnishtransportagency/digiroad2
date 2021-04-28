@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
@@ -114,8 +114,8 @@ trait  PointAssetOperations{
     val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
@@ -163,7 +163,7 @@ trait  PointAssetOperations{
                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {
 
     withDynTransaction {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
 
@@ -192,7 +192,7 @@ trait  PointAssetOperations{
 
   def getLightGeometryByBoundingBox(bounds: BoundingRectangle): Seq[LightGeometry] = {
     withDynSession {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       fetchLightGeometry(withValidAssets(filter))
     }
@@ -438,7 +438,7 @@ trait  PointAssetOperations{
   def withBoundingBoxFilter(position : Point, meters: Int)(query: String): String = {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
     withFilter(s"Where a.asset_type_id = $typeId and $boundingBoxFilter")(query)
   }
 

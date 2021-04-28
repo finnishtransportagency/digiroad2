@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.csvexporter
 
 import fi.liikennevirasto.digiroad2.asset.{Manoeuvres, Lanes, ServicePoints, TrafficSigns}
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult}

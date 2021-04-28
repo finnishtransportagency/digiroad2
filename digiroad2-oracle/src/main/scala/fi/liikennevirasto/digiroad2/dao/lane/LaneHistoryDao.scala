@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.Decode
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PersistedHistoryLane}
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import org.joda.time.DateTime
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation

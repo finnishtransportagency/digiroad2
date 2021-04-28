@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -24,7 +24,7 @@ case class LaneUtils(){
 object LaneUtils {
   lazy val roadLinkTempDAO: RoadLinkTempDAO = new RoadLinkTempDAO
   val eventbus = new DummyEventBus
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus)
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
@@ -205,7 +205,7 @@ object LaneUtils {
 
       //Create lanes
       allLanesToCreate.map(laneService.createWithoutTransaction(_, username))
-      
+
     }
 
     if(withTransaction) {

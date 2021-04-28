@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriCarryingCapa
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertDateProperty, insertNumberProperty, insertSingleChoiceProperty}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -21,8 +21,8 @@ class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImport
   override def typeId: Int = CarryingCapacity.typeId
   override def assetName = "carryingCapacity"
   override type TierekisteriClientType = TierekisteriCarryingCapacityAssetClient
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   override val tierekisteriClient = new TierekisteriCarryingCapacityAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
     Digiroad2Properties.tierekisteriEnabled,

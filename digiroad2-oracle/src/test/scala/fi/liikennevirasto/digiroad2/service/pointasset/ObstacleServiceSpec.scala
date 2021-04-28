@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.ArgumentMatchers._
@@ -195,7 +195,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch a list of floating Obstacles") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val lastIdUpdate = 0
       val lineRange = 1000
       val obstacleAssetTypeId = 220
@@ -286,7 +286,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update floating obstacle") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val obstacle = service.getById(600046).get
       val newMvalue = obstacle.mValue+1
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))

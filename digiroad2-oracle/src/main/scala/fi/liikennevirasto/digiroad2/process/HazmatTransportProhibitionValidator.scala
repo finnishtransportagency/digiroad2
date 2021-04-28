@@ -2,19 +2,19 @@ package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperations {
   override type AssetType = PersistedLinearAsset
   override def assetTypeInfo: AssetTypeInfo =  HazmatTransportProhibition
   override val radiusDistance: Int = 50
 
-  lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(vvhClient, roadLinkService)
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   val allowedTrafficSign: Set[TrafficSignType] = Set(HazmatProhibitionA, HazmatProhibitionB, NoVehiclesWithDangerGoods)
 

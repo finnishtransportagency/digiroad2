@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClient
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.conn.HttpHostConnectException
@@ -16,7 +16,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def roadLinkTempDao = new RoadLinkTempDAO
 

@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -166,11 +166,11 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     println(DateTime.now())
 
     println("Fetching municipalities")
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession{
       Queries.getMunicipalities
     }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
   }
 
@@ -182,7 +182,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
         splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            OracleDatabase.withDynTransaction {
+            PostGISDatabase.withDynTransaction {
               assetValidator(trafficSign).foreach {
                 inaccurate =>
                   (inaccurate.assetId, inaccurate.linkId) match {

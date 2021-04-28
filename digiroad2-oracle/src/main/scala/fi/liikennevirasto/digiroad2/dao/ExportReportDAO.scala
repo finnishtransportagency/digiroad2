@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset.AssetTypeInfo
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.{ExportStatusInfo, Status}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
