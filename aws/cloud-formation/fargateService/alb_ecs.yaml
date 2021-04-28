@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ECS Fargate service in private subnets
+Parameters:
+  NetworkStackName:
+    Description: Name of the network stack
+    Type: String
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
+  Environment:
+    Description: "Environment of the application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  ContainerTag:
+    Type: String
+    Default: latest
+    Description: Tag of the container
+  ContainerPort:
+    Type: Number
+    Default: 80
+    Description: Port of the container
+  RepositoryURI:
+    Type: String
+    Description: URI to repository, where the container is
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: The security group, that is protecting the load balancer. This probably will allow traffic from the TGW
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: The security group, that is protecting the containers. This probably will allow traffic only from the VPC
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['-', [!Ref ApplicationName, 'ECS-Cluster-Private']]
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'ECS-Cluster']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/ecs/', !Ref ApplicationName, '-ECS-logs']]
+      RetentionInDays: 14
+
+  # This is a role which is used by the ECS tasks themselves.
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                # Allow the ECS Tasks to download images from ECR
+                - 'ecr:GetAuthorizationToken'
+                - 'ecr:BatchCheckLayerAvailability'
+                - 'ecr:GetDownloadUrlForLayer'
+                - 'ecr:BatchGetImage'
+
+                # Allow the ECS tasks to upload logs to CloudWatch
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: '*'
+
+  ECSTask:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: ECSLogGroup
+    Properties:
+      Family: !Ref ApplicationName
+      # Adjust these according to the needs of your applications containers
+      Cpu: 256
+      Memory: 512
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      # TaskRoleArn: # Enable and create this role, if your container needs access to other AWS services like SQS, SES, DynamoDB etc.
+      NetworkMode: awsvpc # This is the only possible option with Fargate mode, but set here to remind of this behaviour
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        # First container. You can add several containers to one task. You would probably only add sidecar containers though
+        - Name: !Ref ApplicationName
+          Image: !Join [':', [!Ref RepositoryURI, !Ref ContainerTag]]
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+          # If you want to pass environment variables to the container, uncomment and modify these:
+           Environment:
+             - Name: REGION
+               Value: !Ref AWS::Region
+          Essential: true # One of the container need to be essential. So, if you'd add another container in this task, it's Essential -value should be false.
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: ecs
+          # Adjust this according to the need of your container
+          Memory: 512
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'ECS-Task']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  PrivateLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internal
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: 30
+        - Key: routing.http2.enabled
+          Value: true
+      Subnets:
+        - Fn::ImportValue:
+            !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
+        - Fn::ImportValue:
+            !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
+      SecurityGroups: [!Ref LoadBalancerSecurityGroup]
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  PrivateLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - PrivateLoadBalancer
+      - TargetGroup
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: 'forward'
+      LoadBalancerArn: !Ref PrivateLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Listener']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: PrivateLoadBalancer
+    Properties:
+      HealthCheckIntervalSeconds: 300
+      HealthCheckPath: /  # If you have a more sophisticated container health check endpoint, add its path here
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      TargetType: ip
+      Name: !Join ['-', [!Ref ApplicationName, 'TargetGroup']]
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 10
+      VpcId:
+        Fn::ImportValue:
+          !Join ['-', [!Ref NetworkStackName, 'VPC-Id']]
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-TargetGroup']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  LoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'TargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values: ['*']
+      ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 1
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Rule']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  EcsService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ECSCluster
+      - ECSTask
+      - TargetGroup
+      - PrivateLoadBalancerListener
+    Properties:
+      Cluster: !Ref ECSCluster
+      ServiceName: !Join ['-', [!Ref ApplicationName, 'ECS-Service-Private']]
+      DesiredCount: 2
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !Ref ECSSecurityGroup
+          Subnets:
+            - Fn::ImportValue:
+                !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
+            - Fn::ImportValue:
+                !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
+      LaunchType: FARGATE
+      TaskDefinition: !Ref ECSTask
+      LoadBalancers:
+        - ContainerName: !Ref ApplicationName
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'ECS-Service']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+Outputs:
+  ALBDNSName:
+    Description: DNSname for the private Application Load Balancer
+    Value: !GetAtt PrivateLoadBalancer.DNSName
