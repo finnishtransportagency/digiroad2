@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.oracle
+package fi.liikennevirasto.digiroad2.postgis
 
 import java.sql.Date
 import java.util.Properties

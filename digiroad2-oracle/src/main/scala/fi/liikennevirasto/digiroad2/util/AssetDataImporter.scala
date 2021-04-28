@@ -924,16 +924,6 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     id
   }
 
-  lazy val localProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load local.properties for env: " + System.getProperty("env"), e)
-    }
-    props
-  }
-
   /**
     * Get address information to mass transit stop assets from VVH road link (DROTH-221).
     *

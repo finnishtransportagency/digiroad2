@@ -17,8 +17,8 @@ class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporter
   override def typeId: Int = AnimalWarnings.typeId
   override def assetName = "animalWarnings"
   override type TierekisteriClientType = TierekisteriAnimalWarningsAssetClient
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override val tierekisteriClient = new TierekisteriAnimalWarningsAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
     Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
