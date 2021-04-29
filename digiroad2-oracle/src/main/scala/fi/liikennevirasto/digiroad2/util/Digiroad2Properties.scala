@@ -48,6 +48,7 @@ trait Digiroad2Properties {
   val emailHost: String
   val emailPort: String
   val env: String
+  val featureProvider: String
 
 
   val bonecpProperties: Properties
@@ -97,6 +98,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val emailHost = scala.util.Properties.envOrElse("emailHost", null)
   val emailPort = scala.util.Properties.envOrElse("emailPort", null)
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
+  val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -162,6 +164,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val emailHost: String = envProps.getProperty("email.host")
   override val emailPort: String = envProps.getProperty("email.port")
   override val env: String = envProps.getProperty("env")
+  override val featureProvider: String = envProps.getProperty("featureProvider")
 
   override lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -235,6 +238,7 @@ object Digiroad2Properties {
   lazy val emailHost: String = properties.emailHost
   lazy val emailPort: String = properties.emailPort
   lazy val env: String = properties.env
+  lazy val featureProvider: String = properties.featureProvider
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties
 }
