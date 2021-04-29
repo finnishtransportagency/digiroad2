@@ -63,18 +63,6 @@ trait TrafficSignLinearGenerator {
   final val userUpdate = "automatic_trafficSign_updated"
   final val debbuger = false
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   lazy val userProvider: UserProvider = {
     Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }

@@ -71,8 +71,6 @@ class VKMProxyServlet extends ProxyServlet {
   def regex = "/(digiroad|viite)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/env.properties"))
     val vkmUrl: String = Digiroad2Properties.vkmUrl
     java.net.URI.create(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
   }

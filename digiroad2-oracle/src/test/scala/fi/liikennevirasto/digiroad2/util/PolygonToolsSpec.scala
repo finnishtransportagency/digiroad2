@@ -20,11 +20,6 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   val wKTParser = new WKTReader()
   val vvhClient = new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
   test("Polygon to string test") {
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
     val polyString = vvhClient.roadLinkData.stringifyPolygonGeometry(poly1)

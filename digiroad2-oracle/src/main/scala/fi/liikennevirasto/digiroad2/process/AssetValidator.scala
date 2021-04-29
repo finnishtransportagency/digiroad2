@@ -23,11 +23,6 @@ case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
 trait AssetServiceValidator {
 
   val eventbus = new DummyEventBus
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
@@ -51,14 +46,6 @@ trait AssetServiceValidator {
   def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo) : Unit
 
   val allowedTrafficSign: Set[TrafficSignType]
-
-  protected def getProperty(name: String): String = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
 
   protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
     sideCode match {

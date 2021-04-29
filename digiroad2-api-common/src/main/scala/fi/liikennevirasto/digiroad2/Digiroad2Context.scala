@@ -316,11 +316,6 @@ object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/env.properties"))
-    props
-  }
 
   val system = ActorSystem("Digiroad2")
 
@@ -744,11 +739,4 @@ object Digiroad2Context {
   }
 
   val env = System.getProperty("env")
-  def getProperty(name: String) = {
-    val property = properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name for enviroment: $env")
-  }
 }

@@ -26,11 +26,7 @@ case class TrAssetInfo(trAsset: TierekisteriAssetData, roadLink: Option[VVHRoadl
 trait TierekisteriImporterOperations {
 
   val eventbus = new DummyEventBus
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/env.properties"))
-    props
-  }
+
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val userProvider: UserProvider = {
@@ -49,14 +45,6 @@ trait TierekisteriImporterOperations {
   def withDynTransaction[T](f: => T): T
 
   def assetName: String
-
-  protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
 
   protected def getSideCode(roadAddress: ViiteRoadAddress, trAssetTrack: Track, trAssetRoadSide: RoadSide): SideCode = {
     val trTrack = trAssetTrack match {

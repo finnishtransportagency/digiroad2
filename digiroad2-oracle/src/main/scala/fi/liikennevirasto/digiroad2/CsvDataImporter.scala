@@ -54,12 +54,6 @@ trait CsvDataImporterOperations {
   def vvhClient: VVHClient
   def eventBus: DigiroadEventBus
 
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(viiteClient)
   }
@@ -87,14 +81,6 @@ trait CsvDataImporterOperations {
     s"<ul> excludedLinks: ${excludedResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
     s"<ul> incompleteRows: ${incompleteResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
     s"<ul> malformedRows: ${malformedResult.mkString.replaceAll("[(|)]{1}","")} </ul>"
-  }
-
-  protected def getProperty(name: String) : String = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
   }
 
   val importLogDao: ImportLogDAO = new ImportLogDAO

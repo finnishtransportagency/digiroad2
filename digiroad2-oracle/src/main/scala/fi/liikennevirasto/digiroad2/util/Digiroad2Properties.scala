@@ -51,9 +51,6 @@ trait Digiroad2Properties {
 
 
   val bonecpProperties: Properties
-
-  def getAuthenticationBasicUsername(baseAuth: String = ""): String
-  def getAuthenticationBasicPassword(baseAuth: String = ""): String
 }
 
 class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
@@ -112,15 +109,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
     }
     props
   }
-
-  def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
-    scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username", null)
-  }
-
-  def getAuthenticationBasicPassword(baseAuth: String = ""): String = {
-    scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.password", null)
-  }
-
 }
 
 class Digiroad2PropertiesFromFile extends Digiroad2Properties {
@@ -186,14 +174,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
     }
     props
   }
-
-  override def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
-    envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username")
-  }
-
-  override def getAuthenticationBasicPassword(baseAuth: String = ""): String = {
-    envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.password")
-  }
 }
 
 /**
@@ -257,7 +237,4 @@ object Digiroad2Properties {
   lazy val env: String = properties.env
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties
-
-  def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
-  def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)
 }

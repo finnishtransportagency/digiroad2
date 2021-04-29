@@ -39,19 +39,9 @@ import scala.collection.mutable.ListBuffer
 
 object DataFixture {
   val TestAssetId = 300000
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/env.properties"))
-    props
-  }
 
   val dataImporter = new AssetDataImporter
+
   lazy val vvhClient: VVHClient = {
     new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
@@ -208,14 +198,6 @@ object DataFixture {
   }
 
   lazy val municipalityService: MunicipalityService = new MunicipalityService
-
-  def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
 
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
@@ -2511,7 +2493,7 @@ object DataFixture {
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
+    val username = Digiroad2Properties.bonecpUsername
     if (!username.startsWith("digiroad2")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")

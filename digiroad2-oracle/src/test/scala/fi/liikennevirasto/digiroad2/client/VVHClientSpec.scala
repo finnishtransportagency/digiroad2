@@ -13,11 +13,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class VVHClientSpec extends FunSuite with Matchers{
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   val geomFact= new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
