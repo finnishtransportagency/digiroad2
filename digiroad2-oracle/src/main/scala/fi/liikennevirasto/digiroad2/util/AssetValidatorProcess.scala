@@ -17,18 +17,6 @@ import org.joda.time.DateTime
 
 object AssetValidatorProcess {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   lazy val vvhClient: VVHClient = {
     new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
@@ -150,7 +138,7 @@ object AssetValidatorProcess {
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
+    val username = Digiroad2Properties.bonecpUsername
     if (!username.startsWith("dr2dev")) {
       println("*******************************************************************************************")
       println("YOU ARE RUNNING VALIDATOR ASSET PROCESS AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")

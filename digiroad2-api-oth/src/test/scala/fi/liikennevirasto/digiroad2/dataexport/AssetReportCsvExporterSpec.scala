@@ -42,12 +42,6 @@ object sTestTransactions {
 
 class AssetReportCsvExporterSpec extends FunSuite with Matchers {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   val csvSeparator = ";"
   val newLine = "\r\n"
 
