@@ -545,13 +545,6 @@ object Digiroad2Context {
     new UserNotificationService()
   }
 
-  lazy val revision: String = {
-    Digiroad2Properties.revision
-  }
-  lazy val deploy_date: String = {
-    Digiroad2Properties.latestDeploy
-  }
-
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -738,5 +731,4 @@ object Digiroad2Context {
     new PedestrianCrossingValidator()
   }
 
-  val env = System.getProperty("env")
 }

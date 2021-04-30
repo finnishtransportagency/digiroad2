@@ -30,20 +30,6 @@ trait Feedback {
   def body: String
   type FeedbackBody
 
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
-  protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
-
   def stringifyBody(username: String, body: FeedbackBody) : String
 
   def insertFeedback(username: String, body: FeedbackBody): Long = {
