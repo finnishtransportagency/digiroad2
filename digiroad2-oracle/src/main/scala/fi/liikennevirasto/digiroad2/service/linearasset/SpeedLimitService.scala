@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.util.{NoSuchElementException, Properties}
+import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
