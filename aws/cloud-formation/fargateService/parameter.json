@@ -48,11 +48,11 @@
     "ParameterValue": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2"
   },
   {
-    "ParameterKey": "LoadBalancerSecurityGroup",
-    "ParameterValue": "sg-045b3c438af20d055"
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
   },
   {
-    "ParameterKey": "ECSSecurityGroup",
-    "ParameterValue": "sg-0c14014d86a4b8fd4"
+    "ParameterKey": "DigiroadDatabaseSecurityGroup",
+    "ParameterValue": "sg-0ced3d4a7245fb3ed"
   }
 ]
