@@ -10,7 +10,7 @@ import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 case class BasicAuthUser(username: String)
 
 // TODO: IntegrationAuthStrategy.scala will be deleted in the future (aws)
-// TODO: https://extranet.vayla.fi/jira/browse/DROTH-2705
+// TODO: https://extranet.vayla.fi/jira/browse/DROTH-2759
 class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String, baseAuth: String = "")
   extends BasicAuthStrategy[BasicAuthUser](app, realm) {
 
