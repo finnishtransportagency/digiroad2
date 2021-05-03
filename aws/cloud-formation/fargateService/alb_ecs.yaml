@@ -415,7 +415,6 @@ Resources:
       SecurityGroupEgress:
         - IpProtocol: "-1"
           CidrIp: 0.0.0.0/0
-          Description:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref ApplicationName, 'ECS-Task' ] ]
