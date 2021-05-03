@@ -17,11 +17,11 @@ Parameters:
   ServiceCPU:
     Description: Service CPU, vayla defaut is 256
     Default: 256
-    Type: number
+    Type: Number
   ServiceMemory:
     Description: Service memory, vayla defaut is 512
     Default: 512
-    Type: number
+    Type: Number
   Environment:
     Description: "Environment of the application, that these resources are created for. Used when tagging the resources"
     Type: String
@@ -95,6 +95,10 @@ Resources:
                 # Allow the ECS tasks to upload logs to CloudWatch
                 - 'logs:CreateLogStream'
                 - 'logs:PutLogEvents'
+
+                - 'ssm:GetParameter'
+                - 'ssm:GetParameters'
+                - 'ssm:GetParametersByPath'
               Resource: '*'
 
   ECSTask:
@@ -117,7 +121,7 @@ Resources:
           PortMappings:
             - ContainerPort: !Ref ContainerPort
           # If you want to pass environment variables to the container, uncomment and modify these:
-           Environment:
+          Environment:
              - Name: REGION
                Value: !Ref AWS::Region
              - Name: speedLimitProvider
@@ -186,15 +190,19 @@ Resources:
             - Name: authentication.basic.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.basic.password"
             - Name: authentication.serviceRoad.basic.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
-            - Name: authentication.municipality.basic.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.serviceRoad.basic.password"
+            - Name: authentication.municipality.basic.password
+              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.municipality.basic.password"
             - Name: tierekisteri.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.password"
             - Name: tierekisteri.old.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.old.password"
             - Name: viite.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
+            - Name: googlemapapi.client_id
+              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/googlemapapi.client_id"
+            - Name: googlemapapi.crypto_key
+              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/googlemapapi.crypto_key"
 
           Essential: true # One of the container need to be essential. So, if you'd add another container in this task, it's Essential -value should be false.
           LogConfiguration:
@@ -252,15 +260,15 @@ Resources:
       LoadBalancerArn: !Ref PrivateLoadBalancer
       Port: 80
       Protocol: HTTP
-      Tags:
-        - Key: Name
-          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Listener']]
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+#      Tags:
+#        - Key: Name
+#          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Listener']]
+#        - Key: Environment
+#          Value: !Ref Environment
+#        - Key: Owner
+#          Value: !Ref Owner
+#        - Key: Project
+#          Value: !Ref Project
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -301,15 +309,15 @@ Resources:
           Values: ['*']
       ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 1
-      Tags:
-        - Key: Name
-          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Rule']]
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+#      Tags:
+#        - Key: Name
+#          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Rule']]
+#        - Key: Environment
+#          Value: !Ref Environment
+#        - Key: Owner
+#          Value: !Ref Owner
+#        - Key: Project
+#          Value: !Ref Project
 
   EcsService:
     Type: AWS::ECS::Service
@@ -347,15 +355,15 @@ Resources:
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-      Tags:
-        - Key: Name
-          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer']]
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+#      Tags:
+#        - Key: Name
+#          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer']]
+#        - Key: Environment
+#          Value: !Ref Environment
+#        - Key: Owner
+#          Value: !Ref Owner
+#        - Key: Project
+#          Value: !Ref Project
 
 Outputs:
   ALBDNSName:

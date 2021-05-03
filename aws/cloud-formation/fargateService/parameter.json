@@ -5,7 +5,7 @@
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "digiroad"
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "DevDatabaseURL",
@@ -17,11 +17,11 @@
   },
   {
     "ParameterKey": "ServiceCPU",
-    "ParameterValue": 256
+    "ParameterValue": "256"
   },
   {
     "ParameterKey": "ServiceMemory",
-    "ParameterValue": 512
+    "ParameterValue": "512"
   },
   {
     "ParameterKey": "Environment",
@@ -29,26 +29,30 @@
   },
   {
     "ParameterKey": "Owner",
-    "ParameterValue": "digiroad"
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "ContainerTag",
-    "ParameterValue": "lates"
+    "ParameterValue": "latest"
   },
   {
     "ParameterKey": "ContainerPort",
-    "ParameterValue": 80
+    "ParameterValue": "80"
   },
   {
     "ParameterKey": "RepositoryURI",
-    "ParameterValue": "test"
+    "ParameterValue": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2"
   },
   {
     "ParameterKey": "LoadBalancerSecurityGroup",
-    "ParameterValue": "sg-04cdc6aa401693969"
+    "ParameterValue": "sg-045b3c438af20d055"
   },
   {
     "ParameterKey": "ECSSecurityGroup",
-    "ParameterValue": "sg-04cdc6aa401693969"
+    "ParameterValue": "sg-0c14014d86a4b8fd4"
   }
 ]
