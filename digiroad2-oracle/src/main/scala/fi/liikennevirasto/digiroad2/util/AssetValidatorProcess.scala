@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset, State}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
