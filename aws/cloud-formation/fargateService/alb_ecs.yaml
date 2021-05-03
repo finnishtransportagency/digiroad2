@@ -42,12 +42,12 @@ Parameters:
   RepositoryURI:
     Type: String
     Description: URI to repository, where the container is
-  LoadBalancerSecurityGroup:
+  VpcID:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC of your system
+  DigiroadDatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
-    Description: The security group, that is protecting the load balancer. This probably will allow traffic from the TGW
-  ECSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup::Id
-    Description: The security group, that is protecting the containers. This probably will allow traffic only from the VPC
+    Description: VPC of your system
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -237,7 +237,7 @@ Resources:
             !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
         - Fn::ImportValue:
             !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
-      SecurityGroups: [!Ref LoadBalancerSecurityGroup]
+      SecurityGroups: [!Ref LoadBalanserSecurityGroup]
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer']]
@@ -334,7 +334,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref ECSSecurityGroup
+            - !Ref WebServiceSecurityGroup
           Subnets:
             - Fn::ImportValue:
                 !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
@@ -364,6 +364,68 @@ Resources:
 #          Value: !Ref Owner
 #        - Key: Project
 #          Value: !Ref Project
+
+  #The security group, that is protecting the load balancer.
+  #This probably will allow traffic from the TGW
+  LoadBalanserSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: String
+      GroupName: DigiroadLoadBalanserSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 100.64.1.0/24
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref ApplicationName, 'ECS-Task' ] ]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+      VpcId: String
+  #The security group, that is protecting the containers.
+  #This probably will allow traffic only from the VPC
+  WebServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
+      GroupName: DigiroadWebService
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: ::/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          DestinationSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+          Description:
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref ApplicationName, 'ECS-Task' ] ]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+      VpcId: String
 
 Outputs:
   ALBDNSName:
