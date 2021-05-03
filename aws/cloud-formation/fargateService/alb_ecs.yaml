@@ -42,7 +42,7 @@ Parameters:
   RepositoryURI:
     Type: String
     Description: URI to repository, where the container is
-  VpcID:
+  VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
   DigiroadDatabaseSecurityGroup:
@@ -370,7 +370,7 @@ Resources:
   LoadBalanserSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: String
+      GroupDescription: DigiroadLoadBalanserSecurityGroup
       GroupName: DigiroadLoadBalanserSecurityGroup
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -384,14 +384,14 @@ Resources:
           DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref ApplicationName, 'ECS-Task' ] ]
+          Value: !Join [ '-', [ !Ref ApplicationName, 'LoadBalanser-Security-Group' ] ]
         - Key: Environment
           Value: !Ref Environment
         - Key: Owner
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-      VpcId: String
+      VpcId: !Ref VpcIDOfSystem
   #The security group, that is protecting the containers.
   #This probably will allow traffic only from the VPC
   WebServiceSecurityGroup:
@@ -407,24 +407,24 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: ::/0
+          CidrIpv6: ::/0
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
-          DestinationSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
+          SourceSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
       SecurityGroupEgress:
         - IpProtocol: "-1"
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref ApplicationName, 'ECS-Task' ] ]
+          Value: !Join [ '-', [ !Ref ApplicationName, 'WebService-Security-Group' ] ]
         - Key: Environment
           Value: !Ref Environment
         - Key: Owner
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-      VpcId: String
+      VpcId: !Ref VpcIDOfSystem
 
 Outputs:
   ALBDNSName:
