@@ -51,7 +51,7 @@ AssetDataImporter {
 
   case object TemporaryTables extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/import.bonecp.properties"))
+      val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
       new BoneCPDataSource(cfg)
     }
 
@@ -60,7 +60,7 @@ AssetDataImporter {
 
   case object Conversion extends ImportDataSet {
     lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/conversion.bonecp.properties"))
+      val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
       new BoneCPDataSource(cfg)
     }
 
@@ -922,16 +922,6 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     val id = PostGISObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
     sqlu"""update asset set floating = '1' where id = $id""".execute
     id
-  }
-
-  lazy val localProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load local.properties for env: " + System.getProperty("env"), e)
-    }
-    props
   }
 
   /**

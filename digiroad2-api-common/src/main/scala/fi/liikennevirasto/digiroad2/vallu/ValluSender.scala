@@ -1,10 +1,9 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import java.nio.charset.Charset
-
 import com.newrelic.api.agent.NewRelic
-import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, Digiroad2Context}
-import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
+import fi.liikennevirasto.digiroad2.{Digiroad2Context, EventBusMassTransitStop}
+import fi.liikennevirasto.digiroad2.util.{AssetPropertiesReader, Digiroad2Properties}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -15,8 +14,8 @@ import org.slf4j.LoggerFactory
 object ValluSender extends AssetPropertiesReader {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
-  val sendingEnabled = Digiroad2Context.getProperty("digiroad2.vallu.server.sending_enabled").toBoolean
-  val address = Digiroad2Context.getProperty("digiroad2.vallu.server.address")
+  val sendingEnabled = Digiroad2Properties.valluServerSendingEnabled
+  val address = Digiroad2Properties.valluServerAddress
 
   val config = RequestConfig.custom()
     .setSocketTimeout(60 * 1000)

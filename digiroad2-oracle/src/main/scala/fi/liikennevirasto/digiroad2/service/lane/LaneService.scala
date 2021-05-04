@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LaneUtils.roadLinkTempDAO
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, Track}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, PolygonTools, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -48,7 +48,7 @@ trait LaneOperations {
   def laneFiller: LaneFiller = new LaneFiller
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 

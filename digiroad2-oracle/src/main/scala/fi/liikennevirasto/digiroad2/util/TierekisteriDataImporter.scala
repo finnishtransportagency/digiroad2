@@ -19,20 +19,8 @@ import org.joda.time.format.DateTimeFormat
 
 object TierekisteriDataImporter {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService : RoadLinkService = {
@@ -200,13 +188,13 @@ object TierekisteriDataImporter {
 
   //TODO delete this client after migrate the import asset to TierekisteriImporterOperations
   lazy val tierekisteriTrafficVolumeAssetClient : TierekisteriTrafficVolumeAssetClient = {
-    new TierekisteriTrafficVolumeAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriTrafficVolumeAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val roadAddressService: RoadAddressService = {
@@ -373,7 +361,7 @@ object TierekisteriDataImporter {
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
+    val username = Digiroad2Properties.bonecpUsername
     if (!username.startsWith("dr2dev")) {
       println("*******************************************************************************************")
       println("YOU ARE RUNNING TIEREKISTERI IMPORT AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")

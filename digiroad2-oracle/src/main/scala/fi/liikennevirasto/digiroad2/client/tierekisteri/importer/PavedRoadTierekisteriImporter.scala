@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -18,8 +19,8 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
   override type TierekisteriClientType = TierekisteriPavedRoadAssetClient
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-  override val tierekisteriClient = new TierekisteriPavedRoadAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriPavedRoadAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   val pavementClassPropertyId = "paallysteluokka"
