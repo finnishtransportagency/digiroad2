@@ -169,9 +169,9 @@ Resources:
              - Name: feedbackAssetsEndPoint
                Value: http://devtest.vayla.fi/digiroad/
              - Name: bonecp.jdbcUrl
-               Value: ref DevDatabaseURL
+               Value: !ref DevDatabaseURL
              - Name: bonecp.username
-               Value: ref DevDatabaseUser
+               Value: !ref DevDatabaseUser
              - Name: authentication.basic.username
                Value: "kalpa"
              - Name: authentication.serviceRoad.basic.username
