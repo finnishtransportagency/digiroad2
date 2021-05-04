@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, TestTransactions}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -25,7 +25,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 

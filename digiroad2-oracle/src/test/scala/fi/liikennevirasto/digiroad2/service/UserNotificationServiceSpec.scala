@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.dao.UserNotificationDao
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, TestTransactions}
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -11,7 +11,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class UserNotificationServiceSpec extends FunSuite with Matchers {
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 

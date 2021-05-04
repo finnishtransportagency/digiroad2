@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.impl.client.HttpClientBuilder
 
 
@@ -20,8 +21,8 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
 
   lazy val dao = new PostGISPedestrianCrossingDao()
 
-  override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
 

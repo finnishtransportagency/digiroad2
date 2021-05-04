@@ -4,6 +4,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, ServicePointsClass}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, PostGISServicePointDao, ServicePoint}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class ServicePointService {
   val typeId: Int = 250
@@ -59,7 +60,7 @@ class ServicePointService {
   }
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
 

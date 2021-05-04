@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.dataexport
 
-import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.csvDataExporter.AssetReportCsvExporter
@@ -41,12 +39,6 @@ object sTestTransactions {
 
 
 class AssetReportCsvExporterSpec extends FunSuite with Matchers {
-
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   val csvSeparator = ";"
   val newLine = "\r\n"

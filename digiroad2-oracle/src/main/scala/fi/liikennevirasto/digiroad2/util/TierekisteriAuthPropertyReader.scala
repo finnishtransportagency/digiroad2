@@ -5,14 +5,8 @@ import org.apache.commons.codec.binary.Base64
 
 class TierekisteriAuthPropertyReader {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/keys.properties"))
-    props
-  }
-
   private def getUsername: String = {
-    val loadedKeyString = properties.getProperty("tierekisteri.username")
+    val loadedKeyString = Digiroad2Properties.tierekisteriUsername
     println("u = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR username")
@@ -20,14 +14,14 @@ class TierekisteriAuthPropertyReader {
   }
 
   private def getPassword: String = {
-    val loadedKeyString = properties.getProperty("tierekisteri.password")
+    val loadedKeyString = Digiroad2Properties.tierekisteriPassword
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR Password")
     loadedKeyString
   }
 
   private def getOldUsername: String = {
-    val loadedKeyString = properties.getProperty("tierekisteri.old.username")
+    val loadedKeyString = Digiroad2Properties.tierekisteriOldUsername
     println("u = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR username")
@@ -35,7 +29,7 @@ class TierekisteriAuthPropertyReader {
   }
 
   private def getOldPassword: String = {
-    val loadedKeyString = properties.getProperty("tierekisteri.old.password")
+    val loadedKeyString = Digiroad2Properties.tierekisteriOldPassword
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR Password")
     loadedKeyString

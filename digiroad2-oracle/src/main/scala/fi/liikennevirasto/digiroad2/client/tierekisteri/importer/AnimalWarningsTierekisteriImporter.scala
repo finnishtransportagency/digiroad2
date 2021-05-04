@@ -10,6 +10,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -18,8 +19,8 @@ class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporter
   override type TierekisteriClientType = TierekisteriAnimalWarningsAssetClient
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-  override val tierekisteriClient = new TierekisteriAnimalWarningsAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriAnimalWarningsAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   val animalWarningPropertyId = "hirvivaro"

@@ -11,6 +11,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -23,8 +24,8 @@ class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImport
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriCarryingCapacityAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriCarryingCapacityAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {

@@ -11,6 +11,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import slick.jdbc.StaticQuery
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 
 class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
@@ -21,8 +22,8 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriRoadWidthAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriRoadWidthAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {

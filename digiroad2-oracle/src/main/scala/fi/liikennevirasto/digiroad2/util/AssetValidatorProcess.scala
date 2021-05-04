@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset, State}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -17,24 +15,12 @@ import org.joda.time.DateTime
 
 object AssetValidatorProcess {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val roadLinkService : RoadLinkService = {
@@ -150,7 +136,7 @@ object AssetValidatorProcess {
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
+    val username = Digiroad2Properties.bonecpUsername
     if (!username.startsWith("dr2dev")) {
       println("*******************************************************************************************")
       println("YOU ARE RUNNING VALIDATOR ASSET PROCESS AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")

@@ -1,13 +1,13 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{_}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
-import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, RoadSide, Track}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -20,21 +20,21 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
 
   override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]) = throw new UnsupportedOperationException("Not supported method")
 
-  override val tierekisteriClient = new TierekisteriTrafficSignAssetSpeedLimitClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriTrafficSignAssetSpeedLimitClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
 
   lazy val tierekisteriClientUA: TierekisteriUrbanAreaClient = {
-    new TierekisteriUrbanAreaClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriUrbanAreaClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriClientTelematicSpeedLimit: TierekisteriTelematicSpeedLimitClient = {
-    new TierekisteriTelematicSpeedLimitClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriTelematicSpeedLimitClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 

@@ -39,25 +39,15 @@ import scala.collection.mutable.ListBuffer
 
 object DataFixture {
   val TestAssetId = 300000
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   val dataImporter = new AssetDataImporter
+
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val roadLinkService: RoadLinkService = {
@@ -69,8 +59,8 @@ object DataFixture {
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
@@ -142,14 +132,14 @@ object DataFixture {
   }
 
   lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {
-    new TierekisteriLightingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriLightingAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
   lazy val tierekisteriRoadWidthAsset : TierekisteriRoadWidthAssetClient = {
-    new TierekisteriRoadWidthAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriRoadWidthAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
@@ -162,8 +152,8 @@ object DataFixture {
   }
 
   lazy val tierekisteriSpeedLimitAsset : TierekisteriSpeedLimitAssetClient = {
-    new TierekisteriSpeedLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriSpeedLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
@@ -208,14 +198,6 @@ object DataFixture {
   }
 
   lazy val municipalityService: MunicipalityService = new MunicipalityService
-
-  def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
 
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
@@ -266,14 +248,14 @@ object DataFixture {
 
   def importEuropeanRoads(): Unit = {
     println(s"\nCommencing European road import from conversion at time: ${DateTime.now()}")
-    dataImporter.importEuropeanRoads(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    dataImporter.importEuropeanRoads(Conversion.database(), Digiroad2Properties.vvhServiceHost)
     println(s"European road import complete at time: ${DateTime.now()}")
     println()
   }
 
   def importProhibitions(): Unit = {
     println(s"\nCommencing prohibition import from conversion at time: ${DateTime.now()}")
-    dataImporter.importProhibitions(Conversion.database(), dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    dataImporter.importProhibitions(Conversion.database(), Digiroad2Properties.vvhServiceHost)
     println(s"Prohibition import complete at time: ${DateTime.now()}")
     println()
   }
@@ -288,7 +270,7 @@ object DataFixture {
   def generateDroppedAssetsCsv(): Unit = {
     println("\nGenerating list of linear assets outside geometry")
     println(DateTime.now())
-    val csvGenerator = new CsvGenerator(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    val csvGenerator = new CsvGenerator(Digiroad2Properties.vvhServiceHost)
     csvGenerator.generateDroppedNumericalLimits()
     csvGenerator.generateCsvForTextualLinearAssets(260, "european_roads")
     csvGenerator.generateCsvForTextualLinearAssets(270, "exit_numbers")
@@ -302,7 +284,7 @@ object DataFixture {
   def generateDroppedManoeuvres(): Unit = {
     println("\nGenerating list of manoeuvres outside geometry")
     println(DateTime.now())
-    val csvGenerator = new CsvGenerator(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    val csvGenerator = new CsvGenerator(Digiroad2Properties.vvhServiceHost)
     csvGenerator.generateDroppedManoeuvres()
     println("complete at time: ")
     println(DateTime.now())
@@ -343,7 +325,7 @@ object DataFixture {
   def adjustToNewDigitization(): Unit = {
     println("\nAdjusting side codes and m-values according new digitization directions")
     println(DateTime.now())
-    dataImporter.adjustToNewDigitization(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+    dataImporter.adjustToNewDigitization(Digiroad2Properties.vvhServiceHost)
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
@@ -363,7 +345,7 @@ object DataFixture {
   {
     println("\nCommencing address information import from VVH road links to mass transit stops at time: ")
     println(DateTime.now())
-    dataImporter.getMassTransitStopAddressesFromVVH(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    dataImporter.getMassTransitStopAddressesFromVVH(Digiroad2Properties.vvhRestApiEndPoint)
     println("complete at time: ")
     println(DateTime.now())
     println("\n")
@@ -373,7 +355,7 @@ object DataFixture {
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val vvhClient = new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true
@@ -2511,7 +2493,7 @@ object DataFixture {
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
+    val username = Digiroad2Properties.bonecpUsername
     if (!username.startsWith("digiroad2")) {
       println("*************************************************************************************")
       println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
@@ -2566,7 +2548,7 @@ object DataFixture {
       case Some("adjust_digitization") =>
         adjustToNewDigitization()
       case Some("import_link_ids") =>
-        LinkIdImporter.importLinkIdsFromVVH(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+        LinkIdImporter.importLinkIdsFromVVH(Digiroad2Properties.vvhRestApiEndPoint)
       case Some("generate_floating_obstacles") =>
         FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
       case Some("get_addresses_to_masstransitstops_from_vvh") =>

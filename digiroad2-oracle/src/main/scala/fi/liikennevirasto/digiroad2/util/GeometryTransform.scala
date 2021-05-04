@@ -149,11 +149,7 @@ class VKMGeometryTransform {
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
 
-  private def vkmBaseUrl = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl") + "/viitekehysmuunnin/"
-  }
+  private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
     paramMap.filter(entry => entry._2.nonEmpty).map(entry => URLEncoder.encode(entry._1, "UTF-8")

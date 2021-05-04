@@ -15,6 +15,7 @@ import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
@@ -110,7 +111,7 @@ trait  PointAssetOperations{
   final val defaultSingleChoiceValue = 99
 
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(PostGISDatabase.loadProperties("/bonecp.properties"))
+    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
     new BoneCPDataSource(cfg)
   }
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)

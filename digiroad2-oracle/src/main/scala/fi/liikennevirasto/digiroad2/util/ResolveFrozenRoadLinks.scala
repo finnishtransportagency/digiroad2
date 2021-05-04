@@ -19,14 +19,9 @@ import scala.util.Try
 case class RoadAddressTEMPwithPoint(firstP: Point, lastP: Point, roadAddress: RoadAddressTEMP)
 
 trait ResolvingFrozenRoadLinks {
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val roadAddressService: RoadAddressService = {
@@ -42,7 +37,7 @@ trait ResolvingFrozenRoadLinks {
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {

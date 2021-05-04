@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient}
@@ -14,7 +13,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, RoadSide, Track}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -27,19 +26,15 @@ case class TrAssetInfo(trAsset: TierekisteriAssetData, roadLink: Option[VVHRoadl
 trait TierekisteriImporterOperations {
 
   val eventbus = new DummyEventBus
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
+
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
-  lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
+  lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val userProvider: UserProvider = {
-    Class.forName(getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
   lazy val assetDao: PostGISAssetDao = new PostGISAssetDao
   lazy val roadAddressService : RoadAddressService = new RoadAddressService(viiteClient)
-  lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build()) }
+  lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
   lazy val roadLinkTempDAO: RoadLinkTempDAO = new RoadLinkTempDAO
 
@@ -50,14 +45,6 @@ trait TierekisteriImporterOperations {
   def withDynTransaction[T](f: => T): T
 
   def assetName: String
-
-  protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
 
   protected def getSideCode(roadAddress: ViiteRoadAddress, trAssetTrack: Track, trAssetRoadSide: RoadSide): SideCode = {
     val trTrack = trAssetTrack match {

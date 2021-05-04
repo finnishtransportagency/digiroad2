@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.util.{NoSuchElementException, Properties}
+import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
@@ -30,11 +30,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   private val RECORD_NUMBER = 4000
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkService, eventbus)

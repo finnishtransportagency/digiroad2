@@ -1543,11 +1543,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     (roadLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(roadLink.geometry.last, connectionPoint)) roadLink.geometry else roadLink.geometry.reverse))
 
 
-  private val cacheDirectory = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.cache.directory", "/tmp/digiroad.cache")
-  }
+  private val cacheDirectory = { Digiroad2Properties.cacheDirecroty }
 
   def geometryToBoundingBox(s: Seq[Point], delta: Vector3d) = {
     BoundingRectangle(Point(s.minBy(_.x).x, s.minBy(_.y).y) - delta, Point(s.maxBy(_.x).x, s.maxBy(_.y).y) + delta)

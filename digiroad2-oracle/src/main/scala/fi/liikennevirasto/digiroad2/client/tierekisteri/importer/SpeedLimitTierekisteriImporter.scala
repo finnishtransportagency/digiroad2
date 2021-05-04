@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitValue
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.impl.client.HttpClientBuilder
 
 class SpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOperations{
@@ -19,8 +20,8 @@ class SpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOper
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriSpeedLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriSpeedLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 
   protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
