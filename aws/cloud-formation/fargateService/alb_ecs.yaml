@@ -48,6 +48,11 @@ Parameters:
   DigiroadDatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
     Description: VPC of your system
+  IpRangeForYourNetwork:
+    Type: String
+    ConstraintDescription: Requires a /32 CIDR block
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(32))$"
+    Description: Ip range of your network
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -135,17 +140,15 @@ Resources:
              - Name: useVVHGeometry
                Value: true
              - Name: VVHServiceHost
-               Value: haproxy.vayla.fi #haproxy.vayla.fi
+               Value: haproxy.vayla.fi # copied from viite
              - Name: VVHRestApiEndPoint
-               Value: https://haproxy.vayla.fi:2027/vvhdata/ #https://haproxy.vayla.fi:2027/vvhdata/
-             - Name: VVHProdRestApiEndPoint
-               Value: http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/ #?
+               Value: https://haproxy.vayla.fi:2027/vvhdata/ # copied from viite
              - Name: VVHRoadlink.frozen
                Value: false
              - Name: viiteRestApiEndPoint
                Value: http://localhost:9080/viite/api/viite/ #?
              - Name: authenticationTestMode
-               Value: true
+               Value: false
              - Name: VKMUrl
                Value: http://oag.vayla.fi # copied from viite
              - Name: tierekisteriRestApiEndPoint
@@ -190,6 +193,8 @@ Resources:
                Value: emailHost
              - Name: email.port
                Value: emailPort
+             - Name: env
+               Value: !Ref Environment
           Secrets:
             - Name: bonecp.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
@@ -382,7 +387,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 100.64.1.0/24
+          CidrIp: !Ref IpRangeForYourNetwork
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 80
