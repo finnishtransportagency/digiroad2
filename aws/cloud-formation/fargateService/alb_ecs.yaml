@@ -172,7 +172,7 @@ Resources:
              - Name: feedbackAssetsEndPoint
                Value: http://devtest.vayla.fi/digiroad/
              - Name: bonecp.jdbcUrl
-               Value: !Ref DevDatabaseURL
+               Value: !Sub "jdbc:postgresql://${DevDatabaseURL}"
              - Name: bonecp.username
                Value: !Ref DevDatabaseUser
              - Name: authentication.basic.username
