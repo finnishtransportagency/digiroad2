@@ -135,11 +135,11 @@ Resources:
              - Name: useVVHGeometry
                Value: true
              - Name: VVHServiceHost
-               Value: 172.17.204.38:6080 #haproxy.vayla.fi
+               Value: haproxy.vayla.fi #haproxy.vayla.fi
              - Name: VVHRestApiEndPoint
-               Value: http://172.17.204.38:6080/arcgis/rest/services/VVH_OTH_TEST/ #https://haproxy.vayla.fi:2027/vvhdata/
+               Value: https://haproxy.vayla.fi:2027/vvhdata/ #https://haproxy.vayla.fi:2027/vvhdata/
              - Name: VVHProdRestApiEndPoint
-               Value: http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/
+               Value: http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/ #?
              - Name: VVHRoadlink.frozen
                Value: false
              - Name: viiteRestApiEndPoint
@@ -147,9 +147,9 @@ Resources:
              - Name: authenticationTestMode
                Value: true
              - Name: VKMUrl
-               Value: http://oag.vayla.fi
+               Value: http://oag.vayla.fi # copied from viite
              - Name: tierekisteriRestApiEndPoint
-               Value: http://testioag.vayla.fi:8081/trrest/devtest/ #?
+               Value: http://testioag.vayla.fi/trrest/devtest/ # copied from viite
              - Name: tierekisteri.enabled
                Value: true
              - Name: vallu.server.sending_enabled
@@ -169,9 +169,9 @@ Resources:
              - Name: feedbackAssetsEndPoint
                Value: http://devtest.vayla.fi/digiroad/
              - Name: bonecp.jdbcUrl
-               Value: !ref DevDatabaseURL
+               Value: !Ref DevDatabaseURL
              - Name: bonecp.username
-               Value: !ref DevDatabaseUser
+               Value: !Ref DevDatabaseUser
              - Name: authentication.basic.username
                Value: "kalpa"
              - Name: authentication.serviceRoad.basic.username
@@ -184,6 +184,12 @@ Resources:
                Value: "trrest"
              - Name: viite.username
                Value: "kalpa"
+             - Name: email.to
+               Value: emailTo
+             - Name: email.host
+               Value: emailHost
+             - Name: email.port
+               Value: emailPort
           Secrets:
             - Name: bonecp.password
               ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
