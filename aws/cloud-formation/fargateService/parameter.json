@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "DevDatabaseURL",
-    "ParameterValue": "test"
+    "ParameterValue": "ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2"
   },
   {
     "ParameterKey": "DevDatabaseUser",
@@ -25,7 +25,7 @@
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "test"
+    "ParameterValue": "dev"
   },
   {
     "ParameterKey": "Owner",
