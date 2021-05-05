@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "ServiceMemory",
-    "ParameterValue": "512"
+    "ParameterValue": "2048"
   },
   {
     "ParameterKey": "Environment",
