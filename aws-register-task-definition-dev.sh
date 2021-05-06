@@ -7,7 +7,7 @@
 #
 # Before running this script you must authenticate through Väylä SAML:
 #
-# python3 aws/login/vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 783354560127 --role ViiteAdmin --region eu-west-1
+# python3 aws/login/vaylaAssumeRoleAWSCLI.py --username <Your Väylä username> --account 475079312496 --role DigiroadOthAdmin --region eu-west-1
 #
 aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-input-json file://aws/task-definition/dev/task-definition.json
 
@@ -15,4 +15,4 @@ aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-inp
 # Replace the <VERSION> with the new version. You can find the new version number from the JSON returned by the previous command:
 #         "taskDefinitionArn": "arn:aws:ecs:eu-west-1:783354560127:task-definition/Viite-dev:<VERSION>",
 #
-# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster VIITE-ECS-Cluster --service viite-dev --task-definition Viite-dev:<VERSION> --force-new-deployment
+ aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster digiroad2-ECS-Cluster-Private --service digiroad2-ECS-Service-Private --task-definition digiroad2-dev:<VERSION> --force-new-deployment
