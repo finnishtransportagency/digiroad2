@@ -27,6 +27,9 @@ Parameters:
   DigiroadDatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
     Description: Databases security group
+  TaskDefinitionForService:
+    Type: String
+    Description: Task definition for your service
   IpRangeForYourNetwork:
     Type: String
     ConstraintDescription: Requires a /24 CIDR block
@@ -52,38 +55,6 @@ Resources:
     Properties:
       LogGroupName: !Join ['', ['/ecs/', !Ref ApplicationName, '-ECS-logs']]
       RetentionInDays: 14
-
-  # This is a role which is used by the ECS tasks themselves.
-  ECSTaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: [ecs-tasks.amazonaws.com]
-          Action: ['sts:AssumeRole']
-      Path: /
-      Policies:
-        - PolicyName: AmazonECSTaskExecutionRolePolicy
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action:
-                # Allow the ECS Tasks to download images from ECR
-                - 'ecr:GetAuthorizationToken'
-                - 'ecr:BatchCheckLayerAvailability'
-                - 'ecr:GetDownloadUrlForLayer'
-                - 'ecr:BatchGetImage'
-
-                # Allow the ECS tasks to upload logs to CloudWatch
-                - 'logs:CreateLogStream'
-                - 'logs:PutLogEvents'
-
-                - 'ssm:GetParameter'
-                - 'ssm:GetParameters'
-                - 'ssm:GetParametersByPath'
-              Resource: '*'
 
   PrivateLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -184,6 +155,7 @@ Resources:
             - Fn::ImportValue:
                 !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
       LaunchType: FARGATE
+      TaskDefinition: !Ref TaskDefinitionForService
       LoadBalancers:
         - ContainerName: !Ref ApplicationName
           ContainerPort: !Ref ContainerPort

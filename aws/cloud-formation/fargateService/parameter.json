@@ -8,6 +8,10 @@
     "ParameterValue": "digiroad2"
   },
   {
+    "ParameterKey": "TaskDefinitionForService",
+    "ParameterValue": "digiroad2-dev"
+  },
+  {
     "ParameterKey": "Environment",
     "ParameterValue": "dev"
   },
