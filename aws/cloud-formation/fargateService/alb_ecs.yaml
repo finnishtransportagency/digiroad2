@@ -271,15 +271,6 @@ Resources:
       LoadBalancerArn: !Ref PrivateLoadBalancer
       Port: 80
       Protocol: HTTP
-#      Tags:
-#        - Key: Name
-#          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Listener']]
-#        - Key: Environment
-#          Value: !Ref Environment
-#        - Key: Owner
-#          Value: !Ref Owner
-#        - Key: Project
-#          Value: !Ref Project
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -320,15 +311,6 @@ Resources:
           Values: ['*']
       ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 1
-#      Tags:
-#        - Key: Name
-#          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-Rule']]
-#        - Key: Environment
-#          Value: !Ref Environment
-#        - Key: Owner
-#          Value: !Ref Owner
-#        - Key: Project
-#          Value: !Ref Project
 
   EcsService:
     Type: AWS::ECS::Service
@@ -366,15 +348,6 @@ Resources:
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-#      Tags:
-#        - Key: Name
-#          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer']]
-#        - Key: Environment
-#          Value: !Ref Environment
-#        - Key: Owner
-#          Value: !Ref Owner
-#        - Key: Project
-#          Value: !Ref Project
 
   #The security group, that is protecting the load balancer.
   #This probably will allow traffic from the TGW
