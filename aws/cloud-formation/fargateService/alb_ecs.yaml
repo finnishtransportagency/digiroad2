@@ -8,20 +8,6 @@ Parameters:
   ApplicationName:
     Description: Name of the application (no whitespace or special characters)
     Type: String
-  DevDatabaseURL:
-    Description: Database url
-    Type: String
-  DevDatabaseUser:
-    Description: Database user
-    Type: String
-  ServiceCPU:
-    Description: Service CPU, vayla defaut is 256
-    Default: 256
-    Type: Number
-  ServiceMemory:
-    Description: Service memory, vayla defaut is 512
-    Default: 512
-    Type: Number
   Environment:
     Description: "Environment of the application, that these resources are created for. Used when tagging the resources"
     Type: String
@@ -31,17 +17,10 @@ Parameters:
   Project:
     Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
     Type: String
-  ContainerTag:
-    Type: String
-    Default: latest
-    Description: Tag of the container
   ContainerPort:
     Type: Number
     Default: 80
     Description: Port of the container
-  RepositoryURI:
-    Type: String
-    Description: URI to repository, where the container is
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
@@ -105,134 +84,6 @@ Resources:
                 - 'ssm:GetParameters'
                 - 'ssm:GetParametersByPath'
               Resource: '*'
-
-  ECSTask:
-    Type: AWS::ECS::TaskDefinition
-    DependsOn: ECSLogGroup
-    Properties:
-      Family: !Ref ApplicationName
-      # Adjust these according to the needs of your applications containers
-      Cpu: !Ref ServiceCPU
-      Memory: !Ref ServiceMemory
-      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
-      # TaskRoleArn: # Enable and create this role, if your container needs access to other AWS services like SQS, SES, DynamoDB etc.
-      NetworkMode: awsvpc # This is the only possible option with Fargate mode, but set here to remind of this behaviour
-      RequiresCompatibilities:
-        - FARGATE
-      ContainerDefinitions:
-        # First container. You can add several containers to one task. You would probably only add sidecar containers though
-        - Name: !Ref ApplicationName
-          Image: !Join [':', [!Ref RepositoryURI, !Ref ContainerTag]]
-          PortMappings:
-            - ContainerPort: !Ref ContainerPort
-          # If you want to pass environment variables to the container, uncomment and modify these:
-          Environment:
-             - Name: REGION
-               Value: !Ref AWS::Region
-             - Name: speedLimitProvider
-               Value: fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
-             - Name: userProvider
-               Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
-             - Name: municipalityProvider
-               Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
-             - Name: eventBus
-               Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
-             - Name: useVVHGeometry
-               Value: true
-             - Name: VVHServiceHost
-               Value: haproxy.vayla.fi # copied from viite
-             - Name: VVHRestApiEndPoint
-               Value: https://haproxy.vayla.fi:2027/vvhdata/ # copied from viite
-             - Name: VVHRoadlink.frozen
-               Value: false
-             - Name: viiteRestApiEndPoint
-               Value: http://localhost:9080/viite/api/viite/ #?
-             - Name: authenticationTestMode
-               Value: false
-             - Name: VKMUrl
-               Value: http://oag.vayla.fi # copied from viite
-             - Name: tierekisteriRestApiEndPoint
-               Value: http://testioag.vayla.fi/trrest/devtest/ # copied from viite
-             - Name: tierekisteri.enabled
-               Value: true
-             - Name: vallu.server.sending_enabled
-               Value: true
-             - Name: vallu.server.address
-               Value: http://localhost:9002
-             - Name: viite.importTimeStamp
-               Value: 1510876800000
-             - Name: http.proxySet
-               Value: true
-             - Name: http.proxyHost
-               Value: 127.0.0.1
-             - Name: http.proxyPort
-               Value: 3128
-             - Name: http.nonProxyHosts
-               Value: 172.17.*|localhost|127.*
-             - Name: feedbackAssetsEndPoint
-               Value: http://devtest.vayla.fi/digiroad/
-             - Name: bonecp.jdbcUrl
-               Value: !Sub "jdbc:postgresql://${DevDatabaseURL}"
-             - Name: bonecp.username
-               Value: !Ref DevDatabaseUser
-             - Name: authentication.basic.username
-               Value: "kalpa"
-             - Name: authentication.serviceRoad.basic.username
-               Value: "livi"
-             - Name: authentication.municipality.basic.username
-               Value: "kalpa"
-             - Name: tierekisteri.username
-               Value: "trrest"
-             - Name: tierekisteri.old.username
-               Value: "trrest"
-             - Name: viite.username
-               Value: "kalpa"
-             - Name: email.to
-               Value: emailTo
-             - Name: email.host
-               Value: emailHost
-             - Name: email.port
-               Value: emailPort
-             - Name: env
-               Value: !Ref Environment
-          Secrets:
-            - Name: bonecp.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
-            - Name: authentication.basic.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.basic.password"
-            - Name: authentication.serviceRoad.basic.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.serviceRoad.basic.password"
-            - Name: authentication.municipality.basic.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.municipality.basic.password"
-            - Name: tierekisteri.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.password"
-            - Name: tierekisteri.old.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.old.password"
-            - Name: viite.password
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
-            - Name: googlemapapi.client_id
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/googlemapapi.client_id"
-            - Name: googlemapapi.crypto_key
-              ValueFrom: "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/googlemapapi.crypto_key"
-
-          Essential: true # One of the container need to be essential. So, if you'd add another container in this task, it's Essential -value should be false.
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref ECSLogGroup
-              awslogs-region: !Ref "AWS::Region"
-              awslogs-stream-prefix: ecs
-          # Adjust this according to the need of your container
-          Memory: !Ref ServiceMemory
-      Tags:
-        - Key: Name
-          Value: !Join ['-', [!Ref ApplicationName, 'ECS-Task']]
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
 
   PrivateLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -316,7 +167,6 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn:
       - ECSCluster
-      - ECSTask
       - TargetGroup
       - PrivateLoadBalancerListener
     Properties:
@@ -334,7 +184,6 @@ Resources:
             - Fn::ImportValue:
                 !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
       LaunchType: FARGATE
-      TaskDefinition: !Ref ECSTask
       LoadBalancers:
         - ContainerName: !Ref ApplicationName
           ContainerPort: !Ref ContainerPort

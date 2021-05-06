@@ -8,22 +8,6 @@
     "ParameterValue": "digiroad2"
   },
   {
-    "ParameterKey": "DevDatabaseURL",
-    "ParameterValue": "ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2"
-  },
-  {
-    "ParameterKey": "DevDatabaseUser",
-    "ParameterValue": "test"
-  },
-  {
-    "ParameterKey": "ServiceCPU",
-    "ParameterValue": "256"
-  },
-  {
-    "ParameterKey": "ServiceMemory",
-    "ParameterValue": "2048"
-  },
-  {
     "ParameterKey": "Environment",
     "ParameterValue": "dev"
   },
@@ -36,16 +20,8 @@
     "ParameterValue": "digiroad2"
   },
   {
-    "ParameterKey": "ContainerTag",
-    "ParameterValue": "latest"
-  },
-  {
     "ParameterKey": "ContainerPort",
     "ParameterValue": "80"
-  },
-  {
-    "ParameterKey": "RepositoryURI",
-    "ParameterValue": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2"
   },
   {
     "ParameterKey": "VpcIDOfSystem",
