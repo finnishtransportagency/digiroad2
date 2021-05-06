@@ -1,9 +1,8 @@
-[
-  {
-    "family": "digiroad2",
-    "cpu": 256,
-    "memory": 2048,
-    "executionRoleArn": " :role/TaskExecutionRole",
+ {
+    "family": "digiroad2-dev",
+    "cpu": "256",
+    "memory": "2048",
+    "executionRoleArn": "arn:aws:iam::475079312496:role/devTaskDefinitionRight-ECSTaskExecutionRoleForTask-AN683PJ3RZSA",
     "networkMode": "awsvpc",
     "requiresCompatibilities": [
       "FARGATE"
@@ -41,7 +40,7 @@
           },
           {
             "name": "useVVHGeometry",
-            "value": true
+            "value": "true"
           },
           {
             "name": "VVHServiceHost",
@@ -53,7 +52,7 @@
           },
           {
             "name": "VVHRoadlink.frozen",
-            "value": false
+            "value": "false"
           },
           {
             "name": "viiteRestApiEndPoint",
@@ -61,7 +60,7 @@
           },
           {
             "name": "authenticationTestMode",
-            "value": false
+            "value": "false"
           },
           {
             "name": "VKMUrl",
@@ -73,11 +72,11 @@
           },
           {
             "name": "tierekisteri.enabled",
-            "value": true
+            "value": "true"
           },
           {
             "name": "vallu.server.sending_enabled",
-            "value": true
+            "value": "true"
           },
           {
             "name": "vallu.server.address",
@@ -85,11 +84,11 @@
           },
           {
             "name": "viite.importTimeStamp",
-            "value": 1510876800000
+            "value": "1510876800000"
           },
           {
             "name": "http.proxySet",
-            "value": true
+            "value": "true"
           },
           {
             "name": "http.proxyHost",
@@ -97,7 +96,7 @@
           },
           {
             "name": "http.proxyPort",
-            "value": 3128
+            "value": "3128"
           },
           {
             "name": "http.nonProxyHosts",
@@ -224,4 +223,3 @@
       }
     ]
   }
-]
