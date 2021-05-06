@@ -47,12 +47,12 @@ Parameters:
     Description: VPC of your system
   DigiroadDatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
-    Description: VPC of your system
+    Description: Databases security group
   IpRangeForYourNetwork:
     Type: String
     ConstraintDescription: Requires a /24 CIDR block
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(24))$"
-    Description: Ip range of your network
+    Description: Ip range of your network, VPC CIDR
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
