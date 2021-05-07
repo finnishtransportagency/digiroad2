@@ -153,6 +153,10 @@
           {
             "name": "env",
             "value": "Dev"
+          },
+          {
+            "name": "rasterServiceUrl",
+            "value": "http://oag.vayla.fi/rasteripalvelu-mml"
           }
         ],
         "secrets": [
