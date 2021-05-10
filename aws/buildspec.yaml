@@ -27,7 +27,6 @@ phases:
       - rm conf/env.properties
   build:
     commands:
-      - printenv
       - grunt test
       - sbt test
       - grunt deploy
