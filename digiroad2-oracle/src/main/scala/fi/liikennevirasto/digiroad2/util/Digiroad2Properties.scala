@@ -51,8 +51,7 @@ trait Digiroad2Properties {
   val featureProvider: String
   val googleMapApiClientId: String
   val googleMapApiCryptoKey: String
-
-
+  val rasterServiceUrl: String
   val bonecpProperties: Properties
 }
 
@@ -103,6 +102,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val googleMapApiClientId: String = scala.util.Properties.envOrElse("googlemapapi.client_id", null)
   val googleMapApiCryptoKey: String = scala.util.Properties.envOrElse("googlemapapi.crypto_key", null)
+  val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -171,6 +171,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val featureProvider: String = envProps.getProperty("featureProvider")
   override val googleMapApiClientId: String = envProps.getProperty("googlemapapi.client_id")
   override val googleMapApiCryptoKey: String = envProps.getProperty("googlemapapi.crypto_key")
+  override val rasterServiceUrl: String = envProps.getProperty("rasterServiceUrl")
 
   override lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -247,6 +248,7 @@ object Digiroad2Properties {
   lazy val featureProvider: String = properties.featureProvider
   lazy val googleMapApiClientId: String = properties.googleMapApiClientId
   lazy val googleMapApiCryptoKey: String = properties.googleMapApiCryptoKey
+  lazy val rasterServiceUrl: String = properties.rasterServiceUrl
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties
 }
