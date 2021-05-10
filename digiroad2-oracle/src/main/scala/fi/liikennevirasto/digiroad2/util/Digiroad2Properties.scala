@@ -78,15 +78,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val httpProxyPort: String = scala.util.Properties.envOrElse("http.proxyPort", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", null)
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "true").toBoolean
-  val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp_jdbcUrl", scala.util.Properties.envOrElse("bonecp.jdbcUrl",null))
-  val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp_username", scala.util.Properties.envOrElse("bonecp.username",null))
-  val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp_password", scala.util.Properties.envOrElse("bonecp.password",null))
-  val authenticationBasicUsername: String = scala.util.Properties.envOrElse("authentication_basic_username", scala.util.Properties.envOrElse("authentication.basic.username", null))
-  val authenticationBasicPassword: String = scala.util.Properties.envOrElse("authentication_basic_password", scala.util.Properties.envOrElse("authentication.basic.password", null))
-  val authenticationServiceRoadBasicUsername: String = scala.util.Properties.envOrElse("authentication_serviceRoad_basic_username", scala.util.Properties.envOrElse("authentication.serviceRoad.basic.username", null))
-  val authenticationServiceRoadBasicPassword: String = scala.util.Properties.envOrElse("authentication_serviceRoad_basic_password", scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null))
-  val authenticationMunicipalityBasicUsername: String = scala.util.Properties.envOrElse("authentication_municipality_basic_username", scala.util.Properties.envOrElse("authentication.municipality.basic.username", null))
-  val authenticationMunicipalityBasicPassword: String = scala.util.Properties.envOrElse("authentication_municipality_basic_password", scala.util.Properties.envOrElse("authentication.municipality.basic.password", null))
   val revision: String = scala.util.Properties.envOrElse("revision", null)
   val latestDeploy: String = scala.util.Properties.envOrElse("latestDeploy", null)
   val tierekisteriUsername: String = scala.util.Properties.envOrElse("tierekisteriUsername", null)
@@ -100,9 +91,29 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val emailPort = scala.util.Properties.envOrElse("emailPort", null)
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
-  val googleMapApiClientId: String = scala.util.Properties.envOrElse("googlemapapi_client_id", scala.util.Properties.envOrElse("googlemapapi.client_id", null))
-  val googleMapApiCryptoKey: String = scala.util.Properties.envOrElse("googlemapapi_crypto_key", scala.util.Properties.envOrElse("googlemapapi.crypto_key", null))
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
+
+  // Get build id to check if executing in aws environment.
+  val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
+  private def selectEnvType(codebuildVersion: String, normal: String): String = {
+    awsBuildId match {
+      case null =>
+        normal
+      case _ =>
+        codebuildVersion
+    }
+  }
+  val googleMapApiClientId: String = selectEnvType(scala.util.Properties.envOrElse("googlemapapi_client_id", null), scala.util.Properties.envOrElse("googlemapapi.client_id", null))
+  val googleMapApiCryptoKey: String = selectEnvType(scala.util.Properties.envOrElse("googlemapapi_crypto_key", null), scala.util.Properties.envOrElse("googlemapapi.crypto_key", null))
+  val bonecpJdbcUrl: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_jdbcUrl", null), scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
+  val bonecpUsername: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_username", null), scala.util.Properties.envOrElse("bonecp.username", null))
+  val bonecpPassword: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_password", null), scala.util.Properties.envOrElse("bonecp.password", null))
+  val authenticationBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_basic_username", null), scala.util.Properties.envOrElse("authentication.basic.username", null))
+  val authenticationBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_basic_password", null), scala.util.Properties.envOrElse("authentication.basic.password", null))
+  val authenticationServiceRoadBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_serviceRoad_basic_username", null), scala.util.Properties.envOrElse("authentication.serviceRoad.basic.username", null))
+  val authenticationServiceRoadBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_serviceRoad_basic_password", null), scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null))
+  val authenticationMunicipalityBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_username", null), scala.util.Properties.envOrElse("authentication.municipality.basic.username", null))
+  val authenticationMunicipalityBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_password", null), scala.util.Properties.envOrElse("authentication.municipality.basic.password", null))
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
