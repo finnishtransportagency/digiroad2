@@ -69,7 +69,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
   val valluServerAddress: String = scala.util.Properties.envOrElse("vallu.server.address", null)
-  val cacheDirectory: String = scala.util.Properties.envOrElse("cache_directory", scala.util.Properties.envOrElse("cache.directory", null))
   val feedbackAssetsEndPoint: String = scala.util.Properties.envOrElse("feedbackAssetsEndPoint", null)
   val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", null)
   val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "true").toBoolean
@@ -114,6 +113,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val authenticationServiceRoadBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_serviceRoad_basic_password", null), scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null))
   val authenticationMunicipalityBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_username", null), scala.util.Properties.envOrElse("authentication.municipality.basic.username", null))
   val authenticationMunicipalityBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_password", null), scala.util.Properties.envOrElse("authentication.municipality.basic.password", null))
+  val cacheDirectory: String = selectEnvType(scala.util.Properties.envOrElse("cache_directory", null), scala.util.Properties.envOrElse("cache.directory", null))
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
