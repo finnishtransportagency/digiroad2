@@ -78,9 +78,9 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val httpProxyPort: String = scala.util.Properties.envOrElse("http.proxyPort", null)
   val httpNonProxyHosts: String = scala.util.Properties.envOrElse("http.nonProxyHosts", null)
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "true").toBoolean
-  val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp.jdbcUrl", null)
-  val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp.username", null)
-  val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp.password", null)
+  val bonecpJdbcUrl: String = scala.util.Properties.envOrElse("bonecp_jdbcUrl", scala.util.Properties.envOrElse("bonecp.jdbcUrl",null))
+  val bonecpUsername: String = scala.util.Properties.envOrElse("bonecp_username", scala.util.Properties.envOrElse("bonecp.username",null))
+  val bonecpPassword: String = scala.util.Properties.envOrElse("bonecp_password", scala.util.Properties.envOrElse("bonecp.password",null))
   val authenticationBasicUsername: String = scala.util.Properties.envOrElse("authentication.basic.username", null)
   val authenticationBasicPassword: String = scala.util.Properties.envOrElse("authentication.basic.password", null)
   val authenticationServiceRoadBasicUsername: String = scala.util.Properties.envOrElse("authentication.serviceRoad.basic.username", null)
