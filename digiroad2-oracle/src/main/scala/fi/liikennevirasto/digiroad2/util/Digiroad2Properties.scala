@@ -100,8 +100,8 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val emailPort = scala.util.Properties.envOrElse("emailPort", null)
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
-  val googleMapApiClientId: String = scala.util.Properties.envOrElse("googlemapapi.client_id", null)
-  val googleMapApiCryptoKey: String = scala.util.Properties.envOrElse("googlemapapi.crypto_key", null)
+  val googleMapApiClientId: String = scala.util.Properties.envOrElse("googlemapapi_client_id", scala.util.Properties.envOrElse("googlemapapi.crypto_key", null))
+  val googleMapApiCryptoKey: String = scala.util.Properties.envOrElse("googlemapapi_crypto_key", scala.util.Properties.envOrElse("googlemapapi.crypto_key", null))
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
 
   lazy val bonecpProperties: Properties = {
