@@ -112,7 +112,7 @@
           },
           {
             "name": "bonecp.username",
-            "value": "test"
+            "value": "digiroad2dbuser"
           },
           {
             "name": "authentication.basic.username",
