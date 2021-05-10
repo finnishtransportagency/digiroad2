@@ -254,6 +254,12 @@ Resources:
           - Name: bonecp.password
             Value: "/test/bonecp.password"
             Type: PARAMETER_STORE
+          - Name: email.to
+            Value: emailTo
+          - Name: email.host
+            Value: emailHost
+          - Name: email.port
+            Value: emailPort
 
       Artifacts:
         Name: !Ref ApplicationName
