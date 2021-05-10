@@ -69,7 +69,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
   val valluServerAddress: String = scala.util.Properties.envOrElse("vallu.server.address", null)
-  val cacheDirectory: String = scala.util.Properties.envOrElse("cache.directory", null)
+  val cacheDirectory: String = scala.util.Properties.envOrElse("cache_directory", scala.util.Properties.envOrElse("cache.directory", null))
   val feedbackAssetsEndPoint: String = scala.util.Properties.envOrElse("feedbackAssetsEndPoint", null)
   val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", null)
   val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "true").toBoolean
