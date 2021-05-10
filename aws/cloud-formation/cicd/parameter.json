@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "EcsServiceName",
-    "ParameterValue": "\tdigiroad2-ECS-Service-Private"
+    "ParameterValue": "digiroad2-ECS-Service-Private"
   },
   {
     "ParameterKey": "EcrRepositoryName",
