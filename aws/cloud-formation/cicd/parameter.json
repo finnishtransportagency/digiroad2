@@ -1,35 +1,35 @@
 [
   {
     "ParameterKey": "PipelineName",
-    "ParameterValue": "test"
+    "ParameterValue": "devpipelinebuildtest"
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "testidigiroad"
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "TestDatabaseString",
-    "ParameterValue": "testidigiroad"
+    "ParameterValue": "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2"
   },
   {
     "ParameterKey": "TestDatabaseUser",
-    "ParameterValue": "testidigiroad"
+    "ParameterValue": "digiroaduserfortest"
   },
   {
     "ParameterKey": "EcsClusterName",
-    "ParameterValue": "testidigiroadscluster"
+    "ParameterValue": "digiroad2-ECS-Cluster-Private"
   },
   {
     "ParameterKey": "EcsServiceName",
-    "ParameterValue": "testidigiroadsService"
+    "ParameterValue": "\tdigiroad2-ECS-Service-Private"
   },
   {
     "ParameterKey": "EcrRepositoryName",
-    "ParameterValue": "testidigiroad"
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "GitBranchName",
-    "ParameterValue": ""
+    "ParameterValue": "AwsPostGist"
   },
   {
     "ParameterKey": "GitRepositoryName",
@@ -42,5 +42,13 @@
   {
     "ParameterKey": "GitHubWebhookSecret",
     "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
+  },
+  {
+    "ParameterKey": "DigiroadDatabaseSecurityGroup",
+    "ParameterValue": "sg-0ced3d4a7245fb3ed"
   }
 ]
