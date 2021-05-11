@@ -41,7 +41,7 @@
   },
   {
     "ParameterKey": "GitHubWebhookSecret",
-    "ParameterValue": ""
+    "UsePreviousValue": true
   },
   {
     "ParameterKey": "VpcIDOfSystem",
