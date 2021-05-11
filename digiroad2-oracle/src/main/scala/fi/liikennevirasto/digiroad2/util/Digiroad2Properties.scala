@@ -92,7 +92,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
 
-  // Get build id to check if executing in aws environment.
+  // Get build id to check if executing in aws CodeBuild environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
   private def selectEnvType(codebuildVersion: String, normal: String): String = {
     awsBuildId match {
