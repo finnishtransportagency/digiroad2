@@ -217,8 +217,10 @@ Resources:
       Description: "Build project for the application"
       ServiceRole: !Ref CodeBuildRole
       VpcConfig:
-        SecurityGroupIds: !Ref CodeBuildSecurityGroup
-        Subnets: Digiroad-OTH-kehitys-Subnet-AZ1
+        SecurityGroupIds:
+          - !Ref CodeBuildSecurityGroup
+        Subnets:
+          - Digiroad-OTH-kehitys-Subnet-AZ1
         VpcId: !Ref VpcIDOfSystem
       Source:
         Type: CODEPIPELINE
