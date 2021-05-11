@@ -261,10 +261,6 @@ Resources:
             Value: true
           - Name: tierekisteriRestApiEndPoint
             Value: http://localhost:8080/api/tierekisteri/
-          - Name: tierekisteri.enabled
-            Value: false
-          - Name: vallu.server.sending_enabled
-            Value: false
           - Name: authentication_basic_username
             Value: kalpa
           - Name: authentication_basic_password
