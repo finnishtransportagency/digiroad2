@@ -38,6 +38,12 @@ Parameters:
     Type: String
     NoEcho: true
     MinLength: 20
+  VpcIDOfSystem:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC of your system
+  DigiroadDatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Databases security group
 
 Resources:
 
@@ -181,13 +187,43 @@ Resources:
                   - 'cloudformation:*'
                   - 'ecs:*'
                 Resource: '*'
+  CodeBuildSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
+      GroupName: CodeBuildSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcIDOfSystem
 
   CodeBuild:
+    DependsOn:
+      - CodeBuildRole
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Ref ApplicationName
       Description: "Build project for the application"
       ServiceRole: !Ref CodeBuildRole
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref CodeBuildSecurityGroup
+        Subnets:
+          - subnet-0d38ee507d838207c
+        VpcId: !Ref VpcIDOfSystem
       Source:
         Type: CODEPIPELINE
         BuildSpec: "aws/buildspec.yaml"
@@ -219,41 +255,45 @@ Resources:
             Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
           - Name: useVVHGeometry
             Value: true
-          - Name: VVHServiceHost
-            Value: localhost:6080
-          - Name: VVHRestApiEndPoint
-            Value: http://localhost:6080/arcgis/rest/services/VVH_OTH_DEV/
-          - Name: VVHRoadlink.frozen
-            Value: false
+          - Name: vvhServiceHost
+            Value: http://testihaproxy.vayla.fi:2024
+          - Name: vvhRestApiEndPoint
+            Value: http://testihaproxy.vayla.fi:2024/vvhdata/
           - Name: viiteRestApiEndPoint
             Value: http://localhost:9080/api/viite/
           - Name: authenticationTestMode
             Value: true
-          - Name: tierekisteriViiteRestApiEndPoint
-            Value: http://localhost:8080/api/tierekisteri/
           - Name: tierekisteriRestApiEndPoint
             Value: http://localhost:8080/api/tierekisteri/
-          - Name: tierekisteri.enabled
-            Value: false
-          - Name: vallu.server.sending_enabled
-            Value: false
-          - Name: http.proxySet
-            Value: false
-          - Name: authentication.basic.username
+          - Name: authentication_basic_username
             Value: kalpa
-          - Name: authentication.basic.password
+          - Name: authentication_basic_password
             Value: kalpa
-          - Name: authentication.serviceRoad.basic.username
+          - Name: authentication_serviceRoad_basic_username
             Value: kalpa
-          - Name: authentication.serviceRoad.basic.password
+          - Name: authentication_serviceRoad_basic_password
             Value: kalpa
-          - Name: authentication.municipality.basic.username
+          - Name: authentication_municipality_basic_username
             Value: kalpa
-          - Name: authentication.municipality.basic.password
+          - Name: authentication_municipality_basic_password
             Value: kalpa
-          - Name: bonecp.password
+          - Name: bonecp_password
             Value: "/test/bonecp.password"
             Type: PARAMETER_STORE
+          - Name: cache_directory
+            Value: tmp/digiroad.cache
+          - Name: googlemapapi_client_id
+            Value: XYZ123
+          - Name: googlemapapi_crypto_key
+            Value: ZYX321
+          - Name: tierekisteriUsername
+            Value: userXYZ
+          - Name: tierekisteriPassword
+            Value: passwordXYZ
+          - Name: tierekisteriOldUsername
+            Value: userXYZ
+          - Name: tierekisteriOldPassword
+            Value: passwordXYZ
 
       Artifacts:
         Name: !Ref ApplicationName
@@ -295,6 +335,8 @@ Resources:
                   - "ecr:CompleteLayerUpload"
                   - "ecr:PutImage"
                   - "ssm:GetParameters"
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:DescribeSubnets'
               - Effect: "Allow"
                 Resource: "*"
                 Action:

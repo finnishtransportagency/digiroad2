@@ -24,10 +24,11 @@ phases:
       - aws s3 cp "s3://geotools-repo/gt-metadata-19.0.jar" ./digiroad2-geo/lib
       - aws s3 cp "s3://geotools-repo/gt-opengis-19.0.jar" ./digiroad2-geo/lib
       - aws s3 cp "s3://geotools-repo/jts-core-1.14.0.jar" ./digiroad2-geo/lib
+      - rm conf/env.properties
   build:
     commands:
-      # - grunt test
-      # - sbt test
+      - grunt test
+      - sbt test
       - grunt deploy
       - sbt clean
       - sbt assembly
