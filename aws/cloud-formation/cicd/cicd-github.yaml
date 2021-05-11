@@ -211,6 +211,8 @@ Resources:
       VpcId: !Ref VpcIDOfSystem
 
   CodeBuild:
+    DependsOn:
+      - CodeBuildRole
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Ref ApplicationName
@@ -220,7 +222,7 @@ Resources:
         SecurityGroupIds:
           - !Ref CodeBuildSecurityGroup
         Subnets:
-          - Digiroad-OTH-kehitys-Subnet-AZ1
+          - subnet-0d38ee507d838207c
         VpcId: !Ref VpcIDOfSystem
       Source:
         Type: CODEPIPELINE
@@ -333,6 +335,8 @@ Resources:
                   - "ecr:CompleteLayerUpload"
                   - "ecr:PutImage"
                   - "ssm:GetParameters"
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:DescribeSubnets'
               - Effect: "Allow"
                 Resource: "*"
                 Action:
