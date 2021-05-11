@@ -265,8 +265,6 @@ Resources:
             Value: false
           - Name: vallu.server.sending_enabled
             Value: false
-          - Name: http.proxySet
-            Value: false
           - Name: authentication_basic_username
             Value: kalpa
           - Name: authentication_basic_password
