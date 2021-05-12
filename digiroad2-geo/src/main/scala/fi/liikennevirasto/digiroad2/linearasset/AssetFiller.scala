@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
+import com.sun.org.slf4j.internal.LoggerFactory
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -8,6 +9,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import org.joda.time.DateTime
 
 class AssetFiller {
+
+  val logger = LoggerFactory.getLogger(getClass)
   val AllowedTolerance = 0.5
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
@@ -521,6 +524,9 @@ class AssetFiller {
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
+      logger.warn("adjustedAssets "+adjustedAssets(0).toString())
+      logger.warn("adjustedAssets "+adjustedAssets.size.toString)
+      logger.warn("assetAdjustments "+assetAdjustments.toString)
       (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }
   }

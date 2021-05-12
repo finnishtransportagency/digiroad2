@@ -261,7 +261,9 @@ trait LinearAssetOperations {
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, removedLinkIds)
-
+    logger.info(existingAssets(0).toString() +" existingAssets")
+    logger.info(existingAssets(1).toString() +" existingAssets")
+    logger.info(existingAssets.size +" existingAssets")
     val timing = System.currentTimeMillis
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
@@ -278,13 +280,20 @@ trait LinearAssetOperations {
       assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
     val newAssets = projectedAssets ++ assetsWithoutChangedLinks
-
+    logger.info(newAssets(0).toString() +" new assets")
+    logger.info(newAssets(1).toString() +" new assets")
+    logger.info(newAssets.size +" new assets")
     if (newAssets.nonEmpty) {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
-
+    logger.info(groupedAssets.size +" groupedAssets")
+    logger.info(projectedAssets.size +" projectedAssets")
+    logger.info(filledTopology.size +" filledTopology")
+    logger.info(filledTopology(0).toString +" filledTopology 0")
+    logger.info(filledTopology(1).toString +" filledTopology 1")
+    logger.info(filledTopology(2).toString +" filledTopology 2")
     publish(eventBus, changeSet, projectedAssets)
     filledTopology
   }
