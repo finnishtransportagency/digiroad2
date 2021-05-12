@@ -37,13 +37,6 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
   }
 
-  before {
-    integrationApi.clearCache()
-  }
-  after {
-    integrationApi.clearCache()
-  }
-
   test("Should require correct authentication", Tag("db")) {
     get("/mass_transit_stops") {
       status should equal(401)
