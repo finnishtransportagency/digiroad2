@@ -239,7 +239,7 @@ Resources:
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
           - Name: ECS_SERVICE_NAME
             Value: !Ref ApplicationName
-          - Name: bonecp_jdbcurl
+          - Name: bonecp_jdbcUrl
             Value: !Ref TestDatabaseString
           - Name: bonecp_username
             Value: !Ref TestDatabaseUser
@@ -336,7 +336,21 @@ Resources:
                   - "ecr:PutImage"
                   - "ssm:GetParameters"
                   - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:DescribeNetworkInterfaces'
                   - 'ec2:DescribeSubnets'
+                  - 'ec2:DescribeDhcpOptions'
+                  - 'ec2:DescribeVpcs'
+                  - 'ec2:DeleteNetworkInterface'
+                  - 'ec2:CreateNetworkInterface'
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterfacePermission
+                Resource: arn:aws:ec2:eu-west-1:475079312496:network-interface/*
+                Condition:
+                  StringEquals:
+                    ec2:Subnet:
+                      - arn:aws:ec2:eu-west-1:475079312496:subnet/subnet-0d38ee507d838207c
+                    ec2:AuthorizedService: codebuild.amazonaws.com
               - Effect: "Allow"
                 Resource: "*"
                 Action:
