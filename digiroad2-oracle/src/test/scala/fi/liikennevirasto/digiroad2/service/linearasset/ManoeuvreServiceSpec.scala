@@ -268,7 +268,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       berforeUpdate.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1611419)
       berforeUpdate.elements.find(_.elementType == ElementTypes.FirstElement).get.destLinkId should equal(1611420)
       berforeUpdate.elements.find(_.elementType == ElementTypes.LastElement).get.sourceLinkId should equal(1611420)
-      berforeUpdate.exceptions should be(Seq(19, 21))
+      berforeUpdate.exceptions.sorted should be(Seq(19, 21))
       berforeUpdate.validityPeriods should be(Set(ValidityPeriod(22, 8, ValidityPeriodDayOfWeek.apply(3))))
 
       val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
@@ -283,7 +283,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       manoeuvreUpdated.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1611419)
       manoeuvreUpdated.elements.find(_.elementType == ElementTypes.FirstElement).get.destLinkId should equal(1611420)
       manoeuvreUpdated.elements.find(_.elementType == ElementTypes.LastElement).get.sourceLinkId should equal(1611420)
-      manoeuvreUpdated.exceptions should be(exceptions)
+      manoeuvreUpdated.exceptions.sorted should be(exceptions)
       manoeuvreUpdated.validityPeriods should be(validityPeriod)
       manoeuvreUpdated.additionalInfo should be (additionalInfo)
     }
