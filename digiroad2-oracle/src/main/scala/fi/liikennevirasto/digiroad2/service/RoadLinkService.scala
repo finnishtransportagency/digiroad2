@@ -1663,9 +1663,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     )
   }
+
   // TODO DROTH-2740 redo to work in aws
   private def getCacheWithComplementaryFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File, File)]) = {
-    // cachedGeometryFile cachedChangesFile cachedComplementaryFile
+
     val twentyHours = 20L * 60 * 60 * 1000
     deleteOldCacheFiles(municipalityCode, dir, twentyHours)
 
