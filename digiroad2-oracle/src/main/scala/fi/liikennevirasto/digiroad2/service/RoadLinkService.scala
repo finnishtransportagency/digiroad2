@@ -246,22 +246,27 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links
     */
   def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
-    getCachedRoadLinksAndChanges(municipality)._1
+    reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
   }
 
   def getRoadLinksWithComplementaryFromVVH(municipality: Int): Seq[RoadLink] = {
-    getCachedRoadLinksWithComplementaryAndChanges(municipality)._1
+    reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
   }
 
   def getRoadNodesByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
-    getCachedRoadNodes(municipality)
+    reloadRoadNodesFromVVH(municipality)
   }
 
   def getRoadNodesFromVVHFuture(municipality: Int): Future[Seq[VVHRoadNodes]] = {
     Future(getRoadNodesByMunicipality(municipality))
   }
 
-  def getTinyRoadLinkFromVVH(municipality: Int): Seq[TinyRoadLink] = getCachedTinyRoadLinks(municipality)
+  def getTinyRoadLinkFromVVH(municipality: Int): Seq[TinyRoadLink] = {
+    val (roadLinks, _ , complementaryRoadLink) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    (roadLinks ++ complementaryRoadLink).map { roadlink =>
+      TinyRoadLink(roadlink.linkId)
+    }
+  }
 
   /**
     * This method returns road links by bounding box and municipalities.
@@ -563,11 +568,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links and change data
     */
   def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    getCachedRoadLinksAndChanges(municipality)
+    val (roadLinks, changes, _) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    (roadLinks, changes)
   }
 
   def getRoadLinksWithComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    getCachedRoadLinksWithComplementaryAndChanges(municipality)
+    val (roadLinks, changes, complementaries) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    (roadLinks ++ complementaries, changes)
   }
 
   /**
@@ -1073,7 +1080,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
-    val (roadLinks, _, complementaries) = getCachedRoadLinks(municipality)
+    val (roadLinks, _, complementaries) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     roadLinks ++ complementaries
   }
 
@@ -1657,6 +1664,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   private def getCacheWithComplementaryFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File, File)]) = {
+    // cachedGeometryFile cachedChangesFile cachedComplementaryFile
     val twentyHours = 20L * 60 * 60 * 1000
     deleteOldCacheFiles(municipalityCode, dir, twentyHours)
 
@@ -1706,11 +1714,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
+  // TODO DROTH-2740 redo to work in aws
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, _) = getCachedRoadLinks(municipalityCode)
     (roadLinks, changes)
   }
-
+  // TODO DROTH-2740 redo to work in aws
   private def getCachedRoadLinksWithComplementaryAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, complementaries) = getCachedRoadLinks(municipalityCode)
     (roadLinks ++ complementaries, changes)
@@ -1731,7 +1740,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   protected def readCachedTinyRoadLinks(geometryFile: File): Seq[TinyRoadLink] = {
     vvhSerializer.readCachedTinyRoadLinks(geometryFile)
   }
-
+  // TODO DROTH-2740 redo to work in aws
   private def getCachedTinyRoadLinks(municipalityCode: Int): Seq[TinyRoadLink] = {
     val dir = getCacheDirectory
     val cachedFiles = getCacheWithComplementaryFiles(municipalityCode, dir)
@@ -1747,6 +1756,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  /**
+    *
+    *  Call reloadRoadLinksWithComplementaryAndChangesFromVVH
+    *
+    */
+  // TODO DROTH-2740 redo to work in aws
   private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     val dir = getCacheDirectory
     val cachedFiles = getCacheWithComplementaryFiles(municipalityCode, dir)
@@ -1783,7 +1798,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         (roadLinks, changes, complementaries)
     }
   }
-
+  /**
+    *
+    *  Call reloadRoadNodesFromVVH
+    *
+    */
+  // TODO DROTH-2740 redo to work in aws
   private def getCachedRoadNodes(municipalityCode: Int): Seq[VVHRoadNodes] = {
     val dir = getCacheDirectory
     val cachedFiles = getNodeCacheFiles(municipalityCode, dir)
@@ -1808,7 +1828,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         roadNodes
     }
   }
-
+  // TODO DROTH-2740 redo to work in aws
   def clearCache() = {
     val dir = getCacheDirectory
     var cleared = 0
