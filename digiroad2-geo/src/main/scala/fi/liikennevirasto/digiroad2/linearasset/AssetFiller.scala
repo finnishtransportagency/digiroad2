@@ -524,8 +524,8 @@ class AssetFiller {
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      logger.warn("adjustedAssets "+adjustedAssets(0).toString())
-      logger.warn("adjustedAssets "+adjustedAssets.size.toString)
+      logger.warn("adjustedAssets 7478 "+adjustedAssets.count(a=>a.linkId==7478).toString)
+      logger.warn("adjustedAssets 1611374 "+adjustedAssets.count(a=>a.linkId==1611374).toString)
       logger.warn("assetAdjustments "+assetAdjustments.toString)
       (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }
