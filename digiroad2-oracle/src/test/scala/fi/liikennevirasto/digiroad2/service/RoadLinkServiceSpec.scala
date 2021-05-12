@@ -608,8 +608,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     val linkId = 1l
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val vvhModifiedDate = 1455274504000l // 12
-    val vvhModifiedDate2 = 1455231304000l
+
     val roadLink = VVHRoadlink(linkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, Option(new DateTime("2016-02-12T12:55:04")), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
