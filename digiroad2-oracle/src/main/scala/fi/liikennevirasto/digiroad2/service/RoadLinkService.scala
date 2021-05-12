@@ -1549,7 +1549,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getGeometryLastSegmentVector(connectionPoint: Point, roadLink: RoadLink) : (RoadLink, Vector3d) =
     (roadLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(roadLink.geometry.last, connectionPoint)) roadLink.geometry else roadLink.geometry.reverse))
 
-
+  // TODO DROTH-2740 redo to specify some aws caching system
   private val cacheDirectory = { Digiroad2Properties.cacheDirecroty }
 
   def geometryToBoundingBox(s: Seq[Point], delta: Vector3d) = {
@@ -1581,7 +1581,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }))
     )
   }
-
+  // TODO DROTH-2740 remove I/O functionality
   private def getCacheDirectory: Option[File] = {
     val file = new File(cacheDirectory)
     try {
@@ -1609,6 +1609,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private val complementaryCacheFileNames = "complementary_%d_%d.cached"
   private val complementaryCacheStartsMatch = "complementary_%d_"
 
+  // TODO DROTH-2740 redo to work in aws
   private def deleteOldNodeCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
     val oldNodeCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
@@ -1623,7 +1624,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     )
   }
-
+  // TODO DROTH-2740 redo to work in aws
   private def deleteOldCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
     val oldCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
@@ -1662,7 +1663,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     )
   }
-
+  // TODO DROTH-2740 redo to work in aws
   private def getCacheWithComplementaryFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File, File)]) = {
     // cachedGeometryFile cachedChangesFile cachedComplementaryFile
     val twentyHours = 20L * 60 * 60 * 1000
@@ -1694,7 +1695,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       None
     }
   }
-
+  // TODO DROTH-2740 redo to work in aws
   private def getNodeCacheFiles(municipalityCode: Int, dir: Option[File]): Option[File] = {
     val twentyHours = 20L * 60 * 60 * 1000
 
@@ -1724,7 +1725,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val (roadLinks, changes, complementaries) = getCachedRoadLinks(municipalityCode)
     (roadLinks ++ complementaries, changes)
   }
-
+  // TODO DROTH-2740 redo to work in aws
   protected def readCachedGeometry(geometryFile: File): Seq[RoadLink] = {
     def getFeatureClass(roadLink: RoadLink): Int ={
       val mtkClass = roadLink.attributes("MTKCLASS")
@@ -1736,7 +1737,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     vvhSerializer.readCachedGeometry(geometryFile).filterNot(r => getFeatureClass(r) == 12312)
   }
-
+  // TODO DROTH-2740 redo to work in aws
   protected def readCachedTinyRoadLinks(geometryFile: File): Seq[TinyRoadLink] = {
     vvhSerializer.readCachedTinyRoadLinks(geometryFile)
   }
