@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Date
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
@@ -24,6 +23,7 @@ import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Promise
 
@@ -46,7 +46,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       {
         case _ => null
       }))
-
+  val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + PointAssetSerializer
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
@@ -341,8 +341,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      println(parsedBody)
-      println(parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size)
+      logger.info(parsedBody.toString())
+      logger.info(parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size.toString)
       parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
       parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }
@@ -365,8 +365,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      println(parsedBody)
-      println(parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size)
+      logger.info(parsedBody.toString())
+      logger.info(parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size.toString)
       parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
       parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }
