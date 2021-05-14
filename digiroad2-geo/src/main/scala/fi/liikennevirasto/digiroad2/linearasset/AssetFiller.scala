@@ -164,22 +164,13 @@ class AssetFiller {
   }
 
   private def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    /*if(roadLink.linkId==1611374){
-      logger.warn(" start generateTwoSidedNonExistingLinearAssets for 1611374")
-    }*/
+
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     val generated = remainders.map { segment =>
       PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None, None)
     }
 
-/*    if(roadLink.linkId==1611374){
-      if(generated.nonEmpty){
-        logger.warn("remainders when new is created" +remainders)
-        logger.warn("generated" +generated.toString())
-      }
-      logger.warn(" end generateTwoSidedNonExistingLinearAssets for 1611374")
-    }*/
     (segments ++ generated, changeSet)
   }
 
@@ -531,12 +522,8 @@ class AssetFiller {
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-        if(roadLink.linkId==1611374){
-         // logger.warn("operation for 1611374")
-        }
         operation(roadLink, currentSegments, currentAdjustments)
       }
-
       (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }
   }
