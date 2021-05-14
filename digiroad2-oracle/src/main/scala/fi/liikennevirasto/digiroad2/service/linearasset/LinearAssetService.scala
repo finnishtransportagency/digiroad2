@@ -262,13 +262,13 @@ trait LinearAssetOperations {
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, removedLinkIds)
 
-    logger.info(existingAssets.size +" existingAssets")
+ /*   logger.info(existingAssets.size +" existingAssets")
     if(existingAssets.size == 2){
       logger.info(existingAssets(0).toString() +" existingAssets")
       logger.info(existingAssets(1).toString() +" existingAssets")
     }else{
       logger.info(existingAssets(0).toString() +" existingAssets")
-    }
+    }*/
     val timing = System.currentTimeMillis
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
@@ -292,10 +292,10 @@ trait LinearAssetOperations {
     }
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
-    logger.info(groupedAssets.size +" groupedAssets")
+    /*logger.info(groupedAssets.size +" groupedAssets")
     logger.info(projectedAssets.size +" projectedAssets")
     logger.info(filledTopology.size +" filledTopology")
-    logger.info(filledTopology.count(a => a.linkId == 1611374).toString +" filledTopology 1611374")
+    logger.info(filledTopology.count(a => a.linkId == 1611374).toString +" filledTopology 1611374")*/
     publish(eventBus, changeSet, projectedAssets)
     filledTopology
   }
