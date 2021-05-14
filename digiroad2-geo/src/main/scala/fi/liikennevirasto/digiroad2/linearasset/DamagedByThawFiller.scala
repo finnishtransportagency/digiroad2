@@ -13,6 +13,7 @@ class DamagedByThawFiller extends AssetFiller {
   val today: DateTime = DateTime.now()
 
   override protected def updateValues(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+
     def getProperties(publicId: String, propertyData: Seq[DynamicProperty]): Seq[DynamicPropertyValue] = {
       propertyData.find(p => p.publicId == publicId) match {
         case Some(props) => props.values

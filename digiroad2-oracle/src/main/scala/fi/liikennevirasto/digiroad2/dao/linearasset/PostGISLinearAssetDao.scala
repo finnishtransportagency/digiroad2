@@ -92,6 +92,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
 
+
       PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate,
         linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
