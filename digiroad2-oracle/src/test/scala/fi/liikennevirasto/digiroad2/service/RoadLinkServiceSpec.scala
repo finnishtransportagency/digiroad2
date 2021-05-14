@@ -39,7 +39,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynSession[T](f: => T): T = f
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+  def runWithRollback[T](f: => T): T = {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
+      val t = f
+      dynamicSession.rollback()
+      t
+    }
+  }
 
   private def simulateQuery[T](f: => T): T = {
     val result = f
