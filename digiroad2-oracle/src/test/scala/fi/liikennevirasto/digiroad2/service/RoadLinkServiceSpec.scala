@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.VVHSerializer
+import fi.liikennevirasto.digiroad2.util.{TestTransactions, VVHSerializer}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
@@ -18,9 +18,13 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+
 import scala.collection.immutable.Stream.Empty
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
+
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.StaticQuery.interpolation
 
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -35,6 +39,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynSession[T](f: => T): T = f
   }
 
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   private def simulateQuery[T](f: => T): T = {
     val result = f
@@ -43,7 +48,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Override road link traffic direction with adjusted value") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -54,12 +59,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.find {
         _.linkId == 1611447
       }.map(_.trafficDirection) should be(Some(TrafficDirection.AgainstDigitizing))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Include road link functional class with adjusted value") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -68,12 +73,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new TestService(mockVVHClient)
       val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
       roadLinks.find {_.linkId == 1611447}.map(_.functionalClass) should be(Some(4))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Modified traffic Direction in a Complementary RoadLink") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val oldRoadLink = VVHRoadlink(30, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MTKCLASS" -> BigInt(12314)))
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -90,12 +95,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
       roadLink.map(_.attributes("MTKCLASS")) should be (Some(12314))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Adjust link type") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -106,12 +111,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
       val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Override administrative class") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -122,12 +127,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private)
       val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       roadLink.map(_.administrativeClass) should be(Some(Private))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Provide last edited date from VVH on road link modification date if there are no overrides") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback{
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
@@ -142,12 +147,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new TestService(mockVVHClient)
       val results = service.getRoadLinksFromVVH(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
       results.head.modifiedAt should be(Some(DateTimePropertyFormat.print(lastEditedDate)))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Adjust link traffic direction to value that is in VVH") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -165,7 +170,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       }
       roadLink2.map(_.trafficDirection) should be(Some(TrafficDirection.TowardsDigitizing))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -186,7 +191,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Validate access rights to municipality") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -200,13 +205,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         validatedCode = municipalityCode
       })
       validatedCode should be(91)
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
 
   test("Autogenerate properties for tractor road, drive path, cycle or cpedestrian path, special transport with and without gate") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback{
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -247,12 +252,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.find(_.linkId == 333).get.functionalClass should be(99)
       roadLinks.find(_.linkId == 333).get.linkType should be(SpecialTransportWithGate)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Changes should cause event") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
       val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -277,12 +282,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
         org.mockito.ArgumentMatchers.eq(changeSet))
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Remove road link from incomplete link list once functional class and link type are specified") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -304,7 +309,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
       incompleteLinks should be(empty)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -322,7 +327,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId, 3, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (2, $oldLinkId, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
@@ -343,7 +348,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       after.head.linkType should be(Freeway)
       after.head.trafficDirection should be(TrafficDirection.BothDirections)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -362,7 +367,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId1, 3, 'test' )""".execute
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $oldLinkId2, 3, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId1, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
@@ -387,7 +392,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       after.head.trafficDirection should be(TrafficDirection.TowardsDigitizing)
 
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -409,7 +414,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId1, 3, 'test' )""".execute
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $oldLinkId2, 2, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId1, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
@@ -431,7 +436,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       after.head.linkType should be(UnknownLinkType)
       after.head.trafficDirection should be(TrafficDirection.BothDirections)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -451,7 +456,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId1, 3, 'test' )""".execute
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $oldLinkId2, 3, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
@@ -472,7 +477,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       after.head.linkType should be(Freeway)
       after.head.trafficDirection should be(TrafficDirection.BothDirections)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -492,7 +497,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId, 3, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId, ${SlipRoad.value}, 'test' )""".execute
@@ -516,7 +521,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         link.trafficDirection should be(TrafficDirection.TowardsDigitizing)
       }
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -533,7 +538,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId, 3, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (2, $oldLinkId, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
@@ -556,7 +561,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       after.head.linkType should be(UnknownLinkType)
       after.head.trafficDirection should be(TrafficDirection.BothDirections)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -577,7 +582,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (1, $oldLinkId, 3, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (3, $oldLinkId, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (4, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
@@ -600,7 +605,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       after.head.linkType should be(Freeway)
       after.head.trafficDirection should be(TrafficDirection.BothDirections)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -616,7 +621,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by, modified_date) values (1, $linkId, 3, 'test', TO_TIMESTAMP('2014-02-10 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'))""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by, modified_date) values (2, $linkId, ${TrafficDirection.TowardsDigitizing.value}, 'test', TO_TIMESTAMP('2014-02-10 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'))""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by, modified_date) values (5, $linkId, ${Freeway.value}, 'test', TO_TIMESTAMP('2015-03-10 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'))""".execute
@@ -630,12 +635,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinkAfterDateComparison.modifiedAt.get should be ("12.02.2016 12:55:04")
       roadLinkAfterDateComparison.modifiedBy.get should be ("vvh_modified")
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Only road links with construction type 'in use' should be saved to incomplete_link table (not 'under construction' or 'planned')") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
@@ -668,12 +673,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
         org.mockito.ArgumentMatchers.eq(changeSet))
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Should not save links to incomplete_link when the road source is not normal") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
@@ -713,7 +718,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
         org.mockito.ArgumentMatchers.eq(changeSet))
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -736,7 +741,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val vvhRoadLink3 = VVHRoadlink(7, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned)
     val vvhRoadLink4 = VVHRoadlink(8, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
@@ -759,7 +764,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val vvhRoadNode1 = VVHRoadNodes(2, Point(4, 5, 6), 2, NodeType(1), 235, 1)
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       when(mockVVHClient.roadNodesData).thenReturn(mockVVHRoadNodesClient)
       when(mockVVHRoadNodesClient.fetchByMunicipality(any[Int])).thenReturn(Seq(vvhRoadNode, vvhRoadNode1))
 
@@ -784,7 +789,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val changedVVHRoadlinks = service.getChanged(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z"))
       changedVVHRoadlinks.length should be(1)
       changedVVHRoadlinks.head.link.linkId should be(1611447)
@@ -810,7 +815,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       .thenReturn(Seq(VVHRoadlink(1611447, 60, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
     val service = new TestService(mockVVHClient)
 
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val changedVVHRoadlinks = service.getChanged(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z"))
       changedVVHRoadlinks.length should be(1)
       changedVVHRoadlinks.head.link.linkId should be(1611447)
@@ -822,7 +827,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Should not return roadLinks because it has FeatureClass Winter Roads") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -831,13 +836,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new RoadLinkTestService(mockVVHClient)
       val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447l))
       roadLinks.length should be (0)
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
 
   test("Should only return roadLinks that doesn't have FeatureClass Winter Roads") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -851,7 +856,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.sortBy(_.linkId)
       roadLinks.head.linkId should be(1611448)
       roadLinks.last.linkId should be(1611449)
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -874,7 +879,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
   test("Should return adjacents according to given point"){
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
 
       insertFunctionalClass()
       insertLinkType()
@@ -908,12 +913,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       linkIds.max should be(445520)
       linkIds.min should be(445407)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("PickMost: Should pick the most left roadLink"){
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val sourceRoadLink = RoadLink(445521, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), 105.06772542032195, Municipality, 6, TowardsDigitizing, Motorway, None, None, linkSource = NormalLinkInterface)
 
       val roadLinks =
@@ -930,7 +935,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("PickMost: Should pick the most right roadLink"){
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val sourceRoadLink = RoadLink(445521, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), 105.06772542032195, Municipality, 6, AgainstDigitizing, Motorway, None, None, linkSource = NormalLinkInterface)
 
       val roadLinks =
@@ -946,7 +951,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("PickMost: Should pick the most right adjacent"){
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val sourceGeometry = Seq(Point(533701.563,6994545.568, 100.42699999999604), Point(533700.872,6994552.548, 100.4030000000057),
                               Point(533700.608, 6994559.672,100.38499999999476), Point(533696.367,6994589.226,99.94599999999627))
 
@@ -972,7 +977,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Should pick the most left roadLink"){
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val sourceRoadLink = RoadLink(445521, Seq(Point(386028.217, 6671112.363, 20.596000000005006), Point(386133.222, 6671115.993, 21.547000000005937)), 105.06772542032195, Municipality, 6, BothDirections, Motorway, None, None, linkSource = NormalLinkInterface)
 
       val roadLinks =
@@ -988,7 +993,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Added privateRoadAssociation, additionalInfo and accessRightId fields if private road") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -1002,12 +1007,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLink.map(_.attributes(service.privateRoadAssociationPublicId) should be("Private Road Name Text Dummy"))
       roadLink.map(_.attributes(service.additionalInfoPublicId) should be(AdditionalInformation.DeliveredWithRestrictions.value))
       roadLink.map(_.attributes(service.accessRightIDPublicId) should be("999999"))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Added privateRoadAssociation, additionalInfo and accessRightId fields if road different from private") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -1021,12 +1026,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLink.map(_.attributes.contains(service.privateRoadAssociationPublicId) should be(false))
       roadLink.map(_.attributes.contains(service.additionalInfoPublicId) should be(false))
       roadLink.map(_.attributes.contains(service.accessRightIDPublicId) should be(false))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Update privateRoadAssociation, additionalInfo and accessRightId fields if private road") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -1047,12 +1052,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinkUpdated.map(_.attributes(service.privateRoadAssociationPublicId) should be("Private Road Name Text Dummy99"))
       roadLinkUpdated.map(_.attributes(service.additionalInfoPublicId) should be(AdditionalInformation.DeliveredWithoutRestrictions.value))
       roadLinkUpdated.map(_.attributes(service.accessRightIDPublicId) should be("11111"))
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Expire privateRoadAssociation, additionalInfo and accessRightId fields if switch private road to another type") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -1076,7 +1081,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         """.as[(String, String)].list
 
       roadLinkAttributes should be (Empty)
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
@@ -1207,7 +1212,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Test to fetch road link by private road association name") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
@@ -1247,12 +1252,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.map(_.roadName).contains(attributesRoad2("ROADNAME_FI")) should be(true)
       result.map(_.roadName).contains(attributesRoad3("ROADNAME_FI")) should be(true)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Test to fetch road link by private road association name having road links with different road association name, different municipalities and no road name") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
       val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
@@ -1294,12 +1299,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.map(_.roadName).contains(attributesRoad3("ROADNAME_FI")) should be(false)
       result.map(_.roadName).contains(noRoadName) should be(true)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Update roadLink attributes based on geometry changes with old links passing to new links") {
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val dummyRoadAssociationNameNumber = "Test Road Association"
 
@@ -1344,12 +1349,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       attributesRoadLink5.size should be (1)
       attributesRoadLink5.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Update roadLink attributes based on geometry changes with new roadlink"){
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val dummyRoadAssociationNameNumber = "Test Road Association"
 
@@ -1381,12 +1386,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       attributesRoadLink4.size should be (1)
       attributesRoadLink4.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 
   test("Update roadLink attributes based on geometry changes with old roadlink"){
-    PostGISDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val dummyRoadAssociationNameNumber = "Test Road Association"
 
@@ -1409,7 +1414,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val attributesRoadLink2 = LinkAttributesDao.getExistingValues(2)
       attributesRoadLink2.isEmpty should be(true)
 
-      dynamicSession.rollback()
+      //dynamicSession.rollback()
     }
   }
 }
