@@ -341,8 +341,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      /*logger.info(parsedBody.toString())
-      logger.info(parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size.toString)*/
       parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
       parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }
@@ -365,8 +363,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      /*logger.info(parsedBody.toString())
-      logger.info(parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size.toString)*/
       parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
       parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
     }

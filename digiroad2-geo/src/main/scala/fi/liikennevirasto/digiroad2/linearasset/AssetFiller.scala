@@ -503,19 +503,19 @@ class AssetFiller {
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry, //1
-      capSegmentsThatOverflowGeometry, //2
-      expireOverlappingSegments, //3
-      combine, //4
-      fuse, //5
-      dropShortSegments, //6
-      adjustAssets, //7
-      droppedSegmentWrongDirection, //8
-      adjustSegmentSideCodes, //9
-      generateTwoSidedNonExistingLinearAssets(typeId),//10
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),//11
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),//12
-      updateValues//13
+      expireSegmentsOutsideGeometry,
+      capSegmentsThatOverflowGeometry,
+      expireOverlappingSegments,
+      combine,
+      fuse,
+      dropShortSegments,
+      adjustAssets,
+      droppedSegmentWrongDirection,
+      adjustSegmentSideCodes,
+      generateTwoSidedNonExistingLinearAssets(typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
+      updateValues
     )
 
     val changeSet = changedSet match {
@@ -527,23 +527,10 @@ class AssetFiller {
                               adjustedSideCodes = Seq.empty[SideCodeAdjustment],
                               valueAdjustments = Seq.empty[ValueAdjustment])
     }
-/*    logger.warn("starting adjustment")
-    logger.warn("linearAssets 1611374 "+linearAssets(1611374).size.toString)
-    logger.warn("linearAssets 1611374 "+linearAssets(1611374)(0).toString)
-    if(linearAssets.count(a=>a._1==1611374)==2){
-      logger.warn("linearAssets 1611374 "+linearAssets(1611374)(0).toString)
-      logger.warn("linearAssets 1611374 "+linearAssets(1611374)(1).toString)
-    }*/
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
-/*      logger.warn("roadlink "+roadLink.linkId)
-      logger.warn("assetsOnRoadLink "+assetsOnRoadLink.toString)
-      if(assetsOnRoadLink.size==2){
-        logger.warn("assetsOnRoadLink "+assetsOnRoadLink(0).toString)
-        logger.warn("assetsOnRoadLink "+assetsOnRoadLink(1).toString)
-      }*/
 
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         if(roadLink.linkId==1611374){
@@ -551,13 +538,6 @@ class AssetFiller {
         }
         operation(roadLink, currentSegments, currentAdjustments)
       }
-   /*   logger.warn("adjustedAssets 7478 "+adjustedAssets.count(a=>a.linkId==7478).toString)
-      logger.warn("adjustedAssets 1611374 "+adjustedAssets.count(a=>a.linkId==1611374).toString)
-      if(adjustedAssets.count(a=>a.linkId==1611374)==2){
-        logger.warn("adjustedAssets 1611374 "+adjustedAssets(0).toString)
-        logger.warn("adjustedAssets 1611374 "+adjustedAssets(1).toString)
-        logger.warn("assetAdjustments "+assetAdjustments.toString)
-      }*/
 
       (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }

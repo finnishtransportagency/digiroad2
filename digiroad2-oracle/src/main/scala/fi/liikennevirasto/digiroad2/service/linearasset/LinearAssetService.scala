@@ -292,10 +292,6 @@ trait LinearAssetOperations {
     }
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
-    /*logger.info(groupedAssets.size +" groupedAssets")
-    logger.info(projectedAssets.size +" projectedAssets")
-    logger.info(filledTopology.size +" filledTopology")
-    logger.info(filledTopology.count(a => a.linkId == 1611374).toString +" filledTopology 1611374")*/
     publish(eventBus, changeSet, projectedAssets)
     filledTopology
   }
