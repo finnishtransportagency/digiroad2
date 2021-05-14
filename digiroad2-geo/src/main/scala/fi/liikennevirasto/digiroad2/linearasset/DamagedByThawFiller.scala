@@ -13,9 +13,6 @@ class DamagedByThawFiller extends AssetFiller {
   val today: DateTime = DateTime.now()
 
   override protected def updateValues(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    if(roadLink.linkId==1611374){
-      logger.warn("updateValues for 1611374")
-    }
     def getProperties(publicId: String, propertyData: Seq[DynamicProperty]): Seq[DynamicPropertyValue] = {
       propertyData.find(p => p.publicId == publicId) match {
         case Some(props) => props.values

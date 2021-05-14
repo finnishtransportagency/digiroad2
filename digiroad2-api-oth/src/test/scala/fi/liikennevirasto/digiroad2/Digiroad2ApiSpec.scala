@@ -46,7 +46,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       {
         case _ => null
       }))
-  val logger = LoggerFactory.getLogger(getClass)
+
   protected implicit val jsonFormats: Formats = DefaultFormats + PointAssetSerializer
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
