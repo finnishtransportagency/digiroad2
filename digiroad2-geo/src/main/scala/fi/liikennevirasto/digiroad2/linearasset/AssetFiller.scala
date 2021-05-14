@@ -166,10 +166,21 @@ class AssetFiller {
   }
 
   private def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    if(roadLink.linkId==1611374){
+      logger.warn(" start generateTwoSidedNonExistingLinearAssets for 1611374")
+    }
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     val generated = remainders.map { segment =>
       PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None, None)
+    }
+
+    if(roadLink.linkId==1611374){
+      if(generated.nonEmpty){
+        logger.warn("remainders when new is created" +remainders)
+        logger.warn("generated" +generated.toString())
+      }
+      logger.warn(" end generateTwoSidedNonExistingLinearAssets for 1611374")
     }
     (segments ++ generated, changeSet)
   }
@@ -492,19 +503,19 @@ class AssetFiller {
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      capSegmentsThatOverflowGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets,
-      droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      generateTwoSidedNonExistingLinearAssets(typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      updateValues
+      expireSegmentsOutsideGeometry, //1
+      capSegmentsThatOverflowGeometry, //2
+      expireOverlappingSegments, //3
+      combine, //4
+      fuse, //5
+      dropShortSegments, //6
+      adjustAssets, //7
+      droppedSegmentWrongDirection, //8
+      adjustSegmentSideCodes, //9
+      generateTwoSidedNonExistingLinearAssets(typeId),//10
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),//11
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),//12
+      updateValues//13
     )
 
     val changeSet = changedSet match {
@@ -516,12 +527,28 @@ class AssetFiller {
                               adjustedSideCodes = Seq.empty[SideCodeAdjustment],
                               valueAdjustments = Seq.empty[ValueAdjustment])
     }
+    logger.warn("starting adjustment")
+    logger.warn("linearAssets 1611374 "+linearAssets(1611374).size.toString)
+    logger.warn("linearAssets 1611374 "+linearAssets(1611374)(0).toString)
+    if(linearAssets.count(a=>a._1==1611374)==2){
+      logger.warn("linearAssets 1611374 "+linearAssets(1611374)(0).toString)
+      logger.warn("linearAssets 1611374 "+linearAssets(1611374)(1).toString)
+    }
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
+      logger.warn("roadlink "+roadLink.linkId)
+      logger.warn("assetsOnRoadLink "+assetsOnRoadLink.toString)
+      if(assetsOnRoadLink.size==2){
+        logger.warn("assetsOnRoadLink "+assetsOnRoadLink(0).toString)
+        logger.warn("assetsOnRoadLink "+assetsOnRoadLink(1).toString)
+      }
 
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        if(roadLink.linkId==1611374){
+         // logger.warn("operation for 1611374")
+        }
         operation(roadLink, currentSegments, currentAdjustments)
       }
       logger.warn("adjustedAssets 7478 "+adjustedAssets.count(a=>a.linkId==7478).toString)
