@@ -35,6 +35,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynSession[T](f: => T): T = f
   }
 
+
   private def simulateQuery[T](f: => T): T = {
     val result = f
     sqlu"""delete from temp_id""".execute
