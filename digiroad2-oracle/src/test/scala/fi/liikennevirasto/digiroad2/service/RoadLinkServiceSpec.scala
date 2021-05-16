@@ -94,7 +94,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   //this fail at seventh consecutive test suite run
-  test("Adjust link type, this test fail at attemps 7") {
+  test("Adjust link type") {
     PostGISDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
