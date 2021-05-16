@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.Invoker
 import slick.jdbc.StaticQuery.interpolation
 
 sealed trait RoadLinkDAO{
@@ -35,23 +35,41 @@ sealed trait RoadLinkDAO{
     insertValues(linkProperty, username, value)
   }
 
-  def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
-            select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
-            where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
+
+  def genericInsert(linkId:Long,id:Long,insert:Invoker[Any]): Unit ={
+    val exist = sql"select id from #$table where link_id =$linkId".as[Option[Long]].firstOption
+    // sometime database gives already used id, check if id really is available
+    val primaryKeyUsed = sql"select id from #$table where id =$id".as[Option[Long]].firstOption
+    println("item exists "+exist+" in table "+table)
+    if(exist.isEmpty && primaryKeyUsed.isEmpty){
+      println("inserting")
+      insert.execute
+    }
   }
 
+  def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
+    println("where insert happen "+table,column)
+    val id= Sequences.nextPrimaryKeySeqValue
+    println("link "+linkProperty.linkId +" with properties "+linkProperty.toString)
+    genericInsert(linkProperty.linkId,id,
+      sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+                      values($id, ${linkProperty.linkId}, $value, $username)""")
+  }
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
-    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
-            select nextval('primary_key_seq'), $linkId, $value, $username
-            where not exists (select * from #$table where link_id = $linkId)""".execute
+    val id= Sequences.nextPrimaryKeySeqValue
+    genericInsert(linkId,id,
+      sqlu""" insert into #$table(id, link_id, #$column, modified_by)
+                      values($id, $linkId, $value, $username ) """
+    )
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
-    sqlu""" insert into #$table (id, link_id, #$column, modified_date, modified_by)
-            select nextval('primary_key_seq'), ${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
-           where not exists (select * from #$table where link_id = $linkId)""".execute
+    val id= Sequences.nextPrimaryKeySeqValue
+    genericInsert(linkId,id,
+      sqlu""" insert into #$table(id, link_id, #$column, modified_date, modified_by)
+                     values($id,${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username)"""
+    )
   }
 
 
@@ -224,9 +242,11 @@ object RoadLinkDAO{
     }
 
     override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-      sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type)
-             select nextval('primary_key_seq'), ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
-                   where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
+      val id= Sequences.nextPrimaryKeySeqValue
+      genericInsert(linkProperty.linkId,id,
+        sqlu""" insert into #$table(id, link_id, #$column, modified_by, link_type)
+                        values($id, ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value})"""
+      )
     }
 
     override def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
@@ -287,9 +307,11 @@ object RoadLinkDAO{
 
     override def insertValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
       val vvhValue = getVVHValue(vvhRoadLink)
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
-              where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
+      val id= Sequences.nextPrimaryKeySeqValue
+      genericInsert(linkProperty.linkId,id,
+        sqlu""" insert into #$table(id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass)
+                        values($id, ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue})  """
+      )
     }
 
     override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
@@ -302,11 +324,11 @@ object RoadLinkDAO{
     override def updateValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long] = None): Unit = {
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
-
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
-                   where exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
-
+      val id= Sequences.nextPrimaryKeySeqValue
+      genericInsert(linkProperty.linkId,id,
+        sqlu""" insert into #$table(id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass)
+                        values($id,, ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue )"""
+      )
     }
 
     override def updateValues(linkId: Long, username: Option[String], value: Int) = {
