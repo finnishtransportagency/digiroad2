@@ -40,17 +40,13 @@ sealed trait RoadLinkDAO{
     val exist = sql"select id from #$table where link_id =$linkId".as[Option[Long]].firstOption
     // sometime database gives already used id, check if id really is available
     val primaryKeyUsed = sql"select id from #$table where id =$id".as[Option[Long]].firstOption
-    println("item exists "+exist+" in table "+table)
     if(exist.isEmpty && primaryKeyUsed.isEmpty){
-      println("inserting")
       insert.execute
     }
   }
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-    println("where insert happen "+table,column)
     val id= Sequences.nextPrimaryKeySeqValue
-    println("link "+linkProperty.linkId +" with properties "+linkProperty.toString)
     genericInsert(linkProperty.linkId,id,
       sqlu""" insert into #$table (id, link_id, #$column, modified_by )
                       values($id, ${linkProperty.linkId}, $value, $username)""")
