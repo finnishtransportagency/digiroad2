@@ -2,8 +2,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri
 
 import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
-
-import fi.liikennevirasto.digiroad2.util.TierekisteriAuthPropertyReader
+import fi.liikennevirasto.digiroad2.util.{OAGAuthPropertyReader, TierekisteriAuthPropertyReader}
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpRequestBase, _}
 import org.apache.http.entity.StringEntity
@@ -86,6 +85,7 @@ trait TierekisteriClient{
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val dateFormat = "yyyy-MM-dd"
   protected val auth = new TierekisteriAuthPropertyReader
+  private val oagAuth = new OAGAuthPropertyReader
   protected lazy val logger = LoggerFactory.getLogger(getClass)
 
   def mapFields(data: Map[String, Any]): Option[TierekisteriType]
@@ -93,7 +93,7 @@ trait TierekisteriClient{
   def addAuthorizationHeader(request: HttpRequestBase) = {
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-
+    request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
   }
   protected def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
