@@ -126,7 +126,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, daoWithRoadLinks(List(vvhRoadLink)))
       assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
-      println(created2.modifiedDate)
       provider.getPersistedSpeedLimitByIds(Set(asset.id)).head.expired should be (true)
 
       created1.modifiedBy shouldBe Some("test")
