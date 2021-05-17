@@ -81,12 +81,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "true").toBoolean
   val revision: String = scala.util.Properties.envOrElse("revision", null)
   val latestDeploy: String = scala.util.Properties.envOrElse("latestDeploy", null)
-  val tierekisteriUsername: String = scala.util.Properties.envOrElse("tierekisteriUsername", null)
-  val tierekisteriPassword: String = scala.util.Properties.envOrElse("tierekisteriPassword", null)
-  val viiteUsername: String = scala.util.Properties.envOrElse("viiteUsername", null)
-  val viitePassword: String = scala.util.Properties.envOrElse("viitePassword", null)
-  val tierekisteriOldUsername: String = scala.util.Properties.envOrElse("tierekisteriOldUsername", null)
-  val tierekisteriOldPassword: String = scala.util.Properties.envOrElse("tierekisteriOldPassword", null)
   val emailTo: String = scala.util.Properties.envOrElse("emailTo", null)
   val emailHost = scala.util.Properties.envOrElse("emailHost", null)
   val emailPort = scala.util.Properties.envOrElse("emailPort", null)
@@ -118,6 +112,12 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val cacheDirectory: String = selectEnvType(scala.util.Properties.envOrElse("cache_directory", null), scala.util.Properties.envOrElse("cache.directory", null))
   val oagUsername: String = selectEnvType(scala.util.Properties.envOrElse("oag_username", null),scala.util.Properties.envOrElse("oag.username", null))
   val oagPassword: String =  selectEnvType(scala.util.Properties.envOrElse("oag_password", null),scala.util.Properties.envOrElse("oag.password", null))
+  val tierekisteriOldUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldUsername", null),scala.util.Properties.envOrElse("tierekisteri.old.username", null))
+  val tierekisteriOldPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldPassword", null),scala.util.Properties.envOrElse("tierekisteri.old.password", null))
+  val tierekisteriUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriUsername", null),scala.util.Properties.envOrElse("tierekisteri.username", null))
+  val tierekisteriPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriPassword", null),scala.util.Properties.envOrElse("tierekisteri.password", null))
+  val viiteUsername: String = selectEnvType(scala.util.Properties.envOrElse("viiteUsername", null),scala.util.Properties.envOrElse("viite.username", null))
+  val viitePassword: String = selectEnvType(scala.util.Properties.envOrElse("viitePassword", null),scala.util.Properties.envOrElse("viite.password", null))
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
