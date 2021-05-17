@@ -85,7 +85,7 @@ trait TierekisteriClient{
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected val dateFormat = "yyyy-MM-dd"
   protected val auth = new TierekisteriAuthPropertyReader
-  private val oagAuth = new OAGAuthPropertyReader
+  protected val oagAuth = new OAGAuthPropertyReader
   protected lazy val logger = LoggerFactory.getLogger(getClass)
 
   def mapFields(data: Map[String, Any]): Option[TierekisteriType]
