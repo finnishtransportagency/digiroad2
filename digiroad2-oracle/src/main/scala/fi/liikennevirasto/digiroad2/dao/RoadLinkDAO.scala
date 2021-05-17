@@ -8,6 +8,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.Invoker
 import slick.jdbc.StaticQuery.interpolation
 
+import java.sql.SQLException
+
 sealed trait RoadLinkDAO{
 
   def table: String
@@ -36,12 +38,36 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def validateAndInsert(linkId:Long, id:Long, insert:Invoker[Any]): Unit ={
+  def validateAndInsert(linkId: Long, id: Long, insert: Invoker[Any]): Unit = {
+    val exist = sql"select id from #$table where link_id =$linkId".as[Long].firstOption
+    // sometime database gives already used id, check if id really is available
+    val primaryKeyUsed = sql"select id from #$table where id =$id".as[Long].firstOption
+    if (exist.isEmpty && primaryKeyUsed.isEmpty) {
+      insert.execute
+    } else {
+      if (exist.isDefined && primaryKeyUsed.isDefined) {
+        throw new SQLException(s"Primary key $id is already used in table $table and link $linkId already exist.")
+      } else if (exist.isDefined) {
+        throw new SQLException(s"Link $linkId already exist in table $table.")
+      } else if (primaryKeyUsed.isDefined) {
+        throw new SQLException(s"Primary key $id is already used in table $table.")
+      }
+    }
+  }
+  def validateAndInsert(linkId: Long, id: Long, insert: Invoker[Any], updateAdministrativeClass: Boolean): Unit = {
     val exist = sql"select id from #$table where link_id =$linkId".as[Option[Long]].firstOption
     // sometime database gives already used id, check if id really is available
     val primaryKeyUsed = sql"select id from #$table where id =$id".as[Option[Long]].firstOption
-    if(exist.isEmpty && primaryKeyUsed.isEmpty){
+    if (exist.isDefined && primaryKeyUsed.isEmpty) {
       insert.execute
+    } else {
+     if(exist.isEmpty && primaryKeyUsed.isDefined){
+       throw new SQLException(s"Primary key $id is already used in table $table and there is no link $linkId to update.")
+     } else if (exist.isEmpty) {
+        throw new SQLException(s"No link $linkId in table $table to update.")
+      } else  if (primaryKeyUsed.isDefined) {
+        throw new SQLException(s"Primary key $id is already used in table $table.")
+      }
     }
   }
 
@@ -323,8 +349,7 @@ object RoadLinkDAO{
       val id= Sequences.nextPrimaryKeySeqValue
       validateAndInsert(linkProperty.linkId,id,
         sqlu""" insert into #$table(id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass)
-                        values($id,, ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue )"""
-      )
+                        values($id, ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue )""",true)
     }
 
     override def updateValues(linkId: Long, username: Option[String], value: Int) = {
