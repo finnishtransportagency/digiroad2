@@ -294,6 +294,10 @@ Resources:
             Value: userXYZ
           - Name: tierekisteriOldPassword
             Value: passwordXYZ
+          - Name: oag.username
+            Value: svc_clouddigiroad
+          - Name: oag.password
+            Value: svc_clouddigiroad
 
       Artifacts:
         Name: !Ref ApplicationName
