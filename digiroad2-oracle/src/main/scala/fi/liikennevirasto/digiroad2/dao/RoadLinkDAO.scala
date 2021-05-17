@@ -36,7 +36,7 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def genericInsert(linkId:Long,id:Long,insert:Invoker[Any]): Unit ={
+  def validateAndInsert(linkId:Long, id:Long, insert:Invoker[Any]): Unit ={
     val exist = sql"select id from #$table where link_id =$linkId".as[Option[Long]].firstOption
     // sometime database gives already used id, check if id really is available
     val primaryKeyUsed = sql"select id from #$table where id =$id".as[Option[Long]].firstOption
@@ -47,14 +47,14 @@ sealed trait RoadLinkDAO{
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
     val id= Sequences.nextPrimaryKeySeqValue
-    genericInsert(linkProperty.linkId,id,
+    validateAndInsert(linkProperty.linkId,id,
       sqlu""" insert into #$table (id, link_id, #$column, modified_by )
                       values($id, ${linkProperty.linkId}, $value, $username)""")
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
     val id= Sequences.nextPrimaryKeySeqValue
-    genericInsert(linkId,id,
+    validateAndInsert(linkId,id,
       sqlu""" insert into #$table(id, link_id, #$column, modified_by)
                       values($id, $linkId, $value, $username ) """
     )
@@ -62,7 +62,7 @@ sealed trait RoadLinkDAO{
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
     val id= Sequences.nextPrimaryKeySeqValue
-    genericInsert(linkId,id,
+    validateAndInsert(linkId,id,
       sqlu""" insert into #$table(id, link_id, #$column, modified_date, modified_by)
                      values($id,${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username)"""
     )
@@ -239,7 +239,7 @@ object RoadLinkDAO{
 
     override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
       val id= Sequences.nextPrimaryKeySeqValue
-      genericInsert(linkProperty.linkId,id,
+      validateAndInsert(linkProperty.linkId,id,
         sqlu""" insert into #$table(id, link_id, #$column, modified_by, link_type)
                         values($id, ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value})"""
       )
@@ -304,7 +304,7 @@ object RoadLinkDAO{
     override def insertValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
       val vvhValue = getVVHValue(vvhRoadLink)
       val id= Sequences.nextPrimaryKeySeqValue
-      genericInsert(linkProperty.linkId,id,
+      validateAndInsert(linkProperty.linkId,id,
         sqlu""" insert into #$table(id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass)
                         values($id, ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue})  """
       )
@@ -321,7 +321,7 @@ object RoadLinkDAO{
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
       val id= Sequences.nextPrimaryKeySeqValue
-      genericInsert(linkProperty.linkId,id,
+      validateAndInsert(linkProperty.linkId,id,
         sqlu""" insert into #$table(id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass)
                         values($id,, ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue )"""
       )
