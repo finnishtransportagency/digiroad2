@@ -194,7 +194,7 @@
           },
           {
             "name": "oag.password",
-            "valueFrom": "arn:aws:ssm:eu-west-1:783354560127:parameter/dev/authentication.oag.basic.password"
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
           },
           {
             "name": "googlemapapi.client_id",
