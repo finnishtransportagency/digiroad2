@@ -28,6 +28,7 @@ phases:
   build:
     commands:
       - grunt test
+      - printf YES | sbt "project digiroad2-oracle" "test:run-main fi.liikennevirasto.digiroad2.util.DataFixture test"
       - sbt test
       - grunt deploy
       - sbt clean
