@@ -433,14 +433,14 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val sideCodeValue = sideCode.value
-
+    println(createdDate)
     val creationDate = createdDate match {
-      case Some(datetime) => s"""TO_DATE('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
       case None => "current_timestamp"
     }
 
     val modifiedDate = modifiedAt match {
-      case Some(datetime) => s"""TO_DATE('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
       case None => "NULL"
     }
 
@@ -449,7 +449,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case None => null
     }
 
-    println(creationDate)
+
 
     val insertAll =
       s"""
