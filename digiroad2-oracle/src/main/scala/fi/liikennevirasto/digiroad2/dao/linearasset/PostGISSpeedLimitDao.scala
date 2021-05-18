@@ -449,6 +449,8 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case None => null
     }
 
+    println(creationDate)
+
     val insertAll =
       s"""
          insert into asset(id, asset_type_id, created_by, created_date, modified_by, modified_date)
