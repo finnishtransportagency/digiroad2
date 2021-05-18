@@ -5,10 +5,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.Invoker
-import slick.jdbc.StaticQuery.interpolation
 
-import java.sql.SQLException
+import slick.jdbc.StaticQuery.interpolation
 
 sealed trait RoadLinkDAO{
 
@@ -42,7 +40,6 @@ sealed trait RoadLinkDAO{
             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
             where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
-
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
     sqlu""" insert into #$table (id, link_id, #$column, modified_by )
             select nextval('primary_key_seq'), $linkId, $value, $username
