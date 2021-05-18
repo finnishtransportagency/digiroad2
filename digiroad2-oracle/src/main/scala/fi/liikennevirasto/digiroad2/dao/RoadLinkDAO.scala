@@ -38,7 +38,7 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def validateAndInsert(linkId: Long, id: Long, insert: Invoker[Any]): Unit = {
+/*  def validateAndInsert(linkId: Long, id: Long, insert: Invoker[Any]): Unit = {
     val exist = sql"select id from #$table where link_id =$linkId".as[Long].firstOption
     // sometime database gives already used id, check if id really is available
     val primaryKeyUsed = sql"select id from #$table where id =$id".as[Long].firstOption
@@ -69,29 +69,24 @@ sealed trait RoadLinkDAO{
         throw new SQLException(s"Primary key $id is already used in table $table.")
       }
     }
-  }
+  }*/
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-    val id= Sequences.nextPrimaryKeySeqValue
-    validateAndInsert(linkProperty.linkId,id,
-      sqlu""" insert into #$table (id, link_id, #$column, modified_by )
-                      values($id, ${linkProperty.linkId}, $value, $username)""")
+    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+            select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
+            where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
-    val id= Sequences.nextPrimaryKeySeqValue
-    validateAndInsert(linkId,id,
-      sqlu""" insert into #$table(id, link_id, #$column, modified_by)
-                      values($id, $linkId, $value, $username ) """
-    )
+    sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+            select nextval('primary_key_seq'), $linkId, $value, $username
+            where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
   def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
-    val id= Sequences.nextPrimaryKeySeqValue
-    validateAndInsert(linkId,id,
-      sqlu""" insert into #$table(id, link_id, #$column, modified_date, modified_by)
-                     values($id,${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username)"""
-    )
+    sqlu""" insert into #$table (id, link_id, #$column, modified_date, modified_by)
+            select nextval('primary_key_seq'), ${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
+           where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
 
@@ -264,11 +259,9 @@ object RoadLinkDAO{
     }
 
     override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
-      val id= Sequences.nextPrimaryKeySeqValue
-      validateAndInsert(linkProperty.linkId,id,
-        sqlu""" insert into #$table(id, link_id, #$column, modified_by, link_type)
-                        values($id, ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value})"""
-      )
+      sqlu"""insert into #$table (id, link_id, #$column, modified_by, link_type)
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, ${value}, $username, ${linkProperty.linkType.value}
+                   where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
     override def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
@@ -329,11 +322,9 @@ object RoadLinkDAO{
 
     override def insertValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
       val vvhValue = getVVHValue(vvhRoadLink)
-      val id= Sequences.nextPrimaryKeySeqValue
-      validateAndInsert(linkProperty.linkId,id,
-        sqlu""" insert into #$table(id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass)
-                        values($id, ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue})  """
-      )
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
+              where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
     override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
@@ -346,10 +337,11 @@ object RoadLinkDAO{
     override def updateValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long] = None): Unit = {
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
-      val id= Sequences.nextPrimaryKeySeqValue
-      validateAndInsert(linkProperty.linkId,id,
-        sqlu""" insert into #$table(id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass)
-                        values($id, ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue )""",true)
+
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
+                   where exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
+
     }
 
     override def updateValues(linkId: Long, username: Option[String], value: Int) = {
