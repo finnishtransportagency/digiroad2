@@ -255,10 +255,8 @@ Resources:
             Value: fi.liikennevirasto.digiroad2.DigiroadEventBus
           - Name: useVVHGeometry
             Value: true
-          - Name: vvhServiceHost
-            Value: http://testihaproxy.vayla.fi:2024
           - Name: vvhRestApiEndPoint
-            Value: http://testihaproxy.vayla.fi:2024/vvhdata/
+            Value: https://haproxy.vayla.fi:2027/vvhdata/
           - Name: viiteRestApiEndPoint
             Value: http://localhost:9080/api/viite/
           - Name: authenticationTestMode
