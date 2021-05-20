@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.util.Properties
-import javax.sql.DataSource
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.joda.time.format.PeriodFormat
@@ -50,21 +47,11 @@ AssetDataImporter {
   }
 
   case object TemporaryTables extends ImportDataSet {
-    lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-      new BoneCPDataSource(cfg)
-    }
-
-    def database() = Database.forDataSource(dataSource)
+    def database() = Database.forDataSource(PostGISDatabase.ds)
   }
 
   case object Conversion extends ImportDataSet {
-    lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-      new BoneCPDataSource(cfg)
-    }
-
-    def database() = Database.forDataSource(dataSource)
+    def database() = Database.forDataSource(PostGISDatabase.ds)
     val roadLinkTable: String = "tielinkki"
     val busStopTable: String = "lineaarilokaatio"
   }

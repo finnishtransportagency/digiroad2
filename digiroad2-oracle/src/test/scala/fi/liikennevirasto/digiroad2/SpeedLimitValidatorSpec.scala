@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
@@ -11,7 +10,7 @@ import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -24,17 +23,13 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
 
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-    new BoneCPDataSource(cfg)
-  }
 
   object testTrafficSignService extends TrafficSignService(mockRoadLinkService, new DummyEventBus){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
   val validator = new SpeedLimitValidator(testTrafficSignService)
   val simpleProp50 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("5"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("50"))))
   val simpleProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("1"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))

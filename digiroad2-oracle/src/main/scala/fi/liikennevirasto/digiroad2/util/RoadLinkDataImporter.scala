@@ -9,7 +9,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 object RoadLinkDataImporter {
   def importFromConversionDB() {
-    val existingRoadLinkData = Database.forDataSource(ConversionDatabase.dataSource).withDynSession {
+    val existingRoadLinkData = Database.forDataSource(PostGISDatabase.ds).withDynSession {
       sql"""select link_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas group by link_id """
         .as[(Long, Int, Int, Int)]
         .list

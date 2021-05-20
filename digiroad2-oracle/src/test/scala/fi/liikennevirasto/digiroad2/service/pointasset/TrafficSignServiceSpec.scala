@@ -25,6 +25,7 @@ import Database.dynamicSession
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.asset.HazmatTransportProhibitionClass.HazmatProhibitionTypeA
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 
 class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -86,7 +87,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("46"))),
     SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
     SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))

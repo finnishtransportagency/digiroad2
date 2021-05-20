@@ -1,10 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, ServicePointsClass}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, PostGISServicePointDao, ServicePoint}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 class ServicePointService {
   val typeId: Int = 250
@@ -57,11 +55,6 @@ class ServicePointService {
     withDynSession {
       PostGISServicePointDao.get(boundingBox)
     }
-  }
-
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-    new BoneCPDataSource(cfg)
   }
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)

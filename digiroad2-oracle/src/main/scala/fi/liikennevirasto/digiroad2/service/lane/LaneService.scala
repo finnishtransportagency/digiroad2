@@ -47,10 +47,6 @@ trait LaneOperations {
   def polygonTools: PolygonTools
   def laneFiller: LaneFiller = new LaneFiller
 
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-    new BoneCPDataSource(cfg)
-  }
 
   val logger = LoggerFactory.getLogger(getClass)
   lazy val VvhGenerated = "vvh_generated"

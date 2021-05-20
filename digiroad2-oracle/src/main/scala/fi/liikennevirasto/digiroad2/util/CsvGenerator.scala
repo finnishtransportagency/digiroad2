@@ -58,7 +58,7 @@ class CsvGenerator(vvhServiceHost: String) {
   }
 
   def getIdsAndLinkIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       sql"""
         select dr1_id, link_id
           from tielinkki_ctas
