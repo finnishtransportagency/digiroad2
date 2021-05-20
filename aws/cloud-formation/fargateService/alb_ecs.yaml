@@ -247,6 +247,17 @@ Resources:
           Value: !Ref Project
       VpcId: !Ref VpcIDOfSystem
 
+  # Creates CNAME record "alb.<accountName>.vaylapilvi.aws" that points to alb-1234567.eu-west-1.elb.amazonaws.com
+  CnameRecordDigiroad:
+    Type: Custom::VaylapilviRoute53Record
+    Properties:
+      ServiceToken: arn:aws:sns:eu-west-1:434599271542:Vaylapilvi-Route53-Record
+      Type: CNAME
+      Name: digiroadalb
+      Records:
+        - !GetAtt PrivateLoadBalancer.DNSName
+      Comment: Application load balancer
+
 Outputs:
   ALBDNSName:
     Description: DNSname for the private Application Load Balancer
