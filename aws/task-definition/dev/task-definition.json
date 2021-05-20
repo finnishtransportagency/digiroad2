@@ -135,6 +135,10 @@
             "value": "trrest"
           },
           {
+            "name": "oag.username",
+            "value": "svc_clouddr"
+          },
+          {
             "name": "viite.username",
             "value": "kalpa"
           },
@@ -187,6 +191,10 @@
           {
             "name": "viite.password",
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
+          },
+          {
+            "name": "oag.password",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
           },
           {
             "name": "googlemapapi.client_id",
