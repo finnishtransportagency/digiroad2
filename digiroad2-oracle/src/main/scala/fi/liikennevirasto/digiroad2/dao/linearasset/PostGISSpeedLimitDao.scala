@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import java.nio.charset.StandardCharsets
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, OffsetDateTime, OffsetTime, ZoneId, ZonedDateTime}
 import java.util.{Base64, NoSuchElementException}
 
 import fi.liikennevirasto.digiroad2._
@@ -433,9 +435,15 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val sideCodeValue = sideCode.value
-    println(createdDate)
-    val creationDate = createdDate match {
-      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+//    println(createdDate)
+    val createdDate2 = createdDate.get.toDateTime()
+    println(createdDate2)
+    val inputValue = "2012-08-15T22:56:02.038Z"
+//    val timestamp = Instant.parse(createdDate2)
+//    val losAngelesTime = timestamp.atZone(ZoneId.of("Europe/Helsinki"))
+//    println(losAngelesTime)
+    val creationDate = createdDate2 match {
+      case datetime => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
       case None => "current_timestamp"
     }
 
@@ -449,7 +457,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case None => null
     }
 
-
+//    println(creationDate)
 
     val insertAll =
       s"""
