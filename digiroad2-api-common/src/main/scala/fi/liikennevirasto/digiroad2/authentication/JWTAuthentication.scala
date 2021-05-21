@@ -68,7 +68,7 @@ trait JWTAuthentication extends Authentication {
     }
 
     val user = userProvider.getUser(username).getOrElse(viewerUser)
-    jwtLogger.info("Authenticate request, remote user = " + user)
+    jwtLogger.info(s"Authenticate request, remote user = $user in Digiroad.${if (user.isNotInDigiroad()) " (User not added in Digiroad.)" else ""}")
     user
 
   }
