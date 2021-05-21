@@ -437,13 +437,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val sideCodeValue = sideCode.value
 //    println(createdDate)
 //    val createdDate2 = createdDate.get.
-    println(createdDate.get.toDateTime)
-    println(createdDate.get.toDateTime())
-    println(createdDate.get.toDateTime())
-    println(createdDate.get.toDateTimeISO)
-    println(createdDate.get.toLocalDate)
-    println(createdDate.get.toLocalDateTime)
-    val inputValue = "2012-08-15T22:56:02.038Z"
+//    val inputValue = "2012-08-15T22:56:02.038Z"
 //    val timestamp = Instant.parse(createdDate2)
 //    val losAngelesTime = timestamp.atZone(ZoneId.of("Europe/Helsinki"))
 //    println(losAngelesTime)
@@ -462,6 +456,12 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case None => null
     }
 
+//    println(createdDate.get.toDateTime)
+//    println(createdDate.get.toDateTime())
+//    println(createdDate.get.toDateTime())
+//    println(createdDate.get.toDateTimeISO)
+//    println(createdDate.get.toLocalDate)
+//    println(createdDate.get.toLocalDateTime)
 //    println(creationDate)
 
     val insertAll =
