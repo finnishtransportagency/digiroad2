@@ -39,7 +39,7 @@ trait JWTAuthentication extends Authentication {
 
   def authenticate(request: HttpServletRequest)(implicit userProvider: UserProvider): User = {
 
-    val username:String =
+    val username: String =
       if (!Digiroad2Properties.authenticationTestMode) {
 
         // Example value:
