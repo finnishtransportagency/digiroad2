@@ -27,6 +27,7 @@ trait Digiroad2Properties {
   val httpProxyPort: String
   val httpNonProxyHosts: String
   val authenticationTestMode: Boolean
+  val authenticationTestUser: String
   val bonecpJdbcUrl: String
   val bonecpUsername: String
   val bonecpPassword: String
@@ -87,7 +88,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
-
+  val authenticationTestUser: String = scala.util.Properties.envOrElse("authenticationTestUser", null)
   // Get build id to check if executing in aws CodeBuild environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
   private def selectEnvType(codebuildVersion: String, normal: String): String = {
@@ -162,6 +163,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val httpProxyPort: String = envProps.getProperty("http.proxyPort")
   override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "true").toBoolean
+  override val authenticationTestUser: String = envProps.getProperty("authenticationTestUser")
   override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
   override val bonecpUsername: String = envProps.getProperty("bonecp.username")
   override val bonecpPassword: String = envProps.getProperty("bonecp.password")
@@ -241,6 +243,7 @@ object Digiroad2Properties {
   lazy val httpProxyPort: String = properties.httpProxyPort
   lazy val httpNonProxyHosts: String = properties.httpNonProxyHosts
   lazy val authenticationTestMode: Boolean = properties.authenticationTestMode
+  lazy val authenticationTestUser: String = properties.authenticationTestUser
   lazy val bonecpJdbcUrl: String = properties.bonecpJdbcUrl
   lazy val bonecpUsername: String = properties.bonecpUsername
   lazy val bonecpPassword: String = properties.bonecpPassword
