@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
-import java.time.{Instant, OffsetDateTime, OffsetTime, ZoneId, ZonedDateTime}
+import java.time.{Instant, LocalDateTime, OffsetDateTime, OffsetTime, ZoneId, ZonedDateTime}
 import java.util.{Base64, NoSuchElementException}
 
 import fi.liikennevirasto.digiroad2._
@@ -456,13 +456,11 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case None => null
     }
 
+//    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+//    val barDate1 = LocalDateTime.parse(createdDate.get.toString(), formatter)
+//    println(barDate1)
+
     println(createdDate.get.toDateTime)
-    println(createdDate.get.toDateTime())
-    println(createdDate.get.toDateTime())
-    println(createdDate.get.toDateTimeISO)
-    println(createdDate.get.toLocalDate)
-    println(createdDate.get.toLocalDateTime)
-    println(creationDate)
 
     val insertAll =
       s"""
