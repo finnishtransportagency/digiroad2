@@ -456,13 +456,13 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case None => null
     }
 
-//    println(createdDate.get.toDateTime)
-//    println(createdDate.get.toDateTime())
-//    println(createdDate.get.toDateTime())
-//    println(createdDate.get.toDateTimeISO)
-//    println(createdDate.get.toLocalDate)
-//    println(createdDate.get.toLocalDateTime)
-//    println(creationDate)
+    println(createdDate.get.toDateTime)
+    println(createdDate.get.toDateTime())
+    println(createdDate.get.toDateTime())
+    println(createdDate.get.toDateTimeISO)
+    println(createdDate.get.toLocalDate)
+    println(createdDate.get.toLocalDateTime)
+    println(creationDate)
 
     val insertAll =
       s"""
