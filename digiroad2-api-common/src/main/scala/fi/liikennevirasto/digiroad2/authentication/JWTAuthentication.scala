@@ -18,11 +18,15 @@ object JWTReader {
   implicit lazy val formats = org.json4s.DefaultFormats
 
   def getUsername(jwt: String): String = {
-    val jwtParts = jwt.split('.')
-    val jwtPayloadBase64Encoded = jwtParts(1)
-    val jwtPayload = new String(Base64.getDecoder.decode(jwtPayloadBase64Encoded), StandardCharsets.UTF_8)
-    logger.debug(s"JWT Payload: $jwtPayload")
-    parseUsernameFromJWTPayloadJSONString(jwtPayload)
+    try{
+      val jwtParts = jwt.split('.')
+      val jwtPayloadBase64Encoded = jwtParts(1)
+      val jwtPayload = new String(Base64.getDecoder.decode(jwtPayloadBase64Encoded), StandardCharsets.UTF_8)
+      logger.debug(s"JWT Payload: $jwtPayload")
+      parseUsernameFromJWTPayloadJSONString(jwtPayload)
+    }catch {
+      case e: Exception =>logger.warn("Failed to parse JWT");throw e
+    }
   }
 
   def parseUsernameFromJWTPayloadJSONString(jsonString: String): String = {
