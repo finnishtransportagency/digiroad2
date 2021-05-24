@@ -446,7 +446,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val sourceFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     val targetFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
 
-    val dateTime = LocalDateTime.parse(createdDate, sourceFormat)
+    val dateTime = LocalDateTime.parse(sourceDateTime, sourceFormat)
     val formatedDateTime = dateTime.atZone(ZoneId.of("UTC")).format(targetFormat)
     println(formatedDateTime)
     val createdDate2 = Option(formatedDateTime)
