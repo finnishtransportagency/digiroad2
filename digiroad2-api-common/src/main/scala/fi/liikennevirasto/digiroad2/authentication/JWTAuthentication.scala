@@ -39,9 +39,11 @@ trait JWTAuthentication extends Authentication {
 
   def authenticate(request: HttpServletRequest)(implicit userProvider: UserProvider): User = {
     val username: String = {
+      // local development system
       if (request.getCookies != null && request.getCookies.exists(p => p.getName == "testusername") && Digiroad2Properties.authenticationTestMode) {
         request.getCookies.find(p => p.getName == "testusername").orNull.getValue
       } else {
+        // In AWS use JWT
         val tokenHeaderValue = request.getHeader(dataHeader)
         JWTReader.getUsername(tokenHeaderValue)
       }
