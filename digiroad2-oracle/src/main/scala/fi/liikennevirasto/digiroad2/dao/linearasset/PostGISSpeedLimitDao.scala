@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDateTime, OffsetDateTime, OffsetTime, ZoneId, ZonedDateTime}
-import java.util.{Base64, NoSuchElementException}
+import java.util.{Base64, Date, NoSuchElementException}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -451,7 +451,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     println(formatedDateTime)
     val createdDate2 = Option(formatedDateTime)
     val creationDate = createdDate2 match {
-      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case Some(datetime) => s"""TO_TIMESTAMP('${datetime.format(new Date())}', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
       case None => "current_timestamp"
     }
 
