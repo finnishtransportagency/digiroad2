@@ -435,7 +435,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val sideCodeValue = sideCode.value
-//    println(createdDate)
+    println(createdDate)
 //    val createdDate2 = createdDate.get.
 //    val inputValue = "2012-08-15T22:56:02.038Z"
 //    val timestamp = Instant.parse(createdDate2)
