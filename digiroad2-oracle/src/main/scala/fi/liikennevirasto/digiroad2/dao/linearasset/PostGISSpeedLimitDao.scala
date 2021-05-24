@@ -435,7 +435,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val sideCodeValue = sideCode.value
-    println(createdDate)
+//    println(createdDate)
 //    val createdDate2 = createdDate.get.
 //    val inputValue = "2012-08-15T22:56:02.038Z"
 //    val timestamp = Instant.parse(createdDate2)
@@ -446,7 +446,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val sourceFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     val targetFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
 
-    val dateTime = LocalDateTime.parse(sourceDateTime, sourceFormat)
+    val dateTime = LocalDateTime.parse(createdDate, sourceFormat)
     val formatedDateTime = dateTime.atZone(ZoneId.of("UTC")).format(targetFormat)
     println(formatedDateTime)
     val createdDate2 = Option(formatedDateTime)
