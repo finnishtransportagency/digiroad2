@@ -143,15 +143,15 @@
             "value": "kalpa"
           },
           {
-            "name": "email.to",
+            "name": "emailTo",
             "value": "emailTo"
           },
           {
-            "name": "email.host",
+            "name": "emailHost",
             "value": "emailHost"
           },
           {
-            "name": "email.port",
+            "name": "emailPort",
             "value": "emailPort"
           },
           {
