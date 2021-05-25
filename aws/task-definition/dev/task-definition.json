@@ -43,15 +43,15 @@
             "value": "true"
           },
           {
-            "name": "VVHServiceHost",
+            "name": "vvhServiceHost",
             "value": "haproxy.vayla.fi"
           },
           {
-            "name": "VVHRestApiEndPoint",
+            "name": "vvhRestApiEndPoint",
             "value": "https://haproxy.vayla.fi:2027/vvhdata/"
           },
           {
-            "name": "VVHRoadlink.frozen",
+            "name": "vvhRoadlink.frozen",
             "value": "false"
           },
           {
@@ -63,7 +63,7 @@
             "value": "false"
           },
           {
-            "name": "VKMUrl",
+            "name": "vkmUrl",
             "value": "http://oag.vayla.fi"
           },
           {
@@ -143,15 +143,15 @@
             "value": "kalpa"
           },
           {
-            "name": "email.to",
+            "name": "emailTo",
             "value": "emailTo"
           },
           {
-            "name": "email.host",
+            "name": "emailHost",
             "value": "emailHost"
           },
           {
-            "name": "email.port",
+            "name": "emailPort",
             "value": "emailPort"
           },
           {
