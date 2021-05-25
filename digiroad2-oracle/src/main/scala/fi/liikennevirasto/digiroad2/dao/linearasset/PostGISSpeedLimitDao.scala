@@ -451,7 +451,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 //    println(formatedDateTime)
 //    val createdDate2 = Option(formatedDateTime)
     val creationDate = createdDate match {
-      case Some(datetime) => s"""TO_TIMESTAMP('${datetime}', 'YYYY-MM-DD"T"HH24:MI:SS.FF3)"""
+      case Some(datetime) => s"""TO_TIMESTAMP('${datetime}', 'YYYY-MM-DD"T"HH24:MI:SS.FF3')"""
       case None => "current_timestamp"
     }
 
