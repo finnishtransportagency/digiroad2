@@ -20,7 +20,6 @@ import scala.collection.JavaConversions._
 
 trait DigiroadServer {
   val contextPath : String
-  val viiteContextPath: String
 
   protected def setupWebContext(): WebAppContext ={
     val context = new WebAppContext()

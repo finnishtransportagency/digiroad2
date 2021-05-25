@@ -4,7 +4,6 @@ import org.eclipse.jetty.webapp.WebAppContext
 
 object TestServer extends App with DigiroadServer {
   override val contextPath: String = "/"
-  override val viiteContextPath: String = "/viite"
 
   override def setupWebContext(): WebAppContext ={
     val context = super.setupWebContext()
