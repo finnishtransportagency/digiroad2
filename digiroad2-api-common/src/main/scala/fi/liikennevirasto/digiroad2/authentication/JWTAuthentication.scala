@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.authentication
 
-
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -18,14 +17,14 @@ object JWTReader {
   implicit lazy val formats = org.json4s.DefaultFormats
 
   def getUsername(jwt: String): String = {
-    try{
+    try {
       val jwtParts = jwt.split('.')
       val jwtPayloadBase64Encoded = jwtParts(1)
       val jwtPayload = new String(Base64.getDecoder.decode(jwtPayloadBase64Encoded), StandardCharsets.UTF_8)
       logger.debug(s"JWT Payload: $jwtPayload")
       parseUsernameFromJWTPayloadJSONString(jwtPayload)
-    }catch {
-      case e: Exception =>logger.warn("Failed to parse JWT");throw e
+    } catch {
+      case e: Exception => logger.warn("Failed to parse JWT"); throw e
     }
   }
 
