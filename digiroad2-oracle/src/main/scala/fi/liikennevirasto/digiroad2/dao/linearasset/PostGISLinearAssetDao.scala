@@ -531,12 +531,12 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     val sideCodeValue = sideCode.value
 
     val creationDate = createdDate match {
-      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3')"""
       case None => "current_timestamp"
     }
 
     val modifiedDate = modifiedAt match {
-      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM')"""
+      case Some(datetime) => s"""TO_TIMESTAMP('$datetime', 'YYYY-MM-DD"T"HH24:MI:SS.FF3')"""
       case None => "NULL"
     }
 
