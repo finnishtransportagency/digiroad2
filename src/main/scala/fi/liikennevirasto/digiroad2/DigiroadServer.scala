@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, OAGAuthPropertyReader}
 
 import java.lang.management.ManagementFactory
 import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
+import org.eclipse.jetty.http.HttpHeader
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
@@ -20,7 +21,6 @@ import scala.collection.JavaConversions._
 
 trait DigiroadServer {
   val contextPath : String
-  val viiteContextPath: String
 
   protected def setupWebContext(): WebAppContext ={
     val context = new WebAppContext()
@@ -54,7 +54,7 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad)/(maasto)/(wmts)".r
+  def regex = "/(digiroad(-dev)?)/(maasto)/(wmts)".r
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
@@ -68,7 +68,8 @@ class OAGProxyServlet extends ProxyServlet {
 }
 
 class VKMProxyServlet extends ProxyServlet {
-  def regex = "/(digiroad|viite)".r
+  def regex = "/(digiroad(-dev)?)".r
+  private val oagAuth = new OAGAuthPropertyReader
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val vkmUrl: String = Digiroad2Properties.vkmUrl
@@ -80,6 +81,8 @@ class VKMProxyServlet extends ProxyServlet {
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
+
+    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }

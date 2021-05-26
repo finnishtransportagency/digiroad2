@@ -25,7 +25,7 @@
   },
   {
     "ParameterKey": "ContainerPort",
-    "ParameterValue": "80"
+    "ParameterValue": "8080"
   },
   {
     "ParameterKey": "VpcIDOfSystem",

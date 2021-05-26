@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.util
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
+
 import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, SSLContext, SSLSession, TrustManager, X509TrustManager}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
@@ -150,6 +150,7 @@ class VKMGeometryTransform {
   private def DefaultToleranceMeters = 20.0
 
   private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
+  private val oagAuth = new OAGAuthPropertyReader
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
     paramMap.filter(entry => entry._2.nonEmpty).map(entry => URLEncoder.encode(entry._1, "UTF-8")
@@ -163,6 +164,7 @@ class VKMGeometryTransform {
 
   private def request(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
+    request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {

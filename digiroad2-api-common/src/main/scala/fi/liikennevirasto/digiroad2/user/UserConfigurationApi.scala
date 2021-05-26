@@ -2,13 +2,13 @@ package fi.liikennevirasto.digiroad2.user
 
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
-import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
+import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.slf4j.LoggerFactory
 import org.json4s.{DefaultFormats, Formats}
 
 class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
-  with CorsSupport with RequestHeaderAuthentication {
+  with CorsSupport with JWTAuthentication {
 
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats

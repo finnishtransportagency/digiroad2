@@ -44,6 +44,8 @@ trait Digiroad2Properties {
   val viitePassword: String
   val tierekisteriOldUsername: String
   val tierekisteriOldPassword: String
+  val oagUsername: String
+  val oagPassword: String
   val emailTo: String
   val emailHost: String
   val emailPort: String
@@ -79,12 +81,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val authenticationTestMode: Boolean = scala.util.Properties.envOrElse("authenticationTestMode", "true").toBoolean
   val revision: String = scala.util.Properties.envOrElse("revision", null)
   val latestDeploy: String = scala.util.Properties.envOrElse("latestDeploy", null)
-  val tierekisteriUsername: String = scala.util.Properties.envOrElse("tierekisteriUsername", null)
-  val tierekisteriPassword: String = scala.util.Properties.envOrElse("tierekisteriPassword", null)
-  val viiteUsername: String = scala.util.Properties.envOrElse("viiteUsername", null)
-  val viitePassword: String = scala.util.Properties.envOrElse("viitePassword", null)
-  val tierekisteriOldUsername: String = scala.util.Properties.envOrElse("tierekisteriOldUsername", null)
-  val tierekisteriOldPassword: String = scala.util.Properties.envOrElse("tierekisteriOldPassword", null)
   val emailTo: String = scala.util.Properties.envOrElse("emailTo", null)
   val emailHost = scala.util.Properties.envOrElse("emailHost", null)
   val emailPort = scala.util.Properties.envOrElse("emailPort", null)
@@ -114,6 +110,14 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val authenticationMunicipalityBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_username", null), scala.util.Properties.envOrElse("authentication.municipality.basic.username", null))
   val authenticationMunicipalityBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_password", null), scala.util.Properties.envOrElse("authentication.municipality.basic.password", null))
   val cacheDirectory: String = selectEnvType(scala.util.Properties.envOrElse("cache_directory", null), scala.util.Properties.envOrElse("cache.directory", null))
+  val oagUsername: String = selectEnvType(scala.util.Properties.envOrElse("oag_username", null),scala.util.Properties.envOrElse("oag.username", null))
+  val oagPassword: String =  selectEnvType(scala.util.Properties.envOrElse("oag_password", null),scala.util.Properties.envOrElse("oag.password", null))
+  val tierekisteriOldUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldUsername", null),scala.util.Properties.envOrElse("tierekisteri.old.username", null))
+  val tierekisteriOldPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldPassword", null),scala.util.Properties.envOrElse("tierekisteri.old.password", null))
+  val tierekisteriUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriUsername", null),scala.util.Properties.envOrElse("tierekisteri.username", null))
+  val tierekisteriPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriPassword", null),scala.util.Properties.envOrElse("tierekisteri.password", null))
+  val viiteUsername: String = selectEnvType(scala.util.Properties.envOrElse("viiteUsername", null),scala.util.Properties.envOrElse("viite.username", null))
+  val viitePassword: String = selectEnvType(scala.util.Properties.envOrElse("viitePassword", null),scala.util.Properties.envOrElse("viite.password", null))
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -175,6 +179,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val viitePassword: String = envProps.getProperty("viite.password")
   override val tierekisteriOldUsername: String = envProps.getProperty("tierekisteri.old.username")
   override val tierekisteriOldPassword: String = envProps.getProperty("tierekisteri.old.password")
+  override val oagUsername: String = envProps.getProperty("oag.username")
+  override val oagPassword: String = envProps.getProperty("oag.password")
   override val emailTo: String = envProps.getProperty("email.to")
   override val emailHost: String = envProps.getProperty("email.host")
   override val emailPort: String = envProps.getProperty("email.port")
@@ -252,6 +258,8 @@ object Digiroad2Properties {
   lazy val viitePassword: String = properties.viitePassword
   lazy val tierekisteriOldUsername: String = properties.tierekisteriOldUsername
   lazy val tierekisteriOldPassword: String = properties.tierekisteriOldPassword
+  lazy val oagUsername: String = properties.oagUsername
+  lazy val oagPassword: String = properties.oagPassword
   lazy val emailTo: String = properties.emailTo
   lazy val emailHost: String = properties.emailHost
   lazy val emailPort: String = properties.emailPort

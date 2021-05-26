@@ -99,7 +99,7 @@ Resources:
     DependsOn: PrivateLoadBalancer
     Properties:
       HealthCheckIntervalSeconds: 300
-      HealthCheckPath: /  # If you have a more sophisticated container health check endpoint, add its path here
+      HealthCheckPath: /digiroad/  # If you have a more sophisticated container health check endpoint, add its path here
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 3
@@ -178,14 +178,18 @@ Resources:
       GroupDescription: DigiroadLoadBalanserSecurityGroup
       GroupName: DigiroadLoadBalanserSecurityGroup
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: !Ref IpRangeForYourNetwork
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: "-1"
+          CidrIpv6: ::/0
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
+          DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
           DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
       Tags:
         - Key: Name
@@ -214,6 +218,14 @@ Resources:
           ToPort: 80
           CidrIpv6: ::/0
         - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
           SourceSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
@@ -230,6 +242,17 @@ Resources:
         - Key: Project
           Value: !Ref Project
       VpcId: !Ref VpcIDOfSystem
+
+  # Creates CNAME record "alb.<accountName>.vaylapilvi.aws" that points to alb-1234567.eu-west-1.elb.amazonaws.com
+  CnameRecordDigiroad:
+    Type: Custom::VaylapilviRoute53Record
+    Properties:
+      ServiceToken: arn:aws:sns:eu-west-1:434599271542:Vaylapilvi-Route53-Record
+      Type: CNAME
+      Name: digiroadalb
+      Records:
+        - !GetAtt PrivateLoadBalancer.DNSName
+      Comment: Application load balancer
 
 Outputs:
   ALBDNSName:

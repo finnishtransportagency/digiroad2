@@ -13,7 +13,7 @@
         "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:latest",
         "portMappings": [
           {
-            "containerPort": 80
+            "containerPort": 8080
           }
         ],
         "memory": 2048,
@@ -43,15 +43,15 @@
             "value": "true"
           },
           {
-            "name": "VVHServiceHost",
+            "name": "vvhServiceHost",
             "value": "haproxy.vayla.fi"
           },
           {
-            "name": "VVHRestApiEndPoint",
+            "name": "vvhRestApiEndPoint",
             "value": "https://haproxy.vayla.fi:2027/vvhdata/"
           },
           {
-            "name": "VVHRoadlink.frozen",
+            "name": "vvhRoadlink.frozen",
             "value": "false"
           },
           {
@@ -63,7 +63,7 @@
             "value": "false"
           },
           {
-            "name": "VKMUrl",
+            "name": "vkmUrl",
             "value": "http://oag.vayla.fi"
           },
           {
@@ -135,19 +135,23 @@
             "value": "trrest"
           },
           {
+            "name": "oag.username",
+            "value": "svc_clouddr"
+          },
+          {
             "name": "viite.username",
             "value": "kalpa"
           },
           {
-            "name": "email.to",
+            "name": "emailTo",
             "value": "emailTo"
           },
           {
-            "name": "email.host",
+            "name": "emailHost",
             "value": "emailHost"
           },
           {
-            "name": "email.port",
+            "name": "emailPort",
             "value": "emailPort"
           },
           {
@@ -187,6 +191,10 @@
           {
             "name": "viite.password",
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
+          },
+          {
+            "name": "oag.password",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
           },
           {
             "name": "googlemapapi.client_id",
