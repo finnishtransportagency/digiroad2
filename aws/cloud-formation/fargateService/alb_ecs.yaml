@@ -99,7 +99,7 @@ Resources:
     DependsOn: PrivateLoadBalancer
     Properties:
       HealthCheckIntervalSeconds: 300
-      HealthCheckPath: /digiroad/  # If you have a more sophisticated container health check endpoint, add its path here
+      HealthCheckPath: /  # If you have a more sophisticated container health check endpoint, add its path here
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 3
