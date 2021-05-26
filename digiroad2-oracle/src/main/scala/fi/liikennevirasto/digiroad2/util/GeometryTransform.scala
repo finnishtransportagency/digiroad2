@@ -150,7 +150,7 @@ class VKMGeometryTransform {
   private def DefaultToleranceMeters = 20.0
 
   private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
-  private def oagAuth = new OAGAuthPropertyReader
+  private val oagAuth = new OAGAuthPropertyReader
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
     paramMap.filter(entry => entry._2.nonEmpty).map(entry => URLEncoder.encode(entry._1, "UTF-8")
