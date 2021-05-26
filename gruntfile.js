@@ -242,10 +242,10 @@ module.exports = function(grunt) {
   grunt.registerTask('save_deploy_info',
     function () {
       var options = this.options({
-        file: 'revision.properties'
+        file: 'Digiroad2Properties.revision'
       });
 
-      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
+      var data = ('Digiroad2Properties.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
       grunt.file.write(options.file, data);
 
     }
