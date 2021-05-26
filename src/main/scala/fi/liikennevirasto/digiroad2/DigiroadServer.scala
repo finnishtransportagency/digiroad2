@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, OAGAuthPropertyReader}
 
 import java.lang.management.ManagementFactory
 import java.util.Properties
@@ -68,6 +68,7 @@ class OAGProxyServlet extends ProxyServlet {
 
 class VKMProxyServlet extends ProxyServlet {
   def regex = "/(digiroad(-dev)?)".r
+  private val oagAuth = new OAGAuthPropertyReader
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val vkmUrl: String = Digiroad2Properties.vkmUrl
@@ -79,6 +80,7 @@ class VKMProxyServlet extends ProxyServlet {
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
+    proxyResponse.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
