@@ -53,7 +53,7 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad)/(maasto)/(wmts)".r
+  def regex = "/(digiroad(-dev)?)/(maasto)/(wmts)".r
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
@@ -67,7 +67,7 @@ class OAGProxyServlet extends ProxyServlet {
 }
 
 class VKMProxyServlet extends ProxyServlet {
-  def regex = "/(digiroad|viite)".r
+  def regex = "/(digiroad(-dev)?)".r
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val vkmUrl: String = Digiroad2Properties.vkmUrl
