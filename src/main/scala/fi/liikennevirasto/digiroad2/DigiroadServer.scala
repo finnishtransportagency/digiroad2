@@ -7,6 +7,7 @@ import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
+import org.eclipse.jetty.http.HttpHeader
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
@@ -80,7 +81,8 @@ class VKMProxyServlet extends ProxyServlet {
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
-    proxyResponse.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
+
+    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
