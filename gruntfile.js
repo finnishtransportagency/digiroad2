@@ -238,16 +238,4 @@ module.exports = function(grunt) {
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 
   grunt.registerTask('test-concat', ['concat']);
-
-  grunt.registerTask('save_deploy_info',
-    function () {
-      var options = this.options({
-        file: 'Digiroad2Properties.revision'
-      });
-
-      var data = ('Digiroad2Properties.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
-      grunt.file.write(options.file, data);
-
-    }
-  );
 };
