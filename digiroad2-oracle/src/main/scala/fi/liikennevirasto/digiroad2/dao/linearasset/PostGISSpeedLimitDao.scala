@@ -435,21 +435,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val sideCodeValue = sideCode.value
-//    println(createdDate)
-//    val createdDate2 = createdDate.get.
-//    val inputValue = "2012-08-15T22:56:02.038Z"
-//    val timestamp = Instant.parse(createdDate2)
-//    val losAngelesTime = timestamp.atZone(ZoneId.of("Europe/Helsinki"))
-//    println(losAngelesTime)
 
-//    val sourceDateTime = "2021-05-20T13:07:38.343Z"
-//    val sourceFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-//    val targetFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-//
-//    val dateTime = LocalDateTime.parse(createdDate.get.toString(), sourceFormat)
-//    val formatedDateTime = dateTime.atZone(ZoneId.of("UTC")).format(targetFormat)
-//    println(formatedDateTime)
-//    val createdDate2 = Option(formatedDateTime)
     val creationDate = createdDate match {
       case Some(datetime) => s"""TO_TIMESTAMP('${datetime}', 'YYYY-MM-DD"T"HH24:MI:SS.FF3')"""
       case None => "current_timestamp"
@@ -464,14 +450,6 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       case Some(modifier) => s"""'$modifier'"""
       case None => null
     }
-
-//    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
-//    val barDate1 = LocalDateTime.parse(createdDate.get.toString(), formatter)
-    println(creationDate)
-
-
-
-//    println(createdDate.get.toDateTime)
 
     val insertAll =
       s"""
