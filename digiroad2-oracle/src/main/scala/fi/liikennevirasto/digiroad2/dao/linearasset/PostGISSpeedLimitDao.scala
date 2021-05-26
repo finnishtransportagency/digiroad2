@@ -1,9 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import java.nio.charset.StandardCharsets
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, LocalDateTime, OffsetDateTime, OffsetTime, ZoneId, ZonedDateTime}
-import java.util.{Base64, Date, NoSuchElementException}
+import java.util.{Base64, NoSuchElementException}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
