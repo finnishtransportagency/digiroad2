@@ -115,18 +115,6 @@
             "value": "digiroad2dbuser"
           },
           {
-            "name": "authentication.basic.username",
-            "value": "kalpa"
-          },
-          {
-            "name": "authentication.serviceRoad.basic.username",
-            "value": "livi"
-          },
-          {
-            "name": "authentication.municipality.basic.username",
-            "value": "kalpa"
-          },
-          {
             "name": "tierekisteri.username",
             "value": "trrest"
           },
@@ -169,18 +157,6 @@
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
           },
           {
-            "name": "authentication.basic.password",
-            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.basic.password"
-          },
-          {
-            "name": "authentication.serviceRoad.basic.password",
-            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.serviceRoad.basic.password"
-          },
-          {
-            "name": "authentication.municipality.basic.password",
-            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.municipality.basic.password"
-          },
-          {
             "name": "tierekisteri.password",
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.password"
           },
@@ -191,10 +167,6 @@
           {
             "name": "viite.password",
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
-          },
-          {
-            "name": "oag.password",
-            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
           },
           {
             "name": "googlemapapi.client_id",
