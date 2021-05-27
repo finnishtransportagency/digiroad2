@@ -30,12 +30,6 @@ trait Digiroad2Properties {
   val bonecpJdbcUrl: String
   val bonecpUsername: String
   val bonecpPassword: String
-  val authenticationBasicUsername: String
-  val authenticationBasicPassword: String
-  val authenticationServiceRoadBasicUsername: String
-  val authenticationServiceRoadBasicPassword: String
-  val authenticationMunicipalityBasicUsername: String
-  val authenticationMunicipalityBasicPassword: String
   val revision: String
   val latestDeploy: String
   val tierekisteriUsername: String
@@ -103,12 +97,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val bonecpJdbcUrl: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_jdbcUrl", null), scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
   val bonecpUsername: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_username", null), scala.util.Properties.envOrElse("bonecp.username", null))
   val bonecpPassword: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_password", null), scala.util.Properties.envOrElse("bonecp.password", null))
-  val authenticationBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_basic_username", null), scala.util.Properties.envOrElse("authentication.basic.username", null))
-  val authenticationBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_basic_password", null), scala.util.Properties.envOrElse("authentication.basic.password", null))
-  val authenticationServiceRoadBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_serviceRoad_basic_username", null), scala.util.Properties.envOrElse("authentication.serviceRoad.basic.username", null))
-  val authenticationServiceRoadBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_serviceRoad_basic_password", null), scala.util.Properties.envOrElse("authentication.serviceRoad.basic.password", null))
-  val authenticationMunicipalityBasicUsername: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_username", null), scala.util.Properties.envOrElse("authentication.municipality.basic.username", null))
-  val authenticationMunicipalityBasicPassword: String = selectEnvType(scala.util.Properties.envOrElse("authentication_municipality_basic_password", null), scala.util.Properties.envOrElse("authentication.municipality.basic.password", null))
   val cacheDirectory: String = selectEnvType(scala.util.Properties.envOrElse("cache_directory", null), scala.util.Properties.envOrElse("cache.directory", null))
   val oagUsername: String = selectEnvType(scala.util.Properties.envOrElse("oag_username", null),scala.util.Properties.envOrElse("oag.username", null))
   val oagPassword: String =  selectEnvType(scala.util.Properties.envOrElse("oag_password", null),scala.util.Properties.envOrElse("oag.password", null))
@@ -165,12 +153,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
   override val bonecpUsername: String = envProps.getProperty("bonecp.username")
   override val bonecpPassword: String = envProps.getProperty("bonecp.password")
-  override val authenticationBasicUsername: String = envProps.getProperty("authentication.basic.username")
-  override val authenticationBasicPassword: String = envProps.getProperty("authentication.basic.password")
-  override val authenticationServiceRoadBasicUsername: String = envProps.getProperty("authentication.serviceRoad.basic.username")
-  override val authenticationServiceRoadBasicPassword: String = envProps.getProperty("authentication.serviceRoad.basic.password")
-  override val authenticationMunicipalityBasicUsername: String = envProps.getProperty("authentication.municipality.basic.username")
-  override val authenticationMunicipalityBasicPassword: String = envProps.getProperty("authentication.municipality.basic.password")
   override val revision: String = envProps.getProperty("revision")
   override val latestDeploy: String = envProps.getProperty("latestDeploy")
   override val tierekisteriUsername: String = envProps.getProperty("tierekisteri.username")
@@ -244,12 +226,6 @@ object Digiroad2Properties {
   lazy val bonecpJdbcUrl: String = properties.bonecpJdbcUrl
   lazy val bonecpUsername: String = properties.bonecpUsername
   lazy val bonecpPassword: String = properties.bonecpPassword
-  lazy val authenticationBasicUsername: String = properties.authenticationBasicUsername
-  lazy val authenticationBasicPassword: String = properties.authenticationBasicPassword
-  lazy val authenticationServiceRoadBasicUsername: String = properties.authenticationServiceRoadBasicUsername
-  lazy val authenticationServiceRoadBasicPassword: String = properties.authenticationServiceRoadBasicPassword
-  lazy val authenticationMunicipalityBasicUsername: String = properties.authenticationMunicipalityBasicUsername
-  lazy val authenticationMunicipalityBasicPassword: String = properties.authenticationMunicipalityBasicPassword
   lazy val revision: String = properties.revision
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val tierekisteriUsername: String = properties.tierekisteriUsername
