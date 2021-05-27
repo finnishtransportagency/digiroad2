@@ -59,6 +59,7 @@ class OAGProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val url = Digiroad2Properties.rasterServiceUrl +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
+    logger.info(url)
     java.net.URI.create(url)
   }
 
