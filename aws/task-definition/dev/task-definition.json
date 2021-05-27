@@ -64,7 +64,7 @@
           },
           {
             "name": "vkmUrl",
-            "value": "http://oag.vayla.fi"
+            "value": "http://testioag.vayla.fi"
           },
           {
             "name": "tierekisteriRestApiEndPoint",
