@@ -160,7 +160,7 @@
           },
           {
             "name": "rasterServiceUrl",
-            "value": "http://oag.vayla.fi/rasteripalvelu-mml"
+            "value": "http://testioag.vayla.fi/rasteripalvelu-mml"
           }
         ],
         "secrets": [
