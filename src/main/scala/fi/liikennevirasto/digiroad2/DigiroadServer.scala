@@ -54,7 +54,8 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad(-dev)?)/(maasto)/(wmts)".r
+  def regex = "(/(digiroad(-dev)?))?/(maasto)/(wmts)".r
+  private val oagAuth = new OAGAuthPropertyReader
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
@@ -64,6 +65,7 @@ class OAGProxyServlet extends ProxyServlet {
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
