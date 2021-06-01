@@ -54,15 +54,18 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad(-dev)?)/(maasto)/(wmts)".r
+  def regex = "(/(digiroad(-dev)?))?/(maasto)/(wmts)".r
+  private val oagAuth = new OAGAuthPropertyReader
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val url = Digiroad2Properties.rasterServiceUrl +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
+    logger.info(url)
     java.net.URI.create(url)
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
@@ -70,9 +73,11 @@ class OAGProxyServlet extends ProxyServlet {
 class VKMProxyServlet extends ProxyServlet {
   def regex = "/(digiroad(-dev)?)".r
   private val oagAuth = new OAGAuthPropertyReader
+  private val logger = LoggerFactory.getLogger(getClass)
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val vkmUrl: String = Digiroad2Properties.vkmUrl
+    logger.info(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
     java.net.URI.create(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
   }
 
