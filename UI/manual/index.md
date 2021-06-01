@@ -8,7 +8,7 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erot
 1. Miten p&auml;&auml;sen alkuun?
 -----------------------
 
-1. Testi Digiroadiin k&auml;yv&auml;t olemassa olevat Väyläviraston tunnukset. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-palvelusta: info@digiroad.fi tai 040-507 2301.
+1. Digiroadiin k&auml;yv&auml;t olemassa olevat Väyläviraston tunnukset. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-palvelusta: info@digiroad.fi tai 040-507 2301.
 
 1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
 
@@ -38,7 +38,7 @@ p. 040-507 2301
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
 
-1.2 Usein kysytyt kysymykset (UKK) ja ongelmatilanteet
+1.2 Usein kysytyt kysymykset (UKK) ja tunnetut ongelmatilanteet
 ------------------------------------------------
 
 Digiroad -sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set <a href=http://www.digiroad.fi/yllapito/fi_FI/pysakkiohjeet/  target="_blank">t&auml;&auml;lt&auml;. </a>
