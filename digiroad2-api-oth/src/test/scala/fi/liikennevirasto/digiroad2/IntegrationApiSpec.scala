@@ -30,63 +30,9 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   private val integrationApi = new IntegrationApi(mockMassTransitStopService, new OthSwagger)
   addServlet(integrationApi, "/*")
 
-  def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
-    val credentials = username + ":" + password
-    val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials
-    get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
-  }
-
   test("Should require correct authentication", Tag("db")) {
     get("/mass_transit_stops") {
       status should equal(401)
-    }
-    getWithBasicUserAuth("/mass_transit_stops", "nonexisting", "incorrect") {
-      status should equal(401)
-    }
-  }
-
-  test("Get assets requires municipality number") {
-    getWithBasicUserAuth("/mass_transit_stops", "kalpa", "kalpa") {
-      status should equal(400)
-    }
-    getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
-      status should equal(200)
-    }
-  }
-
-  test("Get speed_limits requires municipality number") {
-    getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
-      status should equal(400)
-    }
-    getWithBasicUserAuth("/speed_limits?municipality=588", "kalpa", "kalpa") {
-      status should equal(200)
-    }
-  }
-
-  // run manually if required, will take a long time or will not work reliably on CI
-  ignore("Should use cached data on second search") {
-    var result = ""
-    var timing = 0L
-    val startTimeMs = System.currentTimeMillis
-    getWithBasicUserAuth("/road_link_properties?municipality=235", "kalpa", "kalpa") {
-      status should equal(200)
-      result = body
-      timing =  System.currentTimeMillis - startTimeMs
-    }
-    // Second request should use cache and be less than half of the time spent (in dev testing, approx 2/5ths)
-    getWithBasicUserAuth("/road_link_properties?municipality=235", "kalpa", "kalpa") {
-      status should equal(200)
-      body should equal(result)
-      val elapsed = System.currentTimeMillis - startTimeMs - timing
-      elapsed shouldBe < (timing / 2)
-    }
-  }
-
-  test("Returns mml id of the road link that the stop refers to") {
-    getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
-      val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
-      linkIds should be(Seq(123L, 321L))
     }
   }
 

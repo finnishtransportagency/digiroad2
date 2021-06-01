@@ -25,26 +25,9 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
    addServlet(serviceRoadAPI, "/*")
 
-  def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
-    val credentials = username + ":" + password
-    val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials
-    get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
-  }
-
   test("Should require correct authentication", Tag("db")) {
     get("/huoltotiet") {
       status should equal(401)
-    }
-
-    getWithBasicUserAuth("/huoltotiet", "nonexisting", "incorrect") {
-      status should equal(401)
-    }
-  }
-
-  test("Get all existing active assets by poligon in database") {
-    getWithBasicUserAuth("/huoltotiet/12345", "kalpa", "kalpa") {
-      status should equal(200)
     }
   }
 
