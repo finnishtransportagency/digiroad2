@@ -263,14 +263,6 @@ Resources:
             Value: true
           - Name: tierekisteriRestApiEndPoint
             Value: http://localhost:8080/api/tierekisteri/
-          - Name: authentication_serviceRoad_basic_username
-            Value: kalpa
-          - Name: authentication_serviceRoad_basic_password
-            Value: kalpa
-          - Name: authentication_municipality_basic_username
-            Value: kalpa
-          - Name: authentication_municipality_basic_password
-            Value: kalpa
           - Name: bonecp_password
             Value: "/test/bonecp.password"
             Type: PARAMETER_STORE
