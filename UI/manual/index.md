@@ -1,14 +1,14 @@
 Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;ohje
 ======================================================
 
-__Huom! Suosittelemme Firefoxia tai Chromea, kun sovelluksella yll&auml;pidet&auml;&auml;n Digiroad-tietoja.__
+__Huom! Suosittelemme Firefox- tai Chrome-selainten käyttöä, kun sovelluksella yll&auml;pidet&auml;&auml;n Digiroad-tietoja.__
 
 __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
 
 1. Miten p&auml;&auml;sen alkuun?
 -----------------------
 
-1. Digiroadiin k&auml;yv&auml;t olemassa olevat Väyläviraston tunnukset. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-palvelusta: info@digiroad.fi tai 040-507 2301.
+1. Digiroad-sovellukseen kirjaudutaan voimassa olevilla Väyläviraston tunnuksilla. Mik&auml;li tunnuksia ei vielä ole, voi ne tilata Digiroad-operaattorilta sähköpostitse osoitteesta info@digiroad.fi.
 
 1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
 
@@ -18,15 +18,15 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erot
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
 - Ilman Digiroad-oikeuksia Väyläviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia aineistoja.
-- Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin kaikkiin aineistoihin.
+- Sovelluksen käyttäjällä on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin kaikkiin aineistoihin.
 - Digiroad-operaattorilla on oikeudet koko Suomen kaikkiin aineistoihin.
 
-Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
+Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301.
 
 1.1 Mist&auml; saan opastusta?
 --------------------------
 
-Digiroad-palvelusta saa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Palvelu auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Palvelussa vastataan puhelimeen ja s&auml;hk&ouml;posteihin arkip&auml;ivin&auml; klo 9-16.
+Digiroad-operaattori antaa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Operaattori auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Asiakaspalveluun voi olla yhteydessä sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301 arkipäivisin klo 9-16.
 
 Yhteystiedot:
 
