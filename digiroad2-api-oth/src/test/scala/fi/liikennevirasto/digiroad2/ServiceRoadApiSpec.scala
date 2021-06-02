@@ -29,6 +29,15 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     get("/huoltotiet") {
       status should equal(401)
     }
+    get("/huoltotiet") {
+      status should equal(401)
+    }
+  }
+
+  test("Get all existing active assets by poligon in database") {
+    get("/huoltotiet/12345") {
+      status should equal(200)
+    }
   }
 
 }

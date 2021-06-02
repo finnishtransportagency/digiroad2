@@ -34,6 +34,53 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     get("/mass_transit_stops") {
       status should equal(401)
     }
+    get("/mass_transit_stops") {
+      status should equal(401)
+    }
+  }
+
+  test("Get assets requires municipality number") {
+    get("/mass_transit_stops") {
+      status should equal(400)
+    }
+    get("/mass_transit_stops?municipality=235") {
+      status should equal(200)
+    }
+  }
+
+  test("Get speed_limits requires municipality number") {
+    get("/speed_limits") {
+      status should equal(400)
+    }
+    get("/speed_limits?municipality=588") {
+      status should equal(200)
+    }
+  }
+
+  // run manually if required, will take a long time or will not work reliably on CI
+  ignore("Should use cached data on second search") {
+    var result = ""
+    var timing = 0L
+    val startTimeMs = System.currentTimeMillis
+    get("/road_link_properties?municipality=235") {
+      status should equal(200)
+      result = body
+      timing =  System.currentTimeMillis - startTimeMs
+    }
+    // Second request should use cache and be less than half of the time spent (in dev testing, approx 2/5ths)
+    get("/road_link_properties?municipality=235") {
+      status should equal(200)
+      body should equal(result)
+      val elapsed = System.currentTimeMillis - startTimeMs - timing
+      elapsed shouldBe < (timing / 2)
+    }
+  }
+
+  test("Returns mml id of the road link that the stop refers to") {
+    get("/mass_transit_stops?municipality=235") {
+      val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
+      linkIds should be(Seq(123L, 321L))
+    }
   }
 
   test("encode speed limit") {

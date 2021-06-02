@@ -26,7 +26,7 @@ class MunicipalityApiRequestSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("invalid json throws internal server error"){
     val payLoad = """[{"dattasettid": "apispecId", "geojson": {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"LineString","coordinates":[[10,10],[50,50]]},"properties":{"id":"apispecId","name":"Teststreet","type":"Roadlink","sideCode":1,"speedLimit":"50","pavementClass":"1","functionalClass":"Katu"}}]}, "matchedRoadlinks": [[999999], [999999]]}]"""
-    putJsonWithUserAuth("/" + "assetUpdateFromAWS", payLoad.getBytes) {
+    put("/" + "assetUpdateFromAWS", payLoad.getBytes) {
         status should equal(500)
     }
   }
