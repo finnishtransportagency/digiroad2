@@ -25,15 +25,6 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
    addServlet(serviceRoadAPI, "/*")
 
-  test("Should require correct authentication", Tag("db")) {
-    get("/huoltotiet") {
-      status should equal(401)
-    }
-    get("/huoltotiet") {
-      status should equal(401)
-    }
-  }
-
   test("Get all existing active assets by poligon in database") {
     get("/huoltotiet/12345") {
       status should equal(200)

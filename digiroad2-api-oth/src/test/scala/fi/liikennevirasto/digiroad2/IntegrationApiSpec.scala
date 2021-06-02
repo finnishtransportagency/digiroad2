@@ -30,15 +30,6 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   private val integrationApi = new IntegrationApi(mockMassTransitStopService, new OthSwagger)
   addServlet(integrationApi, "/*")
 
-  test("Should require correct authentication", Tag("db")) {
-    get("/mass_transit_stops") {
-      status should equal(401)
-    }
-    get("/mass_transit_stops") {
-      status should equal(401)
-    }
-  }
-
   test("Get assets requires municipality number") {
     get("/mass_transit_stops") {
       status should equal(400)
