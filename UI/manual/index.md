@@ -1,7 +1,7 @@
 Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;ohje
 ======================================================
 
-__Huom! Suosittelemme, että Digiroad-sovellusta käytetään Firefox- tai Chrome-selaimella.
+__Huom! Suosittelemme, että Digiroad-sovellusta käytetään Firefox- tai Chrome-selaimella.__
 
 __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata suuremmaksi, jolloin tekstit erottuvat paremmin.__
 
