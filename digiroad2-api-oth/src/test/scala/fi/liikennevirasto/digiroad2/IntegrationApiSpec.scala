@@ -30,36 +30,20 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   private val integrationApi = new IntegrationApi(mockMassTransitStopService, new OthSwagger)
   addServlet(integrationApi, "/*")
 
-  def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
-    val credentials = username + ":" + password
-    val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials
-    get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
-  }
-
-  test("Should require correct authentication", Tag("db")) {
-    get("/mass_transit_stops") {
-      status should equal(401)
-    }
-    getWithBasicUserAuth("/mass_transit_stops", "nonexisting", "incorrect") {
-      status should equal(401)
-    }
-  }
-
   test("Get assets requires municipality number") {
-    getWithBasicUserAuth("/mass_transit_stops", "kalpa", "kalpa") {
+    get("/mass_transit_stops") {
       status should equal(400)
     }
-    getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
+    get("/mass_transit_stops?municipality=235") {
       status should equal(200)
     }
   }
 
   test("Get speed_limits requires municipality number") {
-    getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
+    get("/speed_limits") {
       status should equal(400)
     }
-    getWithBasicUserAuth("/speed_limits?municipality=588", "kalpa", "kalpa") {
+    get("/speed_limits?municipality=588") {
       status should equal(200)
     }
   }
@@ -69,13 +53,13 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     var result = ""
     var timing = 0L
     val startTimeMs = System.currentTimeMillis
-    getWithBasicUserAuth("/road_link_properties?municipality=235", "kalpa", "kalpa") {
+    get("/road_link_properties?municipality=235") {
       status should equal(200)
       result = body
       timing =  System.currentTimeMillis - startTimeMs
     }
     // Second request should use cache and be less than half of the time spent (in dev testing, approx 2/5ths)
-    getWithBasicUserAuth("/road_link_properties?municipality=235", "kalpa", "kalpa") {
+    get("/road_link_properties?municipality=235") {
       status should equal(200)
       body should equal(result)
       val elapsed = System.currentTimeMillis - startTimeMs - timing
@@ -84,7 +68,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("Returns mml id of the road link that the stop refers to") {
-    getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
+    get("/mass_transit_stops?municipality=235") {
       val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
       linkIds should be(Seq(123L, 321L))
     }

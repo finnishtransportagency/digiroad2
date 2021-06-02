@@ -20,16 +20,12 @@ import org.slf4j.LoggerFactory
 
 import scala.util.Try
 
-class IntegrationApi(val massTransitStopService: MassTransitStopService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
+class IntegrationApi(val massTransitStopService: MassTransitStopService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   val logger = LoggerFactory.getLogger(getClass)
   protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-
-  before() {
-    basicAuth
-  }
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->

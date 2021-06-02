@@ -62,10 +62,8 @@ class MunicipalityApi(val vvhClient: VVHClient,
                       val pavedRoadService: PavedRoadService,
                       val obstacleService: ObstacleService,
                       implicit val swagger: Swagger
-                     ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
+                     ) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
 
-  override def baseAuth: String = "municipality."
-  override val realm: String = "Municipality API"
   protected val applicationDescription = "Municipality API "
 
   case object GeometrySerializer extends CustomSerializer[Geometry](format =>
@@ -118,10 +116,6 @@ class MunicipalityApi(val vvhClient: VVHClient,
       }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + DatasetSerializer + FeatureCollectionSerializer + FeatureSerializer + GeometrySerializer
-
-  before() {
-    basicAuth
-  }
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
