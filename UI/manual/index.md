@@ -67,7 +67,7 @@ _Karttak&auml;ytt&ouml;liittym&auml;n katselutila._
 
 Mik&auml;li karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei k&auml;ytt&auml;j&auml;ll&auml; ole oikeuksia Digiroad-sovellukseen. Digiroad-oikeuksia voi pyyt&auml;&auml; Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
-2. Yleist&auml;
+2 Yleist&auml;
 ----------
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lkeen ruudulle avautuu oletuksena katselutila. Jos käyttäjälle ei ole myönnetty muokkausoikeuksia kunnan tai Ely-keskuksen alueelle, voi hän ainoastaan katsella Digiroadin eri tietolajeja sovelluksessa. Muokkausoikeudet saatuaan käyttäjä voi sekä katsella että muokata eri tietolajeja. Muokkausoikeudet myönnetään käyttäjälle aina alueellisesti yhden tai useamman kunnan tai Ely-keskuksen rajojen sisäpuolella oleviin aineistoihin.
@@ -128,7 +128,7 @@ Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jo
 
 _Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot._
 
-3. Tielinkki
+3 Tielinkki
 ------------
 
 Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttan&auml;kym&auml;&auml;n valitaan tielinkit valitsemalla tietolajit-paletista Tielinkit.
