@@ -133,7 +133,7 @@ _Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot._
 
 Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttan&auml;kym&auml;&auml;n valitaan tielinkit valitsemalla tietolajit-paletista Tielinkit.
 
-![Tielinkit](k38.JPG)
+![Tielinkit](Manuaali7.png)
 
 _Tielinkit._
 
