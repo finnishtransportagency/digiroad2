@@ -8,7 +8,7 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata suuremmaksi, jolloin tekstit er
 1. Miten p&auml;&auml;sen alkuun?
 -----------------------
 
-1. Digiroad-sovellukseen kirjaudutaan voimassa olevilla Väyläviraston tunnuksilla. Mik&auml;li tunnuksia ei vielä ole, voi ne tilata Digiroad-operaattorilta sähköpostitse osoitteesta info@digiroad.fi.
+1. Digiroad-sovellukseen kirjaudutaan voimassa olevilla Väyläviraston tunnuksilla. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-operaattorilta sähköpostitse osoitteesta info@digiroad.fi.
 
 1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
 
@@ -26,7 +26,7 @@ Jos karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirj
 1.1 Mist&auml; saan opastusta?
 --------------------------
 
-Digiroad-operaattori antaa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Operaattori auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Asiakaspalveluun voi olla yhteydessä sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301 arkipäivisin klo 9-16.
+Digiroad-operaattorilta saa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Operaattori auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Asiakaspalveluun voi olla yhteydessä sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301 arkipäivisin klo 9-16.
 
 Yhteystiedot:
 
@@ -45,15 +45,15 @@ Digiroad-sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroa
 
 ####Ongelmatilanteet####
 
-Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu oikein) toimi seuraavasti:
+Sovelluksen toimiessa virheellisesti tee näin:
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
 - Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-operaattoriin sähköpostitse info@digiroad.fi 
+- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-operaattoriin sähköpostitse info@digiroad.fi tai soittamalla numeroon 040 507 2301
 
 ####Kirjautuminen Digiroad-sovellukseen####
 
-Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.vayla.fi/digiroad/  target="_blank">https://extranet.vayla.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-palvelusta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.vayla.fi/digiroad/  target="_blank">https://extranet.vayla.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
 ![Kirjautuminen Digiroadiin.](k2.PNG)
 
@@ -65,20 +65,20 @@ Kirjautumisen j&auml;lkeen avautuu Digiroad-selainsovelluksen karttak&auml;ytt&o
 
 _Karttak&auml;ytt&ouml;liittym&auml;n katselutila._
 
-Mik&auml;li karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu kirjautumisen jälkeen, ei k&auml;ytt&auml;j&auml;ll&auml; ole oikeuksia Digiroad-sovellukseen. Digiroad-oikeuksia voi pyyt&auml;&auml; Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Mik&auml;li karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei k&auml;ytt&auml;j&auml;ll&auml; ole oikeuksia Digiroad-sovellukseen. Digiroad-oikeuksia voi pyyt&auml;&auml; Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
 2. Yleist&auml;
 ----------
 
-Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lkeen ruudulle avautuu katselutila. Jos käyttäjälle ei ole myönnetty muokkausoikeuksia kunnan tai Ely-keskuksen alueelle, voi hän ainoastaan katsella Digiroadin eri tietolajeja sovelluksessa. Muokkausoikeudet saatuaan käyttäjä voi sekä katsella että muokata eri tietolajeja. Muokkausoikeudet myönnetään käyttäjälle aina alueellisesti yhden tai useamman kunnan tai Ely-keskuksen rajojen sisäpuolella oleviin aineistoihin.
+Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lkeen ruudulle avautuu oletuksena katselutila. Jos käyttäjälle ei ole myönnetty muokkausoikeuksia kunnan tai Ely-keskuksen alueelle, voi hän ainoastaan katsella Digiroadin eri tietolajeja sovelluksessa. Muokkausoikeudet saatuaan käyttäjä voi sekä katsella että muokata eri tietolajeja. Muokkausoikeudet myönnetään käyttäjälle aina alueellisesti yhden tai useamman kunnan tai Ely-keskuksen rajojen sisäpuolella oleviin aineistoihin.
 
-Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan ruudun vasemman yl&auml;kulman tietolajivalikosta (1).
+Tietolajien muokkaus suoritetaan muokkaustilassa, jolloin käyttäjä pääsee muokkaamaan niitä tietoja, joihin hänelle on myönnetty ylläpito-oikeudet. (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan ruudun vasemman yl&auml;kulman tietolajivalikosta (1).
 
 ![Tietolajivalikko](Manuaali3.1.PNG)
 
 _Tietolajivalikko._
 
-Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta. Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa. Kuntak&auml;ytt&auml;jien tulee kohdistaa muutokset katuverkolle, ELY-k&auml;ytt&auml;jien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (3). Muutosten tallentamisen j&auml;lkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan k&auml;ytt&auml;j&auml;tunnus, p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika (4). Ennen tallentamista voi tehdyt muutokset peruuttaa painamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisia, kun muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-ilmoituksen, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (5).
+Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta. Muokkaustilassa kartan yläosassa on teksti "Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (3). Muutosten tallentamisen jälkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan käyttäjätunnus, päivämäärä ja kellonaika (4). Ennen tallentamista voi tehdyt muutokset peruuttaa painamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eivät ole aktiivisia, kun muutoksia ei ole tehty. Tehdyt muutokset tulee tallentaa tai perua ennen, kun sovellus antaa siirtyä muokkaamaan uutta kohdetta. Takaisin katselutilaan pääsee klikkaamalla "Siirry katselutilaan"-painiketta (5).
 
 Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
