@@ -115,7 +115,7 @@ Merkitse-painike (10) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki p
 
 Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (9)
 
-![Karttan&auml;kym&auml;n muokkaus](Manual5.png)
+![Karttan&auml;kym&auml;n muokkaus](Manuaali5.png)
 
 _Karttan&auml;kym&auml;n muokkaus._
 
