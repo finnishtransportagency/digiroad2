@@ -19,5 +19,3 @@ COPY aws/fargate/startup.sh /startup.sh
 RUN sed -i 's/\r$//' /startup.sh  && chmod +x /startup.sh
 EXPOSE 8080/tcp
 ENTRYPOINT ["./startup.sh"]
-
-#docker run --env-file aws/fargate/.env digiroad2:latest
