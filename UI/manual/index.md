@@ -74,7 +74,7 @@ Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lke
 
 Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan ruudun vasemman yl&auml;kulman tietolajivalikosta (1).
 
-![Tietolajivalikko](k120.jpg)
+![Tietolajivalikko](Manuaali3.PNG)
 
 _Tietolajivalikko._
 
