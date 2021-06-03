@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! [ $batchenv = "true" ]
+if ! [ $batchEnv = "true" ]
   then
     echo "Server mode"
     java $javaParameter -jar /digiroad2.jar
