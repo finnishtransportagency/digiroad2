@@ -91,7 +91,7 @@ _Muokkaustila._
 
 ####Kartan liikutus####
 
-Karttaa liikutetaan raahaamalla.
+Karttaa liikutetaan hiirellä raahaamalla.
 
 ####Mittakaavataso####
 
