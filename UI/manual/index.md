@@ -78,11 +78,11 @@ Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv
 
 _Tietolajivalikko._
 
-Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta. Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa. Kuntak&auml;ytt&auml;jien tulee kohdistaa muutokset katuverkolle, ELY-k&auml;ytt&auml;jien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (3). Muutosten tallentamisen j&auml;lkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan k&auml;ytt&auml;j&auml;tunnus, p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika (5). Ennen tallentamista voi tehdyt muutokset peruuttaa painamalla Peruuta-painiketta (4). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisia, kun muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-ilmoituksen, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (6).
+Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta. Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa. Kuntak&auml;ytt&auml;jien tulee kohdistaa muutokset katuverkolle, ELY-k&auml;ytt&auml;jien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (3). Muutosten tallentamisen j&auml;lkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan k&auml;ytt&auml;j&auml;tunnus, p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika (4). Ennen tallentamista voi tehdyt muutokset peruuttaa painamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisia, kun muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-ilmoituksen, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (5).
 
 Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
-![Muokkaustila](k1.jpg)
+![Muokkaustila](Manuaali4.1.PNG)
 
 _Muokkaustila._
 
