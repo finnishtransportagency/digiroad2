@@ -82,7 +82,7 @@ Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaust
 
 Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
-![Muokkaustila](Manuaali4.png)
+![Muokkaustila](Manuaali4.PNG)
 
 _Muokkaustila._
 
