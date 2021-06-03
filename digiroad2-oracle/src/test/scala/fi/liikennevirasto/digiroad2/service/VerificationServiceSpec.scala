@@ -1,11 +1,10 @@
 package fi.liikennevirasto.digiroad2.service
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences, VerificationDao}
+import fi.liikennevirasto.digiroad2.dao.{Sequences, VerificationDao}
 import fi.liikennevirasto.digiroad2.linearasset.TinyRoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -18,18 +17,13 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val verificationDao = new VerificationDao
 
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-    new BoneCPDataSource(cfg)
-  }
-
   object ServiceWithDao extends VerificationService(mockEventBus, mockRoadLinkService){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
     override def dao: VerificationDao = new VerificationDao
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
 
   test("get last linear asset modification") {

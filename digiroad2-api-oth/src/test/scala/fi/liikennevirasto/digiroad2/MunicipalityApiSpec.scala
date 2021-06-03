@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
@@ -10,7 +9,6 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import javax.sql.DataSource
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
@@ -47,12 +45,6 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   val obstacleService = new ObstacleService(mockRoadLinkService)
   val speedLimitService = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
   val pavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
-
-
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-    new BoneCPDataSource(cfg)
-  }
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 

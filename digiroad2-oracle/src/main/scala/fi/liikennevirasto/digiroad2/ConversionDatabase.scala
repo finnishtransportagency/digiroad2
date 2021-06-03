@@ -1,12 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import slick.jdbc.{GetResult, PositionedResult}
-
 import scala.collection.mutable.ListBuffer
 
 object ConversionDatabase {
@@ -31,10 +27,5 @@ object ConversionDatabase {
         listOfPoint.toList
       }
     }
-  }
-
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-    new BoneCPDataSource(cfg)
   }
 }

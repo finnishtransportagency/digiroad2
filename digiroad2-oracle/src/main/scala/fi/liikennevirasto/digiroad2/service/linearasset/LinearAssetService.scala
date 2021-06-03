@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
@@ -58,10 +57,6 @@ trait LinearAssetOperations {
   def assetDao: PostGISAssetDao
   def assetFiller: AssetFiller = new AssetFiller
 
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(Digiroad2Properties.bonecpProperties)
-    new BoneCPDataSource(cfg)
-  }
 
   val logger = LoggerFactory.getLogger(getClass)
   val verifiableAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
