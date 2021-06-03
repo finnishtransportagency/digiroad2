@@ -5,8 +5,8 @@ __Huom! Suosittelemme, että Digiroad-sovellusta käytetään Firefox- tai Chrom
 
 __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata suuremmaksi, jolloin tekstit erottuvat paremmin.__
 
-**1. Miten p&auml;&auml;sen alkuun?
------------------------**
+1 Miten pääsen alkuun
+--------------------------
 
 1. Digiroad-sovellukseen kirjaudutaan voimassa olevilla Väyläviraston tunnuksilla. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-operaattorilta sähköpostitse osoitteesta info@digiroad.fi.
 
