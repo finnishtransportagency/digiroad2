@@ -32,9 +32,7 @@ Yhteystiedot:
 
 Digiroad-operaattori:
 info@digiroad.fi
-
 040 507 2301
-
  <a href=http://www.digiroad.fi/ target="_blank">http://www.digiroad.fi/ </a>
 
 Pys&auml;kkeihin liittyv&auml;t asiat:
