@@ -157,13 +157,13 @@ Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tiel
 - tielinkin tyyppi
 - tieto tasosijainnista eli silta, alikulku tai tunneli
 - kuntanumero
-- tien nimi (suomi, ruotsi, saame)
+- tiennimi (suomi, ruotsi, saame)
 - tien numero
 - tieosanumero
 - osoitenumerot vasemmalla ja oikealla (ensimm&auml;inen ja viimeinen numero)
 - Maanmittauslaitoksen ID (MML ID)
 
-Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tiennumero (maantiet) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
+Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tienumero (maantiet) tai tiennimi (katuverkko ja yksityistie). Jos käyttöliittymässä haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
 
 Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartalla. Sivun oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Jos tielinkkiketju jatkuu kuntarajan yli, tiennumerolla on useita tien nimi&auml; tai useita tieosanumeroita, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustieton&auml;kym&auml;&auml;n.
 
