@@ -2492,24 +2492,12 @@ object DataFixture {
   }
 
   def main(args:Array[String]) : Unit = {
-    import scala.util.control.Breaks._
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
-      breakable {
-        while (true) {
-          // Get build id to check if executing in aws CodeBuild environment.
-          val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
-          awsBuildId match {
-            case null =>
-              println("*************************************************************************************")
-              println("TURN ENV batchMode true TO RUN FIXTURE RESET")
-              println("*************************************************************************************")
-              exit()
-            case _ =>
-              break()
-          }
-        }
-      }
+        println("*************************************************************************************")
+        println("TURN ENV batchMode true TO RUN FIXTURE RESET")
+        println("*************************************************************************************")
+        exit()
     } else
       println("")
 
