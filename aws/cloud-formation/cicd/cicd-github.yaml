@@ -284,6 +284,8 @@ Resources:
             Value: svc_clouddigiroad
           - Name: oag_password
             Value: svc_clouddigiroad
+          - Name: batchMode
+            Value: true
 
       Artifacts:
         Name: !Ref ApplicationName
