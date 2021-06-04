@@ -169,7 +169,7 @@ Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartal
 
 Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai tunneli -tiedot n&auml;y ominaisuustieton&auml;kym&auml;ss&auml;. Jos k&auml;ytt&auml;j&auml; haluaa tarkastella n&auml;it&auml; tietoja, tulee tielinkki valita yksitt&auml;in tuplaklikkaamalla.
 
-![Tielinkkiketju](k54.jpg)
+![Tielinkkiketju](Manuaali8.png)
 
 _Tielinkkiketjun valinta (klikattu kerran)._
 
