@@ -49,6 +49,7 @@ trait Digiroad2Properties {
   val googleMapApiCryptoKey: String
   val rasterServiceUrl: String
   val bonecpProperties: Properties
+  val batchMode:Boolean
 }
 
 class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
@@ -81,6 +82,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
+  val batchMode: Boolean = scala.util.Properties.envOrElse("batchMode", "false").toBoolean
 
   // Get build id to check if executing in aws CodeBuild environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
@@ -171,6 +173,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val googleMapApiClientId: String = envProps.getProperty("googlemapapi.client_id")
   override val googleMapApiCryptoKey: String = envProps.getProperty("googlemapapi.crypto_key")
   override val rasterServiceUrl: String = envProps.getProperty("rasterServiceUrl")
+  override val batchMode: Boolean =  envProps.getProperty("batchMode", "false").toBoolean
 
   override lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -244,6 +247,7 @@ object Digiroad2Properties {
   lazy val googleMapApiClientId: String = properties.googleMapApiClientId
   lazy val googleMapApiCryptoKey: String = properties.googleMapApiCryptoKey
   lazy val rasterServiceUrl: String = properties.rasterServiceUrl
+  lazy val batchMode: Boolean = properties.batchMode
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties
 }
