@@ -6,8 +6,17 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+import scala.sys.exit
+
 object UpdateIncompleteLinkList {
   def main(args:Array[String]) : Unit = {
+    val batchMode = Digiroad2Properties.batchMode
+    if (!batchMode) {
+      println("*******************************************************************************************")
+      println("TURN ENV batchMode true TO RUN UpdateIncompleteLinkList")
+      println("*******************************************************************************************")
+      exit()
+    }
     try {
       UpdateIncompleteLinkList.runUpdate()
     } finally {

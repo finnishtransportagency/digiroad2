@@ -6,7 +6,6 @@ import java.sql.SQLIntegrityConstraintViolationException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.{Date, NoSuchElementException, Properties}
-
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
@@ -35,6 +34,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 import scala.collection.mutable.ListBuffer
+import scala.sys.exit
 
 
 object DataFixture {
@@ -2493,16 +2493,20 @@ object DataFixture {
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
-    val username = Digiroad2Properties.bonecpUsername
-    if (!username.startsWith("digiroad2")) {
+    val batchMode = Digiroad2Properties.batchMode
+    if (!batchMode) {
       println("*************************************************************************************")
-      println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("TURN ENV batchMode true TO RUN FIXTURE RESET")
       println("*************************************************************************************")
       breakable {
         while (true) {
-          val input = Console.readLine()
-          if (input.trim() == "YES") {
-            break()
+          // Get build id to check if executing in aws CodeBuild environment.
+          val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
+          awsBuildId match {
+            case _ =>
+              break()
+            case null =>
+              exit()
           }
         }
       }
