@@ -362,7 +362,7 @@ object TierekisteriDataImporter {
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = Digiroad2Properties.bonecpUsername
-    if (!username.startsWith("dr2dev")) {
+    if (!username.startsWith("digiroad2")) {
       println("*******************************************************************************************")
       println("YOU ARE RUNNING TIEREKISTERI IMPORT AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
       println("*******************************************************************************************")
