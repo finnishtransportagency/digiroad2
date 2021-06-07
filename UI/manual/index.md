@@ -173,7 +173,7 @@ Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai
 
 _Tielinkkiketjun valinta (klikattu kerran)._
 
-![Yksitt&auml;isen tielinkin valinta](Manuaali9.PNG)
+![Yksitt&auml;isen tielinkin valinta](Manuaali9.png)
 
 _Yksitt&auml;isen tielinkin valinta (tuplaklikkaus)._
 
