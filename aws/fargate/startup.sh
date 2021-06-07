@@ -15,16 +15,16 @@ if ! [ "$batchMode" = "true" ]; then
         elif [ "$batchRunType" = "DataFixture" ] &&  [[ ! -z "$trafficSignGroup" ]]; then
 
           echo "DataFixture with trafficSignGroup"
-           if  [[ ! -z "$batcAction" ]]; then
-            java "$javaParameter" -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.DataFixture "$batcAction" "$trafficSignGroup"
+           if  [[ ! -z "$batchAction" ]]; then
+            java "$javaParameter" -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.DataFixture "$batchAction" "$trafficSignGroup"
           else
            echo "batcAction env is not defined"
           fi
         elif [ "$batchRunType" = "DataFixture" ]; then
 
           echo "DataFixture"
-          if [[ ! -z "$batcAction" ]]; then
-             java "$javaParameter" -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.DataFixture "$batcAction"
+          if [[ ! -z "$batchAction" ]]; then
+             java "$javaParameter" -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.DataFixture "$batchAction"
           else
            echo "batcAction env is not defined"
           fi
