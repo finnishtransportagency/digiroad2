@@ -126,7 +126,7 @@ Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jo
 
 ![Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot.](Manuaali6.PNG)
 
-_Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot._
+_Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot, jotka visualisoituvat vaaleansinisinä ohuempina viivoina kartalle._
 
 3 Tielinkki
 ------------
