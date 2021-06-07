@@ -155,17 +155,17 @@ Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tiel
 - toiminnallinen luokka
 - liikennevirran suunta
 - tielinkin tyyppi
-- tieto tasosijainnista eli silta, alikulku tai tunneli
+- tieto tasosijainnista eli onko kyseessä silta, alikulku tai tunneli
 - kuntanumero
 - tiennimi (suomi, ruotsi, saame)
-- tien numero
+- tienumero
 - tieosanumero
 - osoitenumerot vasemmalla ja oikealla (ensimm&auml;inen ja viimeinen numero)
 - Maanmittauslaitoksen ID (MML ID)
 
 Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tienumero (maantiet) tai tiennimi (katuverkko ja yksityistie). Jos käyttöliittymässä haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
 
-Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartalla. Sivun oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Jos tielinkkiketju jatkuu kuntarajan yli, tiennumerolla on useita tiennimi&auml; tai useita tieosanumeroita, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustieton&auml;kym&auml;&auml;n.
+Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartalla. Sivun oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Jos tielinkkiketju jatkuu kuntarajan yli, tienumerolla on useita tiennimi&auml; tai useita tieosanumeroita, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustieton&auml;kym&auml;&auml;n.
 
 Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai tunneli -tiedot n&auml;y ominaisuustieton&auml;kym&auml;ss&auml;. Jos k&auml;ytt&auml;j&auml; haluaa tarkastella n&auml;it&auml; tietoja, tulee tielinkki valita yksitt&auml;in tuplaklikkaamalla.
 
@@ -173,7 +173,7 @@ Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai
 
 _Tielinkkiketjun valinta (klikattu kerran)._
 
-![Yksitt&auml;isen tielinkin valinta](k55.jpg)
+![Yksitt&auml;isen tielinkin valinta](Manuaali9.PNG)
 
 _Yksitt&auml;isen tielinkin valinta (tuplaklikkaus)._
 
