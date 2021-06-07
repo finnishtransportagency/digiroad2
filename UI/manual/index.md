@@ -190,19 +190,19 @@ Luokka 6: Muu yksityistie
 Luokka 7: Ajopolku
 Luokka 8: Kävelyn ja pyöräilyn väylä
 
-![Tielinkit visualisoitu toiminnallisen luokan mukaan](Manuaali9.PNG)
+![Tielinkit visualisoitu toiminnallisen luokan mukaan](Manuaali10.PNG)
 
 _Tielinkit visualisoitu toiminnallisen luokan mukaan._
 
-![Tielinkit visualisoitu tielinkin tyypin mukaan](Manuaali10.PNG)
+![Tielinkit visualisoitu tielinkin tyypin mukaan](Manuaali11.PNG)
 
 _Tielinkit visualisoitu tielinkin tyypin mukaan._
 
-![Tielinkit visualisoitu hallinnollisen luokan mukaan](Manuaali11.PNG)
+![Tielinkit visualisoitu hallinnollisen luokan mukaan](Manuaali12.PNG)
 
 _Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
-![Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan](Manuaali12.PNG)
+![Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan](Manuaali13.PNG)
 
 _Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan._
 
