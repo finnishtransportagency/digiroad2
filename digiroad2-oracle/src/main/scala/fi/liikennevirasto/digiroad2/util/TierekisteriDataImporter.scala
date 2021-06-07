@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, TrafficVolume}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolumeAssetClient
@@ -16,6 +15,8 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Lin
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+
+import scala.sys.exit
 
 object TierekisteriDataImporter {
 
@@ -360,20 +361,12 @@ object TierekisteriDataImporter {
   }
 
   def main(args:Array[String]) : Unit = {
-    import scala.util.control.Breaks._
-    val username = Digiroad2Properties.bonecpUsername
-    if (!username.startsWith("dr2dev")) {
+    val batchMode = Digiroad2Properties.batchMode
+    if (!batchMode) {
       println("*******************************************************************************************")
-      println("YOU ARE RUNNING TIEREKISTERI IMPORT AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("TURN ENV batchMode true TO RUN TIEREKISTERI IMPORT")
       println("*******************************************************************************************")
-      breakable {
-        while (true) {
-          val input = Console.readLine()
-          if (input.trim() == "YES") {
-            break()
-          }
-        }
-      }
+      exit()
     }
 
     if(args.length < 2){

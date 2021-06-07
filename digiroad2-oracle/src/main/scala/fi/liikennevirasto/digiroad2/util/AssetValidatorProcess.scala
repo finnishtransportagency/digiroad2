@@ -13,6 +13,8 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 
+import scala.sys.exit
+
 object AssetValidatorProcess {
 
   lazy val vvhClient: VVHClient = {
@@ -135,20 +137,12 @@ object AssetValidatorProcess {
   )
 
   def main(args:Array[String]) : Unit = {
-    import scala.util.control.Breaks._
-    val username = Digiroad2Properties.bonecpUsername
-    if (!username.startsWith("dr2dev")) {
+    val batchMode = Digiroad2Properties.batchMode
+    if (!batchMode) {
       println("*******************************************************************************************")
-      println("YOU ARE RUNNING VALIDATOR ASSET PROCESS AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("TURN batchMode true TO RUN VALIDATOR ASSET PROCESS")
       println("*******************************************************************************************")
-      breakable {
-        while (true) {
-          val input = Console.readLine()
-          if (input.trim() == "YES") {
-            break()
-          }
-        }
-      }
+      exit()
     }
 
     if(args.size < 1){

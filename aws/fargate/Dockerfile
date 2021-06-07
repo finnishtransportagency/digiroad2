@@ -4,6 +4,7 @@ ENV initialRamPercentage="-XX:InitialRAMPercentage=50.0"
 ENV maxRamPercentage="-XX:MaxRAMPercentage=95.0"
 ENV otherParameter="-Djava.security.egd=file:/dev/./urandom -Duser.timezone=Europe/Helsinki -XX:-OmitStackTraceInFastThrow"
 ENV javaParameter="${initialRam} ${maxRamPercentage} ${otherParameter}"
+ENV batchMode="false"
 RUN apk --no-cache add curl
 RUN mkdir /src
 RUN mkdir /src/main
@@ -14,5 +15,7 @@ COPY UI/ /src/main/webapp
 COPY src/main/webapp/ /src/main/webapp
 COPY node_modules/ /src/main/webapp/node_modules
 COPY target/scala-2.11/digiroad2-assembly-0.1.0-SNAPSHOT.jar /digiroad2.jar
+COPY aws/fargate/startup.sh /startup.sh
+RUN sed -i 's/\r$//' /startup.sh  && chmod +x /startup.sh
 EXPOSE 8080/tcp
-ENTRYPOINT java ${javaParameter} -jar /digiroad2.jar
+ENTRYPOINT ["./startup.sh"]
