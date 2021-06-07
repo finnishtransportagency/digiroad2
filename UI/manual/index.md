@@ -175,9 +175,9 @@ _Tielinkkiketjun valinta (klikattu kerran)._
 
 ![Yksitt&auml;isen tielinkin valinta](Manuaali9.png)
 
-_Yksitt&auml;isen tielinkin valinta (tuplaklikkaus)._
+_Yksitt&auml;isen tielinkin valinta tuplaklikkaamalla._
 
-Tielinkeille voi valita visualisoinnin Tietolajit -paletista tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin, hallinnollisen luokan tai silta, alikulku tai tunneli -tason mukaan. Silta, alikulku tai tunneli -tasolla kohteet piirret&auml;&auml;n kartalle tasosijainnin mukaisessa j&auml;rjestyksess&auml;, esimerkiksi alikulku piirret&auml;&auml;n silta, taso 1 -linkin alle. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t sovelluksen vasemmassa laidassa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
+Tielinkeille voi valita visualisointi-tason sovelluksen vasemman reunan karttaselitenäkymästä. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin, hallinnollisen luokan tai silta, alikulku tai tunneli -tason mukaan. Silta, alikulku tai tunneli -tasolla kohteet piirret&auml;&auml;n kartalle tasosijainnin mukaisessa j&auml;rjestyksess&auml;, esimerkiksi alikulku piirret&auml;&auml;n silta, taso 1 -linkin alle. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t sovelluksen vasemmassa laidassa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
 
 Toiminnallisen luokan selitteet ovat:
 
@@ -185,10 +185,10 @@ Luokka 1: Ohjeellisesti valtatie tai seudullinen p&auml;&auml;katu
 Luokka 2: Ohjeellisesti kantatie tai seudullinen p&auml;&auml;katu
 Luokka 3: Ohjeellisesti seututie tai alueellinen p&auml;&auml;katu
 Luokka 4: Ohjeellisesti yhdystie tai kokoojakatu
-Luokka 5: Liitynt&auml;katu, t&auml;rke&auml; yksityistie
+Luokka 5: Liitynt&auml;katu tai t&auml;rke&auml; yksityistie
 Luokka 6: Muu yksityistie
 Luokka 7: Ajopolku
-Luokka 8: Kevyen liikenteen v&auml;yl&auml;
+Luokka 8: Kävelyn ja pyöräilyn väylä
 
 ![Tielinkit visualisoitu toiminnallisen luokan mukaan](k7.jpg)
 
