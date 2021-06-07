@@ -142,7 +142,7 @@ _Tielinkit._
 
 Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.vayla.fi/digiroad/#linkProperty/450541 target="_blank">https://extranet.vayla.fi/digiroad/#linkProperty/450541 </a>
+ <a href=https://extranet.vayla.fi/digiroad/#linkProperty/450541 target="_blank">https://extranet.vayla.fi/digiroad/#linkProperty/450541</a>
 
 jossa numerosarja 450541 on tielinkin ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 
