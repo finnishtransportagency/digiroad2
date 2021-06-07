@@ -119,10 +119,10 @@ Taustakartaksi voi valita maastokartan, ortokuvan tai taustakarttasarjan. (9)
 
 _Karttan&auml;kym&auml;n muokkaus._
 
-##2.2. Historiatiedot ja täydentävä geometria kartalla##
+##2.2. Historiatiedot##
 
 Sovelluksessa on mahdollista piirt&auml;&auml; n&auml;kyviin my&ouml;s tielinkkien historiatiedot aiemmin poistuneiden geometriatietojen osalta. Toiminnallisuuden tavoitteena on helpottaa yll&auml;pit&auml;j&auml;&auml; t&auml;ydent&auml;m&auml;&auml;n uusien linkkien puuttuvia ominaisuustietoja. Toistaiseksi historiatietoja on mahdollista katsella tielinkkien toiminnallisten luokkien ja nopeusrajoitustiedon osalta. 
-Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan vasemmassa yl&auml;kulmassa olevasta valikosta (1). Kun haluttu tietolaji on piirrossa, valitaan sivun vasemmasta alalaidasta rasti ruutuun kohdassa ”N&auml;yt&auml; poistuneet tielinkit” (2).
+Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan vasemmassa yl&auml;kulmassa olevasta valikosta (1). Kun haluttu tietolaji on piirrossa, valitaan sivun vasemmasta alalaidasta rasti ruutuun kohdassa ”Näytä poistuneet tielinkit” (2).
 
 ![Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot.](historiatietojen_esittaminen.png)
 
