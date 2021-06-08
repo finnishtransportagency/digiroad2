@@ -216,7 +216,7 @@ Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden tielinkin, sen voi tehd&aum
 
 Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi ovat muokattavissa (3). Ketjuvalinta korjaa kaikkien ketjuun valittuna olevien tielinkkien tiedot.
 
-![Tielinkin ominaisuustietojen muokkaus.](Manuaali14_PNG)
+![Tielinkin ominaisuustietojen muokkaus.](Manuaali14.PNG)
 
 _Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (klikattu kerran)._
 
