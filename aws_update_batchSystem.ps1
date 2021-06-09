@@ -1,0 +1,3 @@
+# create
+#aws cloudformation create-stack --region eu-west-1 --stack-name batchSystem --on-failure DELETE --capabilities CAPABILITY_NAMED_IAM --template-body file://aws/cloud-formation/batchSystem/batchSystem.yaml --parameters file://aws/cloud-formation/batchSystem/parameter.json --profile vaylaapp
+aws cloudformation update-stack --stack-name batchSystem --capabilities CAPABILITY_NAMED_IAM --template-body file://aws/cloud-formation/batchSystem/batchSystem.yaml --parameters file://aws/cloud-formation/batchSystem/parameter.json --profile vaylaapp
