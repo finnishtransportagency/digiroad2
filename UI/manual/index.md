@@ -232,9 +232,9 @@ _Tielinkkien p&auml;ivitys aluevalintaty&ouml;kalulla._
 </br>
 ####Korjattavat tielinkit####
 
-Uudet linkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (1). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan. Linkki on kartalla musta, kunnes tieto on lis&auml;tty. Korjattavien linkkien listaan p&auml;&auml;see tielinkki-tasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (2). Listasta voi klikata korjattavaa tielinkki&auml; (3), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta vasta sitten, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
+Uudet linkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (1). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan. Linkki on kartalla musta, kunnes tieto on lis&auml;tty. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (2). Listasta voi klikata korjattavaa tielinkki&auml; (3), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta vasta sitten, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
 
-Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot voi korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi. Korjattavien linkkien listaan ei tule uusia kevyen liikenteen v&auml;ylien, ajopolkujen ja ajoteiden tielinkkej&auml;, koska n&auml;iden tiedot saadaan Maanmittauslaitokselta. Toiminnallinen luokka ja tielinkin tyyppi t&auml;ydennet&auml;&auml;n n&auml;ille tielinkille automaattisesti. 
+Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi. Korjattavien linkkien listaan ei tule uusia kevyen liikenteen v&auml;ylien, ajopolkujen ja ajoteiden tielinkkej&auml;, koska n&auml;iden tiedot saadaan Maanmittauslaitokselta. Toiminnallinen luokka ja tielinkin tyyppi t&auml;ydennet&auml;&auml;n n&auml;ille tielinkille automaattisesti. 
 
 ![Korjattava linkki](k47.jpg)
 
@@ -468,7 +468,7 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 5. Nopeusrajoitus
 --------------------
 
-Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. Lis&auml;ksi nopeusrajoituksilla on ympyr&auml;, joka kertoo nopeusrajoituksen arvon. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
+Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi nopeusrajoitukset valita tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vaemman reunan legendassa.
 
 ![Nopeusrajoitusten valinta](k18.jpg)
 
@@ -478,9 +478,9 @@ _Nopeusrajoitusten valinta._
 
 Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa.
 
-Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta.
+Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tienumero (maantiell&auml;) tai tienimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta.
 
-Huom! Nopeusrajoituksien ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
+Huom! Nopeusrajoituksten ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
 
 Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
 
@@ -511,18 +511,18 @@ _Nopeusrajoitusten visualisointi._
 Muokkaustilassa nopeusrajoituksille voi antaa uusia arvoja, niit&auml; voi katkaista sek&auml; muuttaa yksisuuntaisiksi. Nopeusrajoituksien arvoja voi muokata kolmella tavalla:
 
 1. Koko nopeusrajoitusketjulle.
-1. Yksitt&auml;isen linkin mittaiselle osuudelle.
+1. Yksitt&auml;isen linkin mittaiselle osuudelle tai tielinkin osalle.
 1. Monivalinnan avulla kokonaiselle alueelle.
 
 ###Nopeusrajoituksen arvon muokkaus###
 
-Muokattava nopeusrajoitus valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). 
+Muokattava nopeusrajoitus valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tienumero (maantiell&auml;) tai tiennimi (katuverkko ja yksityistie). 
 
 Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta.
 
 Huom! Nopeusrajoituksien ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
 
-Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; valitsemalla nopeusrajoitukselle uusi arvo alasvetovalikosta (5). Muutokset tallennetaan painamalla Tallenna-painiketta. Ennen Tallenna-painikkeen painamista muutokset voi perua painamalla Peruuta-painiketta. Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; valitsemalla nopeusrajoitukselle uusi arvo ominaisuustietotaulun alasvetovalikosta (5). Muutokset tallennetaan painamalla Tallenna-painiketta. Ennen Tallenna-painikkeen painamista muutokset voi perua painamalla Peruuta-painiketta. Tallenna- ja peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Muutokset tulee tallentaa tai perua ennen kuin siirrytään muokkaamaan uutta kohdetta. 
 
 ![Nopeusrajoituksen muokkaus.](k26.png)
 
@@ -531,7 +531,7 @@ _Nopeusrajoitusketjun arvon muokkaus (klikattu kerran)._
 </br>
 ####Nopeusrajoituksien muokkaus monivalintaty&ouml;kalulla####
 
-Useamman kuin yhden nopeusrajoituksen arvon voi muuttaa kerralla. Halutut nopeusrajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko nopeusrajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki nopeusrajoitukset laatikon sis&auml;ll&auml; ja nopeusrajoitukset, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan nopeusrajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usean tielinkin nopeusrajoituksen arvon voi muokata kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon viisikulmiosymboli. Työkalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki nopeusrajoitukset piirretyn alueen sisällä ja nopeusrajoitukset, joita alue leikkaa. Valinnan jälkeen ruudulle avautuu ikkuna, josta valitaan kaikille nopeusrajoituksille sama tallennettava arvo. Muutokset tulee tallentaa tai perua ennen uuden kohteen muokkaamista.
 
 ![Useamman nopeusrajoituksen arvon muokkaus.](k40.JPG)
 
@@ -540,16 +540,14 @@ _Useamman nopeusrajoituksen arvon muokkaus kerralla._
 </br>
 ####Nopeusrajoituksen katkaiseminen####
 
-Nopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (13). Leikkausty&ouml;kalulla klikataan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;.
-
-Nopeusrajoituksen katkaisu valitsee aina vain linkin mittaisen osion nopeusrajoitusta, ei nopeusrajoitusketjua.
+Nopeusrajoituksen voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka löytyy työkaluvalikosta (13). Leikkaustyökalulla klikataan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Nopeusrajoituksen katkaisu valitsee aina vain linkin mittaisen osion nopeusrajoitusta, ei nopeusrajoitusketjua.
 
 ![Nopeusrajoituksen katkaiseminen.](k28.jpg)
 
 _Nopeusrajoituksen katkaiseminen._
 
 </br>
-Nopeusrajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (4). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet nopeusrajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+Nopeusrajoituksen katkaisussa tielinkin osille valitaan uudet nopeusrajoitusarvot sovelluksen oikean reunan ominaisuustietotaulun alasvetovalikoista (4). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet nopeusrajoitukset tallennetaan tallenna-painikkeella (6) ja katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
 Huom! Nopeusrajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; nopeusrajoituksille eri arvot, jotta tallennus on mahdollista.
 
