@@ -38,7 +38,7 @@ trait ViiteClientOperations {
   protected def mapFields(data: Map[String, Any]): Option[ViiteType]
 
   def addAuthorizationHeader(request: HttpRequestBase) = {
-    request.addHeader("Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("Authorization", "Basic " + auth.getViiteApiKey)
   }
 
   protected def get[T](url: String): Either[T, ViiteError] = {

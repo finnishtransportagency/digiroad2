@@ -36,6 +36,7 @@ trait Digiroad2Properties {
   val tierekisteriPassword: String
   val viiteUsername: String
   val viitePassword: String
+  val viiteApiKey: String
   val tierekisteriOldUsername: String
   val tierekisteriOldPassword: String
   val oagUsername: String
@@ -108,6 +109,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val tierekisteriPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriPassword", null),scala.util.Properties.envOrElse("tierekisteri.password", null))
   val viiteUsername: String = selectEnvType(scala.util.Properties.envOrElse("viiteUsername", null),scala.util.Properties.envOrElse("viite.username", null))
   val viitePassword: String = selectEnvType(scala.util.Properties.envOrElse("viitePassword", null),scala.util.Properties.envOrElse("viite.password", null))
+  val viiteApiKey: String = selectEnvType(scala.util.Properties.envOrElse("viiteApiKey", null),scala.util.Properties.envOrElse("viite.viiteapikey", null))
 
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
@@ -161,6 +163,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val tierekisteriPassword: String = envProps.getProperty("tierekisteri.password")
   override val viiteUsername: String = envProps.getProperty("viite.username")
   override val viitePassword: String = envProps.getProperty("viite.password")
+  override val viiteApiKey: String = envProps.getProperty("viite.viiteapikey")
   override val tierekisteriOldUsername: String = envProps.getProperty("tierekisteri.old.username")
   override val tierekisteriOldPassword: String = envProps.getProperty("tierekisteri.old.password")
   override val oagUsername: String = envProps.getProperty("oag.username")
@@ -235,6 +238,7 @@ object Digiroad2Properties {
   lazy val tierekisteriPassword: String = properties.tierekisteriPassword
   lazy val viiteUsername: String = properties.viiteUsername
   lazy val viitePassword: String = properties.viitePassword
+  lazy val viiteApiKey: String = properties.viiteApiKey
   lazy val tierekisteriOldUsername: String = properties.tierekisteriOldUsername
   lazy val tierekisteriOldPassword: String = properties.tierekisteriOldPassword
   lazy val oagUsername: String = properties.oagUsername

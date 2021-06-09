@@ -13,6 +13,10 @@ class ViiteAuthPropertyReader {
     Digiroad2Properties.viitePassword
   }
 
+  def getViiteApiKey: String = {
+    Digiroad2Properties.viiteApiKey
+  }
+
   def getAuthInBase64: String = {
     Base64.encodeBase64String((getUsername + ":" + getPassword).getBytes)
   }
