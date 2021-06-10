@@ -10,14 +10,6 @@
   "platformCapabilities": [
     "FARGATE"
   ],
-  "parameters": {
-    "BatchRunType": "DataFixture",
-    "TrafficSignGroup": "",
-    "BatchAction": "",
-    "AssetForValidation": "",
-    "TierekisteriAction": "",
-    "TierekisteriAsset": ""
-  },
   "containerProperties": {
     "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:latest",
     "resourceRequirements" : [
@@ -102,7 +94,7 @@
       },
       {
         "name": "bonecp.jdbcUrl",
-        "value": "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2"
+        "value": "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2?currentSchema=dr2user"
       },
       {
         "name": "bonecp.username",
@@ -127,30 +119,6 @@
       {
         "name": "batchMode",
         "value": "true"
-      },
-      {
-        "name": "batchRunType",
-        "value": "Ref::BatchRunType"
-      },
-      {
-        "name": "batchAction",
-        "value": "Ref::BatchAction"
-      },
-      {
-        "name": "assetForValidation",
-        "value": "Ref::AssetForValidation"
-      },
-      {
-        "name": "tierekisteriAction",
-        "value": "Ref::TierekisteriAction"
-      },
-      {
-        "name": "tierekisteriAsset",
-        "value": "Ref::TierekisteriAsset"
-      },
-      {
-        "name": "trafficSignGroup",
-        "value": "Ref::TrafficSignGroup"
       }
     ],
     "logConfiguration": {
