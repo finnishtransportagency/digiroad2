@@ -34,8 +34,6 @@ trait Digiroad2Properties {
   val latestDeploy: String
   val tierekisteriUsername: String
   val tierekisteriPassword: String
-  val viiteUsername: String
-  val viitePassword: String
   val viiteApiKey: String
   val tierekisteriOldUsername: String
   val tierekisteriOldPassword: String
@@ -107,8 +105,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val tierekisteriOldPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldPassword", null),scala.util.Properties.envOrElse("tierekisteri.old.password", null))
   val tierekisteriUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriUsername", null),scala.util.Properties.envOrElse("tierekisteri.username", null))
   val tierekisteriPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriPassword", null),scala.util.Properties.envOrElse("tierekisteri.password", null))
-  val viiteUsername: String = selectEnvType(scala.util.Properties.envOrElse("viiteUsername", null),scala.util.Properties.envOrElse("viite.username", null))
-  val viitePassword: String = selectEnvType(scala.util.Properties.envOrElse("viitePassword", null),scala.util.Properties.envOrElse("viite.password", null))
   val viiteApiKey: String = selectEnvType(scala.util.Properties.envOrElse("viiteApiKey", null),scala.util.Properties.envOrElse("viite.apikey", null))
 
   lazy val bonecpProperties: Properties = {
@@ -234,8 +230,6 @@ object Digiroad2Properties {
   lazy val latestDeploy: String = properties.latestDeploy
   lazy val tierekisteriUsername: String = properties.tierekisteriUsername
   lazy val tierekisteriPassword: String = properties.tierekisteriPassword
-  lazy val viiteUsername: String = properties.viiteUsername
-  lazy val viitePassword: String = properties.viitePassword
   lazy val viiteApiKey: String = properties.viiteApiKey
   lazy val tierekisteriOldUsername: String = properties.tierekisteriOldUsername
   lazy val tierekisteriOldPassword: String = properties.tierekisteriOldPassword
