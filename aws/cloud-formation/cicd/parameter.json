@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "TestDatabaseString",
-    "ParameterValue": "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2?currentSchema=dr2user"
+    "ParameterValue": "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2"
   },
   {
     "ParameterKey": "TestDatabaseUser",
