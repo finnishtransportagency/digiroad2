@@ -21,6 +21,7 @@ Resources:
       - Order: 1
         ComputeEnvironment:
           Ref: ComputeEnvironment
+
   JobQueueUpdateIncompleteList:
     Type: AWS::Batch::JobQueue
     Properties:
@@ -79,65 +80,6 @@ Resources:
         - IpProtocol: "-1"
           CidrIp: 0.0.0.0/0
       VpcId: !Ref VpcIDOfSystem
-
-#  BatchProcessingLambdaInvokeFunction:
-#    Type: AWS::Lambda::Function
-#    Properties:
-#      FunctionName: BatchProcessingLambdaInvokeFunction
-#      Handler: index.lambda_handler
-#      Runtime: d
-#      MemorySize: 128
-#      Timeout: 30
-#      Role: nodejs10.x
-#        Fn::GetAtt:
-#          - LambdaExecutionRole
-#          - Arn
-#      Code:
-#        ZipFile: |
-#          code
-#
-#  # CloudWatch Event Rule for build trigger
-#  CloudWatcEventRule:
-#    Type: AWS::Events::Rule
-#    Properties:
-#      Description: "This event rule triggers the batch on event"
-#      EventPattern: ""
-#      State: "ENABLED"
-#      Targets:
-#        -
-#          Arn: {'Fn::GetAtt': [BatchProcessingLambdaInvokeFunction, Arn]}
-#          Id: cloudwatch-codebuild-eventrules
-#          RoleArn: !GetAtt LambdaExecutionRole.Arn
-#
-#  LambdaExecutionRole:
-#    Type: AWS::IAM::Role
-#    Properties:
-#      RoleName: LambdaBatch
-#      AssumeRolePolicyDocument:
-#        Version: 2012-10-17
-#        Statement:
-#          - Action:
-#              - sts:AssumeRole
-#            Effect: Allow
-#            Principal:
-#              Service:
-#                - lambda.amazonaws.com
-#      ManagedPolicyArns:
-#        - arn:aws:iam::aws:policy/AWSLambdaExecute
-#      Path: /
-#      Policies:
-#        - PolicyName: "BatchLambda"
-#          PolicyDocument:
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "batch:SubmitJob"
-#                  - "batch:Describe*"
-#                  - "batch:List*"
-#                  - "batch:UpdateJobQueue"
-#                  - "batch:TerminateJob"
-#                  - "batch:CancelJob"
-#                Resource: *
 
   BatchTaskRole:
     Type: AWS::IAM::Role
