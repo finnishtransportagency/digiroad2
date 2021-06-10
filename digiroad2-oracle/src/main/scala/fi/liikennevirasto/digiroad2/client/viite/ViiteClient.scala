@@ -6,7 +6,7 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
 import fi.liikennevirasto.digiroad2.dao.RoadAddress
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, Track}
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -28,7 +28,6 @@ trait ViiteClientOperations {
   protected val dateFormat = "yyyy-MM-dd"
   protected def restApiEndPoint: String
   protected def serviceName: String
-  protected def auth = new ViiteAuthPropertyReader
   protected def client: CloseableHttpClient
 
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -38,7 +37,7 @@ trait ViiteClientOperations {
   protected def mapFields(data: Map[String, Any]): Option[ViiteType]
 
   def addAuthorizationHeader(request: HttpRequestBase) = {
-    request.addHeader("Authorization", "X-API-Key: " + auth.getViiteApiKey)
+    request.addHeader("X-API-Key", Digiroad2Properties.viiteApiKey)
   }
 
   protected def get[T](url: String): Either[T, ViiteError] = {
