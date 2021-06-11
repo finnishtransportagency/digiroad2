@@ -56,7 +56,7 @@
           },
           {
             "name": "viiteRestApiEndPoint",
-            "value": "http://localhost:9080/viite/api/viite/"
+            "value": "https://devapi.testivaylapilvi.fi/viite/api/viite/"
           },
           {
             "name": "authenticationTestMode",
@@ -127,10 +127,6 @@
             "value": "svc_clouddr"
           },
           {
-            "name": "viite.username",
-            "value": "kalpa"
-          },
-          {
             "name": "emailTo",
             "value": "emailTo"
           },
@@ -165,8 +161,8 @@
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.old.password"
           },
           {
-            "name": "viite.password",
-            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/viite.password"
+            "name": "viite.apikey",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
           },
           {
             "name": "oag.password",

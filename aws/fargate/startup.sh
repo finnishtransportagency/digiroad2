@@ -7,6 +7,7 @@ else
   echo "Batch mode"
     if  [[ -z "$batchRunType" ]]; then
       echo "batchRunType env is not defined"
+      exit 1
     else
       if [ "$batchRunType" = "UpdateIncompleteLinkList" ]; then
 
@@ -19,6 +20,7 @@ else
             java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.DataFixture "$batchAction" "$trafficSignGroup"
          else
             echo "batchAction env is not defined"
+            exit 1
          fi
       elif [ "$batchRunType" = "DataFixture" ]; then
 
@@ -27,6 +29,7 @@ else
            java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.DataFixture "$batchAction"
         else
          echo "batchAction env is not defined"
+         exit 1
         fi
       elif [ "$batchRunType" = "AssetValidatorProcess" ]; then
 
@@ -35,6 +38,7 @@ else
           java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.AssetValidatorProcess "$assetForValidation"
         else
          echo "assetForValidation env is not defined"
+         exit 1
         fi
       elif [ "$batchRunType" = "TierekisteriDataImporter" ]; then
 
@@ -43,9 +47,11 @@ else
           java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter "$tierekisteriAction" "$tierekisteriAsset" "$trafficSignGroup"
         else
           echo "tierekisteriAction or tierekisteriAsset or trafficSignGroup env is not defined"
+          exit 1
         fi
       else
         echo "Wrong mode"
+        exit 1
       fi
     fi
 fi
