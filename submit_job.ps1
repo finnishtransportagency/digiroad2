@@ -9,7 +9,6 @@
 aws batch submit-job --profile vaylaapp --job-definition GenericBatch --job-name <name> --job-queue AdHoc --container-overrides "environment=[{name=batchRunType,value=UpdateIncompleteLink}]"
 
 # DataFixture
-aws batch submit-job --profile vaylaapp --job-definition GenericBatch --job-name testFromCLI --job-queue AdHoc --container-overrides "environment=[{name=batchRunType,value=DataFixture}]"
 aws batch submit-job --profile vaylaapp --job-definition GenericBatch --job-name <name> --job-queue AdHoc --container-overrides "environment=[{name=batchRunType,value=DataFixture},{name=batchAction,value=<action>}]"
 
 # DataFixture With $trafficSignGroup
