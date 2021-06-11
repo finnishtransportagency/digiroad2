@@ -61,6 +61,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
+  val viiteApiKey: String = scala.util.Properties.envOrElse("viite.apikey", null)
   val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
@@ -105,8 +106,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val tierekisteriOldPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldPassword", null),scala.util.Properties.envOrElse("tierekisteri.old.password", null))
   val tierekisteriUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriUsername", null),scala.util.Properties.envOrElse("tierekisteri.username", null))
   val tierekisteriPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriPassword", null),scala.util.Properties.envOrElse("tierekisteri.password", null))
-  val viiteApiKey: String = selectEnvType(scala.util.Properties.envOrElse("viiteApiKey", null),scala.util.Properties.envOrElse("viite.apikey", null))
-
+  
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
     try {

@@ -34,10 +34,12 @@ trait ViiteClientOperations {
 
   protected def serviceUrl = restApiEndPoint + serviceName
 
+  protected def viiteApiKey = Digiroad2Properties.viiteApiKey
+
   protected def mapFields(data: Map[String, Any]): Option[ViiteType]
 
   def addAuthorizationHeader(request: HttpRequestBase) = {
-    request.addHeader("X-API-Key", Digiroad2Properties.viiteApiKey)
+    request.addHeader("X-API-Key", viiteApiKey)
   }
 
   protected def get[T](url: String): Either[T, ViiteError] = {
