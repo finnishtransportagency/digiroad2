@@ -25,7 +25,6 @@ Jos karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirj
 
 1.1 Mist&auml; saan opastusta?
 --------------------------
-testi
 Digiroad-operaattorilta saa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Operaattori auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Asiakaspalveluun voi olla yhteydessä sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301 arkipäivisin klo 9-16.
 
 Yhteystiedot:
