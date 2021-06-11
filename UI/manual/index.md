@@ -468,7 +468,7 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 5. Nopeusrajoitus
 --------------------
 
-Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi nopeusrajoitukset valita tietolajit-valikosta (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vaemman reunan legendassa.
+Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi nopeusrajoitukset valita tietolajit-valikosta (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan legendassa.
 
 ![Nopeusrajoitusten valinta](k18.jpg)
 
