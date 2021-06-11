@@ -1,0 +1,14 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
+  },
+  {
+    "ParameterKey": "DigiroadDatabaseSecurityGroup",
+    "ParameterValue": "sg-0ced3d4a7245fb3ed"
+  }
+]
