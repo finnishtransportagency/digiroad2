@@ -56,7 +56,7 @@
           },
           {
             "name": "viiteRestApiEndPoint",
-            "value": "http://localhost:9080/viite/api/viite/"
+            "value": "https://devapi.testivaylapilvi.fi/viite/api/viite/"
           },
           {
             "name": "authenticationTestMode",
