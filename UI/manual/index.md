@@ -392,7 +392,7 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 
 ##4.8 Pys&auml;kin siirt&auml;minen##
 
-Pys&auml;kki&auml; siirret&auml;&auml;n k&auml;ytt&auml;m&auml;ll&auml; muokkausty&ouml;kalua (17). Pys&auml;kkej&auml; voi siirt&auml;&auml; vain tarpeeksi tarkalta mittakaavatasolta (18).
+Pys&auml;kki&auml; siirret&auml;&auml;n k&auml;ytt&auml;m&auml;ll&auml; muokkausty&ouml;kalua (17). Pys&auml;kkej&auml; voi siirt&auml;&auml; mittakaavatasolta, joka on 1:20 000 tai tarkempi (18).
 
 Siirt&auml;minen tapahtuu tarttumalla pys&auml;kkiin kiinni ja raahaamalla se oikeaan paikkaan. Pys&auml;kki liikkuu vain olemassa olevia tielinkkej&auml; (ei tielinkeill&auml;, jotka ovat kevyen liikenteen v&auml;yli&auml; tai lautta/lossi v&auml;yli&auml;) pitkin ja k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimien maantieteellisten rajojen sis&auml;puolella. Jos pys&auml;kin irrottaa tielinkist&auml;, kiinnittyy se automaattisesti l&auml;himp&auml;&auml;n tielinkkiin, joka on k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimalla maantietellisell&auml; alueella. Jos riitt&auml;v&auml;n l&auml;hell&auml;  ei ole toista tielinkki&auml;, ei pys&auml;kki irtoa linkilt&auml;, jolla se on. Tielinkki, jonka p&auml;&auml;ll&auml; pys&auml;kki on, n&auml;kyy sinisell&auml; korostusv&auml;rill&auml;. Kun pys&auml;kist&auml; p&auml;&auml;stet&auml;&auml;n irti (lasketaan se uuteen sijaintiin), oikealle avautuu Google Street View (19) ja ominaisuustietotaulu (20), jonka kautta voi halutessaan muokata muita ominaisuustietoja. Pys&auml;kin siirt&auml;minen ei muuta pys&auml;kin mitattuja maastokoordinaatteja vaan ne s&auml;ilyv&auml;t ennallaan. 
 
@@ -420,11 +420,11 @@ _Joukkoliikenteen pys&auml;kin siirt&auml;minen._
 
 ##4.9 Uuden pys&auml;kin lis&auml;&auml;minen##
 
-Uusia pys&auml;kkej&auml; voi lis&auml;t&auml;, kun mittakaavataso on 1:10 000 tai tarkempi. T&auml;m&auml; mittakaavataso on yht&auml; tasoa tarkempi kuin uloin mittakaavataso jolla pys&auml;kit n&auml;ytet&auml;&auml;n. Uusi pys&auml;kki luodaan klikkaamalla kartan tiest&ouml;st&auml; haluttu sijainti pys&auml;kille lis&auml;ysty&ouml;kalulla (13). Jos valitulla kohdalla ei ole tielinkki&auml;, muodostuu pys&auml;kki l&auml;himm&auml;lle tielinkille. Jos pys&auml;kin yritt&auml;&auml; luoda liian kauas l&auml;himm&auml;st&auml; tielinkist&auml;, ei pys&auml;kki&auml; muodostu. Uusi pys&auml;kki on korostettu sinisell&auml; v&auml;rill&auml; (4) ja sivun oikealle puolelle avautuu Google Street View (5) ja ominaisuustieton&auml;kym&auml; (6), jossa pys&auml;kille tallennetaan tiedossa olevat ominaisuustiedot.
+Uusia pys&auml;kkej&auml; voi lis&auml;t&auml;, kun mittakaavataso on 1:20 000 tai tarkempi (23). Uusi pys&auml;kki luodaan klikkaamalla kartan tiest&ouml;st&auml; haluttu sijainti pys&auml;kille lis&auml;ysty&ouml;kalulla (24). Jos valitulla kohdalla ei ole tielinkki&auml;, muodostuu pys&auml;kki l&auml;himm&auml;lle tielinkille. Jos pys&auml;kin yritt&auml;&auml; luoda liian kauas l&auml;himm&auml;st&auml; tielinkist&auml;, ei pys&auml;kki&auml; muodostu. Uusi pys&auml;kki on korostettu sinisell&auml; v&auml;rill&auml; (25) ja sivun oikealle puolelle avautuu Google Street View (26) ja ominaisuustietotaulu (27), jossa pys&auml;kille tallennetaan tiedossa olevat ominaisuustiedot.
 
 Sovellus muodostaa osan ominaisuustiedoista itse, jos niit&auml; ei m&auml;&auml;ritet&auml;. "Ensimm&auml;inen voimassaolop&auml;iv&auml;" oletetaan meneill&auml;&auml;n olevaksi p&auml;iv&auml;m&auml;&auml;r&auml;ksi. Pys&auml;kin vaikutussuunta oletetaan alla olevan linkin digitointisuunnaksi. Kaikkien varusteiden oletusarvo on "Ei tietoa". Lis&auml;ksi valtakunnallinen tunnus ja Livi-tunnus maantien pys&auml;kille muodostuu automaattisesti Digiroadin omasta numeroavaruudesta eik&auml; k&auml;ytt&auml;j&auml;n tarvitse sit&auml; itse asettaa.
 
-Pys&auml;kin tyyppi on pakollinen tieto eik&auml; uutta pys&auml;kki&auml; voi tallentaa, jos sit&auml; ei ole m&auml;&auml;ritetty. Uuden pys&auml;kin ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kin pakollisia tietoja puuttuu. Kun ominaisuustiedot on kirjattu, painetaan Tallenna-painiketta (21) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruuta-painiketta (22). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko "Tallenna" tai "Peruuta".
+Pys&auml;kin tyyppi on pakollinen tieto eik&auml; uutta pys&auml;kki&auml; voi tallentaa, jos sit&auml; ei ole m&auml;&auml;ritetty. Uuden pys&auml;kin ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kin pakollisia tietoja puuttuu. Kun ominaisuustiedot on kirjattu, painetaan Tallenna-painiketta (28) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruuta-painiketta (29). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko "Tallenna" tai "Peruuta".
 
 Uuden pys&auml;kin voi lis&auml;t&auml; alle kuuden metrin p&auml;&auml;h&auml;n olemassa olevasta pys&auml;kist&auml;. Kunta yll&auml;pit&auml;j&auml; ei voi lis&auml;t&auml; uutta pys&auml;kki&auml; maantielle.
 
@@ -432,14 +432,14 @@ __Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:__
 
 1. Aktivoi muokkaustila.
 1. Etsi kartalta kohta, jonne haluat pys&auml;kin lis&auml;t&auml;.
-1. Tarkenna mittakaava 1:10 000 tai tarkemmaksi (9).
-1. Valitse lis&auml;ysty&ouml;kalu (13).
+1. Tarkenna mittakaava 1:10 000 tai tarkemmaksi (23).
+1. Valitse lis&auml;ysty&ouml;kalu (24).
 1. Klikkaa linkin kohtaa, johon haluat lis&auml;t&auml; pys&auml;kin.
-1. Lis&auml;&auml; ominaisuustieto -n&auml;kym&auml;&auml;n (6) pakolliset ja olemassa olevat tiedot pys&auml;kist&auml;.
-1. Jos et haluakaan luoda ko. pys&auml;kki&auml;, paina Peruuta-painiketta (22).
-1. Kun olet lis&auml;nnyt haluamasi tiedot, paina Tallenna-painiketta (21).
+1. Lis&auml;&auml; ominaisuustietotauluun (27) pakolliset ja olemassa olevat tiedot pys&auml;kist&auml;.
+1. Jos et haluakaan luoda ko. pys&auml;kki&auml;, paina Peruuta-painiketta (29).
+1. Kun olet lis&auml;nnyt haluamasi tiedot, paina Tallenna-painiketta (28).
 
-![Pys&auml;kin lis&auml;&auml;minen.](k16.jpg)
+![Pys&auml;kin lis&auml;&auml;minen.](pysäkit_12.png)
 
 _Joukkoliikenteen pys&auml;kin lis&auml;&auml;minen._
 
