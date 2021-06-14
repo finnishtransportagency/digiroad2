@@ -268,42 +268,42 @@ _Joukkoliikenteen pys&auml;kkien haku._
 
 ##4.2 Pys&auml;kin tietojen katselu##
 
-Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; klikataan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View (5) ja ominaisuustieto -n&auml;kym&auml;t (6). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (4)
+Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; klikataan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View -näkymä (4) ja ominaisuustietotaulu (5). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (6)
 
 Jos kaksi tai useampi pys&auml;kki ovat alle kuuden metrin p&auml;&auml;ss&auml; toisistaan, esitet&auml;&auml;n pys&auml;kit k&auml;ytt&ouml;liittym&auml;ss&auml; p&auml;&auml;llekk&auml;in ryhmiteltyn&auml;. P&auml;&auml;llekk&auml;in asettelu mahdollistaa pys&auml;kin tarkastelun ilman, ett&auml; samassa sijainnissa olevia pys&auml;kkej&auml; tarvitsee siirt&auml;&auml;. 
 
-Ominaisuustieto-n&auml;kym&auml;ss&auml; kentti&auml; ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu Google Street View uudelle v&auml;lilehdelle. Huom! Kun Google Street View avautuu, ei k&auml;ytt&auml;j&auml; ole siell&auml; t&auml;ysin samassa kohdassa, mik&auml; sovelluksessa n&auml;kyy pys&auml;kin ominaisuustiedoissa. Sijaintiheitto on noin 50-100 metri&auml;. Virhe johtuu Googlen tekemist&auml; muutoksista Street Viewiin. T&auml;m&auml; ei kuitenkaan vaikuta pys&auml;kin asetteluun Digiroad-sovelluksessa siell&auml; n&auml;kyv&auml;n Street View n&auml;kym&auml;n avulla.
+Ominaisuustieto-n&auml;kym&auml;ss&auml; kentti&auml; ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu katunäkymä uudelle v&auml;lilehdelle. Huom! Kun Google Street View avautuu, ei k&auml;ytt&auml;j&auml; ole siell&auml; t&auml;ysin samassa kohdassa, mik&auml; sovelluksessa n&auml;kyy pys&auml;kin ominaisuustiedoissa. Sijaintiheitto on noin 50-100 metri&auml;. Virhe johtuu Googlen tekemist&auml; muutoksista Street Viewiin. T&auml;m&auml; ei kuitenkaan vaikuta pys&auml;kin asetteluun Digiroad-sovelluksessa siell&auml; n&auml;kyv&auml;n Street View n&auml;kym&auml;n avulla.
 
 Pys&auml;kin valinnan saa pois klikkaamalla karttaa.
 
-![Pys&auml;kin tietojen katselu](k9.jpg)
+![Pys&auml;kin tietojen katselu](pysäkit_3.png)
 
 _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
 ##4.3 Kelluvat pys&auml;kit##
 
-Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Kelluvat pys&auml;kit on korostettu karttan&auml;kym&auml;ss&auml; alla olevan kuvan tavoin, ja niiden ominaisuustieton&auml;kym&auml;ss&auml; on huomautus, ett&auml; pys&auml;kki tulisi siirt&auml;&auml; tielinkille, jotta kelluvuus poistuu (kts. [Pys&auml;kin siirt&auml;minen](#Pys&auml;kin_siirt&auml;minen)). 
+Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Kelluvat pys&auml;kit on korostettu karttan&auml;kym&auml;ss&auml; alla olevan kuvan tavoin, ja niiden ominaisuustietotaulussa on huomautus, ett&auml; pys&auml;kki tulisi siirt&auml;&auml; tielinkille, jotta kelluvuus poistuu (kts. [Pys&auml;kin siirt&auml;minen](#Pys&auml;kin_siirt&auml;minen)). 
 
-![Kelluva pys&auml;kki](k29.JPG)
+![Kelluva pys&auml;kki](pysäkit_4.png)
 
 _Kelluvat pys&auml;kit on visualisoitu eri tavoin._
 
 </br>
-Kelluvat pys&auml;kit on listattu omaan listaan, johon on linkki pys&auml;kkien ominaisuustieton&auml;kym&auml;ss&auml; (1). Pys&auml;kit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne pys&auml;kit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Kelluvat pys&auml;kit on listattu omaan listaan, johon on linkki pys&auml;kkien ominaisuustietotaulussa (1). Pys&auml;kit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne pys&auml;kit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Kelluvien pys&auml;kkien lista](k30.JPG)
+![Kelluvien pys&auml;kkien lista](pysäkit_5.PNG)
 
 _Kelluvien pys&auml;kkien lista._
 
 ##4.4 Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus##
 
-Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkausty&ouml;kalun (12). Muokattava pys&auml;kki valitaan hiirell&auml; klikkaamalla. P&auml;&auml;llekk&auml;in esitetyist&auml; pys&auml;keist&auml; voi valita yhden pys&auml;kin klikkaamalla pys&auml;kki&auml;. Pinosta valitun pys&auml;kin erottaa sille avautuvasta infoikkunasta. Valittaessa pys&auml;kin sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (5) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (6). Jos pys&auml;kill&auml; ei ole tyyppi&auml;, tulee se asettaa ennen tallentamista. Pys&auml;kkien ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
+Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkausty&ouml;kalun (8). Muokattava pys&auml;kki valitaan hiirell&auml; klikkaamalla. P&auml;&auml;llekk&auml;in esitetyist&auml; pys&auml;keist&auml; voi valita yhden pys&auml;kin klikkaamalla pys&auml;kki&auml;. Pinosta valitun pys&auml;kin erottaa sille avautuvasta infoikkunasta. Valittaessa pys&auml;kin sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (9) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (10). Jos pys&auml;kill&auml; ei ole tyyppi&auml;, tulee se asettaa ennen tallentamista. Pys&auml;kkien ominaisuustietotaulussa n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
 
 Pys&auml;kin valinnan saa pois klikkaamalla karttaa, kun tallennus tai peruutus on tehty.
 
 Muokkaustoiminnallisuudet poikkeavat hieman kunnan kadun ja maantien pys&auml;kkien v&auml;lill&auml;, riippuen siit&auml; onko pys&auml;kki kunnan vai Elyn yll&auml;pit&auml;m&auml;, eri ominaisuustietojen t&auml;ytt&auml;minen on sallittua. P&auml;&auml;s&auml;&auml;nt&ouml;n&auml; on, ett&auml; kuntak&auml;ytt&auml;j&auml;ll&auml; muokattavissa on kaikki ne kent&auml;t, joita h&auml;nen on enimmill&auml;&auml;n tarpeen muokata. Samoin ELYn pys&auml;kkivastaavalla on muokattavissa ne kent&auml;t, joita h&auml;nen on tarpeen yll&auml;pit&auml;&auml; (t&auml;ydent&auml;v&auml;t varustetiedot yll&auml;pidet&auml;&auml;n HARJA-j&auml;rjestelm&auml;ss&auml; ja ovat sovelluksessa ainoastaan read-only n&auml;kym&auml;n&auml;).
 
-![Pys&auml;kin ominaisuustietojen muokkaus.](k12.jpg)
+![Pys&auml;kin ominaisuustietojen muokkaus.](pysäkit_6.png)
 
 _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
