@@ -432,7 +432,7 @@ __Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:__
 
 1. Aktivoi muokkaustila.
 1. Etsi kartalta kohta, jonne haluat pys&auml;kin lis&auml;t&auml;.
-1. Tarkenna mittakaava 1:10 000 tai tarkemmaksi (23).
+1. Tarkenna mittakaava 1:20 000 tai tarkemmaksi (23).
 1. Valitse lis&auml;ysty&ouml;kalu (24).
 1. Klikkaa linkin kohtaa, johon haluat lis&auml;t&auml; pys&auml;kin.
 1. Lis&auml;&auml; ominaisuustietotauluun (27) pakolliset ja olemassa olevat tiedot pys&auml;kist&auml;.
@@ -445,20 +445,20 @@ _Joukkoliikenteen pys&auml;kin lis&auml;&auml;minen._
 
 ##4.10 Pys&auml;kin m&auml;&auml;ritt&auml;minen k&auml;yt&ouml;st&auml; poistuneeksi##
 
-Olemassa oleva pys&auml;kki m&auml;&auml;ritet&auml;&auml;n k&auml;yt&ouml;st&auml; poistuneeksi muokkausty&ouml;kalulla (12). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pys&auml;kin voi m&auml;&auml;ritt&auml;&auml; k&auml;yt&ouml;st&auml; poistuneeksi (9). K&auml;yt&ouml;st&auml; poistunut pys&auml;kki valitaan klikkaamalla pys&auml;kkikuvaketta, jolloin avautuu ominaisuustieton&auml;kym&auml; (6). Valittu pys&auml;kki korostuu sinisell&auml; huomiov&auml;rill&auml; (4). Pys&auml;kin k&auml;yt&ouml;st&auml; poistuneeksi m&auml;&auml;ritt&auml;minen suoritetaan asettamalla ominaisuustieton&auml;kym&auml;n (6) "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (20) pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;. Jos haluat palauttaa pys&auml;kin voimassaolevaksi, valitse viimeinen voimassaolop&auml;iv&auml;-aikavalikosta ”ei tietoa”. Pys&auml;kki palautuu voimassaolevaksi tallentamalla valinta.
+Olemassa oleva pys&auml;kki m&auml;&auml;ritet&auml;&auml;n k&auml;yt&ouml;st&auml; poistuneeksi muokkausty&ouml;kalulla (30). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pys&auml;kin voi m&auml;&auml;ritt&auml;&auml; k&auml;yt&ouml;st&auml; poistuneeksi (31). K&auml;yt&ouml;st&auml; poistunut pys&auml;kki valitaan klikkaamalla pys&auml;kkikuvaketta, jolloin avautuu ominaisuustieton&auml;kym&auml; (32). Valittu pys&auml;kki korostuu sinisell&auml; huomiov&auml;rill&auml; (33). Pys&auml;kin k&auml;yt&ouml;st&auml; poistuneeksi m&auml;&auml;ritt&auml;minen suoritetaan asettamalla ominaisuustietotaulun (34) "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (35) pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;. Jos haluat palauttaa pys&auml;kin voimassaolevaksi, valitse viimeinen voimassaolop&auml;iv&auml;-aikavalikosta ”ei tietoa”. Pys&auml;kki palautuu voimassaolevaksi tallentamalla valinta.
 
-Jos pys&auml;kki on poistettu maastosta kokonaan, eik&auml; k&auml;yt&ouml;st&auml; poistunutta pys&auml;kki&auml; tulla en&auml;&auml; ottamaan uudelleen k&auml;ytt&ouml;&ouml;n, voi pys&auml;kin poistaa kokonaan valitsemalla ominaisuustaulun (6) alareunasta Poista Poistunutta pys&auml;kki&auml; ei voi en&auml;&auml; palauttaa voimassaolevaksi. Jos pys&auml;kin viimeinen voimassaolop&auml;iv&auml; on menneisyydess&auml;, aktivoituu kartalla "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinta. Pys&auml;kin kuvake h&auml;vi&auml;&auml; kartalta, kun "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinnan sulkee.
+Jos pys&auml;kki on poistettu maastosta kokonaan, eik&auml; k&auml;yt&ouml;st&auml; poistunutta pys&auml;kki&auml; tulla en&auml;&auml; ottamaan uudelleen k&auml;ytt&ouml;&ouml;n, voi pys&auml;kin poistaa kokonaan valitsemalla ominaisuustaulun (36) alareunasta Poista Poistunutta pys&auml;kki&auml; ei voi en&auml;&auml; palauttaa voimassaolevaksi. Jos pys&auml;kin viimeinen voimassaolop&auml;iv&auml; on menneisyydess&auml;, aktivoituu kartalla "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinta. Pys&auml;kin kuvake h&auml;vi&auml;&auml; kartalta, kun "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinnan sulkee.
 
 __Vanhan pys&auml;kin poistamisen vaiheet:__
 
 1. Aktivoi muokkaustila.
 1. Etsi kartalta pys&auml;kki, jonka haluat poistaa.
-1. Tarkenna kartan mittakaava 1:20 000 tai tarkemmaksi (9).
-1. Valitse muokkausty&ouml;kalu (12).
-1. Klikkaa pys&auml;kki&auml; (4).
-1. Aseta pys&auml;kille "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (20) viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; kirjoittamalla tai valitsemalla se kalenterista, joka avautuu klikkaamalla "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;.
+1. Tarkenna kartan mittakaava 1:20 000 tai tarkemmaksi (31).
+1. Valitse muokkausty&ouml;kalu (30).
+1. Klikkaa pys&auml;kki&auml; (33).
+1. Aseta pys&auml;kille "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (35) viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; kirjoittamalla tai valitsemalla se kalenterista, joka avautuu klikkaamalla "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;.
 1. Jos et halua poistaa pys&auml;kki&auml;, valitse kalenterista "Ei tietoa".
-1. Pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; tallentuu painamalla Tallenna-painiketta (15).
+1. Pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; tallentuu painamalla Tallenna-painiketta (37).
 1. Jos pys&auml;kki on poistettu maastosta, eik&auml; poistuvaa pys&auml;kki&auml; ole tarkoitus ottaa uudelleen k&auml;ytt&ouml;&ouml;n, valitaan ominaisuustaulun lopusta ”Poista”. HUOM! Poistettua pys&auml;kki&auml; ei voi en&auml;&auml; palauttaa olemassaolevaksi!
 
 ![Pys&auml;kin poistaminen.](k17.jpg)
