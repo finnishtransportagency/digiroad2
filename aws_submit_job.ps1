@@ -5,6 +5,8 @@
 #tierekisteriAsset
 #trafficSignGroup
 
+# if command does not work, check aws version and update it to at least 2.1.14 or latest
+
 # UpdateIncompleteLink
 aws batch submit-job --profile vaylaapp --job-definition GenericBatch --job-name <name> --job-queue AdHoc --container-overrides "environment=[{name=batchRunType,value=UpdateIncompleteLinkList}]"
 
