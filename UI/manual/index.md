@@ -332,9 +332,9 @@ _Pys&auml;kin voimassaolop&auml;ivien muokkaus._
 
 ##4.7 Pys&auml;kin muiden ominaisuustietojen muokkaus##
 
-Muita ominaisuustietoja voi muokata oikeassa laidassa olevan ominaisuustieton&auml;kym&auml;n (6) kautta. Tietoja muokataan joko kirjoittamalla tietokentt&auml;&auml;n, valitsemalla pudotusvalikosta tieto tai merkitsem&auml;ll&auml; rasti ruutuun oikean/oikeiden tietojen kohdalle.
+Muita ominaisuustietoja voi muokata oikeassa laidassa olevan ominaisuustietotaulun (16) kautta. Tietoja muokataan joko kirjoittamalla tietokentt&auml;&auml;n, valitsemalla pudotusvalikosta tieto tai merkitsem&auml;ll&auml; rasti ruutuun oikean/oikeiden tietojen kohdalle.
 
-![Pys&auml;kin muiden ominaisuustietojen muokkaus.](k15.jpg)
+![Pys&auml;kin muiden ominaisuustietojen muokkaus.](pysäkit_9.png)
 
 _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
@@ -366,12 +366,13 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Maastokoordinaatti Y|Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Maastokoordinaatti Z|Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.||||
 |Liikenn&ouml;intisuunta|Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:"Keskustaan".||||
-|Vaikutussuunta|Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla (9). Google Street View (4) osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.||||
+|Vaikutussuunta|Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla. Google Street View osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.||||
 |Liikenn&ouml;intisuuntima|Sovellus laskee itse tiegeometriasta. Pohjoinen on nolla astetta ja koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Ilmoitetaan asteluvun mukaan pohjoinen, it&auml;, etel&auml; tai l&auml;nsi.|x|||
 |Ensimm&auml;inen voimassaolop&auml;iv&auml;|P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on ensimm&auml;isen kerran k&auml;yt&ouml;ss&auml;.||||
 |Viimeinen voimassaolop&auml;iv&auml;|P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;.||||
 |Inventointip&auml;iv&auml;|Maantien pys&auml;kin muokkausp&auml;iv&auml;m&auml;&auml;r&auml;|||x|
 |Pys&auml;kin tyyppi|Pakollinen tieto! Linja-autojen paikallisliikenne, raitiovaunu, linja-autojen kaukoliikenne, linja-autojen pikavuoro tai virtuaalipys&auml;kki (virtuaalipys&auml;kin kanssa ei voi valita muita tyyppej&auml;).||||
+|Pysäkin palvelutaso|Ilmaisee pysäkin palvelutason. Mahdolliset arvot: "Terminaali", "Keskeinen solmupysäkki", "Vilkas pysäkki", "Peruspysäkki", "Vähän käytetty pysäkki", "Jättöpysäkki", "Virtuaalipysäkki", "Pysäkit, jotka eivät ole lnja-autoliikenteen käytössä" & "Ei tietoa".||||
 |Korotettu|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Katos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Mainoskatos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos, joka sis&auml;lt&auml;&auml; mainoksia. Pys&auml;kin kunnossapidosta vastaa t&auml;ll&ouml;in mainosten yll&auml;pit&auml;j&auml;. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
