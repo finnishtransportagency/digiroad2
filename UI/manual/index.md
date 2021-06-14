@@ -246,9 +246,9 @@ _Korjattavien linkkien lista._
 4. Joukkoliikenteen pys&auml;kki
 --------------------------------
 
-Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajivalikosta (1) Joukkoliikenteen pys&auml;kit. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
+Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajivalikosta (1) Joukkoliikenteen pysäkki. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
 
-Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta Hallinnollinen luokka-valinnan pois. Sininen v&auml;ri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
+Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajivalikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta Hallinnollinen luokka-valinnan pois. Sininen v&auml;ri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
 
 ![Hallinnollinen luokka](pysäkit_1.png)
 
@@ -258,9 +258,9 @@ _Joukkoliikenteen pys&auml;kkien valinta._
 
 Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin valtakunnallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Sovelluksen t&auml;ytyy olla pys&auml;kkin&auml;kym&auml;ss&auml; pys&auml;kki&auml; haettaessa. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.vayla.fi/digiroad/#massTransitStop/95374  target="_blank">https://extranet.vayla.fi/digiroad/#massTransitStop/95374   </a>(2)
+ <a href=https://extranet.vayla.fi/digiroad/#massTransitStop/95374  target="_blank">https://extranet.vayla.fi/digiroad/#massTransitStopNationalId/164599   </a>(2)
 
-jossa numerosarja 95374 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustieton&auml;kym&auml; (3) aukeaa sivun oikealle puolelle. 
+jossa numerosarja 164599 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustieton&auml;kym&auml; (3) aukeaa sivun oikealle puolelle. 
 
 ![Pys&auml;kkien haku](pysäkit_2.png)
 
