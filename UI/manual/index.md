@@ -309,24 +309,24 @@ _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
 ##4.5 Pys&auml;kin vaikutussuunnan muuttaminen##
 
-Googlen Street View -n&auml;kym&auml; (5) sivun oikeassa laidassa on suunnattu suuntaan, jossa pys&auml;kin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla n&auml;kym&auml;&auml; avautuu Googlen Street View -v&auml;lilehti, jossa pys&auml;kin ymp&auml;rist&ouml;&auml; voi tarkastella tarkemmin. Kartalla pys&auml;kin vaikutussuunta n&auml;kyy pisarana pys&auml;kkikuvakkeella (10). Pisaran k&auml;rki osoittaa pys&auml;kin vaikutussuunnan suuntaan.
+Googlen Street View -n&auml;kym&auml; (edellisen osion kuva) sivun oikeassa laidassa on suunnattu suuntaan, jossa pys&auml;kin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla n&auml;kym&auml;&auml; avautuu Googlen Street View -v&auml;lilehti, jossa pys&auml;kin ymp&auml;rist&ouml;&auml; voi tarkastella tarkemmin. Kartalla pys&auml;kin vaikutussuunta n&auml;kyy pisarana pys&auml;kkikuvakkeella (11). Pisaran k&auml;rki osoittaa pys&auml;kin vaikutussuunnan suuntaan.
 
-Pys&auml;kin vaikutussuunnan voi muuttaa ominaisuustieton&auml;kym&auml;ss&auml; (6) painamalla "Vaihda suuntaa"-painiketta (18). Pys&auml;kin vaikutussuuntaa muutettaessa Googlen Street View -n&auml;kym&auml; (5) muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta k&auml;&auml;ntyy. Mik&auml;li ”Vaihda suuntaa” – painike ei ole valittavissa, on pys&auml;kki yksisuuntaisella tielinkill&auml;, eik&auml; sen suuntaa voida k&auml;&auml;nt&auml;&auml; ajoradan liikennevirran suunnan vastaiseksi. Jos tielinkin suunta on virheellinen (tai sen kuuluisi olla molempiin suuntiin, tulee ensin korjata tielinkin suunta, jotta pys&auml;kin suunta voidaan korjata).
+Pys&auml;kin vaikutussuunnan voi muuttaa ominaisuustietotaulussa; painamalla "Vaihda suuntaa"-painiketta (12). Pys&auml;kin vaikutussuuntaa muutettaessa Googlen Street View -n&auml;kym&auml; muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta k&auml;&auml;ntyy. Mik&auml;li ”Vaihda suuntaa” – painike ei ole valittavissa, on pys&auml;kki yksisuuntaisella tielinkill&auml;, eik&auml; sen suuntaa voida k&auml;&auml;nt&auml;&auml; ajoradan liikennevirran suunnan vastaiseksi. Jos tielinkin suunta on virheellinen (tai sen kuuluisi olla molempiin suuntiin, tulee ensin korjata tielinkin suunta, jotta pys&auml;kin suunta voidaan korjata).
 
-![Pys&auml;kin vaikutussuunnan muuttaminen.](k13.jpg)
+![Pys&auml;kin vaikutussuunnan muuttaminen.](pysäkit_7.png)
 
-_Joukkoliikenteen pys&auml;kin vaikutussuunnan voi muuttaa painamalla "Vaihda suuntaa"-painiketta (18)._
+_Joukkoliikenteen pys&auml;kin vaikutussuunnan voi muuttaa painamalla "Vaihda suuntaa"-painiketta (12)._
 
 ##4.6 Pys&auml;kin voimassaolop&auml;ivien muokkaus##
 
-Ensimm&auml;inen voimassaolop&auml;iv&auml; (19) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, josta l&auml;htien pys&auml;kki on k&auml;yt&ouml;ss&auml;. Viimeinen voimassaolop&auml;iv&auml; (20) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;. Molempia p&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata ominaisuustieto -n&auml;kym&auml;n (6) kautta. P&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata joko kirjoittamalla ne p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n muodossa pp.kk.vvvv tai valitsemalla ne kalenterista, joka avautuu, kun p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml; klikkaa.
+Ensimm&auml;inen voimassaolop&auml;iv&auml; (13) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, josta l&auml;htien pys&auml;kki on k&auml;yt&ouml;ss&auml;. Viimeinen voimassaolop&auml;iv&auml; (14) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;. Molempia p&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata ominaisuustietotaulun (15) kautta. P&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata joko kirjoittamalla ne p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n muodossa pp.kk.vvvv tai valitsemalla ne kalenterista, joka avautuu, kun p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml; klikkaa.
 
 P&auml;iv&auml;m&auml;&auml;ri&auml; ei voi asettaa ristiin siten, ett&auml; "Ensimm&auml;inen voimassaolop&auml;iv&auml;" olisi my&ouml;hemmin kuin "Viimeinen voimassaolop&auml;iv&auml;". Kalenterissa ei-sallitut p&auml;iv&auml;m&auml;&auml;r&auml;t eiv&auml;t ole valittavissa. Jos p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n kirjoittaa p&auml;iv&auml;m&auml;&auml;r&auml;n, joka asettaa p&auml;iv&auml;m&auml;&auml;r&auml;t ristiin, ei p&auml;iv&auml;m&auml;&auml;r&auml; tallennu.
 
 Jos "Ensimm&auml;inen voimassaolop&auml;iv&auml;" tai "Viimeinen voimassaolop&auml;iv&auml;" ei ole tiedossa, voi kalenterista valita "ei tietoa".
 Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; tierekisterin tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi sovellus siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
 
-![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](k14.jpg)
+![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](pysäkit_8.png)
 
 _Pys&auml;kin voimassaolop&auml;ivien muokkaus._
 
