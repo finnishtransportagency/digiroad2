@@ -403,7 +403,7 @@ Kunnan yll&auml;pit&auml;m&auml;&auml; pys&auml;kki&auml; siirrett&auml;ess&auml
 **Elyn yll&auml;pit&auml;m&auml;n pys&auml;kin siirt&auml;minen**
 Maantien pys&auml;kki&auml; siirrett&auml;ess&auml; yli 50 metri&auml; sovellus kysyy varmistuksen pys&auml;kin siirrolle. Jos pys&auml;kki&auml; siirret&auml;&auml;n yli 50 metri&auml;, lakkautetaan vanha pys&auml;kki ja luodaan uusi pys&auml;kki. Pys&auml;kki saa uuden valtakunnallisen Id:n ja Livi-tunnuksen. 
 
-![Pys&auml;kin siirto yli 50 metri&auml;](pysakin_siirto_yli50m.png)
+![Pys&auml;kin siirto yli 50 metri&auml;](pysäkit_10.PNG)
 
 _Pys&auml;kin siirto yli 50 metri&auml;._
 
@@ -414,7 +414,7 @@ Siirrett&auml;ess&auml; pys&auml;kki&auml;, joka on pinossa, j&auml;&auml; pinoo
 
 Pys&auml;kin siirto t&auml;ytyy tallentaa tai peruuttaa ennen kuin voi siirty&auml; muokkaamaan muita pys&auml;kkej&auml; tai pois muokkaustilasta. Sovellus ilmoittaa tehdyst&auml; muutoksesta muutos-dialogilla.
 
-![Pys&auml;kin siirt&auml;minen.](pysakin_siirto.jpg)
+![Pys&auml;kin siirt&auml;minen.](pysäkit_11.png)
 
 _Joukkoliikenteen pys&auml;kin siirt&auml;minen._
 
