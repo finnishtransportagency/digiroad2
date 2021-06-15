@@ -262,7 +262,7 @@ Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin valtakunnallisella ID:
 
 jossa numerosarja 164599 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustieton&auml;kym&auml; (3) aukeaa sivun oikealle puolelle. 
 
-![Pys&auml;kkien haku](pysäkit_2.png)
+![Pys&auml;kkien haku](pysäkit_2_2.png)
 
 _Joukkoliikenteen pys&auml;kkien haku._
 
