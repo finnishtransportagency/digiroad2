@@ -246,9 +246,9 @@ _Korjattavien linkkien lista._
 4. Joukkoliikenteen pys&auml;kki
 --------------------------------
 
-Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajivalikosta (1) Joukkoliikenteen pysäkki. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Lisäksi tietolajivalikosta saa näkyviin palvelupisteet-näkymän, johon kuuluu erilaisia julkisen liikenteen palvelupisteitä, kuten metroasemat ja rautatieasemat. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
+Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajivalikosta (1) "Joukkoliikenteen pysäkki". Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Lisäksi tietolajivalikosta saa näkyviin palvelupisteet-näkymän, johon kuuluu erilaisia julkisen liikenteen palvelupisteitä, kuten metroasemat ja rautatieasemat. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
 
-Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajivalikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta Hallinnollinen luokka-valinnan pois. Sininen väri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
+Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajivalikon (1) "Joukkoliikenteen pysäkki" kohdasta Hallinnollinen luokka -valinnan pois. Sininen väri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
 
 ![Hallinnollinen luokka](pysäkit_1.png)
 
@@ -272,7 +272,7 @@ Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&au
 
 Jos kaksi tai useampi pys&auml;kki ovat alle kuuden metrin p&auml;&auml;ss&auml; toisistaan, esitet&auml;&auml;n pys&auml;kit k&auml;ytt&ouml;liittym&auml;ss&auml; p&auml;&auml;llekk&auml;in ryhmiteltyn&auml;. P&auml;&auml;llekk&auml;in asettelu mahdollistaa pys&auml;kin tarkastelun ilman, ett&auml; samassa sijainnissa olevia pys&auml;kkej&auml; tarvitsee siirt&auml;&auml;. 
 
-Ominaisuustieto-n&auml;kym&auml;ss&auml; kentti&auml; ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu katunäkymä uudelle v&auml;lilehdelle. Huom! Kun Google Street View avautuu, ei k&auml;ytt&auml;j&auml; ole siell&auml; t&auml;ysin samassa kohdassa, mik&auml; sovelluksessa n&auml;kyy pys&auml;kin ominaisuustiedoissa. Sijaintiheitto on noin 50-100 metri&auml;. Virhe johtuu Googlen tekemist&auml; muutoksista Street Viewiin. T&auml;m&auml; ei kuitenkaan vaikuta pys&auml;kin asetteluun Digiroad-sovelluksessa siell&auml; n&auml;kyv&auml;n Street View n&auml;kym&auml;n avulla.
+Ominaisuustietotaulussa kentti&auml; ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu katunäkymä uudelle v&auml;lilehdelle. Huom! Kun Google Street View avautuu, ei k&auml;ytt&auml;j&auml; ole siell&auml; t&auml;ysin samassa kohdassa, joka sovelluksessa n&auml;kyy pys&auml;kin ominaisuustiedoissa. Sijaintiheitto on noin 50-100 metri&auml;. Virhe johtuu Googlen tekemist&auml; muutoksista Street Viewiin. T&auml;m&auml; ei kuitenkaan vaikuta pys&auml;kin asetteluun Digiroad-sovelluksessa siell&auml; n&auml;kyv&auml;n Street View n&auml;kym&auml;n avulla.
 
 Pys&auml;kin valinnan saa pois klikkaamalla karttaa.
 
@@ -289,11 +289,12 @@ Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla 
 _Kelluvat pys&auml;kit on visualisoitu eri tavoin._
 
 </br>
-Kelluvat pys&auml;kit on listattu omaan listaan, johon on linkki pys&auml;kkien ominaisuustietotaulussa (1). Pys&auml;kit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne pys&auml;kit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Kelluvat pys&auml;kit on listattu omaan listaan, johon on linkki pys&auml;kkien ominaisuustietotaulussa (7). Pys&auml;kit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne pys&auml;kit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
 ![Kelluvien pys&auml;kkien lista](pysäkit_5.PNG)
 
 _Kelluvien pys&auml;kkien lista._
+
 
 ##4.4 Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus##
 
@@ -301,7 +302,7 @@ Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkau
 
 Pys&auml;kin valinnan saa pois klikkaamalla karttaa, kun tallennus tai peruutus on tehty.
 
-Muokkaustoiminnallisuudet poikkeavat hieman kunnan kadun ja maantien pys&auml;kkien v&auml;lill&auml;, riippuen siit&auml; onko pys&auml;kki kunnan vai Elyn yll&auml;pit&auml;m&auml;, eri ominaisuustietojen t&auml;ytt&auml;minen on sallittua. P&auml;&auml;s&auml;&auml;nt&ouml;n&auml; on, ett&auml; kuntak&auml;ytt&auml;j&auml;ll&auml; muokattavissa on kaikki ne kent&auml;t, joita h&auml;nen on enimmill&auml;&auml;n tarpeen muokata. Samoin ELYn pys&auml;kkivastaavalla on muokattavissa ne kent&auml;t, joita h&auml;nen on tarpeen yll&auml;pit&auml;&auml; (t&auml;ydent&auml;v&auml;t varustetiedot yll&auml;pidet&auml;&auml;n HARJA-j&auml;rjestelm&auml;ss&auml; ja ovat sovelluksessa ainoastaan read-only n&auml;kym&auml;n&auml;).
+Muokkaustoiminnallisuudet poikkeavat hieman kunnan kadun ja maantien pys&auml;kkien v&auml;lill&auml;, riippuen siit&auml; onko pys&auml;kki kunnan vai ELYn yll&auml;pit&auml;m&auml;, eri ominaisuustietojen t&auml;ytt&auml;minen on sallittua. P&auml;&auml;s&auml;&auml;nt&ouml;n&auml; on, ett&auml; kuntak&auml;ytt&auml;j&auml;ll&auml; muokattavissa on kaikki ne kent&auml;t, joita h&auml;nen on enimmill&auml;&auml;n tarpeen muokata. Samoin ELYn pys&auml;kkivastaavalla on muokattavissa ne kent&auml;t, joita h&auml;nen on tarpeen yll&auml;pit&auml;&auml; (t&auml;ydent&auml;v&auml;t varustetiedot yll&auml;pidet&auml;&auml;n HARJA-j&auml;rjestelm&auml;ss&auml; ja ovat sovelluksessa ainoastaan read-only n&auml;kym&auml;n&auml;).
 
 ![Pys&auml;kin ominaisuustietojen muokkaus.](pysäkit_6.png)
 
@@ -309,7 +310,7 @@ _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
 ##4.5 Pys&auml;kin vaikutussuunnan muuttaminen##
 
-Googlen Street View -n&auml;kym&auml; (edellisen osion kuva) sivun oikeassa laidassa on suunnattu suuntaan, jossa pys&auml;kin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla n&auml;kym&auml;&auml; avautuu Googlen Street View -v&auml;lilehti, jossa pys&auml;kin ymp&auml;rist&ouml;&auml; voi tarkastella tarkemmin. Kartalla pys&auml;kin vaikutussuunta n&auml;kyy pisarana pys&auml;kkikuvakkeella (11). Pisaran k&auml;rki osoittaa pys&auml;kin vaikutussuunnan suuntaan.
+Googlen Street View -n&auml;kym&auml; (edellinen kuva) sivun oikeassa laidassa on suunnattu suuntaan, jossa pys&auml;kin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla n&auml;kym&auml;&auml; avautuu Googlen Street View -v&auml;lilehti, jossa pys&auml;kin ymp&auml;rist&ouml;&auml; voi tarkastella tarkemmin. Kartalla pys&auml;kin vaikutussuunta n&auml;kyy pisarana pys&auml;kkikuvakkeella (11). Pisaran k&auml;rki osoittaa pys&auml;kin vaikutussuuntaan.
 
 Pys&auml;kin vaikutussuunnan voi muuttaa ominaisuustietotaulussa; painamalla "Vaihda suuntaa"-painiketta (12). Pys&auml;kin vaikutussuuntaa muutettaessa Googlen Street View -n&auml;kym&auml; muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta k&auml;&auml;ntyy. Mik&auml;li ”Vaihda suuntaa” – painike ei ole valittavissa, on pys&auml;kki yksisuuntaisella tielinkill&auml;, eik&auml; sen suuntaa voida k&auml;&auml;nt&auml;&auml; ajoradan liikennevirran suunnan vastaiseksi. Jos tielinkin suunta on virheellinen (tai sen kuuluisi olla molempiin suuntiin, tulee ensin korjata tielinkin suunta, jotta pys&auml;kin suunta voidaan korjata).
 
@@ -408,7 +409,7 @@ Maantien pys&auml;kki&auml; siirrett&auml;ess&auml; yli 50 metri&auml; sovellus 
 _Pys&auml;kin siirto yli 50 metri&auml;._
 
 </br>
-Pys&auml;kin uusi sijainti tallettuu painamalla Tallenna-painiketta (21). Painamalla Peruuta-painiketta (22) pys&auml;kki palautuu alkuper&auml;iselle paikalleen. Jos pys&auml;kilt&auml; puuttuu tyyppi, tulee se t&auml;ydent&auml;&auml; ennen tallentamista. Pys&auml;kkien ominaisustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
+Pys&auml;kin uusi sijainti tallettuu painamalla Tallenna-painiketta (21). Painamalla Peruuta-painiketta (22) pys&auml;kki palautuu alkuper&auml;iselle paikalleen. Jos pys&auml;kilt&auml; puuttuu tyyppi, tulee se t&auml;ydent&auml;&auml; ennen tallentamista. Pys&auml;kkien ominaisuustietotaulussa n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
 
 Siirrett&auml;ess&auml; pys&auml;kki&auml;, joka on pinossa, j&auml;&auml; pinoon siirrett&auml;v&auml;n pys&auml;kin kohdalle rako, kunnes siirron tallentaa tai peruuttaa. Jos pys&auml;kin siirt&auml;&auml; alle kuuden metrin p&auml;&auml;h&auml;n toisesta/toisista pys&auml;keist&auml;, siirtyy pys&auml;kki osaksi pinoa.
 
@@ -424,9 +425,9 @@ Uusia pys&auml;kkej&auml; voi lis&auml;t&auml;, kun mittakaavataso on 1:20 000 t
 
 Sovellus muodostaa osan ominaisuustiedoista itse, jos niit&auml; ei m&auml;&auml;ritet&auml;. "Ensimm&auml;inen voimassaolop&auml;iv&auml;" oletetaan meneill&auml;&auml;n olevaksi p&auml;iv&auml;m&auml;&auml;r&auml;ksi. Pys&auml;kin vaikutussuunta oletetaan alla olevan linkin digitointisuunnaksi. Kaikkien varusteiden oletusarvo on "Ei tietoa". Lis&auml;ksi valtakunnallinen tunnus ja Livi-tunnus maantien pys&auml;kille muodostuu automaattisesti Digiroadin omasta numeroavaruudesta eik&auml; k&auml;ytt&auml;j&auml;n tarvitse sit&auml; itse asettaa.
 
-Pys&auml;kin tyyppi on pakollinen tieto eik&auml; uutta pys&auml;kki&auml; voi tallentaa, jos sit&auml; ei ole m&auml;&auml;ritetty. Uuden pys&auml;kin ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kin pakollisia tietoja puuttuu. Kun ominaisuustiedot on kirjattu, painetaan Tallenna-painiketta (28) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruuta-painiketta (29). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko "Tallenna" tai "Peruuta".
+Pys&auml;kin tyyppi on pakollinen tieto eik&auml; uutta pys&auml;kki&auml; voi tallentaa, jos sit&auml; ei ole m&auml;&auml;ritetty. Uuden pys&auml;kin ominaisuustietotaulussa n&auml;kyy ilmoitus, jos pys&auml;kin pakollisia tietoja puuttuu. Kun ominaisuustiedot on kirjattu, painetaan Tallenna-painiketta (28) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruuta-painiketta (29). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko "Tallenna" tai "Peruuta".
 
-Uuden pys&auml;kin voi lis&auml;t&auml; alle kuuden metrin p&auml;&auml;h&auml;n olemassa olevasta pys&auml;kist&auml;. Kunta yll&auml;pit&auml;j&auml; ei voi lis&auml;t&auml; uutta pys&auml;kki&auml; maantielle.
+Uuden pys&auml;kin voi lis&auml;t&auml; alle kuuden metrin p&auml;&auml;h&auml;n olemassa olevasta pys&auml;kist&auml;. Kuntaylläpitäjä ei voi lis&auml;t&auml; uutta pys&auml;kki&auml; maantielle.
 
 __Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:__
 
