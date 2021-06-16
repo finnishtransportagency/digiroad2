@@ -40,6 +40,9 @@ Resources:
     Type: AWS::ECS::Cluster
     Properties:
       ClusterName: !Join ['-', [!Ref ApplicationName, 'ECS-Cluster-Private']]
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref ApplicationName, 'ECS-Cluster']]
