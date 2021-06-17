@@ -469,9 +469,9 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 5. Nopeusrajoitus
 --------------------
 
-Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi nopeusrajoitukset valita tietolajit-valikosta (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan legendassa.
+Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Nopeusrajoitukset voi asettaa aktiiviseksi tasoksi karttaliittymään tietolajivalikosta (1) valitsemalla nopeusrajoitukset. Kartan eri mittakaavatasoilla nopeusrajoitusten visualisointi muuttuu, jotta niiden erottaminen olisi helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan legendassa.
 
-![Nopeusrajoitusten valinta](k18.jpg)
+![Nopeusrajoitusten valinta](Nopeusrajoitus1.PNG)
 
 _Nopeusrajoitusten valinta._
 
@@ -479,19 +479,19 @@ _Nopeusrajoitusten valinta._
 
 Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa.
 
-Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tienumero (maantiell&auml;) tai tienimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta.
+Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tienumero (maantiell&auml;) tai tiennimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, voi sen tehd&auml; tuplaklikkamalla nopeusrajoitusta.
 
 Huom! Nopeusrajoituksten ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
 
-Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustietotaulu.
 
-Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen arvo (km/h), valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+Ominaisuustietotaulu sisältää tiedot nopeusrajoituksen arvosta (km/h), valittujen linkkien lukumäärästä sekä, historiatiedoista, eli milloin tieto on lisätty järjestelmään ja millon sitä on viimeksi muokattu.
 
-![Nopeusrajoituksen tietojen katselu](k24.JPG)
+![Nopeusrajoituksen tietojen katselu](Nopeusrajoitus2.PNG)
 
 _Nopeusrajoituksen tietojen katselu, kun valittuna on nopeusrajoitusketju (klikattu kerran)._
 
-![Nopeusrajoituksen tietojen katselu](k51.JPG)
+![Nopeusrajoituksen tietojen katselu](opeusrajoitus3.png)
 
 _Nopeusrajoituksen tietojen katselu, kun valittuna on yksitt&auml;inen nopeusrajoitus (tuplaklikkaus)._
 
