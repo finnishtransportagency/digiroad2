@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+import scala.concurrent.Await
 import scala.sys.exit
 
 object UpdateIncompleteLinkList {
@@ -32,9 +33,14 @@ object UpdateIncompleteLinkList {
       Queries.getMunicipalities
     }
     municipalities.foreach { municipality =>
+      val timer1 = System.currentTimeMillis()
       println("*** Processing municipality: " + municipality)
       val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
       println("*** Processed " + roadLinks.length + " road links")
+      println("processing took: %.3f sec".format((System.currentTimeMillis()-timer1)*0.001))
+      println("*** wait 60 sec")
+      println("thread: "+Thread.currentThread().getName)
+      Thread.sleep(60000)
     }
   }
 
