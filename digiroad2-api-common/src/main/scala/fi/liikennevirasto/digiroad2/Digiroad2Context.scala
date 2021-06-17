@@ -203,9 +203,8 @@ class SpeedLimitSaveProjected[T](speedLimitProvider: SpeedLimitService) extends 
 }
 
 class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
-  val logger = LoggerFactory.getLogger(getClass)
   def receive = {
-    case w: RoadLinkChangeSet => println("LinkPropertyUpdater start"); roadLinkService.updateRoadLinkChanges(w);
+    case w: RoadLinkChangeSet => roadLinkService.updateRoadLinkChanges(w)
     case _                    => println("linkPropertyUpdater: Received unknown message")
   }
 }
