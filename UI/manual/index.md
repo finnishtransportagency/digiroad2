@@ -594,49 +594,49 @@ Nopeusrajoituksesta on listassa linkki, josta p&auml;&auml;see suoraan nopeusraj
 
 _Tuntemattomien nopeusrajoitusten lista._
 
-6. K&auml;&auml;ntymisrajoitus
+6. Kääntymisrajoitus
 ----------------------------------
 
-Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-paletista (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset tulevat n&auml;kyviin paksumpina viivoina, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymism&auml;&auml;r&auml;ykset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml; (2), on sininen ja linkki, jolle ei saa k&auml;&auml;nty&auml; (3) on punainen.
+Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajivalikosta (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset tulevat n&auml;kyviin paksumpina viivoina, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymism&auml;&auml;r&auml;ykset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml; (2), on sininen ja linkki, jolle ei saa k&auml;&auml;nty&auml; (3) on punainen.
 
 Joissain tapauksissa (U-k&auml;&auml;nn&ouml;s, liikenneympyr&auml;n ohittava erillinen k&auml;&auml;ntymiskaista oikealle) k&auml;&auml;ntymisrajoitus saattaa koostua useammista linkeist&auml;. T&auml;ll&ouml;in ns. v&auml;lilinkki (4) on visualisoitu vihre&auml;ksi. V&auml;lilinkki yhdist&auml;&auml; sen linkin, jolta k&auml;&auml;ntyminen on kielletty (sininen linkki) siihen linkkiin, jolle k&auml;&auml;ntyminen on kielletty&auml; (punainen linkki).
 
-Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajit-paletissa. Tielinkeill&auml;, joiden liikennevirran suunta on vain yhteen suuntaan, on visualisoitu suuntanuoli kuvaamaan liikennevirran suuntaa.
+Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajivalikossa. Tielinkeill&auml;, joiden liikennevirran suunta on vain yhteen suuntaan, on visualisoitu suuntanuoli kuvaamaan liikennevirran suuntaa.
 
-![K&auml;&auml;ntymisrajoitus](KR_kohdat_1_4.png)
+![K&auml;&auml;ntymisrajoitus](kraj_1.png)
 
 _K&auml;&auml;ntymisrajoitusten valinta._
 
 ##6.1 K&auml;&auml;ntymisrajoituksen tietojen katselu##
 
-Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (4) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6).
+Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (5) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustietotauluun (6).
 
-![K&auml;&auml;ntymisrajoituksen visualisointi](KR_kohdat_5.PNG)
+![K&auml;&auml;ntymisrajoituksen visualisointi](kraj_2.png)
 
 _K&auml;&auml;ntymisrajoituksen tietojen katselu._
 
 ##6.2 K&auml;&auml;ntymisrajoitusten muokkaus##
 
-K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa (5). Muokattava kohde valitaan klikkaamalla sen geometriaa (6). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (7), josta valitaan haluttu k&auml;&auml;ntymisrajoitus, klikkaamalla muokkaa-painiketta (8). Muokattavia tietoja ovat k&auml;&auml;ntymisrajoituksen lis&auml;kilven mukainen voimassaoloaika, ajoneuvotyypit, joita k&auml;&auml;ntymisrajoitus ei koske eli poikkeukset sek&auml; mahdollinen muu tarkenne. 
+K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa (7). Muokattava kohde valitaan klikkaamalla sen geometriaa (8). Tietoja muokataan ominaisuustietotaulussa (9), josta valitaan haluttu k&auml;&auml;ntymisrajoitus, klikkaamalla muokkaa-painiketta (10). Muokattavia tietoja ovat k&auml;&auml;ntymisrajoituksen lis&auml;kilven mukainen voimassaoloaika, ajoneuvotyypit, joita k&auml;&auml;ntymisrajoitus ei koske eli poikkeukset sek&auml; mahdollinen muu tarkenne. 
 
-Muokkaustilassa on mahdollista my&ouml;s poistaa olemassaolevia k&auml;&auml;ntymisrajoituksia rastimalla Poista-sarake (9). Muokkaukset ja poisto hyv&auml;ksyt&auml;&auml;n Tallenna-painiketta (10) klikkaamalla. Poiston yhteydess&auml; h&auml;vi&auml;&auml; koko k&auml;&auml;ntymisrajoitus ja sit&auml; koskevat poikkeukset! Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois k&auml;&auml;ntymisrajoituksen valinnasta, sovellus avaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. 
+Muokkaustilassa on mahdollista my&ouml;s poistaa olemassaolevia k&auml;&auml;ntymisrajoituksia rastimalla Poista-sarake (11). Muokkaukset ja poisto hyv&auml;ksyt&auml;&auml;n Tallenna-painiketta (12) klikkaamalla. Poiston yhteydess&auml; h&auml;vi&auml;&auml; koko k&auml;&auml;ntymisrajoitus ja sit&auml; koskevat poikkeukset! Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois k&auml;&auml;ntymisrajoituksen valinnasta, sovellus avaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. 
 
-![K&auml;&auml;ntymisrajoitusten muokkaus.pt1](KR_kohdat_6_8.png)
+![K&auml;&auml;ntymisrajoitusten muokkaus.pt1](kraj_3.png)
 
-![K&auml;&auml;ntymisrajoitusten muokkaus.pt2](KR_kohdat_9_10.png)
+![K&auml;&auml;ntymisrajoitusten muokkaus.pt2](kraj_4.png)
 
 _K&auml;&auml;ntymisrajoitusten muokkaus._
 
 </br>
 ####Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen####
 
-Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustieton&auml;kym&auml; (11), jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (12). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin! 
+Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustietotaulu (13), jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (14). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin! 
 
-Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa klikkaamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (13). Ominaisuustieton&auml;kym&auml;&auml;n aukeaa lomake (14), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustieton&auml;kym&auml;ss&auml; alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (15). Valitse viimeinen linkki -painike, mik&auml;li aiemmin valitsemasi linkki on k&auml;&auml;ntymisrajoituksen kohde linkki. Vahvista valinta painamalla tallenna-nappulaa.
+Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa klikkaamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (15). Ominaisuustietotauluun aukeaa lomake (16), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustietotaulussa alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (17). Valitse viimeinen linkki -painike, mik&auml;li aiemmin valitsemasi linkki on k&auml;&auml;ntymisrajoituksen kohde linkki. Vahvista valinta painamalla tallenna-nappulaa.
  
- Huom! K&auml;&auml;ntymisrajoitukseen valittuja linkkej&auml; ei ole mahdollista poistaa/lis&auml;t&auml; yksitellen vaan koko k&auml;&auml;ntymisrajoitus tulee poistaa, mik&auml;li siihen kuuluvien linkkien sijaintia/m&auml;&auml;r&auml;&auml; on tarve muokata. Poista vanha rajoitus valitsemalla sen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustieton&auml;kym&auml;&auml;n ilmestyy Poista-sarake (9). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
+ Huom! K&auml;&auml;ntymisrajoitukseen valittuja linkkej&auml; ei ole mahdollista poistaa/lis&auml;t&auml; yksitellen vaan koko k&auml;&auml;ntymisrajoitus tulee poistaa, mik&auml;li siihen kuuluvien linkkien sijaintia/m&auml;&auml;r&auml;&auml; on tarve muokata. Poista vanha rajoitus valitsemalla sen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustietotauluun ilmestyy Poista-sarake (11). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
 
-![K&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen](KR_kohdat_11_13.png)
+![K&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen](kraj_5.png)
 
 _K&auml;&auml;ntymisrajoitusten lis&auml;&auml;minen._
 
@@ -645,20 +645,20 @@ _K&auml;&auml;ntymisrajoitusten lis&auml;&auml;minen._
 
 Mik&auml;li haluat tehd&auml; k&auml;&auml;ntymisrajoituksen, jossa k&auml;&auml;ntymisrajoituksen l&auml;hde ja kohde eiv&auml;t ole per&auml;kk&auml;iset linkit, lue n&auml;m&auml; ohjeet! Kahden linkin mittaisen rajoituksen tekeminen onnistuu yll&auml;olevan ohjeen avulla.
 
-Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustieton&auml;kym&auml; (11), jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (12). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin!
+Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustietotaulu, jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (14). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin!
 
-Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa klikkaamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (13). Ominaisuustieton&auml;kym&auml;&auml;n aukeaa lomake (14), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustieton&auml;kym&auml;ss&auml; alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (15). Valitse listalta se linkki, jolle haluat jatkaa k&auml;&auml;ntymisrajoitusta (16). Jos t&auml;m&auml; linkki on muodostamasi ketjun viimeinen, valitse "viimeinen linkki". Piirto saattaa kest&auml;&auml; jonkin aikaa, joten odota rauhassa ennen muutosten tallentamista. 
+Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa klikkaamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (15). Ominaisuustietotauluun aukeaa lomake (16), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustietotaulussa alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (17). Valitse listalta se linkki, jolle haluat jatkaa k&auml;&auml;ntymisrajoitusta (18). Jos t&auml;m&auml; linkki on muodostamasi ketjun viimeinen, valitse "viimeinen linkki". Piirto saattaa kest&auml;&auml; jonkin aikaa, joten odota rauhassa ennen muutosten tallentamista. 
 
 Muussa tapauksessa toista edellinen vaihe ja valitse listalta se linkki, jolle haluat k&auml;&auml;ntymisrajoitusta jatkaa. Etene n&auml;in, kunnes olet valinnut ketjun viimeisen linkin (k&auml;&auml;ntymisrajoituksen kohdelinkin). Lopuksi paina Tallenna-nappia, jolloin tekem&auml;si k&auml;&auml;ntymisrajoitus tallentuu.
 
-![Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille](KR_kohdat_14_16.png)
+![Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille](kraj_6.png)
 
 _Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille_
 
 </br>
 ####Uuden k&auml;&auml;ntymisrajoituksen poistaminen####
 
-K&auml;&auml;ntymisrajoitus poistetaan valitsemalla halutun rajoituksen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustieton&auml;kym&auml;&auml;n ilmestyy Poista-sarake (9). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
+K&auml;&auml;ntymisrajoitus poistetaan valitsemalla halutun rajoituksen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustietotauluun ilmestyy Poista-sarake (11). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
 
 7. Suurin sallittu X 7
 ----------------------
