@@ -667,13 +667,13 @@ Kartalle voi valita tietolajivalikosta (1) Suurin sallittu -valintoja. Suurin sa
 
 Suurin sallittu -tietolajit (7 tietolajia):
 
-__Suurin sallittu massa__
-__Yhdistelm&auml;n suurin sallittu massa__
-__Suurin sallittu akselimassa__
-__Suurin sallittu telimassa__
-__Suurin sallittu korkeus__
-__Ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus__
-__Suurin sallittu leveys__
+* __Suurin sallittu massa__
+* __Yhdistelm&auml;n suurin sallittu massa__
+* __Suurin sallittu akselimassa__
+* __Suurin sallittu telimassa__
+* __Suurin sallittu korkeus__
+* __Ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus__
+* __Suurin sallittu leveys__
 
 ![Suurin sallittu -valinta](ss_1.png)
 
