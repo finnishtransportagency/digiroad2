@@ -672,7 +672,7 @@ Suurin sallittu -tietolajit (7 tietolajia):
 * __Suurin sallittu akselimassa__
 * __Suurin sallittu telimassa__
 * __Suurin sallittu korkeus__
-* __Ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus__
+* __Suurin sallittu pituus__
 * __Suurin sallittu leveys__
 
 ![Suurin sallittu -valinta](ss_1.png)
