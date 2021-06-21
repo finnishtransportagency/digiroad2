@@ -1,6 +1,6 @@
  {
     "family": "digiroad2-dev",
-    "cpu": "256",
+    "cpu": "1024",
     "memory": "2048",
     "executionRoleArn": "arn:aws:iam::475079312496:role/devTaskDefinitionRight-ECSTaskExecutionRoleForTask-AN683PJ3RZSA",
     "networkMode": "awsvpc",
@@ -18,6 +18,10 @@
         ],
         "memory": 2048,
         "environment": [
+          {
+            "name": "containerCPU",
+            "value": "-XX:ActiveProcessorCount=1"
+          },
           {
             "name": "REGION",
             "value": "eu-west-1"
