@@ -746,20 +746,20 @@ Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla linkin ge
 _Suurin sallittu -kohteen lis&auml;&auml;minen._
 
 
-8. Valaistu tie
+8. Valaistus
 ----------------------
 
-Valaistu tie on viivamainen kohde. Valaistus voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Valaistu tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu valaistus, se piirtyy kartalle punaisella viivalla (2). Valaisemattomat tielinkit ovat harmaita (3). Valaistuksen arvo on kyll&auml; tai ei. 
+Valaistus on viivamainen kohde. Valaistus voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Valaistus-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu valaistus, se piirtyy kartalle punaisella viivalla (2). Valaisemattomat tielinkit ovat harmaita (3). Valaistuksen arvo on kyll&auml; tai ei. 
 
-![Valaistu tie](k57.jpg)
+![Valaistus](valaistus1.png)
 
-_Valaistu tie._
+_Valaistus-tietolaji._
 
 ##8.1 Valaistustietojen katselu##
 
 Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko valaistusketju, eli kaikki linkit, joilla on sama valaistustieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Valaistuksella on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; valaistuksen arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valaistusketjussa.
 
-![Valaistustiedon katselu](k58.jpg)
+![Valaistustiedon katselu](valaistus2.png)
 
 _Valaistustiedon katselu._
 
@@ -771,7 +771,7 @@ Valaistus-tietoja voi muokata muokkaustilassa. Valaistuksen voi lis&auml;t&auml;
 
 Uusi valaistus lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Valaistus" (6). Uusi valaistus-tieto n&auml;kyy kartalla punaisena.
 
-![Valaistustiedon lis&auml;ys](k59.jpg)
+![Valaistustiedon lis&auml;ys](valaistus3.png)
 
 _Valaistustiedon lis&auml;ys._
 
@@ -779,27 +779,27 @@ _Valaistustiedon lis&auml;ys._
 
 Valaistustiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei valaistusta" (7). Kun valaistustieto on poistettu, kohde muuttuu kartalla harmaaksi.
 
-![Valaistustiedon poistaminen](k60.jpg)
+![Valaistustiedon poistaminen](valaistus4.png)
 
 _Valaistustiedon poistaminen._
 
 ###Valaistuksen muokkaus monivalintaty&ouml;kalulla###
 
-Usealle linkille voi lis&auml;t&auml; tai poistaa valaistuksen kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan valaistuksen arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usealle linkille voi lisätä tai poistaa valaistuksen kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (8), jolloin ctrl-näppäimen irti päästämällä avautuu valaistuksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (9) tai monikulmiotyökalua (10). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisklikkaamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaa. Valinnan jälkeen avautuu ikkuna, jossa valaistustietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
-![Valaistuksen monivalinta](k63.JPG)
+![Valaistuksen monivalinta](valaistus5.png)
 
 _Valaistuksen monivalinta._
 
 ###Valaistuksen katkaisu###
 
-Tarvittaessa valaistuksen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan valaistuksen geometriasta kohtaa, josta se halutaan katkaista. Valaistuksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet valaistustiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+Tarvittaessa valaistuksen voi katkaista leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla klikataan valaistuksen geometriasta kohtaa, josta se halutaan katkaista. Valaistuksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot ominaisuustietotaulussa (12). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (13). Uudet valaistustiedot tallennetaan tallenna-painikkeesta (14). Katkaisun voi peruuttaa peruuta-painikkeella (15), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
 Huom! Valaistuksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
 
-![Valaistusgeometrian katkaisu](k61.jpg)
+![Valaistusgeometrian katkaisu](valaistus6.png)
 
-_Valaistusgeometrian katkaisu._
+_Valaistusgeometrian katkaisu.__
 
 
 9. Kelirikko
