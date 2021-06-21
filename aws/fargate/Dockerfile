@@ -3,7 +3,9 @@ FROM ${image}
 ENV initialRamPercentage="-XX:InitialRAMPercentage=50.0"
 ENV maxRamPercentage="-XX:MaxRAMPercentage=95.0"
 ENV otherParameter="-Djava.security.egd=file:/dev/./urandom -Duser.timezone=Europe/Helsinki -XX:-OmitStackTraceInFastThrow"
-ENV javaParameter="${initialRam} ${maxRamPercentage} ${otherParameter}"
+# -XX:ActiveProcessorCount=xx"
+ENV containerCPU=""
+ENV javaParameter="${initialRam} ${maxRamPercentage} ${containerCPU} ${otherParameter}"
 ENV batchMode="false"
 RUN apk --no-cache add curl
 RUN mkdir /src
