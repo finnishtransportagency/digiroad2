@@ -663,7 +663,7 @@ K&auml;&auml;ntymisrajoitus poistetaan valitsemalla halutun rajoituksen l&auml;h
 7. Suurin sallittu -tietolajit
 ----------------------
 
-Kartalle voi valita tietolajivalikosta (1) Suurin sallittu -valintoja. Suurin sallittu -arvon omaavat geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+Kartalle voi valita tietolajivalikosta (1) Suurin sallittu -tietolajeja. Suurin sallittu -arvon omaavat geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
 
 Suurin sallittu -tietolajit (7 tietolajia):
 
