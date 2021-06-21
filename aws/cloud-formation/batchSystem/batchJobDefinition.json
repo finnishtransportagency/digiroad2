@@ -2,10 +2,10 @@
   "jobDefinitionName": "BatchJob",
   "type": "container",
   "retryStrategy": {
-    "attempts": 2
+    "attempts": 1
   },
   "timeout": {
-    "attemptDurationSeconds": 60
+    "attemptDurationSeconds": 172800
   },
   "platformCapabilities": [
     "FARGATE"
@@ -15,15 +15,19 @@
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "2048"
+        "value": "8192"
       },
       {
         "type": "VCPU",
-        "value": "1"
+        "value": "2"
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/batchSystem-BatchTaskRole-GSUD7E3H8KV4",
     "environment": [
+      {
+        "name": "containerCPU",
+        "value": "-XX:ActiveProcessorCount=2"
+      },
     {
         "name": "speedLimitProvider",
         "value": "fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService"
