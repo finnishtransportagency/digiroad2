@@ -58,6 +58,10 @@ class OAGProxyServlet extends ProxyServlet {
   private val oagAuth = new OAGAuthPropertyReader
   private val logger = LoggerFactory.getLogger(getClass)
 
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val url = Digiroad2Properties.rasterServiceUrl +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
     logger.info(url)
@@ -74,6 +78,10 @@ class VKMProxyServlet extends ProxyServlet {
   def regex = "/(digiroad(-dev)?)".r
   private val oagAuth = new OAGAuthPropertyReader
   private val logger = LoggerFactory.getLogger(getClass)
+
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val vkmUrl: String = Digiroad2Properties.vkmUrl
