@@ -866,82 +866,82 @@ Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometri
 
 _Kelirikkogeometrian katkaisu._
 
-10. Tien leveys
+10. Leveys
 ----------------------
 
-Kartalle voi valita tietolajit-paletista (1) Tien leveys -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Tielinkit, joiden leveys tiedet&auml;&auml;n on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joiden leveys ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;. Tien leveys ilmoitetaan senttimetrein&auml; (cm).
+Kartalle voi valita tietolajivalikosta (1) Leveys-valinnan, joka kuvaa tien leveyttä. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Tielinkit, joiden leveys tiedet&auml;&auml;n on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joiden leveys ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;. Tien leveys ilmoitetaan senttimetrein&auml; (cm).
 
-![Tien leveys](k71.JPG)
+![Leveys](leveys1.png)
 
-_Tien leveys -valinta._
+_Leveys-valinta._
 
-##10.1 Tien leveyden katselu##
+##10.1 Leveyden katselu##
 
-Yksitt&auml;isen tien leveys -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki linkit, joilla on sama tien leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustieton&auml;kym&auml; (6). Tien leveydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; tien leveyden arvo senttimetrein&auml;, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
+Yksitt&auml;isen leveyskohteen voi valita klikkaamalla kartalta sen geometriaa (2). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki linkit, joilla on sama tien leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustietotaulu (3). Tien leveydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; tieto siitä, onko kohteessa leveys-arvoa ja tien leveyden arvo senttimetrein&auml;. Taulusta löytyy myös tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
 
-![Tien leveys katselu](k72.JPG)
+![Leveyden katselu](leveys2.png)
 
-_Tien leveys -katselutila._
+_Leveys-katselutila._
 
-##10.2 Tien leveys -kohteiden muokkaus##
+##10.2 Leveyskohteiden muokkaus##
 
-Tien leveys -tietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Muokkaustilassa tien leveydelle voi antaa uuden arvon (cm), tietoja voi poistaa sek&auml; leveysgeometrian voi katkaista. Tien leveyden arvoa voi muokata kolmella tavalla:
+Leveystietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa leveydelle voi antaa uuden arvon (cm), tietoja voi poistaa sek&auml; leveysgeometrian voi katkaista. Tien leveyden arvoa voi muokata kolmella tavalla:
 
 1. Koko leveysketjulle kerralla.
 2. Yksitt&auml;isen linkin mittaiselle osuudelle.
 3. Monivalinnan avulla kokonaiselle alueelle.
 
-###Tien leveyden muokkaus###
+###Leveyden muokkaus###
 
-Tien leveys -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Leveysvalintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietotaulussa (5). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (6). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (7). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
-Huom! Tien leveyden arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
+Huom! Leveyden arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
 
-![Tien leveys muokkaus](k73.JPG)
+![Leveys muokkaus](leveys3.png)
 
-_Tien leveyden muokkaus._
+_Leveyden muokkaus._
 
-###Tien leveyden muokkaus monivalintaty&ouml;kalulla###
+###Leveyden muokkaus monivalintaty&ouml;kalulla###
 
-Useamman kuin yhden tielinkin leveyden voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko linkkien p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan tien leveyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Useamman kuin yhden tielinkin leveyden voi muuttaa kerralla. Halutut tielinkit valitaan valintatyökalulla (8) painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja klikkaamalla hiiren vasemmalla näppäimellä halutut tielinkit. Vaihtoehtoisesti voi käyttää laatikko- (9) tai monikulmiovalintatyökaluja (10), joilla piirretään linkkien päälle valinta-alueet. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan tien leveyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
-![Tien leveys monivalinta](k74.JPG)
+![Tien leveys monivalinta](leveys4.png)
 
-_Useamman tien leveyden muokkaus kerralla._
+_Useamman leveystiedon muokkaus kerralla._
 
-###Tien leveys -kohteen katkaisu###
+###Leveyskohteen katkaisu###
 
-Tien leveys -kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi muuttaa tien leveytt&auml; lyhyill&auml; tieosuuksilla. Leikkausty&ouml;kalulla klikataan leveyden geometriasta kohtaa, josta leveystieto halutaan katkaista. Leveyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2).
+Leveyskohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (11). Siten leikkausty&ouml;kalun avulla voi muuttaa tien leveytt&auml; lyhyill&auml; tieosuuksilla. Leikkausty&ouml;kalulla klikataan leveyden geometriasta kohtaa, josta leveystieto halutaan katkaista. Leveyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (12).
 Katkaisuty&ouml;kalu valitsee aina vain linkin mittaisen osion geometriasta, ei koko leveysketjua.
 
-![Tien leveys katkaisu](k75.JPG)
+![Tien leveys katkaisu](leveys5.png)
 
-_Tien leveys -geometrian katkaisu._
+_Leveysgeometrian katkaisu._
 
-Katkaistun leveystiedon osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille m&auml;&auml;ritell&auml;&auml;n arvot oikean laidan kentiss&auml; (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet leveystiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tien leveys j&auml;&auml; voimaan.
+Katkaistun leveystiedon osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille m&auml;&auml;ritell&auml;&auml;n arvot oikean laidan ominaisuustietotaulun kentiss&auml; (13). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (14). Uudet leveystiedot tallennetaan tallenna-painikkeesta (15). Katkaisun voi peruuttaa peruuta-painikkeella (16), jolloin alkuper&auml;inen tien leveys j&auml;&auml; voimaan.
 
 Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille tieosuuksille eri arvot, jotta tallennus on mahdollista.
 
-![Tien leveys katkaisu2](k76.JPG)
+![Tien leveys katkaisu2](leveys6.png)
 
-_Tien leveys -kohteen katkaisu._
+_Leveyskohteen katkaisu._
 
-###Tien leveys -kohteen poistaminen###
+###Leveyskohteen poistaminen###
 
-Tielinkin tien leveys -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Leveys-kohdasta "Leveys ei tiedossa".
+Tielinkin leveyskohde poistetaan ominaisuustietotaulussa (17) valitsemalla Leveys-kohdasta "Leveys ei tiedossa".
 
-![Tien leveys poisto](k77.JPG)
+![Tien leveys poisto](leveys7.png)
 
-_Tien leveys -kohteen poistaminen._
+_Leveyskohteen poistaminen._
 
-###Uuden tien leveys -kohteen lis&auml;&auml;minen###
+###Uuden leveyskohteen lis&auml;&auml;minen###
 
-Tielinkille voi lis&auml;t&auml; tien leveys -kohteen valitsemalla linkin geometrian (4) Tien leveys -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin leveyden tiedot. Valitaan "Leveys tiedossa" ja sy&ouml;tet&auml;&auml;n leveys sy&ouml;tekentt&auml;&auml;n.  Tien leveys tallennetaan painamalla Tallenna (8). Uuden tien leveys -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
+Tielinkille voi lis&auml;t&auml; leveyskohteen valitsemalla linkin geometrian (18) leveyden muokkaustilassa. Ominaisuustietotauluun (19) avautuu tielinkin leveyden tiedot. Valitaan "Leveys tiedossa" ja sy&ouml;tet&auml;&auml;n leveys sy&ouml;tekentt&auml;&auml;n.  Leveys tallennetaan painamalla Tallenna (20). Uuden tien leveys -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (21).
 
-![Tien leveys lisays](k78.JPG)
+![Tien leveys lisays](leveys8.png)
 
-_Tien leveys -kohteen lis&auml;&auml;minen._
+_Leveyskohteen lis&auml;&auml;minen._
 
 11. Ruuhkautumisherkkyys
 ----------------------
