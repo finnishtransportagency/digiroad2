@@ -1583,7 +1583,7 @@ _Geometrian ulkopuolinen suojatiemerkint&auml; on v&auml;rilt&auml;&auml;n punai
 </br>
 Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (6). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan suojatien kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Ulkopuoliset suojatiet.](suojatie5.png)
+![Ulkopuoliset suojatiet.](suojatie5_2.png)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
 
