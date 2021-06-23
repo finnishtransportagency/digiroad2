@@ -1541,17 +1541,17 @@ Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa pe
 19. Suojatie
 ----------------------
 
-Suojatie on ajoradan ylitt&auml;miseen tarkoitettu kohta. Karttan&auml;kym&auml;&auml;n voi valita suojatiet tietolajit-paletista (1) ”Suojatie”. Kartalle tulevat esiin suojatiemerkinn&auml;t sinisen&auml; ympyr&auml;n&auml;. Punaisella ympyr&auml;ll&auml; olevat suojatiemerkinn&auml;t kuvaavat geometrian ulkopuolella olevia suojateit&auml;.
+Suojatie on ajoradan ylitt&auml;miseen tarkoitettu kohta. Karttan&auml;kym&auml;&auml;n voi valita suojatiet tietolajivalikosta (1) ”Suojatie”. Kartalle tulevat esiin suojatiemerkinn&auml;t sinisen&auml; ympyr&auml;n&auml;. Punaisella ympyr&auml;ll&auml; olevat suojatiemerkinn&auml;t kuvaavat geometrian ulkopuolella olevia suojateit&auml;. 
 
-![Valinta.](k141.JPG)
+![Valinta.](suojatie1.png)
 
 _Suojatiemerkinn&auml;n valinta._
 
 ##19.1 Suojatiemerkinn&auml;n tietojen katselu##
 
-Yksitt&auml;isen suojatiemerkinn&auml;n voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu suojatiemerkinn&auml;n ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa klikkaamalla taustakarttaa.
+Yksitt&auml;isen suojatiemerkinn&auml;n voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu suojatiemerkinn&auml;n ominaisuustietotaulu. Ominaisuustietotaulussa n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa klikkaamalla taustakarttaa.
 
-![Valinta.](k142.JPG)
+![Valinta.](suojatie2.png)
 
 _Suojatien katselu._
 
@@ -1561,29 +1561,29 @@ Suojatiemerkinn&auml;n voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden
 
 ###Suojatiemerkinn&auml;n poisto, siirto ja lis&auml;ys###
 
-Muokattava suojatie valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu suojatiemerkint&auml; voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla.
+Muokattava suojatie valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu suojatiemerkint&auml; voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna painiketta (3). Muutokset voidaan kumota peruuta-napilla.
 
-Yksitt&auml;ist&auml; suojatiemerkint&auml;&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Linkki, jolle suojatie siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla.
+Yksitt&auml;ist&auml; suojatiemerkint&auml;&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Linkki, jolle suojatie siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-napilla.
 
-![Muokkaustila.](k145.JPG)
+![Muokkaustila.](suojatie3.png)
 
 _Suojatien muokkaustila._
 
 </br>
-Suojatiemerkint&auml; voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (6). Suojatiemerkint&auml; lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (7).
+Suojatiemerkint&auml; voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (4). Suojatiemerkint&auml; lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (5).
 
 ###Geometrian ulkopuolelle j&auml;&auml;neet suojatiet###
 
 Geometrian ulkopuolelle j&auml;&auml;neet suojatiet on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Suojatiemerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
 
-![Merkinta.](k143.JPG)
+![Merkinta.](suojatie4.png)
 
 _Geometrian ulkopuolinen suojatiemerkint&auml; on v&auml;rilt&auml;&auml;n punainen._
 
 </br>
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (2). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan suojatien kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (6). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan suojatien kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Ulkopuoliset suojatiet.](k144.JPG)
+![Ulkopuoliset suojatiet.](suojatie5.png)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
 
