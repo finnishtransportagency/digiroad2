@@ -229,7 +229,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom, assetTypeId)
       case _  => None
     }
-//TODO: Disabled because of the usage of municipality coordinates. See MunicipalityDao.scala
+//TODO: Disabled because of the usage of municipality coordinates. See MunicipalityDao.scala. https://extranet.vayla.fi/jira/browse/DROTH-2824
     /*
     val location = userPreferences match {
       case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3, preference._4)
@@ -2118,6 +2118,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   //TODO: Disabled because of the usage of coordinates. See MunicipalityDao.scala
+  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   put("/userConfiguration/defaultLocation") {
     def getCenterView(id: Int, getCenterViewFunctionType: Int => Option[MapViewZoom], user: User): User = {
       /*
@@ -2236,6 +2237,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   //TODO: municipalityService calls disabled because of usage of municipality coordinates. See MunicipalityDao.scala
+  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   get("/userStartLocation") {
     val user = userProvider.getCurrentUser()
     params.get("position") match {
