@@ -223,15 +223,15 @@ _Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (klikattu kerra
 
 ####Korjattavat tielinkit####
 
-OHT-sovelluksess kokonaan uudet linkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (1). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan. Linkki on kartalla mustaksi visualisoituneena, kunnes tieto on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (2). Listasta voi klikata korjattavaa tielinkki&auml; (3), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen,kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
+OHT-sovelluksess kokonaan uudet linkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (2). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan. Linkki on kartalla mustaksi visualisoituneena (1), kunnes tieto on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (3). Listasta voi klikata korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen,kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
 
 Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi. Korjattavien linkkien listaan ei tule uusia kevyen liikenteen v&auml;ylien, ajopolkujen ja ajoteiden tielinkkej&auml;, koska n&auml;iden tiedot saadaan Maanmittauslaitokselta. Toiminnallinen luokka ja tielinkin tyyppi t&auml;ydennet&auml;&auml;n n&auml;ille tielinkille automaattisesti. 
 
-![Korjattava linkki](k47.jpg)
+![Korjattava linkki](Manuaali15.PNG)
 
 _Korjattava linkki._
 
-![Korjattavien linkkien lista](k50.JPG)
+![Korjattavien linkkien lista](Manuaali16.PNG)
 
 _Korjattavien linkkien lista._
 
