@@ -62,6 +62,8 @@ class MunicipalityDao {
     sql"""select id from municipality where id = $id """.as[Int].list
   }
 
+  //TODO: sdo_util.getvertices() function works in Oracle but not in PostGIS
+  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   def getMunicipalityByCoordinates(coordinates: Point): Seq[MunicipalityInfo] = {
     sql"""
           select m.id, m.ely_nro,
@@ -90,20 +92,21 @@ class MunicipalityDao {
     """.as[MunicipalityInfo].list
   }
 
+  //TODO: Usages disabled (no municipality coordinates). https://extranet.vayla.fi/jira/browse/DROTH-2824
   def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] =  {
     PostGISDatabase.withDynSession {
       sql"""select geometry, zoom from municipality where id = $municipalityId""".as[MapViewZoom].firstOption
     }
   }
 
-
+  //TODO: Usages disabled (no municipality coordinates). https://extranet.vayla.fi/jira/browse/DROTH-2824
   def getCenterViewArea(area: Int): Option[MapViewZoom] =  {
     PostGISDatabase.withDynSession {
       sql"""select geometry, zoom from service_area where id = $area""".as[MapViewZoom].firstOption
     }
   }
 
-
+  //TODO: Usages disabled (no municipality coordinates). https://extranet.vayla.fi/jira/browse/DROTH-2824
   def getCenterViewEly(ely: Int): Option[MapViewZoom] =  {
     PostGISDatabase.withDynSession {
       sql"""select geometry, zoom from ely where id = $ely""".as[MapViewZoom].firstOption
@@ -122,6 +125,8 @@ class MunicipalityDao {
     }
   }
 
+  //TODO: sdo_util.getvertices() function works in Oracle but not in PostGIS
+  //TODO: Usages disabled (no municipality coordinates). https://extranet.vayla.fi/jira/browse/DROTH-2824
   def getElysIdAndNamesByCoordinates(lon: Int, lat: Int): Seq[(Int, String)] = {
     sql"""
          select e.id,
