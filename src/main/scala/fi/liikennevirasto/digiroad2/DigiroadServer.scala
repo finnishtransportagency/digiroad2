@@ -11,7 +11,7 @@ import org.eclipse.jetty.http.HttpHeader
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
-import org.eclipse.jetty.server.{Handler, Server}
+import org.eclipse.jetty.server.{Connector, Handler, HttpConfiguration, HttpConnectionFactory, Server, ServerConnector}
 import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.LoggerFactory
@@ -41,6 +41,12 @@ trait DigiroadServer {
   def startServer() {
     val server = new Server(8080)
     val mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer)
+    val httpConfiguration = new HttpConfiguration()
+    // 32 kb
+    httpConfiguration.setRequestHeaderSize(32*1024)
+    httpConfiguration.setResponseHeaderSize(32*1024)
+    val connector = new ServerConnector(server,new HttpConnectionFactory(httpConfiguration))
+    server.setConnectors(Array[Connector](connector))
     server.addEventListener(mbContainer)
     server.addBean(mbContainer)
     val handler = new ContextHandlerCollection()
