@@ -39,13 +39,14 @@ trait DigiroadServer {
   }
 
   def startServer() {
-    val server = new Server(8080)
+    val server = new Server
     val mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer)
     val httpConfiguration = new HttpConfiguration()
     // 32 kb
     httpConfiguration.setRequestHeaderSize(32*1024)
     httpConfiguration.setResponseHeaderSize(32*1024)
     val connector = new ServerConnector(server,new HttpConnectionFactory(httpConfiguration))
+    connector.setPort(8080)
     server.setConnectors(Array[Connector](connector))
     server.addEventListener(mbContainer)
     server.addBean(mbContainer)
