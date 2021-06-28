@@ -548,15 +548,15 @@ Huom! Nopeusrajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; nopeusra
 
 Molempiin suuntiin voimassa olevan nopeusrajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti.
 
-Muutos tehd&auml;&auml;n tuplaklikkaamalla kyseist&auml; nopeusrajoitusta (1), jolloin oikeaan laitaan tulee painike "Jaa nopeusrajoitus yksisuuntaiseksi" (2).
+Muutos tehd&auml;&auml;n tuplaklikkaamalla kyseist&auml; nopeusrajoitusta (10), jolloin oikeaan laitaan tulee painike "Jaa nopeusrajoitus yksisuuntaiseksi" (11).
 
-![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](k52.jpg)
+![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](Nopeusrajoitus8.PNG)
 
 _Nopeusrajoituksen valinta ja muuttaminen yksisuuntaiseksi._
 
-Painikkeen painamisen j&auml;lkeen voi uusille nopeusrajoituksille antaa arvot alasvetovalikoista (3). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat nopeusrajoituksia kartalla (4). Arvojen pit&auml;&auml; erota toisistaan, jotta tallentaminen on mahdollista.
+Painikkeen painamisen j&auml;lkeen voi uusille nopeusrajoituksille antaa arvot alasvetovalikoista (12). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat nopeusrajoituksia kartalla (13). Arvojen pit&auml;&auml; erota toisistaan, jotta tallentaminen on mahdollista.
 
-![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](k53.jpg)
+![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](Nopeusrajoitus9.PNG)
 
 _Uusien yksisuuntaisten nopeusrajoitusten arvon valinta._
 
