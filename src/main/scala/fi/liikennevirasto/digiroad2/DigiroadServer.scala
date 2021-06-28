@@ -45,6 +45,7 @@ trait DigiroadServer {
     // 32 kb
     httpConfiguration.setRequestHeaderSize(32*1024)
     httpConfiguration.setResponseHeaderSize(32*1024)
+    httpConfiguration.setHeaderCacheSize(32*1024)
     val connector = new ServerConnector(server,new HttpConnectionFactory(httpConfiguration))
     connector.setPort(8080)
     server.setConnectors(Array[Connector](connector))
