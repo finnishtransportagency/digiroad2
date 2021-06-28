@@ -1003,21 +1003,21 @@ Huom! Ruuhkautumisherkkyystiedon katkaisussa tulee m&auml;&auml;ritt&auml;&auml;
 
 _Ruuhkautumisherkkyysgeometrian katkaisu._
 
-12. P&auml;&auml;llystetty tie
+12. Päällyste
 ----------------------
 
-P&auml;&auml;llystetty tie on viivamainen kohde. P&auml;&auml;llystys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. P&auml;&auml;llystetty tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu p&auml;&auml;llyste, se piirtyy kartalle punaisella viivalla (2). P&auml;&auml;llyst&auml;m&auml;tt&ouml;m&auml;ksi merkatut tielinkit ovat harmaita (3). P&auml;&auml;llystyksen arvo on kyll&auml; tai ei.
-P&auml;&auml;llyste -tiedon l&auml;hde tielinkille on Maanmittauslaitoksen maastotietokanta.
+"Päällyste" on viivamainen kohde, joka voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Päällyste-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu p&auml;&auml;llyste, se piirtyy kartalle (2). P&auml;&auml;llyst&auml;m&auml;tt&ouml;m&auml;ksi merkatut tielinkit ovat harmaita (3). P&auml;&auml;llystyksen mahdollisina arvoina on useita päällysteisiin viittaavia päällysteluokkia.
+P&auml;&auml;llystetiedon l&auml;hde tielinkille on Maanmittauslaitoksen maastotietokanta.
 
-![Paallyste](k85.JPG)
+![Paallyste](päällyste1.png)
 
-_P&auml;&auml;llystetty tie._
+_Päällystenäkymä._
 
 ##12.1 P&auml;&auml;llystetietojen katselu##
 
-Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko p&auml;&auml;llysteketju, eli kaikki linkit, joilla on sama p&auml;&auml;llystetieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. P&auml;&auml;llystyksell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; p&auml;&auml;llystyksen arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
+Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko p&auml;&auml;llysteketju, eli kaikki linkit, joilla on sama p&auml;&auml;llystetieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. P&auml;&auml;llystyksell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; p&auml;&auml;llystyksen arvo kyll&auml;/ei. Taulussa on myös tieto päällysteluokasta, jossa on useita mahdollisia vaihtoehtoja, sekä tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
 
-![Paallyste katselu](k86.JPG)
+![Paallyste katselu](päällyste2.png)
 
 _P&auml;&auml;llystetiedon katselu._
 
@@ -1032,9 +1032,9 @@ P&auml;&auml;llysteen arvoa voi muokata kolmella tavalla:
 
 ###P&auml;&auml;llystetiedon lis&auml;ys###
 
-Uusi p&auml;&auml;llystetieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "P&auml;&auml;llyste" (6). Uusi p&auml;&auml;llystystieto n&auml;kyy kartalla punaisena.
+Uusi p&auml;&auml;llystetieto lis&auml;t&auml;&auml;n valitsemalla kartalta geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "P&auml;&auml;llyste" sekä päällysteluokka (6). Uusi p&auml;&auml;llystystieto n&auml;kyy kartalla päällysteluokalle ominaisella värillä.
 
-![Paallyste lisays](k87.JPG)
+![Paallyste lisays](päällyste3.png)
 
 _P&auml;&auml;llystetiedon lis&auml;ys._
 
@@ -1042,25 +1042,25 @@ _P&auml;&auml;llystetiedon lis&auml;ys._
 
 P&auml;&auml;llystetiedon voi poistaa valitsemalla p&auml;&auml;llystetyn kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei p&auml;&auml;llystett&auml;" (7). Kun p&auml;&auml;llystetieto on poistettu, kohde muuttuu kartalla harmaaksi.
 
-![Paallyste poisto](k88.JPG)
+![Paallyste poisto](päällyste4.png)
 
 _P&auml;&auml;llystetiedon poistaminen._
 
 ###P&auml;&auml;llystetiedon muokkaus monivalintaty&ouml;kalulla###
 
-Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla painamalla valintatyökalua (8) sekä pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa valitsemalla useita tielinkkejä hiiren vasemmalla näppäimellä. Lisäksi on mahdollista käyttää laatikko- (9) ja monikulmiovalintatyökaluja (10). Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo sekä päällysteluokka ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
-![Paallyste monivalinta](k89.JPG)
+![Paallyste monivalinta](päällyste5.png)
 
 _P&auml;&auml;llysteen monivalinta._
 
 ###P&auml;&auml;llysteen katkaisu###
 
-Tarvittaessa p&auml;&auml;llysteen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan p&auml;&auml;llysteen geometriasta kohtaa, josta se halutaan katkaista. P&auml;&auml;llysteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. P&auml;&auml;llysteen katkaisussa uusille tieosuuksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet p&auml;&auml;llystetiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen p&auml;&auml;llystetieto j&auml;&auml; voimaan.
+Tarvittaessa p&auml;&auml;llysteen voi katkaista leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla klikataan p&auml;&auml;llysteen geometriasta kohtaa, josta se halutaan katkaista. P&auml;&auml;llysteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. P&auml;&auml;llysteen katkaisussa uusille tieosuuksille valitaan arvot oikean laidan ominaisuustietotaulusta (12). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (13). Uudet p&auml;&auml;llystetiedot tallennetaan tallenna-painikkeesta (14). Katkaisun voi peruuttaa peruuta-painikkeella (15), jolloin alkuper&auml;inen p&auml;&auml;llystetieto j&auml;&auml; voimaan.
 
 Huom! P&auml;&auml;llysteen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
 
-![Paallyste katko](k90.JPG)
+![Paallyste katko](päällyste6.png)
 
 _P&auml;&auml;llystegeometrian katkaisu._
 
