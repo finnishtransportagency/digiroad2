@@ -1048,7 +1048,7 @@ _P&auml;&auml;llystetiedon poistaminen._
 
 ###P&auml;&auml;llystetiedon muokkaus monivalintaty&ouml;kalulla###
 
-Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla painamalla valintatyökalua (8) sekä pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa valitsemalla useita tielinkkejä hiiren vasemmalla näppäimellä. Lisäksi on mahdollista käyttää laatikko- (9) ja monikulmiovalintatyökaluja (10). Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo sekä päällysteluokka ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla painamalla valintatyökalua (8) sekä pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa valitsemalla useita tielinkkejä hiiren vasemmalla näppäimellä. Lisäksi on mahdollista käyttää laatikko- (9) ja monikulmiovalintatyökaluja (10). Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita kuvio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo sekä päällysteluokka ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
 ![Paallyste monivalinta](päällyste5.png)
 
