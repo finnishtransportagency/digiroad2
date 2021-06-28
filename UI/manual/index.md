@@ -535,14 +535,14 @@ _Useamman nopeusrajoituksen arvon muokkaus kerralla._
 
 Nopeusrajoituksen voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka löytyy työkaluvalikosta (13). Leikkaustyökalulla klikataan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Nopeusrajoituksen katkaisu valitsee aina vain linkin mittaisen osion nopeusrajoitusta, ei nopeusrajoitusketjua.
 
-![Nopeusrajoituksen katkaiseminen.](k28.jpg)
+![Nopeusrajoituksen katkaiseminen.](Nopeusrajoitus7.PNG)
 
 _Nopeusrajoituksen katkaiseminen._
 
 </br>
-Nopeusrajoituksen katkaisussa tielinkin osille valitaan uudet nopeusrajoitusarvot sovelluksen oikean reunan ominaisuustietotaulun alasvetovalikoista (4). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet nopeusrajoitukset tallennetaan tallenna-painikkeella (6) ja katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+Nopeusrajoituksen katkaisussa tielinkin osille valitaan uudet nopeusrajoitusarvot sovelluksen oikean reunan ominaisuustietotaulun alasvetovalikoista (4). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet nopeusrajoitukset tallennetaan tallenna-painikkeella (6) ja katkaisun voi peruuttaa peruuta-painikkeella (9), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
-Huom! Nopeusrajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; nopeusrajoituksille eri arvot, jotta tallennus on mahdollista.
+Huom! Nopeusrajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; nopeusrajoituksille eri arvot (7), jotta tallennus on mahdollista.
 
 ###Nopeusrajoituksen muuttaminen yksisuuntaiseksi###
 
