@@ -81,8 +81,8 @@ class OAGProxyServlet extends ProxyServlet {
     logger.info(proxyRequest.getHeaders.toString)
     logger.info("Header end")
     proxyRequest.getHeaders.foreach(
-      field => 
-        if( field.getName.startsWith("X-Iam")|| field.getName.startsWith("X-Amzn")){
+      field =>
+        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
           proxyRequest.getHeaders.remove(field.getName)
         }
     )
@@ -118,7 +118,7 @@ class VKMProxyServlet extends ProxyServlet {
     //logger.info(proxyRequest.getHeaders.toString)
     proxyRequest.getHeaders.foreach(
       field =>
-        if( field.getName.startsWith("X-Iam")|| field.getName.startsWith("X-Amzn")){
+        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
           proxyRequest.getHeaders.remove(field.getName)
         }
     )
