@@ -1212,17 +1212,17 @@ _Talvinopeusrajoituksen lis&auml;&auml;minen._
 15. Joukkoliikennekaista
 ----------------------
 
-Joukkoliikennekaista on viivamainen kohde. Joukkoliikennekaista voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Joukkoliikennekaista-tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu joukkoliikennekaista, se piirtyy kartalle punaisella viivalla (2). Tielinkit ilman joukkoliikennekaistaa ovat harmaita (3). Joukkoliikennekaistan arvo on kyll&auml; tai ei.
+Joukkoliikennekaista on viivamainen kohde, joka voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Joukkoliikennekaista-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu joukkoliikennekaista, se piirtyy kartalle punaisella viivalla (2). Tielinkit ilman joukkoliikennekaistaa ovat harmaita (3). Joukkoliikennekaistan arvo on kyll&auml; tai ei.
 
-![Joukkoliikennekaista.](k106.JPG)
+![Joukkoliikennekaista.](jl1.png)
 
 _Joukkoliikennekaista._
 
 ##15.1 Joukkoliikennekaistatietojen katselu##
 
-Kun kohdetta klikkaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko joukkoliikennekaistaketju, eli kaikki linkit, joilla on sama tieto joukkoliikennekaistasta ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Joukkoliikennekaistatiedolla on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; joukkoliikennekaistan arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; joukkoliikennekaistaketjussa.
+Kun kohdetta napauttaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran napauttamalla tulee valituksi koko joukkoliikennekaistaketju, eli kaikki linkit, joilla on sama tieto joukkoliikennekaistasta ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. Joukkoliikennekaistatiedolla on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; joukkoliikennekaistan arvo kyll&auml;/ei, tieto siitä, milloin tiedot on tarkistettu sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; joukkoliikennekaistaketjussa.
 
-![Joukkoliikennekaistatiedon katselu.](k107.JPG)
+![Joukkoliikennekaistatiedon katselu.](jl2.png)
 
 _Joukkoliikennekaistatiedon katselu._
 
@@ -1232,9 +1232,9 @@ Joukkoliikennekaistatietoja voi muokata muokkaustilassa. Joukkoliikennekaistan v
 
 ###Joukkoliikennekaistan lis&auml;ys###
 
-Uusi joukkoliikennekaista lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Joukkoliikennekaista" (6). Uusi joukkoliikennekaistatieto n&auml;kyy kartalla punaisena.
+Uusi joukkoliikennekaista lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Joukkoliikennekaista" sekä mahdollinen tarkennus kaistan lisäkilvessä ilmoitetusta voimassaoloajasta(6). Uusi joukkoliikennekaistatieto n&auml;kyy kartalla punaisena.
 
-![Joukkoliikennekaistan lis&auml;ys.](k108.JPG)
+![Joukkoliikennekaistan lis&auml;ys.](jl3.png)
 
 _Joukkoliikennekaistan lis&auml;ys._
 
@@ -1242,25 +1242,25 @@ _Joukkoliikennekaistan lis&auml;ys._
 
 Joukkoliikennekaistan voi poistaa valitsemalla joukkoliikennekaistatiedon ja oikean laidan ominaisuustietotaulusta kohdan "Ei joukkoliikennekaistaa" (7). Kun joukkoliikennekaista on poistettu, kohde muuttuu kartalla harmaaksi.
 
-![Joukkoliikennekaistan poistaminen.](k109.JPG)
+![Joukkoliikennekaistan poistaminen.](jl4.png)
 
 _Joukkoliikennekaistan poistaminen._
 
 ###Joukkoliikennekaistatietojen muokkaus monivalintaty&ouml;kalulla###
 
-Usealle linkille voi lis&auml;t&auml; tai poistaa joukkoliikennekaistan kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan onko linkeill&auml; joukkoliikennekaistaa vai ei ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usealle linkille voi lis&auml;t&auml; tai poistaa joukkoliikennekaistan valintatyökalulla (8) kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja napauttamalla tielinkkejä hiiren vasemmalla näppäimellä. Toinen tapa on käyttää laatikko- (9) tai monikulmiotyökalua (10), joilla voi piirtää tielinkkien päälle alueen.  Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan onko linkeill&auml; joukkoliikennekaistaa vai ei sekä mahdollisen lisäkilvessä ilmoitetun voimassaolon tiedot. Tiedot tallennetaan painamalla tallenna ja peruuta-painikkeesta voi perua muutokset.
 
-![Joukkoliikennekaistan monivalinta.](k110.JPG)
+![Joukkoliikennekaistan monivalinta.](jl5.png)
 
 _Joukkoliikennekaistan monivalinta._
 
 ###Joukkoliikennekaistatiedon katkaisu###
 
-Tarvittaessa joukkoliikennekaistatiedon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan joukkoliikennekaistan geometriasta kohtaa, josta se halutaan katkaista. Joukkoliikennekaistan geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Joukkoliikennekaistan katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet joukkoliikennekaistatiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen joukkoliikennekaistatieto j&auml;&auml; voimaan.
+Tarvittaessa joukkoliikennekaistatiedon voi katkaista leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla klikataan joukkoliikennekaistan geometriasta kohtaa, josta se halutaan katkaista. Joukkoliikennekaistan geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Joukkoliikennekaistan katkaisussa uusille geometrioille valitaan arvot oikean laidan ominaisuustietotaulusta (12). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (13). Uudet joukkoliikennekaistatiedot tallennetaan tallenna-painikkeesta (14). Katkaisun voi peruuttaa peruuta-painikkeella (15), jolloin alkuper&auml;inen joukkoliikennekaistatieto j&auml;&auml; voimaan.
 
 Huom! Joukkoliikennekaistan katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
 
-![Joukkoliikennekaistageometrian katkaisu.](k111.JPG)
+![Joukkoliikennekaistageometrian katkaisu.](jl6.png)
 
 _Joukkoliikennekaistageometrian katkaisu._
 
