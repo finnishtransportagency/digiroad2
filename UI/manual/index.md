@@ -1232,7 +1232,7 @@ Joukkoliikennekaistatietoja voi muokata muokkaustilassa. Joukkoliikennekaistan v
 
 ###Joukkoliikennekaistan lis&auml;ys###
 
-Uusi joukkoliikennekaista lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Joukkoliikennekaista" sekä mahdollinen tarkennus kaistan lisäkilvessä ilmoitetusta voimassaoloajasta(6). Uusi joukkoliikennekaistatieto n&auml;kyy kartalla punaisena.
+Uusi joukkoliikennekaista lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Joukkoliikennekaista" sekä mahdollinen tarkennus kaistan lisäkilvessä ilmoitetusta voimassaoloajasta (6). Uusi joukkoliikennekaistatieto n&auml;kyy kartalla punaisena.
 
 ![Joukkoliikennekaistan lis&auml;ys.](jl3.png)
 
@@ -1248,7 +1248,7 @@ _Joukkoliikennekaistan poistaminen._
 
 ###Joukkoliikennekaistatietojen muokkaus monivalintaty&ouml;kalulla###
 
-Usealle linkille voi lis&auml;t&auml; tai poistaa joukkoliikennekaistan valintatyökalulla (8) kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja napauttamalla tielinkkejä hiiren vasemmalla näppäimellä. Toinen tapa on käyttää laatikko- (9) tai monikulmiotyökalua (10), joilla voi piirtää tielinkkien päälle alueen.  Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan onko linkeill&auml; joukkoliikennekaistaa vai ei sekä mahdollisen lisäkilvessä ilmoitetun voimassaolon tiedot. Tiedot tallennetaan painamalla tallenna ja peruuta-painikkeesta voi perua muutokset.
+Usealle linkille voi lis&auml;t&auml; tai poistaa joukkoliikennekaistan valintatyökalulla (8) kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja napauttamalla tielinkkejä hiiren vasemmalla näppäimellä. Toinen tapa on käyttää laatikko- (9) tai monikulmiotyökalua (10), joilla voi piirtää tielinkkien päälle alueen.  Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita kuvio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan onko linkeill&auml; joukkoliikennekaistaa vai ei sekä mahdollisen lisäkilvessä ilmoitetun voimassaolon tiedot. Tiedot tallennetaan painamalla tallenna ja peruuta-painikkeesta voi perua muutokset.
 
 ![Joukkoliikennekaistan monivalinta.](jl5.png)
 
