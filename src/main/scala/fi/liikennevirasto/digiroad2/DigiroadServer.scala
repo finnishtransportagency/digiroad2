@@ -7,7 +7,7 @@ import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
-import org.eclipse.jetty.http.HttpHeader
+import org.eclipse.jetty.http.{HttpField, HttpHeader}
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
@@ -77,7 +77,15 @@ class OAGProxyServlet extends ProxyServlet {
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    logger.info(proxyRequest.getHeaders.toString) 
+    proxyRequest.getHeaders.foreach(
+      field => 
+        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
+          proxyRequest.getHeaders.remove(field.getName)
+        }
+    )
     proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
+    logger.info(proxyRequest.getHeaders.toString)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
@@ -103,6 +111,14 @@ class VKMProxyServlet extends ProxyServlet {
       proxyRequest.param(key, value.mkString(""))
     }
 
+    logger.info(proxyRequest.getHeaders.toString)
+    proxyRequest.getHeaders.foreach(
+      field =>
+        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
+          proxyRequest.getHeaders.remove(field.getName)
+        }
+    )
+    
     proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
