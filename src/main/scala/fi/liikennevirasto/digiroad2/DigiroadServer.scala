@@ -80,12 +80,12 @@ class OAGProxyServlet extends ProxyServlet {
     logger.info("Header start")
     logger.info(proxyRequest.getHeaders.toString)
     logger.info("Header end")
-    proxyRequest.getHeaders.foreach(
-      field =>
-        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
-          proxyRequest.getHeaders.remove(field.getName)
-        }
-    )
+
+    proxyRequest.getHeaders.remove("X-Iam-Data")
+    proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+    proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+    proxyRequest.getHeaders.remove("X-Iam-Identity")
+    
     proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     logger.info("Header clean start")
     logger.info(proxyRequest.getHeaders.toString)
@@ -116,12 +116,10 @@ class VKMProxyServlet extends ProxyServlet {
     }
 
     //logger.info(proxyRequest.getHeaders.toString)
-    proxyRequest.getHeaders.foreach(
-      field =>
-        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
-          proxyRequest.getHeaders.remove(field.getName)
-        }
-    )
+    proxyRequest.getHeaders.remove("X-Iam-Data")
+    proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+    proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+    proxyRequest.getHeaders.remove("X-Iam-Identity")
     
     proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
