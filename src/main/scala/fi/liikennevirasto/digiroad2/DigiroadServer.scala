@@ -77,15 +77,19 @@ class OAGProxyServlet extends ProxyServlet {
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    logger.info(proxyRequest.getHeaders.toString) 
+    logger.info("Header start")
+    logger.info(proxyRequest.getHeaders.toString)
+    logger.info("Header end")
     proxyRequest.getHeaders.foreach(
       field => 
-        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
+        if( field.getName.startsWith("X-Iam")|| field.getName.startsWith("X-Amzn")){
           proxyRequest.getHeaders.remove(field.getName)
         }
     )
     proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
+    logger.info("Header clean start")
     logger.info(proxyRequest.getHeaders.toString)
+    logger.info("Header clean end")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
@@ -111,10 +115,10 @@ class VKMProxyServlet extends ProxyServlet {
       proxyRequest.param(key, value.mkString(""))
     }
 
-    logger.info(proxyRequest.getHeaders.toString)
+    //logger.info(proxyRequest.getHeaders.toString)
     proxyRequest.getHeaders.foreach(
       field =>
-        if( field.getName.startsWith("x-iam")|| field.getName.startsWith("x-amzn")){
+        if( field.getName.startsWith("X-Iam")|| field.getName.startsWith("X-Amzn")){
           proxyRequest.getHeaders.remove(field.getName)
         }
     )
