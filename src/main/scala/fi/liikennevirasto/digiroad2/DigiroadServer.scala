@@ -87,9 +87,9 @@ class OAGProxyServlet extends ProxyServlet {
         }
     )
     proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
-    logger.info("Header start")
+    logger.info("Header clean start")
     logger.info(proxyRequest.getHeaders.toString)
-    logger.info("Header start")
+    logger.info("Header clean end")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
