@@ -37,7 +37,7 @@ object ValluSender extends AssetPropertiesReader {
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
-      messageLogger.info(s"Got response (${response.getStatusLine.getStatusCode}) ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
+      applicationLogger.info(s"Got response (${response.getStatusLine.getStatusCode}) ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
       EntityUtils.consume(entity)
     } finally {
       response.close()
@@ -47,17 +47,18 @@ object ValluSender extends AssetPropertiesReader {
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
       if (sendingEnabled) {
-        messageLogger.info(s"Sending to vallu: $payload")
+        applicationLogger.info(s"Sending to vallu: $payload")
         thunk(payload)
       } else {
-        messageLogger.info(s"Messaging is disabled, xml was $payload")
+        applicationLogger.info(s"Messaging is disabled, xml was $payload")
       }
     } catch {
       case e: Exception => {
-        NewRelic.noticeError(e)
+
         applicationLogger.error("Error occurred", e)
-        messageLogger.error("=====Error in sending Message to Vallu, message below ======")
-        messageLogger.error(payload)
+        applicationLogger.error("=====Error in sending Message to Vallu, message below ======")
+        applicationLogger.error(payload)
+
       }
     }
   }
