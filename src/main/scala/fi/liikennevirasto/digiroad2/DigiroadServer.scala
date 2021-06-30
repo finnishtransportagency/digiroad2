@@ -72,14 +72,14 @@ class OAGProxyServlet extends ProxyServlet {
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val url = Digiroad2Properties.rasterServiceUrl +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
-    logger.info(url)
+    logger.debug(url)
     java.net.URI.create(url)
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
-    logger.info("Header start")
-    logger.info(proxyRequest.getHeaders.toString)
-    logger.info("Header end")
+    logger.debug("Header start")
+    logger.debug(proxyRequest.getHeaders.toString)
+    logger.debug("Header end")
 
     proxyRequest.getHeaders.remove("X-Iam-Data")
     proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
@@ -87,9 +87,9 @@ class OAGProxyServlet extends ProxyServlet {
     proxyRequest.getHeaders.remove("X-Iam-Identity")
     
     proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
-    logger.info("Header clean start")
-    logger.info(proxyRequest.getHeaders.toString)
-    logger.info("Header clean end")
+    logger.debug("Header clean start")
+    logger.debug(proxyRequest.getHeaders.toString)
+    logger.debug("Header clean end")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
@@ -114,8 +114,7 @@ class VKMProxyServlet extends ProxyServlet {
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
-
-    //logger.info(proxyRequest.getHeaders.toString)
+    
     proxyRequest.getHeaders.remove("X-Iam-Data")
     proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
     proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
