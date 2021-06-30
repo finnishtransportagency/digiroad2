@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import java.nio.charset.Charset
-import com.newrelic.api.agent.NewRelic
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, EventBusMassTransitStop}
+import fi.liikennevirasto.digiroad2.EventBusMassTransitStop
 import fi.liikennevirasto.digiroad2.util.{AssetPropertiesReader, Digiroad2Properties}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
@@ -12,7 +11,6 @@ import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
 
 object ValluSender extends AssetPropertiesReader {
-  val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
   val sendingEnabled = Digiroad2Properties.valluServerSendingEnabled
   val address = Digiroad2Properties.valluServerAddress
@@ -37,7 +35,7 @@ object ValluSender extends AssetPropertiesReader {
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
-      applicationLogger.info(s"Got response (${response.getStatusLine.getStatusCode}) ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
+      applicationLogger.info(s"VALLU Got response (${response.getStatusLine.getStatusCode}) ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
       EntityUtils.consume(entity)
     } finally {
       response.close()
@@ -47,15 +45,15 @@ object ValluSender extends AssetPropertiesReader {
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
       if (sendingEnabled) {
-        applicationLogger.info(s"Sending to vallu: $payload")
+        applicationLogger.info(s"VALLU Sending to vallu: $payload")
         thunk(payload)
       } else {
-        applicationLogger.info(s"Messaging is disabled, xml was $payload")
+        applicationLogger.info(s"VALLU Messaging is disabled, xml was $payload")
       }
     } catch {
       case e: Exception => {
 
-        applicationLogger.error("Error occurred", e)
+        applicationLogger.error("VALLU Error occurred", e)
         applicationLogger.error("=====Error in sending Message to Vallu, message below ======")
         applicationLogger.error(payload)
 
