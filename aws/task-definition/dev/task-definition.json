@@ -84,7 +84,7 @@
           },
           {
             "name": "vallu.server.address",
-            "value": "http://localhost:9002"
+            "value": "https://testioag.ely-keskus.fi/koontikartta/rest/stop/xml"
           },
           {
             "name": "viite.importTimeStamp",
