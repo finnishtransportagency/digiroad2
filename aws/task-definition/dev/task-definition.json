@@ -68,11 +68,11 @@
           },
           {
             "name": "vkmUrl",
-            "value": "http://testioag.vayla.fi"
+            "value": "https://testioag.vayla.fi"
           },
           {
             "name": "tierekisteriRestApiEndPoint",
-            "value": "http://testioag.vayla.fi/trrest/devtest/"
+            "value": "https://testioag.vayla.fi/trrest/devtest/"
           },
           {
             "name": "tierekisteri.enabled",
@@ -108,7 +108,7 @@
           },
           {
             "name": "feedbackAssetsEndPoint",
-            "value": "http://devtest.vayla.fi/digiroad/"
+            "value": "https://devtest.vayla.fi/digiroad/"
           },
           {
             "name": "bonecp.jdbcUrl",
@@ -120,7 +120,7 @@
           },
           {
             "name": "tierekisteri.username",
-            "value": "trrest"
+            "value": "trrestoth"
           },
           {
             "name": "tierekisteri.old.username",
@@ -148,7 +148,7 @@
           },
           {
             "name": "rasterServiceUrl",
-            "value": "http://testioag.vayla.fi/rasteripalvelu-mml"
+            "value": "https://testioag.vayla.fi/rasteripalvelu-mml"
           }
         ],
         "secrets": [
