@@ -69,15 +69,15 @@ Mik&auml;li karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovelluks
 2 Yleist&auml;
 ----------
 
-Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lkeen ruudulle avautuu oletuksena katselutila. Jos käyttäjälle ei ole myönnetty muokkausoikeuksia kunnan tai Ely-keskuksen alueelle, voi hän ainoastaan katsella Digiroadin eri tietolajeja sovelluksessa. Muokkausoikeudet saatuaan käyttäjä voi sekä katsella että muokata eri tietolajeja. Muokkausoikeudet myönnetään käyttäjälle aina alueellisesti yhden tai useamman kunnan tai Ely-keskuksen rajojen sisäpuolella oleviin aineistoihin.
+Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lkeen ruudulle avautuu oletuksena katselutila. Jos käyttäjälle ei ole myönnetty muokkausoikeuksia kunnan tai ELY-keskuksen alueelle, voi hän ainoastaan katsella Digiroadin eri tietolajeja sovelluksessa. Muokkausoikeudet saatuaan käyttäjä voi sekä katsella että muokata eri tietolajeja. Muokkausoikeudet myönnetään käyttäjälle aina alueellisesti yhden tai useamman kunnan tai Ely-keskuksen rajojen sisäpuolella oleviin aineistoihin.
 
-Tietolajien muokkaus suoritetaan muokkaustilassa, jolloin käyttäjä pääsee muokkaamaan niitä tietoja, joihin hänelle on myönnetty ylläpito-oikeudet. (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan ruudun vasemman yl&auml;kulman tietolajivalikosta (1).
+Tietolajien muokkaus suoritetaan muokkaustilassa, jolloin käyttäjä pääsee muokkaamaan niitä tietoja, joihin hänelle on myönnetty ylläpito-oikeudet. (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan käyttöliittymän vasemmassa reunassa olevan tietolajipaneelin tietolajivalikosta (1).
 
 ![Tietolajivalikko](Manuaali3.1.PNG)
 
 _Tietolajivalikko._
 
-Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta. Muokkaustilassa kartan yläosassa on teksti "Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (3). Muutosten tallentamisen jälkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan käyttäjätunnus, päivämäärä ja kellonaika (4). Ennen tallentamista voi tehdyt muutokset peruuttaa painamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eivät ole aktiivisia, kun muutoksia ei ole tehty. Tehdyt muutokset tulee tallentaa tai perua ennen, kun sovellus antaa siirtyä muokkaamaan uutta kohdetta. Takaisin katselutilaan pääsee klikkaamalla "Siirry katselutilaan"-painiketta (5).
+Muokkaustilan saa aktivoitua napauttamalla tietolajipaneelin alareunassa olevaa Siirry muokkaustilaan -painiketta. Muokkaustilassa kartan yläpalkkiin ilmestyy teksti "Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla Tallenna-painiketta (3). Muutosten tallentamisen jälkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan käyttäjätunnus, päivämäärä ja kellonaika (4). Ennen uusien tietojen tallentamista voi tehdyt muutokset peruuttaa napauttamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eivät ole aktiivisia silloin, kun muutoksia ei ole tehty. Tehdyt muutokset tulee tallentaa tai perua ennen kun sovellus antaa siirtyä muokkaamaan uutta kohdetta. Takaisin katselutilaan pääsee klikkaamalla Siirry katselutilaan -painiketta (5).
 
 Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
@@ -94,13 +94,13 @@ Karttaa liikutetaan hiirellä raahaamalla.
 
 ####Mittakaavataso####
 
-Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan oikeassa alakulmassa (8).
+Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisnapauttamalla, Shift+piirto (alue) tai mittakaavapainikkeista (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy karttaikkunan oikeassa alakulmassa (8).
 
 ####Karttahaut####
 
-K&auml;ytt&ouml;liittym&auml;ss&auml; on hakukentt&auml; (6), jossa voi hakea haluttua sijantia kohteen koordinaateilla, katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukentt&auml;&auml;n ja klikkaamalla Hae. Hakutulos tulee listaan hakukent&auml;n alle. Hakutuloslistassa ylimp&auml;n&auml; on maantieteellisesti kartan nykyist&auml; keskipistett&auml; l&auml;himp&auml;n&auml; oleva kohde. Mik&auml;li hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, t&auml;ytyy listalta valita tulos, johon kartta keskittyy. Tyhjenn&auml; tulokset -painike tyhjent&auml;&auml; hakutuloslistan.
+K&auml;ytt&ouml;liittym&auml;ss&auml; on hakukentt&auml; (6), jossa voi hakea haluttua sijantia kohteen koordinaateilla, katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukentt&auml;&auml;n ja napauttamalla Hae-painiketta. Hakutulos tulee listaan hakukent&auml;n alle. Hakutuloslistassa ylimp&auml;n&auml; on maantieteellisesti kartan nykyist&auml; keskipistett&auml; l&auml;himp&auml;n&auml; oleva kohde. Mik&auml;li hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, t&auml;ytyy listalta valita tulos, johon kartta keskittyy. Tyhjenn&auml; tulokset -painike tyhjent&auml;&auml; hakutuloslistan.
 
-Koordinaateilla haku: Koordinaatit sy&ouml;tet&auml;&auml;n muodossa "pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;)". Koordinaatit tulee olla ETRS89-TM35FIN -koordinaattij&auml;rjestelm&auml;ss&auml;. Esimerkiksi: 6975061, 535628.
+Koordinaateilla haku: Koordinaatit sy&ouml;tet&auml;&auml;n hakukenttään ETRS89-TM35FIN -koordinaattij&auml;rjestelm&auml;ss&auml, siten, että pohjoinen ja eteläinen arvo ovat pilkuin erotettu. Esimerkiksi: 6975061, 535628.
 
 Katuosoitteella haku: Katuosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&auml; koko ositteen tai sen osan. Esimerkiksi: Mannerheimintie tai Mannerheimintie 10, Helsinki.
 
@@ -108,11 +108,11 @@ Tieosoitteella haku: Tieosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&
 
 ####Merkitse piste kartalle####
 
-Merkitse-painike (10) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkit&auml;&auml;n uusi piste kartalta. Merkitse-painikkeen vieress&auml; olevat koordinaatit seuraavat kartan keskipistett&auml; ja p&auml;ivittyv&auml;t, kun kartan keskipiste muuttuu.
+Merkitse-painike käyttöliittymän alapalkin vasemmassa reunassa (10) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkit&auml;&auml;n uusi piste kartalta. Merkitse-painikkeen vieress&auml; olevat koordinaatit seuraavat kartan keskipistett&auml; ja p&auml;ivittyv&auml;t, kun kartan keskipiste muuttuu.
 
 ####Taustakartat####
 
-Taustakartaksi voi valita maastokartan, ortokuvan tai taustakarttasarjan. (9)
+Karttaikkunan taustakartaksi voi valita maastokartan, ortokuvan tai taustakarttasarjan. (9)
 
 ![Karttan&auml;kym&auml;n muokkaus](Manuaali5.png)
 
@@ -120,8 +120,8 @@ _Karttan&auml;kym&auml;n muokkaus._
 
 ##2.2. Historiatiedot##
 
-Sovelluksessa on mahdollista piirt&auml;&auml; n&auml;kyviin my&ouml;s tielinkkien historiatiedot aiemmin poistuneiden geometriatietojen osalta. Toiminnallisuuden tavoitteena on helpottaa yll&auml;pit&auml;j&auml;&auml; t&auml;ydent&auml;m&auml;&auml;n uusien linkkien puuttuvia ominaisuustietoja. Toistaiseksi historiatietoja on mahdollista katsella tielinkkien toiminnallisten luokkien ja nopeusrajoitustiedon osalta. 
-Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan vasemmassa yl&auml;kulmassa olevasta valikosta (1). Kun haluttu tietolaji on piirrossa, valitaan sivun vasemmasta alalaidasta rasti ruutuun kohdassa ”Näytä poistuneet tielinkit” (2).
+Sovelluksessa on mahdollista piirt&auml;&auml; n&auml;kyviin my&ouml;s tielinkkien historiatiedot aiemmin poistuneiden tielinkkien osalta. Toiminnallisuuden tavoitteena on helpottaa yll&auml;pit&auml;j&auml;&auml; t&auml;ydent&auml;m&auml;&auml;n uusien tielinkkien puuttuvia ominaisuustietoja. Toistaiseksi historiatietoja on mahdollista katsella ainoastaan tielinkkien toiminnallisten luokkien ja nopeusrajoitustiedon osalta. 
+Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan tietolajipaneelin yl&auml;kulmassa olevasta tietolajivalikosta (1). Kun haluttu tietolaji on visualisoitu karttaikkunaan, aktivoidaan tietolajipaneelin alalaidasta Näytä poistuneet tielinkit -valintaruutu (2).
 
 ![Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot.](Manuaali6.PNG)
 
@@ -130,7 +130,7 @@ _Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot, jotka visua
 3 Tielinkki
 ------------
 
-Tielinkki on tien, kadun, kävelyn ja pyöräilyn väylän tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttan&auml;kym&auml;&auml;n valitaan tielinkit valitsemalla tietolajivalikosta Tielinkit.
+Tielinkki on tien, kadun, kävelyn ja pyöräilyn väylän tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttaikkunaan valitaan tielinkit valitsemalla tietolajivalikosta Tielinkit.
 
 ![Tielinkit](Manuaali7.PNG)
 
@@ -139,15 +139,15 @@ _Tielinkit._
 </br>
 ####Tielinkkien haku####
 
-Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
+Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa n&auml;kyviin karttaikkunassa kaksoisnapauttamalla tielinkki&auml;, jolloin sovelluksen oikeaan laitaan avautuu tielinkin ominaisuustietoikkuna. Ominaisuustietoikkunassa linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
  <a href=https://extranet.vayla.fi/digiroad/#linkProperty/450541 target="_blank">https://extranet.vayla.fi/digiroad/#linkProperty/450541</a>
 
-jossa numerosarja 450541 on tielinkin ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
+jossa numerosarja 450541 on tielinkin ID. Toiminto tarkentaa karttaikkunan haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 
 ##3.1 Tielinkin tietojen katselu##
 
-Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat:
+Yksitt&auml;isen tielinkin voi valita napauttamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustietoikkunaan (1). Tielinkin ominaisuustietoja ovat:
 
 - Linkin ID
 - hallinnollinen luokka
@@ -162,11 +162,11 @@ Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tiel
 - osoitenumerot vasemmalla ja oikealla (ensimm&auml;inen ja viimeinen numero)
 - Maanmittauslaitoksen ID (MML ID)
 
-Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tienumero (maantiet) tai tiennimi (katuverkko ja yksityistie). Jos käyttöliittymässä haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
+Kerran tielinkkiä napauttamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tienumero (maantiet) tai tiennimi (katuverkko ja yksityistie). Jos karttaikkunassa haluaa valita vain yhden linkin, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;.
 
-Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartalla. Sivun oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Jos tielinkkiketju jatkuu kuntarajan yli, tienumerolla on useita tiennimi&auml; tai useita tieosanumeroita, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustieton&auml;kym&auml;&auml;n.
+Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu karttaikkunassa. Sivun oikeaan laitaan avautuu tielinkin ominaisuustietoikkuna. Jos tielinkkiketju jatkuu kuntarajan yli, tienumerolla on useita tiennimi&auml; tai useita tieosanumeroita, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustietoikkunaan.
 
-Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai tunneli -tiedot n&auml;y ominaisuustieton&auml;kym&auml;ss&auml;. Jos k&auml;ytt&auml;j&auml; haluaa tarkastella n&auml;it&auml; tietoja, tulee tielinkki valita yksitt&auml;in tuplaklikkaamalla.
+Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai tunneli -tiedot n&auml;y ominaisuustietotaulussa. Jos k&auml;ytt&auml;j&auml; haluaa tarkastella n&auml;it&auml; tietoja, tulee tielinkki valita yksitt&auml;in kaksoisnapauttamalla.
 
 ![Tielinkkiketju](Manuaali8.png)
 
