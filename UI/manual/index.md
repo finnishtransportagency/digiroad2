@@ -209,21 +209,21 @@ _Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan._
 
 Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan.
 
-Muokattava tielinkki valitaan klikkaamalla sen geometriaa (2). Kerran klikkaamalla tulee valituksi koko tielinkkiketju, eli ominaisuustiedoiltaan yhtenev&auml;t tielinkit.
+Muokattava tielinkki valitaan napauttamalla sen geometriaa (2). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli ominaisuustiedoiltaan yhtenev&auml;t tielinkit.
 
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden tielinkin, sen voi tehd&auml; tuplaklikkamalla tielinkki&auml;.
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden tielinkin, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;.
 
 Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi ovat muokattavissa (3). Ketjuvalinta korjaa kaikkien ketjuun valittuna olevien tielinkkien tiedot.
 
 ![Tielinkin ominaisuustietojen muokkaus.](Manuaali14.PNG)
 
-_Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (klikattu kerran)._
+_Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (napautettu kerran)._
 
 </br>
 
 ####Korjattavat tielinkit####
 
-OHT-sovelluksessa uudet tielinkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (2). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan. Linkki on kartalla mustaksi visualisoituneena (1), kunnes tieto on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (3). Listasta voi klikata korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen,kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
+Digiroadin sovelluksessa uudet tielinkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (2). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan (kunta, valtio, yksityinen). Linkki on kartalla mustaksi visualisoituneena (1), kunnes toiminnallinen luokka tai linkin tyyppitiedot on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietoikkunan alareunassa olevan painikkeen kautta (3). Listasta voi napauttaa korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
 
 Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi. Korjattavien linkkien listaan ei tule uusia kevyen liikenteen v&auml;ylien, ajopolkujen ja ajoteiden tielinkkej&auml;, koska n&auml;iden tiedot saadaan Maanmittauslaitokselta. Toiminnallinen luokka ja tielinkin tyyppi t&auml;ydennet&auml;&auml;n n&auml;ille tielinkille automaattisesti. 
 
@@ -461,7 +461,7 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 5. Nopeusrajoitus
 --------------------
 
-Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Nopeusrajoitukset voi asettaa aktiiviseksi tasoksi karttaliittymään tietolajivalikosta (1). Kartan eri mittakaavatasoilla nopeusrajoitusten visualisointi muuttuu, jotta niiden erottaminen olisi helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan legendassa.
+Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Nopeusrajoitukset voi asettaa aktiiviseksi tasoksi tietolajivalikosta (1). Kartan eri mittakaavatasoilla nopeusrajoitusten visualisointi muuttuu, jotta niiden erottaminen olisi helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan legendassa tietolajipaneelissa.
 
 ![Nopeusrajoitusten valinta](Nopeusrajoitus1.PNG)
 
@@ -805,7 +805,7 @@ _Valaistusgeometrian katkaisu.__
 9. Kelirikko
 ----------------------
 
-Kelirikko on viivamainen kohde. Kelirikko voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Kelirikko -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu kelirikko, se piirtyy kartalle punaisella viivalla (2). Tielinkit, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikon arvo on kyll&auml; tai ei.
+Kelirikko on viivamainen tietolaji. Kelirikko voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Kelirikko -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu kelirikko, se piirtyy kartalle punaisella viivalla (2). Tielinkit, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikon arvo on kyll&auml; tai ei.
 
 ![Kelirikko](k64.JPG)
 
