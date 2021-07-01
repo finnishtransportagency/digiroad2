@@ -77,7 +77,7 @@ Tietolajien muokkaus suoritetaan muokkaustilassa, jolloin käyttäjä pääsee m
 
 _Tietolajivalikko._
 
-Muokkaustilan saa aktivoitua napauttamalla tietolajipaneelin alareunassa olevaa Siirry muokkaustilaan -painiketta. Muokkaustilassa kartan yläpalkkiin ilmestyy teksti "Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla Tallenna-painiketta (3). Muutosten tallentamisen jälkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan käyttäjätunnus, päivämäärä ja kellonaika (4). Ennen uusien tietojen tallentamista voi tehdyt muutokset peruuttaa napauttamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eivät ole aktiivisia silloin, kun muutoksia ei ole tehty. Tehdyt muutokset tulee tallentaa tai perua ennen kun sovellus antaa siirtyä muokkaamaan uutta kohdetta. Takaisin katselutilaan pääsee klikkaamalla Siirry katselutilaan -painiketta (5).
+Muokkaustilan saa aktivoitua napauttamalla tietolajipaneelin alareunassa olevaa Siirry muokkaustilaan -painiketta. Muokkaustilassa kartan yläpalkkiin ilmestyy teksti "Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla Tallenna-painiketta (3). Muutosten tallentamisen jälkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan käyttäjätunnus, päivämäärä ja kellonaika (4). Ennen uusien tietojen tallentamista voi tehdyt muutokset peruuttaa napauttamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eivät ole aktiivisia silloin, kun muutoksia ei ole tehty. Tehdyt muutokset tulee tallentaa tai perua ennen kun sovellus antaa siirtyä muokkaamaan uutta kohdetta. Takaisin katselutilaan pääsee napauttamalla Siirry katselutilaan -painiketta (5).
 
 Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
@@ -94,7 +94,7 @@ Karttaa liikutetaan hiirellä raahaamalla.
 
 ####Mittakaavataso####
 
-Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisnapauttamalla, Shift+piirto (alue) tai mittakaavapainikkeista (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy karttaikkunan oikeassa alakulmassa (8).
+Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisnapauttamalla, Shift+piirto (alue) tai mittakaavapainikkeista (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, kaksoisnapauttamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy karttaikkunan oikeassa alakulmassa (8).
 
 ####Karttahaut####
 
@@ -174,7 +174,7 @@ _Tielinkkiketjun valinta (klikattu kerran)._
 
 ![Yksitt&auml;isen tielinkin valinta](Manuaali9.png)
 
-_Yksitt&auml;isen tielinkin valinta tuplaklikkaamalla._
+_Yksitt&auml;isen tielinkin valinta kaksoisnapauttamalla._
 
 Tielinkeille voi valita visualisointitason sovelluksen vasemman reunan karttaselitenäkymästä. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin, hallinnollisen luokan tai silta, alikulku tai tunneli -tason mukaan. Silta, alikulku tai tunneli -tasolla kohteet piirret&auml;&auml;n kartalle tasosijainnin mukaisessa j&auml;rjestyksess&auml;, esimerkiksi alikulku piirret&auml;&auml;n silta, taso 1 -linkin alle. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t sovelluksen vasemmassa laidassa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
 
@@ -469,23 +469,23 @@ _Nopeusrajoitusten valinta._
 
 ##5.1 Nopeusrajoituksen tietojen katselu##
 
-Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa.
+Yksitt&auml;isen nopeusrajoituksen voi valita napauttamalla kartalta sen geometriaa.
 
-Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tienumero (maantiell&auml;) tai tiennimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, voi sen tehd&auml; tuplaklikkamalla nopeusrajoitusta.
+Kerran napauttamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tienumero (maantiell&auml;) tai tiennimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, voi sen tehd&auml; kaksoisnapauttamalla nopeusrajoitusta.
 
 Huom! Nopeusrajoituksten ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
 
-Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustietotaulu.
+Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustietoikkuna.
 
-Ominaisuustietotaulu sisältää tiedot nopeusrajoituksen arvosta (km/h), valittujen linkkien lukumäärästä sekä, historiatiedoista, eli milloin tieto on lisätty järjestelmään ja millon sitä on viimeksi muokattu.
+Ominaisuustietoikkuna sisältää tiedot nopeusrajoituksen arvosta (km/h), valittujen linkkien lukumäärästä sekä, historiatiedoista, eli milloin tieto on lisätty järjestelmään ja millon sitä on viimeksi muokattu.
 
 ![Nopeusrajoituksen tietojen katselu](Nopeusrajoitus2.PNG)
 
-_Nopeusrajoituksen tietojen katselu, kun valittuna on nopeusrajoitusketju (klikattu kerran)._
+_Nopeusrajoituksen tietojen katselu, kun valittuna on nopeusrajoitusketju (napautettu kerran)._
 
 ![Nopeusrajoituksen tietojen katselu](Nopeusrajoitus3.PNG)
 
-_Nopeusrajoituksen tietojen katselu, kun valittuna on yksitt&auml;inen nopeusrajoitus (tuplaklikkaus)._
+_Nopeusrajoituksen tietojen katselu, kun valittuna on yksitt&auml;inen nopeusrajoitus (kaksoisnapautus)._
 
 ###Nopeusrajoitusten visualisointi###
 
