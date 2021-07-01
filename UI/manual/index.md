@@ -12,16 +12,16 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi näpäyttää hiirellä suuremmaksi, jo
 
 1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
 
-1. Kirjautumisen j&auml;lkeen avautuu karttak&auml;ytt&ouml;liittym&auml;ss&auml; katselutila. Oikeudet on rajattu maantieteellisesti sek&auml; k&auml;ytt&auml;j&auml;n roolin mukaan. Katselijan roolissa aineistoja voi ainoastaan katsella. Muokkaajan roolissa aineistoja voi sek&auml; katsella ett&auml; muokata.
+1. Kirjautumisen j&auml;lkeen avautuu karttak&auml;ytt&ouml;liittym&auml;ss&auml; katselutila. Käyttöoikeudet on rajattu maantieteellisesti kunnan tai ELY-alueen sekä k&auml;ytt&auml;j&auml;n roolin mukaan. Katselijan roolissa aineistoja voi ainoastaan katsella käyttöliittymässä. Muokkaajan roolissa aineistoja voi sek&auml; katsella ett&auml; muokata.
 
 
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
 - Väyläviraston tunnuksilla p&auml;&auml;see katselemaan sovelluksessa kaikkia aineistoja, vaikka Digiroadin muokkausoikeuksia ei olisi.
-- Sovelluksen käyttäjälle on voitu myöntää muokkausoikeuksia h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin aineistoihin. Muokkausoikeudet voidaan myöntää kunnan tai Ely-keskuksen aineistoihin.
+- Sovelluksen käyttäjälle on voitu myöntää muokkausoikeuksia h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin aineistoihin. Muokkausoikeudet voidaan myöntää kunnan tai ELY-alueen aineistoihin.
 - Digiroad-operaattorilla on oikeudet koko Suomen kaikkiin kunta-aineistoihin.
 
-Jos karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-operaattoriin sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301.
+Jos karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranetiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-operaattoriin sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301.
 
 1.1 Mist&auml; saan opastusta?
 --------------------------
@@ -47,8 +47,8 @@ Digiroad-sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroa
 Sovelluksen toimiessa virheellisesti tee näin:
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
-- Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-operaattoriin sähköpostitse info@digiroad.fi tai soittamalla numeroon 040 507 2301
+- Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome.
+- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-operaattoriin sähköpostitse info@digiroad.fi tai soittamalla numeroon 040 507 2301.
 
 ####Kirjautuminen Digiroad-sovellukseen####
 
