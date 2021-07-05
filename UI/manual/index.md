@@ -1590,17 +1590,17 @@ _Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
 20. Esterakennelma
 ----------------------
 
-Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalle tietolajit(1) -paletista "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; esterakennelmia.
+Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalle tietolajivalikosta (1) "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; esterakennelmia.
 
-![Valinta.](k146.jpg)
+![Valinta.](este1.png)
 
 _Esterakennelman valinta._
 
 ##20.1 Esterakennelman tietojen katselu##
 
-Yksitt&auml;isen esterakennelman voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu esterakennelman ominaisuustieton&auml;kym&auml; (3). Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; esterakennelman tyyppi eli suljettu yhteys tai avattava puomi. Valinnan voi poistaa klikkaamalla muualle.
+Yksitt&auml;isen esterakennelman voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu esterakennelman ominaisuustietoikkuna (3). Ominaisuustietoikkunassa; n&auml;kyy esterakennelman ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; esterakennelman tyyppi eli suljettu yhteys tai avattava puomi. Valinnan voi poistaa klikkaamalla muualle.
 
-![Katselu.](k147.jpg)
+![Katselu.](este2.png)
 
 _Esterakennelman katselu._
 
@@ -1612,19 +1612,19 @@ Esterakennelman voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml;. Lis&auml;ks
 
 Muokattava esterakennelma valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu esterakennelma voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta. Muutokset voidaan kumota peruuta-napilla. Olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa oikean laidan alasvetovalikosta valitsemalla suljettu yhteys tai avattava puomi (5). Kohteen visualisointi kartalla muuttuu valinnan mukaan.
 
-![Muokkaus.](k148.jpg)
+![Muokkaus.](este3.png)
 
 _Esterakennelman muokkaus._
 
-Yksitt&auml;ist&auml; esterakennelma voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle esterakennelma siirtyy, korostuu kartalla sinisell&auml; (8). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
+Yksitt&auml;ist&auml; esterakennelma voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle esterakennelma siirtyy, korostuu kartalla sinisell&auml; (6). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
 
-![Siirto.](k152.jpg)
+![Siirto.](este4.png)
 
 _Esterakennelman siirto._
 
-Esterakennelma voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Esterakennelma lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttan&auml;kym&auml; tummenee. Esterakennelmalle valitaan oikeasta laidasta tyyppi eli suljettu yhteys tai avattava puomi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. 
+Esterakennelma voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Esterakennelma lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttaikkuna tummenee. Esterakennelmalle valitaan oikeasta laidasta tyyppi eli suljettu yhteys tai avattava puomi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. 
 
-![Lisays.](k149.jpg)
+![Lisays.](este5.png)
 
 _Esterakennelman lis&auml;ys._
 
@@ -1636,11 +1636,11 @@ Geometrian ulkopuolelle j&auml;&auml;neet esterakennelmat on korostettu kartalla
 
 Geometrian ulkopuolelle j&auml;&auml;neill&auml; esterakennelmilla on oma lista (2). Esterakennelmat on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne esterakennelmat, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan esterakennelmaan on listassa linkki, josta p&auml;&auml;see suoraan esterakennelman kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Merkinta.](k150.jpg)
+![Merkinta.](este6.png)
 
 _Geometrian ulkopuolinen esterakennelma on v&auml;rilt&auml;&auml;n punainen._
 
-![Ulkopuoliset esterakennelmat.](k151.jpg)
+![Ulkopuoliset esterakennelmat.](este7.PNG)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden esterakennelmien lista._
 
