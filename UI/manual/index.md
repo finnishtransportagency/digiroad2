@@ -1598,7 +1598,7 @@ _Esterakennelman valinta._
 
 ##20.1 Esterakennelman tietojen katselu##
 
-Yksitt&auml;isen esterakennelman voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu esterakennelman ominaisuustietoikkuna (3). Ominaisuustietoikkunassa; n&auml;kyy esterakennelman ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; esterakennelman tyyppi eli suljettu yhteys tai avattava puomi. Valinnan voi poistaa klikkaamalla muualle.
+Yksitt&auml;isen esterakennelman voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu esterakennelman ominaisuustietoikkuna (3). Ominaisuustietoikkunassa n&auml;kyy esterakennelman ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; esterakennelman tyyppi eli suljettu yhteys tai avattava puomi. Valinnan voi poistaa klikkaamalla muualle.
 
 ![Katselu.](este2.png)
 
