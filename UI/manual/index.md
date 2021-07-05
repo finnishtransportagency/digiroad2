@@ -1634,7 +1634,7 @@ Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella.
 
 Geometrian ulkopuolelle j&auml;&auml;neet esterakennelmat on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Esterakennelmaa siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; esterakennelmilla on oma lista (2). Esterakennelmat on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne esterakennelmat, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan esterakennelmaan on listassa linkki, josta p&auml;&auml;see suoraan esterakennelman kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; esterakennelmilla on oma lista (10). Esterakennelmat on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne esterakennelmat, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan esterakennelmaan on listassa linkki, josta p&auml;&auml;see suoraan esterakennelman kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
 ![Merkinta.](este6.png)
 
