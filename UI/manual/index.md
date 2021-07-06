@@ -1669,13 +1669,13 @@ Muokattava tasoristeys valitaan klikkaamalla sen geometriaa. Valitun merkinn&aum
 
 _Rautatien tasoristeyksen muokkaus._
 
-Yksitt&auml;ist&auml; tasoristeyst&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle tasoristeys siirtyy, korostuu kartalla sinisell&auml; (6). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
+Yksitt&auml;ist&auml; tasoristeyst&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle tasoristeys siirtyy, korostuu kartalla sinisell&auml; (6). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-painikkeella.
 
 ![Siirto.](taso4.png)
 
 _Rautatien tasoristeyksen siirto._
 
-Uusi tasoristeys voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Tasoristeys lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttan&auml;kym&auml; tummenee. Tasoristeykselle valitaan oikean laidan alasvetovalikosta turvavarustus-tieto sek&auml; kirjoitetaan tasoristeystunnus ja nimi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. Lis&auml;yksen voi perua peruuta-painikkeesta.
+Uusi tasoristeys voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Tasoristeys lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttan&auml;kym&auml; tummenee. Tasoristeykselle valitaan oikean laidan alasvetovalikosta turvavarustus-tieto sek&auml; kirjoitetaan tasoristeystunnus ja nimi (9). Uusi kohde tallennetaan painamalla tallenna-painiketta. Lis&auml;yksen voi perua peruuta-painikkeesta.
 
 ![Lisays.](taso5.png)
 
