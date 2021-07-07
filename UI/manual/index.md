@@ -1700,17 +1700,17 @@ _Geometrian ulkopuolelle j&auml;&auml;neiden rautatien tasoristeysten lista._
 22. Opastustaulu ja sen informaatio
 ----------------------
 
-Opastustaulu ja sen informaatio ovat moottori- ja moottoriliikenneteill&auml; sijaitseva tai niille opastava tienviitta. Karttan&auml;kym&auml;&auml;n voi valita opastustaulut tietolajit-paletista (1). Kartalle tulevat esiin opastustaulut sinisen&auml; nuolena. Nuolen suunta kuvaa opastustaulun vaikutussuuntaa. Punaisella nuolella olevat opastustaulut kuvaavat geometrian ulkopuolella olevia opastustauluja.
+Opastustaulu ja sen informaatio ovat moottori- ja moottoriliikenneteill&auml; sijaitseva tai niille opastava tienviitta. Karttaikkunaan voi valita opastustaulut tietolajivalikosta (1). Kartalle tulevat esiin opastustaulut sinisen&auml; nuolena. Nuolen suunta kuvaa opastustaulun vaikutussuuntaa. Punaisella nuolella olevat opastustaulut kuvaavat geometrian ulkopuolella olevia opastustauluja.
 
-![Valinta.](k161.JPG)
+![Valinta.](opas1.png)
 
 _Opastustaulun valinta._
 
 ##22.1 Opastustaulun tietojen katselu##
 
-Yksitt&auml;isen opastustaulun voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu opastustaulun ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot ja opastustaulun informaatio. Valinnan voi purkaa klikkaamalla taustakarttaa.
+Yksitt&auml;isen opastustaulun voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu opastustaulun ominaisuustietoikkuna. Ominaisuustietoikkunassa n&auml;kyy opastustaulun ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sekä opastustaulun informaatio. Valinnan voi purkaa klikkaamalla taustakarttaa.
 
-![Katselu.](k162.JPG)
+![Katselu.](opas2.png)
 
 _Opastustaulun katselu._
 
@@ -1718,8 +1718,8 @@ __Opastustaulun informaation sis&auml;lt&ouml;__
 
 Informaatiokent&auml;ss&auml; on seuraavat tiedot puolipisteell&auml; eroteltuina ja useampi kohde rivinvaihdolla:
 
-PAIKKAKUNNAT;V&auml;RI;SIJAINTI
-PAIKKAKUNNAT;V&auml;RI;SIJAINTI
+PAIKKAKUNNAT;VÄRI;SIJAINTI
+PAIKKAKUNNAT;VÄRI;SIJAINTI
 
 Kenttien sis&auml;ll&auml; tiedot on eroteltu kaksoispisteell&auml;. Esim:
 
@@ -1743,31 +1743,31 @@ Opastustaulun voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&
 
 ###Opastustaulun siirto, muokkaus ja poisto###
 
-Muokattava opastustaulu valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu opastustaulu voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (3) ja painamalla tallenna painiketta (4). Muutokset voidaan kumota peruuta-napilla (5).
+Muokattava opastustaulu valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu opastustaulu voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna painiketta (3). Muutokset voidaan kumota peruuta-napilla (4).
 
-Yksitt&auml;ist&auml; opastustaulua voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle opastustaulu siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (4). Muutokset voidaan kumota peruuta-napilla(5).
+Yksitt&auml;ist&auml; opastustaulua voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle opastustaulu siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-napilla(4).
 
-Muokkaustilassa opastustaulun tekstikentt&auml;&auml;n (6) pystyy my&ouml;s lis&auml;t&auml; informaatiota ja vaihtaa vaikutussuuntaa (7). 
+Muokkaustilassa opastustaulun tekstikentt&auml;&auml;n (5) pystyy my&ouml;s lis&auml;t&auml; informaatiota ja vaihtaa vaikutussuuntaa (6). 
 
-![Muokkaus.](k163.JPG)
+![Muokkaus.](opas3.png)
 
 _Opastustaulun muokkaus._
 
 ###Opastustaulun lis&auml;ys###
 
-Opastustaulu voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis&auml;&auml;-painiketta (8). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (9).
+Opastustaulu voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkissa lisäyspainiketta (7). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia (3). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
 
 ###Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut###
 
 Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut on korostettu kartalla punaisella nuolella. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Opastustaulumerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu. Ennen opastustaulun korjaamista tiegeometrialle, tulee alla olevan tielinkit tiedot olla tarvittaessa korjattu.
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; opastustauluilla on oma lista (2). Opastustaulut on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne opastustaulut, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Opastustauluista on listassa linkki, josta p&auml;&auml;see suoraan opastustaulun kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; opastustauluilla on oma lista (9). Opastustaulut on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne opastustaulut, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Opastustauluista on listassa linkki, josta p&auml;&auml;see suoraan opastustaulun kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Ulkopuolella1.](k164.JPG)
+![Ulkopuolella1.](opas4.png)
 
 _Geometrian ulkopuolinen opastustaulu on v&auml;rilt&auml;&auml;n punainen._
 
-![Ulkopuolella2.](k165.JPG)
+![Ulkopuolella2.](opas5.PNG)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden opastustaulujen lista._
 
