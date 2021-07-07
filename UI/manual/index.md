@@ -1743,9 +1743,9 @@ Opastustaulun voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&
 
 ###Opastustaulun siirto, muokkaus ja poisto###
 
-Muokattava opastustaulu valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu opastustaulu voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna painiketta (3). Muutokset voidaan kumota peruuta-napilla (4).
+Muokattava opastustaulu valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu opastustaulu voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna-painiketta (3). Muutokset voidaan kumota peruuta-painikkeella (4).
 
-Yksitt&auml;ist&auml; opastustaulua voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle opastustaulu siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-napilla(4).
+Yksitt&auml;ist&auml; opastustaulua voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle opastustaulu siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-painikkeella (4).
 
 Muokkaustilassa opastustaulun tekstikentt&auml;&auml;n (5) pystyy my&ouml;s lis&auml;t&auml; informaatiota ja vaihtaa vaikutussuuntaa (6). 
 
@@ -1755,7 +1755,7 @@ _Opastustaulun muokkaus._
 
 ###Opastustaulun lis&auml;ys###
 
-Opastustaulu voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkissa lisäyspainiketta (7). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia (3). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
+Opastustaulu voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkissa lisäyspainiketta (7). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan tallenna-painiketta (3). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
 
 ###Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut###
 
