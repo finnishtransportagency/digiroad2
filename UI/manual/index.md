@@ -1774,9 +1774,9 @@ _Geometrian ulkopuolelle j&auml;&auml;neiden opastustaulujen lista._
 23. Palvelupiste
 ----------------------
 
-Palvelu on liikenneverkon k&auml;ytt&auml;j&auml;&auml; auttava ja tukeva palvelu kuten pys&auml;k&ouml;intitalo tai linja-autoasema. Palvelulla on geometriapiste (palvelupiste), joka sijaitsee palvelun sijaintikohdassa (rakennuksen tai kiinteist&ouml;n keskikohdassa). Yhdess&auml; palvelupisteess&auml; voi olla useita palveluita. Karttan&auml;kym&auml;&auml;n voi valita palvelupisteet tietolajit-paletista (1). Kartalle tulevat esiin palvelupisteet sinisen&auml; ympyr&auml;n&auml;.
+Palvelu on liikenneverkon k&auml;ytt&auml;j&auml;&auml; auttava ja tukeva palvelu kuten pys&auml;k&ouml;intitalo tai linja-autoasema. Palvelulla on geometriapiste (palvelupiste), joka sijaitsee palvelun sijaintikohdassa (rakennuksen tai kiinteist&ouml;n keskikohdassa). Yhdess&auml; palvelupisteess&auml; voi olla useita palveluita. Karttaikkunaan voi valita palvelupisteet tietolajivalikosta (1). Kartalle visualisoituvat palvelupisteet sinisen ympyrän päälle.
  
-![Valinta.](k167.JPG)
+![Valinta.](pal1.png)
 
 _Palvelupisteiden valinta._
 
@@ -1784,9 +1784,9 @@ _Palvelupisteiden valinta._
 
 Yksitt&auml;isen palvelupisteen voi valita klikkaamalla kartalta sen geometriaa.
 
-Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu palvelupisteen ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi –tiedot. Palvelulla on nimi, palvelun tyyppi, lis&auml;tieto ja  lepoalueella, pys&auml;k&ouml;intialueella, kuorma-autojen pys&auml;k&ouml;intialueella ja rautatieasemalla on tarkentava tyyppi. Valinnan voi purkaa klikkaamalla taustakarttaa.
+Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu palvelupisteen ominaisuustietoikkuna. Ominaisuustietoikkunassa n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Palvelupisteillä on myös muita ominaisuustietoja, jotka vaihtelevat palvelupisteestä riippuen. Valinnan voi purkaa klikkaamalla taustakarttaa.
  
-![Katselu.](k168.JPG)
+![Katselu.](pal2.png)
 
 _Palvelupisteiden katselu._
 
@@ -1796,21 +1796,21 @@ Palvelupisteen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn
 
 ###Palvelupisteen poisto###
 
-Muokattava palvelupiste valitaan klikkaamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu palvelupiste voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna painiketta (3). Muutokset voidaan kumota peruuta-napilla (4).
+Muokattava palvelupiste valitaan klikkaamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu palvelupiste voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna-painiketta (3). Muutokset voidaan kumota peruuta-painikkeella (4).
 
 ###Palvelupsiteen siirto ja muokkaus###
 
-Yksitt&auml;ist&auml; palvelupistett&auml; voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Palvelupisteen sijainti ei ole riippuvainen tien geometriasta, vaan sen voi sijoittaa mihin kohtaan tahansa. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-napilla(4).
+Yksitt&auml;ist&auml; palvelupistett&auml; voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Palvelupisteen sijainti ei ole riippuvainen tien geometriasta, vaan sen voi sijoittaa mihin kohtaan tahansa. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-painikkeella(4).
 
 Muokkaustilassa palvelupisteeseen voidaan lis&auml;t&auml; uusi palvelu (5) tai yksitt&auml;inen palvelu voidaan poistaa (6). Palveluun voidaan m&auml;&auml;ritt&auml;&auml; palvelun nimi (7) ja lis&auml;tieto (8). Joihinkin palveluihin on valittavissa my&ouml;s tarkentava lis&auml;kentt&auml; (9), kuten lepoalueella, pys&auml;k&ouml;intialueella, kuorma-autojen pys&auml;k&ouml;intialueella ja rautatieasemalla.
 
-![Muokkaus.](k169.JPG)
+![Muokkaus.](pal3.png)
 
 _Palvelupisteiden muokkaus._
 
 ###Palvelupisteen lis&auml;ys###
 
-Palvelupiste voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis&auml;&auml;-painiketta (10). Palvelupiste lis&auml;t&auml;&auml;n haluttuun kohtaan ja painetaan Tallenna-nappia (3) tai kumotaan Peruuta-painikkeesta (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (11).
+Palvelupiste voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkin lisää-painiketta (10). Palvelupiste lis&auml;t&auml;&auml;n haluttuun kohtaan ja painetaan tallenna-painiketta (3) tai kumotaan peruuta-painikkeesta (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (11).
 
 24. Eurooppatienumero
 ----------------------
