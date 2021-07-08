@@ -801,7 +801,7 @@ _Valaistusgeometrian katkaisu.__
 9. Kelirikko
 ----------------------
 
-Kelirikko on viivamainen tietolaji. Kelirikko voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Kelirikko -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu kelirikko, se piirtyy kartalle punaisella viivalla (2). Tielinkit, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikon arvo on kyll&auml; tai ei.
+Kelirikko on viivamainen tietolaji, joka kuvaa kelirikon aikaisia rajoituksia ja tien alttiutta kelirikolle. Kelirikko voi olla tielinkin mittainen tai sitä lyhyempi. Kelirikko-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on ilmoitettu kelirikko, joka on katseluhetkellä voimassa, se piirtyy kartalle punaisella viivalla (2). Siniset tielinkit puolestaan tarkoittavat, että tielle on määritelty kelirikkoaikainen rajoitus, mutta se ei ole katseluhetkellä voimassa. Tiet, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikko voidaan ilmoittaa vuosittain tiettynä aikana toistuvasti voimassa olevaksi tai yleisenä tietona siitä, että tie on kelirikolle altis. Kelirikolle voidaan määritellä tietty painorajoitus.
 
 ![Kelirikko](k64.JPG)
 
@@ -809,7 +809,7 @@ _Kelirikko._
 
 ##9.1 Kelirikkotietojen katselu##
 
-Kun kohdetta klikkaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko kelirikkoketju, eli kaikki linkit, joilla on sama kelirikkotieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Kelirikkotiedolla on lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; kelirikon arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; kelirikkoketjussa. 
+Kun kelirikkokohdetta napauttaa kartalta, se korostuu (4) ja ominaisuustietoikkunaan avautuu kohteen tiedot (5). Kerran napauttamalla tulee valituksi koko kelirikkoketju, eli kaikki tielinkit, joilla on sama kelirikkotieto ja tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Kelirikon ominaisuustietoja ovat kelirikon ajankohta eli alku- ja loppupäivämäärät, painorajoitus, kelirikon toistuvuus vuosittain (kyllä/ei). Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä kelirikkoketjussa.
 
 ![Kelirikko katselu](k65.JPG)
 
@@ -818,7 +818,7 @@ _Kelirikkotiedon katselu._
 ##9.2 Kelirikkotietojen muokkaus##
 
 Kelirikkotietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Muokkaustilassa kelirikolle voi antaa uuden arvon (kyll&auml;/ei) ja niit&auml; voi katkaista. Kelirikon arvoa voi muokata kolmella tavalla:
+Muokkaustilassa kelirikolle voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista saksi-työkalulla. Kelirikon arvoa voi muokata kolmella tavalla:
 
 1. Koko kelirikkoketjulle kerralla.
 2. Yksitt&auml;isen linkin mittaiselle osuudelle.
@@ -829,7 +829,7 @@ Muokkaustilassa kelirikolle voi antaa uuden arvon (kyll&auml;/ei) ja niit&auml; 
 _Kelirikkotiedon muokkaus._
 
 ###Kelirikkotiedon lis&auml;ys###
-Uusi kelirikkotieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Kelirikko" (6). Uusi kelirikkotieto n&auml;kyy kartalla punaisena.
+Uusi kelirikkotieto lisätään järjestelmään asettamalla ensin tietolajivalikosta kelirikko-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle kelirikkotieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Kelirikko-radionappi aktiiviseksi (X), jonka jälkeen tarkentavia ominaisuustietoja kuten kelirikkoaikainen painorajoitus (X), alku- ja loppupäivä (X) voidaan asettaa. Kelirikkotieto voidaan tallentaa myös ilman tarkentavia tietoja, jolloin tielle asetetaan yleinen kelirikkotieto eli tieto siitä, että tie on kelirikolle altis. Kelirikkotieto näkyy karttaikkunassa punaisena silloin kuin kelirikko on katseluhetkellä voimassa ja sinisenä silloin, kun tiellä on kelirikko, mutta se ei ole katseluhetkellä voimassa tai tie on altis kelirikolle (värit eivät visualisoidu tällä hetkellä oikein). 
 
 ![Kelirikko lis&auml;ys](k67.JPG)
 
@@ -837,7 +837,7 @@ _Kelirikkotiedon lis&auml;ys._
 
 ###Kelirikkotiedon poistaminen###
 
-Kelirikkotiedon voi poistaa valitsemalla tielinkin, jolla on kelirikko ja oikean laidan ominaisuustietotaulusta kohdan "Ei kelirikkoa" (7). Kun kelirikkotieto on poistettu, kohde muuttuu kartalla harmaaksi.
+Kelirikkotiedon voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta kelirikko halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei kelirikkoa" (7) mahdollistaa kelirikkotiedon poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun kelirikkotieto on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
 
 ![Kelirikko poisto](k68.JPG)
 
@@ -845,7 +845,7 @@ _Kelirikkotiedon poistaminen._
 
 ###Kelirikkojen muokkaus monivalintaty&ouml;kalulla###
 
-Usealle linkille voi lis&auml;t&auml; tai poistaa kelirikon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan kelirikon arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Kelirikkotiedon voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille kelirikkotieto halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin (8), jolloin ctrl-näppäimen irti päästämällä avautuu kelirikon muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (9) tai monikulmiotyökalua (10). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna, jossa määritellään kelirikon ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
 
 ![Kelirikko monivalinta](k69.JPG)
 
@@ -853,8 +853,7 @@ _Kelirikon monivalinta._
 
 ###Kelirikkotiedon katkaisu###
 
-Tarvittaessa kelirikon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan kelirikon geometriasta kohtaa, josta se halutaan katkaista. Kelirikon geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Kelirikon katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet kelirikkotiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Katkaisuty&ouml;kalu valitsee aina vain linkin mittaisen osion geometriasta, ei koko kelirikkoketjua.
+Tarvittaessa kelirikon voi katkaista leikkaustyökalulla (8). Leikkaustyökalulla napautetaan kelirikon geometriasta kohtaa, josta se halutaan katkaista. Kelirikon tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Kelirikon katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet kelirikkotiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko kelirikkoketjua.
 
 Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
 
