@@ -831,7 +831,7 @@ _Kelirikkotiedon muokkaus._
 ###Kelirikkotiedon lis&auml;ys###
 Uusi kelirikkotieto lisätään järjestelmään asettamalla ensin tietolajivalikosta kelirikko-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle kelirikkotieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Kelirikko-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten kelirikkoaikainen painorajoitus (6), kelirikkokausi (7) voidaan asettaa. Kelirikkotieto voidaan tallentaa myös ilman tarkentavia tietoja, jolloin tielle asetetaan yleinen kelirikkotieto eli tieto siitä, että tie on kelirikolle altis. Kelirikkotieto näkyy karttaikkunassa punaisena silloin kuin kelirikko on katseluhetkellä voimassa ja sinisenä silloin, kun tiellä on kelirikko, mutta se ei ole katseluhetkellä voimassa tai tie on altis kelirikolle (värit eivät visualisoidu tällä hetkellä oikein). 
 
-![Kelirikko lis&auml;ys](k67.JPG)
+![Kelirikko lis&auml;ys](Kelirikko4.PNG)
 
 _Kelirikkotiedon lis&auml;ys._
 
