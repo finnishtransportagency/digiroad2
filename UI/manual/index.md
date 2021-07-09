@@ -801,17 +801,17 @@ _Valaistusgeometrian katkaisu.__
 9. Kelirikko
 ----------------------
 
-Kelirikko on viivamainen tietolaji, joka kuvaa kelirikon aikaisia rajoituksia ja tien alttiutta kelirikolle. Kelirikko voi olla tielinkin mittainen tai sitä lyhyempi. Kelirikko-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on ilmoitettu kelirikko, joka on katseluhetkellä voimassa, se piirtyy kartalle punaisella viivalla (2). Siniset tielinkit puolestaan tarkoittavat, että tielle on määritelty kelirikkoaikainen rajoitus, mutta se ei ole katseluhetkellä voimassa. Tiet, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikko voidaan ilmoittaa vuosittain tiettynä aikana toistuvasti voimassa olevaksi tai yleisenä tietona siitä, että tie on kelirikolle altis. Kelirikolle voidaan määritellä tietty painorajoitus.
+Kelirikko on viivamainen tietolaji, joka kuvaa kelirikon aikaisia rajoituksia ja tien alttiutta kelirikolle. Kelirikko voi olla tielinkin mittainen tai sitä lyhyempi. Kelirikko-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on ilmoitettu kelirikko, joka on katseluhetkellä voimassa, se piirtyy kartalle punaisella viivalla. Siniset tielinkit puolestaan tarkoittavat, että tielle on määritelty kelirikkoaikainen rajoitus, mutta se ei ole katseluhetkellä voimassa. Tiet, joilla ei ole kelirikkoa ovat harmaita. Kelirikko voidaan ilmoittaa vuosittain tiettynä aikana toistuvasti voimassa olevaksi tai yleisenä tietona siitä, että tie on kelirikolle altis. Kelirikolle voidaan määritellä tietty painorajoitus.
 
-![Kelirikko](k64.JPG)
+![Kelirikko](Kelirikko1.PNG)
 
 _Kelirikko._
 
 ##9.1 Kelirikkotietojen katselu##
 
-Kun kelirikkokohdetta napauttaa kartalta, se korostuu (4) ja ominaisuustietoikkunaan avautuu kohteen tiedot (5). Kerran napauttamalla tulee valituksi koko kelirikkoketju, eli kaikki tielinkit, joilla on sama kelirikkotieto ja tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Kelirikon ominaisuustietoja ovat kelirikon ajankohta eli alku- ja loppupäivämäärät, painorajoitus, kelirikon toistuvuus vuosittain (kyllä/ei). Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä kelirikkoketjussa.
+Kun kelirikkokohdetta napauttaa kartalta, se korostuu (2) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko kelirikkoketju, eli kaikki tielinkit, joilla on sama kelirikkotieto ja tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Kelirikon ominaisuustietoja ovat (3) kelirikon aikainen painorajoitus, kelirikkokausi, kelirikon toistuvuus vuosittain (kyllä/ei). Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä kelirikkoketjussa (4).
 
-![Kelirikko katselu](k65.JPG)
+![Kelirikko katselu](Kelirikko2.1.PNG)
 
 _Kelirikkotiedon katselu._
 
@@ -824,12 +824,12 @@ Muokkaustilassa kelirikolle voi antaa uudet ominaisuustiedot ja niit&auml; voi k
 2. Yksitt&auml;isen linkin mittaiselle osuudelle.
 3. Monivalinnan avulla kokonaiselle alueelle.
 
-![Kelirikko muokkaus](k66.JPG)
+![Kelirikko muokkaus](Kelirikko3.PNG)
 
 _Kelirikkotiedon muokkaus._
 
 ###Kelirikkotiedon lis&auml;ys###
-Uusi kelirikkotieto lisätään järjestelmään asettamalla ensin tietolajivalikosta kelirikko-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle kelirikkotieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Kelirikko-radionappi aktiiviseksi (X), jonka jälkeen tarkentavia ominaisuustietoja kuten kelirikkoaikainen painorajoitus (X), alku- ja loppupäivä (X) voidaan asettaa. Kelirikkotieto voidaan tallentaa myös ilman tarkentavia tietoja, jolloin tielle asetetaan yleinen kelirikkotieto eli tieto siitä, että tie on kelirikolle altis. Kelirikkotieto näkyy karttaikkunassa punaisena silloin kuin kelirikko on katseluhetkellä voimassa ja sinisenä silloin, kun tiellä on kelirikko, mutta se ei ole katseluhetkellä voimassa tai tie on altis kelirikolle (värit eivät visualisoidu tällä hetkellä oikein). 
+Uusi kelirikkotieto lisätään järjestelmään asettamalla ensin tietolajivalikosta kelirikko-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle kelirikkotieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Kelirikko-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten kelirikkoaikainen painorajoitus (6), kelirikkokausi (7) voidaan asettaa. Kelirikkotieto voidaan tallentaa myös ilman tarkentavia tietoja, jolloin tielle asetetaan yleinen kelirikkotieto eli tieto siitä, että tie on kelirikolle altis. Kelirikkotieto näkyy karttaikkunassa punaisena silloin kuin kelirikko on katseluhetkellä voimassa ja sinisenä silloin, kun tiellä on kelirikko, mutta se ei ole katseluhetkellä voimassa tai tie on altis kelirikolle (värit eivät visualisoidu tällä hetkellä oikein). 
 
 ![Kelirikko lis&auml;ys](k67.JPG)
 
