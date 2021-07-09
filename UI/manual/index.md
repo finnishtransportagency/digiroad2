@@ -839,7 +839,7 @@ _Kelirikkotiedon lis&auml;ys._
 
 Kelirikkotiedon voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta kelirikko halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei kelirikkoa" (7) mahdollistaa kelirikkotiedon poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun kelirikkotieto on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
 
-![Kelirikko poisto](k68.JPG)
+![Kelirikko poisto](Kelirikko5.PNG)
 
 _Kelirikkotiedon poistaminen._
 
@@ -847,7 +847,7 @@ _Kelirikkotiedon poistaminen._
 
 Kelirikkotiedon voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille kelirikkotieto halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin (8), jolloin ctrl-näppäimen irti päästämällä avautuu kelirikon muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (9) tai monikulmiotyökalua (10). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna, jossa määritellään kelirikon ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
 
-![Kelirikko monivalinta](k69.JPG)
+![Kelirikko monivalinta](Kelirikko6.PNG)
 
 _Kelirikon monivalinta._
 
@@ -857,7 +857,7 @@ Tarvittaessa kelirikon voi katkaista leikkaustyökalulla (8). Leikkaustyökalull
 
 Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
 
-![Kelirikko katkaisu](k70.JPG)
+![Kelirikko katkaisu](Kelirikko7.PNG)
 
 _Kelirikkogeometrian katkaisu._
 
