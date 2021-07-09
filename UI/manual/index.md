@@ -824,7 +824,7 @@ Muokkaustilassa kelirikolle voi antaa uudet ominaisuustiedot ja niit&auml; voi k
 2. Yksitt&auml;isen linkin mittaiselle osuudelle.
 3. Monivalinnan avulla kokonaiselle alueelle.
 
-![Kelirikko muokkaus](Kelirikko3.PNG)
+![Kelirikko muokkaus](Kelirikko3.png)
 
 _Kelirikkotiedon muokkaus._
 
