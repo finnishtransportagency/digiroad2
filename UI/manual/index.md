@@ -1815,23 +1815,23 @@ Palvelupiste voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkin li
 24. Eurooppatienumero
 ----------------------
 
-Eurooppatien numerot kattavat maantiet ja muutaman kaupungin kadut. Eurooppatienumerot ovat muotoa E+nro. Karttan&auml;kym&auml;&auml;n voi valita eurooppatienumerot tietolajit-paletista (1). Karttaa tarkennettaessa kohteet tulevat n&auml;kyviin. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on eurooppatienumero.
+Eurooppatien numerot kattavat maantiet ja muutaman kaupungin kadut. Eurooppatienumerot merkitään vain numerolla (ei lisätä E-kirjainta). Karttan&auml;kym&auml;&auml;n voi valita eurooppatienumerot tietolajivalikosta (1). Karttaa tarkennettaessa kohteet tulevat n&auml;kyviin. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on eurooppatienumero.
  
-![Valinta.](k170.JPG)
+![Valinta.](eutie1.PNG)
 
 _Eurooppatienumeroiden valinta._
 
 ##24.1 Eurooppatienumeron tietojen katselu##
 
-Eurooppatienumeron voi valita klikkaamalla kartalta sen geometriaa.
+Eurooppatienumeron voi valita napauttamalla kartalta sen geometriaa.
 
-Kerran klikkaamalla tulee valituksi koko ketju, eli osuus, jossa eurooppatienumerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
+Kerran napauttamalla tulee valituksi koko ketju, eli osuus, jossa eurooppatienumerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
 
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla eurooppatienumerollista tielinkki&auml;. Valittu ketjun tai yksitt&auml;isen tielinkin mittainen osuus geometriasta korostuu kartalla. Sivun oikeaan laitaan avautuu eurooppatienumeron ominaisuustieton&auml;kym&auml;.
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla eurooppatienumerollista tielinkki&auml;. Valitun ketjun tai yksitt&auml;isen tielinkin mittainen osuus geometriasta korostuu kartalla. Sivun oikeaan laitaan avautuu eurooppatienumeron ominaisuustietoikkuna.
 
-Ominaisuustieton&auml;kym&auml;ss&auml; on eurooppatienumeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+Ominaisuustietoikkunassa on eurooppatienumeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
 
-![Katselu.](k171.JPG)
+![Katselu.](eutie2.PNG)
 
 _Eurooppatienumeron tietojen katselu._
 
@@ -1841,45 +1841,43 @@ Eurooppatienumero viivageometrialle voi antaa muokkaustilassa tietoja. Eurooppat
 
 1.	Koko eurooppatienumeroketjulle
 2.	Yksitt&auml;isen linkin mittaiselle osuudelle
-3.	Monivalinnan avulla kokonaiselle alueelle.
+3.	Laatikko- tai monikulmiovalintatyökalun avulla kokonaiselle alueelle.
 
-Jos samalla tielinkill&auml; on kaksi eurooppatienumeroa, ne erotetaan lis&auml;&auml;m&auml;ll&auml; rivin vaihto tekstikentt&auml;&auml;n (enter), esimerkiksi
-E4
-E8
+Jos samalla tielinkill&auml; on kaksi eurooppatienumeroa, ne erotetaan lis&auml;&auml;m&auml;ll&auml; pilkku ja väli syötekentt&auml;&auml;n numeroiden välille, esimerkiksi 4, 8
 
 ###Eurooppatienumeron muokkaus ja lis&auml;ys###
 
-Muokattava kohde valitaan klikkaamalla sen geometriaa. Kerran klikkaamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla kohdetta. Tekstikentt&auml;&auml;n voidaan p&auml;ivitt&auml;&auml; eurooppatienumero (2).
+Muokattava kohde valitaan napauttamalla sen geometriaa. Kerran napauttamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla kohdetta. Syötekentt&auml;&auml;n voidaan p&auml;ivitt&auml;&auml; eurooppatienumero (2).
 
-Tielinkit, joilla ei ole eurooppatienumeroa on visualisoitu kartalle harmaalla v&auml;rill&auml; (4). Uusi eurooppatienumero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan eurooppatienumero ja testikentt&auml;&auml;n (2) kirjoitetaan eurooppatien numero.
+Tielinkit, joilla ei ole eurooppatienumeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi eurooppatienumero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan eurooppatienumero ja syötekentt&auml;&auml;n (2) kirjoitetaan eurooppatien numero.
  
-![Muokkaus.](k172.JPG)
+![Muokkaus.](eutie3.PNG)
 
 _Eurooppatienumeroiden muokkaus._
 
 ###Eurooppatienumeron poistaminen###
 
-Eurooppatienumeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei eurooppatienumeroa. Muutokset tallentuu tallenna-napista (5) tai ne voi kumota peruuta-napista (6).
+Eurooppatienumeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei eurooppatienumeroa. Muutokset tallentuu tallenna-napista (4) tai ne voi kumota peruuta-napista (5).
 
 ###Useamman eurooppatienumero muokkaus monivalintaty&ouml;kalulla###
 
-Useamman kuin yhden tielinkin eurooppatienumeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (7), jossa kirjataan eurooppatienumero ko. viivoille (8). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
+Useamman kuin yhden tielinkin eurooppatienumeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla joko laatikko- (6) tai monikulmiovalintatyökalu päälle. Laatikkovalintatyökalulla voi vetää laatikon, jota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Monikulmiovalintatyökalulla voi napsauttelemalla luoda kulmia monikulmiolle ja kaksoisnapauttamalla lopettaa kulmion luomisen. Kaikki kulmiota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Valinnan j&auml;lkeen avautuu ikkuna (7), jossa kirjataan eurooppatienumero ko. viivoille (8). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
 
-Huom! Muutos kumoaa kaikki valitun alueen aiemmat eurooppatienumero tiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat eurooppatienumerotiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
 
-![Muokkaus2.](k173.JPG)
+![Muokkaus2.](eutie4.PNG)
 
 _Useamman eurooppatienumeron tietojen muokkaus kerralla._
 
 ###Eurooppatienumeron katkaiseminen###
 
-Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (9). Leikkausty&ouml;kalulla klikataan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
+Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (9). Leikkausty&ouml;kalulla napautetaan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
 
 Eurooppatienumeron katkaisussa uusille kohteille valitaan arvot oikean laidan radionapeista (10). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (11). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
 
 Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
 
-![Katkaisu.](k174.JPG)
+![Katkaisu.](eutie5.PNG)
 
 _Eurooppatienumeron katkaiseminen._
 
