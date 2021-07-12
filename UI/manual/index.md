@@ -1861,7 +1861,7 @@ Eurooppatienumeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsem
 
 ###Useamman eurooppatienumero muokkaus monivalintaty&ouml;kalulla###
 
-Useamman kuin yhden tielinkin eurooppatienumeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla joko laatikko- (6) tai monikulmiovalintatyökalu päälle. Laatikkovalintatyökalulla voi vetää laatikon, jota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Monikulmiovalintatyökalulla voi napsauttelemalla luoda kulmia monikulmiolle ja kaksoisnapauttamalla lopettaa kulmion luomisen. Kaikki kulmiota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Valinnan j&auml;lkeen avautuu ikkuna (7), jossa kirjataan eurooppatienumero ko. viivoille (8). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
+Useamman kuin yhden tielinkin eurooppatienumeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla joko laatikko- (6) tai monikulmiovalintatyökalu (7) päälle. Laatikkovalintatyökalulla voi vetää laatikon, jota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Monikulmiovalintatyökalulla voi napsauttelemalla luoda kulmia monikulmiolle ja kaksoisnapauttamalla lopettaa kulmion luomisen. Kaikki kulmiota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Valinnan j&auml;lkeen avautuu ikkuna (8), jossa kirjataan eurooppatienumero ko. viivoille (9). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
 
 Huom! Muutos kumoaa kaikki valitun alueen aiemmat eurooppatienumerotiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
 
@@ -1871,9 +1871,9 @@ _Useamman eurooppatienumeron tietojen muokkaus kerralla._
 
 ###Eurooppatienumeron katkaiseminen###
 
-Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (9). Leikkausty&ouml;kalulla napautetaan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
+Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (10). Leikkausty&ouml;kalulla napautetaan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
 
-Eurooppatienumeron katkaisussa uusille kohteille valitaan arvot oikean laidan radionapeista (10). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (11). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+Eurooppatienumeron katkaisussa uusille kohteille valitaan arvot oikean laidan radionapeista (11). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (12). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
 
 Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
 
