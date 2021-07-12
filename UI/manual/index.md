@@ -1817,7 +1817,7 @@ Palvelupiste voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkin li
 
 Eurooppatien numerot kattavat maantiet ja muutaman kaupungin kadut. Eurooppatienumerot merkitään vain numerolla (ei lisätä E-kirjainta). Karttan&auml;kym&auml;&auml;n voi valita eurooppatienumerot tietolajivalikosta (1). Karttaa tarkennettaessa kohteet tulevat n&auml;kyviin. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on eurooppatienumero.
  
-![Valinta.](eutie1.PNG)
+![Valinta.](eutie1.png)
 
 _Eurooppatienumeroiden valinta._
 
@@ -1831,7 +1831,7 @@ Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&
 
 Ominaisuustietoikkunassa on eurooppatienumeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
 
-![Katselu.](eutie2.PNG)
+![Katselu.](eutie2.png)
 
 _Eurooppatienumeron tietojen katselu._
 
@@ -1851,7 +1851,7 @@ Muokattava kohde valitaan napauttamalla sen geometriaa. Kerran napauttamalla tul
 
 Tielinkit, joilla ei ole eurooppatienumeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi eurooppatienumero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan eurooppatienumero ja syötekentt&auml;&auml;n (2) kirjoitetaan eurooppatien numero.
  
-![Muokkaus.](eutie3.PNG)
+![Muokkaus.](eutie3.png)
 
 _Eurooppatienumeroiden muokkaus._
 
@@ -1865,7 +1865,7 @@ Useamman kuin yhden tielinkin eurooppatienumeron voi muuttaa kerralla. Halutut t
 
 Huom! Muutos kumoaa kaikki valitun alueen aiemmat eurooppatienumerotiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
 
-![Muokkaus2.](eutie4.PNG)
+![Muokkaus2.](eutie4.png)
 
 _Useamman eurooppatienumeron tietojen muokkaus kerralla._
 
@@ -1877,7 +1877,7 @@ Eurooppatienumeron katkaisussa uusille kohteille valitaan arvot oikean laidan ra
 
 Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
 
-![Katkaisu.](eutie5.PNG)
+![Katkaisu.](eutie5.png)
 
 _Eurooppatienumeron katkaiseminen._
 
