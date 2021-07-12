@@ -1857,7 +1857,7 @@ _Eurooppatienumeroiden muokkaus._
 
 ###Eurooppatienumeron poistaminen###
 
-Eurooppatienumeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei eurooppatienumeroa. Muutokset tallentuu tallenna-napista (4) tai ne voi kumota peruuta-napista (5).
+Eurooppatienumeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei eurooppatienumeroa. Muutokset tallentuu tallenna-painikkeesta (4) tai ne voi kumota peruuta-painikkeesta (5).
 
 ###Useamman eurooppatienumero muokkaus monivalintaty&ouml;kalulla###
 
