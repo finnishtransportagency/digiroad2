@@ -79,7 +79,7 @@ _Tietolajivalikko._
 
 Muokkaustilan saa aktivoitua napauttamalla tietolajipaneelin alareunassa olevaa Siirry muokkaustilaan -painiketta. Muokkaustilassa kartan yläpalkkiin ilmestyy teksti "Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla Tallenna-painiketta (3). Muutosten tallentamisen jälkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan käyttäjätunnus, päivämäärä ja kellonaika (4). Ennen uusien tietojen tallentamista voi tehdyt muutokset peruuttaa napauttamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eivät ole aktiivisia silloin, kun muutoksia ei ole tehty. Tehdyt muutokset tulee tallentaa tai perua ennen kun sovellus antaa siirtyä muokkaamaan uutta kohdetta. Takaisin katselutilaan pääsee napauttamalla Siirry katselutilaan -painiketta (5).
 
-Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
+Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaavajanalla näkyy 200 m tai vähemmän. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
 ![Muokkaustila](Manuaali4.png)
 
@@ -157,7 +157,7 @@ _Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot, jotka visua
 
 Keskellä ruutua on **Karttaikkuna** (4). Karttaikkunassa näkyy käyttäjän valitsema tausta sekä visualisoitavaksi valittu tietolaji. Karttaikkunan oikeassa alalaidassa on **Zoomauspainikkeet** (5), joita naputtamalla voi loitontaa tai lähentää karttanäkymää.
 
-Vasemmalla käyttöliittymässä ylhäältä alaspäin lähdettäessä on ensimmäisen **Hakukenttä** (6), josta voi etsiä tietoa edellä mainitusti.
+Vasemmalla käyttöliittymässä ylhäältä alaspäin lähdettäessä on ensimmäisenä **Hakukenttä** (6), josta voi etsiä tietoa edellä mainitusti.
 
 Hakukentän alla on painike (7), jolla saa auki **Tietolajivalikon**. Tästä valikosta voi valita tietolajin, joka näkyy karttaikkunassa. 
 
