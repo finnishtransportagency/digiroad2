@@ -127,6 +127,58 @@ Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jo
 
 _Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot, jotka visualisoituvat vaaleansinisinä ohuempina viivoina kartalle._
 
+##2.3 Käyttöliittymän osien kuvaus##
+
+![Käyttöliittymä](kuvaus1.png)
+
+*Käyttöliittymä*
+
+**Yläpalkki** (1) on käyttöliittymän ylin osa. Siinä on Digiroad-logo, sekä oikealla painikkeet:
+* Lisätyt viivamaiset kohteet
+	* Lista viivamaisista kohteista, jotka luodaan yöllä liikennemerkkien luomisen/päivityksen seurauksena.
+* Tietolajien kuntasivu
+	* Kuntakäyttäjä voi merkitä tietolajeja tarkistetuiksi, sekä tarkistaa yksityisteiden ilmoitusten tilanteen.
+* Tiedotteet
+	* Tiedotteita liittyen Digiroadiin.
+* Käyttöohje
+	* Linkki Digiroad-ylläpitosovelluksen käyttöohjeeseen.
+* Palaute työkalusta
+	* Avaa ikkunan, jossa käyttäjä voi lähettää palautetta liittyen ylläpitosovellukseen.
+
+**Alapalkki** (2) on käyttöliittymän alin osa. Siinä on vasemmalta oikealle:
+* Valintapainikkeet kartan taustalle: Maastokartta, Ortokuvat ja Taustakarttasarja (oletus). 
+* Tietolajeja ladatessa tähän keskelle ilmestyy latauspalkki. 
+* Painikkeesta ”Muokkaa aloitussivua” voi käyttäjä muokata sitä, mikä näkymä hänelle latautuu aina ylläpitosovellusta käynnistäessä. 
+* Tieto kunnasta, minkä alueella karttanäkymä on.
+* ETRS89-TM35FIN koordinaatit kartalla näkyvän kohdistin -ristin (3) kohdalla.
+* ”Merkitse” -painike, jota napauttamalla voi asettaa merkin itselleen kartalla näkyvän kohdistin -ristin kohdalle.
+* ”Kohdistin” -valintaruutu, jota napauttamalla saa kohdistin -ristin pois ja päälle.
+* ”Tieosoiteinfo” -valintaruutu, jota napauttamalla saa tieosoitetiedot näkyviin viemällä hiiren tielinkin päälle.
+
+Keskellä ruutua on **Karttaikkuna** (4). Karttaikkunassa näkyy käyttäjän valitsema tausta sekä visualisoitavaksi valittu tietolaji. Karttaikkunan oikeassa alalaidassa on **Zoomauspainikkeet** (5), joita naputtamalla voi loitontaa tai lähentää karttanäkymää.
+
+Vasemmalla käyttöliittymässä ylhäältä alaspäin lähdettäessä on ensimmäisen **Hakukenttä** (6), josta voi etsiä tietoa edellä mainitusti.
+
+Hakukentän alla on painike (7), jolla saa auki **Tietolajivalikon**. Tästä valikosta voi valita tietolajin, joka näkyy karttaikkunassa. 
+
+Näiden alla on **Tietolajipaneeli**	 (8), joka sisältää:
+* Riippuen tietolajista, tietolajipainikkeen alla on mahdollisesti **Radionappeja** tai **Valintaruutuja** (9), joista voi valita mitä ominaisuutta tietolajista visualisoidaan kartalla. 
+* Näiden alla (tai niiden puuttuessa) on **Selite** (10). Selitteessä kerrotaan, millä tavalla tietolajit on kuvattu karttaikkunassa. 
+* Näiden alla on tietolajista riippuen mahdollisesti valintaruutuja, joista saa näkyviin ja pois näkyviltä tiettyjä ominaisuuksia. 
+* Toisilla tietolajeilla on **Työkalupainikkeet** (11), joita napauttamalla saa valittua erilaisia työkaluja tietolajien muokkaamiseen.
+* Alimmaisena tietolajipaneelissa on ”Siirry muokkaustilaan” -painike (12), jota painamalla siirrytään muokkaustilaan.
+
+Oikealla käyttöliittymässä on **Ominaisuustietoikkuna** (13). Tähän kuvautuu valitun kohteen ominaisuustiedot eri lailla tietolajista riippuen. Erilaisia vaihtoehtoja muokkaustilassa oleville ominaisuustietojen kuvauksille on:
+* **Syötekenttä**, johon voi syöttää näppäimistöltä tekstiä.
+* **Alasvetovalikko**, josta voi valita tietolajille ominaisia valintoja.
+* **Radionapit** ja **Valintaruudut**: pyöreistä radionapeista voi valita vain yhden, kun taas neliömäisistä valintaruuduista voi valita haluamansa määrän.
+
+Asioita tallentaessa ja joskus uusia alueita ladatessa karttaikkunaan ilmestyy **Spinneri** (14) ilmoittamaan käynnissä olevasta latauksesta. 
+
+![Spinneri](kuvaus3.png)
+
+*Spinneri*
+
 3 Tielinkki
 ------------
 
