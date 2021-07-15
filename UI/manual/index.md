@@ -1992,20 +1992,20 @@ Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvo
 
 _Liittym&auml;numeron katkaiseminen._
 
-26. Liikennevalo
+26. Liikennevalot
 ----------------------
 
-Valo-ohjatuissa liittymiss&auml; liikennevalo on kuvattu pisteen&auml;. Karttan&auml;kym&auml;&auml;n voi valita liikennevalot tietolajit-paletista (1). Kartalle tulevat esiin liikennevalot sinisen&auml; pisteen&auml;. Punaisella pisteell&auml; olevat liikennevalot ovat geometrian ulkopuolella olevia liikennevaloja.
+Valo-ohjatuissa liittymiss&auml; liikennevalot on kuvattu pisteinä, joilla on niiden vaikutussuuntaa kuvaavat nuolet. Karttaikkunaan voi valita liikennevalot tietolajivalikosta (1). Uuden vuonna 2020 voimaan tulleen tieliikennelain myötä Digiroadiin kerätään tarkempaa tietoa liikennevaloista, joten tietolajipaneelissa ja kartalla on sekä vanhan että uuden tietomallin mukaiset liikennevalot. Vanhan mallin liikennevalot näyttäytyvät kartalla sinisinä pisteinä. Punaisilla pisteillä olevat liikennevalot ovat geometrian ulkopuolella olevia liikennevaloja. Uuden tietomallin mukaiset liikennevalot näkyvät karttaikkunassa pisteinä, joilla on vaikutussuuntanuoli. Uuden tietomallin liikennevaloissa oranssilla visualisoidut liikennevalot indikoivat, että niissä on useita opastinlaitteita. Puolestaan vaalkoisella visualisoidut liikennevalot indikoivat risteyksessä olevan vain yksi opastinlaite.
  
-![Valinta.](k181.JPG)
+![Valinta.](liik1.png)
 
 _Liikennevalojen valinta._
 
-##26.1 Liikennevalon tietojen katselu##
+##26.1 Liikennevalojen tietojen katselu##
 
-Yksitt&auml;isen liikennevalon voi valita klikkaamalla kartalta sen geometriaa.  Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu liikennevalon ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy liikennevalon ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa klikkaamalla taustakarttaa.
+Liikennevalokohteen voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu liikennevalon ominaisuustietoikkuna. Ominaisuustietoikkunassa näkyy useita ominaisuustietoja, joita voi tallentaa liikennevaloille (2). Valinnan voi purkaa klikkaamalla taustakarttaa.
 
-![Katselu.](k182.JPG)
+![Katselu.](liik2.png)
 
 _Liikennevalokohteen katselu._
 
@@ -2013,29 +2013,34 @@ _Liikennevalokohteen katselu._
 
 Geometrian ulkopuolelle j&auml;&auml;neet liikennevalot on korostettu kartalla punaisella pisteell&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Liikennevaloa siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
 
-![punainen.](k183.JPG)
+![punainen.](liik3.png)
 
-_Geometrian ulkopuolinen liikennevalo on n&auml;kyy kartalla punaisena pisteen&auml;._
+_Geometrian ulkopuoliset liikennevalot näkyvät kartalla punaisina pisteinä._
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; liikennevaloilla on oma lista (2). Liikennevalot on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne liikennevalot, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Liikennevalosta on listassa linkki, josta p&auml;&auml;see suoraan pisteen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; liikennevaloilla on oma lista (3). Liikennevalot on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne liikennevalot, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Liikennevalosta on listassa linkki, josta p&auml;&auml;see suoraan pisteen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Lista.](k184.JPG)
+![Lista.](liik4.PNG)
 
 _Geometrian ulkopuoliset liikennevalot._
 
-##26.2 Liikennevalon muokkaus##
+##26.2 Liikennevalojen muokkaus##
 
-Liikennevalon voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden kohteen muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+Liikennevalojen tietoja voi muokata, kohteen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden kohteen muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
 
-###Liikennevalon poisto, siirto ja lis&auml;ys###
+###Liikennevalojen tietojen muokkaus, kohteen poisto, siirto ja lis&auml;ys###
 
-Muokattava kohde valitaan klikkaamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu liikennevalo voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla (6).
+Muokattava kohde valitaan napauttamalla sen geometriaa. Valitun kohteen geometria korostuu ja sivun oikeaan laitaan avautuu ominaisuustietoikkuna (4), johon voi täydentää liikennevalojen tietoja. Valittu liikennevalo voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (5). Muutokset voidaan tallentaa painamalla tallenna-painiketta (6) tai kumota peruuta-napilla (7).
 
-Yksitt&auml;ist&auml; liikennevaloa voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle liikennevalo siirtyy, korostuu kartalla sinisell&auml; v&auml;rill&auml;. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla (6).
+Yksitt&auml;ist&auml; liikennevaloa voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle liikennevalo siirtyy, korostuu kartalla sinisell&auml; v&auml;rill&auml;. Siirto tallentuu tallenna-painikkeella (6). Muutokset voidaan kumota peruuta-napilla (7).
 
-![Muokkaus.](k185.JPG)
+![Muokkaus.](liik5.png)
+
+![Muokkaus2.](liik6.png)
 
 _Liikennevalokohteiden muokkaus._
 
-Liikennevalomerkint&auml; voidaan lis&auml;t&auml; klikkaamalla vasemmassa yl&auml;kulmasta plussaa eli lis&auml;ys-ty&ouml;kalua (7). Liikennevalo lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
+Liikennevalomerkint&auml; voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta pluss-painiketta eli lis&auml;ys-ty&ouml;kalua (8). Liikennevalo lis&auml;t&auml;&auml;n haluttuun tien kohtaan, minkä jälkeen sivun oikeaan laitaan avautuu ominaisuustietoikkuna (9), johon liikennevalojen tiedot täydennetään. ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (10).
 
+![Lisäys.](liik7.png)
+
+HUOM! Muokatessa vanhan tietomallin mukaisia liikennevaloja, esiin tulee uuden tietomallin mukainen ominaisuustietoikkuna, jonka tiedot täyttämällä kohde päivittyy uuteen tietomalliin.
