@@ -1186,17 +1186,17 @@ _Liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
 14. Talvinopeusrajoitus
 ----------------------
 
-Kartalle voi valita tietolajit-paletista (1) Talvinopeusrajoitus-tietolajin. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla talvinopeusrajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+Kartalle voi valita tietolajivalikosta (1) Talvinopeusrajoitus-tietolajin. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Talvinopeusrajoitukset on visualisoitu geometrioihin eri väreillä riippuen nopeusrajoituksesta ja tielinkit, joilla talvinopeusrajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
 
-![Talvinopeusrajoitusvalinta.](k98.JPG)
+![Talvinopeusrajoitusvalinta.](tal1.png)
 
 _Talvinopeusrajoitusvalinta._
 
 ##14.1 Talvinopeusrajoituksen tietojen katselu##
 
-Yksitt&auml;isen talvinopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustieton&auml;kym&auml; (6).
+Yksitt&auml;isen talvinopeusrajoituksen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustietoikkuna (3).
 
-![Talvinopeusrajoituksen katselutila.](k99.JPG)
+![Talvinopeusrajoituksen katselutila.](tal.png)
 
 _Talvinopeusrajoituksen katselutila._
 
@@ -1209,51 +1209,51 @@ Muokkaustilassa talvinopeusrajoituksille voi antaa uusia arvoja ja niit&auml; vo
 
 ###Rajoituksen arvon muokkaus###
 
-Talvinopeusrajoitusta muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki per&auml;kk&auml;iset rajoitukset, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois talvinopeusrajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Talvinopeusrajoitusta muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki per&auml;kk&auml;iset rajoitukset, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa (5). Muutokset tallennetaan painamalla Tallenna-painiketta (6). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (7). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois talvinopeusrajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
-![Talvinopeusrajoituksen muokkaus.](k100.JPG)
+![Talvinopeusrajoituksen muokkaus.](tal3.png)
 
 _Talvinopeusrajoituksen muokkaus._
 
 ###Talvinopeusrajoitusten muokkaus monivalintaty&ouml;kalulla###
 
-Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko rajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella valittavia tielinkkejä. Toinen tapa on käyttää työkalupalkin aluevalintatyökaluja, joita ovat monikulmio- ja laatikkotyökalut. Työkalujen avulla piirretään kartalle alue, jolta tielinkit valitaan. Valituksi tulevat kaikki linkit alueen sis&auml;ll&auml; ja linkit, joita alue leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
-![Useamman rajoituksen arvon muokkaus kerralla.](k101.JPG)
+![Useamman rajoituksen arvon muokkaus kerralla.](tal4.png)
 
 _Useamman rajoituksen arvon muokkaus kerralla._
 
 ###Talvinopeusrajoituskohteen katkaisu###
 
-Talvinopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2).
+Talvinopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (8). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla napautetaan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (9).
 
 Rajoituksen katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
 
-![Talvinopeusrajoituskohteen katkaisu.](k102.JPG)
+![Talvinopeusrajoituskohteen katkaisu.](tal5.png)
 
 _Talvinopeusrajoituskohteen katkaisu._
 
-Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan ominaisuustietoikkunasta (10). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (11). Uudet rajoitukset tallennetaan tallenna-painikkeesta (12). Katkaisun voi peruuttaa peruuta-painikkeella (13), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
 Huom! Rajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
 
-![Talvinopeusrajoituskohteen katkaisu.](k103.JPG)
+![Talvinopeusrajoituskohteen katkaisu.](tal6.png)
 
 _Talvinopeusrajoituskohteen katkaisu._
 
 ###Talvinopeusrajoituksen poistaminen###
 
-Tielinkin talvinopeusrajoitus poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei talvinopeusrajoitusta".
+Tielinkin talvinopeusrajoitus poistetaan ominaisuustietoikkunassa (14) valitsemalla Rajoitus-kohdasta "Ei talvinopeusrajoitusta".
 
-![Talvinopeusrajoituksen poistaminen.](k104.JPG)
+![Talvinopeusrajoituksen poistaminen.](tal7.png)
 
 _Talvinopeusrajoituksen poistaminen._
 
 ###Uuden talvinopeusrajoituksen lis&auml;&auml;minen###
 
-Tielinkille voi lis&auml;t&auml; talvinopeusrajoituksen valitsemalla linkin geometrian (4) Talvinopeusrajoitus-muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin talvinopeusrajoituksen tiedot. Valitaan "Talvinopeusrajoitus" ja valitaan rajoituksen arvo valikosta. Talvinopeusrajoitus tallennetaan painamalla Tallenna (8). Talvinopeusrajoituksen lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
+Tielinkille voi lis&auml;t&auml; talvinopeusrajoituksen valitsemalla linkin geometrian (15) Talvinopeusrajoitus-muokkaustilassa. Ominaisuustietoikkunaan (16) avautuu tielinkin talvinopeusrajoituksen tiedot. Valitaan "Talvinopeusrajoitus" ja valitaan rajoituksen arvo valikosta. Talvinopeusrajoitus tallennetaan painamalla Tallenna-painiketta (17). Talvinopeusrajoituksen lis&auml;&auml;misen voi perua Peruuta-painikkeella (18).
 
-![Talvinopeusrajoituksen lis&auml;&auml;minen.](k105.JPG)
+![Talvinopeusrajoituksen lis&auml;&auml;minen.](tal8.png)
 
 _Talvinopeusrajoituksen lis&auml;&auml;minen._
 
