@@ -1445,7 +1445,7 @@ _Ajoneuvokohtaisen rajoituksen lis&auml;ys._
 
 ###Ajoneuvokohtaisen rajoituksen poistaminen###
 
-Ajoneuvokohtaisia rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustietoikkunasta rajoituksen pois (12). My&ouml;s rajoituksen ominaisuuksia eli voimassaoloaikaa ja poikkeuksia voi poistaa ominaisuustieton&auml;kym&auml;n rukseista. (13) 
+Ajoneuvokohtaisia rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustietoikkunasta rajoituksen pois (12). My&ouml;s rajoituksen ominaisuuksia eli voimassaoloaikaa ja poikkeuksia voi poistaa ominaisuustietoikkunan rukseista. (13) 
 
 ![Poisto.](akr6.png)
 
