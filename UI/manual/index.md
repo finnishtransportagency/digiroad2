@@ -1196,7 +1196,7 @@ _Talvinopeusrajoitusvalinta._
 
 Yksitt&auml;isen talvinopeusrajoituksen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustietoikkuna (3).
 
-![Talvinopeusrajoituksen katselutila.](tal2.png)
+![Talvinopeusrajoituksen katselutila.](ta2.png)
 
 _Talvinopeusrajoituksen katselutila._
 
@@ -1217,9 +1217,9 @@ _Talvinopeusrajoituksen muokkaus._
 
 ###Talvinopeusrajoitusten muokkaus monivalintaty&ouml;kalulla###
 
-Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella valittavia tielinkkejä. Toinen tapa on käyttää työkalupalkin aluevalintatyökaluja, joita ovat monikulmio- ja laatikkotyökalut. Työkalujen avulla piirretään kartalle alue, jolta tielinkit valitaan. Valituksi tulevat kaikki linkit alueen sis&auml;ll&auml; ja linkit, joita alue leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella valittavia tielinkkejä. Toinen tapa on käyttää työkalupalkin aluevalintatyökaluja, joita ovat monikulmio- ja laatikkotyökalut (alla olevassa kuvassa huomioitu punaisella). Työkalujen avulla piirretään kartalle alue, jolta tielinkit valitaan. Valituksi tulevat kaikki linkit alueen sis&auml;ll&auml; ja linkit, joita alue leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
-![Useamman rajoituksen arvon muokkaus kerralla.](tal4.png)
+![Useamman rajoituksen arvon muokkaus kerralla.](tal4_2.png)
 
 _Useamman rajoituksen arvon muokkaus kerralla._
 
