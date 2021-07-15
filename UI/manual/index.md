@@ -1196,7 +1196,7 @@ _Talvinopeusrajoitusvalinta._
 
 Yksitt&auml;isen talvinopeusrajoituksen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustietoikkuna (3).
 
-![Talvinopeusrajoituksen katselutila.](ta2.png)
+![Talvinopeusrajoituksen katselutila.](tal2.png)
 
 _Talvinopeusrajoituksen katselutila._
 
