@@ -1631,8 +1631,7 @@ Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
 
-20. 
-
+20. Esterakennelma
 ----------------------
 
 Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalla tietolajivalikosta (1) "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; esterakennelmia.
@@ -1661,7 +1660,7 @@ Muokattava esterakennelma valitaan klikkaamalla sen geometriaa. Valitun merkinn&
 
 _Esterakennelman muokkaus._
 
-Yksitt&auml;ist&auml; esterakennelma voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle esterakennelma siirtyy, korostuu kartalla sinisell&auml; (6). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
+Yksittäinen esterakennelma voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle esterakennelma siirtyy, korostuu kartalla sinisell&auml; (6). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
 
 ![Siirto.](este4.png)
 
