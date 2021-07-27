@@ -186,7 +186,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, startupAsseId: Int)
 
-  val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
+  val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
 
   val minVisibleZoom = 8
