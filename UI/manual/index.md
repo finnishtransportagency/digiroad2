@@ -1491,6 +1491,87 @@ _Uusien yksisuuntaisten ajoneuvokohtaisen rajoitusten arvojen valinta._
 
 Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
+X Pysäköintikielto
+------------
+
+Pysäköintikielto on viivamainen kohde. Pysäköintikielto voi olla tielinkin mittainen tai sitä lyhyempi viiva. Pysäköintikielto-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun zoomaa lähemmäksi. Jos tielinkille on ilmoitettu pysähtymiskielto, se piirtyy kartalle punaisella viivalla (2) tai jos sille on ilmoitettu pysäköintikielto, se piirtyy kartalle turkoosilla viivalla (3). Kiellottomat tielinkit ovat harmaita (4). Joissain tapauksissa pysäköintikiellot voivat muuttua kesken tielinkin tai pysäköintikieltoarvo on eri suuntiin kulkeville kaistoille eri. Tällöin pysäköintikiellot visualisoituvat ylläpitosovelluksessa ohuemmilla viivoilla tiegeometrian viereen.
+Pysäköintikiellon muokkauksessa on mahdollisuus jakaa molempiin suuntiin voimassa oleva nopeusrajoitus yhteen suuntaan voimassa olevaksi.
+
+![Pysäköintikielto](pk1.png)
+
+*Pysäköintikielto-tietolaji*
+
+##Pysäköintikieltotietojen katselu##
+
+Kun kohdetta napauttaa kartalta, se korostuu (5). ja ominaisuustietoikkunaan tulee näkyviin sen tiedot (6). Kerran napauttamalla tulee valituksi koko pysäköintikieltoketju, eli kaikki linkit, joilla on sama pysäköintikieltotieto ja tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie). Jos käyttäjä haluaa valita vain yhden linkin mittaisen pätkän tarkasteluun, sen voi tehdä kaksoisnapauttamalla linkkiä. Pysäköintikiellolla on: 
+* ID
+* lisätty järjestelmään ja muokattu viimeksi -tiedot
+* tieto linkkien lukumäärästä pysäköintikieltoketjussa
+* radionappi valinnalle ”Ei pysäköintikieltoa” ja ”Pysäköintikielto”, jonka valinnan jälkeen aktivoituu kaksi alasvetovalikkoa, joista ensimmäisestä voi valita joko ”Pysäköinti-” tai ”Pysähtyminen kielletty, ja toisesta voi valita voimassaoloajan. 
+Myös kaksisuuntaiseksi jakamisen nappi aktivoituu.
+
+![Pysäköintikiellon katselu](pk2.png)
+
+*Pysäköintikieltotiedon katselu*
+
+##Pysäköintikieltotietojen muokkaus##
+
+Pysäköintikieltotietoja voi muokata muokkaustilassa. Pysäköintikiellon voi lisätä, poistaa ja pysäköintikieltogeometrian voi katkaista sekä muuttaa kaksisuuntaisiksi. Myös pysäköintikiellon tyyppiä ja aikaa voi muokata. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuperäinen tieto jää voimaan.
+
+###Pysäköintikieltotiedon lisäys###
+
+Uusi pysäköintikielto lisätään valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietoikkunassa "Pysäköintikielto" (7). Tämän alta alasvetovalikosta (8) valitaan joko pysäköinti- tai pysähtymiskielto. Uusi pysäköintikieltotieto näkyy kartalla turkoosina ja pysähtymiskielto punaisena.
+
+![Pysäköintikiellon lisäys](pk3.png)
+
+*Pysäköintikieltotiedon lisäys*
+
+###Pysäköintikieltotiedon poistaminen###
+
+Pysäköintikieltotiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan ominaisuustietoikkunasta kohdan "Ei pysäköintikieltoa" (9) ja painamalla tallenna-painiketta. Kun pysäköintikieltotieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Pysäköintikiellon poistaminen](pk4.png)
+
+*Pysäköintikieltotiedon poistaminen*
+
+###Pysäköintikiellon muokkaus monivalintatyökalulla###
+
+Usealle linkille voi lisätä tai poistaa pysäköintikiellon kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (10), jolloin ctrl-näppäimen irti päästämällä avautuu valaistuksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (11) tai monikulmiotyökalua (12). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisklikkaamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen avautuu ikkuna, jossa pysäköintikieltotietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Pysäköintikiellon monivalinta](pk5.png)
+
+*Pysäköintikiellon monivalinta*
+
+###Pysäköintikiellon katkaisu###
+
+Tarvittaessa pysäköintikiellon voi katkaista leikkaustyökalulla (13). Leikkaustyökalulla napautetaan kiellon geometriasta kohtaa, josta se halutaan katkaista. Kiellon geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Kiellon katkaisu valitsee aina vain yhden tielinkin mittaisen osion kieltoa, ei kieltoketjua. Kiellon katkaisussa uusille kielloille valitaan arvot ominaisuustietoikkunassa (14). Kartalla ja valikkojen vieressä olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (15). Uudet pysäköintikieltotiedot tallennetaan tallenna-painikkeesta (16). Katkaisun voi peruuttaa peruuta-painikkeella (17), jolloin alkuperäinen rajoitus jää voimaan.
+Huom! Pysäköintikiellon katkaisussa tulee määrittää uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
+
+![Pysäköintikiellon katkaisu](pk6.png)
+
+*Pysäköintikiellon katkaisu*
+
+###Pysäköintikiellon muuttaminen kaksisuuntaiseksi###
+
+Molempiin suuntiin voimassa olevan kiellon voi muuttaa kaksisuuntaiseksi, eli molempiin suuntiin eri arvoiksi, jos kyseisellä tielinkillä liikennevirran suunta on molempiin suuntiin. Muutos tehdään tielinkkikohtaisesti.
+
+Muutos tehdään kaksoisnapauttamalla kyseistä kieltoa (18), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (19). Jos napauttaa kiellotonta linkkiä ja tekee tämän kaksisuuntaiseksi jaon, muuttaa sovellus linkille vain pysähtymiskiellon. Kaksisuuntaiseksi jako tuleekin tehdä vain linkille, jolla on jo valmiiksi kielto.
+
+![Pysäköintikiellon muuttaminen kaksisuuntaiseksi](pk7.png)
+
+*Pysäköintikiellon valinta ja muuttaminen kaksisuuntaiseksi*
+
+Painikkeen painamisen jälkeen voi uusille kielloille antaa arvot alasvetovalikoista (20). A ja B -kirjaimet alasvetovalikkojen vieressä vastaavat kieltoja kartalla (21). Arvojen pitää erota toisistaan, jotta tallentaminen on mahdollista.
+
+![Pysäköintikiellon arvojen valinta](pk8.png)
+
+*Uusien kaksisuuntaisten pysäköintikieltojen arvon valinta*
+
+
+Uudet kiellot tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen kielto jää voimaan.
+Jos tallennuksen jälkeen yhteen suuntaan voimassa oleville kielloille antaa saman arvon, sovellus yhdistää ne molempiin voimassa oleviksi.
+
+
 18. Vaarallisten aineiden kuljetus (VAK)
 ----------------------------------------
 
