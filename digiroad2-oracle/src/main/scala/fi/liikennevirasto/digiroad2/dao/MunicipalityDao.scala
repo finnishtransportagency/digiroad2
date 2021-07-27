@@ -62,15 +62,12 @@ class MunicipalityDao {
     sql"""select id from municipality where id = $id """.as[Int].list
   }
 
-  //TODO: sdo_util.getvertices() function works in Oracle but not in PostGIS
-  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   def getMunicipalityByCoordinates(coordinates: Point): Seq[MunicipalityInfo] = {
     sql"""
           select m.id, m.ely_nro,
                  case when m.name_fi is not null then m.name_fi else m.name_sv end as name
-          from municipality m,
-               table(sdo_util.getvertices(m.geometry)) t
-            where trunc( t.x ) = ${coordinates.x} and trunc( t.y ) = ${coordinates.y}
+          from municipality m
+            where ST_X(m.geometry) = ${coordinates.x} and ST_Y(m.geometry) = ${coordinates.y}
       """.as[MunicipalityInfo].list
   }
 
@@ -122,7 +119,6 @@ class MunicipalityDao {
     }
   }
 
-  //TODO: sdo_util.getvertices() function works in Oracle but not in PostGIS
   def getElysIdAndNamesByCoordinates(lon: Int, lat: Int): Seq[(Int, String)] = {
     sql"""
          select e.id,
@@ -130,9 +126,8 @@ class MunicipalityDao {
          		when e.name_fi is not null then e.name_fi
          		else e.name_sv
          	end as name
-         from ely e,
-              table(sdo_util.getvertices(e.geometry)) t
-         	where trunc( t.x ) = $lon and trunc( t.y ) = $lat
+         from ely e
+         	where ST_X(m.geometry) = $lon and ST_Y(m.geometry) = $lat
        """.as[(Int, String)].list
   }
 }
