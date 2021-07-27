@@ -6,14 +6,11 @@
 
     this.formEditModeAccess = function(selectedAsset) {
       var isMaintainerAndHaveRights = (me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
-      var isMaintainerWithRightsOrOperator = isMaintainerAndHaveRights || me.isOperator();
-      //console.log("state exclusion " +me.isStateExclusions(selectedAsset));
-      //console.log("first part not isState: "+!me.isState(selectedAsset) +" second part isMaintainerWithRightsOrOperator:  "+ isMaintainerWithRightsOrOperator + " full clause  "+ (!me.isState(selectedAsset) && isMaintainerWithRightsOrOperator ));
-      //console.log(me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerWithRightsOrOperator ));
-      return isMaintainerWithRightsOrOperator;
-      //return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerWithRightsOrOperator );
-      
-      
+      if(me.isOperator()){
+        return true;
+      }else{
+        return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerAndHaveRights );
+      }
     };
 
     this.handleSuggestedAsset = function(selectedAsset, value, layerMode) {
