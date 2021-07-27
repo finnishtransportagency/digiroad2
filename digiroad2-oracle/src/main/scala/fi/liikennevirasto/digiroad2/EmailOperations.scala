@@ -19,8 +19,11 @@ class EmailOperations() {
       throw new IllegalArgumentException
 
     val properties = new Properties()
+    properties.put("mail.transport.protocol", "smtp")
     properties.put("mail.smtp.host", smtpProp.getHost)
     properties.put("mail.smtp.port", smtpProp.getPort)
+    properties.put("mail.smtp.starttls.enable", "true")
+    properties.put("mail.smtp.auth", "true")
 
     Session.getDefaultInstance(properties)
   }
