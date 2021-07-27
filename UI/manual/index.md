@@ -2044,3 +2044,78 @@ Liikennevalomerkint&auml; voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml
 ![Lisäys.](liik7.png)
 
 HUOM! Muokatessa vanhan tietomallin mukaisia liikennevaloja, esiin tulee uuden tietomallin mukainen ominaisuustietoikkuna, jonka tiedot täyttämällä kohde päivittyy uuteen tietomalliin.
+
+27. Liikennemerkit
+----------------------
+
+Liikennemerkit ovat tieverkolla olevia tieliikenteen ohjauslaitteita, jotka on jaoteltu Digiroadissa kahdeksaan ryhmään: 
+
+* Varoitusmerkit
+* Etuajo-oikeus ja väistämismerkit 
+* Kielto- ja rajoitusmerkit
+* Määräysmerkit 
+* Sääntömerkit
+* Opastusmerkit 
+* Palvelukohteet
+* Muut merkit
+
+Kartalle voi valita liikennemerkit valitsemalla tietolajivalikosta (1) "Liikennemerkit", jolloin kohteet visualisoituvat karttaikkunassa pisteinä, joilla on niiden vaikutussuuntaa kuvaavat nuolet. Tarpeeksi lähelle karttaikkunaa zoomatessa liikennemerkit visualisoituvat niiden tietosisältöä ilmaisevina kuvina.  
+
+![Valinta.](lm1.png)
+
+_Liikennemerkkien valinta._
+
+##27.1 Liikennemerkin tietojen katselu##
+
+Yksitt&auml;isen liikennemerkin voi valita napauttamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu liikennemerkin ominaisuustietoikkuna (3). Ominaisuustietoikkunassa näkyy useita merkkiin liittyviä ominaisuustietoja, kuten sen tyyppi, arvo/tekstisisältö, maastokoordinaatit sekä mahdollisten lisäkilpien tiedot. Valinnan voi poistaa klikkaamalla muualle.
+
+![Katselu.](lm2.png)
+
+Liikennemerkin katselu._
+
+##27.2 Liikennemerkin muokkaus##
+
+Liikennemerkin voi poistaa, siirtää tai lisätä. Lisäksi olemassa olevan liikennemerkin ominaisuustietoja voi muokata liikennemerkin ominaisuustietoikkunassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+###Liikennemerkin poisto, siirto, lis&auml;ys ja tietojen muokkaus###
+
+Muokattava liikennemerkki valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu liikennemerkki voidaan poistaa raksittamalla ominaisuustietoikkunan alaosassa oleva poista-ruutu (4) ja painamalla tallenna-painiketta. Muutokset voidaan kumota peruuta-painikkeella. Olemassa olevan liikennemerkin ominaisuustietoja voi muokata ominaisuustietoikkunassa (5). Liikennemerkeillä on lukuisia ominaisuustietoja ja esimerkiksi kohteen tyyppiä, sen tietosisältöä sekä vaikutussuuntaa voi muokata. Vaikutussuunta kuvautuu liikennemerkissä vaikutussuuntanuolella (6), joka osoittaa merkin vaikutusalueen suuntaan. Muokkaukset tallennetaan painamalla tallenna-painiketta, jolloin kohteen visualisointi kartalla muuttuu ominaisuustietojen muokkauksen yhteydessä. Muutokset voidaan kumota peruuta-painikkeella.
+
+![Poisto.](lm3.png)
+![Muokkaus.](lm4.png)
+
+_Liikennemerkin muokkaus._
+
+Yksittäistä liikennemerkkiä voidaan myös siirtää valitsemalla kohde. Ensin klikataan siirrettävä kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle liikennemerkki siirtyy, korostuu kartalla sinisell&auml; (7). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-painikkeella.
+
+![Siirto.](lm5.png)
+
+_Liikennemerkin siirto._
+
+Liikennemerkki voidaan lis&auml;t&auml; valitsemalla työkalupalkista lis&auml;ys-ty&ouml;kalu (plussa) (8). Liikennemerkki lis&auml;t&auml;&auml;n haluttuun tien kohtaan napauttamalla karttaa (9), jolloin karttaikkuna tummenee. Liikennemerkille täytetään ominaisuustietoikkunassa kohteen tiedot (10). Uusi kohde tallennetaan painamalla Tallenna-nappia. 
+
+![Lisays.](lm6.png)
+
+_Esterakennelman lis&auml;ys._
+
+Liikennemerkille voi myös lisätä lisäkilpiä ominaisuustietoikkunassa valitsemalla Linkitä lisäkilpiä -valintaruudun (11). Lisäkilvelle voi täyttää useita ominaisuustietoja (12), esimerkiksi sen tyyppi ja tekstisisältö.
+
+![Lisäkilpi.](lm7.png)
+
+_Lisäkilven lisäys_
+
+Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella.
+
+###Geometrian ulkopuolelle j&auml;&auml;neet liikennemerkit###
+
+Liikennemerkki voi jäädä geometrian ulkopuolelle, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Liikennemerkkiä siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; liikennemerkeillä on oma lista (13). Liikennemerkit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne liikennemerkit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan liikennemerkkiin on listassa linkki, josta p&auml;&auml;see suoraan merkin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Merkinta.](lm8.png)
+
+_Geometrian ulkopuoliset liikennemerkit löytyvät painikkeen takaa._
+
+![Ulkopuoliset liikennemerkit.](lm9.PNG)
+
+_Geometrian ulkopuolelle j&auml;&auml;neiden liikennemerkkien lista._
