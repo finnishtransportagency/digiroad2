@@ -227,10 +227,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/startupParameters") {
       status should equal(200)
       val responseJson = parse(body)
-      //TODO: Fix these test or revert changes when municipalityDao is fixed. https://extranet.vayla.fi/jira/browse/DROTH-2824
-      (responseJson \ "zoom").values should equal(2)
-      (responseJson \ "lon").values should equal(390000)
-      (responseJson \ "lat").values should equal(6900000)
+      (responseJson \ "zoom").values should equal(3)
+      (responseJson \ "lon").values should equal(470092)
+      (responseJson \ "lat").values should equal(7504895)
     }
   }
 

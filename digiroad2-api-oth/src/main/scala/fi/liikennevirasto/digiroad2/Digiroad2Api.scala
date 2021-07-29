@@ -232,8 +232,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom, assetTypeId)
       case _  => None
     }
-//TODO: Disabled because of the usage of municipality coordinates. See MunicipalityDao.scala. https://extranet.vayla.fi/jira/browse/DROTH-2824
-    /*
     val location = userPreferences match {
       case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3, preference._4)
       case _ =>
@@ -248,8 +246,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             None
         }
     }
-     */
-    val loc = defaultValues
+    val loc = location.getOrElse(defaultValues)
     StartupParameters(loc._1, loc._2, loc._3, loc._4)
   }
 
@@ -2126,11 +2123,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     )
   }
 
-  //TODO: Disabled because of the usage of coordinates. See MunicipalityDao.scala
-  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   put("/userConfiguration/defaultLocation") {
     def getCenterView(id: Int, getCenterViewFunctionType: Int => Option[MapViewZoom], user: User): User = {
-      /*
       getCenterViewFunctionType(id) match {
         case Some(centerView) =>
           val east = Option(centerView.geometry.x.toLong)
@@ -2140,8 +2134,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
         case _ => user
       }
-       */
-      user
     }
 
     val user = userProvider.getCurrentUser()
@@ -2245,12 +2237,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     )
   }
 
-  //TODO: municipalityService calls disabled because of usage of municipality coordinates. See MunicipalityDao.scala
-  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   get("/userStartLocation") {
     val user = userProvider.getCurrentUser()
     params.get("position") match {
-/*
       case Some(position) =>
         val coordinates = constructPosition(position)
 
@@ -2273,7 +2262,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             }
           }
         }
-*/
       case _ => Map()
     }
   }
