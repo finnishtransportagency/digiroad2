@@ -991,65 +991,7 @@ Tielinkille voi lis&auml;t&auml; leveyskohteen valitsemalla linkin geometrian (1
 
 _Leveyskohteen lis&auml;&auml;minen._
 
-11. Ruuhkautumisherkkyys
-----------------------
 
-Ruuhkautumisherkkyys on viivamainen kohde. Ruuhkautumisherkkyys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Ruuhkautumisherkkyys -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu ruuhkautumisherkkyys, se piirtyy kartalle punaisella viivalla (2). Ruuhkautumattomat tielinkit ovat harmaita (3). Ruuhkautumisherkkyyden arvo on kyll&auml; tai ei.
-
-![Ruuhka](k79.JPG)
-
-_Ruuhkautumisherkkyys._
-
-##11.1 Ruuhkautumisherkkyystietojen katselu##
-
-Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko ruuhkautumisherkkyysketju, eli kaikki linkit, joilla on sama ruuhkautumisherkkyystieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Ruuhkautumisherkkyydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; ruuhkautumisherkkyyden arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
-
-![Ruuhka katselu](k80.JPG)
-
-_Ruuhkautumisherkkyystiedon katselu._
-
-##11.2 Ruuhkautumisherkkyystietojen muokkaus##
-
-Ruuhkautumisherkkyys-tietoja voi muokata muokkaustilassa. Ruuhkautumisherkkyyden voi lis&auml;t&auml;, poistaa ja ruuhkautumisherkkyysgeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Ruuhkautumisherkkyyden arvoa voi muokata kolmella tavalla:
-
-1. Koko ruuhkautumisherkkyysketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-###Ruuhkautumisherkkyystiedon lis&auml;ys###
-
-Uusi ruuhkautumisherkkyystieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Ruuhkautumisherkk&auml;" (6). Uusi ruuhkautumisherkkyys-tieto n&auml;kyy kartalla punaisena.
-
-![Ruuhka lisays](k81.JPG)
-
-_Ruuhkautumisherkkyystiedon lis&auml;ys._
-
-###Ruuhkautumisherkkyystiedon poistaminen###
-
-Ruuhkautumisherkkyystiedon voi poistaa valitsemalla ruuhkautumisherk&auml;n kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei ruuhkautumisherkk&auml; " (7). Kun ruuhkautumisherkkyystieto on poistettu, kohde muuttuu kartalla harmaaksi.
-
-![Ruuhka poisto](k82.JPG)
-
-_Ruuhkautumisherkkyystiedon poistaminen._
-
-###Ruuhkautumisherkkyyden muokkaus monivalintaty&ouml;kalulla###
-
-Usealle linkille voi lis&auml;t&auml; tai poistaa ruuhkautumisherkkyystiedon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan ruuhkautumisherkkyyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Ruuhka monivalinta](k83.JPG)
-
-_Ruuhkautumisherkkyyden monivalinta._
-
-###Ruuhkautumisherkkyystiedon katkaisu###
-
-Tarvittaessa ruuhkautumisherkkyystiedon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan ruuhkautumisherkkyyden geometriasta kohtaa, josta se halutaan katkaista. Ruuhkautumisherkkyyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Ruuhkautumisherkkyystiedon katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta tieosuudesta on kyse (5). Uudet ruuhkautumisherkkyystiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-
-Huom! Ruuhkautumisherkkyystiedon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
-
-![Ruuhka katko](k84.jpg)
-
-_Ruuhkautumisherkkyysgeometrian katkaisu._
 
 12. Päällyste
 ----------------------
