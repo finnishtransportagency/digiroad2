@@ -914,6 +914,68 @@ Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometri
 
 _Kelirikkogeometrian katkaisu._
 
+
+X. Tietyö
+----------------------
+
+Tietyö on viivamainen tietolaji, joka kuvaa tieverkkojen kohteita, joilla suoritetaan tietöitä. Tietyö voi olla tielinkin mittainen tai sitä lyhyempi. Tietyö-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on ilmoitettu tietyö, joka on katseluhetkellä voimassa, se piirtyy kartalle punaisella viivalla. Siniset tielinkit puolestaan tarkoittavat, että tielle on määritelty tuleva tai mennyt tietyö. Tiet, joilla ei ole tietyötä ovat harmaita. Tietyölle voidaan asettaa myös työn yksilöivä tunnus.
+
+![Tietyö](tt1.png)
+
+_Tietyö._
+
+##X.1 Tietyötietojen katselu##
+
+Kun tietyökohdetta napauttaa kartalta, se korostuu (2) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko tietyöketju, eli kaikki tielinkit, joilla on sama tietyötieto ja tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Tietyön ominaisuustietoja ovat (3) tietyö (on/ei vaihtoehdot), työn tunnus sekä tietyön arvioitu kesto. Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä tietyöketjussa (4).
+
+![Tietyö katselu](tt2.png)
+
+_Tietyötietojen katselu._
+
+##X.2 Tietyötietojen muokkaus ja lisäys ##
+
+Tietyön tietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa tietyölle voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista saksi-työkalulla. Tietyön arvoa voi muokata kolmella tavalla:
+
+1. Koko tietyöketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+###Tietyötiedon lis&auml;ys###
+
+Uusi tietyötieto lisätään järjestelmään asettamalla ensin tietolajivalikosta tietyö-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle tietyötieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Tietyö-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten työn tunnus (6) ja arvioitu kesto (7) voidaan asettaa. Tietyölle pakollinen tieto on sen kesto eli arvioitu alkamis- ja päättymispäivmäärä. Valinnaisena lisätietona tietyölle voi asettaa työn tunnuksen. Tietyötieto näkyy karttaikkunassa punaisena silloin kuin tietyö on katseluhetkellä voimassa ja sinisenä (8) silloin, kun tielle on tulossa tietyö tai se on päättynyt. Tiedot tallennetaan painamalla Tallenna-painiketta (9).
+
+![Tietyö lis&auml;ys](tt3.PNG)
+
+_Tietyötiedon lis&auml;ys._
+
+###Tietyötietojen poistaminen###
+
+Tietyötiedon voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta tietyö halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei tietyötä" (10) mahdollistaa tietyötietojen poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun tietyötieto on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
+
+![Tietyö poisto](tt4.png)
+
+_Tietyötiedon poistaminen._
+
+###Tietyötietojen muokkaus monivalintaty&ouml;kalulla###
+
+Tietyötietoa voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille tietyötieto halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin pohjassa, jolloin ctrl-näppäimen irti päästämällä avautuu tietyön muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua tai monikulmiotyökalua (11). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna (12), jossa määritellään tietyön ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Tietyö monivalinta](tt5.png)
+
+_Tietyön monivalinta._
+
+###Tietyötiedon katkaisu###
+
+Tarvittaessa tietyön voi katkaista leikkaustyökalulla. Leikkaustyökalulla napautetaan tietyön geometriasta kohtaa, josta se halutaan katkaista (13). Tietyön tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Tietyön katkaisussa uusille geometrioille asetetaan uudet ominaisuustiedot karttaikkunan oikean reunan ominaisuustietoikkunasta (14). Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse. Uudet tietyötiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko tietyöketjua.
+
+Huom! Tietyön katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Tietyö katkaisu](tt6.png)
+
+_Tietyögeometrian katkaisu._
+
+
 10. Leveys
 ----------------------
 
