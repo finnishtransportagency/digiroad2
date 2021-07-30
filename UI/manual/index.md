@@ -945,7 +945,7 @@ Muokkaustilassa tietyölle voi antaa uudet ominaisuustiedot ja niit&auml; voi ka
 
 Uusi tietyötieto lisätään järjestelmään asettamalla ensin tietolajivalikosta tietyö-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle tietyötieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Tietyö-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten työn tunnus (6) ja arvioitu kesto (7) voidaan asettaa. Tietyölle pakollinen tieto on sen kesto eli arvioitu alkamis- ja päättymispäivmäärä. Valinnaisena lisätietona tietyölle voi asettaa työn tunnuksen. Tietyötieto näkyy karttaikkunassa punaisena silloin kuin tietyö on katseluhetkellä voimassa ja sinisenä (8) silloin, kun tielle on tulossa tietyö tai se on päättynyt. Tiedot tallennetaan painamalla Tallenna-painiketta (9).
 
-![Tietyö lis&auml;ys](tt3.PNG)
+![Tietyö lis&auml;ys](tt3.png)
 
 _Tietyötiedon lis&auml;ys._
 
