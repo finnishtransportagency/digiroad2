@@ -127,6 +127,10 @@
             "value": "trrest"
           },
           {
+            "name": "ses.name",
+            "value": "ses-smtp-digiroad"
+          },
+          {
             "name": "oag.username",
             "value": "svc_clouddr"
           },
@@ -167,6 +171,10 @@
           {
             "name": "viite.apikey",
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
+          },
+          {
+            "name": "ses.password",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/ses-smtp-digiroad"
           },
           {
             "name": "oag.password",

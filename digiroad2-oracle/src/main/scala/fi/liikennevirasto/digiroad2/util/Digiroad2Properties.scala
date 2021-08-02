@@ -35,6 +35,8 @@ trait Digiroad2Properties {
   val tierekisteriUsername: String
   val tierekisteriPassword: String
   val viiteApiKey: String
+  val sesName: String
+  val sesPassword: String
   val tierekisteriOldUsername: String
   val tierekisteriOldPassword: String
   val oagUsername: String
@@ -62,6 +64,8 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
   val viiteApiKey: String = scala.util.Properties.envOrElse("viite.apikey", null)
+  val sesName: String = scala.util.Properties.envOrElse("ses.name", null)
+  val sesPassword: String = scala.util.Properties.envOrElse("ses.password", null)
   val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
@@ -158,6 +162,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val tierekisteriUsername: String = envProps.getProperty("tierekisteri.username")
   override val tierekisteriPassword: String = envProps.getProperty("tierekisteri.password")
   override val viiteApiKey: String = envProps.getProperty("viite.apikey")
+  override val sesName: String = envProps.getProperty("ses.name")
+  override val sesPassword: String = envProps.getProperty("ses.password")
   override val tierekisteriOldUsername: String = envProps.getProperty("tierekisteri.old.username")
   override val tierekisteriOldPassword: String = envProps.getProperty("tierekisteri.old.password")
   override val oagUsername: String = envProps.getProperty("oag.username")
@@ -231,6 +237,8 @@ object Digiroad2Properties {
   lazy val tierekisteriUsername: String = properties.tierekisteriUsername
   lazy val tierekisteriPassword: String = properties.tierekisteriPassword
   lazy val viiteApiKey: String = properties.viiteApiKey
+  lazy val sesName: String = properties.sesName
+  lazy val sesPassword: String = properties.sesPassword
   lazy val tierekisteriOldUsername: String = properties.tierekisteriOldUsername
   lazy val tierekisteriOldPassword: String = properties.tierekisteriOldPassword
   lazy val oagUsername: String = properties.oagUsername

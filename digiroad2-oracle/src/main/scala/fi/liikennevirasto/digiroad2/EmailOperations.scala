@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
+
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, SmtpPropertyReader}
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import org.slf4j.LoggerFactory
@@ -11,6 +12,7 @@ case class Email( to: String, from: String, cc: Option[String], bcc: Option[Stri
 class EmailOperations() {
 
   private val smtpProp = new SmtpPropertyReader
+
   private def isNumeric(str:String): Boolean = str.matches("[-+]?\\d+(\\.\\d+)?")
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -54,7 +56,7 @@ class EmailOperations() {
   def sendEmail(email: Email): Boolean = {
     val message = createMessage(email, setEmailProperties())
     try {
-      Transport.send(message)
+      Transport.send(message, Digiroad2Properties.sesName, Digiroad2Properties.sesPassword)
       true
     }catch {
       case ex: MessagingException =>
