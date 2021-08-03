@@ -127,7 +127,7 @@
             "value": "trrest"
           },
           {
-            "name": "ses.name",
+            "name": "ses.username",
             "value": "ses-smtp-digiroad"
           },
           {
