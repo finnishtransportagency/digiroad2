@@ -649,7 +649,7 @@
           enabled: 'Eurooppatienumero(t)',
           disabled: 'Ei eurooppatienumeroa'
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearEuropeanRoadsAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true

@@ -186,6 +186,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, startupAsseId: Int)
 
+  val StateRoadRestrictedAssetsForOperator = Set(DamagedByThaw.typeId, MassTransitLane.typeId, LitRoad.typeId,
+    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
+  
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
 
@@ -229,8 +232,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom, assetTypeId)
       case _  => None
     }
-//TODO: Disabled because of the usage of municipality coordinates. See MunicipalityDao.scala. https://extranet.vayla.fi/jira/browse/DROTH-2824
-    /*
     val location = userPreferences match {
       case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3, preference._4)
       case _ =>
@@ -245,8 +246,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             None
         }
     }
-     */
-    val loc = defaultValues
+    val loc = location.getOrElse(defaultValues)
     StartupParameters(loc._1, loc._2, loc._3, loc._4)
   }
 
@@ -1638,8 +1638,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateAdministrativeClass(typeId: Int, user: User, municipality: Int)(administrativeClass: AdministrativeClass): Unit  = {
-    if ( !user.isAnElyException(municipality) && administrativeClass == State && StateRoadRestrictedAssets.contains(typeId))
-      halt(BadRequest("Modification restriction for this asset on state roads"))
+    val isNotElyExceptionAndIsStateRoad = !user.isAnElyException(municipality) && administrativeClass == State
+    if(user.isOperator()){
+      if (isNotElyExceptionAndIsStateRoad  && StateRoadRestrictedAssetsForOperator.contains(typeId))
+        halt(BadRequest("Modification restriction for this asset on state roads"))
+    }else{
+      if ( isNotElyExceptionAndIsStateRoad && StateRoadRestrictedAssets.contains(typeId))
+        halt(BadRequest("Modification restriction for this asset on state roads"))
+    }
   }
 
   get("/manoeuvres") {
@@ -2117,11 +2123,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     )
   }
 
-  //TODO: Disabled because of the usage of coordinates. See MunicipalityDao.scala
-  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   put("/userConfiguration/defaultLocation") {
     def getCenterView(id: Int, getCenterViewFunctionType: Int => Option[MapViewZoom], user: User): User = {
-      /*
       getCenterViewFunctionType(id) match {
         case Some(centerView) =>
           val east = Option(centerView.geometry.x.toLong)
@@ -2131,8 +2134,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
         case _ => user
       }
-       */
-      user
     }
 
     val user = userProvider.getCurrentUser()
@@ -2236,12 +2237,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     )
   }
 
-  //TODO: municipalityService calls disabled because of usage of municipality coordinates. See MunicipalityDao.scala
-  //TODO: https://extranet.vayla.fi/jira/browse/DROTH-2824
   get("/userStartLocation") {
     val user = userProvider.getCurrentUser()
     params.get("position") match {
-/*
       case Some(position) =>
         val coordinates = constructPosition(position)
 
@@ -2264,7 +2262,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             }
           }
         }
-*/
       case _ => Map()
     }
   }
