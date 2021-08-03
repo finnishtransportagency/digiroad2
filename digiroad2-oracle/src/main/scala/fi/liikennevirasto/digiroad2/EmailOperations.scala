@@ -56,7 +56,7 @@ class EmailOperations() {
   def sendEmail(email: Email): Boolean = {
     val message = createMessage(email, setEmailProperties())
     try {
-      Transport.send(message, Digiroad2Properties.sesName, Digiroad2Properties.sesPassword)
+      Transport.send(message, Digiroad2Properties.sesUsername, Digiroad2Properties.sesPassword)
       true
     }catch {
       case ex: MessagingException =>
