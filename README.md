@@ -4,8 +4,6 @@ Digiroad2
 Ympäristön pystytys
 ===================
 
-
-
 1. Kloonaa digiroad2-repo omalle koneellesi
 
   ```
