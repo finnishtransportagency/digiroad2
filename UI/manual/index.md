@@ -945,6 +945,8 @@ Muokkaustilassa tietyölle voi antaa uudet ominaisuustiedot ja niit&auml; voi ka
 
 Uusi tietyötieto lisätään järjestelmään asettamalla ensin tietolajivalikosta tietyö-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle tietyötieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Tietyö-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten työn tunnus (6) ja arvioitu kesto (7) voidaan asettaa. Tietyölle pakollinen tieto on sen kesto eli arvioitu alkamis- ja päättymispäivämäärä. Valinnaisena lisätietona tietyölle voi asettaa työn tunnuksen. Tietyötieto näkyy karttaikkunassa punaisena silloin kuin tietyö on katseluhetkellä voimassa ja sinisenä (8) silloin, kun tielle on tulossa tietyö tai se on päättynyt. Tiedot tallennetaan painamalla Tallenna-painiketta (9).
 
+Tietyötiedon voi myös lisätä lisäämällä tielle liikennemerkin A11 Tietyö, ja kirjaamalla merkille alku- ja loppupäivämäärän. Tällöin kaikille linkeille, joilla on sama tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie) generoituu seuraavan yön aikana automaattisesti tietyötieto.
+
 ![Tietyö lis&auml;ys](tt3.png)
 
 _Tietyötiedon lis&auml;ys._
@@ -1526,6 +1528,8 @@ Pysäköintikieltotietoja voi muokata muokkaustilassa. Pysäköintikiellon voi l
 
 Uusi pysäköintikielto lisätään valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietoikkunassa "Pysäköintikielto" (7). Tämän alta alasvetovalikosta (8) valitaan joko pysäköinti- tai pysähtymiskielto. Uusi pysäköintikieltotieto näkyy kartalla turkoosina ja pysähtymiskielto punaisena.
 
+Pysäköintikiellon voi myös lisätä lisäämällä tielle liikennemerkin C37 tai C38 (pysäyttäminen tai pysäköinti kielletty). Tällöin kaikille linkeille, joilla on sama tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie) generoituu seuraavan yön aikana automaattisesti pysäköintikieltotieto.
+
 ![Pysäköintikiellon lisäys](pk3.png)
 
 *Pysäköintikieltotiedon lisäys*
@@ -1616,6 +1620,8 @@ Tietoja muokataan ominaisuustietoikkunassa olevien alasvetovalikkojen avulla (5)
 _VAK-rajoituksen muokkaus._
 
 Tielinkit, joilla ei ole VAK-rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi VAK-rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (7). Valitsemalla alasvetovalikosta rajoituksen tyyppi (8), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja toiselle rajoitukselle.
+
+VAK-rajoituksen voi myös lisätä lisäämällä tielle liikennemerkin C8 Vaarallisten aineiden kuljettaminen kielletty. Tällöin kaikille linkeille, joilla on sama tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie) generoituu seuraavan yön aikana automaattisesti VAK-kieltotieto.
 
 ![Lis&auml;ys.](vak4.png)
 
