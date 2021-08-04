@@ -16,6 +16,8 @@ class MunicipalityService {
     }
   }
 
+  //Tämä on testimuutos.
+
   def getMunicipalityByName(municipalityName: String, newTransaction: Boolean = true): Option[MunicipalityInfo] = {
     if (newTransaction) {
       withDynSession {
