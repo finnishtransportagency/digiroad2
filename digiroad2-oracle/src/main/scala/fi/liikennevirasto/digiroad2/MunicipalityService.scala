@@ -16,7 +16,7 @@ class MunicipalityService {
     }
   }
 
-  //Tämä on testimuutos.
+  // This is a test change.
 
   def getMunicipalityByName(municipalityName: String, newTransaction: Boolean = true): Option[MunicipalityInfo] = {
     if (newTransaction) {
