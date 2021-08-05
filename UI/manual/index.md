@@ -1318,23 +1318,20 @@ Huom! Joukkoliikennekaistan katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusi
 
 _Joukkoliikennekaistageometrian katkaisu._
 
-16. Kaistojen lukum&auml;&auml;r&auml; (toistaiseksi n&auml;kyviss&auml; vain operaattorik&auml;ytt&auml;jille)
+16. Kaistojen lukum&auml;&auml;r&auml; 
 ----------------------
 
-Kaistojen lukum&auml;&auml;r&auml; n&auml;kyy t&auml;ll&auml; hetkell&auml; vain operaattorik&auml;ytt&auml;jille, koska tietolajia ei ole m&auml;&auml;ritelty uuteen Digiroad-j&auml;rjestelm&auml;&auml;n.
+Kartalle voi valita tietolajivalikosta (1) Kaistojen lukum&auml;&auml;r&auml; -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla kaistojen lukum&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;.
 
-Kartalle voi valita tietolajit-paletista (1) Kaistojen lukum&auml;&auml;r&auml; -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla kaistojen lukum&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;.
-
-![Kaistojen lukum&auml;&auml;r&auml; -valinta.](k112.JPG)
+![Kaistojen lukum&auml;&auml;r&auml; -valinta.](klm1.png)
 
 _Kaistojen lukum&auml;&auml;r&auml; -valinta._
 
 ##16.1 Kaistojen lukum&auml;&auml;r&auml; -tietojen katselu##
 
-Yksitt&auml;isen kaistojen lukum&auml;&auml;r&auml; -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko tielinkkiketju, eli kaikki geometriat, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai tielinkkiketjun kaistojen lukum&auml;&auml;r&auml;n ominaisuustieton&auml;kym&auml; (6).
-Kaistojen lukum&auml;&auml;r&auml; –tietolajin m&auml;&auml;rittely on toistaiseksi kesken, eik&auml; sen arvoja / lukum&auml;&auml;r&auml;n ilmaisutapaa ole viel&auml; p&auml;&auml;tetty.
+Yksitt&auml;isen kaistojen lukum&auml;&auml;r&auml; -kohteen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli kaikki geometriat, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai tielinkkiketjun kaistojen lukum&auml;&auml;r&auml;n ominaisuustietoikkuna (3).
 
-![Kaistojen lukum&auml;&auml;r&auml; -katselutila.](k113.JPG)
+![Kaistojen lukum&auml;&auml;r&auml; -katselutila.](klm2.png)
 
 _Kaistojen lukum&auml;&auml;r&auml; -katselutila._
 
@@ -1347,53 +1344,67 @@ Muokkaustilassa kaistojen lukum&auml;&auml;r&auml;&auml; voi muuttaa ja geometri
 
 ###Kaistojen lukum&auml;&auml;r&auml;n muokkaus###
 
-Kaistojen lukum&auml;&auml;r&auml;&auml; muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko ketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kaistojen lukum&auml;&auml;r&auml; -valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Kaistojen lukum&auml;&auml;r&auml;&auml; muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko ketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa(5). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (6). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (7). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kaistojen lukum&auml;&auml;r&auml; -valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
 Huom! Kaistojen lukum&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
 
-![Kaistojen lukum&auml;&auml;r&auml;n muokkaus.](k114.JPG)
+![Kaistojen lukum&auml;&auml;r&auml;n muokkaus.](klm3.png)
 
 _Kaistojen lukum&auml;&auml;r&auml;n muokkaus._
 
 ###Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla###
 
-Useamman kuin yhden kaistojen lukum&auml;&auml;r&auml;n arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa sy&ouml;tet&auml;&auml;n kaistojen lukum&auml;&auml;r&auml; ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usealle linkille voi lisätä tai poistaa kaistojen lukumäärä-tiedon kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (8), jolloin ctrl-näppäimen irti päästämällä avautuu valaistuksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (9) tai monikulmiotyökalua (10). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisklikkaamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen avautuu ikkuna, jossa kaistojen lukumäärä-tietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
-![Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla.](k115.JPG)
+![Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla.](klm4.png)
 
 _Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla._
 
 ###Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu###
 
-Kaistojen lukum&auml;&auml;r&auml;n geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; tielinkki&auml; lyhyemmille tieosuuksille eri kaistojen lukum&auml;&auml;ri&auml;. Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta rajoitus halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2).
+Kaistojen lukum&auml;&auml;r&auml;n geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (11). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; tielinkki&auml; lyhyemmille tieosuuksille eri kaistojen lukum&auml;&auml;ri&auml;. Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta rajoitus halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (12).
 
 Tielinkin katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
 
-![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](k116.JPG)
+![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](klm5.png)
 
 _Kaistojen lukum&auml;&auml;r&auml; -kohteen katkaisu._
 
-Katkaistun tielinkin osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Tielinkin katkaisussa uusille kohteille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet kaistojen lukum&auml;&auml;r&auml;tiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Katkaistun tielinkin osille generoidaan molemmille uusi ID. Tielinkin katkaisussa uusille kohteille valitaan arvot oikean laidan ominausuustietoikkunasta (13). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (14). Uudet kaistojen lukum&auml;&auml;r&auml;tiedot tallennetaan tallenna-painikkeesta (15). Katkaisun voi peruuttaa peruuta-painikkeella (16), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
 
 Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille osuuksille eri arvot, jotta tallennus on mahdollista.
 
-![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](k117.JPG)
+![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](klm6.png)
 
 _Kaistojen lukum&auml;&auml;r&auml; -kohteen katkaisu._
 
+###Kaistojen lukumäärän jakaminen yksisuuntaiseksi###
+
+Molempiin suuntiin voimassa olevan kaistojen lukumäärä-tiedon voi muuttaa yksisuuntaiseksi, jos kyseisellä tielinkillä liikennevirran suunta on molempiin suuntiin. Muutos tehdään siis tielinkkikohtaisesti. Muutos tehdään kaksoisnapauttamalla kyseistä kaistojen lukumäärää (17), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (18). 
+
+![Kaistojen lukumäärän jakaminen](klm7.png)
+
+_Kaistojen lukumäärän jakaminen yksisuuntaiseksi._
+
+Painikkeen painamisen jälkeen voi uusille kaistojen lukumäärille syöttää arvot syötekenttään (19). Kirjaimet kartalla vastaavat alasvetovalikkojen vieressä olevia kirjaimia (20). Uudet lukumäärät tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen lukumäärä jää voimaan.
+
+![Kaistojen lukumäärän jakaminen](klm8.png)
+
+_Kaistojen lukumäärän jakaminen yksisuuntaiseksi._
+
 ###Kaistojen lukum&auml;&auml;r&auml; -tiedon poistaminen###
 
-Tielinkin kaistojen lukum&auml;&auml;r&auml; -tieto poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Lukum&auml;&auml;r&auml;-kohdasta "Linkin mukainen tyypillinen kaistam&auml;&auml;r&auml;".
+Tielinkin kaistojen lukum&auml;&auml;r&auml; -tieto poistetaan ominaisuustietoikkunassa valitsemalla Lukum&auml;&auml;r&auml;-kohdasta "Ei tietoa" (21).
 
-![Kaistojen lukum&auml;&auml;r&auml; kohteen poistaminen.](k118.JPG)
+![Kaistojen lukum&auml;&auml;r&auml; kohteen poistaminen.](klm9.png)
 
 _Kaistojen lukum&auml;&auml;r&auml; -kohteen poistaminen._
 
 ###Uuden kaistojen lukum&auml;&auml;r&auml; -tiedon lis&auml;&auml;minen###
 
-Tielinkille voi lis&auml;t&auml; kaistojen lukum&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (4) Kaistojen lukum&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin kaistojen lukum&auml;&auml;r&auml;n tiedot. Valitaan "Kaistojen lukum&auml;&auml;r&auml; / suunta" ja sy&ouml;tet&auml;&auml;n kaistojen lukum&auml;&auml;r&auml; sy&ouml;tekentt&auml;&auml;n. Kaistojen lukum&auml;&auml;r&auml; tallennetaan painamalla Tallenna (8). Uuden kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
+Tielinkille voi lis&auml;t&auml; kaistojen lukum&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (22) Kaistojen lukum&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustietoikkunaan (23) avautuu tielinkin kaistojen lukum&auml;&auml;r&auml;n tiedot. Valitaan "Kaistojen lukum&auml;&auml;r&auml; / suunta" ja sy&ouml;tet&auml;&auml;n kaistojen lukum&auml;&auml;r&auml; sy&ouml;tekentt&auml;&auml;n. Kaistojen lukum&auml;&auml;r&auml; tallennetaan painamalla Tallenna (24). Uuden kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (25).
 
-![Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen.](k119.JPG)
+![Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen.](klm10.png)
 
 _Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
 
