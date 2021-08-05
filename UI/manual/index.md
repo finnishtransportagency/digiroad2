@@ -1684,6 +1684,134 @@ _Uusien yksisuuntaisten VAK-rajoitusten arvojen valinta._
 
 Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
+
+X. Käpy tietolaji
+----------------------------------------
+
+Käpy tietolaji on useisiin väylätyyppeihin jakautunut viivamainen tietolaji, joka kuvaa onko tielinkeillä sallittu kävellä tai pyöräillä. Karttaikkunaan saa tietolajin näkyviin valitsemalla sen tietolajivalikosta (1). Karttaa tarkennettaessa tietolajia kuvaavat väylätyypit tulevat näkyviin eri väreillä.
+
+![Valinta.](kt1.png)
+
+_Käpy tietolajin valinta._
+
+##X.1 Käpy tietolajin tietojen katselu##
+
+Yksitt&auml;isen Käpy tietolajin kohteen voi valita napauttamalla kartalta sen geometriaa. Kerran napauttamalla tulee valituksi koko ketju, eli osuus, jossa linkeillä on samat käpy-väylätiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). Karttaikkunan vasemman puolen tietolajipaneelin legendassa on eritelty kävelyyn ja pyöräilyyn liittyvät väylätyypit (2).
+
+Jos käyttäjä haluaa valita vain yhden linkin mittaisen pätkän tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla geometriaa. Valitun ketjun tai yksitt&auml;isen käpykohteen geometria korostuu kartalla (3). Sivun oikeaan laitaan avautuu Käpy tietolajin ominaisuustietoikkuna. Ominaisuustietoikkunassa on Käpy tietolajin tiedot (4) kyseisell&auml; tielinkill&auml;/tielinkeill&auml; (ei/kyllä käpy tietolaji sekä väylätyypin tarkenne), valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](kt2.png)
+
+_Käpytietojen katselu._
+
+Väylätyyppejä ja tarkennuksia:
+
+* Pyöräily ja kävely kielletty
+* Pyöräily kielletty
+* Jalankulun ja pyöräilyn väylä (tyyppi tuntematon)
+* Katu
+  * Kunnan omistama katuverkko
+* Maantie tai yksityistie
+* Pyöräkatu
+  * Pääasiassa pyöräilyn käyttöön tarkoitettu katu, jolla autot ovat väistämisvelvollisia pyöräilijään nähden
+* Kylätie
+  * Väylä, jolla on tiemerkinnällä tai muuten erotettu ajoradasta levennetty osa jalankulun ja pyöräilyn käyttöön
+* Pihakatu
+  * Jalankulkijalla on esteetön liikkumisoikeus ja väylä on sallittu ajoneuvoliikenteelle nopeusrajoitus 20 km/h
+* Kävelykatu
+  * Ensisijaisesti jalankulun käyttöön varattu alue, jolla suurin sallittu ajonopeus on 20 km/h
+* Pyöräkaista
+* Pyörätie
+  * Pyörätie on lähtökohtaisesti yksisuuntainen
+* Kaksisuuntainen pyörätie
+* Yhdistetty pyörätie ja jalkakäytävä, yksisuuntainen pyörille
+  * Väylätyypillä jalankulkijat ja pyöräilijät käyttävät samoja alueita ja väylä koostuu lähtökohtaisesti aina vain yhdestä kaistasta
+  * Jos ajosuunnat on erotettu toisistaan keskiviivalla, väylälle voidaan lisätä kaksi kaistaa jotka kuvaavat ajosuuntia. Tällöin kuvataan rinnakkain kaksi vierekkäistä yhdistetty pyörätie ja jalkakäytävä kaistaa, joilla on eri suunta
+* Yhdistetty pyörätie ja jalkakäytävä, kaksisuuntainen pyörille
+* Puistokäytävä
+  * Polkua hoidetumpi ja yleensä leveämpi puistokäytävä, joka on usein merkittävä osa jalankulun ja pyöräilyn verkkoa
+* Jalkakäytävä
+  * Jalankulkijoille tarkoitettu tien osa
+  * jalkakäytävää ei ole aina merkitty erikseen, mutta pyörätie on. Siten merkitsemätön korotettu väylä katuverkolla on lähtökohtaisesti jalkakäytävä
+  * Jalkakäytävällä ei ole suuntaa, ellei erityistapauksessa sitä ole erikseen osoitettu esimerkiksi tiemerkinnällä
+* Pururata
+  * Pururata muistuttaa puistokäytävää, mutta pyöräily on lähtökohtaisesti kielletty
+* Ajopolku
+  * Muu yksityis- tai metsätie, joka on jalankulun ja pyöräilyn käytössä ja on ajattavissa maastoajoneuvolla
+* Polku
+  * Kapeampi ja usein heikommin hoidettu väylä
+  * "Maastoa"
+* Lossi tai lautta
+
+Käpy tietolajin kohteet on visualisoitu eri tavoin riippuen vaikutussuunnasta. Tieto voi olla suuntautunut väylällä molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, väylätieto on visualisoitu yhdell&auml; paksulla viivalla. Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan.
+
+##X.2 Käpy tietolajin muokkaus##
+
+Käpy tietolajin tietoja voi muokata muokkaustilassa kolmella tavalla:
+
+1.	Koko Käpy tietolajin ketjulle (esim. koko kadulle).
+1.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+1.	Monivalinnan avulla kokonaiselle alueelle.
+
+###Käpy tietolajin muokkaus ja lis&auml;ys###
+
+Muokattava tielinkki valitaan napauttamalla sen geometriaa (5). Kerran napauttamalla tulee valituksi koko käpy-väyläketju, eli kaikki linkit, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkkiä.
+
+Tietoja muokataan ominaisuustietoikkunassa olevien valintojen avulla (6), joissa voi muokata tietoa siitä onko väylä käpy tietolajiin kuuluva vai ei (eli jalankulun ja pyöräilyn väylä). Lisäksi käpy-väylätyyppiä voi muuttaa tarvittaessa.
+
+Tielinkit, joilla ei ole Käpy tietolajiin kuuluvia on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi käpy tietolajin kohde lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Sen jälkeen ominaisuustietoikkunassa valitaan radionapista väylä käpy tietolajiin kuuluvaksi sekä mahdollinen väylätyypin tarkennus.
+
+![Muokkaus.](kt3.png)
+
+_Käpy tietolajin muokkaus._
+
+###Käpy tietolajin kohteen poistaminen###
+
+Käpy-kohteilta voi poistaa valitsemalla kartalta kohteen, ja painamalla ominaisuustietoikkunan radionapista "ei käpy tietolaji" (7). Muutokset tallentuu tallenna-painikkeesta ja peruuntuvat peruuta-painikkeesta (8).
+
+![Poisto.](kt4.png)
+
+_Käpy tietolajin kohteen poistaminen._
+
+###Useamman Käpy-kohteen muokkaus monivalintaty&ouml;kalulla###
+
+Useamman kuin yhden tielinkin käpy-tiedot voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella muokattavia tielinkkejä. Toinen vaihtoehto on käyttää työkalupalkin aluevalintatyökaluja (9), joita ovat monikulmio- ja laatikkotyökalut. Työkaluilla piirretään alue hiiren vasemmalla painikkeella. Valituksi tulevat kaikki tielinkit monikulmion/laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (10), jossa valitaan Käpy tietolajin tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla. Peruuta-painikkeesta voi perua muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat Käpy tietolajin tiedot. P&auml;&auml;llekk&auml;isi&auml; tietoja ei voi siis luoda.
+
+![Monivalinta.](kt5.png)
+
+_Useamman Käpy-kohteen tietojen muokkaus kerralla._
+
+###Käpy tietolajin kohteen katkaiseminen###
+
+Käpy tietolajin kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla napautetaan tiegeometriasta kohtaa, josta se halutaan katkaista. Käpy-kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen käpy-kohteen, ei koko ketjua.
+
+Käpy tietolajin kohteen katkaisussa uusille kohteille valitaan tiedot oikean laidan ominaisuustietovalikossa (12). Kartalla ja ominaisuustietoikkunassa olevat kirjaimet osoittavat, kummasta käpy-kohteesta on kyse (13). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](kt6.png)
+
+_Käpy tietolajin kohteen katkaiseminen._
+
+##X.3 Käpy tietolajin kohteen muuttaminen yksisuuntaiseksi##
+
+Molempiin suuntiin voimassa olevan Käpy-kohteen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti. Muutos tehd&auml;&auml;n kaksoisnapauttamalla kyseist&auml; Käpy tietolajin kohdetta (14), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (15).
+
+![Yksisuuntaiseksi.](kt7.png)
+
+_Käpy tietolajin kohteen valinta ja muuttaminen yksisuuntaiseksi._
+
+Painikkeen painamisen j&auml;lkeen voi valita uusille Käpy-kohteille tietoja (16). Kirjaimet kartalla vastaavat ominaisuustietoikkunassa olevia kirjaimia (17).
+
+![Yksisuuntaisen arvo.](kt8.png)
+
+_Uusien yksisuuntaisten Käpy tietolajikohteiden tietojen valinta._
+
+Uudet tiedot tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+
 19. Suojatie
 ----------------------
 
