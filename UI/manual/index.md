@@ -12,7 +12,7 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi näpäyttää hiirellä suuremmaksi, jo
 
 1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
 
-1. Kirjautumisen j&auml;lkeen avautuu karttak&auml;ytt&ouml;liittym&auml;ss&auml; katselutila. Käyttöoikeudet on rajattu maantieteellisesti kunnan tai ELY-alueen sekä k&auml;ytt&auml;j&auml;n roolin mukaan. Katselijan roolissa aineistoja voi ainoastaan katsella käyttöliittymässä. Muokkaajan roolissa aineistoja voi sek&auml; katsella ett&auml; muokata.
+1. Kirjautumisen j&auml;lkeen avautuu karttak&auml;ytt&ouml;&auml;ss&auml; katselutila. Käyttöoikeudet on rajattu maantieteellisesti kunnan tai ELY-alueen sekä k&auml;ytt&auml;j&auml;n roolin mukaan. Katselijan roolissa aineistoja voi ainoastaan katsella käyttöliittymässä. Muokkaajan roolissa aineistoja voi sek&auml; katsella ett&auml; muokata.
 
 
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
@@ -2221,6 +2221,111 @@ Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvo
 ![Katkaisu.](ln5.png)
 
 _Liittym&auml;numeron katkaiseminen._
+
+X. Hoitoluokat
+----------------------
+
+Hoitoluokat on viivamainen tietolaji, joka jakautuu kahdeteen hoitoluokkaan: talvihoitoluokkaan ja viherhoitoluokkaan. Talvihoitoluokka kuvaa hoidon tarpeen tasoa talvella sekä sitä, kuinka nopeasti hoitotoimenpiteet on aloitettava. Viherhoitoluokka puolestaan kuvaa viheralueen yleistä ilmettä, käyttöä sekä hoidon huoltotasoja. Hoitoluokat-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on määritetty hoitoluokka, se värjäytyy hoitoluokalla ominaisella tavalla. Tiet, joille ei ole määritelty hoitoluokkaa ovat harmaita. 
+
+![Hoitoluokat](hl1.png)
+
+_Hoitoluokat._
+
+##X.1 Hoitoluokkatietojen katselu##
+
+Kun hoitoluokkakohdetta napauttaa kartalta, se korostuu (2) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko hoitoluokkaketju, eli kaikki tielinkit, joilla on sama hoitoluokka ja tienumero (maantiellä) tai tiennimi (katuverkolla). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Kelirikon ominaisuustietoja ovat (3) hoitoluokka (on/ei valinnat), talvihoitoluokka sekä viherhoitoluokka. Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä hoitoluokkaketjussa. Vasemman laidan tietolajipaneelissa (4) on valittavissa radionapilla talvi- tai viherhoitoluokka. Valinnan myötä karttaikkunan näkymä ja tietolajipaneelin selite muuttuu vastaamaan valittua hoitoluokkaa.
+
+![Hoitoluokat katselu](hl2.png)
+
+_Hoitoluokkatietojen katselu._
+
+Valtion teillä on eri talvihoitoluokittelu kuin kunnan omistamilla teillä. Lisäksi kunnan omistamilla teillä ei määritellä viherhoitoluokkaa ollenkaan.
+
+Talvihoitoluokat valtion teillä:
+
+* lse = Liukkaudentorjunta ilman toimenpideaikaa
+* ls = Normaalisti aina paljaana
+* l = Normaalisti paljaana
+* lb = Pääosin suolattava, ajoittain hieman liukas
+* lc = Pääosin hiekoitettava, ohut lumipolanne sallittu
+* II = Pääosin lumipintainen
+* III = Pääosin lumipintainen, pisin toimenpideaika
+* L = Kevyen liikenteen laatukäytävät
+* K1 = Melko vilkkaat kevyen liikenteen väylät
+* K2 = Kevyen liikenteen väylien perus talvihoitotaso
+* Kevyen liikenteen väylät, joilla ei talvihoitoa
+
+Talvihoitoluokat kuntien omistamilla teillä:
+
+* Pääkadut ja vilkkaat väylät
+* Kokoojakadut
+* Tonttikadut
+
+Kevyen liikenteen väylät:
+* A-luokan väylät
+* B-luokan väylät
+* C-luokan väylät
+
+Viherhoitoluokat:
+
+Normaalit hoitoluokat:
+* N1 = 2-ajorataiset tiet
+* N2 = Valta- ja kantatiet sekä vilkkaat seututiet
+* N3 = Muut tiet
+
+Taajamien hoitoluokat: 
+* T1 = Puistomainen taajamassa
+* T2 = Luonnonmukainen taajamassa
+
+Erityisalueet:
+* E1 = Puistomainen erityisalue
+* E2 = Luonnonmukainen erityisalue
+* Y = Ympäristötekijä
+
+Lisäksi tietolajipaneelin selitteessä on kategoriat linkeille, joilla on "Vain viherhoitoluokka" (musta) sekä "Ei hoitoluokkaa" (harmaa).
+
+##X.2 Hoitoluokkatietojen muokkaus##
+
+Hoitoluokkatietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa hoitoluokalle voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista leikkaustyökalulla. Hoitoluokkaa voi muokata kolmella tavalla:
+
+1. Koko hoitoluokkaketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+![Hoitoluokka muokkaus](hl3.png)
+
+_Hoitoluokkatietojen muokkaus._
+
+###Hoitoluokkatieton lis&auml;ys###
+
+Uusi hoitoluokkatieto lisätään järjestelmään asettamalla ensin tietolajivalikosta Hoitoluokat-tietolaji aktiiviseksi. Tämän jälkeen tulee tietolajipaneelin radionapeista valita joko talvi- tai viherhoitoluokka (huom. vain kunnan omistamilla teillä on mahdollista muokata tietoja). Karttaikkunassa tulee napauttaa tielinkin geometriaa, jolle hoitoluokka halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Hoitoluokka-radionappi aktiiviseksi (5), minkä jälkeen tarkennetaan hoitoluokka alasvetovalikosta. Tiedot tallennetaan painamalla Tallenna-painiketta (6).
+
+###Hoitoluokkatiedon poistaminen###
+
+Hoitoluokkatiedon voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta hoitoluokka halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei hoitoluokkaa" (7) mahdollistaa hoitoluokkatietojen poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun hoitoluokkatieto on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
+
+![Hoitoluokka poisto](hl4.png)
+
+_Hoitoluokkatiedon poistaminen._
+
+###Hoitoluokkatietojen muokkaus monivalintaty&ouml;kalulla###
+
+Hoitoluokkatietoja voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille hoitoluokka halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin pohjassa, jolloin ctrl-näppäimen irti päästämällä avautuu hoitoluokan muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua tai monikulmiotyökalua (8). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), jossa määritellään hoitoluokan ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Hoitoluokka monivalinta](hl5.png)
+
+_Hoitoluokan monivalinta._
+
+###Hoitoluokkatiedon katkaisu###
+
+Tarvittaessa hoitoluokkaketjun voi katkaista leikkaustyökalulla (10). Leikkaustyökalulla napautetaan hoitoluokkageometriasta kohtaa, josta se halutaan katkaista (11). Hoitoluokan tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Hoitoluokan katkaisussa uusille geometrioille asetetaan uudet ominaisuustiedot karttaikkunan oikean reunan ominaisuustietoikkunasta (12). Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse. Uudet hoitoluokkatiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko hoitoluokkaketjua.
+
+Huom! Hoitoluokan katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Hoitoluokka katkaisu](hl6.png)
+
+_Hoitoluokkaketjun katkaisu._
 
 26. Liikennevalot
 ----------------------
