@@ -173,8 +173,12 @@
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
           },
           {
+            "name": "ses.username",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/ses_username"
+          },
+          {
             "name": "ses.password",
-            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/ses-smtp-digiroad"
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/ses_password"
           },
           {
             "name": "oag.password",
