@@ -47,9 +47,11 @@ class CacheClient {
 object Caching extends CacheClient {
   def cache[DataModel](f: => DataModel)(key:String): DataModel = {
     get[DataModel](key) match {
-      case CachedValue(data, true) => println("return cached value"); data.asInstanceOf[DataModel]
-      case _ => println("cache value")
-        println("saving with value " + key)
+      case CachedValue(data, true) => 
+        logger.debug("Return cached value")
+        data.asInstanceOf[DataModel]
+      case _ =>
+        logger.debug("Saving with key " + key)
         set[DataModel](key, twentyHours, f)
     }
   }
