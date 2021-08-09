@@ -47,13 +47,18 @@ class CacheClient {
 
 object Caching extends CacheClient {
   def cache[DataModel](f: => DataModel)(key: String): DataModel = {
-    get[DataModel](key) match {
-      case CachedValue(data, true) =>
-        logger.debug("Return cached value")
-        data.asInstanceOf[DataModel]
-      case _ =>
-        logger.debug("Caching with key " + key)
-        set[DataModel](key, twentyHours, f)
+    if (Digiroad2Properties.caching) {
+      get[DataModel](key) match {
+        case CachedValue(data, true) =>
+          logger.debug("Return cached value")
+          data.asInstanceOf[DataModel]
+        case _ =>
+          logger.debug("Caching with key " + key)
+          set[DataModel](key, twentyHours, f)
+      }
+    } else {
+      logger.debug("Caching turned off")
+      f
     }
   }
 }
