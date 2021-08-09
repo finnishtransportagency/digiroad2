@@ -45,21 +45,13 @@ class CacheClient {
 }
 
 object Caching extends CacheClient {
-  def cache[DataModel](f: => DataModel)(method: String,
-                                        parameter: String): DataModel = {
-    val generatedKey = generateKey(method, parameter = parameter)
-
-    get[DataModel](generatedKey) match {
+  def cache[DataModel](f: => DataModel)(key:String): DataModel = {
+    get[DataModel](key) match {
       case CachedValue(data, true) => println("return cached value"); data.asInstanceOf[DataModel]
       case _ => println("cache value")
-        println("saving with value " + generatedKey)
-        set[DataModel](generatedKey, twentyHours, f)
+        println("saving with value " + key)
+        set[DataModel](key, twentyHours, f)
     }
-  }
-
-  def generateKey(method: String, parameter: String): String = {
-    println(method + parameter.toString())
-    method + parameter.toString()
   }
 }
 
