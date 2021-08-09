@@ -1,7 +1,8 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.client
 
-import net.spy.memcached.{AddrUtil, ConnectionFactory, ConnectionFactoryBuilder, MemcachedClient}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import net.spy.memcached.transcoders.SerializingTranscoder
+import net.spy.memcached.{AddrUtil, ConnectionFactory, ConnectionFactoryBuilder, MemcachedClient}
 import org.slf4j.{Logger, LoggerFactory}
 
 
