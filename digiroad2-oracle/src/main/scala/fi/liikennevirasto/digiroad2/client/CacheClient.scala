@@ -52,7 +52,7 @@ object Caching extends CacheClient {
         logger.debug("Return cached value")
         data.asInstanceOf[DataModel]
       case _ =>
-        logger.debug("Saving with key " + key)
+        logger.debug("Caching with key " + key)
         set[DataModel](key, twentyHours, f)
     }
   }
