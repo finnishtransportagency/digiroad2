@@ -88,7 +88,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
 
   val cacheHostname: String = scala.util.Properties.envOrElse("cacheHostname", null)
   val cacheHostPort: Int = scala.util.Properties.envOrElse("cacheHostPort", null).toInt
-  val caching: Boolean = scala.util.Properties.envOrElse("caching", null).toBoolean
+  val caching: Boolean = scala.util.Properties.envOrElse("caching", "false").toBoolean
 
   // Get build id to check if executing in aws CodeBuild environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
@@ -148,7 +148,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val valluServerAddress: String = envProps.getProperty("vallu.server.address")
   override val cacheHostname: String = envProps.getProperty("cacheHostname", null)
   override val cacheHostPort: Int = envProps.getProperty("cacheHostPort", null).toInt
-  override val caching: Boolean = envProps.getProperty("caching", null).toBoolean
+  override val caching: Boolean = envProps.getProperty("caching", "false").toBoolean
   override val feedbackAssetsEndPoint: String = envProps.getProperty("feedbackAssetsEndPoint")
   override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint")
   override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "true").toBoolean
