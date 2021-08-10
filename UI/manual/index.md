@@ -21,7 +21,7 @@ Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
 Jos karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranetiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-operaattoriin sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301.
 
-### 1.1 Mistä saan opastusta?
+### 1.1. Mistä saan opastusta?
 
 Digiroad-operaattorilta saa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Operaattori auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Asiakaspalveluun voi olla yhteydessä sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301 arkipäivisin klo 9-16.
 
@@ -35,7 +35,7 @@ info@digiroad.fi
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
 
-### 1.2 Usein kysytyt kysymykset (UKK) ja ongelmatilanteet
+### 1.2. Usein kysytyt kysymykset (UKK) ja ongelmatilanteet
 
 Digiroad-sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set <a href=https://vayla.fi/vaylista/aineistot/digiroad/yllapito/usein-kysytyt-kysymykset  target="_blank">t&auml;&auml;lt&auml;. </a>
 
@@ -113,7 +113,7 @@ Karttaikkunan taustakartaksi voi valita maastokartan, ortokuvan tai taustakartta
 
 _Karttan&auml;kym&auml;n muokkaus._
 
-### 2.2 Historiatiedot
+### 2.2. Historiatiedot
 
 Sovelluksessa on mahdollista piirt&auml;&auml; n&auml;kyviin my&ouml;s tielinkkien historiatiedot aiemmin poistuneiden tielinkkien osalta. Toiminnallisuuden tavoitteena on helpottaa yll&auml;pit&auml;j&auml;&auml; t&auml;ydent&auml;m&auml;&auml;n uusien tielinkkien puuttuvia ominaisuustietoja. Toistaiseksi historiatietoja on mahdollista katsella ainoastaan tielinkkien toiminnallisten luokkien ja nopeusrajoitustiedon osalta. 
 Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan tietolajipaneelin yl&auml;kulmassa olevasta tietolajivalikosta (1). Kun haluttu tietolaji on visualisoitu karttaikkunaan, aktivoidaan tietolajipaneelin alalaidasta Näytä poistuneet tielinkit -valintaruutu (2).
@@ -122,7 +122,7 @@ Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jo
 
 _Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot, jotka visualisoituvat vaaleansinisinä ohuempina viivoina kartalle._
 
-### 2.3 Käyttöliittymän osien kuvaus
+### 2.3. Käyttöliittymän osien kuvaus
 
 ![Käyttöliittymä](kuvaus1.png)
 
@@ -182,8 +182,7 @@ Tielinkki on tien, kadun, kävelyn ja pyöräilyn väylän tai lauttayhteyden ke
 
 _Tielinkit._
 
-</br>
-### Tielinkkien haku
+### 3.1. Tielinkkien haku
 
 Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa n&auml;kyviin karttaikkunassa kaksoisnapauttamalla tielinkki&auml;, jolloin sovelluksen oikeaan laitaan avautuu tielinkin ominaisuustietoikkuna. Ominaisuustietoikkunassa linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
@@ -191,7 +190,7 @@ Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitt
 
 jossa numerosarja 450541 on tielinkin ID. Toiminto tarkentaa karttaikkunan haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 
-### 3.1 Tielinkin tietojen katselu
+### 3.2. Tielinkin tietojen katselu
 
 Yksitt&auml;isen tielinkin voi valita napauttamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustietoikkunaan (1). Tielinkin ominaisuustietoja ovat:
 
@@ -251,7 +250,7 @@ _Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
 _Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan._
 
-### 3.2 Tielinkin ominaisuustietojen muokkaus
+### 3.3. Tielinkin ominaisuustietojen muokkaus
 
 Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan.
 
@@ -267,7 +266,7 @@ _Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (napautettu ker
 
 </br>
 
-### 3.3 Korjattavat tielinkit
+### 3.4. Korjattavat tielinkit
 
 Digiroadin sovelluksessa uudet tielinkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (2). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan (kunta, valtio, yksityinen). Linkki on kartalla mustaksi visualisoituneena (1), kunnes toiminnallinen luokka tai linkin tyyppitiedot on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietoikkunan alareunassa olevan painikkeen kautta (3). Listasta voi napauttaa korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
 
