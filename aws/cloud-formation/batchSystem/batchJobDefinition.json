@@ -131,6 +131,10 @@
       {
         "name": "cacheHostPort",
         "value": "11211"
+      },
+      {
+        "name": "cacheTTL",
+        "value": "72000"
       }
     ],
     "logConfiguration": {

@@ -11,7 +11,7 @@ case class CachedValue(data: Any, success: Boolean)
 class CacheClient {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   //in second
-  val twentyHours: Int = 72000
+  val twentyHours: Int = Digiroad2Properties.cacheTTL
 
   lazy val transcoder = new SerializingTranscoder(50 * 1024 * 1024)
   lazy val connectionFactory: ConnectionFactory = new ConnectionFactoryBuilder()

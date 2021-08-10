@@ -21,6 +21,7 @@ trait Digiroad2Properties {
   val cacheHostname: String
   val cacheHostPort: Int
   val caching: Boolean
+  val cacheTTL: Int
   val feedbackAssetsEndPoint: String
   val tierekisteriViiteRestApiEndPoint: String
   val tierekisteriEnabled: Boolean
@@ -89,7 +90,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val cacheHostname: String = scala.util.Properties.envOrElse("cacheHostname", null)
   val cacheHostPort: Int = scala.util.Properties.envOrElse("cacheHostPort", null).toInt
   val caching: Boolean = scala.util.Properties.envOrElse("caching", "false").toBoolean
-
+  val cacheTTL: Int = scala.util.Properties.envOrElse("cacheTTL", null).toInt
   // Get build id to check if executing in aws CodeBuild environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
   private def selectEnvType(codebuildVersion: String, normal: String): String = {
@@ -149,6 +150,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val cacheHostname: String = envProps.getProperty("cacheHostname", null)
   override val cacheHostPort: Int = envProps.getProperty("cacheHostPort", null).toInt
   override val caching: Boolean = envProps.getProperty("caching", "false").toBoolean
+  override val cacheTTL: Int = envProps.getProperty("cacheTTL", null).toInt
   override val feedbackAssetsEndPoint: String = envProps.getProperty("feedbackAssetsEndPoint")
   override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint")
   override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "true").toBoolean
@@ -223,8 +225,8 @@ object Digiroad2Properties {
   lazy val valluServerAddress: String = properties.valluServerAddress
   lazy val cacheHostname: String = properties.cacheHostname
   lazy val cacheHostPort: Int = properties.cacheHostPort
-  lazy val cacheDirecroty: String = properties.cacheHostname
   lazy val caching: Boolean = properties.caching
+  lazy val cacheTTL: Int = properties.cacheTTL
   lazy val feedbackAssetsEndPoint: String = properties.feedbackAssetsEndPoint
   lazy val tierekisteriViiteRestApiEndPoint: String = properties.tierekisteriViiteRestApiEndPoint
   lazy val tierekisteriEnabled: Boolean = properties.tierekisteriEnabled

@@ -159,6 +159,10 @@
             "value": "11211"
           },
           {
+            "name": "cacheTTL",
+            "value": "72000"
+          },
+          {
             "name": "rasterServiceUrl",
             "value": "https://testioag.vayla.fi/rasteripalvelu-mml"
           }
