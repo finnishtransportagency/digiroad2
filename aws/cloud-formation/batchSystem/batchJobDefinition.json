@@ -119,6 +119,22 @@
       {
         "name": "batchMode",
         "value": "true"
+      },
+      {
+        "name": "caching",
+        "value": "true"
+      },
+      {
+        "name": "cacheHostname",
+        "value": "roadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com"
+      },
+      {
+        "name": "cacheHostPort",
+        "value": "11211"
+      },
+      {
+        "name": "cacheTTL",
+        "value": "72000"
       }
     ],
     "logConfiguration": {

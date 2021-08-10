@@ -18,7 +18,10 @@ trait Digiroad2Properties {
   val vkmUrl: String
   val valluServerSengindEnabled: Boolean
   val valluServerAddress: String
-  val cacheDirectory: String
+  val cacheHostname: String
+  val cacheHostPort: Int
+  val caching: Boolean
+  val cacheTTL: Int
   val feedbackAssetsEndPoint: String
   val tierekisteriViiteRestApiEndPoint: String
   val tierekisteriEnabled: Boolean
@@ -84,6 +87,10 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
   val batchMode: Boolean = scala.util.Properties.envOrElse("batchMode", "false").toBoolean
 
+  val cacheHostname: String = scala.util.Properties.envOrElse("cacheHostname", null)
+  val cacheHostPort: Int = scala.util.Properties.envOrElse("cacheHostPort", null).toInt
+  val caching: Boolean = scala.util.Properties.envOrElse("caching", "false").toBoolean
+  val cacheTTL: Int = scala.util.Properties.envOrElse("cacheTTL", null).toInt
   // Get build id to check if executing in aws CodeBuild environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
   private def selectEnvType(codebuildVersion: String, normal: String): String = {
@@ -99,7 +106,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val bonecpJdbcUrl: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_jdbcUrl", null), scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
   val bonecpUsername: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_username", null), scala.util.Properties.envOrElse("bonecp.username", null))
   val bonecpPassword: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_password", null), scala.util.Properties.envOrElse("bonecp.password", null))
-  val cacheDirectory: String = selectEnvType(scala.util.Properties.envOrElse("cache_directory", null), scala.util.Properties.envOrElse("cache.directory", null))
   val oagUsername: String = selectEnvType(scala.util.Properties.envOrElse("oag_username", null),scala.util.Properties.envOrElse("oag.username", null))
   val oagPassword: String =  selectEnvType(scala.util.Properties.envOrElse("oag_password", null),scala.util.Properties.envOrElse("oag.password", null))
   val tierekisteriOldUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldUsername", null),scala.util.Properties.envOrElse("tierekisteri.old.username", null))
@@ -141,7 +147,10 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
   override val valluServerSengindEnabled: Boolean = envProps.getProperty("vallu.server.sending_enabled", "true").toBoolean
   override val valluServerAddress: String = envProps.getProperty("vallu.server.address")
-  override val cacheDirectory: String = envProps.getProperty("cache.directory")
+  override val cacheHostname: String = envProps.getProperty("cacheHostname", null)
+  override val cacheHostPort: Int = envProps.getProperty("cacheHostPort", null).toInt
+  override val caching: Boolean = envProps.getProperty("caching", "false").toBoolean
+  override val cacheTTL: Int = envProps.getProperty("cacheTTL", null).toInt
   override val feedbackAssetsEndPoint: String = envProps.getProperty("feedbackAssetsEndPoint")
   override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint")
   override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "true").toBoolean
@@ -214,7 +223,10 @@ object Digiroad2Properties {
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val valluServerSendingEnabled: Boolean = properties.valluServerSengindEnabled
   lazy val valluServerAddress: String = properties.valluServerAddress
-  lazy val cacheDirecroty: String = properties.cacheDirectory
+  lazy val cacheHostname: String = properties.cacheHostname
+  lazy val cacheHostPort: Int = properties.cacheHostPort
+  lazy val caching: Boolean = properties.caching
+  lazy val cacheTTL: Int = properties.cacheTTL
   lazy val feedbackAssetsEndPoint: String = properties.feedbackAssetsEndPoint
   lazy val tierekisteriViiteRestApiEndPoint: String = properties.tierekisteriViiteRestApiEndPoint
   lazy val tierekisteriEnabled: Boolean = properties.tierekisteriEnabled

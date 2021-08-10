@@ -104,7 +104,8 @@ object Digiroad2Build extends Build {
         "javax.mail" % "javax.mail-api" % "1.6.1",
         "com.sun.mail" % "javax.mail" % "1.6.1",
         "org.postgresql" % "postgresql" % "42.2.5",
-        "net.postgis" % "postgis-jdbc" % "2.3.0"
+        "net.postgis" % "postgis-jdbc" % "2.3.0",
+        "net.spy" % "spymemcached" % "2.12.3"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
