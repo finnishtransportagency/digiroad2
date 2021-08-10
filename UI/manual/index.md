@@ -183,7 +183,7 @@ Tielinkki on tien, kadun, kävelyn ja pyöräilyn väylän tai lauttayhteyden ke
 _Tielinkit._
 
 </br>
-####Tielinkkien haku####
+### Tielinkkien haku
 
 Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa n&auml;kyviin karttaikkunassa kaksoisnapauttamalla tielinkki&auml;, jolloin sovelluksen oikeaan laitaan avautuu tielinkin ominaisuustietoikkuna. Ominaisuustietoikkunassa linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
@@ -191,7 +191,7 @@ Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitt
 
 jossa numerosarja 450541 on tielinkin ID. Toiminto tarkentaa karttaikkunan haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 
-##3.1 Tielinkin tietojen katselu##
+### 3.1 Tielinkin tietojen katselu
 
 Yksitt&auml;isen tielinkin voi valita napauttamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustietoikkunaan (1). Tielinkin ominaisuustietoja ovat:
 
@@ -251,7 +251,7 @@ _Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
 _Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan._
 
-##3.2 Tielinkin ominaisuustietojen muokkaus##
+### 3.2 Tielinkin ominaisuustietojen muokkaus
 
 Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan.
 
@@ -267,7 +267,7 @@ _Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (napautettu ker
 
 </br>
 
-####Korjattavat tielinkit####
+### 3.3 Korjattavat tielinkit
 
 Digiroadin sovelluksessa uudet tielinkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (2). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan (kunta, valtio, yksityinen). Linkki on kartalla mustaksi visualisoituneena (1), kunnes toiminnallinen luokka tai linkin tyyppitiedot on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietoikkunan alareunassa olevan painikkeen kautta (3). Listasta voi napauttaa korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
 
