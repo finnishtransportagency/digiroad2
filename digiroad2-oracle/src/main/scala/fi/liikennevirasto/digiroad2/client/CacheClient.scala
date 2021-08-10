@@ -11,11 +11,11 @@ case class CachedValue(data: Any, success: Boolean)
 class CacheClient {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   //in second
-  val twentyHours: Int = Digiroad2Properties.cacheTTL
+  val defaultTTL: Int = Digiroad2Properties.cacheTTL
 
   lazy val transcoder = new SerializingTranscoder(50 * 1024 * 1024)
   lazy val connectionFactory: ConnectionFactory = new ConnectionFactoryBuilder()
-    .setOpTimeout(1000000L)
+    .setOpTimeout(1000000L) 
     .setTranscoder(transcoder).build()
 
   lazy val client = new MemcachedClient(connectionFactory,
@@ -54,7 +54,7 @@ object Caching extends CacheClient {
           data.asInstanceOf[DataModel]
         case _ =>
           logger.debug("Caching with key " + key)
-          set[DataModel](key, twentyHours, f)
+          set[DataModel](key, defaultTTL, f)
       }
     } else {
       logger.debug("Caching turned off")
