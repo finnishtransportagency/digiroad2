@@ -278,8 +278,7 @@ _Korjattava linkki._
 
 _Korjattavien linkkien lista._
 
-4. Nopeusrajoitus
---------------------
+## 4. Nopeusrajoitus
 
 Nopeusrajoitus on liikenneväylälle asetettu tieto ajoneuvon suurimmasta sallitusta ajonopeudesta. Nopeusrajoitukset voi asettaa aktiiviseksi tasoksi tietolajivalikosta (1). Kartan eri mittakaavatasoilla nopeusrajoitusten visualisointi muuttuu, jotta niiden erottaminen olisi helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan legendassa tietolajipaneelissa.
 
@@ -287,7 +286,7 @@ Nopeusrajoitus on liikenneväylälle asetettu tieto ajoneuvon suurimmasta sallit
 
 _Nopeusrajoitusten valinta._
 
-##4.1 Nopeusrajoitusten tietojen katselu##
+### 4.1 Nopeusrajoitusten tietojen katselu
 
 Yksitt&auml;isen nopeusrajoituksen voi valita napauttamalla kartalta sen geometriaa.
 
@@ -305,7 +304,7 @@ _Nopeusrajoituksen tietojen katselu, kun valittuna on nopeusrajoitusketju (napau
 
 _Nopeusrajoituksen tietojen katselu, kun valittuna on yksitt&auml;inen nopeusrajoitus (kaksoisnapautus)._
 
-###Nopeusrajoitusten visualisointi###
+#### Nopeusrajoitusten visualisointi
 
 Nopeusrajoitukset on visualisoitu kartalle eri tavoin riippuen niiden vaikutussuunnasta. Nopeusrajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan. Jos vaikutussuunta on molempiin suuntiin, nopeusrajoitus on visualisoitu yhdell&auml; paksulla viivalla (1). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (2).
 
@@ -317,7 +316,7 @@ Nopeusrajoituksen muokkauksessa on mahdollisuus jakaa molempiin suuntiin voimass
 
 _Nopeusrajoitusten visualisointi._
 
-##4.2 Nopeusrajoitusten muokkaus##
+### 4.2 Nopeusrajoitusten muokkaus
 
 Muokkaustilassa nopeusrajoituksille voi antaa uusia arvoja, niit&auml; voi katkaista ja muuttaa yksisuuntaisiksi. Nopeusrajoitusten arvoja voi muokata kolmella tavalla:
 
@@ -325,7 +324,7 @@ Muokkaustilassa nopeusrajoituksille voi antaa uusia arvoja, niit&auml; voi katka
 1. Yksitt&auml;isen linkin mittaiselle osuudelle tai tielinkin osalle.
 1. Monivalinnan avulla kokonaiselle alueelle.
 
-###Nopeusrajoituksen arvon muokkaus###
+#### Nopeusrajoituksen arvon muokkaus
 
 Muokattava nopeusrajoitus valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo sekä tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityistiellä). 
 
@@ -339,8 +338,7 @@ Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; valitsemalla nopeusraj
 
 _Nopeusrajoitusketjun arvon muokkaus (napautettu kerran)._
 
-</br>
-####Nopeusrajoitusten muokkaus monivalintaty&ouml;kalulla####
+#### Nopeusrajoitusten muokkaus monivalintaty&ouml;kalulla
 
 Usean tielinkin nopeusrajoitusarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit. Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki nopeusrajoitukset piirretyn alueen sisällä ja nopeusrajoitukset, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu alasvetovalikko, josta nopeusrajoituksille määritellään uusi arvo. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
 
@@ -348,8 +346,7 @@ Usean tielinkin nopeusrajoitusarvon voi muuttaa kerralla monivalintatyökalulla,
 
 _Useamman nopeusrajoituksen arvon muokkaus kerralla._
 
-</br>
-####Nopeusrajoituksen katkaiseminen####
+#### Nopeusrajoituksen katkaiseminen
 
 Nopeusrajoituksen voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka löytyy työkaluvalikosta (6). Leikkaustyökalulla klikataan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Nopeusrajoituksen katkaisu valitsee aina vain yhden tielinkin mittaisen osion nopeusrajoitusta, ei nopeusrajoitusketjua.
 
@@ -357,12 +354,11 @@ Nopeusrajoituksen voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka l
 
 _Nopeusrajoituksen katkaiseminen._
 
-</br>
 Nopeusrajoituksen katkaisussa tielinkin osille valitaan uudet nopeusrajoitusarvot sovelluksen oikean reunan ominaisuustietotaulun alasvetovalikoista (8). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet A ja B osoittavat, kummasta rajoituksesta on kyse. Uudet nopeusrajoitukset tallennetaan tallenna-painikkeella ja tai perutaan peruuta-painikkeella (9), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
 Huom! Nopeusrajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; nopeusrajoituksille eri arvot (7), jotta tallennus on mahdollista.
 
-###Nopeusrajoituksen muuttaminen yksisuuntaiseksi###
+#### Nopeusrajoituksen muuttaminen yksisuuntaiseksi
 
 Molempiin suuntiin voimassa olevan nopeusrajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n tielinkkikohtaisesti.
 
@@ -378,12 +374,11 @@ Painikkeen painamisen j&auml;lkeen voi uusille nopeusrajoituksille antaa arvot a
 
 _Uusien yksisuuntaisten nopeusrajoitusten arvon valinta._
 
-</br>
 Uudet nopeusrajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
 
 Jos tallennuksen j&auml;lkeen yhteen suuntaan voimassa oleville nopeusrajoituksille antaa saman arvon, sovellus yhdist&auml;&auml; ne molempiin voimassa oleviksi.
 
-###Tuntemattomat nopeusrajoitukset###
+#### Tuntemattomat nopeusrajoitukset
 
 Jos tielinkille ei ole asetettu nopeusrajoitusta, n&auml;kyy se k&auml;ytt&ouml;liittym&auml;ss&auml; mustana eli tuntemattomana nopeusrajoituksena. Nopeusrajoitus on tuntematon, jos nopeusrajoitustietoa ei ole toimitettu Digiroad-j&auml;rjestelm&auml;&auml;n. Uusille, j&auml;rjestelm&auml;&auml;n lis&auml;tyille tielinkeille, tulee lis&auml;t&auml; nopeusrajoitus.
 
@@ -396,7 +391,6 @@ _Tuntematon nopeusrajoitus._
 Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoitusten ominaisuustieton&auml;kym&auml;st&auml; (14). Nopeusrajoitukset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listan pituus on rajoitettu kymmeneen nopeusrajoitukseen, mutta kunkin hallinnollisen luokan vieress&auml; lukee korjattavien nopeusrajoitusten kokonaism&auml;&auml;r&auml;.
 
 Nopeusrajoituksesta on listassa linkki, jota napauttamalla karttaikkuna kohdistuu suoraan nopeusrajoituksen kohdalle ja sille voi asettaa arvon. Nopeusrajoituslinkin voi avata uuteen v&auml;lilehteen napauttamalla linkki&auml; Ctrl-painike pohjassa. Muuten linkki avautuu samaan v&auml;lilehteen. Lista sulkeutuu Sulje lista -painikkeesta.
-
 
 ![Tuntematon nopeusrajoitus.](Nopeusrajoitus11.PNG)
 
