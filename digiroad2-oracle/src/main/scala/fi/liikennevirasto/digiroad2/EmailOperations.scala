@@ -25,6 +25,7 @@ class EmailOperations() {
     properties.put("mail.smtp.host", smtpProp.getHost)
     properties.put("mail.smtp.port", smtpProp.getPort)
     properties.put("mail.smtp.starttls.enable", "true")
+    properties.put("mail.smtp.starttls.required", "true")
     properties.put("mail.smtp.auth", "true")
 
     Session.getDefaultInstance(properties)
@@ -55,8 +56,10 @@ class EmailOperations() {
 
   def sendEmail(email: Email): Boolean = {
     val message = createMessage(email, setEmailProperties())
+    val sesUsername = Digiroad2Properties.sesUsername
+    val sesPassword = Digiroad2Properties.sesPassword
     try {
-      Transport.send(message, Digiroad2Properties.sesUsername, Digiroad2Properties.sesPassword)
+      Transport.send(message, sesUsername, sesPassword)
       true
     }catch {
       case ex: MessagingException =>
