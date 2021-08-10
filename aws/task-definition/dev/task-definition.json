@@ -143,6 +143,10 @@
             "value": "587"
           },
           {
+            "name": "emailFrom",
+            "value": "noreply.digiroad@vaylapilvi.fi"
+          },
+          {
             "name": "env",
             "value": "Dev"
           },

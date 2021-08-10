@@ -44,6 +44,7 @@ trait Digiroad2Properties {
   val emailTo: String
   val emailHost: String
   val emailPort: String
+  val emailFrom: String
   val env: String
   val featureProvider: String
   val googleMapApiClientId: String
@@ -83,6 +84,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val emailTo: String = scala.util.Properties.envOrElse("emailTo", null)
   val emailHost = scala.util.Properties.envOrElse("emailHost", null)
   val emailPort = scala.util.Properties.envOrElse("emailPort", null)
+  val emailFrom = scala.util.Properties.envOrElse("emailFrom", null)
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
@@ -171,6 +173,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val emailTo: String = envProps.getProperty("email.to")
   override val emailHost: String = envProps.getProperty("email.host")
   override val emailPort: String = envProps.getProperty("email.port")
+  override val emailFrom: String = envProps.getProperty("email.from")
   override val env: String = envProps.getProperty("env")
   override val featureProvider: String = envProps.getProperty("featureProvider")
   override val googleMapApiClientId: String = envProps.getProperty("googlemapapi.client_id")
@@ -246,6 +249,7 @@ object Digiroad2Properties {
   lazy val emailTo: String = properties.emailTo
   lazy val emailHost: String = properties.emailHost
   lazy val emailPort: String = properties.emailPort
+  lazy val emailFrom: String = properties.emailFrom
   lazy val env: String = properties.env
   lazy val featureProvider: String = properties.featureProvider
   lazy val googleMapApiClientId: String = properties.googleMapApiClientId

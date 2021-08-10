@@ -86,7 +86,7 @@ class FeedbackApplicationService extends Feedback {
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackApplicationBody
 
-  override def from: String = "noreply.digiroad@vaylapilvi.fi"
+  override def from: String = Digiroad2Properties.emailFrom
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
 
@@ -109,7 +109,7 @@ class FeedbackDataService extends Feedback {
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackDataBody
 
-  override def from: String = "noreply.digiroad@vaylapilvi.fi"
+  override def from: String = Digiroad2Properties.emailFrom
   override def subject: String = "Aineistopalaute"
   override def body: String = ""
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
