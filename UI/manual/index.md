@@ -1,12 +1,10 @@
-Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;ohje
-======================================================
+# Digiroad-ylläpitosovelluksen käyttöohje
 
 __Huom! Suosittelemme, että Digiroad-sovellusta käytetään Firefox- tai Chrome-selaimella.__
 
 __Huom! K&auml;ytt&ouml;ohjeen kuvia voi näpäyttää hiirellä suuremmaksi, jolloin tekstit erottuvat paremmin.__
 
-1 Miten pääsen alkuun
---------------------------
+## 1. Miten pääsen alkuun
 
 1. Digiroad-sovellukseen kirjaudutaan voimassa olevilla Väyläviraston tunnuksilla. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-operaattorilta sähköpostitse osoitteesta info@digiroad.fi.
 
@@ -23,8 +21,8 @@ Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
 Jos karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranetiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-operaattoriin sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301.
 
-1.1 Mist&auml; saan opastusta?
---------------------------
+### 1.1 Mistä saan opastusta?
+
 Digiroad-operaattorilta saa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Operaattori auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Asiakaspalveluun voi olla yhteydessä sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301 arkipäivisin klo 9-16.
 
 Yhteystiedot:
@@ -37,12 +35,11 @@ info@digiroad.fi
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
 
-1.2 Usein kysytyt kysymykset (UKK) ja yleiset ongelmatilanteet
-------------------------------------------------
+### 1.2 Usein kysytyt kysymykset (UKK) ja ongelmatilanteet
 
 Digiroad-sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set <a href=https://vayla.fi/vaylista/aineistot/digiroad/yllapito/usein-kysytyt-kysymykset  target="_blank">t&auml;&auml;lt&auml;. </a>
 
-####Ongelmatilanteet####
+#### Ongelmatilanteet
 
 Sovelluksen toimiessa virheellisesti tee näin:
 
@@ -50,7 +47,7 @@ Sovelluksen toimiessa virheellisesti tee näin:
 - Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome.
 - Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-operaattoriin sähköpostitse info@digiroad.fi tai soittamalla numeroon 040 507 2301.
 
-####Kirjautuminen Digiroad-sovellukseen####
+#### Kirjautuminen Digiroad-sovellukseen
 
 Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.vayla.fi/digiroad/  target="_blank">https://extranet.vayla.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
@@ -66,8 +63,7 @@ _Karttak&auml;ytt&ouml;liittym&auml;n katselutila._
 
 Mik&auml;li karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei k&auml;ytt&auml;j&auml;ll&auml; ole oikeuksia Digiroad-sovellukseen. Digiroad-oikeuksia voi pyyt&auml;&auml; Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
-2 Yleist&auml;
-----------
+## 2. Yleistä 
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lkeen ruudulle avautuu oletuksena katselutila. Jos käyttäjälle ei ole myönnetty muokkausoikeuksia kunnan tai ELY-keskuksen alueelle, voi hän ainoastaan katsella Digiroadin eri tietolajeja sovelluksessa. Muokkausoikeudet saatuaan käyttäjä voi sekä katsella että muokata eri tietolajeja. Muokkausoikeudet myönnetään käyttäjälle aina alueellisesti yhden tai useamman kunnan tai Ely-keskuksen rajojen sisäpuolella oleviin aineistoihin.
 
@@ -85,18 +81,17 @@ Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa
 
 _Muokkaustila._
 
-2.1 Karttan&auml;kym&auml;n muokkaus
---------------------------
+### 2.1 Karttaikkunan muokkaus
 
-####Kartan liikutus####
+#### Kartan liikutus
 
 Karttaa liikutetaan hiirellä raahaamalla.
 
-####Mittakaavataso####
+#### Mittakaavataso
 
 Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisnapauttamalla, Shift+piirto (alue) tai mittakaavapainikkeista (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, kaksoisnapauttamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy karttaikkunan oikeassa alakulmassa (8).
 
-####Karttahaut####
+#### Karttahaut
 
 K&auml;ytt&ouml;liittym&auml;ss&auml; on hakukentt&auml; (6), jossa voi hakea haluttua sijantia kohteen koordinaateilla, katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukentt&auml;&auml;n ja napauttamalla Hae-painiketta. Hakutulos tulee listaan hakukent&auml;n alle. Hakutuloslistassa ylimp&auml;n&auml; on maantieteellisesti kartan nykyist&auml; keskipistett&auml; l&auml;himp&auml;n&auml; oleva kohde. Mik&auml;li hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, t&auml;ytyy listalta valita tulos, johon kartta keskittyy. Tyhjenn&auml; tulokset -painike tyhjent&auml;&auml; hakutuloslistan.
 
@@ -106,11 +101,11 @@ Katuosoitteella haku: Katuosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml
 
 Tieosoitteella haku: Tieosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&auml; koko osoitteen tai osan siit&auml;. Esimerkiksi 2 tai 2 1 150.
 
-####Merkitse piste kartalle####
+#### Merkitse piste kartalle
 
 Merkitse-painike käyttöliittymän alapalkin vasemmassa reunassa (10) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkit&auml;&auml;n uusi piste kartalta. Merkitse-painikkeen vieress&auml; olevat koordinaatit seuraavat kartan keskipistett&auml; ja p&auml;ivittyv&auml;t, kun kartan keskipiste muuttuu.
 
-####Taustakartat####
+#### Taustakartat
 
 Karttaikkunan taustakartaksi voi valita maastokartan, ortokuvan tai taustakarttasarjan. (9)
 
@@ -118,7 +113,7 @@ Karttaikkunan taustakartaksi voi valita maastokartan, ortokuvan tai taustakartta
 
 _Karttan&auml;kym&auml;n muokkaus._
 
-##2.2. Historiatiedot##
+### 2.2 Historiatiedot
 
 Sovelluksessa on mahdollista piirt&auml;&auml; n&auml;kyviin my&ouml;s tielinkkien historiatiedot aiemmin poistuneiden tielinkkien osalta. Toiminnallisuuden tavoitteena on helpottaa yll&auml;pit&auml;j&auml;&auml; t&auml;ydent&auml;m&auml;&auml;n uusien tielinkkien puuttuvia ominaisuustietoja. Toistaiseksi historiatietoja on mahdollista katsella ainoastaan tielinkkien toiminnallisten luokkien ja nopeusrajoitustiedon osalta. 
 Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan tietolajipaneelin yl&auml;kulmassa olevasta tietolajivalikosta (1). Kun haluttu tietolaji on visualisoitu karttaikkunaan, aktivoidaan tietolajipaneelin alalaidasta Näytä poistuneet tielinkit -valintaruutu (2).
@@ -127,7 +122,7 @@ Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jo
 
 _Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot, jotka visualisoituvat vaaleansinisinä ohuempina viivoina kartalle._
 
-##2.3 Käyttöliittymän osien kuvaus##
+### 2.3 Käyttöliittymän osien kuvaus
 
 ![Käyttöliittymä](kuvaus1.png)
 
@@ -179,8 +174,7 @@ Asioita tallentaessa ja joskus uusia alueita ladatessa karttaikkunaan ilmestyy *
 
 *Spinneri*
 
-3 Tielinkki
-------------
+## 3. Tielinkki
 
 Tielinkki on tien, kadun, kävelyn ja pyöräilyn väylän tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttaikkunaan valitaan tielinkit valitsemalla tietolajivalikosta Tielinkit.
 
