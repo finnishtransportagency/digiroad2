@@ -264,8 +264,6 @@ Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja ti
 
 _Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (napautettu kerran)._
 
-</br>
-
 ### 3.4. Korjattavat tielinkit
 
 Digiroadin sovelluksessa uudet tielinkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (2). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan (kunta, valtio, yksityinen). Linkki on kartalla mustaksi visualisoituneena (1), kunnes toiminnallinen luokka tai linkin tyyppitiedot on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietoikkunan alareunassa olevan painikkeen kautta (3). Listasta voi napauttaa korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
