@@ -290,6 +290,8 @@ Resources:
             Value: empty
           - Name: cacheHostname
             Value: empty
+          - Name: caching
+            Value: false
 
       Artifacts:
         Name: !Ref ApplicationName
