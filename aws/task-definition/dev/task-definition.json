@@ -136,11 +136,11 @@
           },
           {
             "name": "emailHost",
-            "value": "emailHost"
+            "value": "email-smtp.eu-west-1.amazonaws.com"
           },
           {
             "name": "emailPort",
-            "value": "emailPort"
+            "value": "587"
           },
           {
             "name": "env",
