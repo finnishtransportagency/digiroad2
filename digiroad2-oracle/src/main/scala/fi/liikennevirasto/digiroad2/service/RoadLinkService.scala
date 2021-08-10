@@ -1593,7 +1593,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     Caching.cache[(Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])](
       reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
-    )("reloadRoadLinksWithComplementaryAndChangesFromVVH:" + municipalityCode)
+    )("links:" + municipalityCode)
   }
   /**
     *  Call reloadRoadNodesFromVVH
@@ -1601,7 +1601,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private def getCachedRoadNodes(municipalityCode: Int): Seq[VVHRoadNodes] = {
     Caching.cache[Seq[VVHRoadNodes]](
       reloadRoadNodesFromVVH(municipalityCode)
-    )("reloadRoadNodesFromVVH:"+municipalityCode)
+    )("nodes:"+municipalityCode)
   }
 
   /**
