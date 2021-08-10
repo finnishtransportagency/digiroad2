@@ -11,7 +11,7 @@ case class CachedValue(data: Any, success: Boolean)
 class CacheClient {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   //in second
-  val defaultTTL: Int = Digiroad2Properties.cacheTTL
+  val defaultTTL: Int = Digiroad2Properties.cacheTTL.toInt
 
   lazy val transcoder = new SerializingTranscoder(50 * 1024 * 1024)
   lazy val connectionFactory: ConnectionFactory = new ConnectionFactoryBuilder()
