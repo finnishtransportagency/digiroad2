@@ -127,10 +127,6 @@
             "value": "trrest"
           },
           {
-            "name": "ses.username",
-            "value": "ses-smtp-digiroad"
-          },
-          {
             "name": "oag.username",
             "value": "svc_clouddr"
           },
