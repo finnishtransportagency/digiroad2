@@ -38,6 +38,8 @@ trait Digiroad2Properties {
   val tierekisteriUsername: String
   val tierekisteriPassword: String
   val viiteApiKey: String
+  val sesUsername: String
+  val sesPassword: String
   val tierekisteriOldUsername: String
   val tierekisteriOldPassword: String
   val oagUsername: String
@@ -45,6 +47,7 @@ trait Digiroad2Properties {
   val emailTo: String
   val emailHost: String
   val emailPort: String
+  val emailFrom: String
   val env: String
   val featureProvider: String
   val googleMapApiClientId: String
@@ -65,6 +68,8 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
   val viiteApiKey: String = scala.util.Properties.envOrElse("viite.apikey", null)
+  val sesUsername: String = scala.util.Properties.envOrElse("ses.username", null)
+  val sesPassword: String = scala.util.Properties.envOrElse("ses.password", null)
   val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
@@ -82,6 +87,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val emailTo: String = scala.util.Properties.envOrElse("emailTo", null)
   val emailHost = scala.util.Properties.envOrElse("emailHost", null)
   val emailPort = scala.util.Properties.envOrElse("emailPort", null)
+  val emailFrom = scala.util.Properties.envOrElse("emailFrom", null)
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
@@ -167,6 +173,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val tierekisteriUsername: String = envProps.getProperty("tierekisteri.username")
   override val tierekisteriPassword: String = envProps.getProperty("tierekisteri.password")
   override val viiteApiKey: String = envProps.getProperty("viite.apikey")
+  override val sesUsername: String = envProps.getProperty("ses.username")
+  override val sesPassword: String = envProps.getProperty("ses.password")
   override val tierekisteriOldUsername: String = envProps.getProperty("tierekisteri.old.username")
   override val tierekisteriOldPassword: String = envProps.getProperty("tierekisteri.old.password")
   override val oagUsername: String = envProps.getProperty("oag.username")
@@ -174,6 +182,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val emailTo: String = envProps.getProperty("email.to")
   override val emailHost: String = envProps.getProperty("email.host")
   override val emailPort: String = envProps.getProperty("email.port")
+  override val emailFrom: String = envProps.getProperty("email.from")
   override val env: String = envProps.getProperty("env")
   override val featureProvider: String = envProps.getProperty("featureProvider")
   override val googleMapApiClientId: String = envProps.getProperty("googlemapapi.client_id")
@@ -243,6 +252,8 @@ object Digiroad2Properties {
   lazy val tierekisteriUsername: String = properties.tierekisteriUsername
   lazy val tierekisteriPassword: String = properties.tierekisteriPassword
   lazy val viiteApiKey: String = properties.viiteApiKey
+  lazy val sesUsername: String = properties.sesUsername
+  lazy val sesPassword: String = properties.sesPassword
   lazy val tierekisteriOldUsername: String = properties.tierekisteriOldUsername
   lazy val tierekisteriOldPassword: String = properties.tierekisteriOldPassword
   lazy val oagUsername: String = properties.oagUsername
@@ -250,6 +261,7 @@ object Digiroad2Properties {
   lazy val emailTo: String = properties.emailTo
   lazy val emailHost: String = properties.emailHost
   lazy val emailPort: String = properties.emailPort
+  lazy val emailFrom: String = properties.emailFrom
   lazy val env: String = properties.env
   lazy val featureProvider: String = properties.featureProvider
   lazy val googleMapApiClientId: String = properties.googleMapApiClientId

@@ -108,7 +108,7 @@
           },
           {
             "name": "feedbackAssetsEndPoint",
-            "value": "https://devtest.vayla.fi/digiroad/"
+            "value": "https://digiroaddev.testivaylapilvi.fi/"
           },
           {
             "name": "bonecp.jdbcUrl",
@@ -132,15 +132,19 @@
           },
           {
             "name": "emailTo",
-            "value": "emailTo"
+            "value": "info@digiroad.fi"
           },
           {
             "name": "emailHost",
-            "value": "emailHost"
+            "value": "email-smtp.eu-west-1.amazonaws.com"
           },
           {
             "name": "emailPort",
-            "value": "emailPort"
+            "value": "587"
+          },
+          {
+            "name": "emailFrom",
+            "value": "noreply.digiroad@vaylapilvi.fi"
           },
           {
             "name": "env",
@@ -183,6 +187,14 @@
           {
             "name": "viite.apikey",
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
+          },
+          {
+            "name": "ses.username",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/ses_username"
+          },
+          {
+            "name": "ses.password",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/ses_password"
           },
           {
             "name": "oag.password",
