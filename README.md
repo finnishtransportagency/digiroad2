@@ -11,16 +11,12 @@ Ympäristön pystytys
   ```
 
 1. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
-1. Asenna [yarn](https://yarnpkg.com/lang/en/)
 
-  ```
-  npm install -g yarn
-  ```
 
 1. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
 
   ```
-  npm install && yarn install
+  npm install
   ```
 
 1. Asenna [grunt](http://gruntjs.com/getting-started)
@@ -29,33 +25,23 @@ Ympäristön pystytys
   npm install -g grunt-cli
   ```
 
+Lisää Configuration
+----------------
+
+Luo .idea kansioon runConfigurations kansio. Kopioi aws/local-dev/idea-run-configurations konfiguraatiot
+.idea/runConfigurations kansioon. Server configuraatiossa ota "use sbt shell" ruksi pois edit configuration.
+
 digiroad2-oracle
 ----------------
 
 digiroad2-oracle moduuli toteuttaa oracle-spesifisen tuen digiroad2:n `AssetProvider` ja `UserProvider` - rajapinnoista.
 Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen polkuun.
 
-Build edellyttää, että paikallinen tietokantaymäristö on alustettu ja konfiguroitu:
+Backend palvelimen käynistäminen edellyttää, että paikallinen tietokanta on päälä ja alustettu.
 
-Kopioi tiedostot ojdbc6.jar, sdoapi.jar ja sdoutl.jar hakemistoon `digiroad2-oracle/lib`. Tiedostot saa [digiroad2-oracle-projektista](https://github.com/finnishtransportagency/digiroad2-oracle/tree/master/lib).
+Laita aws/local-dev/postgis/docker-compose.yaml pääle.
 
-Luo digiroad2/digiroad2-oracle/conf/dev/bonecp.properties ja lisää sinne tietokantayhteyden tiedot:
-
-```
-bonecp.jdbcUrl=jdbc:oracle:thin:@<tietokannan_osoite>:<portti>/<skeeman_nimi>
-bonecp.username=<käyttäjätunnus>
-bonecp.password=<salasana>
-```
-
-Tietokantayhteyden voi määrittää myös ulkoisessa properties tiedostossa joka noudattaa yllä olevaa muotoa.
-
-Tällöin digiroad2/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulkoiseen tiedostoon:
-
-```
-digiroad2-oracle.externalBoneCPPropertiesFile=/etc/digiroad2/bonecp.properties
-```
-
-Tietokanta ja skeema voidaan alustaa käyttäen `fixture-reset.sh` skriptiä.
+Alusta kanta ajamalla DataFixture init configuraatio. Sitten aja DataFixture reset configuraatio.
 
 Ajaminen
 ========
