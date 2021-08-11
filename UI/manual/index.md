@@ -2392,3 +2392,58 @@ _Palvelupisteiden muokkaus._
 ### Palvelupisteen lis&auml;ys
 
 Palvelupiste voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkin lisää-painiketta (10). Palvelupiste lis&auml;t&auml;&auml;n haluttuun kohtaan ja painetaan tallenna-painiketta (3) tai kumotaan peruuta-painikkeesta (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (11).
+
+# 32. Rautateiden huoltotie (Vain ELYn ylläpidossa)
+
+Rautateiden huoltotie on viivamainen tietolaji, joka on vain ELY-keskusten ylläpidossa. Huoltotie voi olla tielinkin mittainen tai sitä lyhyempi. Rautateiden huoltotie -tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on tallennettu tieto huoltotien olemassaolosta, se visualisoituu karttaikkunaan ominaisuustietojensa mukaisesti. Rautateiden huoltotietietoja voi tallentaa vain tielinkeille, joiden toiminnallinen luokka on suurempi kuin 4. 
+
+![Rautateiden huoltotie](rh1.png)
+
+_Rautateiden huoltotie._
+
+## 32.1 Rautateiden huoltotie -tietojen katselu
+
+Huoltotiet voidaan visualisoida sovelluksessa joko käyttöoikeuden tai huoltovastuun perusteella. Valinta tapahtuu vasemman reunan tietolajipaneelin radionappia painamalla (2). Kun huoltotiekohdetta napauttaa kartalta, se korostuu (3) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko huoltotieketju, eli kaikki tielinkit, joilla on sama huoltotietieto sekä tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Rautateiden huoltotien ominaisuustietoja ovat (4) huoltotie (kyllä/ei vaihtoehdot), käyttöoikeus, huoltovastuu, tiehoitokunta sekä tarkistettu-painike. Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä huoltotieketjussa.
+
+![Huoltotietietojen katselu](rh2.png)
+
+_Rautateiden huoltotie -tietolajin katselu._
+
+## 32.2 Rautateiden huoltotie -tietolajin muokkaus
+
+Huoltotietietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa huoltoteille voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista leikkaustyökalulla. Huoltoteitä voi muokata kolmella tavalla:
+
+1. Koko huoltotieketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+![Huoltotiemuokkaus](rh3.png)
+
+_Huoltotietiedon muokkaus._
+
+### Huoltotietietojen lisäys
+
+Uusi huoltotie lisätään järjestelmään asettamalla ensin tietolajivalikosta rautateiden huoltotie -tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle huoltotietieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Huoltotie-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten käyttöoikeus, huoltovastuu sekä tiehoitokunta kelirikkokausi voidaan asettaa. Huoltotiet visualisoituvat karttaikkunassa joko käyttöoikeustyyppien tai huoltovastuun mukaan riippuen tietolajivalikon radionapin visualisointivalinnasta. Tiedot tallennetaan painamalla Tallenna-painiketta tai peruutetaan painamalla Peruuta (6). Ylläpitäjä voi myös merkata kohteen tarkistetuksi. Tarkistamattomien kohteiden listaa voi tarkastella tarkistamattomien kohteiden listan kautta (7).
+
+### Rautateiden huoltotietiedon poistaminen
+
+Huoltotien voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta huoltotietieto halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei huoltotietä" (8) mahdollistaa huoltotietiedon poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun huoltotie on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
+
+![Huoltotie poisto](rh4.png)
+
+_Huoltotietiedon poistaminen._
+
+### Rautateiden huoltotie -tietolajin muokkaus monivalintaty&ouml;kalulla
+
+Huoltoteitä voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille huoltotietieto halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin pohjassa, jolloin ctrl-näppäimen irti päästämällä avautuu huoltotien muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua tai monikulmiotyökalua (9). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna (10), jossa määritellään huoltotien ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Huoltotie monivalinta](rh5.png)
+
+_Huoltoteiden monivalinta._
+
+### Rautateiden huoltotien katkaisu
+
+Tarvittaessa huoltotien voi katkaista leikkaustyökalulla (edellisen kuvan kohta 11). Leikkaustyökalulla napautetaan huoltotien geometriasta kohtaa, josta se halutaan katkaista. Huoltotien tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Huoltotien katkaisussa uusille geometrioille asetetaan uudet ominaisuustiedot karttaikkunan oikean reunan ominaisuustietoikkunasta. Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse. Uudet huoltotietiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko huoltotieketjuja.
+
+Huom! Huoltotien katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
