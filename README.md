@@ -10,16 +10,16 @@ Ympäristön pystytys
   git clone https://github.com/finnishtransportagency/digi-road-2.git
   ```
 
-1. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
+2. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
 
 
-1. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
+3. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
 
   ```
   npm install
   ```
 
-1. Asenna [grunt](http://gruntjs.com/getting-started)
+4. Asenna [grunt](http://gruntjs.com/getting-started)
 
   ```
   npm install -g grunt-cli
@@ -75,6 +75,8 @@ API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa ol
 ```
 ./sbt test
 ```
+
+Palvelimen voi käynnistää ajamalla Server configuration myös.
 
 API-palvelimen saa käyntiin kehitysmoodiin seuraavalla sbt komennolla:
 ```
