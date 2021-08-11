@@ -98,7 +98,7 @@ run fi.liikennevirasto.digiroad2.ProductionServer
 ```
 
 Avaa käyttöliittymä osoitteessa <http://localhost:9001/login.html>.
-Kirjaudut sisään käyttäen lokaalia testi käyttäjää silari.
+Kirjaudut sisään käyttäen lokaalia testi käyttäjää nimeltään silari.
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================
