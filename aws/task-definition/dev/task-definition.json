@@ -108,7 +108,7 @@
           },
           {
             "name": "feedbackAssetsEndPoint",
-            "value": "https://devtest.vayla.fi/digiroad/"
+            "value": "https://digiroaddev.testivaylapilvi.fi/"
           },
           {
             "name": "bonecp.jdbcUrl",
