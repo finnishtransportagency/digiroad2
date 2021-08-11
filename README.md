@@ -25,17 +25,20 @@ Ympäristön pystytys
   npm install -g grunt-cli
   ```
 
-Lisää Configuration
+Lisää Configuration jos käytät intellij
 ----------------
 
 Luo .idea kansioon runConfigurations kansio. Kopioi aws/local-dev/idea-run-configurations konfiguraatiot
-.idea/runConfigurations kansioon. Server configuraatiossa ota "use sbt shell" ruksi pois edit configuration.
+.idea/runConfigurations kansioon. Käynistä IDE uudestaan. Server configuraatiossa ota "use sbt shell" ruksi pois edit configuration.
 
 digiroad2-oracle
 ----------------
 
 digiroad2-oracle moduuli toteuttaa oracle-spesifisen tuen digiroad2:n `AssetProvider` ja `UserProvider` - rajapinnoista.
 Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen polkuun.
+
+Lokaali tietokannan alustus
+----------------
 
 Backend palvelimen käynistäminen edellyttää, että paikallinen tietokanta on päälä ja alustettu.
 
@@ -93,6 +96,7 @@ run fi.liikennevirasto.digiroad2.ProductionServer
 ```
 
 Avaa käyttöliittymä osoitteessa <http://localhost:9001/login.html>.
+Kirjaudut sisään käyttäen lokaalia testi käyttäjää silari.
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================
