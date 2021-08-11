@@ -4,7 +4,6 @@ import java.io.{File, FilenameFilter, IOException}
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 import java.util.{Date, Properties}
-
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils._
@@ -18,6 +17,7 @@ import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.Caching
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -246,23 +246,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links
     */
   def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
-    reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
+    getCachedRoadLinksAndChanges(municipality)._1
   }
 
   def getRoadLinksWithComplementaryFromVVH(municipality: Int): Seq[RoadLink] = {
-    reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
+    getCachedRoadLinksWithComplementaryAndChanges(municipality)._1
   }
 
   def getRoadNodesByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
-    reloadRoadNodesFromVVH(municipality)
+    getCachedRoadNodes(municipality)
   }
 
   def getRoadNodesFromVVHFuture(municipality: Int): Future[Seq[VVHRoadNodes]] = {
     Future(getRoadNodesByMunicipality(municipality))
   }
 
+
   def getTinyRoadLinkFromVVH(municipality: Int): Seq[TinyRoadLink] = {
-    val (roadLinks, _ , complementaryRoadLink) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val (roadLinks, _, complementaryRoadLink) = getCachedRoadLinks(municipality)
     (roadLinks ++ complementaryRoadLink).map { roadlink =>
       TinyRoadLink(roadlink.linkId)
     }
@@ -568,13 +569,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links and change data
     */
   def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (roadLinks, changes, _) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    (roadLinks, changes)
+    getCachedRoadLinksAndChanges(municipality)
   }
 
   def getRoadLinksWithComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (roadLinks, changes, complementaries) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    (roadLinks ++ complementaries, changes)
+    getCachedRoadLinksWithComplementaryAndChanges(municipality)
   }
 
   /**
@@ -1078,9 +1077,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     roadLink.linkSource != LinkGeomSource.NormalLinkInterface ||
       roadLink.functionalClass != UnknownFunctionalClass.value && roadLink.linkType.value != UnknownLinkType.value
   }
-
+  
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
-    val (roadLinks, _, complementaries) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+   val (roadLinks, _, complementaries) = getCachedRoadLinks(municipality)
     roadLinks ++ complementaries
   }
 
@@ -1548,10 +1547,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getGeometryLastSegmentVector(connectionPoint: Point, roadLink: RoadLink) : (RoadLink, Vector3d) =
     (roadLink, GeometryUtils.lastSegmentDirection(if (GeometryUtils.areAdjacent(roadLink.geometry.last, connectionPoint)) roadLink.geometry else roadLink.geometry.reverse))
-
-  // TODO DROTH-2740 redo to specify some aws caching system or storage
-  private val cacheDirectory = { Digiroad2Properties.cacheDirecroty }
-
+  
   def geometryToBoundingBox(s: Seq[Point], delta: Vector3d) = {
     BoundingRectangle(Point(s.minBy(_.x).x, s.minBy(_.y).y) - delta, Point(s.maxBy(_.x).x, s.maxBy(_.y).y) + delta)
   }
@@ -1581,264 +1577,31 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }))
     )
   }
-  // TODO DROTH-2740 remove I/O functionality
-  private def getCacheDirectory: Option[File] = {
-    val file = new File(cacheDirectory)
-    try {
-      if ((file.exists || file.mkdir()) && file.isDirectory) {
-        return Option(file)
-      } else {
-        logger.error("Unable to create cache directory " + cacheDirectory)
-      }
-    } catch {
-      case ex: SecurityException =>
-        logger.error("Unable to create cache directory due to security", ex)
-      case ex: IOException =>
-        logger.error("Unable to create cache directory due to I/O error", ex)
-    }
-    None
-  }
-
-  private val geometryCacheFileNames = "geom_%d_%d.cached"
-  private val changeCacheFileNames = "changes_%d_%d.cached"
-  private val nodeCacheFileNames = "nodes_%d_%d.cached"
-  private val geometryCacheStartsMatch = "geom_%d_"
-  private val changeCacheStartsMatch = "changes_%d_"
-  private val nodeCacheStartsMatch = "nodes_%d_"
-  private val allCacheEndsMatch = ".cached"
-  private val complementaryCacheFileNames = "complementary_%d_%d.cached"
-  private val complementaryCacheStartsMatch = "complementary_%d_"
-
-  // TODO DROTH-2740 redo to work in aws
-  private def deleteOldNodeCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
-    val oldNodeCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(nodeCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
-    oldNodeCacheFiles.getOrElse(Array()).foreach(f =>
-      try {
-        f.delete()
-      } catch {
-        case ex: Exception => logger.warn("Unable to delete old node cache file " + f.toPath, ex)
-      }
-    )
-  }
-  // TODO DROTH-2740 redo to work in aws
-  private def deleteOldCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
-    val oldCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
-    oldCacheFiles.getOrElse(Array()).foreach(f =>
-      try {
-        f.delete()
-      } catch {
-        case ex: Exception => logger.warn("Unable to delete old Geometry cache file " + f.toPath, ex)
-      }
-    )
-    val oldChangesCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(changeCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
-    oldChangesCacheFiles.getOrElse(Array()).foreach(f =>
-      try {
-        f.delete()
-      } catch {
-        case ex: Exception => logger.warn("Unable to delete old change cache file " + f.toPath, ex)
-      }
-    )
-    val oldCompCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(complementaryCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
-    oldCompCacheFiles.getOrElse(Array()).foreach(f =>
-      try {
-        f.delete()
-      } catch {
-        case ex: Exception => logger.warn("Unable to delete old Complementary cache file " + f.toPath, ex)
-      }
-    )
-  }
-  // TODO DROTH-2740 redo to work in aws
-  private def getCacheWithComplementaryFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File, File)]) = {
-    val twentyHours = 20L * 60 * 60 * 1000
-    deleteOldCacheFiles(municipalityCode, dir, twentyHours)
-
-    val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
-
-    val cachedChangesFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(changeCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
-
-    val cachedComplementaryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(complementaryCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
-
-    if (cachedGeometryFile.nonEmpty && cachedGeometryFile.get.nonEmpty && cachedGeometryFile.get.head.canRead &&
-      cachedChangesFile.nonEmpty && cachedChangesFile.get.nonEmpty && cachedChangesFile.get.head.canRead &&
-      cachedComplementaryFile.nonEmpty && cachedComplementaryFile.get.nonEmpty && cachedComplementaryFile.get.head.canRead){
-      Some(cachedGeometryFile.get.head, cachedChangesFile.get.head, cachedComplementaryFile.get.head)
-    } else {
-      None
-    }
-  }
-  // TODO DROTH-2740 redo to work in aws
-  private def getNodeCacheFiles(municipalityCode: Int, dir: Option[File]): Option[File] = {
-    val twentyHours = 20L * 60 * 60 * 1000
-
-    deleteOldNodeCacheFiles(municipalityCode, dir, twentyHours)
-
-    val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(nodeCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
-
-    if (cachedGeometryFile.nonEmpty && cachedGeometryFile.get.nonEmpty && cachedGeometryFile.get.head.canRead) {
-      Some(cachedGeometryFile.get.head)
-    } else {
-      None
-    }
-  }
-
-  //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
-  // TODO DROTH-2740 redo to work in aws
+  
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, _) = getCachedRoadLinks(municipalityCode)
     (roadLinks, changes)
   }
-  // TODO DROTH-2740 redo to work in aws
   private def getCachedRoadLinksWithComplementaryAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, complementaries) = getCachedRoadLinks(municipalityCode)
     (roadLinks ++ complementaries, changes)
-  }
-  // TODO DROTH-2740 redo to work in aws
-  protected def readCachedGeometry(geometryFile: File): Seq[RoadLink] = {
-    def getFeatureClass(roadLink: RoadLink): Int ={
-      val mtkClass = roadLink.attributes("MTKCLASS")
-      if (mtkClass != null) // Complementary geometries have no MTK Class
-        mtkClass.asInstanceOf[BigInt].intValue()
-      else
-        0
-    }
-
-    vvhSerializer.readCachedGeometry(geometryFile).filterNot(r => getFeatureClass(r) == 12312)
-  }
-  // TODO DROTH-2740 redo to work in aws
-  protected def readCachedTinyRoadLinks(geometryFile: File): Seq[TinyRoadLink] = {
-    vvhSerializer.readCachedTinyRoadLinks(geometryFile)
-  }
-  // TODO DROTH-2740 redo to work in aws
-  private def getCachedTinyRoadLinks(municipalityCode: Int): Seq[TinyRoadLink] = {
-    val dir = getCacheDirectory
-    val cachedFiles = getCacheWithComplementaryFiles(municipalityCode, dir)
-    cachedFiles match {
-      case Some((geometryFile, _, complementaryFile)) =>
-        logger.info("Returning cached result")
-        readCachedTinyRoadLinks(geometryFile) ++ readCachedTinyRoadLinks(complementaryFile)
-      case _ =>
-        val (roadLinks, _ , complementaryRoadLink) = getCachedRoadLinks(municipalityCode)
-        (roadLinks ++ complementaryRoadLink).map { roadlink =>
-          TinyRoadLink(roadlink.linkId)
-        }
-    }
   }
 
   /**
     *  Call reloadRoadLinksWithComplementaryAndChangesFromVVH
     */
-  // TODO DROTH-2740 redo to work in aws
   private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
-    val dir = getCacheDirectory
-    val cachedFiles = getCacheWithComplementaryFiles(municipalityCode, dir)
-    cachedFiles match {
-      case Some((geometryFile, changesFile, complementaryFile)) =>
-        logger.info("Returning cached result")
-        (readCachedGeometry(geometryFile), vvhSerializer.readCachedChanges(changesFile), readCachedGeometry(complementaryFile))
-      case _ =>
-        val (roadLinks, changes, complementaries) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
-        if (dir.nonEmpty) {
-          try {
-            val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newGeomFile, roadLinks)) {
-              logger.info("New cached file created: " + newGeomFile + " containing " + roadLinks.size + " items")
-            } else {
-              logger.error("Writing cached geom file failed!")
-            }
-            val newChangeFile = new File(dir.get, changeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newChangeFile, changes)) {
-              logger.info("New cached file created: " + newChangeFile + " containing " + changes.size + " items")
-            } else {
-              logger.error("Writing cached changes file failed!")
-            }
-            val newComplementaryFile = new File(dir.get, complementaryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newComplementaryFile, complementaries)) {
-              logger.info("New cached file created: " + newComplementaryFile + " containing " + complementaries.size + " items")
-            } else {
-              logger.error("Writing cached complementay file failed!")
-            }
-          } catch {
-            case ex: Exception => logger.warn("Failed cache IO when writing:", ex)
-          }
-        }
-        (roadLinks, changes, complementaries)
-    }
+    Caching.cache[(Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])](
+      reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+    )("links:" + municipalityCode)
   }
   /**
     *  Call reloadRoadNodesFromVVH
     */
-  // TODO DROTH-2740 redo to work in aws
   private def getCachedRoadNodes(municipalityCode: Int): Seq[VVHRoadNodes] = {
-    val dir = getCacheDirectory
-    val cachedFiles = getNodeCacheFiles(municipalityCode, dir)
-    cachedFiles match {
-      case Some(nodeFile) =>
-        logger.info("Returning cached result")
-        vvhSerializer.readCachedNodes(nodeFile)
-      case _ =>
-        val roadNodes = reloadRoadNodesFromVVH(municipalityCode)
-        if (dir.nonEmpty) {
-          try {
-            val newGeomFile = new File(dir.get, nodeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newGeomFile, roadNodes)) {
-              logger.info("New cached file created: " + newGeomFile + " containing " + roadNodes.size + " items")
-            } else {
-              logger.error("Writing cached geom file failed!")
-            }
-          } catch {
-            case ex: Exception => logger.warn("Failed cache IO when writing:", ex)
-          }
-        }
-        roadNodes
-    }
-  }
-  // TODO DROTH-2740 redo to work in aws
-  def clearCache() = {
-    val dir = getCacheDirectory
-    var cleared = 0
-    dir.foreach(d => d.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.endsWith(allCacheEndsMatch)
-      }
-    }).foreach { f =>
-      logger.info("Clearing cache: " + f.getAbsolutePath)
-      f.delete()
-      cleared = cleared + 1
-    }
-    )
-    cleared
+    Caching.cache[Seq[VVHRoadNodes]](
+      reloadRoadNodesFromVVH(municipalityCode)
+    )("nodes:"+municipalityCode)
   }
 
   /**

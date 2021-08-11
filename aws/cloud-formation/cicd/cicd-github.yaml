@@ -284,6 +284,14 @@ Resources:
             Value: svc_clouddigiroad
           - Name: oag_password
             Value: svc_clouddigiroad
+          - Name: cacheTTL
+            Value: 0
+          - Name: cacheHostPort
+            Value: empty
+          - Name: cacheHostname
+            Value: empty
+          - Name: caching
+            Value: false
 
       Artifacts:
         Name: !Ref ApplicationName
