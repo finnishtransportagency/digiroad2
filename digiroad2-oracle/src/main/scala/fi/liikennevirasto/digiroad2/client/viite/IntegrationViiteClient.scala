@@ -41,7 +41,9 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
   }
   
   def fetchRoadwayChangesChanges(since: DateTime,until:DateTime= new DateTime()): List[ChangeInformation] = {
-    get[Map[String, Map[String, Any]]](serviceName + "roadway_changes/changes?since=" +  formatDateTimeToIsoString(Some(since)).get + "&until=" +formatDateTimeToIsoString(Some(until)).get) match {
+    get[Map[String, Map[String, Any]]]( serviceName + "roadway_changes/changes?since=" +  
+                                        formatDateTimeToIsoString(Some(since)).get + "&until=" 
+                                        +formatDateTimeToIsoString(Some(until)).get) match {
       case Left(changes) => mapFields(changes)
       case Right(error) => throw new ViiteClientException(error.toString)
     }
@@ -53,26 +55,36 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
       changes.map(data => {
         val sourceMap = getFieldGeneric[Map[String,Any]](data,"kohde").get
         val sourceObject = Source(
-          getFieldValue(sourceMap,"tie").get.toLong,getFieldValue(sourceMap,"osa").get.toLong,
-          Track(getFieldValue(sourceMap,"ajorata").get.toInt),getFieldValue(sourceMap,"etaisyys").get.toLong,
-          getFieldValue(sourceMap,"etaisyys_loppu").get.toLong,getFieldValue(sourceMap,"jatkuvuuskoodi").get,
-          getFieldValue(sourceMap,"tietyyppi").get,AdministrativeClass(getFieldValue(sourceMap,"hallinnollinen_luokka").get.toInt)
-          ,getFieldValue(sourceMap,"ely").get)
+            getFieldValue(sourceMap,"tie").get.toLong,
+            getFieldValue(sourceMap,"osa").get.toLong,
+            Track(getFieldValue(sourceMap,"ajorata").get.toInt),
+            getFieldValue(sourceMap,"etaisyys").get.toLong,
+            getFieldValue(sourceMap,"etaisyys_loppu").get.toLong,
+            getFieldValue(sourceMap,"jatkuvuuskoodi").get,
+            getFieldValue(sourceMap,"tietyyppi").get,
+            AdministrativeClass(getFieldValue(sourceMap,"hallinnollinen_luokka").get.toInt),
+            getFieldValue(sourceMap,"ely").get)
 
         val targetMap = getFieldGeneric[Map[String,Any]](data,"lahde").get
-
+        
         val targetObject = Target(
-          getFieldValue(targetMap,"tie").get.toLong,getFieldValue(targetMap,"osa").get.toLong,
-          Track(getFieldValue(targetMap,"ajorata").get.toInt),getFieldValue(targetMap,"etaisyys").get.toLong,
-          getFieldValue(targetMap,"etaisyys_loppu").get.toLong,getFieldValue(targetMap,"jatkuvuuskoodi").get,
-          getFieldValue(targetMap,"tietyyppi").get,AdministrativeClass(getFieldValue(targetMap,"hallinnollinen_luokka").get.toInt)
-          ,getFieldValue(targetMap,"ely").get)
+            getFieldValue(targetMap,"tie").get.toLong,
+            getFieldValue(targetMap,"osa").get.toLong,
+            Track(getFieldValue(targetMap,"ajorata").get.toInt),
+            getFieldValue(targetMap,"etaisyys").get.toLong,
+            getFieldValue(targetMap,"etaisyys_loppu").get.toLong,
+            getFieldValue(targetMap,"jatkuvuuskoodi").get,
+            getFieldValue(targetMap,"tietyyppi").get,
+            AdministrativeClass(getFieldValue(targetMap,"hallinnollinen_luokka").get.toInt),
+            getFieldValue(targetMap,"ely").get)
 
         ChangeInformation(
-          getFieldValue(data,"muutostunniste").get,getFieldValue(data,"muutostyyppi").get,
-          getFieldValue(data,"kaannetty").get
-          ,sourceObject, targetObject,
-          convertToDate(getFieldValue(data,"muutospaiva")), convertToDate(getFieldValue(data,"laatimisaika"))
+            getFieldValue(data,"muutostunniste").get,
+            getFieldValue(data,"muutostyyppi").get,
+            getFieldValue(data,"kaannetty").get
+            ,sourceObject, targetObject,
+            convertToDate(getFieldValue(data,"muutospaiva")),
+            convertToDate(getFieldValue(data,"laatimisaika"))
         )
       })
     }else{
