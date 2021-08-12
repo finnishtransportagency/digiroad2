@@ -1,19 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.net.URLEncoder
-import java.security.cert.X509Certificate
-import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.client.viite.VKMGeometryTransformClient
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
-import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
-import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, SSLContext, SSLSession, TrustManager, X509TrustManager}
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+import fi.liikennevirasto.digiroad2.{ Point }
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -89,8 +81,8 @@ class RoadPartReservedException(response: String) extends RoadAddressException(r
 class GeometryTransform(roadAddressService: RoadAddressService) {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
 
-  lazy val vkmGeometryTransform: VKMGeometryTransformClient = {
-    new VKMGeometryTransformClient()
+  lazy val vkmGeometryTransform: VKMClient = {
+    new VKMClient()
   }
 
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {

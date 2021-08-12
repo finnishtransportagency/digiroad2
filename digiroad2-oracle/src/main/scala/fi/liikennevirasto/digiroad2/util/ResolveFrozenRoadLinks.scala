@@ -4,7 +4,8 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode, State}
-import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, VKMGeometryTransformClient}
+import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -28,8 +29,8 @@ trait ResolvingFrozenRoadLinks {
     new RoadAddressService(viiteClient)
   }
 
-  lazy val geometryVKMTransform: VKMGeometryTransformClient = {
-    new VKMGeometryTransformClient()
+  lazy val geometryVKMTransform: VKMClient = {
+    new VKMClient()
   }
 
   lazy val eventbus: DigiroadEventBus = {

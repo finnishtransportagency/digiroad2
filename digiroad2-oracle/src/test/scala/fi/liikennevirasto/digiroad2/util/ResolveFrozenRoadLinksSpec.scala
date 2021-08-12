@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
-import fi.liikennevirasto.digiroad2.client.viite.VKMGeometryTransformClient
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -19,14 +19,14 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVKMGeometryTransform = MockitoSugar.mock[VKMGeometryTransformClient]
+  val mockVKMGeometryTransform = MockitoSugar.mock[VKMClient]
   val mockRoadLinkTempDao = MockitoSugar.mock[RoadLinkTempDAO]
 
   object ResolvingFrozenRoadLinksTest extends ResolvingFrozenRoadLinks {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
-    override lazy val geometryVKMTransform: VKMGeometryTransformClient = mockVKMGeometryTransform
+    override lazy val geometryVKMTransform: VKMClient = mockVKMGeometryTransform
     // override lazy val geometryVKMTransform: VKMGeometryTransform = mockGeometryVKMTransform
     override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao
   }

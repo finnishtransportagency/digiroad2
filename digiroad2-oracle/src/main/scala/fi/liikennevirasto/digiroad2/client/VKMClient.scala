@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.client.viite
+package fi.liikennevirasto.digiroad2.client
 
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
@@ -12,7 +12,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 
-class VKMGeometryTransformClient {
+class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
 
   protected implicit val jsonFormats: Formats = DefaultFormats
