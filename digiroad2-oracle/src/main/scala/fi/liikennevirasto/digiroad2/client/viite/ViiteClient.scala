@@ -145,6 +145,17 @@ trait ViiteClientOperations {
     }
   }
 
+  protected def getFieldGeneric[MapType](data: Map[String, Any], field: String): Option[MapType] = {
+    try {
+      data.get(field) match {
+        case Some(value) => Some(value.asInstanceOf[MapType])
+        case _ => None
+      }
+    } catch {
+      case _: NullPointerException => None
+    }
+  }
+  
   protected def getMandatoryFieldValue(data: Map[String, Any], field: String): Option[String] = {
     val fieldValue = getFieldValue(data, field)
     if (fieldValue.isEmpty)
