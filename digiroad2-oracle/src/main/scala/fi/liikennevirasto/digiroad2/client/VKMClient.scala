@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.client.viite
+package fi.liikennevirasto.digiroad2.client
 
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
