@@ -145,10 +145,10 @@ trait ViiteClientOperations {
     }
   }
 
-  protected def getFieldGeneric[MapType](data: Map[String, Any], field: String): Option[MapType] = {
+  protected def getFieldGeneric[A](data: Map[String, Any], field: String): Option[A] = {
     try {
       data.get(field) match {
-        case Some(value) => Some(value.asInstanceOf[MapType])
+        case Some(value) => Some(value.asInstanceOf[A])
         case _ => None
       }
     } catch {
