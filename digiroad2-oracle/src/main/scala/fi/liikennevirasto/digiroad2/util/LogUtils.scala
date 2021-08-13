@@ -10,7 +10,6 @@ object LogUtils {
     val result = f
     val duration = System.currentTimeMillis() - begin
     if (duration >= timeLoggingThresholdInMs) {
-      println(s"$operationName completed in $duration ms")
       logger.info(s"$operationName completed in $duration ms")
     }
     result
