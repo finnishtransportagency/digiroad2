@@ -40,11 +40,11 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
     dateOption.map { date => formatterNoMillis.print(date) }
   }
 
-  def fetchRoadwayChangesChanges(since: DateTime, until: DateTime = new DateTime()): List[ChangeInformation] = {
+  def fetchRoadwayChangesChanges(since: DateTime, until: DateTime = new DateTime()): Option[List[ChangeInformation]] = {
     get[Map[String, Map[String, Any]]](serviceName + "roadway_changes/changes?since=" +
       formatDateTimeToIsoString(Some(since)).get + "&until="
       + formatDateTimeToIsoString(Some(until)).get) match {
-      case Left(changes) => mapFields(changes)
+      case Left(changes) => mapFields[Map[String, Map[String, Any]]](changes)
       case Right(error) => throw new ViiteClientException(error.toString)
     }
   }
