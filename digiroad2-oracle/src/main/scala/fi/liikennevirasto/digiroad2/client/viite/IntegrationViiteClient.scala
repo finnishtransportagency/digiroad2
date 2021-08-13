@@ -16,12 +16,12 @@ case class ChangeInformation(roadwayChangeId: Long,
 case class Source(roadNumber: Long, roadPartNumber: Long,
                   track: Track, startAddrMValue: Long,
                   endAddrMValue: Long, discontinuity: Long,
-                  roadType: Long, administrativeValues: AdministrativeClass, ely: Long)
+                  administrativeValues: AdministrativeClass, ely: Long)
 
 case class Target(roadNumber: Long, roadPartNumber: Long,
                   track: Track, startAddrMValue: Long,
-                  endAddrMValue: Long, discontinuity: Long,
-                  roadType: Long, administrativeValues: AdministrativeClass, ely: Long)
+                  endAddrMValue: Long, discontinuity: Long, 
+                  administrativeValues: AdministrativeClass, ely: Long)
 
 class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) extends ViiteClientOperations {
 
@@ -62,7 +62,6 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
             getFieldValue(sourceMap, "etaisyys").get.toLong,
             getFieldValue(sourceMap, "etaisyys_loppu").get.toLong,
             getFieldValue(sourceMap, "jatkuvuuskoodi").get.toLong,
-            getFieldValue(sourceMap, "tietyyppi").get.toLong,
             AdministrativeClass(getFieldValue(sourceMap, "hallinnollinen_luokka").get.toInt),
             getFieldValue(sourceMap, "ely").get.toLong)
 
@@ -75,7 +74,6 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
             getFieldValue(targetMap, "etaisyys").get.toLong,
             getFieldValue(targetMap, "etaisyys_loppu").get.toLong,
             getFieldValue(targetMap, "jatkuvuuskoodi").get.toLong,
-            getFieldValue(targetMap, "tietyyppi").get.toLong,
             AdministrativeClass(getFieldValue(targetMap, "hallinnollinen_luokka").get.toInt),
             getFieldValue(targetMap, "ely").get.toLong)
 
