@@ -8,20 +8,20 @@ import org.joda.time.format.DateTimeFormat
 
 import java.util.Date
 
-case class ChangeInformation(roadwayChangeId: String,
-                             changeType: String, reversed: String,
+case class ChangeInformation(roadwayChangeId: Long,
+                             changeType: Long, reversed: Long,
                              oldRoadNumbering: Source, newRoadNumbering: Target,
                              changeDate: Option[Date], creationDate: Option[Date])
 
 case class Source(roadNumber: Long, roadPartNumber: Long,
                   track: Track, startAddrMValue: Long,
-                  endAddrMValue: Long, discontinuity: String,
-                  roadType: String, administrativeValues: AdministrativeClass, ely: String)
+                  endAddrMValue: Long, discontinuity: Long,
+                  roadType: Long, administrativeValues: AdministrativeClass, ely: Long)
 
 case class Target(roadNumber: Long, roadPartNumber: Long,
                   track: Track, startAddrMValue: Long,
-                  endAddrMValue: Long, discontinuity: String,
-                  roadType: String, administrativeValues: AdministrativeClass, ely: String)
+                  endAddrMValue: Long, discontinuity: Long,
+                  roadType: Long, administrativeValues: AdministrativeClass, ely: Long)
 
 class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) extends ViiteClientOperations {
 
@@ -61,10 +61,10 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
             Track(getFieldValue(sourceMap, "ajorata").get.toInt),
             getFieldValue(sourceMap, "etaisyys").get.toLong,
             getFieldValue(sourceMap, "etaisyys_loppu").get.toLong,
-            getFieldValue(sourceMap, "jatkuvuuskoodi").get,
-            getFieldValue(sourceMap, "tietyyppi").get,
+            getFieldValue(sourceMap, "jatkuvuuskoodi").get.toLong,
+            getFieldValue(sourceMap, "tietyyppi").get.toLong,
             AdministrativeClass(getFieldValue(sourceMap, "hallinnollinen_luokka").get.toInt),
-            getFieldValue(sourceMap, "ely").get)
+            getFieldValue(sourceMap, "ely").get.toLong)
 
           val targetMap = getFieldGeneric[Map[String, Any]](data, "lahde").get
 
@@ -74,15 +74,15 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
             Track(getFieldValue(targetMap, "ajorata").get.toInt),
             getFieldValue(targetMap, "etaisyys").get.toLong,
             getFieldValue(targetMap, "etaisyys_loppu").get.toLong,
-            getFieldValue(targetMap, "jatkuvuuskoodi").get,
-            getFieldValue(targetMap, "tietyyppi").get,
+            getFieldValue(targetMap, "jatkuvuuskoodi").get.toLong,
+            getFieldValue(targetMap, "tietyyppi").get.toLong,
             AdministrativeClass(getFieldValue(targetMap, "hallinnollinen_luokka").get.toInt),
-            getFieldValue(targetMap, "ely").get)
+            getFieldValue(targetMap, "ely").get.toLong)
 
           ChangeInformation(
-            getFieldValue(data, "muutostunniste").get,
-            getFieldValue(data, "muutostyyppi").get,
-            getFieldValue(data, "kaannetty").get
+            getFieldValue(data, "muutostunniste").get.toLong,
+            getFieldValue(data, "muutostyyppi").get.toLong,
+            getFieldValue(data, "kaannetty").get.toLong
             , sourceObject, targetObject,
             convertToDate(getFieldValue(data, "muutospaiva")),
             convertToDate(getFieldValue(data, "laatimisaika"))
