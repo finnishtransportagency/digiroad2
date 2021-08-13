@@ -37,6 +37,7 @@ trait ViiteClientOperations {
   protected def viiteApiKey = Digiroad2Properties.viiteApiKey
 
   protected def mapFields(data: Map[String, Any]): Option[ViiteType]
+  protected def mapFields[A](data:A): Option[List[ViiteType]]
 
   def addAuthorizationHeader(request: HttpRequestBase) = {
     request.addHeader("X-API-Key", viiteApiKey)

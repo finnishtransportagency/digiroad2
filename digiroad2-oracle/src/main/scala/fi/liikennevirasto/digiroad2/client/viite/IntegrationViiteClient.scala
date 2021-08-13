@@ -49,10 +49,11 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
     }
   }
   
-  protected def mapFields(data: Map[String, Map[String, Any]]): List[ChangeInformation] = {
-    val changes = getFieldGeneric[List[Map[String,Any]]](data, "muutos_tieto").get
+  override protected def mapFields[A] (data: A): Option[List[ChangeInformation]] = {
+    val changes = getFieldGeneric[List[Map[String,Any]]](data.asInstanceOf[Map[String, Any]], "muutos_tieto").get
     if (changes.size>=0){
-      changes.map(data => {
+     Option( 
+       changes.map(data => {
         val sourceMap = getFieldGeneric[Map[String,Any]](data,"kohde").get
         val sourceObject = Source(
             getFieldValue(sourceMap,"tie").get.toLong,
@@ -86,11 +87,12 @@ class IntegrationViiteClient(viiteUrl: String, httpClient: CloseableHttpClient) 
             convertToDate(getFieldValue(data,"muutospaiva")),
             convertToDate(getFieldValue(data,"laatimisaika"))
         )
-      })
+      }))
     }else{
-      List()
+      None
     }
   }
+ 
 }
 
 
