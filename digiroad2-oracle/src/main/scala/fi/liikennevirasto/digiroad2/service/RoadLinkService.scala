@@ -254,7 +254,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadNodesByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
-    getCachedRoadNodes(municipality)
+    LogUtils.time(logger,"Get roadlink node with cache")(
+      getCachedRoadNodes(municipality)
+    )
   }
 
   def getRoadNodesFromVVHFuture(municipality: Int): Future[Seq[VVHRoadNodes]] = {
@@ -569,13 +571,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links and change data
     */
   def getRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    LogUtils.time(logger,"TestingRoadlinkCaching")(
+    LogUtils.time(logger,"Get roadlinks with cache")(
     getCachedRoadLinksAndChanges(municipality)
     )
   }
 
   def getRoadLinksWithComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    LogUtils.time(logger,"TestingRoadlinkCaching")(
+    LogUtils.time(logger,"Get roadlinks with cache")(
       getCachedRoadLinksWithComplementaryAndChanges(municipality)
     )
   }
