@@ -1085,7 +1085,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
   
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
-    val (roadLinks, _, complementaries) =  LogUtils.time(logger,"cache")(
+    val (roadLinks, _, complementaries) =  LogUtils.time(logger,"Get roadlinks with cache")(
       getCachedRoadLinks(municipality)
     )
     roadLinks ++ complementaries
