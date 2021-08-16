@@ -1143,7 +1143,7 @@ Kantavuus on liikenneväylälle asetettu tieto tien suurimmasta kantavuudesta. K
 
 _Kantavuuksien valinta._
 
-##Kantavuuksien tietojen katselu##
+## 14.1 Kantavuuksien tietojen katselu
 
 Yksitt&auml;isen kantavuuden voi valita napauttamalla kartalta sen geometriaa.
 
@@ -1160,7 +1160,7 @@ _Kantavuuden tietojen katselu, kun valittuna on kantavuusketju (napautettu kerra
 _Kantavuuden tietojen katselu, kun valittuna on yksitt&auml;inen kantavuus (kaksoisnapautus)._
 
 
-##Kantavuuksien muokkaus##
+## 14.2 Kantavuuksien muokkaus
 
 Muokkaustilassa kantavuuksille voi antaa uusia arvoja tai poistaa olemassaolevia. Kantavuuksien arvoja voi muokata kolmella tavalla:
 
@@ -1168,7 +1168,7 @@ Muokkaustilassa kantavuuksille voi antaa uusia arvoja tai poistaa olemassaolevia
 1. Yksitt&auml;isen linkin mittaiselle osuudelle tai tielinkin osalle.
 1. Monivalinnan avulla kokonaiselle alueelle.
 
-###Kantavuuden arvon muokkaus###
+### Kantavuuden arvon muokkaus
 
 Muokattava kantavuus valitaan napauttamalla sen geometriaa (3). Kerran napauttamalla tulee valituksi koko kantavuusketju, eli kaikki kantavuudet, joilla on sama kantavuuden arvo sekä tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityistiellä). 
 
@@ -1181,16 +1181,16 @@ Tietoja muokataan ominaisuustietoikkunassa syöttämällä kantavuudelle uusi ar
 _Kantavuusketjun arvon muokkaus (napautettu kerran)._
 
 </br>
-####Kantavuuksien muokkaus monivalintaty&ouml;kalulla####
+### Kantavuuksien muokkaus monivalintaty&ouml;kalulla
 
 Usean tielinkin kantavuusarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (8). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki kantavuudet piirretyn alueen sisällä ja kantavuudet, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), josta kantavuuksille määritellään uudet arvot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
 
-![Useamman kantavuuden arvon muokkaus.](ka5.png)
+![Useamman kantavuuden arvon muokkaus.](ka5_2.png)
 
 _Useamman kantavuuden arvon muokkaus kerralla._
 
 </br>
-####Kantavuuden katkaiseminen####
+### Kantavuuden katkaiseminen
 
 Kantavuuden voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka löytyy työkaluvalikosta (10). Leikkaustyökalulla klikataan kantavuuden geometriasta kohtaa, josta kantavuus halutaan katkaista. Kantavuuden geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Kantavuuden katkaisu valitsee aina vain yhden tielinkin mittaisen osion kantavuusta, ei kantavuusketjua.
 
