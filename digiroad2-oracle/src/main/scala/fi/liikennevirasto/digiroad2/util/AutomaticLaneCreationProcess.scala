@@ -13,19 +13,19 @@ object AutomaticLaneCreationProcess {
   }
 
   // change type 2
-  private def newLane(changes:List[ChangeInformation]):List[Long] = {
+  private def newLane(changes:ChangeInformation):Long = {
     throw new NotImplementedError()
   }
   // change type 3
-  private def transferLane(changes:List[ChangeInformation]):List[Long] = {
+  private def transferLane(changes:ChangeInformation):Long = {
     throw new NotImplementedError()
   }
   // change type 4
-  private def renumbering(changes:List[ChangeInformation]):List[Long] = {
+  private def renumbering(changes:ChangeInformation):Long = {
     throw new NotImplementedError()
   }
   // change type 5
-  private def expiringLane(changes:List[ChangeInformation]):List[Long] = {
+  private def expiringLane(changes:ChangeInformation):Long= {
     throw new NotImplementedError()
   }
 
@@ -33,7 +33,9 @@ object AutomaticLaneCreationProcess {
     val changeInformations = integrationViiteClient.fetchRoadwayChangesChanges(new DateTime().minusDays(1))
     
     if(changeInformations.isDefined){
-     // run operations 
+     changeInformations.foreach(change=>{
+       // add operation
+     })
     }
   }
 
