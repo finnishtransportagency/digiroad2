@@ -37,6 +37,7 @@ trait ViiteClientOperations {
   protected def viiteApiKey = Digiroad2Properties.viiteApiKey
 
   protected def mapFields(data: Map[String, Any]): Option[ViiteType]
+  protected def mapFields[A](data:A): Option[List[ViiteType]]
 
   def addAuthorizationHeader(request: HttpRequestBase) = {
     request.addHeader("X-API-Key", viiteApiKey)
@@ -145,6 +146,17 @@ trait ViiteClientOperations {
     }
   }
 
+  protected def getFieldGeneric[A](data: Map[String, Any], field: String): Option[A] = {
+    try {
+      data.get(field) match {
+        case Some(value) => Some(value.asInstanceOf[A])
+        case _ => None
+      }
+    } catch {
+      case _: NullPointerException => None
+    }
+  }
+  
   protected def getMandatoryFieldValue(data: Map[String, Any], field: String): Option[String] = {
     val fieldValue = getFieldValue(data, field)
     if (fieldValue.isEmpty)

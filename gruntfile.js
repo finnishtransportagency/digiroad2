@@ -203,6 +203,14 @@ module.exports = function(grunt) {
         src: ['vallu_test_server.js']
       }
     },
+    execute: {
+      viitedummyserver: {
+        options: {
+          args: ['localhost', 9003]
+        },
+        src: ['viitedummyserver.js']
+      }
+    },
     exec: {
     }
   });
@@ -236,6 +244,7 @@ module.exports = function(grunt) {
   grunt.registerTask('integration-test', [ 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
+  grunt.registerTask('viitedummyserver', ['execute:viitedummyserver', 'watch']);
 
   grunt.registerTask('test-concat', ['concat']);
 };
