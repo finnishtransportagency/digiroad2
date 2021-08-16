@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.viite.IntegrationViiteClient
+import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -13,26 +13,28 @@ object AutomaticLaneCreationProcess {
   }
 
   // change type 2
-  private def newLane()= {
+  private def newLane(changes:List[ChangeInformation]):List[Long] = {
     throw new NotImplementedError()
   }
   // change type 3
-  private def transferLane() = {
+  private def transferLane(changes:List[ChangeInformation]):List[Long] = {
     throw new NotImplementedError()
   }
   // change type 4
-  private def renumbering() = {
+  private def renumbering(changes:List[ChangeInformation]):List[Long] = {
     throw new NotImplementedError()
   }
   // change type 5
-  private def expiringLane() = {
+  private def expiringLane(changes:List[ChangeInformation]):List[Long] = {
     throw new NotImplementedError()
   }
 
   def process() = {
-    val changeInformation = integrationViiteClient.fetchRoadwayChangesChanges(new DateTime().minusDays(1))
+    val changeInformations = integrationViiteClient.fetchRoadwayChangesChanges(new DateTime().minusDays(1))
     
-
+    if(changeInformations.isDefined){
+     // run operations 
+    }
   }
 
   withDynTransaction {
