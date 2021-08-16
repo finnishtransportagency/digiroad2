@@ -121,7 +121,7 @@ object DataFixture {
     new GeometryTransform(roadAddressService)
   }
 
-  lazy val geometryVKMTransform: VKMClient = {
+  lazy val vkmClient: VKMClient = {
     new VKMClient()
   }
 
@@ -571,7 +571,7 @@ object DataFixture {
     val busStops = trBusStops.flatMap{
       trStop =>
         try {
-          val stopPointOption = withDynSession{ geometryVKMTransform.addressToCoords(trStop.roadAddress).headOption }
+          val stopPointOption = withDynSession{ vkmClient.addressToCoords(trStop.roadAddress).headOption }
 
           stopPointOption match {
             case Some(stopPoint) =>

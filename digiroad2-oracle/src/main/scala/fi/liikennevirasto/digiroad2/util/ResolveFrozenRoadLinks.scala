@@ -29,7 +29,7 @@ trait ResolvingFrozenRoadLinks {
     new RoadAddressService(viiteClient)
   }
 
-  lazy val geometryVKMTransform: VKMClient = {
+  lazy val vkmClient: VKMClient = {
     new VKMClient()
   }
 
@@ -156,7 +156,7 @@ trait ResolvingFrozenRoadLinks {
     frozen.geometry.zip(frozen.geometry.tail).foldLeft(Seq.empty[RoadAddressTEMPwithPoint]) { case (result, (p1, p2)) =>
       val roadNumber = Try(frozen.roadNumber.map(_.toInt).head).toOption
       val roadPartNumber = Try(frozen.roadPartNumber.map(_.toInt).head).toOption
-      val address = geometryVKMTransform.coordsToAddresses(Seq(p1, p2), roadNumber, roadPartNumber, includePedestrian = Some(true))
+      val address = vkmClient.coordsToAddresses(Seq(p1, p2), roadNumber, roadPartNumber, includePedestrian = Some(true))
 
       if (result.isEmpty) {
         val orderedAddress = address.sortBy(_.addrM)
@@ -279,7 +279,7 @@ trait ResolvingFrozenRoadLinks {
           val roadNumber = Try(frozen.roadNumber.map(_.toInt).head).toOption
           val roadPartNumber = Try(frozen.roadPartNumber.map(_.toInt).head).toOption
 
-          val address = geometryVKMTransform.coordsToAddresses(Seq(first, last), roadNumber, roadPartNumber, includePedestrian = Some(true))
+          val address = vkmClient.coordsToAddresses(Seq(first, last), roadNumber, roadPartNumber, includePedestrian = Some(true))
           if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
             println("problems in wonderland")
             Seq()

@@ -19,14 +19,14 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVKMGeometryTransform = MockitoSugar.mock[VKMClient]
+  val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadLinkTempDao = MockitoSugar.mock[RoadLinkTempDAO]
 
   object ResolvingFrozenRoadLinksTest extends ResolvingFrozenRoadLinks {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
-    override lazy val geometryVKMTransform: VKMClient = mockVKMGeometryTransform
+    override lazy val vkmClient: VKMClient = mockVKMClient
     // override lazy val geometryVKMTransform: VKMGeometryTransform = mockGeometryVKMTransform
     override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao
   }
@@ -96,10 +96,10 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(216, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
 
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(415512.9400000004, 6989434.033), Point(415976.358,6989464.984999999)), Some(77), Some(8), includePedestrian = Some(true)))
+    when(mockVKMClient.coordsToAddresses(Seq(Point(415512.9400000004, 6989434.033), Point(415976.358,6989464.984999999)), Some(77), Some(8), includePedestrian = Some(true)))
       .thenReturn( Seq(RoadAddress(Some("216"), 77, 8, Track.Combined, 0), RoadAddress(Some("216"), 77, 8, Track.Combined, 468)))
 
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(415468.0049999999,6989158.624000002), Point(415512.9400000004,6989434.033)), Some(648), Some(8), includePedestrian = Some(true)))
+    when(mockVKMClient.coordsToAddresses(Seq(Point(415468.0049999999,6989158.624000002), Point(415512.9400000004,6989434.033)), Some(648), Some(8), includePedestrian = Some(true)))
       .thenReturn( Seq(    RoadAddress(Some("216"), 648, 8, Track.Combined, 6416), RoadAddress(Some("216"), 648, 8, Track.Combined, 6695)))
 
     when(mockRoadLinkTempDao.getByMunicipality(216)).thenReturn(Seq())
@@ -154,18 +154,18 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(312, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
 
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376585.751,6992711.448,159.9759999999951),Point(376569.312,6992714.125,160.19400000000314)),
+    when(mockVKMClient.coordsToAddresses(Seq(Point(376585.751,6992711.448,159.9759999999951),Point(376569.312,6992714.125,160.19400000000314)),
       Some(16), Some(29), includePedestrian = Some(true))).thenThrow(new NullPointerException);
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376570.341,6992722.195,160.24099999999453),Point(376534.023,6992725.668,160.875)),
+    when(mockVKMClient.coordsToAddresses(Seq(Point(376570.341,6992722.195,160.24099999999453),Point(376534.023,6992725.668,160.875)),
       Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
       Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704)))
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937),Point(376570.341,6992722.195,160.24099999999453)),
+    when(mockVKMClient.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937),Point(376570.341,6992722.195,160.24099999999453)),
       Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
       Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4757), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740)))
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376519.312,6992724.148,161.00800000000163),Point(376534.023,6992725.668,160.875)),
+    when(mockVKMClient.coordsToAddresses(Seq(Point(376519.312,6992724.148,161.00800000000163),Point(376534.023,6992725.668,160.875)),
       Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
       Seq(RoadAddress(Some("312"), 16, 29, Track.Combined, 4690), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704)))
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937), Point(376639.195,6992733.214,160.125)),
+    when(mockVKMClient.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937), Point(376639.195,6992733.214,160.125)),
       Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
       Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4690), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4808)))
 
