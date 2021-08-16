@@ -9,7 +9,7 @@ import java.util.{Date, NoSuchElementException, Properties}
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
-import fi.liikennevirasto.digiroad2.client.viite.{IntegrationViiteClient, SearchViiteClient}
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
