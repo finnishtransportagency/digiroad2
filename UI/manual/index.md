@@ -1135,6 +1135,75 @@ _Valaistusgeometrian katkaisu._
 
 # 14. Kantavuus
 
+Kantavuus-tietolajia ei ole vielä otettu käyttöön Digiroadissa.
+
+Kantavuus on liikenneväylälle asetettu tieto tien suurimmasta kantavuudesta. Kantavuuksien lisäksi tietolajissa on kuvattu routivuuskerroin. Kantavuudet voi asettaa aktiiviseksi tasoksi tietolajivalikosta (1) ja kevätkantavuuden tai routivuuskertoimen voi asettaa visualisoitavaksi tietolajipaneelin radionapeista (2). Kartan eri mittakaavatasoilla kantavuuksien visualisointi muuttuu, jotta niiden erottaminen olisi helpompaa. Kantavuudet on visualisoitu eri v&auml;rein kantavuuden arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan selitteessä tietolajipaneelissa.
+
+![Kantavuuksien valinta](ka1.png)
+
+_Kantavuuksien valinta._
+
+##Kantavuuksien tietojen katselu##
+
+Yksitt&auml;isen kantavuuden voi valita napauttamalla kartalta sen geometriaa.
+
+Kerran napauttamalla tulee valituksi koko kantavuusketju, eli kaikki kantavuudet, joilla on sama kantavuuden arvo ja tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityisteillä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla kantavuuden geometriaa karttaikkunassa.
+
+Valitun kantavuusketjun tai yksitt&auml;isen kantavuuden geometria korostuu kartalla ja karttaikkunan oikeaan laitaan avautuu kantavuuden ominaisuustietoikkuna. Ominaisuustietoikkuna sisältää tiedot kantavuustiedon lisäys- ja muokkauspäivämäärästä, valittujen linkkien lukumäärästä, tiedon siitä, onko kantavuutta vai ei, kevätkantavuuden arvon, routivuuskertoimen ja mittauspäivän. 
+
+![Kantavuuden tietojen katselu](ka2.png)
+
+_Kantavuuden tietojen katselu, kun valittuna on kantavuusketju (napautettu kerran)._
+
+![Kantavuuden tietojen katselu](ka3.png)
+
+_Kantavuuden tietojen katselu, kun valittuna on yksitt&auml;inen kantavuus (kaksoisnapautus)._
+
+
+##Kantavuuksien muokkaus##
+
+Muokkaustilassa kantavuuksille voi antaa uusia arvoja tai poistaa olemassaolevia. Kantavuuksien arvoja voi muokata kolmella tavalla:
+
+1. Koko kantavuusketjulle.
+1. Yksitt&auml;isen linkin mittaiselle osuudelle tai tielinkin osalle.
+1. Monivalinnan avulla kokonaiselle alueelle.
+
+###Kantavuuden arvon muokkaus###
+
+Muokattava kantavuus valitaan napauttamalla sen geometriaa (3). Kerran napauttamalla tulee valituksi koko kantavuusketju, eli kaikki kantavuudet, joilla on sama kantavuuden arvo sekä tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityistiellä). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, voi sen tehd&auml; kaksoisnapauttamalla kantavuutta.
+
+Tietoja muokataan ominaisuustietoikkunassa syöttämällä kantavuudelle uusi arvo ominaisuustietotaulun syötekenttään (4), valitsemalla routivuuskertoimelle uuden arvon alasvetovalikosta (5) ja/tai syöttämällä uusi arvo mittauspäivälle (6). Muutokset tulee tallentaa tai perua ennen kuin siirrytään muokkaamaan uutta kohdetta. Kantavuus tulee olla valittuna radionapeista (7), jotta arvoja voi syöttää ja muokata
+
+![Kantavuuden muokkaus.](ka4.png)
+
+_Kantavuusketjun arvon muokkaus (napautettu kerran)._
+
+</br>
+####Kantavuuksien muokkaus monivalintaty&ouml;kalulla####
+
+Usean tielinkin kantavuusarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (8). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki kantavuudet piirretyn alueen sisällä ja kantavuudet, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), josta kantavuuksille määritellään uudet arvot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Useamman kantavuuden arvon muokkaus.](ka5.png)
+
+_Useamman kantavuuden arvon muokkaus kerralla._
+
+</br>
+####Kantavuuden katkaiseminen####
+
+Kantavuuden voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka löytyy työkaluvalikosta (10). Leikkaustyökalulla klikataan kantavuuden geometriasta kohtaa, josta kantavuus halutaan katkaista. Kantavuuden geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Kantavuuden katkaisu valitsee aina vain yhden tielinkin mittaisen osion kantavuusta, ei kantavuusketjua.
+
+![Kantavuuden katkaiseminen.](ka6.png)
+
+_Kantavuuden katkaiseminen._
+
+</br>
+Kantavuuden katkaisussa tielinkin osille valitaan uudet kantavuusarvot sovelluksen oikean reunan ominaisuustietotaulusta (11). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet A ja B (12) osoittavat, kummasta rajoituksesta on kyse. Uudet kantavuudet tallennetaan tallenna-painikkeella ja tai perutaan peruuta-painikkeella (13), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Kantavuuden katkaisussa tulee m&auml;&auml;ritt&auml;&auml; kantavuuksille eri arvot, jotta tallennus on mahdollista.
+
+
 # 15. Kelirikko
 
 Kelirikko on viivamainen tietolaji, joka kuvaa kelirikon aikaisia rajoituksia ja tien alttiutta kelirikolle. Kelirikko voi olla tielinkin mittainen tai sitä lyhyempi. Kelirikko-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on ilmoitettu kelirikko, joka on katseluhetkellä voimassa, se piirtyy kartalle punaisella viivalla. Siniset tielinkit puolestaan tarkoittavat, että tielle on määritelty kelirikkoaikainen rajoitus, mutta se ei ole katseluhetkellä voimassa. Tiet, joilla ei ole kelirikkoa ovat harmaita. Kelirikko voidaan ilmoittaa vuosittain tiettynä aikana toistuvasti voimassa olevaksi tai yleisenä tietona siitä, että tie on kelirikolle altis. Kelirikolle voidaan määritellä tietty painorajoitus.
