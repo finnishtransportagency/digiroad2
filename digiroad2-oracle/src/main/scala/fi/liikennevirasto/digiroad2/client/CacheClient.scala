@@ -27,7 +27,7 @@ class CacheClient {
       LogUtils.time(logger,"Cache value")(
         client.set(key, ttl, data).isDone
       )
-      client.get(key).asInstanceOf[DataModel]
+      data
     } catch {
       case e: Exception => logger.error("Caching failed", e); throw e
     }
