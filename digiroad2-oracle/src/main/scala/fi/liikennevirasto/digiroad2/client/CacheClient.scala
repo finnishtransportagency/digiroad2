@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.client
 
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import net.spy.memcached.transcoders.SerializingTranscoder
 import net.spy.memcached.{AddrUtil, ConnectionFactory, ConnectionFactoryBuilder, MemcachedClient}
 import org.slf4j.{Logger, LoggerFactory}
@@ -24,8 +24,10 @@ class CacheClient {
 
   def set[DataModel](key: String, ttl: Int, data: DataModel): DataModel = {
     try {
-      client.set(key, ttl, data).isDone
-      client.get(key).asInstanceOf[DataModel]
+      LogUtils.time(logger,"Cache value")(
+        client.set(key, ttl, data).isDone
+      )
+      data
     } catch {
       case e: Exception => logger.error("Caching failed", e); throw e
     }
@@ -33,7 +35,10 @@ class CacheClient {
 
   def get[DataModel](key: String): CachedValue = {
     try {
-      val result = client.get(key).asInstanceOf[DataModel]
+      val result = LogUtils.time(logger,"Retrieve value from cache")(
+        client.get(key).asInstanceOf[DataModel]
+      )
+      
       if (result == null) {
         CachedValue(null, success = false)
       } else {
