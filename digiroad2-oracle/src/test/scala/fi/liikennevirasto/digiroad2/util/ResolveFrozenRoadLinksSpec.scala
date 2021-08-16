@@ -27,7 +27,6 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     override lazy val vvhClient: VVHClient = mockVVHClient
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val vkmClient: VKMClient = mockVKMClient
-    // override lazy val geometryVKMTransform: VKMGeometryTransform = mockGeometryVKMTransform
     override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao
   }
 
