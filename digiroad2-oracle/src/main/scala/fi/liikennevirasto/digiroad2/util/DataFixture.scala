@@ -2417,7 +2417,7 @@ object DataFixture {
   }
 
   def newRoadAddressFromViite(): Unit ={
-    AutomaticLaneCreationProcess.process()
+    AutomaticLaneCreationModificationProcess.process()
   }
   
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (

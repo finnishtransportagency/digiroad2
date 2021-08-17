@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
-object AutomaticLaneCreationProcess {
+object AutomaticLaneCreationModificationProcess {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   lazy val integrationViiteClient: IntegrationViiteClient = {
