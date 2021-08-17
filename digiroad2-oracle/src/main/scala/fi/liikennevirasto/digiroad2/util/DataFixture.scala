@@ -2418,6 +2418,10 @@ object DataFixture {
     println("\n")
   }
 
+  def newRoadAddressFromViite(): Unit ={
+    AutomaticLaneCreationModificationProcess.process()
+  }
+  
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
     "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
@@ -2648,6 +2652,8 @@ object DataFixture {
         restoreExpiredAssetsFromTRImport()
       case Some("move_old_expired_assets") =>
         moveOldExpiredAssets()
+      case Some("new_road_address_from_viite") =>
+        newRoadAddressFromViite()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
