@@ -81,7 +81,7 @@ class RoadPartReservedException(response: String) extends RoadAddressException(r
 class GeometryTransform(roadAddressService: RoadAddressService) {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
 
-  lazy val vkmGeometryTransform: VKMClient = {
+  lazy val vkmClient: VKMClient = {
     new VKMClient()
   }
 
@@ -105,7 +105,7 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty && road.isDefined)
-      return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
+      return vkmClient.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
 
     val roadSide = roadAddress match {
       case Some(addrSide) if addrSide.sideCode.value == assetSideCode => RoadSide.Right //TowardsDigitizing //
