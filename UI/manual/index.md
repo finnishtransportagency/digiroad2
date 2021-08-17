@@ -2393,7 +2393,7 @@ _Liikennevalojen valinta._
 
 ## 30.1 Liikennevalojen tietojen katselu
 
-Liikennevalokohteen voi valita napauttamalla kartalta sen geometriaa, jolloin valitun kohteen geometria korostuu ja sivun oikeaan laitaan avautuu liikennevalon ominaisuustietoikkuna. Ominaisuustietoikkunassa näkyy useita ominaisuustietoja, joita voi tallentaa liikennevaloille (2), kuten esimerkiksi liikennevalojen tyyppi, opastimen rakennelma sekä opastimen suhteellinen sijainti tiellä. Valinnan voi purkaa napauttamalla taustakarttaa.
+Liikennevalokohteen voi valita napauttamalla kartalta sen geometriaa, jolloin valitun kohteen geometria korostuu ja sivun oikeaan laitaan avautuu liikennevalon ominaisuustietoikkuna. Ominaisuustietoikkunassa näkyy useita ominaisuustietoja, joita voi tallentaa liikennevaloille (2), kuten esimerkiksi liikennevalojen tyyppi, opastimen rakennelma sekä opastimen suhteellinen sijainti tiellä. Valinnan voi purkaa napauttamalla taustakarttaa. Huom! Vanhan tietomallin liikennevalojen tietoja voi katsella vain päivittämällä tiedot uuden tietomallin mukaisiksi. Tämä tapahtuu napauttamalla vanhan tietomallin pysäkin kuvaketta ja painamalla "Siirry muokkaamaan liikennevaloa" -painiketta, jolloin tiedot voi päivittää.
 
 ![Katselu.](liik2.png)
 
@@ -2419,6 +2419,8 @@ Liikennevalojen tietoja voi muokata, kohteen voi poistaa, siirt&auml;&auml; tai 
 
 ### Liikennevalojen tietojen muokkaus, kohteen poisto, siirto ja lis&auml;ys
 
+HUOM! Muokatessa vanhan tietomallin mukaisia liikennevaloja, esiin tulee uuden tietomallin mukainen ominaisuustietoikkuna, jonka tiedot täyttämällä kohde päivittyy uuteen tietomalliin. 
+
 Muokattava kohde valitaan napauttamalla sen geometriaa. Valitun kohteen geometria korostuu ja sivun oikeaan laitaan avautuu ominaisuustietoikkuna (4), johon voi täydentää liikennevalojen tietoja. Valittu opastinlaite voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (5). Muutokset voidaan tallentaa painamalla tallenna-painiketta (6) tai kumota peruuta-painikkeella (7).
 
 Yksitt&auml;ist&auml; liikennevaloa voidaan my&ouml;s siirt&auml;&auml;. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle liikennevalo siirtyy, korostuu kartalla sinisell&auml; v&auml;rill&auml;. Siirto tallentuu tallenna-painikkeella (6). Muutokset voidaan kumota peruuta-painikkeella (7).
@@ -2432,8 +2434,6 @@ _Liikennevalokohteiden muokkaus._
 Liikennevalomerkint&auml; voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta plus-painiketta eli lis&auml;ysty&ouml;kalua (8). Liikennevalo lis&auml;t&auml;&auml;n haluttuun tien kohtaan, minkä jälkeen sivun oikeaan laitaan avautuu ominaisuustietoikkuna (9), johon liikennevalojen tiedot täydennetään, minkä jälkeen painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (10).
 
 ![Lisäys.](liik7.png)
-
-HUOM! Muokatessa vanhan tietomallin mukaisia liikennevaloja, esiin tulee uuden tietomallin mukainen ominaisuustietoikkuna, jonka tiedot täyttämällä kohde päivittyy uuteen tietomalliin.
 
 # 31. Liikennemerkit
 
