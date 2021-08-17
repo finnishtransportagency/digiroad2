@@ -6,8 +6,10 @@ import java.sql.SQLIntegrityConstraintViolationException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.{Date, NoSuchElementException, Properties}
+
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
@@ -119,8 +121,8 @@ object DataFixture {
     new GeometryTransform(roadAddressService)
   }
 
-  lazy val geometryVKMTransform: VKMGeometryTransform = {
-    new VKMGeometryTransform()
+  lazy val vkmClient: VKMClient = {
+    new VKMClient()
   }
 
   lazy val postGISLinearAssetDao : PostGISLinearAssetDao = {
@@ -569,7 +571,7 @@ object DataFixture {
     val busStops = trBusStops.flatMap{
       trStop =>
         try {
-          val stopPointOption = withDynSession{ geometryVKMTransform.addressToCoords(trStop.roadAddress).headOption }
+          val stopPointOption = withDynSession{ vkmClient.addressToCoords(trStop.roadAddress).headOption }
 
           stopPointOption match {
             case Some(stopPoint) =>
