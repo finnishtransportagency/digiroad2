@@ -309,6 +309,23 @@ _Kaistan mallinnustyökalu -katselutila._
 
 Pääkaistojen numerot (8) visualisoituvat karttaikkunassa myös kyseisten kaistojen päälle, kun ikkunaa zoomataan tarpeeksi lähelle. Karttaikkunaan voi tietolajipaneelin työkalupalkin valintaruutujen kautta myös valita näkyviin täydentävän geometrian (tielinkkien historiatiedot) sekä kävelyn ja pyöräilyn väylät (9).
 
+Kaistanumerointi muodostuu seuraavasti:
+
+Ensimmäinen numero määräytyy seuraavasti:
+* 1X = kaista tieosoitteen kasvusuuntaan (tieosoitteistetut tiet ja kadut)
+* 2X = kaista tieosoitteen kasvusuuntaa vastaan (tieosoitteistetut tiet ja kadut)
+
+Toinen numero määräytyy seuraavasti:
+* X1 = pääkaista
+* X2 = ensimmäinen lisäkaista pääkaistan vasemmalla puolella
+* X3 = ensimmäinen lisäkaista pääkaistan oikealla puolella
+* X4 = toinen lisäkaista pääkaistan vasemmalla puolella
+* X5 = toinen lisäkaistan pääkaistan oikealla puolella
+* X6 = kolmas lisäkaista pääkaistan vasemmalla puolella
+* X7 = kolmas lisäkaistan pääkaistan oikealla puolella
+* X8 = neljäs lisäkaista pääkaistan vasemmalla puolella
+* X9 = neljäs lisäkaista pääkaistan oikealla puolella
+
 ![Kaistanumerot.](kmt4.png)
 
 _Kaistan mallinnustyökalu -katselutila ja lisävalinnat._
