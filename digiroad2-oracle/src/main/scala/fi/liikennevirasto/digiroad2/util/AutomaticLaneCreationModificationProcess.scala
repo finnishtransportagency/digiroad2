@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient, Source}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.lane.{ LaneProperty, LanePropertyValue, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -37,13 +37,9 @@ object AutomaticLaneCreationModificationProcess {
     
     if (changeInfo.changeType == 2) {
       val source = changeInfo.oldRoadNumbering
-
-
       val maintenanceHole = Seq(30000, 39999)
       val pedestrianAndCycleRoute = Seq(70000, 99999)
       val path = Seq(62000, 62999)
-
-      var linkids: Seq[Long] = Seq(0, 1, 2, 3)
 
       def mapPropertiesDefaultValue(source: Source, laneCode: Int, lanetype: Int = 1): Seq[LaneProperty] = {
         Seq(
@@ -66,64 +62,63 @@ object AutomaticLaneCreationModificationProcess {
 
         val (track, roadNumber, roadPartNumber) = (source.track, source.roadNumber, source.roadPartNumber)
 
-        //Kevarit (roadNumbers(tie) 70000 - 99999): Lane Code (Kaistat) 31  MainLane.motorwayMaintenance
-        //Polut (roadNumbers(tie) 62000 - 62999): Lane Code (Kaistat) 31  MainLane.motorwayMaintenance
+        //Kevarit (roadNumbers(tie) 70000 - 99999): Lane Code (Kaistat) 31
+        //Polut (roadNumbers(tie) 62000 - 62999): Lane Code (Kaistat) 31
         val pedestrianAndCycleRouteAndPathCheck = (checkRange(roadNumber.toInt, path) ||
           checkRange(roadNumber.toInt, pedestrianAndCycleRoute))
 
-        //Huoltoaukot (roadNumbers(tie) 30000-39999 roadPartNumber(osa) 9) Lane Code (Kaistat) 31  MainLane.motorwayMaintenance
+        //Huoltoaukot (roadNumbers(tie) 30000-39999 roadPartNumber(osa) 9) Lane Code (Kaistat) 31
         val maintenanceHoleCheck = checkRange(roadNumber.toInt, maintenanceHole) && roadPartNumber == 9
 
-
-        //Track(Ajorata) 0, tiet 20000 - 29999, tieosa 995-999: Lane Code (Kaistat) 31  MainLane.motorwayMaintenance*/
+        //Track(Ajorata) 0, tiet 20000 - 29999, tieosa 995-999: Lane Code (Kaistat) 31
         val checkMotorwayMaintenance3 = (track.value == 0 &&
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
           checkRange(roadPartNumber.toInt, Seq(995, 999)))
 
 
-        //Track(Ajorata) 2: Lane Code (Kaistat) 21 MainLane.againstDirection
+        //Track(Ajorata) 2: Lane Code (Kaistat) 21
         if (track.value == 2) {
           MainLane.againstDirection
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance3) {
           MainLane.motorwayMaintenance
         } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
           //Track(Ajorata) 1: Lane Code (Kaistat) 11 MainLane.towardsDirection
-          //Track(Ajorata) 0, tiet 20000 - 39999: Kaista 11  - HUOM! Poikkeus huoltoaukot MainLane.towardsDirection
+          //Track(Ajorata) 0, roadNumbers(tiet) 20000 - 39999: Kaista 11  - HUOM! Poikkeus huoltoaukot
           MainLane.towardsDirection
         }
       }
-      
-      val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
-        mapPropertiesDefaultValue(source, laneCode(source), 20)
-      } else {
-        mapPropertiesDefaultValue(source, laneCode(source))
+      // get set(linkIds) from vkm by  tieosoite
+      val laneExist= false
+      if(laneExist){
+        // new lane to empty road
+        val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
+          mapPropertiesDefaultValue(source, laneCode(source), 20)
+        } else {
+          mapPropertiesDefaultValue(source, laneCode(source))
+        }
+        
+        //Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21 ?
+        if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999)) || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
+          val newLanes = Seq(
+            NewIncomeLane(0, startMeasure = source.startAddrMValue,
+              endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, mapPropertiesDefaultValue(source, 11)),
+            NewIncomeLane(0, startMeasure = source.startAddrMValue,
+              endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, mapPropertiesDefaultValue(source, 21)))
+          laneService.create(newLanes, Set(0, 1, 2, 3), 0, user)
+        } else {
+          val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
+            endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, newLaneProperties))
+          laneService.create(newLane, Set(0, 1, 2, 3), 0, user)
+        }
+      }else{
+        // continue old lane to new part
+
+        // check if there is already lane in part of section 
+
+        // get lane by linkId
+
+        // copy old lane info and add to new section
       }
-
-
-      // new lane to empty road
-      /*
-          Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21 ?
-          */
-      if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999)) || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
-        val newLanes = Seq(
-          NewIncomeLane(0, startMeasure = source.startAddrMValue, 
-            endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, mapPropertiesDefaultValue(source, 11)),
-          NewIncomeLane(0, startMeasure = source.startAddrMValue, 
-            endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, mapPropertiesDefaultValue(source, 21)))
-        laneService.create(newLanes, Set(100L), 0, user)
-      } else {
-        val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue, 
-          endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, newLaneProperties))
-        laneService.create(newLane, Set(100L), 0, user)
-      }
-
-      // continue old lane to new part
-
-      // check if there is already lane in part of section 
-
-      // copy old lane info and add to new section
-
-      // get lane by linkId
     }
 
     throw new NotImplementedError()
