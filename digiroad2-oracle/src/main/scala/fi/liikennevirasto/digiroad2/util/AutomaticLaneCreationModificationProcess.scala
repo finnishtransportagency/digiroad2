@@ -34,7 +34,7 @@ object AutomaticLaneCreationModificationProcess {
 
   // change type 2
   private def newLane(changeInfo: ChangeInformation): Seq[Long] = {
-    
+   
     if (changeInfo.changeType == 2) {
       val source = changeInfo.oldRoadNumbering
       val maintenanceHole = Seq(30000, 39999)
@@ -87,16 +87,17 @@ object AutomaticLaneCreationModificationProcess {
           MainLane.towardsDirection
         }
       }
+
       // get set(linkIds) from vkm by  tieosoite
-      val laneExist= false
-      if(laneExist){
+      val laneExist = false
+      if (laneExist) {
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
           mapPropertiesDefaultValue(source, laneCode(source), 20)
         } else {
           mapPropertiesDefaultValue(source, laneCode(source))
         }
-        
+
         //Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21 ?
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999)) || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
@@ -110,7 +111,7 @@ object AutomaticLaneCreationModificationProcess {
             endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, newLaneProperties))
           laneService.create(newLane, Set(0, 1, 2, 3), 0, user)
         }
-      }else{
+      } else {
         // continue old lane to new part
 
         // check if there is already lane in part of section 
