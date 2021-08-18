@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient, Source}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{ LaneProperty, LanePropertyValue, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -58,7 +59,7 @@ object AutomaticLaneCreationModificationProcess {
         (range.head to range.last).contains(number)
       }
 
-      def laneCode(source: Source): Int = {
+      def laneCodeAndSideCode(source: Source): (Int,Int) = {
 
         val (track, roadNumber, roadPartNumber) = (source.track, source.roadNumber, source.roadPartNumber)
 
@@ -77,13 +78,13 @@ object AutomaticLaneCreationModificationProcess {
         
         //Track(Ajorata) 2: Lane Code (Kaistat) 21
         if (track.value == 2) {
-          MainLane.againstDirection
+          (MainLane.againstDirection,SideCode(2).value)
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance3) {
-          MainLane.motorwayMaintenance
+          (MainLane.motorwayMaintenance,SideCode(3).value)
         }else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
           //Track(Ajorata) 1: Lane Code (Kaistat) 11
           //Track(Ajorata) 0, roadNumbers(tiet) 20000 - 39999: Lane Code (Kaistat) 11
-          MainLane.towardsDirection
+          (MainLane.towardsDirection,SideCode(1).value)
         }
       }
 
@@ -93,9 +94,9 @@ object AutomaticLaneCreationModificationProcess {
       if (laneExist) {
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
-          mapPropertiesDefaultValue(source, laneCode(source), 20)
+          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1, 20)
         } else {
-          mapPropertiesDefaultValue(source, laneCode(source))
+          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1)
         }
 
         //Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21 ?
@@ -106,11 +107,14 @@ object AutomaticLaneCreationModificationProcess {
               endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11)),
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
               endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21)))
-          laneService.create(newLanes, Set(0, 1, 2, 3), 0, user)
+          laneService.create(Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
+            endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11))), Set(0, 1, 2, 3), 1, user)
+          laneService.create(Seq( NewIncomeLane(0, startMeasure = source.startAddrMValue,
+            endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21))), Set(0, 1, 2, 3), 2, user)
         } else {
           val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
             endMeasure = source.endAddrMValue, 0, properties = newLaneProperties))
-          laneService.create(newLane, Set(0, 1, 2, 3), 0, user)
+          laneService.create(newLane, Set(0, 1, 2, 3), laneCodeAndSideCode(source)._2, user)
         }
       } else {
         // continue old lane to new part
