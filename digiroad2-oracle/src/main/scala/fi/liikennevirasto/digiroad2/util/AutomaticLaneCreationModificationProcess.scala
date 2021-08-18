@@ -88,6 +88,7 @@ object AutomaticLaneCreationModificationProcess {
       }
 
       // get set(linkIds) from vkm by  tieosoite
+      // check if there is already lane in part of section
       val laneExist = false
       if (laneExist) {
         // new lane to empty road
@@ -113,8 +114,6 @@ object AutomaticLaneCreationModificationProcess {
         }
       } else {
         // continue old lane to new part
-
-        // check if there is already lane in part of section 
 
         // get lane by linkId
 
