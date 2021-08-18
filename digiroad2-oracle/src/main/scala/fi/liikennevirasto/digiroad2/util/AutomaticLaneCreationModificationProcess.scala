@@ -98,16 +98,17 @@ object AutomaticLaneCreationModificationProcess {
         }
 
         //Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21 ?
-        if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999)) || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
+        if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999)) 
+          || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, mapPropertiesDefaultValue(source, 11)),
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11)),
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, mapPropertiesDefaultValue(source, 21)))
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21)))
           laneService.create(newLanes, Set(0, 1, 2, 3), 0, user)
         } else {
           val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, isExpired = false, isDeleted = false, newLaneProperties))
+            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties))
           laneService.create(newLane, Set(0, 1, 2, 3), 0, user)
         }
       } else {
