@@ -74,16 +74,15 @@ object AutomaticLaneCreationModificationProcess {
         val checkMotorwayMaintenance3 = (track.value == 0 &&
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
           checkRange(roadPartNumber.toInt, Seq(995, 999)))
-
-
+        
         //Track(Ajorata) 2: Lane Code (Kaistat) 21
         if (track.value == 2) {
           MainLane.againstDirection
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance3) {
           MainLane.motorwayMaintenance
-        } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
-          //Track(Ajorata) 1: Lane Code (Kaistat) 11 MainLane.towardsDirection
-          //Track(Ajorata) 0, roadNumbers(tiet) 20000 - 39999: Kaista 11  - HUOM! Poikkeus huoltoaukot
+        }else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
+          //Track(Ajorata) 1: Lane Code (Kaistat) 11
+          //Track(Ajorata) 0, roadNumbers(tiet) 20000 - 39999: Lane Code (Kaistat) 11
           MainLane.towardsDirection
         }
       }
