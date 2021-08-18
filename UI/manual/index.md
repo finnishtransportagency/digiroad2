@@ -1882,19 +1882,21 @@ Tielinkille voi lis&auml;t&auml; talvinopeusrajoituksen valitsemalla linkin geom
 
 _Talvinopeusrajoituksen lis&auml;&auml;minen._
 
-# 24. Liikennemäärä
+# 24 Liikennem&auml;&auml;r&auml;
 
-Kartalle voi valita tietolajit-paletista (1) Liikennem&auml;&auml;r&auml;-valinnan. Liikennem&auml;&auml;r&auml; on viivamainen tietolaji, ja sen arvo ilmoitetaan kokonaisulukuna ajoneuvoa/vuorokausi. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; (2) ja tielinkit, joiden liikennem&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml; (3).
+Liikennemäärän muokkaus on toistaiseksi otettu pois käytöstä.
 
-![Liikennemaara](k91.JPG)
+Kartalle voi valita tietolajipaletista (1) Liikennem&auml;&auml;r&auml;-valinnan. Liikennem&auml;&auml;r&auml; on viivamainen tietolaji, ja sen arvo ilmoitetaan kokonaisulukuna ajoneuvoa/vuorokausi. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat, joille liikennemäärä on merkattu on visualisoitu punaisella v&auml;rill&auml; (2) ja tielinkit, joiden liikennem&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml; (3).
+
+[Kuvat päivitetään, kun muokkaustila saadaan käyttöön.]
 
 _Liikennem&auml;&auml;r&auml; -valinta._
 
 ## 24.1 Liikennem&auml;&auml;r&auml;tietojen katselu
 
-Yksitt&auml;isen liikennem&auml;&auml;r&auml;kohteen voi valita napauttamalla kartalta sen geometriaa (4). Kerran napauttamalla tulee valituksi koko liikennem&auml;&auml;r&auml;ketju, eli kaikki tieosuudet, joilla on sama liikennem&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustietoikkuna (6). Liikennem&auml;&auml;r&auml;ll&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; liikennem&auml;&auml;r&auml;n arvo (kokonaisluku), sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
+Yksitt&auml;isen liikennem&auml;&auml;r&auml;kohteen voi valita napauttamalla kartalta sen geometriaa (4). Kerran napauttamalla tulee valituksi koko liikennem&auml;&auml;r&auml;ketju, eli kaikki tieosuudet, joilla on sama liikennem&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustietoikkuna (5). Liikennem&auml;&auml;r&auml;ll&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot, tieto linkkien lukum&auml;&auml;r&auml;st&auml; linkkiketjussa sekä liikennem&auml;&auml;r&auml;n arvo (kokonaisluku).
 
-![Liikennemaarakatselu](k92.JPG)
+[Kuvat päivitetään, kun muokkaustila saadaan käyttöön.]
 
 _Liikennem&auml;&auml;r&auml;-katselutila._
 
@@ -1913,34 +1915,34 @@ Liikennem&auml;&auml;r&auml;valintaa muokataan muokkaustilassa. Muokattava kohde
 
 Huom! Liikennem&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
 
-![Liikennemaara muokkaus](k93.JPG)
+[Kuvat päivitetään, kun muokkaustila saadaan käyttöön.]
 
 _Liikennem&auml;&auml;r&auml;n muokkaus._
 
 ### Liikennem&auml;&auml;rien muokkaus monivalintaty&ouml;kalulla
 
-Useamman kuin yhden tielinkin liikennem&auml;&auml;r&auml;arvon voi muuttaa kerralla. Halutut geometriat valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko rajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan liikennem&auml;&auml;r&auml;lle tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Usean tielinkin liikennemääräarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (8). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki liikennemäärät piirretyn alueen sisällä ja liikennemäärät, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), josta liikennemäärille määritellään uudet arvot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
 
-![Liikennemaara monivalinta](k94.JPG)
+[Kuvat päivitetään, kun muokkaustila saadaan käyttöön.]
 
 _Useamman tieosuuden liikennem&auml;&auml;r&auml;n muokkaus kerralla._
 
 ### Liikennem&auml;&auml;r&auml;kohteen katkaisu
 
-Liikennem&auml;&auml;r&auml;kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla napautetaan tielinkin geometriasta kohtaa, josta liikennem&auml;&auml;r&auml;tieto halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Liikennem&auml;&auml;r&auml;geometrian katkaisu valitsee aina vain linkin mittaisen osion geometriasta, ei koko liikennem&auml;&auml;r&auml;ketjua.
-Katkaistun geometrian osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen liikennem&auml;&auml;r&auml;tieto j&auml;&auml; voimaan.
+Liikennem&auml;&auml;r&auml;kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta liikennem&auml;&auml;r&auml;tieto halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Liikennem&auml;&auml;r&auml;geometrian katkaisu valitsee aina vain linkin mittaisen osion geometriasta, ei koko liikennem&auml;&auml;r&auml;ketjua.
+Geometrian katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen liikennem&auml;&auml;r&auml;tieto j&auml;&auml; voimaan.
 
 Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille liikennem&auml;&auml;r&auml;tiedoille eri arvot, jotta tallennus on mahdollista.
 
-![Liikennemaara katkaisu](k95.JPG)
+[Kuvat päivitetään, kun muokkaustila saadaan käyttöön.]
 
 _Liikennem&auml;&auml;r&auml;kohteen katkaisu._
 
 ### Liikennem&auml;&auml;r&auml;kohteen poistaminen
 
-Tielinkin suurin liikennem&auml;&auml;r&auml;tieto poistetaan ominaisuustietoikkunassa (6) valitsemalla "Ei tiedossa".
+Tielinkin suurin liikennem&auml;&auml;r&auml;tieto poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla "Ei tiedossa".
 
-![Liikennemaara poisto](k96.JPG)
+[Kuvat päivitetään, kun muokkaustila saadaan käyttöön.]
 
 _Liikennem&auml;&auml;r&auml;tiedon poistaminen._
 
@@ -1948,7 +1950,7 @@ _Liikennem&auml;&auml;r&auml;tiedon poistaminen._
 
 Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (4) Liikennem&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustietoikkunaan (6) avautuu tielinkin liikennem&auml;&auml;r&auml;tiedot. Valitaan "Liikennem&auml;&auml;r&auml;" ja sy&ouml;tet&auml;&auml;n arvo sy&ouml;tekentt&auml;&auml;n. Liikennem&auml;&auml;r&auml;tieto tallennetaan painamalla Tallenna (8). Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
 
-![Liikennemaara lisays](k97.JPG)
+[Kuvat päivitetään, kun muokkaustila saadaan käyttöön.]
 
 _Liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
 
