@@ -41,7 +41,7 @@ case class NewLane ( linkId: Long, startMeasure: Double, endMeasure: Double, val
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime] )
 
 case class NewIncomeLane ( id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
-                           isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Int=null )
+                           isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None )
 
 case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, geometry: Seq[Point], lanes: Seq[Int])
 

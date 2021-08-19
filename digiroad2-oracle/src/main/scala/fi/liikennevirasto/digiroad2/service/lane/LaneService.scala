@@ -963,7 +963,7 @@ trait LaneOperations {
         val laneCode = newLane.properties.find(_.publicId == "lane_code")
           .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
-        val laneToInsert = PersistedLane(0, linkId,newLane.sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+        val laneToInsert = PersistedLane(0, linkId,newLane.sideCode.get, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
           newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
           expired = false, vvhTimeStamp, None, newLane.properties)
 
@@ -988,7 +988,7 @@ trait LaneOperations {
           else
             throw new InvalidParameterException(s"No RoadLink found: $linkId")
 
-          val laneToInsert = PersistedLane(0, linkId, newLane.sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+          val laneToInsert = PersistedLane(0, linkId, newLane.sideCode.get, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
             roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None, None, None,
             expired = false, vvhTimeStamp, None, newLane.properties)
 

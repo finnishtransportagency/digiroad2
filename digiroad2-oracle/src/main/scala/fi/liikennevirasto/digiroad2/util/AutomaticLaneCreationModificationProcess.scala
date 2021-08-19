@@ -104,13 +104,13 @@ object AutomaticLaneCreationModificationProcess {
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11), sideCode = 1),
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11), sideCode = Some(1)),
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21), sideCode = 2))
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21), sideCode =  Some(2)))
           laneService.createNewFromChange(newLanes, Set(0, 1, 2, 3), user)
         } else {
           val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties, sideCode = laneCodeAndSideCode(source)._2))
+            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties, sideCode =  Some(laneCodeAndSideCode(source)._2)))
           laneService.createNewFromChange(newLane, Set(0, 1, 2, 3), user)
         }
       } else {
