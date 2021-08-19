@@ -90,8 +90,8 @@ object AutomaticLaneCreationModificationProcess {
         }
       }
 
-      // get set(linkIds) from vkm by  tieosoite, 
-      // get MValues of links from VKM
+      // TODO get set(linkIds) from vkm by  tieosoite, 
+      // TODO get MValues of links from VKM
       // check if there is already lane in part of section
       val laneExist = false
       val startMeasureFromVKM = 0
