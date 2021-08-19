@@ -130,6 +130,26 @@ class VKMClient {
     }
   }
 
+  def addressToRoadlinks(roadAddress: RoadAddress) : List[String] = {
+    val params = Map(
+      VkmRoad -> roadAddress.road,
+      VkmRoadPart -> roadAddress.roadPart,
+      VkmTrackCodes -> roadAddress.track.value,
+      VkmDistance -> roadAddress.addrM
+    )
+
+    request(vkmBaseUrl + "muunna?" + urlParamsReverse(params)) match  {
+      case Left(addressData) =>
+        if (addressData.features.nonEmpty)
+          mapRoadlinks(addressData)
+        else
+          throw new RoadAddressException("empty response")
+
+      case Right(error) =>
+        throw new RoadAddressException(error.toString)
+    }
+  }
+
   /**
     * Resolve side code as well as road address
     *
@@ -187,6 +207,18 @@ class VKMClient {
           val x = addr.properties("x").toDouble
           val y = addr.properties("y").toDouble
           Point(x,y)
+      }
+    } catch {
+      case ex: Exception => throw new RoadAddressException("Could not convert response from VKM: %s".format(ex.getMessage))
+    }
+  }
+
+  private def mapRoadlinks(data: FeatureCollection) = {
+
+    try {
+      data.features.map {
+        addr =>
+          addr.properties("link_id")
       }
     } catch {
       case ex: Exception => throw new RoadAddressException("Could not convert response from VKM: %s".format(ex.getMessage))
