@@ -59,7 +59,7 @@ object AutomaticLaneCreationModificationProcess {
         (range.head to range.last).contains(number)
       }
 
-      def laneCodeAndSideCode(source: Source): (Int, Int) = {
+      def laneCodeAndSideCode(source: Source): (Option[Int], Option[ Int]) = {
 
         val (track, roadNumber, roadPartNumber) = (source.track, source.roadNumber, source.roadPartNumber)
 
@@ -78,13 +78,15 @@ object AutomaticLaneCreationModificationProcess {
 
         //Track(Ajorata) 2: Lane Code (Kaistat) 21
         if (track.value == 2) {
-          (MainLane.againstDirection, SideCode(2).value)
+          (Some(MainLane.againstDirection), Some(SideCode(2).value))
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance) {
-          (MainLane.motorwayMaintenance, SideCode(3).value)
+          (Some(MainLane.motorwayMaintenance), Some(SideCode(3).value))
         } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
           //Track(Ajorata) 1: Lane Code (Kaistat) 11
           //Track(Ajorata) 0, roadNumbers(tiet) 20000 - 39999: Lane Code (Kaistat) 11
-          (MainLane.towardsDirection, SideCode(1).value)
+          (Some(MainLane.towardsDirection), Some(SideCode(1).value))
+        }else{
+          (None,None)
         }
       }
 
@@ -94,9 +96,9 @@ object AutomaticLaneCreationModificationProcess {
       if (laneExist) {
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
-          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1, 20)
+          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get, 20)
         } else {
-          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1)
+          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get)
         }
 
         //Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21
@@ -110,7 +112,7 @@ object AutomaticLaneCreationModificationProcess {
           laneService.createNewFromChange(newLanes, Set(0, 1, 2, 3), user)
         } else {
           val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties, sideCode =  Some(laneCodeAndSideCode(source)._2)))
+            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties, sideCode =  Some(laneCodeAndSideCode(source)._2.get)))
           laneService.createNewFromChange(newLane, Set(0, 1, 2, 3), user)
         }
       } else {
