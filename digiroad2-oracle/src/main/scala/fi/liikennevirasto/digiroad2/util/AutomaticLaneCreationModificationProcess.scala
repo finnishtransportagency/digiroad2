@@ -72,14 +72,14 @@ object AutomaticLaneCreationModificationProcess {
         val maintenanceHoleCheck = checkRange(roadNumber.toInt, maintenanceHole) && roadPartNumber == 9
 
         //Track(Ajorata) 0, tiet 20000 - 29999, tieosa 995-999: Lane Code (Kaistat) 31
-        val checkMotorwayMaintenance3 = (track.value == 0 &&
+        val checkMotorwayMaintenance = (track.value == 0 &&
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
           checkRange(roadPartNumber.toInt, Seq(995, 999)))
 
         //Track(Ajorata) 2: Lane Code (Kaistat) 21
         if (track.value == 2) {
           (MainLane.againstDirection, SideCode(2).value)
-        } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance3) {
+        } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance) {
           (MainLane.motorwayMaintenance, SideCode(3).value)
         } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
           //Track(Ajorata) 1: Lane Code (Kaistat) 11
