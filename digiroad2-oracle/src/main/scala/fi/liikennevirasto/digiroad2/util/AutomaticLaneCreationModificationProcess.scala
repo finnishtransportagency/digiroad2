@@ -90,9 +90,12 @@ object AutomaticLaneCreationModificationProcess {
         }
       }
 
-      // get set(linkIds) from vkm by  tieosoite
+      // get set(linkIds) from vkm by  tieosoite, 
+      // get MValues of links from VKM
       // check if there is already lane in part of section
       val laneExist = false
+      val startMeasureFromVKM = 0
+      val endMeasureFromVKM = 0
       if (laneExist) {
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
@@ -105,14 +108,14 @@ object AutomaticLaneCreationModificationProcess {
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
-            NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11), sideCode = Some(1)),
-            NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21), sideCode =  Some(2)))
+            NewIncomeLane(0, startMeasure = startMeasureFromVKM,
+              endMeasure = endMeasureFromVKM, 0, properties = mapPropertiesDefaultValue(source, 11), sideCode = Some(1)),
+            NewIncomeLane(0, startMeasure = startMeasureFromVKM,
+              endMeasure = endMeasureFromVKM, 0, properties = mapPropertiesDefaultValue(source, 21), sideCode =  Some(2)))
           laneService.createNewFromChange(newLanes, Set(0, 1, 2, 3), user)
         } else {
-          val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties, sideCode =  Some(laneCodeAndSideCode(source)._2.get)))
+          val newLane = Seq(NewIncomeLane(0, startMeasure = startMeasureFromVKM,
+            endMeasure = endMeasureFromVKM, 0, properties = newLaneProperties, sideCode =  Some(laneCodeAndSideCode(source)._2.get)))
           laneService.createNewFromChange(newLane, Set(0, 1, 2, 3), user)
         }
       } else {
