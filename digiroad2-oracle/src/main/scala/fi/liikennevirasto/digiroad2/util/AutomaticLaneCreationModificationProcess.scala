@@ -63,27 +63,27 @@ object AutomaticLaneCreationModificationProcess {
 
         val (track, roadNumber, roadPartNumber) = (source.track, source.roadNumber, source.roadPartNumber)
 
-        //Kevarit (roadNumbers(tie) 70000 - 99999): Lane Code (Kaistat) 31
-        //Polut (roadNumbers(tie) 62000 - 62999): Lane Code (Kaistat) 31
+        // roadNumbers 70000 - 99999: Lane Code 31
+        // roadNumbers 62000 - 62999: Lane Code 31
         val pedestrianAndCycleRouteAndPathCheck = (checkRange(roadNumber.toInt, path) ||
           checkRange(roadNumber.toInt, pedestrianAndCycleRoute))
 
-        //Huoltoaukot (roadNumbers(tie) 30000-39999 roadPartNumber(osa) 9) Lane Code (Kaistat) 31
+        // roadNumbers 30000-39999 roadPartNumber 9 Lane Code 31
         val maintenanceHoleCheck = checkRange(roadNumber.toInt, maintenanceHole) && roadPartNumber == 9
 
-        //Track(Ajorata) 0, tiet 20000 - 29999, tieosa 995-999: Lane Code (Kaistat) 31
+        //Track 0, roadNumbers 20000 - 29999, roadPartNumbers 995-999: Lane Code 31
         val checkMotorwayMaintenance = (track.value == 0 &&
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
           checkRange(roadPartNumber.toInt, Seq(995, 999)))
 
-        //Track(Ajorata) 2: Lane Code (Kaistat) 21
+        //Track 2: Lane Code 21
         if (track.value == 2) {
           (Some(MainLane.againstDirection), Some(SideCode(2).value))
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance) {
           (Some(MainLane.motorwayMaintenance), Some(SideCode(3).value))
         } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
-          //Track(Ajorata) 1: Lane Code (Kaistat) 11
-          //Track(Ajorata) 0, roadNumbers(tiet) 20000 - 39999: Lane Code (Kaistat) 11
+          //Track 1: Lane Code 11
+          //Track 0, roadNumbers 20000 - 39999: Lane Code 11
           (Some(MainLane.towardsDirection), Some(SideCode(1).value))
         }else{
           (None,None)
