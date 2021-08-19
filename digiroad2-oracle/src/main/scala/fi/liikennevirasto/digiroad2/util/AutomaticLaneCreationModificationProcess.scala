@@ -104,17 +104,14 @@ object AutomaticLaneCreationModificationProcess {
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11)),
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11),sideCode = 1),
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21)))
-          laneService.create(Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11))), Set(0, 1, 2, 3), 1, user)
-          laneService.create(Seq( NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21))), Set(0, 1, 2, 3), 2, user)
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21),sideCode = 2))
+          laneService.createNewFromChange(newLanes, Set(0, 1, 2, 3), user)
         } else {
           val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties))
-          laneService.create(newLane, Set(0, 1, 2, 3), laneCodeAndSideCode(source)._2, user)
+            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties,sideCode = laneCodeAndSideCode(source)._2))
+          laneService.createNewFromChange(newLane, Set(0, 1, 2, 3), user)
         }
       } else {
         // continue old lane to new part
