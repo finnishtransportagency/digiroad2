@@ -35,7 +35,7 @@ object AutomaticLaneCreationModificationProcess {
 
   // change type 2
   private def newLane(changeInfo: ChangeInformation): Seq[Long] = {
-   
+
     if (changeInfo.changeType == 2) {
       val source = changeInfo.oldRoadNumbering
       val maintenanceHole = Seq(30000, 39999)
@@ -59,7 +59,7 @@ object AutomaticLaneCreationModificationProcess {
         (range.head to range.last).contains(number)
       }
 
-      def laneCodeAndSideCode(source: Source): (Int,Int) = {
+      def laneCodeAndSideCode(source: Source): (Int, Int) = {
 
         val (track, roadNumber, roadPartNumber) = (source.track, source.roadNumber, source.roadPartNumber)
 
@@ -75,16 +75,16 @@ object AutomaticLaneCreationModificationProcess {
         val checkMotorwayMaintenance3 = (track.value == 0 &&
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
           checkRange(roadPartNumber.toInt, Seq(995, 999)))
-        
+
         //Track(Ajorata) 2: Lane Code (Kaistat) 21
         if (track.value == 2) {
-          (MainLane.againstDirection,SideCode(2).value)
+          (MainLane.againstDirection, SideCode(2).value)
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance3) {
-          (MainLane.motorwayMaintenance,SideCode(3).value)
-        }else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
+          (MainLane.motorwayMaintenance, SideCode(3).value)
+        } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
           //Track(Ajorata) 1: Lane Code (Kaistat) 11
           //Track(Ajorata) 0, roadNumbers(tiet) 20000 - 39999: Lane Code (Kaistat) 11
-          (MainLane.towardsDirection,SideCode(1).value)
+          (MainLane.towardsDirection, SideCode(1).value)
         }
       }
 
@@ -100,17 +100,17 @@ object AutomaticLaneCreationModificationProcess {
         }
 
         //Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21 ?
-        if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999)) 
+        if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11),sideCode = 1),
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 11), sideCode = 1),
             NewIncomeLane(0, startMeasure = source.startAddrMValue,
-              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21),sideCode = 2))
+              endMeasure = source.endAddrMValue, 0, properties = mapPropertiesDefaultValue(source, 21), sideCode = 2))
           laneService.createNewFromChange(newLanes, Set(0, 1, 2, 3), user)
         } else {
           val newLane = Seq(NewIncomeLane(0, startMeasure = source.startAddrMValue,
-            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties,sideCode = laneCodeAndSideCode(source)._2))
+            endMeasure = source.endAddrMValue, 0, properties = newLaneProperties, sideCode = laneCodeAndSideCode(source)._2))
           laneService.createNewFromChange(newLane, Set(0, 1, 2, 3), user)
         }
       } else {
