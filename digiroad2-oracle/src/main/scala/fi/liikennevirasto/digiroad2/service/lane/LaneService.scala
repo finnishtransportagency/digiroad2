@@ -947,6 +947,58 @@ trait LaneOperations {
         result.head
       }
   }
+  
+  def createNewFromChange(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+
+    if (newIncomeLane.isEmpty || linkIds.isEmpty)
+      return Seq()
+
+    // if it is only 1 link it can be just a new lane with same size as the link or it can be a cut
+    // for that reason we need to use the measure that come inside the newIncomeLane
+    if (linkIds.size == 1) {
+
+      val linkId = linkIds.head
+
+      newIncomeLane.map { newLane =>
+        val laneCode = newLane.properties.find(_.publicId == "lane_code")
+          .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+
+        val laneToInsert = PersistedLane(0, linkId,newLane.sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+          newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
+          expired = false, vvhTimeStamp, None, newLane.properties)
+
+        createWithoutTransaction(laneToInsert, username)
+      }
+
+    } else {
+      // If we have more than 1 linkId than we have a chain selected
+      // Lanes will be created with the size of the link
+      val viiteRoadLinks = LaneUtils.viiteClient.fetchAllByLinkIds(linkIds.toSeq)
+        .groupBy(_.linkId)
+
+      val result = linkIds.map { linkId =>
+
+        newIncomeLane.map { newLane =>
+
+          val laneCode = newLane.properties.find(_.publicId == "lane_code")
+            .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+          
+          val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
+            viiteRoadLinks(linkId).head
+          else
+            throw new InvalidParameterException(s"No RoadLink found: $linkId")
+
+          val laneToInsert = PersistedLane(0, linkId, newLane.sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+            roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None, None, None,
+            expired = false, vvhTimeStamp, None, newLane.properties)
+
+          createWithoutTransaction(laneToInsert, username)
+        }
+      }
+
+      result.head
+    }
+  }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
     def treatChangeSetData(changeSetToTreat: Seq[baseAdjustment]): Unit = {
