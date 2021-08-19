@@ -524,7 +524,7 @@
         title: 'Liikennemäärä',
         newTitle: 'Uusi liikennemäärä',
         className: 'traffic-volume',
-        unit: 'ajoneuvoa/vuorokausi',
+        unit: 'ajon./vrk',
         isSeparable: false,
         allowComplementaryLinks: false,
         editControlLabels: {
@@ -534,7 +534,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
       {
