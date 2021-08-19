@@ -49,8 +49,6 @@ object AutomaticLaneCreationModificationProcess {
           LaneProperty("roadNumber", Seq(LanePropertyValue(value = source.roadNumber))),
           LaneProperty("roadPartNumber", Seq(LanePropertyValue(value = source.roadPartNumber))),
           LaneProperty("track", Seq(LanePropertyValue(value = source.track))),
-          LaneProperty("startAddrMValue", Seq(LanePropertyValue(value = source.startAddrMValue))),
-          LaneProperty("endAddrMValue", Seq(LanePropertyValue(value = source.endAddrMValue))),
           LaneProperty("administrativeClass", Seq(LanePropertyValue(value = source.administrativeValues)))
         )
       }
@@ -97,13 +95,17 @@ object AutomaticLaneCreationModificationProcess {
       val startMeasureFromVKM = 0
       val endMeasureFromVKM = 0
       if (laneExist) {
+
+        val mValues = Seq(LaneProperty("startAddrMValue", Seq(LanePropertyValue(value =startMeasureFromVKM))),
+          LaneProperty("endAddrMValue", Seq(LanePropertyValue(value = endMeasureFromVKM))))
+        
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
-          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get, 20)
+          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get, 20) ++ mValues
         } else {
-          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get)
+          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get) ++ mValues
         }
-
+        
         //Track 0, roadNumbers 1-19999 and 40000 - 61999: Lane Code 11 and 21
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
