@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient, Source}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, NewLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -108,13 +108,13 @@ object AutomaticLaneCreationModificationProcess {
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
-            NewIncomeLane(0, startMeasure = startMeasureFromVKM,
+            NewLane(0, startMeasure = startMeasureFromVKM,
               endMeasure = endMeasureFromVKM, 0, properties = mapPropertiesDefaultValue(source, 11), sideCode = Some(1)),
-            NewIncomeLane(0, startMeasure = startMeasureFromVKM,
+            NewLane(0, startMeasure = startMeasureFromVKM,
               endMeasure = endMeasureFromVKM, 0, properties = mapPropertiesDefaultValue(source, 21), sideCode =  Some(2)))
           laneService.createNewFromChange(newLanes, Set(0, 1, 2, 3), user)
         } else {
-          val newLane = Seq(NewIncomeLane(0, startMeasure = startMeasureFromVKM,
+          val newLane = Seq(NewLane(0, startMeasure = startMeasureFromVKM,
             endMeasure = endMeasureFromVKM, 0, properties = newLaneProperties, sideCode =  Some(laneCodeAndSideCode(source)._2.get)))
           laneService.createNewFromChange(newLane, Set(0, 1, 2, 3), user)
         }

@@ -50,10 +50,10 @@ trait LaneOperations {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val VvhGenerated = "vvh_generated"
 
-  case class ActionsPerLanes(lanesToDelete: Set[NewIncomeLane] = Set(),
-                             lanesToUpdate: Set[NewIncomeLane] = Set(),
-                             lanesToInsert: Set[NewIncomeLane] = Set(),
-                             multiLanesOnLink: Set[NewIncomeLane] = Set())
+  case class ActionsPerLanes(lanesToDelete: Set[NewLane] = Set(),
+                             lanesToUpdate: Set[NewLane] = Set(),
+                             lanesToInsert: Set[NewLane] = Set(),
+                             multiLanesOnLink: Set[NewLane] = Set())
 
   def getByZoomLevel( linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLane]] = {
     withDynTransaction {
@@ -782,7 +782,7 @@ trait LaneOperations {
     pwLane.laneAttributes.find(_.publicId == publicIdToSearch).get.values.headOption
   }
 
-  def getLaneCode (newIncomeLane: NewIncomeLane): String = {
+  def getLaneCode (newIncomeLane: NewLane): String = {
     val laneCodeValue = getPropertyValue(newIncomeLane.properties, "lane_code")
 
     if (laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty)
@@ -809,7 +809,7 @@ trait LaneOperations {
     * @param username Username of the user is doing the changes
     * @return
     */
-  def update(updateIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
+  def update(updateIncomeLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
     if (updateIncomeLane.isEmpty || linkIds.isEmpty)
       return Seq()
 
@@ -896,7 +896,7 @@ trait LaneOperations {
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def create(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long] ,sideCode: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  def create(newIncomeLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
 
     if (newIncomeLane.isEmpty || linkIds.isEmpty)
       return Seq()
@@ -948,7 +948,7 @@ trait LaneOperations {
       }
   }
   
-  def createNewFromChange(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  def createNewFromChange(newIncomeLane: Seq[NewLane], linkIds: Set[Long], username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
 
     if (newIncomeLane.isEmpty || linkIds.isEmpty)
       return Seq()
@@ -1012,8 +1012,8 @@ trait LaneOperations {
       }
     }
 
-    def persistedToIncomeWithNewMeasures(persistedLane: PersistedLane, newStartMeasure: Double, newEndMeasure: Double): NewIncomeLane = {
-      NewIncomeLane(0, newStartMeasure, newEndMeasure, persistedLane.municipalityCode, false, false, persistedLane.attributes)
+    def persistedToIncomeWithNewMeasures(persistedLane: PersistedLane, newStartMeasure: Double, newEndMeasure: Double): NewLane = {
+      NewLane(0, newStartMeasure, newEndMeasure, persistedLane.municipalityCode, false, false, persistedLane.attributes)
     }
 
     withDynTransaction {
@@ -1076,7 +1076,7 @@ trait LaneOperations {
     historyLaneId
   }
 
-  def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
+  def processNewIncomeLanes(newIncomeLanes: Set[NewLane], linkIds: Set[Long],
                             sideCode: Int, username: String): Seq[Long] = {
     withDynTransaction {
       val actionsLanes = separateNewIncomeLanesInActions(newIncomeLanes, linkIds, sideCode)
@@ -1089,7 +1089,7 @@ trait LaneOperations {
     }
   }
 
-  def separateNewIncomeLanesInActions(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long], sideCode: Int): ActionsPerLanes = {
+  def separateNewIncomeLanesInActions(newIncomeLanes: Set[NewLane], linkIds: Set[Long], sideCode: Int): ActionsPerLanes = {
     //Get Current Lanes for sended linkIds
     val allExistingLanes: Seq[PersistedLane] = dao.fetchLanesByLinkIdAndSideCode(linkIds.head, sideCode)
 
@@ -1135,7 +1135,7 @@ trait LaneOperations {
     resultWithAllActions
   }
 
-  def createMultiLanesOnLink(updateIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
+  def createMultiLanesOnLink(updateIncomeLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
     // Get all lane codes from lanes to update
     val laneCodesToModify = updateIncomeLane.map { incomeLane => getLaneCode(incomeLane).toInt }
 
@@ -1200,7 +1200,7 @@ trait LaneOperations {
    * @param lanes lanes to populate start date property
    * @return lanes with populated start date property
    */
-  def populateStartDate(lanes: Set[NewIncomeLane]): Set[NewIncomeLane] = {
+  def populateStartDate(lanes: Set[NewLane]): Set[NewLane] = {
     val lanePropertyDateValues = Seq(LanePropertyValue(DateTime.now().toString(DatePropertyFormat)))
 
     lanes.map { lane =>
