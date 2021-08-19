@@ -130,7 +130,7 @@ class VKMClient {
     }
   }
 
-  def addressToRoadlinks(roadAddress: RoadAddress) : List[String] = {
+  def addressToRoadlinks(roadAddress: RoadAddress) : List[Int] = {
     val params = Map(
       VkmRoad -> roadAddress.road,
       VkmRoadPart -> roadAddress.roadPart,
@@ -218,7 +218,7 @@ class VKMClient {
     try {
       data.features.map {
         addr =>
-          addr.properties("link_id")
+          addr.properties("link_id").toInt
       }
     } catch {
       case ex: Exception => throw new RoadAddressException("Could not convert response from VKM: %s".format(ex.getMessage))
