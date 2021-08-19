@@ -16,9 +16,9 @@ import org.joda.time.DateTime
 
 
 case class LaneUtils(){
-  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+  def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
-    LaneUtils.processNewLanesByRoadAddress(newIncomeLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
+    LaneUtils.processNewLanesByRoadAddress(newLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
   }
 }
 object LaneUtils {
@@ -34,7 +34,7 @@ object LaneUtils {
 
   lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 
-  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+  def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
     def getRoadAddressToProcess(): Set[RoadAddressTEMP] = {
@@ -153,7 +153,7 @@ object LaneUtils {
       val filteredRoadAddresses = getRoadAddressToProcess()
 
       //Get only the lanes to create
-      val lanesToInsert = laneService.populateStartDate(newIncomeLanes.filter(_.id == 0))
+      val lanesToInsert = laneService.populateStartDate(newLanes.filter(_.id == 0))
 
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
