@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
-import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneNumber, LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneNumber, LaneProperty, LanePropertyValue, NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -103,7 +103,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Create new lane") {
     runWithRollback {
 
-      val newLane = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
+      val newLane = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
       newLane.length should be(1)
 
       val lane = laneDao.fetchLanesByIds( Set(newLane.head)).head
@@ -120,13 +120,13 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Fetch existing main lanes by linkId"){
     runWithRollback {
-      val newLane11 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
+      val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
       newLane11.length should be(1)
 
-      val newLane12 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest)
+      val newLane12 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest)
       newLane12.length should be(1)
 
-      val newLane21 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues21)), Set(100L), 2, usernameTest)
+      val newLane21 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues21)), Set(100L), 2, usernameTest)
       newLane21.length should be(1)
 
       val mockRoadLink = RoadLink(100L, Seq(), 1000, State, 2, TrafficDirection.AgainstDigitizing,
@@ -140,13 +140,13 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Fetch existing Lanes by linksId"){
     runWithRollback {
 
-      val newLane11 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
+      val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
       newLane11.length should be(1)
 
-      val newLane21 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues21)), Set(100L), 2, usernameTest)
+      val newLane21 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues21)), Set(100L), 2, usernameTest)
       newLane21.length should be(1)
 
-      val newLane22 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues22)), Set(100L), 2, usernameTest)
+      val newLane22 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues22)), Set(100L), 2, usernameTest)
       newLane22.length should be(1)
 
       val existingLanes = ServiceWithDao.fetchExistingLanesByLinksIdAndSideCode(100L, 1)
@@ -166,10 +166,10 @@ class LaneServiceSpec extends LaneTestSupporter {
                           )
 
 
-      val newLane11 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
+      val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
       newLane11.length should be(1)
 
-      val updatedLane = ServiceWithDao.update(Seq(NewIncomeLane(newLane11.head, 0, 500, 745, false, false, updateValues11)), Set(100L), 1, usernameTest)
+      val updatedLane = ServiceWithDao.update(Seq(NewLane(newLane11.head, 0, 500, 745, false, false, updateValues11)), Set(100L), 1, usernameTest)
       updatedLane.length should be(1)
 
       //Verify the presence one line with old data before the udate on histories tables
@@ -190,11 +190,11 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lanePropertiesWithDate = lanePropertiesValues12 ++ Seq( LaneProperty("start_date", Seq(LanePropertyValue("20.07.2020"))) )
       val lanePropertiesWithEmptyDate = lanePropertiesValues12 ++ Seq( LaneProperty("start_date", Seq()) )
 
-      val newLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesWithDate)), Set(100L), 1, usernameTest)
+      val newLaneId = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesWithDate)), Set(100L), 1, usernameTest)
       val createdLane = ServiceWithDao.getPersistedLanesByIds(newLaneId.toSet)
       createdLane.head.attributes.length should be(3)
 
-      val updatedLaneId = ServiceWithDao.update(Seq(NewIncomeLane(newLaneId.head, 0, 500, 745, false, false, lanePropertiesWithEmptyDate)), Set(100L), 1, usernameTest)
+      val updatedLaneId = ServiceWithDao.update(Seq(NewLane(newLaneId.head, 0, 500, 745, false, false, lanePropertiesWithEmptyDate)), Set(100L), 1, usernameTest)
       val updatedLane = ServiceWithDao.getPersistedLanesByIds(updatedLaneId.toSet)
       updatedLane.head.attributes.length should be(2)
     }
@@ -203,8 +203,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Expire a sub lane") {
     runWithRollback {
       //NewIncomeLanes to create
-      val mainLane11ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
-      val subLane12ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+      val mainLane11ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
+      val subLane12ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
       //Create initial lanes
       val newMainLaneid = ServiceWithDao.create(mainLane11ToAdd, Set(100L), 1, usernameTest).head
@@ -229,7 +229,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Delete sublane 12 and verify the movement to history tables
-      val subLane12ToExpire = Seq(NewIncomeLane(newSubLaneId, 0, 500, 745, true, false, lanePropertiesValues12))
+      val subLane12ToExpire = Seq(NewLane(newSubLaneId, 0, 500, 745, true, false, lanePropertiesValues12))
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane11 = Seq(mainLane11ToAdd.head.copy(id = newMainLaneid))
@@ -258,9 +258,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Split current lane asset. Split lane in two but only keep one part") {
     runWithRollback {
-      val mainLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
-      val subLane12Splited = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val mainLane11 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val subLane12Splited = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
 
       //create lanes 11, 12
       val mainLane11Id = ServiceWithDao.create(Seq(mainLane11), Set(100L), 1, usernameTest).head
@@ -327,8 +327,8 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Create shorter lane in comparation with linkId usign cuting tool") {
     runWithRollback {
-      val mainLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12Splited = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val mainLane11 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12Splited = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
 
       val mainLane11Id = ServiceWithDao.create(Seq(mainLane11), Set(100L), 1, usernameTest).head
       val subLane12SplitedId = ServiceWithDao.create(Seq(subLane12Splited), Set(100L), 1, usernameTest).head
@@ -355,9 +355,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Create new lane splitted since the beigining, keeping two parts") {
     runWithRollback {
-      val mainLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12SplitedA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
-      val subLane12SplitedB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesValues12)
+      val mainLane11 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12SplitedA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val subLane12SplitedB = NewLane(0, 250, 500, 745, false, false, lanePropertiesValues12)
 
       val mainLane11Id = ServiceWithDao.create(Seq(mainLane11), Set(100L), 1, usernameTest).head
       val subLane12SplitedAId = ServiceWithDao.create(Seq(subLane12SplitedA), Set(100L), 1, usernameTest).head
@@ -398,10 +398,10 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("5")))
       )
 
-      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
-      val subLane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
-      val subLane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
+      val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val subLane12SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val subLane12SplitB = NewLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
 
       val mainLane11Id = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
       val newSubLane12Id = ServiceWithDao.create(Seq(subLane12), Set(100L), 1, usernameTest).head
@@ -481,10 +481,10 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("5")))
       )
 
-      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
-      val subLane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
-      val subLane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
+      val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val subLane12SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val subLane12SplitB = NewLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
 
       val mainLane11Id = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
       val newSubLane12SplitAId = ServiceWithDao.create(Seq(subLane12SplitA), Set(100L), 1, usernameTest).head
@@ -583,9 +583,9 @@ class LaneServiceSpec extends LaneTestSupporter {
       val modifiedLaneProperties1WithStartDate = modifiedLaneProperties1 ++ laneStartDatePropertyValue
       val modifiedLaneProperties2WithStartDate = modifiedLaneProperties2 ++ laneStartDatePropertyValue
 
-      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
-      val subLane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, modifiedLaneProperties1)
+      val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val subLane12SplitB = NewLane(0, 250, 500, 745, false, false, modifiedLaneProperties1)
 
       val mainLane11Id = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
       val newSubLane12SplitAId = ServiceWithDao.create(Seq(subLane12SplitA), Set(100L), 1, usernameTest).head
@@ -619,8 +619,8 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Simulation of sending a main lane, and two modificated sublanes on same link
-      val updatedSubLane12SplitA = NewIncomeLane(newSubLane12SplitAId, 0, 250, 745, false, false, modifiedLaneProperties1)
-      val updatedSubLane12SplitB = NewIncomeLane(newSubLane12SplitBId, 250, 500, 745, false, false, modifiedLaneProperties2)
+      val updatedSubLane12SplitA = NewLane(newSubLane12SplitAId, 0, 250, 745, false, false, modifiedLaneProperties1)
+      val updatedSubLane12SplitB = NewLane(newSubLane12SplitBId, 250, 500, 745, false, false, modifiedLaneProperties2)
       val currentMainLane = mainLane.copy(id = mainLane11Id)
       ServiceWithDao.processNewIncomeLanes(Set(currentMainLane, updatedSubLane12SplitA, updatedSubLane12SplitB), Set(100L), 1, usernameTest)
 
@@ -681,9 +681,9 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
-      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
-      val subLane14 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues14)
+      val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val subLane14 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues14)
 
       val mainLaneId = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
       val newSubLane12Id = ServiceWithDao.create(Seq(subLane12), Set(100L), 1, usernameTest).head
@@ -691,7 +691,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       // Delete the lane 12 and update 14 to new 12
-      val updatedSubLane14 = NewIncomeLane(newSubLane14Id, 0, 500, 745, false, false, lanePropertiesValues14To12)
+      val updatedSubLane14 = NewLane(newSubLane14Id, 0, 500, 745, false, false, lanePropertiesValues14To12)
       val currentMainLane = mainLane.copy(id = mainLaneId)
       ServiceWithDao.processNewIncomeLanes(Set(currentMainLane, updatedSubLane14), Set(100L), 1, usernameTest)
 
@@ -842,8 +842,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Expire a sub lane and then create another at same lane code with same properties") {
     runWithRollback {
       //NewIncomeLanes to create
-      val mainLane11ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
-      val subLane12ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+      val mainLane11ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
+      val subLane12ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
       //Create initial lanes
       val newMainLaneId = ServiceWithDao.create(mainLane11ToAdd, Set(100L), 1, usernameTest).head
@@ -866,7 +866,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Create another sub lane 12
-      val newSubLane12WithSameProperties = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+      val newSubLane12WithSameProperties = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane11 = Seq(mainLane11ToAdd.head.copy(id = newMainLaneId))
@@ -897,8 +897,8 @@ class LaneServiceSpec extends LaneTestSupporter {
       )
 
       //NewIncomeLanes to create
-      val mainLane11ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
-      val subLane12ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+      val mainLane11ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
+      val subLane12ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
       //Create initial lanes
       val newMainLaneId = ServiceWithDao.create(mainLane11ToAdd, Set(100L), 1, usernameTest).head
@@ -921,7 +921,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Create another sub lane 12
-      val newSubLane12WithDiffProperties = Seq(NewIncomeLane(0, 0, 500, 745, false, false, newLanePropertiesValues12))
+      val newSubLane12WithDiffProperties = Seq(NewLane(0, 0, 500, 745, false, false, newLanePropertiesValues12))
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane11 = Seq(mainLane11ToAdd.head.copy(id = newMainLaneId))
@@ -956,8 +956,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Expire a outer sub lane in various links") {
     runWithRollback {
       //NewIncomeLanes to create
-      val mainLane11ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
-      val subLane12ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+      val mainLane11ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
+      val subLane12ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
       //Create initial lanes
       val newMainLaneIdLink100 = ServiceWithDao.create(mainLane11ToAdd, Set(100L), 1, usernameTest).head
@@ -991,7 +991,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       //Delete sublane 12 and verify the movement to history tables
-      val subLane12ToExpire = Seq(NewIncomeLane(newSubLaneIdLink100, 0, 500, 745, true, false, lanePropertiesValues12))
+      val subLane12ToExpire = Seq(NewLane(newSubLaneIdLink100, 0, 500, 745, true, false, lanePropertiesValues12))
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane11 = Seq(mainLane11ToAdd.head.copy(id = newMainLaneIdLink100))
@@ -1037,9 +1037,9 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
-      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
-      val subLane14 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues14)
+      val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val subLane14 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues14)
 
       val mainLaneIdLink100 = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
       val newSubLane12IdLink100 = ServiceWithDao.create(Seq(subLane12), Set(100L), 1, usernameTest).head
@@ -1051,7 +1051,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       // Delete the lane 12 and update 14 to new 12
-      val updatedSubLane14 = NewIncomeLane(newSubLane14IdLink100, 0, 500, 745, false, false, lanePropertiesValues14To12)
+      val updatedSubLane14 = NewLane(newSubLane14IdLink100, 0, 500, 745, false, false, lanePropertiesValues14To12)
       val currentMainLane = mainLane.copy(id = mainLaneIdLink100)
       ServiceWithDao.processNewIncomeLanes(Set(currentMainLane, updatedSubLane14), Set(100L, 101L), 1, usernameTest)
 
@@ -1125,7 +1125,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Testing expiring lane by linkId"){
     runWithRollback {
-      val laneToBeCreated = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val laneToBeCreated = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
       val createdLaneID = ServiceWithDao.create(Seq(laneToBeCreated), Set(100L), 2, usernameTest).head
       laneDao.expireLanesByLinkId(Set(100L), usernameTest)
       val laneId = laneDao.fetchLanesByIds(Set(createdLaneID))
@@ -1135,7 +1135,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Adjust lanes: Create missing main lane 21 and adjust side codes of lanes 11 and 12"){
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
       val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
 
       val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
@@ -1168,7 +1168,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Adjust lanes: Create missing main lane 21 and delete lanes 11 and 12"){
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
       val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
 
       val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
@@ -1197,7 +1197,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Adjust lanes: Adjust sideCode of lane 11"){
     runWithRollback {
-      val lane11Id = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 2, usernameTest).head
+      val lane11Id = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 2, usernameTest).head
 
       val mockRoadLink = RoadLink(100L, Seq(), 500, State, 2, TrafficDirection.TowardsDigitizing,
         EnclosedTrafficArea, None, None)
@@ -1221,7 +1221,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Adjust lanes: Delete lane 21"){
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
       val newLane21 = newLane11.copy(properties = lanePropertiesValues21)
 
       val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
@@ -1250,7 +1250,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Lane Change: Show 2 Add"){
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
       val newLane21 = newLane11.copy(properties = lanePropertiesValues21)
       val dateAtThisMoment = DateTime.now()
 
@@ -1269,7 +1269,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Lane Change: Show 1 Add and 1 attribute changed"){
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
       val dateAtThisMoment = DateTime.now()
 
       val newLanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
@@ -1293,7 +1293,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Lane Change: Show 2 Add and 1 expire"){
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
       val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
       val dateAtThisMoment = DateTime.now()
 
@@ -1315,7 +1315,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Lane Change: Show 2 Add, 1 lane code change"){
     runWithRollback {
-      val newLane12 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues12)
+      val newLane12 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues12)
       val newLane14 = newLane12.copy(properties = lanePropertiesValues14)
       val dateAtThisMoment = DateTime.now()
 
@@ -1344,14 +1344,14 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Lane Change: Show 2 Add and 1 shortened lane"){
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
       val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
       val dateAtThisMoment = DateTime.now()
 
       ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest)
       val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest).head
 
-      val subLane12Split = NewIncomeLane(0, 0, 50, 745, false, false, lanePropertiesValues12)
+      val subLane12Split = NewLane(0, 0, 50, 745, false, false, lanePropertiesValues12)
       ServiceWithDao.update(Seq(subLane12Split), Set(100L), 2, usernameTest)
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
@@ -1371,14 +1371,14 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Lane Change: Get only the 2 Add with token"){
     //token = pageNumber:1,recordNumber:2
     runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane11 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
       val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
       val dateAtThisMoment = DateTime.now()
 
       ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest)
       ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest)
 
-      val subLane12Split = NewIncomeLane(0, 0, 50, 745, false, false, lanePropertiesValues12)
+      val subLane12Split = NewLane(0, 0, 50, 745, false, false, lanePropertiesValues12)
       val subLane12Id = ServiceWithDao.update(Seq(subLane12Split), Set(100L), 2, usernameTest).head
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
@@ -1399,9 +1399,9 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
-      val newLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
-      val lane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
-      val lane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesValues12B)
+      val newLane12 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val lane12SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val lane12SplitB = NewLane(0, 250, 500, 745, false, false, lanePropertiesValues12B)
 
       val dateAtThisMoment = DateTime.now()
       val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest).head
@@ -1421,8 +1421,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   }
 
   test("Populate start date automatically") {
-    val lanes = Set(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11),
-      NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+    val lanes = Set(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11),
+      NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
     val currentTime = DateTime.now().toString(DatePropertyFormat)
 
