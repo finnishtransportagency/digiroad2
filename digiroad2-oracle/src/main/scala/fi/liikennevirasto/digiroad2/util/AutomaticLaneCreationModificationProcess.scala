@@ -104,7 +104,7 @@ object AutomaticLaneCreationModificationProcess {
           mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get)
         }
 
-        //Track(Ajorata) 0, roadNumbers(tiet) 1-19999 ja 40000 - 61999: Lane Code (Kaistat) 11 ja 21
+        //Track 0, roadNumbers 1-19999 and 40000 - 61999: Lane Code 11 and 21
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           val newLanes = Seq(
