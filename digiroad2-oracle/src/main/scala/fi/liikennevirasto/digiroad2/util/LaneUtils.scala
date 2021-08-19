@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -16,8 +16,8 @@ import org.joda.time.DateTime
 
 
 case class LaneUtils(){
-  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
+  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+                                   sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
     LaneUtils.processNewLanesByRoadAddress(newIncomeLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
   }
 }
@@ -34,7 +34,7 @@ object LaneUtils {
 
   lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 
-  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
     def getRoadAddressToProcess(): Set[RoadAddressTEMP] = {
