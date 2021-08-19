@@ -42,9 +42,9 @@ object AutomaticLaneCreationModificationProcess {
       val pedestrianAndCycleRoute = Seq(70000, 99999)
       val path = Seq(62000, 62999)
 
-      def mapPropertiesDefaultValue(source: Source, laneCode: Int, lanetype: Int = 1): Seq[LaneProperty] = {
+      def mapPropertiesDefaultValue(source: Source, laneCode: Int, laneType: Int = 1): Seq[LaneProperty] = {
         Seq(
-          LaneProperty("lane_type", Seq(LanePropertyValue(value = lanetype))),
+          LaneProperty("lane_type", Seq(LanePropertyValue(value = laneType))),
           LaneProperty("lane_code", Seq(LanePropertyValue(value = laneCode))),
           LaneProperty("roadNumber", Seq(LanePropertyValue(value = source.roadNumber))),
           LaneProperty("roadPartNumber", Seq(LanePropertyValue(value = source.roadPartNumber))),
