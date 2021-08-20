@@ -1946,7 +1946,7 @@ _Liikennem&auml;&auml;r&auml;tiedon poistaminen._
 
 ### Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen
 
-Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (4) Liikennem&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustietoikkunaan (6) avautuu tielinkin liikennem&auml;&auml;r&auml;tiedot. Valitaan "Liikennem&auml;&auml;r&auml;" ja sy&ouml;tet&auml;&auml;n arvo sy&ouml;tekentt&auml;&auml;n. Liikennem&auml;&auml;r&auml;tieto tallennetaan painamalla Tallenna (8). Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
+Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian Liikennem&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustietoikkunaan avautuu tielinkin liikennem&auml;&auml;r&auml;tiedot. Valitaan "Liikennem&auml;&auml;r&auml;" ja sy&ouml;tet&auml;&auml;n arvo sy&ouml;tekentt&auml;&auml;n. Liikennem&auml;&auml;r&auml;tieto tallennetaan painamalla Tallenna. Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella.
 
 
 # 25. Joukkoliikenteen pysäkki
