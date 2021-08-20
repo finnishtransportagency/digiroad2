@@ -155,7 +155,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         roadLink= vvhClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).get
       }
       catch {
-        case e=> logger.info("Roadlink no longer available: "+oldLinearAsset.linkId+" For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired)
+        case e=> println("Roadlink no longer available: "+oldLinearAsset.linkId+" For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired)
       }
       
       value match {
