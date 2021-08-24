@@ -10,24 +10,26 @@ Ympäristön pystytys
   git clone https://github.com/finnishtransportagency/digi-road-2.git
   ```
 
-1. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
-1. Asenna [yarn](https://yarnpkg.com/lang/en/)
+2. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
+
+
+3. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
 
   ```
-  npm install -g yarn
+  npm install
   ```
 
-1. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
-
-  ```
-  npm install && yarn install
-  ```
-
-1. Asenna [grunt](http://gruntjs.com/getting-started)
+4. Asenna [grunt](http://gruntjs.com/getting-started)
 
   ```
   npm install -g grunt-cli
   ```
+
+Lisää Configuration jos käytät intellij
+----------------
+
+Luo .idea kansioon runConfigurations kansio. Kopioi aws/local-dev/idea-run-configurations konfiguraatiot
+.idea/runConfigurations kansioon. Käynistä IDE uudestaan. Server configuraatiossa ota "use sbt shell" ruksi pois edit configuration.
 
 digiroad2-oracle
 ----------------
@@ -35,27 +37,14 @@ digiroad2-oracle
 digiroad2-oracle moduuli toteuttaa oracle-spesifisen tuen digiroad2:n `AssetProvider` ja `UserProvider` - rajapinnoista.
 Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen polkuun.
 
-Build edellyttää, että paikallinen tietokantaymäristö on alustettu ja konfiguroitu:
+Lokaali tietokannan alustus
+----------------
 
-Kopioi tiedostot ojdbc6.jar, sdoapi.jar ja sdoutl.jar hakemistoon `digiroad2-oracle/lib`. Tiedostot saa [digiroad2-oracle-projektista](https://github.com/finnishtransportagency/digiroad2-oracle/tree/master/lib).
+Backend palvelimen käynistäminen edellyttää, että paikallinen tietokanta on päälä ja alustettu.
 
-Luo digiroad2/digiroad2-oracle/conf/dev/bonecp.properties ja lisää sinne tietokantayhteyden tiedot:
+Laita aws/local-dev/postgis/docker-compose.yaml pääle.
 
-```
-bonecp.jdbcUrl=jdbc:oracle:thin:@<tietokannan_osoite>:<portti>/<skeeman_nimi>
-bonecp.username=<käyttäjätunnus>
-bonecp.password=<salasana>
-```
-
-Tietokantayhteyden voi määrittää myös ulkoisessa properties tiedostossa joka noudattaa yllä olevaa muotoa.
-
-Tällöin digiroad2/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulkoiseen tiedostoon:
-
-```
-digiroad2-oracle.externalBoneCPPropertiesFile=/etc/digiroad2/bonecp.properties
-```
-
-Tietokanta ja skeema voidaan alustaa käyttäen `fixture-reset.sh` skriptiä.
+Alusta kanta ajamalla DataFixture init configuraatio. Sitten aja DataFixture reset configuraatio.
 
 Ajaminen
 ========
@@ -87,6 +76,8 @@ API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa ol
 ./sbt test
 ```
 
+Palvelimen voi käynnistää ajamalla Server configuration myös.
+
 API-palvelimen saa käyntiin kehitysmoodiin seuraavalla sbt komennolla:
 ```
 ./sbt '~;container:start; container:reload /'
@@ -107,6 +98,7 @@ run fi.liikennevirasto.digiroad2.ProductionServer
 ```
 
 Avaa käyttöliittymä osoitteessa <http://localhost:9001/login.html>.
+Kirjaudut sisään käyttäen lokaalia testi käyttäjää nimeltään silari.
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================

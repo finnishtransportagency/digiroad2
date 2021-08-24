@@ -6,18 +6,10 @@ import org.apache.commons.codec.binary.Base64
 
 class GMapUrlSigner
 {
-  lazy val properties: Properties =
-  {
-    //Property loader. Should load from digiroad2-oracle.conf.dev folder
-    val props = new Properties()
-      props.load(getClass.getResourceAsStream("/keys.properties"))
-    props
-  }
-
   val key: Array[Byte] =
   {
     // Load & converts the key from 'web safe' base 64 to binary.
-    val loadedkeyString = properties.getProperty("googlemapapi.crypto_key")
+    val loadedkeyString = Digiroad2Properties.googleMapApiCryptoKey
     if (loadedkeyString == null)
       throw new IllegalArgumentException("Missing Google Crypto-key")
     val wskey = loadedkeyString.replace('-', '+').replace('_', '/')
@@ -25,7 +17,7 @@ class GMapUrlSigner
     Base64.decodeBase64(wskey)
   }
 
-  val clientid = properties.getProperty("googlemapapi.client_id")
+  val clientid = Digiroad2Properties.googleMapApiClientId
   if (clientid == null)
     throw new IllegalArgumentException("Missing Client id")
 

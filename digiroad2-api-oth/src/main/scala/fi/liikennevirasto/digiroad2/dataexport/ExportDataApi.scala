@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.dataexport
 
 import fi.liikennevirasto.digiroad2.asset.DateParser
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
-import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
+import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
 import fi.liikennevirasto.digiroad2.csvDataExporter.AssetReportCsvExporter
 import fi.liikennevirasto.digiroad2.dao.ExportReportDAO
 import fi.liikennevirasto.digiroad2.middleware.CsvDataExporterInfo
@@ -17,7 +17,7 @@ import org.scalatra.json.JacksonJsonSupport
 
 
 class ExportDataApi( roadLinkService: RoadLinkService, userProvider: UserProvider = Digiroad2Context.userProvider, val eventBus: DigiroadEventBus = Digiroad2Context.eventbus)
-extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication {
+extends ScalatraServlet with JacksonJsonSupport with JWTAuthentication {
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")

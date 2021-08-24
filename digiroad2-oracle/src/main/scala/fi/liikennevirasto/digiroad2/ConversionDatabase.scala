@@ -1,32 +1,31 @@
 package fi.liikennevirasto.digiroad2
 
-import _root_.oracle.spatial.geometry.JGeometry
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-
-import slick.jdbc.{PositionedResult, GetResult}
+import org.postgis.PGgeometry
+import org.postgresql.util.PGobject
+import slick.jdbc.{GetResult, PositionedResult}
+import scala.collection.mutable.ListBuffer
 
 object ConversionDatabase {
   implicit object GetPointSeq extends GetResult[Seq[Point]] {
-    def apply(rs: PositionedResult) = toPoints(rs.nextBytes())
+    def apply(rs: PositionedResult) = toPoints(rs.nextObject())
   }
 
-  private def toPoints(bytes: Array[Byte]): Seq[Point] = {
-    val geometry = JGeometry.load(bytes)
-    if (geometry == null) Nil
-    else if(geometry.isPoint) {
-      val point = geometry.getPoint
-      List(Point(point(0), point(1)))
+  private def toPoints(bytes: Object): Seq[Point] = {
+    val geometry = bytes.asInstanceOf[PGobject]
+    if (geometry == null) Nil else{
+      val geom = PGgeometry.geomFromString(geometry.getValue)
+      if(geom.numPoints()==1 ) {
+        val point = geom.getFirstPoint
+        List(Point(point.x, point.y))
+      }
+      else {
+        val listOfPoint=ListBuffer[Point]()
+        for (i <- 0 until geom.numPoints() ){
+          val point =geom.getPoint(i)
+          listOfPoint += Point(point.x,point.y)
+        }
+        listOfPoint.toList
+      }
     }
-    else {
-      geometry.getOrdinatesArray.grouped(2).map { point ⇒
-        Point(point(0), point(1))
-      }.toList
-    }
-  }
-
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
-    new BoneCPDataSource(cfg)
   }
 }

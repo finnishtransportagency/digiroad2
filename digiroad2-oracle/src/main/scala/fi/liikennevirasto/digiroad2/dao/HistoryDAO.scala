@@ -13,12 +13,12 @@ class HistoryDAO {
   def getExpiredAssetsIdsByAssetTypeIdAndYearGap(assetTypeId: Int, yearGap: Int) = {
     sql"""SELECT ID FROM ASSET
             WHERE ASSET_TYPE_ID = $assetTypeId
-            AND EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM SYSDATE) - $yearGap""".as[Long].list
+            AND EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM current_timestamp) - $yearGap""".as[Long].list
   }
 
   def getExpiredManoeuvresIdsByYearGap(yearGap: Int) = {
     sql"""SELECT ID FROM MANOEUVRE
-            WHERE EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM SYSDATE) - $yearGap""".as[Long].list
+            WHERE EXTRACT(YEAR FROM VALID_TO) < EXTRACT(YEAR FROM current_timestamp) - $yearGap""".as[Long].list
   }
 
   def copyAssetToHistory(assetId: Long, assetType: AssetTypeInfo) = {
@@ -50,13 +50,13 @@ class HistoryDAO {
     //Copy standard values
     sqlu"""
         INSERT INTO DATE_PERIOD_VALUE_HISTORY
-          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, START_DATE, END_DATE
+          SELECT nextval('primary_key_seq'), ASSET_ID, PROPERTY_ID, START_DATE, END_DATE
           FROM DATE_PERIOD_VALUE WHERE ASSET_ID = $assetId
     """.execute
 
     sqlu"""
         INSERT INTO ADDITIONAL_PANEL_HISTORY
-          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, ADDITIONAL_SIGN_TYPE, ADDITIONAL_SIGN_VALUE,
+          SELECT nextval('primary_key_seq'), ASSET_ID, PROPERTY_ID, ADDITIONAL_SIGN_TYPE, ADDITIONAL_SIGN_VALUE,
           ADDITIONAL_SIGN_INFO, FORM_POSITION, ADDITIONAL_SIGN_TEXT, ADDITIONAL_SIGN_SIZE, ADDITIONAL_SIGN_COATING_TYPE,
           ADDITIONAL_SIGN_PANEL_COLOR
           FROM ADDITIONAL_PANEL WHERE ASSET_ID = $assetId
@@ -64,33 +64,33 @@ class HistoryDAO {
 
     sqlu"""
         INSERT INTO VAL_PERIOD_PROPERTY_VALUE_HIST
-          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, TYPE, PERIOD_WEEK_DAY, START_HOUR, END_HOUR,
+          SELECT nextval('primary_key_seq'), ASSET_ID, PROPERTY_ID, TYPE, PERIOD_WEEK_DAY, START_HOUR, END_HOUR,
           START_MINUTE, END_MINUTE
           FROM VALIDITY_PERIOD_PROPERTY_VALUE WHERE ASSET_ID = $assetId
     """.execute
 
     sqlu"""
         INSERT INTO DATE_PROPERTY_VALUE_HISTORY
-          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, DATE_TIME
+          SELECT nextval('primary_key_seq'), ASSET_ID, PROPERTY_ID, DATE_TIME
           FROM DATE_PROPERTY_VALUE WHERE ASSET_ID = $assetId
     """.execute
 
     sqlu"""
         INSERT INTO SERVICE_POINT_VALUE_HISTORY
-          SELECT primary_key_seq.nextval, ASSET_ID, TYPE, ADDITIONAL_INFO, PARKING_PLACE_COUNT, NAME, TYPE_EXTENSION,
+          SELECT nextval('primary_key_seq'), ASSET_ID, TYPE, ADDITIONAL_INFO, PARKING_PLACE_COUNT, NAME, TYPE_EXTENSION,
           IS_AUTHORITY_DATA, WEIGHT_LIMIT
           FROM SERVICE_POINT_VALUE WHERE ASSET_ID = $assetId
     """.execute
 
     sqlu"""
         INSERT INTO NUMBER_PROPERTY_VALUE_HISTORY
-          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, VALUE, GROUPED_ID
+          SELECT nextval('primary_key_seq'), ASSET_ID, PROPERTY_ID, VALUE, GROUPED_ID
           FROM NUMBER_PROPERTY_VALUE WHERE ASSET_ID = $assetId
     """.execute
 
     sqlu"""
         INSERT INTO MULTIPLE_CHOICE_VALUE_HISTORY
-          SELECT primary_key_seq.nextval, PROPERTY_ID, ENUMERATED_VALUE_ID, ASSET_ID, MODIFIED_DATE, MODIFIED_BY,
+          SELECT nextval('primary_key_seq'), PROPERTY_ID, ENUMERATED_VALUE_ID, ASSET_ID, MODIFIED_DATE, MODIFIED_BY,
           GROUPED_ID
           FROM MULTIPLE_CHOICE_VALUE WHERE ASSET_ID = $assetId
     """.execute
@@ -101,7 +101,7 @@ class HistoryDAO {
 
     sqlu"""
         INSERT INTO TEXT_PROPERTY_VALUE_HISTORY
-          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, VALUE_FI, VALUE_SV, CREATED_DATE, CREATED_BY,
+          SELECT nextval('primary_key_seq'), ASSET_ID, PROPERTY_ID, VALUE_FI, VALUE_SV, CREATED_DATE, CREATED_BY,
           MODIFIED_DATE, MODIFIED_BY, GROUPED_ID
           FROM TEXT_PROPERTY_VALUE WHERE ASSET_ID = $assetId
     """.execute
@@ -115,14 +115,14 @@ class HistoryDAO {
 
     sqlu"""
         INSERT INTO PROHIBITION_EXCEPTION_HISTORY
-          SELECT primary_key_seq.nextval, PROHIBITION_VALUE_ID, TYPE
+          SELECT nextval('primary_key_seq'), PROHIBITION_VALUE_ID, TYPE
           FROM PROHIBITION_EXCEPTION
           WHERE PROHIBITION_VALUE_ID IN (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)
     """.execute
 
     sqlu"""
         INSERT INTO PROH_VAL_PERIOD_HISTORY
-          SELECT primary_key_seq.nextval, PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR, START_MINUTE,
+          SELECT nextval('primary_key_seq'), PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR, START_MINUTE,
           END_MINUTE
           FROM PROHIBITION_VALIDITY_PERIOD
           WHERE PROHIBITION_VALUE_ID IN (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)
@@ -142,7 +142,7 @@ class HistoryDAO {
 
     sqlu"""
         INSERT INTO MANOEUVRE_VAL_PERIOD_HISTORY
-          SELECT primary_key_seq.nextval, MANOEUVRE_ID, TYPE, START_HOUR, END_HOUR, START_MINUTE, END_MINUTE
+          SELECT nextval('primary_key_seq'), MANOEUVRE_ID, TYPE, START_HOUR, END_HOUR, START_MINUTE, END_MINUTE
           FROM MANOEUVRE_VALIDITY_PERIOD WHERE MANOEUVRE_ID = $assetId
     """.execute
   }

@@ -1,15 +1,17 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, OAGAuthPropertyReader}
+
 import java.lang.management.ManagementFactory
 import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
+import org.eclipse.jetty.http.{HttpField, HttpHeader}
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
-import org.eclipse.jetty.server.{Handler, Server}
+import org.eclipse.jetty.server.{Connector, Handler, HttpConfiguration, HttpConnectionFactory, Server, ServerConnector}
 import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.LoggerFactory
@@ -19,7 +21,6 @@ import scala.collection.JavaConversions._
 
 trait DigiroadServer {
   val contextPath : String
-  val viiteContextPath: String
 
   protected def setupWebContext(): WebAppContext ={
     val context = new WebAppContext()
@@ -38,8 +39,16 @@ trait DigiroadServer {
   }
 
   def startServer() {
-    val server = new Server(8080)
+    val server = new Server
     val mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer)
+    val httpConfiguration = new HttpConfiguration()
+    // 32 kb
+    httpConfiguration.setRequestHeaderSize(32*1024)
+    httpConfiguration.setResponseHeaderSize(32*1024)
+    httpConfiguration.setHeaderCacheSize(32*1024)
+    val connector = new ServerConnector(server,new HttpConnectionFactory(httpConfiguration))
+    connector.setPort(8080)
+    server.setConnectors(Array[Connector](connector))
     server.addEventListener(mbContainer)
     server.addBean(mbContainer)
     val handler = new ContextHandlerCollection()
@@ -53,26 +62,50 @@ trait DigiroadServer {
 
 class OAGProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad)/(maasto)/(wmts)".r
+  def regex = "(/(digiroad(-dev)?))?/(maasto)/(wmts)".r
+  private val oagAuth = new OAGAuthPropertyReader
   private val logger = LoggerFactory.getLogger(getClass)
 
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
+
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    val url = "http://oag.vayla.fi/rasteripalvelu-mml" +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
+    val url = Digiroad2Properties.rasterServiceUrl +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
+    logger.debug(url)
     java.net.URI.create(url)
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    logger.debug("Header start")
+    logger.debug(proxyRequest.getHeaders.toString)
+    logger.debug("Header end")
+
+    proxyRequest.getHeaders.remove("X-Iam-Data")
+    proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+    proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+    proxyRequest.getHeaders.remove("X-Iam-Identity")
+    
+    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
+    logger.debug("Header clean start")
+    logger.debug(proxyRequest.getHeaders.toString)
+    logger.debug("Header clean end")
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
 
 class VKMProxyServlet extends ProxyServlet {
-  def regex = "/(digiroad|viite)".r
+  def regex = "/(digiroad(-dev)?)".r
+  private val oagAuth = new OAGAuthPropertyReader
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    val vkmUrl: String = properties.getProperty("digiroad2.VKMUrl")
+    val vkmUrl: String = Digiroad2Properties.vkmUrl
+    logger.debug(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
     java.net.URI.create(vkmUrl + regex.replaceFirstIn(req.getRequestURI, ""))
   }
 
@@ -81,6 +114,13 @@ class VKMProxyServlet extends ProxyServlet {
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
+    
+    proxyRequest.getHeaders.remove("X-Iam-Data")
+    proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+    proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+    proxyRequest.getHeaders.remove("X-Iam-Identity")
+    
+    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }

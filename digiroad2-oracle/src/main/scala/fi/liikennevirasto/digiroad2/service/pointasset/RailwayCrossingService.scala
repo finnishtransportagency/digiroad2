@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleRailwayCrossingDao, RailwayCrossing}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISRailwayCrossingDao, RailwayCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
@@ -32,7 +32,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     }
   }
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[RailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[RailwayCrossing] = PostGISRailwayCrossingDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: RailwayCrossing, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
@@ -86,7 +86,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   def checkDuplicates(incomingRailwayCrossing: IncomingRailwayCrossing): Option[RailwayCrossing] = {
     val position = Point(incomingRailwayCrossing.lon, incomingRailwayCrossing.lat)
     val safetyEquipmentType = getProperty(incomingRailwayCrossing, safetyEquipmentPublicId).get.propertyValue.toString
-    val signsInRadius = OracleRailwayCrossingDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
+    val signsInRadius = PostGISRailwayCrossingDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
       asset =>
         GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
           safetyEquipmentType == getProperty(asset.propertyData, safetyEquipmentPublicId).get.propertyValue.toString
@@ -100,17 +100,17 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   def createFloatingWithoutTransaction(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    OracleRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
   }
 
   override def create(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     if(newTransaction) {
       withDynTransaction {
-        OracleRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
       }
     } else {
-      OracleRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 
@@ -125,9 +125,9 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon=>
         expireWithoutTransaction(id)
-        OracleRailwayCrossingDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISRailwayCrossingDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        OracleRailwayCrossingDao.update(id, setAssetPosition(updatedAsset,roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        PostGISRailwayCrossingDao.update(id, setAssetPosition(updatedAsset,roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
     }
   }
 
@@ -137,7 +137,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     }
   }
 
-  def getCodeMaxSize : Long  =   withDynTransaction { OracleRailwayCrossingDao.getCodeMaxSize }
+  def getCodeMaxSize : Long  =   withDynTransaction { PostGISRailwayCrossingDao.getCodeMaxSize }
 
   override def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 

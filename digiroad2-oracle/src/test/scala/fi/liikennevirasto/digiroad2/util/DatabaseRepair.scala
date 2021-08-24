@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase._
 
 object DatabaseRepair {
   def main(args: Array[String]): Unit = {

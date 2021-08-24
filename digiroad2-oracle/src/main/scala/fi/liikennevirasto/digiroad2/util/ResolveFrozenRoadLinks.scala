@@ -4,11 +4,12 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode, State}
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.format.DateTimeFormat
@@ -19,22 +20,17 @@ import scala.util.Try
 case class RoadAddressTEMPwithPoint(firstP: Point, lastP: Point, roadAddress: RoadAddressTEMP)
 
 trait ResolvingFrozenRoadLinks {
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(viiteClient)
   }
 
-  lazy val geometryVKMTransform: VKMGeometryTransform = {
-    new VKMGeometryTransform()
+  lazy val vkmClient: VKMClient = {
+    new VKMClient()
   }
 
   lazy val eventbus: DigiroadEventBus = {
@@ -42,7 +38,7 @@ trait ResolvingFrozenRoadLinks {
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
@@ -160,7 +156,7 @@ trait ResolvingFrozenRoadLinks {
     frozen.geometry.zip(frozen.geometry.tail).foldLeft(Seq.empty[RoadAddressTEMPwithPoint]) { case (result, (p1, p2)) =>
       val roadNumber = Try(frozen.roadNumber.map(_.toInt).head).toOption
       val roadPartNumber = Try(frozen.roadPartNumber.map(_.toInt).head).toOption
-      val address = geometryVKMTransform.coordsToAddresses(Seq(p1, p2), roadNumber, roadPartNumber, includePedestrian = Some(true))
+      val address = vkmClient.coordsToAddresses(Seq(p1, p2), roadNumber, roadPartNumber, includePedestrian = Some(true))
 
       if (result.isEmpty) {
         val orderedAddress = address.sortBy(_.addrM)
@@ -283,7 +279,7 @@ trait ResolvingFrozenRoadLinks {
           val roadNumber = Try(frozen.roadNumber.map(_.toInt).head).toOption
           val roadPartNumber = Try(frozen.roadPartNumber.map(_.toInt).head).toOption
 
-          val address = geometryVKMTransform.coordsToAddresses(Seq(first, last), roadNumber, roadPartNumber, includePedestrian = Some(true))
+          val address = vkmClient.coordsToAddresses(Seq(first, last), roadNumber, roadPartNumber, includePedestrian = Some(true))
           if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
             println("problems in wonderland")
             Seq()
@@ -350,12 +346,12 @@ trait ResolvingFrozenRoadLinks {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
 
       municipalities.foreach { municipality =>
-        OracleDatabase.withDynTransaction {
+        PostGISDatabase.withDynTransaction {
           val (toCreate, missing) = processing(municipality)
 
           val cleanningResult = cleaning(missing, toCreate)

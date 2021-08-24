@@ -1,1 +1,0 @@
-alter table project_link rename column road_type to track_code;

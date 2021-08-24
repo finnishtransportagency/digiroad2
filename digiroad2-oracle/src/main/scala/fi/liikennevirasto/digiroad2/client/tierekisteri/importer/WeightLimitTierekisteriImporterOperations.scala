@@ -4,20 +4,21 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWeightLimitAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleAxleWeightLimitDao, OracleBogieWeightLimitDao, OracleTrailerTruckWeightLimitDao, OracleWeightLimitDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISAxleWeightLimitDao, PostGISBogieWeightLimitDao, PostGISTrailerTruckWeightLimitDao, PostGISWeightLimitDao}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingAxleWeightLimit, IncomingBogieWeightLimit, IncomingTrailerTruckWeightLimit, IncomingWeightLimit}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.impl.client.HttpClientBuilder
 
 trait WeightLimitTierekisteriImporterOperations extends PointAssetTierekisteriImporterOperations {
 
   override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
-  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+  override val tierekisteriClient = new TierekisteriWeightLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+    Digiroad2Properties.tierekisteriEnabled,
     HttpClientBuilder.create().build())
 }
 
@@ -35,7 +36,7 @@ class TotalWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
       point =>
         val weightLimit = IncomingWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.totalWeight.get*1000, //convert Ton to Kg
           SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-        OracleWeightLimitDao.create(weightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+        PostGISWeightLimitDao.create(weightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
@@ -55,7 +56,7 @@ class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekister
       point =>
         val trailerTruckWeightLimit = IncomingTrailerTruckWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.trailerTruckWeight.get*1000, //convert Ton to Kg
           SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-        OracleTrailerTruckWeightLimitDao.create(trailerTruckWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+        PostGISTrailerTruckWeightLimitDao.create(trailerTruckWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
@@ -75,7 +76,7 @@ class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporte
       point =>
         val axleWeightLimit = IncomingAxleWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.axleWeight.get*1000, //convert Ton to Kg
           SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-        OracleAxleWeightLimitDao.create(axleWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+        PostGISAxleWeightLimitDao.create(axleWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
@@ -95,7 +96,7 @@ class BogieWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
       point =>
         val bogieWeightLimit = IncomingBogieWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.bogieWeight.get*1000, //convert Ton to Kg
           SideCode.BothDirections.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-        OracleBogieWeightLimitDao.create(bogieWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
+        PostGISBogieWeightLimitDao.create(bogieWeightLimit, mValue, vvhRoadlink.municipalityCode, s"batch_process_$assetName",
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }

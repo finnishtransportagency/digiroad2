@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    Default: Dev
+    AllowedValues:
+      - Dev
+      - Test
+      - Prod
+  Application:
+    Description: Application tag
+    Type: String
+    Default: Digiroad2
+  Vpc:
+    Description: VPC
+    Type: 'AWS::EC2::VPC::Id'
+  MasterUserPassword:
+    Description: Password for the postgres -user
+    Type: String
+  DBInstanceClass:
+    Description: DBInstance DBInstanceClass
+    Default: db.t3.medium
+    Type: String
+  DBDeletionProtection:
+    Type: String
+    Description: Prevent deletion of the database
+    Default: true
+    AllowedValues:
+      - true
+      - false
+  SubnetA:
+    Description: First subnet in the database subnet group
+    Type: 'AWS::EC2::Subnet::Id'
+  SubnetB:
+    Description: Second subnet in the database subnet group
+    Type: 'AWS::EC2::Subnet::Id'
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: !Join 
+            - ' '
+            - - !Ref Application
+              - !Ref Environment
+              - 'DBSubnetGroup'
+      DBSubnetGroupName: !Join 
+            - ''
+            - - !Ref Application
+              - !Ref Environment
+              - 'DBSubnetGroup'
+      SubnetIds: 
+        - !Ref SubnetA
+        - !Ref SubnetB
+      Tags: 
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - DBSubnetGroup
+        -
+          Key: Application
+          Value: !Ref Application
+        -
+          Key: Env
+          Value: !Ref Environment
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Retain
+    Properties:
+      GroupName: Digiroad2-dev-database-security-group
+      GroupDescription: Digiroad2 postgres database security group
+      VpcId:
+        Ref: Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+  DBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs ''
+      DBInstanceClass: !Ref DBInstanceClass
+      DBName: digiroad2
+      DeletionProtection: !Ref DBDeletionProtection
+      Engine: postgres
+      EngineVersion: 13.2
+      AllocatedStorage: 100
+      StorageType: gp2
+      MasterUsername: digiroad2postgres
+      MasterUserPassword: !Ref MasterUserPassword
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Tags: 
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - DBInstance
+        -
+          Key: Application
+          Value: !Ref Application
+        -
+          Key: Env
+          Value: !Ref Environment
+    DependsOn:
+      - DBSubnetGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ce56302f-fd28-4a57-b896-85837035877a
+Metadata:
+  'AWS::CloudFormation::Designer':
+    ce56302f-fd28-4a57-b896-85837035877a:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 180
+        'y': 90
+      z: 1
+      embeds: []
+      dependson:
+        - 534fb193-987a-4025-a04e-f7bebee5de6c
+    534fb193-987a-4025-a04e-f7bebee5de6c:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 60
+        'y': 90
+      z: 0
+      embeds: []

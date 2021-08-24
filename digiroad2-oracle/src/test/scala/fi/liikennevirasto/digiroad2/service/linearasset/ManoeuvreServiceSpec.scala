@@ -2,10 +2,10 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
+import fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod, ValidityPeriodDayOfWeek}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -50,7 +50,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   after {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       sqlu"""delete from manoeuvre_element where manoeuvre_id in (select id from manoeuvre where modified_by = 'unittest')""".execute
       sqlu"""delete from manoeuvre_validity_period where manoeuvre_id in (select id from manoeuvre where modified_by = 'unittest')""".execute
       sqlu"""delete from manoeuvre where modified_by = 'unittest'""".execute
@@ -268,7 +268,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       berforeUpdate.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1611419)
       berforeUpdate.elements.find(_.elementType == ElementTypes.FirstElement).get.destLinkId should equal(1611420)
       berforeUpdate.elements.find(_.elementType == ElementTypes.LastElement).get.sourceLinkId should equal(1611420)
-      berforeUpdate.exceptions should be(Seq(19, 21))
+      berforeUpdate.exceptions.sorted should be(Seq(19, 21))
       berforeUpdate.validityPeriods should be(Set(ValidityPeriod(22, 8, ValidityPeriodDayOfWeek.apply(3))))
 
       val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
@@ -283,7 +283,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       manoeuvreUpdated.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1611419)
       manoeuvreUpdated.elements.find(_.elementType == ElementTypes.FirstElement).get.destLinkId should equal(1611420)
       manoeuvreUpdated.elements.find(_.elementType == ElementTypes.LastElement).get.sourceLinkId should equal(1611420)
-      manoeuvreUpdated.exceptions should be(exceptions)
+      manoeuvreUpdated.exceptions.sorted should be(exceptions)
       manoeuvreUpdated.validityPeriods should be(validityPeriod)
       manoeuvreUpdated.additionalInfo should be (additionalInfo)
     }

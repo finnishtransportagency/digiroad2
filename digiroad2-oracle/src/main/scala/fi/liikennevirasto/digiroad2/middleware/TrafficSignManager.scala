@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2.middleware
 import java.sql.SQLIntegrityConstraintViolationException
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
@@ -43,7 +43,7 @@ object TrafficSignManager {
 }
 
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
     case JInt(lg) => LinkGeomSource.apply(lg.toInt)
@@ -59,8 +59,8 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
 
   protected implicit val jsonFormats: Formats = DefaultFormats + LinkGeomSourceSerializer + DateTimeSerializer
 
-  lazy val linearAssetDao: OracleLinearAssetDao = {
-    new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+  lazy val linearAssetDao: PostGISLinearAssetDao = {
+    new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
 
 

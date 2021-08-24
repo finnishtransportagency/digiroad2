@@ -1,9 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, ServicePointsClass}
-import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, OracleServicePointDao, ServicePoint}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, PostGISServicePointDao, ServicePoint}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 class ServicePointService {
   val typeId: Int = 250
@@ -12,60 +11,55 @@ class ServicePointService {
     if(newTransaction) {
       withDynTransaction {
         checkAuthorityData(asset)
-        OracleServicePointDao.create(asset, municipalityCode, username)
+        PostGISServicePointDao.create(asset, municipalityCode, username)
       }
     } else {
       checkAuthorityData(asset)
-      OracleServicePointDao.create(asset, municipalityCode, username)
+      PostGISServicePointDao.create(asset, municipalityCode, username)
     }
   }
 
   def update(id: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     withDynTransaction {
       checkAuthorityData(updatedAsset)
-      OracleServicePointDao.update(id, updatedAsset, municipalityCode, username)
+      PostGISServicePointDao.update(id, updatedAsset, municipalityCode, username)
     }
   }
 
   def expire(id: Long, username: String): Long = {
     withDynTransaction {
-      OracleServicePointDao.expire(id, username)
+      PostGISServicePointDao.expire(id, username)
     }
   }
 
   def get: Set[ServicePoint] = {
     withDynSession {
-      OracleServicePointDao.get
+      PostGISServicePointDao.get
     }
   }
 
   def getById(id: Long): ServicePoint = {
     withDynSession {
-      OracleServicePointDao.getById(id).headOption.getOrElse(throw new NoSuchElementException("Asset not found"))
+      PostGISServicePointDao.getById(id).headOption.getOrElse(throw new NoSuchElementException("Asset not found"))
     }
   }
 
 
   def getByMunicipality(municipalityNumber: Int): Set[ServicePoint] = {
     withDynSession {
-      OracleServicePointDao.getByMunicipality(municipalityNumber)
+      PostGISServicePointDao.getByMunicipality(municipalityNumber)
     }
   }
 
   def get(boundingBox: BoundingRectangle): Set[ServicePoint] = {
     withDynSession {
-      OracleServicePointDao.get(boundingBox)
+      PostGISServicePointDao.get(boundingBox)
     }
   }
 
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
-    new BoneCPDataSource(cfg)
-  }
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   def getPersistedAssetsByIds(ids: Set[Long]): Set[ServicePoint] = {
     withDynSession {
@@ -75,7 +69,7 @@ class ServicePointService {
     }
   }
 
-  def fetchPointAssets(filter: String): Set[ServicePoint] = OracleServicePointDao.fetchByFilter(filter)
+  def fetchPointAssets(filter: String): Set[ServicePoint] = PostGISServicePointDao.fetchByFilter(filter)
 
 
   def checkAuthorityData(incomingServicePoint: IncomingServicePoint) = {

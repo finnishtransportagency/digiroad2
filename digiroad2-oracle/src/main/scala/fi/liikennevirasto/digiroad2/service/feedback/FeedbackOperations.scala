@@ -5,8 +5,8 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{Email, EmailOperations}
 import fi.liikennevirasto.digiroad2.dao.feedback.FeedbackDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, SmtpPropertyReader}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -20,8 +20,8 @@ trait Feedback {
 
   val logger = LoggerFactory.getLogger(getClass)
   private val smtpProp = new SmtpPropertyReader
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def dao: FeedbackDao
   def emailOperations: EmailOperations
   def to: String = smtpProp.getDestination
@@ -29,20 +29,6 @@ trait Feedback {
   def subject: String
   def body: String
   type FeedbackBody
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
-  protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
 
   def stringifyBody(username: String, body: FeedbackBody) : String
 
@@ -100,7 +86,7 @@ class FeedbackApplicationService extends Feedback {
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackApplicationBody
 
-  override def from: String = "oth-feedback@no-reply.com"
+  override def from: String = Digiroad2Properties.emailFrom
   override def subject: String = "Palaute työkalusta"
   override def body: String = ""
 
@@ -123,10 +109,10 @@ class FeedbackDataService extends Feedback {
   def emailOperations = new EmailOperations
   type FeedbackBody = FeedbackDataBody
 
-  override def from: String = "oth-feedback-data@no-reply.com"
+  override def from: String = Digiroad2Properties.emailFrom
   override def subject: String = "Aineistopalaute"
   override def body: String = ""
-  def directLink: String = getProperty("digiroad2.feedbackAssetsEndPoint")
+  def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
     val ids = body.assetId.getOrElse(Seq.empty[Long]).mkString(",")

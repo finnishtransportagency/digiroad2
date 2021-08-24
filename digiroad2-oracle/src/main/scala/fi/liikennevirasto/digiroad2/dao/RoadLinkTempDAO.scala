@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -52,9 +52,12 @@ class RoadLinkTempDAO {
 
   def insertInfo(roadAddressTemp: RoadAddressTEMP, username: String): Unit = {
     sqlu"""insert into temp_road_address_info (id, link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code  ,created_by)
-             select primary_key_seq.nextval, ${roadAddressTemp.linkId}, ${roadAddressTemp.municipalityCode}, ${roadAddressTemp.road}, ${roadAddressTemp.roadPart}, ${roadAddressTemp.track.value},
-      ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM}, ${roadAddressTemp.startMValue}, ${roadAddressTemp.endMValue}, ${roadAddressTemp.sideCode.map(_.value)}, $username
-              from dual""".execute
+           values (nextval('primary_key_seq'), ${roadAddressTemp.linkId},
+           ${roadAddressTemp.municipalityCode}, ${roadAddressTemp.road},
+           ${roadAddressTemp.roadPart}, ${roadAddressTemp.track.value},
+           ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM},
+           ${roadAddressTemp.startMValue}, ${roadAddressTemp.endMValue},
+           ${roadAddressTemp.sideCode.map(_.value)}, $username)""".execute
   }
 
   def deleteInfoByMunicipality(municipalityCode: Int): Unit = {

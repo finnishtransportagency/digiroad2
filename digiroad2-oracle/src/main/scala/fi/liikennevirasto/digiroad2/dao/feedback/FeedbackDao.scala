@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao.feedback
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import slick.jdbc.StaticQuery.interpolation
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.service.feedback.FeedbackInfo
@@ -25,7 +25,7 @@ class FeedbackDao {
   }
 
   def byStatus(status: Boolean)(query: String): String = {
-    val feedbackFilter = if (status) " status = 1 " else " status = 0 "
+    val feedbackFilter = if (status) " status = '1' " else " status = '0' "
     query + s"where $feedbackFilter"
   }
 
@@ -49,17 +49,17 @@ class FeedbackDao {
   }
 
   def insertFeedback(createdBy: String, body: String, subject: String, status: Boolean): Long = {
-   val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
+   val id = sql"""select nextval('primary_key_seq')""".as[Long].first
       sqlu"""
           insert into feedback (id, created_by, created_date, subject, body, status, status_date)
-          values ($id, ${createdBy}, sysdate, ${subject},
-                ${body},${status}, sysdate)""".execute
+          values ($id, ${createdBy}, current_timestamp, ${subject},
+                ${body},${status}, current_timestamp)""".execute
     id
   }
 
   def updateFeedback(id: Long): Long = {
     sqlu"""
-          update feedback set status = 1, status_date = sysdate where id = ${id} """.execute
+          update feedback set status = '1', status_date = current_timestamp where id = ${id} """.execute
     id
   }
 }

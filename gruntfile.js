@@ -4,9 +4,6 @@ module.exports = function(grunt) {
   var path = require('path');
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    properties: {
-      app: 'conf/dev/keys.properties'
-    },
     env: {
       options: {},
       development: {
@@ -192,7 +189,7 @@ module.exports = function(grunt) {
     watch: {
       oth: {
         files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-        tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
+        tasks: ['jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
         options: {
           livereload: true
         }
@@ -204,6 +201,12 @@ module.exports = function(grunt) {
           args: ['localhost', 9002]
         },
         src: ['vallu_test_server.js']
+      },
+      viitedummyserver: {
+        options: {
+          args: ['localhost', 9003]
+        },
+        src: ['viitedummyserver.js']
       }
     },
     exec: {
@@ -228,29 +231,18 @@ module.exports = function(grunt) {
 
   var target = grunt.option('target') || 'production';
 
-  grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'watch:oth']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'watch:oth']);
 
-  grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', [ 'jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
+  grunt.registerTask('integration-test', [ 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
+  grunt.registerTask('viitedummyserver', ['execute:viitedummyserver', 'watch']);
 
   grunt.registerTask('test-concat', ['concat']);
-
-  grunt.registerTask('save_deploy_info',
-    function () {
-      var options = this.options({
-        file: 'revision.properties'
-      });
-
-      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
-      grunt.file.write(options.file, data);
-
-    }
-  );
 };

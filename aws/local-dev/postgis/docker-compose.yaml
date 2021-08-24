@@ -1,0 +1,22 @@
+version: "3.3"
+services:
+  postgres:
+    image: postgis/postgis:latest
+    container_name: 'postgis-digiroad2'
+    environment:
+      POSTGRES_USER: digiroad2
+      POSTGRES_PASSWORD: digiroad2
+      POSTGRES_DB: digiroad2
+    volumes:
+      - data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+#    command: ["postgres", "-c", "log_statement=all"]
+  cacheDatabaseMemcache:
+    image: memcached:1.6.6-alpine
+    ports:
+      - 11211:11211
+    command: "-I 134M -m 500" # AWS
+
+volumes:
+  data:

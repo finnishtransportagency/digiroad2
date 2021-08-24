@@ -2,19 +2,19 @@ package fi.liikennevirasto.digiroad2.process
 
 import java.sql.SQLIntegrityConstraintViolationException
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 
 case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
@@ -23,16 +23,11 @@ case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
 trait AssetServiceValidator {
 
   val eventbus = new DummyEventBus
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
-  lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
+  lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 
@@ -51,14 +46,6 @@ trait AssetServiceValidator {
   def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo) : Unit
 
   val allowedTrafficSign: Set[TrafficSignType]
-
-  protected def getProperty(name: String): String = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
 
   protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
     sideCode match {
@@ -166,11 +153,11 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     println(DateTime.now())
 
     println("Fetching municipalities")
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession{
       Queries.getMunicipalities
     }
 
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
   }
 
@@ -182,7 +169,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
         splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            OracleDatabase.withDynTransaction {
+            PostGISDatabase.withDynTransaction {
               assetValidator(trafficSign).foreach {
                 inaccurate =>
                   (inaccurate.assetId, inaccurate.linkId) match {

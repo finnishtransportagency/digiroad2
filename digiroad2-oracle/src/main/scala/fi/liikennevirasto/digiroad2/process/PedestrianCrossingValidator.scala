@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.process
 
 import java.sql.SQLIntegrityConstraintViolationException
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.{GeometryUtils, PedestrianCrossingSign, Point, TrafficSignType}
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PedestrianCrossings, Private, SideCode}
@@ -13,8 +13,8 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
   override def assetTypeInfo: AssetTypeInfo =  PedestrianCrossings
   override val radiusDistance: Int = 50
 
-  lazy val dao: OraclePedestrianCrossingDao = new OraclePedestrianCrossingDao()
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  lazy val dao: PostGISPedestrianCrossingDao = new PostGISPedestrianCrossingDao()
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val allowedTrafficSign: Set[TrafficSignType] = Set(PedestrianCrossingSign)
 
   override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType] = {

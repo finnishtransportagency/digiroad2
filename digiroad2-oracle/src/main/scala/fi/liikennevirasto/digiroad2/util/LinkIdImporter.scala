@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.sql.{BatchUpdateException, SQLSyntaxErrorException}
 
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -12,8 +12,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 
 object LinkIdImporter {
-  def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
   case class TableSpec(name: String)
 
@@ -67,10 +67,10 @@ object LinkIdImporter {
         val mmlIds =
           sql"""
                select *
-               from (select a.*, rownum rnum
+               from (select a.*, row_number() OVER() rnum
                       from (select distinct mml_id from #$tableName) a
-                      where rownum <= $max
-                ) where rnum >= $min
+                      limit $max
+                ) derivedMml where rnum >= $min
           """.as[Long].list
         val links = vvhClient.roadLinkData.fetchByMmlIds(mmlIds.toSet)
         links.foreach { link =>

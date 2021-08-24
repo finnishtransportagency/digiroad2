@@ -3,14 +3,14 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, Queries}
-import fi.liikennevirasto.digiroad2.oracle.{OracleDatabase, _}
+import fi.liikennevirasto.digiroad2.postgis.{PostGISDatabase, _}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 
 trait DatabaseTransaction {
   def withDynTransaction[T](f: => T): T
 }
 object DefaultDatabaseTransaction extends DatabaseTransaction {
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 }
 
 class AssetPropertyService(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) {

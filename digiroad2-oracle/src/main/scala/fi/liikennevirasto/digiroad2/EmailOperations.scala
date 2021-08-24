@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.util.SmtpPropertyReader
+
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, SmtpPropertyReader}
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import org.slf4j.LoggerFactory
@@ -11,6 +12,7 @@ case class Email( to: String, from: String, cc: Option[String], bcc: Option[Stri
 class EmailOperations() {
 
   private val smtpProp = new SmtpPropertyReader
+
   private def isNumeric(str:String): Boolean = str.matches("[-+]?\\d+(\\.\\d+)?")
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -19,8 +21,12 @@ class EmailOperations() {
       throw new IllegalArgumentException
 
     val properties = new Properties()
+    properties.put("mail.transport.protocol", "smtp")
     properties.put("mail.smtp.host", smtpProp.getHost)
     properties.put("mail.smtp.port", smtpProp.getPort)
+    properties.put("mail.smtp.starttls.enable", "true")
+    properties.put("mail.smtp.starttls.required", "true")
+    properties.put("mail.smtp.auth", "true")
 
     Session.getDefaultInstance(properties)
   }
@@ -50,8 +56,10 @@ class EmailOperations() {
 
   def sendEmail(email: Email): Boolean = {
     val message = createMessage(email, setEmailProperties())
+    val sesUsername = Digiroad2Properties.sesUsername
+    val sesPassword = Digiroad2Properties.sesPassword
     try {
-      Transport.send(message)
+      Transport.send(message, sesUsername, sesPassword)
       true
     }catch {
       case ex: MessagingException =>

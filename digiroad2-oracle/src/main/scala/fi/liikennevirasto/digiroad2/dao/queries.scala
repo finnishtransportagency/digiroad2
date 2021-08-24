@@ -7,8 +7,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import _root_.oracle.spatial.geometry.JGeometry
-import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.joda.time.{DateTime, LocalDate}
@@ -19,6 +17,8 @@ import slick.jdbc.StaticQuery._
 import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
 import Q._
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import org.postgis.PGgeometry
+import org.postgresql.util.PGobject
 import java.util.Locale
 
 
@@ -35,15 +35,16 @@ object Queries {
   case class AdditionalPanelRow(publicId: String, propertyType: String, panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, panelText: String, panelSize: Int, panelCoatingType: Int, panelColor: Int)
   case class DynamicPropertyRow(publicId: String, propertyType: String, required: Boolean = false, propertyValue: Option[Any])
 
-  def bytesToPoint(bytes: Array[Byte]): Point = {
-    val geometry = JGeometry.load(bytes)
-    val point = geometry.getPoint()
-    Point(point(0), point(1))
+  def objectToPoint(geometry: Object): Point = {
+    val pgObject = geometry.asInstanceOf[PGobject]
+    val geom = PGgeometry.geomFromString(pgObject.getValue)
+    val point =geom.getFirstPoint
+    Point(point.x, point.y)
   }
 
   implicit val getPoint = new GetResult[Point] {
     def apply(r: PositionedResult) = {
-      bytesToPoint(r.nextBytes)
+      objectToPoint(r.nextObject())
     }
   }
 
@@ -69,45 +70,43 @@ object Queries {
     }
   }
 
-  def nextPrimaryKeyId = sql"select primary_key_seq.nextval from dual"
+  def nextPrimaryKeyId = sql"select nextval('primary_key_seq')"
 
-  def nextNationalBusStopId = sql"select national_bus_stop_id_seq.nextval from dual"
+  def nextNationalBusStopId = sql"select nextval('national_bus_stop_id_seq')"
 
-  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_primary_key_seq.nextval from dual"
+  def nextLrmPositionPrimaryKeyId = sql"select nextval('lrm_position_primary_key_seq')"
 
-  def nextGroupedId = sql"select grouped_id_seq.nextval from dual"
-
-  def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
-
-  def nextCommonHistoryValue = sql"select common_history_seq.nextval from dual"
-
-  def fetchViitePrimaryKeyId(len: Int) = {
-    sql"""select viite_general_seq.nextval from dual connect by level <= $len""".as[Long].list
-  }
+  def nextGroupedId = sql"select nextval('grouped_id_seq')"
 
   def fetchLrmPositionIds(len: Int) = {
-    sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= $len""".as[Long].list
+    sql"""SELECT nextval('lrm_position_primary_key_seq') from generate_series(1,$len)""".as[Long].list
   }
 
   def updateAssetModified(assetId: Long, updater: String) =
     sqlu"""
-      update asset set modified_by = $updater, modified_date = SYSDATE where id = $assetId
+      update asset set modified_by = $updater, modified_date = current_timestamp where id = $assetId
     """
 
   def updateAssetGeometry(id: Long, point: Point): Unit = {
     val x = point.x
     val y = point.y
+    val pointGeometry =s"POINT($x $y 0 0)"
     sqlu"""
       UPDATE asset
-        SET geometry = MDSYS.SDO_GEOMETRY(4401,
-                                          3067,
-                                          NULL,
-                                          MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                                          MDSYS.SDO_ORDINATE_ARRAY($x, $y, 0, 0)
-                                         )
+        SET geometry = ST_GeomFromText($pointGeometry,3067)
         WHERE id = $id
     """.execute
   }
+
+  def linearGeometry(startPoint: Point, endPoint: Point,assetLength:Double): String ={
+    val startPointX =startPoint.x.toString
+    val startPointY =startPoint.y.toString
+    val endPointX =endPoint.x.toString
+    val endPointY =endPoint.x.toString
+    s"LINESTRING($startPointX $startPointY 0.0 0.0,$endPointX $endPointY 0.0 $assetLength)"
+  }
+
+  def pointGeometry(lon: Double, lat: Double): String ={s"POINT($lon $lat 0 0)"}
 
   def insertAsset(assetId: Long, externalId: Long,
                   assetTypeId: Long, bearing: Int,
@@ -118,7 +117,7 @@ object Queries {
     """
 
   def expireAsset(id: Long, username: String): Unit = {
-    sqlu"""update ASSET set VALID_TO = sysdate, MODIFIED_BY = $username, modified_date = sysdate where id = $id""".execute
+    sqlu"""update ASSET set VALID_TO = current_timestamp, MODIFIED_BY = $username, modified_date = current_timestamp where id = $id""".execute
   }
 
   def propertyIdByPublicIdAndTypeId = "select id from property where public_id = ? and asset_type_id = ?"
@@ -136,8 +135,8 @@ object Queries {
   def insertMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_date, grouped_id)
-      values (primary_key_seq.nextval, $propertyId, $assetId,
-        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE, $groupedId)
+      values (nextval('primary_key_seq'), $propertyId, $assetId,
+        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), current_timestamp, $groupedId)
     """
 
   def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
@@ -150,7 +149,7 @@ object Queries {
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = Some(0)) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date, grouped_id)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, SYSDATE, $groupedId)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $valueFi, current_timestamp, $groupedId)
     """
   }
 
@@ -175,21 +174,21 @@ object Queries {
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value)
     """
   }
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Double) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value)
     """
   }
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = Some(0)) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value, grouped_id)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value, $groupedId)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value, $groupedId)
     """
   }
 
@@ -217,7 +216,7 @@ object Queries {
   def insertDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) = {
     sqlu"""
       insert into date_property_value(id, property_id, asset_id, date_time)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $dateTime)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $dateTime)
     """
   }
 
@@ -230,7 +229,7 @@ object Queries {
   def insertValidityPeriodProperty(assetId: Long, propertyId: Long, validityPeriodValue: ValidityPeriodValue) = {
     sqlu"""
       insert into validity_period_property_value(id, property_id, asset_id, type, period_week_day, start_hour, end_hour, start_minute, end_minute)
-      values (primary_key_seq.nextval, $propertyId, $assetId, ${validityPeriodValue.periodType}, ${validityPeriodValue.days}, ${validityPeriodValue.startHour},
+      values (nextval('primary_key_seq'), $propertyId, $assetId, ${validityPeriodValue.periodType}, ${validityPeriodValue.days}, ${validityPeriodValue.startHour},
       ${validityPeriodValue.endHour}, ${validityPeriodValue.startMinute}, ${validityPeriodValue.endMinute})
     """
   }
@@ -247,14 +246,14 @@ object Queries {
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
     """
   }
 
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Double, groupedId: Option[Long]) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, grouped_id)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE, $groupedId)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp, $groupedId)
     """
   }
 
@@ -300,7 +299,7 @@ object Queries {
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
-      sqlu"update lrm_position set #$propertyColumn = $value where id = (select position_id from asset_link where asset_id = $assetId)"
+      sqlu"update lrm_position set #$propertyColumn = cast($value as numeric) where id = (select position_id from asset_link where asset_id = $assetId)"
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
@@ -358,10 +357,6 @@ object Queries {
     propertyNames.filter(_._1 != null)
   }
 
-  def storeGeometry(geometry: JGeometry, conn: Connection): STRUCT = {
-    JGeometry.store(geometry, bonecpToInternalConnection(conn))
-  }
-
   def collectedQuery[R](qc: QueryCollector)(implicit rconv: GetResult[R], pconv: SetParameter[IndexedSeq[Any]]): List[R] = {
     Q.query[IndexedSeq[Any], R](qc.sql).apply(qc.params).list
   }
@@ -379,25 +374,6 @@ object Queries {
       """.as[Int].list
   }
 
-  def getDistinctRoadNumbers(filterRoadAddresses : Boolean) : Seq[Int] = {
-    if(filterRoadAddresses){
-      sql"""
-      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000)) and floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-    else{
-      sql"""
-       select distinct road_number from road_address where floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
-      """.as[Int].list
-    }
-  }
-
-  def getLinkIdsByRoadNumber(roadNumber: Int) : Set[Long] = {
-    sql"""
-       select distinct pos.LINK_ID from road_address ra join LRM_POSITION pos on ra.lrm_position_id = pos.id where ra.road_number = $roadNumber
-      """.as[Long].list.toSet
-  }
-
   def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {
     sql"""
       select m.id from municipality m where m.ELY_NRO = $elyNro
@@ -413,7 +389,7 @@ object Queries {
   def insertDatePeriodProperty(assetId: Long, propertyId: Long, startDate: DateTime, endDate: DateTime) = {
     sqlu"""
       insert into date_period_value(id, property_id, asset_id, start_date, end_date)
-      values (primary_key_seq.nextval, $propertyId, $assetId, ${startDate}, ${endDate})
+      values (nextval('primary_key_seq'), $propertyId, $assetId, ${startDate}, ${endDate})
     """
   }
 
@@ -437,7 +413,7 @@ object Queries {
       val additionalInfo = r.nextStringOption()
       val modifiedDate = r.nextStringOption()
       val municipalityCode = r.nextInt()
-      val point = r.nextBytesOption().map(bytesToPoint).get
+      val point = r.nextObjectOption().map(objectToPoint).get
 
       LorryParkingInDATEX2(servicePointId, serviceId, parkingType, parkingTypeMeaning, name, additionalInfo, point.x, point.y, modifiedDate, municipalityCode)
     }
@@ -448,7 +424,7 @@ object Queries {
   }
 
   def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
-    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = current_timestamp, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE INACCURATE_ASSET SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE INCOMPLETE_LINK SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute

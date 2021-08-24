@@ -6,8 +6,9 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneChangeType, LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneNumber, LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -78,7 +79,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughLaneService.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 }
 
 
@@ -1122,6 +1123,16 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
+  test("Testing expiring lane by linkId"){
+    runWithRollback {
+      val laneToBeCreated = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val createdLaneID = ServiceWithDao.create(Seq(laneToBeCreated), Set(100L), 2, usernameTest).head
+      laneDao.expireLanesByLinkId(Set(100L), usernameTest)
+      val laneId = laneDao.fetchLanesByIds(Set(createdLaneID))
+      laneId.head.expired should be(true)
+    }
+  }
+
   test("Adjust lanes: Create missing main lane 21 and adjust side codes of lanes 11 and 12"){
     runWithRollback {
       val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -1278,6 +1289,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lanesChanged.map(_.lane.id) should be(Seq(lane11Id, lane11Id))
     }
   }
+
 
   test("Lane Change: Show 2 Add and 1 expire"){
     runWithRollback {

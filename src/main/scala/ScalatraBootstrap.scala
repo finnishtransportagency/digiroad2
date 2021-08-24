@@ -3,7 +3,9 @@ import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.dataexport.ExportDataApi
 import fi.liikennevirasto.digiroad2.dataimport.ImportDataApi
 import fi.liikennevirasto.digiroad2.user.UserConfigurationApi
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.scalatra._
+
 import javax.servlet.ServletContext
 
 
@@ -45,7 +47,7 @@ ScalatraBootstrap extends LifeCycle {
       swagger
     ), "/api/municipality/*")
     context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService, swagger), "/api/livi/*")
-    if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
+    if (!Digiroad2Properties.tierekisteriEnabled) {
       // Mount for manual testing purposes but do not use them
       context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
     }

@@ -7,9 +7,9 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import org.mockito.Mockito._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.scalatest.mockito.MockitoSugar
@@ -21,13 +21,13 @@ import org.mockito.ArgumentMatchers.any
 class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
 
   class TestTrafficSignProhibitionGenerator extends TrafficSignProhibitionGenerator(mockRoadLinkService) {
-    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-    override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-    override lazy val oracleLinearAssetDao: OracleLinearAssetDao = linearAssetDao
+    override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+    override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+    override lazy val postGisLinearAssetDao: PostGISLinearAssetDao = linearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override lazy val prohibitionService = mockProhibitionService
@@ -398,9 +398,9 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   class TestTrafficSignHazmatTransportProhibitionGenerator extends TrafficSignHazmatTransportProhibitionGenerator(mockRoadLinkService) {
-    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-    override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-    override lazy val oracleLinearAssetDao: OracleLinearAssetDao = linearAssetDao
+    override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+    override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+    override lazy val postGisLinearAssetDao: PostGISLinearAssetDao = linearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
   }
@@ -428,11 +428,11 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   class TestTrafficSignParkingProhibitionGenerator extends TrafficSignParkingProhibitionGenerator(mockRoadLinkService) {
-    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+    override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-    override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+    override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
-    override lazy val oracleLinearAssetDao: OracleLinearAssetDao = linearAssetDao
+    override lazy val postGisLinearAssetDao: PostGISLinearAssetDao = linearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
   }
