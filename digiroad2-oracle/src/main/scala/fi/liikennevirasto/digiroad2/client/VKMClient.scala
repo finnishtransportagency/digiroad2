@@ -134,7 +134,7 @@ class VKMClient {
     val params = Map(
       VkmRoad -> roadAddress.road,
       VkmTrackCodes -> roadAddress.track.value,
-      VkmRoadPart -> roadAddress.roadPart,
+      VkmRoadPart -> roadAddress.roadPart
     )
 
     request(vkmBaseUrl + "muunna?" + urlParamsReverse(params)) match  {
