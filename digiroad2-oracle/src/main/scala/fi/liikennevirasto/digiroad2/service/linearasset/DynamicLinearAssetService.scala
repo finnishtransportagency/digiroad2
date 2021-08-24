@@ -156,14 +156,8 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       }
       catch {
         case e:NoSuchElementException=>
-          // for Batch
-          println("Roadlink no longer available: "+oldLinearAsset.linkId+" For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired)
-          // regular logging
-          logger.warn(("Roadlink no longer available: "+oldLinearAsset.linkId+" For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired))
-        case e=>   
-          // for Batch
-          println("Some other error occurred, For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired+" \n  "+e.printStackTrace())
-          // regular logging
+          logger.warn("Roadlink no longer available: "+oldLinearAsset.linkId+" For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired)
+        case e=>
           logger.warn("Some other error occurred, For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired+" \n  ",e)
       }
       
