@@ -1041,6 +1041,7 @@
 
               if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(_.head(startDate.values)) && !_.isUndefined(_.head(endDate.values)))
                 isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
+              else if (!startDate || _.isEmpty(startDate.values)) isValidDate = false;
               return isValidDate;
             };
 
