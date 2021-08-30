@@ -37,11 +37,8 @@ case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Long
                                 vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty],
                                 historyCreatedDate: DateTime, historyCreatedBy: String)
 
-case class NewLane ( linkId: Long, startMeasure: Double, endMeasure: Double, value: LanePropertyValue, sideCode: Int,
-                          vvhTimeStamp: Long, geomModifiedDate: Option[DateTime] )
-
-case class NewIncomeLane ( id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
-                           isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty] )
+case class NewLane(id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
+                   isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None )
 
 case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, geometry: Seq[Point], lanes: Seq[Int])
 
