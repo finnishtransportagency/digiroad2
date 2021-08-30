@@ -2326,7 +2326,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
 
     validateUserRightsForLanes(linkIds, user)
-    laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
+    laneService.processNewIncomeLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
   }
 
   post("/lanesByRoadAddress") {
