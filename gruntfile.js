@@ -201,9 +201,7 @@ module.exports = function(grunt) {
           args: ['localhost', 9002]
         },
         src: ['vallu_test_server.js']
-      }
-    },
-    execute: {
+      },
       viitedummyserver: {
         options: {
           args: ['localhost', 9003]

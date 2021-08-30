@@ -1,59 +1,56 @@
-Digiroad-yll&auml;pitosovelluksen k&auml;ytt&ouml;ohje
-======================================================
+Digiroad-ylläpitosovelluksen käyttöohje
+==============
 
-__Huom! Suosittelemme Firefoxia tai Chromea, kun sovelluksella yll&auml;pidet&auml;&auml;n Digiroad-tietoja.__
+__Huom! Suosittelemme, että Digiroad-sovellusta käytetään Firefox- tai Chrome-selaimella.__
 
-__Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erottuvat paremmin.__
+__Huom! K&auml;ytt&ouml;ohjeen kuvia voi näpäyttää hiirellä suuremmaksi, jolloin tekstit erottuvat paremmin.__
 
-1. Miten p&auml;&auml;sen alkuun?
------------------------
+# 1. Miten pääsen alkuun
 
-1. Digiroadiin k&auml;yv&auml;t olemassa olevat Liikenneviraston tunnukset. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-palvelusta: info@digiroad.fi tai 040-507 2301.
+1. Digiroad-sovellukseen kirjaudutaan voimassa olevilla Väyläviraston tunnuksilla. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-operaattorilta sähköpostitse osoitteesta info@digiroad.fi.
 
-1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.liikennevirasto.fi/digiroad/ target="_blank">https://extranet.liikennevirasto.fi/digiroad/. </a>
+2. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
 
-1. Kirjautumisen j&auml;lkeen avautuu karttak&auml;ytt&ouml;liittym&auml;ss&auml; katselutila. Oikeudet on rajattu maantieteellisesti sek&auml; k&auml;ytt&auml;j&auml;n roolin mukaan. Katselijan roolissa aineistoja voi ainoastaan katsella. Muokkaajan roolissa aineistoja voi sek&auml; katsella ett&auml; muokata.
+3. Kirjautumisen j&auml;lkeen avautuu karttak&auml;ytt&ouml;&auml;ss&auml; katselutila. Käyttöoikeudet on rajattu maantieteellisesti kunnan tai ELY-alueen sekä k&auml;ytt&auml;j&auml;n roolin mukaan. Katselijan roolissa aineistoja voi ainoastaan katsella käyttöliittymässä. Muokkaajan roolissa aineistoja voi sek&auml; katsella ett&auml; muokata.
 
 
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
-- Ilman Digiroad-oikeuksia Liikenneviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia aineistoja.
-- Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin kaikkiin aineistoihin tai vain pys&auml;kkiaineistoihin.
-- Digiroad-operaattorilla on oikeudet koko Suomen kaikkiin aineistoihin.
+- Väyläviraston tunnuksilla p&auml;&auml;see katselemaan sovelluksessa kaikkia aineistoja, vaikka Digiroadin muokkausoikeuksia ei olisi.
+- Sovelluksen käyttäjälle on voitu myöntää muokkausoikeuksia h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin aineistoihin. Muokkausoikeudet voidaan myöntää kunnan tai ELY-alueen aineistoihin.
+- Digiroad-operaattorilla on oikeudet koko Suomen kaikkiin kunta-aineistoihin.
 
-Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Liikenneviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
+Jos karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranetiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-operaattoriin sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301.
 
-1.1 Mist&auml; saan opastusta?
---------------------------
+## 1.1 Mistä saan opastusta?
 
-Digiroad-palvelusta saa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Palvelu auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Palvelussa vastataan puhelimeen ja s&auml;hk&ouml;posteihin arkip&auml;ivin&auml; klo 9-16.
+Digiroad-operaattorilta saa tarvittavat tunnukset ja k&auml;ytt&ouml;oikeudet selainsovellukseen. Operaattori auttaa my&ouml;s ongelmatilanteissa sovelluksen k&auml;yt&ouml;n kanssa. Asiakaspalveluun voi olla yhteydessä sähköpostitse osoitteeseen info@digiroad.fi tai puhelimitse numeroon 040 507 2301 arkipäivisin klo 9-16.
 
 Yhteystiedot:
 
-Digiroad-palvelu:
+Digiroad-operaattori:
 info@digiroad.fi
-p. 040-507 2301
+040 507 2301
  <a href=http://www.digiroad.fi/ target="_blank">http://www.digiroad.fi/ </a>
 
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
 
-1.2 Usein kysytyt kysymykset (UKK) ja ongelmatilanteet
-------------------------------------------------
+## 1.2 Usein kysytyt kysymykset (UKK) ja ongelmatilanteet
 
-Digiroad -sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set <a href=http://www.digiroad.fi/yllapito/fi_FI/pysakkiohjeet/  target="_blank">t&auml;&auml;lt&auml;. </a>
+Digiroad-sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set <a href=https://vayla.fi/vaylista/aineistot/digiroad/yllapito/usein-kysytyt-kysymykset  target="_blank">t&auml;&auml;lt&auml;. </a>
 
-####Ongelmatilanteet####
+### Ongelmatilanteet
 
-Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu oikein) toimi seuraavasti:
+Sovelluksen toimiessa virheellisesti tee näin:
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
-- Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome
-- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-palveluun: info@digiroad.fi 
+- Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome.
+- Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-operaattoriin sähköpostitse info@digiroad.fi tai soittamalla numeroon 040 507 2301.
 
-####Kirjautuminen Digiroad-sovellukseen####
+### Kirjautuminen Digiroad-sovellukseen
 
-Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.liikennevirasto.fi/digiroad/  target="_blank">https://extranet.liikennevirasto.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Liikenneviraston tunnukset. Tunnuksia saa Digiroad-palvelusta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.vayla.fi/digiroad/  target="_blank">https://extranet.vayla.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
 ![Kirjautuminen Digiroadiin.](k2.PNG)
 
@@ -61,287 +58,1991 @@ _Kirjautuminen Digiroadiin._
 
 Kirjautumisen j&auml;lkeen avautuu Digiroad-selainsovelluksen karttak&auml;ytt&ouml;liittym&auml;n katselutila. Maantieteellisesti kartalla on n&auml;kyviss&auml; alue, johon k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
-![Katselutila](k3.jpg)
+![Katselutila](Manuaali2.PNG)
 
 _Karttak&auml;ytt&ouml;liittym&auml;n katselutila._
 
-Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei k&auml;ytt&auml;j&auml;ll&auml; ole oikeuksia Digiroad-sovellukseen. Digiroad-oikeuksia voi pyyt&auml;&auml; Digiroad-palvelusta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Mik&auml;li karttak&auml;ytt&ouml;liittym&auml;n katselutila ei avaudu sovellukseen kirjautumisen jälkeen, ei k&auml;ytt&auml;j&auml;ll&auml; ole oikeuksia Digiroad-sovellukseen. Digiroad-oikeuksia voi pyyt&auml;&auml; Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
-2. Yleist&auml;
-----------
+# 2. Yleistä 
 
-Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija tai vierailija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; ja nopeusrajoituksia. 
+Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen j&auml;lkeen ruudulle avautuu oletuksena katselutila. Jos käyttäjälle ei ole myönnetty muokkausoikeuksia kunnan tai ELY-keskuksen alueelle, voi hän ainoastaan katsella Digiroadin eri tietolajeja sovelluksessa. Muokkausoikeudet saatuaan käyttäjä voi sekä katsella että muokata eri tietolajeja. Muokkausoikeudet myönnetään käyttäjälle aina alueellisesti yhden tai useamman kunnan tai Ely-keskuksen rajojen sisäpuolella oleviin aineistoihin.
 
-Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan sivun vasemman yl&auml;kulman tietolajit-paletista(1).
+Tietolajien muokkaus suoritetaan muokkaustilassa, jolloin käyttäjä pääsee muokkaamaan niitä tietoja, joihin hänelle on myönnetty ylläpito-oikeudet. (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan. Tietolaji valitaan käyttöliittymän vasemmassa reunassa olevan tietolajipaneelin tietolajivalikosta (1).
 
-![Tietolajivalikko](k120.jpg)
+![Tietolajivalikko](Manuaali3.1.PNG)
 
 _Tietolajivalikko._
 
-Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta. Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa. Kuntak&auml;ytt&auml;jien tulee kohdistaa muutokset katuverkolle, ELY-k&auml;ytt&auml;jien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (3). Muutosten tallentamisen j&auml;lkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan k&auml;ytt&auml;j&auml;tunnus, p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika (5). Ennen tallentamista voi tehdyt muutokset peruuttaa painamalla Peruuta-painiketta (4). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisia, kun muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-ilmoituksen, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (6).
+Muokkaustilan saa aktivoitua napauttamalla tietolajipaneelin alareunassa olevaa Siirry muokkaustilaan -painiketta. Muokkaustilassa kartan yläpalkkiin ilmestyy teksti "Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle." (2). Muokkaustilassa tehdyt muutokset tallentuvat painamalla Tallenna-painiketta (3). Muutosten tallentamisen jälkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan käyttäjätunnus, päivämäärä ja kellonaika (4). Ennen uusien tietojen tallentamista voi tehdyt muutokset peruuttaa napauttamalla Peruuta-painiketta (3). Tallenna- ja Peruuta -painikkeet eivät ole aktiivisia silloin, kun muutoksia ei ole tehty. Tehdyt muutokset tulee tallentaa tai perua ennen kun sovellus antaa siirtyä muokkaamaan uutta kohdetta. Takaisin katselutilaan pääsee napauttamalla Siirry katselutilaan -painiketta (5).
 
-Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
+Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaavajanalla näkyy 200 m tai vähemmän. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
-![Muokkaustila](k1.jpg)
+![Muokkaustila](Manuaali4.png)
 
 _Muokkaustila._
 
-2.1 Karttan&auml;kym&auml;n muokkaus
---------------------------
+## 2.1 Karttaikkunan muokkaus
 
-####Kartan liikutus####
+### Kartan liikutus
 
-Karttaa liikutetaan raahaamalla.
+Karttaa liikutetaan hiirellä raahaamalla.
 
-####Mittakaavataso####
+### Mittakaavataso
 
-Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista  (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan oikeassa alakulmassa (9).
+Kartan mittakaavatasoa muutetaan joko hiiren rullalla, kaksoisnapauttamalla, Shift+piirto (alue) tai mittakaavapainikkeista (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, kaksoisnapauttamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy karttaikkunan oikeassa alakulmassa (8).
 
-####Karttahaut####
+### Karttahaut
 
-K&auml;ytt&ouml;liittym&auml;ss&auml; on hakukentt&auml; (2), jossa voi hakea koordinaateilla, katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukentt&auml;&auml;n ja klikkaamalla Hae. Hakutulos tulee listaan hakukent&auml;n alle. Hakutuloslistassa ylimp&auml;n&auml; on maantieteellisesti kartan nykyist&auml; keskipistett&auml; l&auml;himp&auml;n&auml; oleva kohde. Mik&auml;li hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, t&auml;ytyy listalta valita tulos, jolloin kartta keskittyy siihen. Tyhjenn&auml; tulokset -painike tyhjent&auml;&auml; hakutuloslistan.
+K&auml;ytt&ouml;liittym&auml;ss&auml; on hakukentt&auml; (6), jossa voi hakea haluttua sijantia kohteen koordinaateilla, katuosoitteella tai tieosoitteella. Haku suoritetaan kirjoittamalla hakuehto hakukentt&auml;&auml;n ja napauttamalla Hae-painiketta. Hakutulos tulee listaan hakukent&auml;n alle. Hakutuloslistassa ylimp&auml;n&auml; on maantieteellisesti kartan nykyist&auml; keskipistett&auml; l&auml;himp&auml;n&auml; oleva kohde. Mik&auml;li hakutuloksia on vain yksi, keskittyy kartta automaattisesti haettuun kohteeseen. Jos hakutuloksia on useampi kuin yksi, t&auml;ytyy listalta valita tulos, johon kartta keskittyy. Tyhjenn&auml; tulokset -painike tyhjent&auml;&auml; hakutuloslistan.
 
-Koordinaateilla haku: Koordinaatit sy&ouml;tet&auml;&auml;n muodossa "pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;)". Koordinaatit tulee olla ETRS89-TM35FIN -koordinaattij&auml;rjestelm&auml;ss&auml;. Esim. "6975061, 535628".
+Koordinaateilla haku: Koordinaatit sy&ouml;tet&auml;&auml;n hakukenttään ETRS89-TM35FIN -koordinaattijärjestelmässä, siten, että pohjoinen ja eteläinen arvo ovat pilkuin erotettu. Esimerkiksi: 6975061, 535628.
 
-Katuosoitteella haku: Katuosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&auml; koko ositteen tai sen osan. Esim. "Mannerheimintie" tai "Mannerheimintie 10, Helsinki".
+Katuosoitteella haku: Katuosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&auml; koko ositteen tai sen osan. Esimerkiksi: Mannerheimintie tai Mannerheimintie 10, Helsinki.
 
-Tieosoitteella haku: Tieosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&auml; koko osoitteen tai osan siit&auml;. Esim. "2" tai "2 1 150".
+Tieosoitteella haku: Tieosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&auml; koko osoitteen tai osan siit&auml;. Esimerkiksi 2 tai 2 1 150.
 
-####Merkitse piste kartalla####
+### Merkitse piste kartalle
 
-Merkitse-painike (10) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkit&auml;&auml;n uusi piste kartalta. Merkitse-painikkeen vieress&auml; olevat koordinaatit seuraavat kartan keskipistett&auml; ja p&auml;ivittyv&auml;t, kun kartan keskipiste muuttuu.
+Merkitse-painike käyttöliittymän alapalkin vasemmassa reunassa (10) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkit&auml;&auml;n uusi piste kartalta. Merkitse-painikkeen vieress&auml; olevat koordinaatit seuraavat kartan keskipistett&auml; ja p&auml;ivittyv&auml;t, kun kartan keskipiste muuttuu.
 
-####Taustakartat####
+### Taustakartat
 
-Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
+Karttaikkunan taustakartaksi voi valita maastokartan, ortokuvan tai taustakarttasarjan. (9)
 
-![Karttan&auml;kym&auml;n muokkaus](k5.jpg)
+![Karttaikkunan muokkaus](Manuaali5.png)
 
-_Karttan&auml;kym&auml;n muokkaus._
+_Karttaikkunan muokkaus._
 
-##2.2. Historiatietojen esitt&auml;minen kartalla##
+## 2.2 Historiatiedot
 
-OTH:ssa on mahdollista piirt&auml;&auml; n&auml;kyviin my&ouml;s historiatiedot aiemmin poistuneiden geometriatietojen osalta. Toiminnallisuuden tavoitteena on helpottaa yll&auml;pit&auml;j&auml;&auml; t&auml;ydent&auml;m&auml;&auml;n uusien linkkien puuttuvia ominaisuustietoja. Toistaiseksi historiatietoja on mahdollista katsella tielinkkien toiminnallisten luokkien ja nopeusrajoitustiedon osalta. 
-Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan vasemmassa yl&auml;kulmassa olevasta valikosta (1). Kun haluttu tietolaji on piirrossa, valitaan sivun vasemmasta alalaidasta rasti ruutuun kohdassa ”n&auml;yt&auml; poistuneet linkit” (2).
+Sovelluksessa on mahdollista piirt&auml;&auml; n&auml;kyviin my&ouml;s tielinkkien historiatiedot aiemmin poistuneiden tielinkkien osalta. Toiminnallisuuden tavoitteena on helpottaa yll&auml;pit&auml;j&auml;&auml; t&auml;ydent&auml;m&auml;&auml;n uusien tielinkkien puuttuvia ominaisuustietoja. Toistaiseksi historiatietoja on mahdollista katsella ainoastaan tielinkkien toiminnallisten luokkien ja nopeusrajoitustiedon osalta. 
+Historiatiedot otetaan piirtoon valitsemalla ensin aktiiviseksi se tietolaji, jota halutaan tarkastella. Tietolaji valitaan tietolajipaneelin yl&auml;kulmassa olevasta tietolajivalikosta (1). Kun haluttu tietolaji on visualisoitu karttaikkunaan, aktivoidaan tietolajipaneelin alalaidasta Näytä poistuneet tielinkit -valintaruutu (2).
 
-![Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot.](historiatietojen_esittaminen.png)
+![Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot.](Manuaali6.PNG)
 
-_Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot._
+_Kuvassa on piirrossa linkkien toiminnallisen luokan historiatiedot, jotka visualisoituvat vaaleansinisinä ohuempina viivoina kartalle._
 
-3. Tielinkki
-------------
+## 2.3 Käyttöliittymän osien kuvaus
 
-Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttan&auml;kym&auml;&auml;n valitaan tielinkit valitsemalla tietolajit-paletista Tielinkit.
+![Käyttöliittymä](kuvaus1.png)
 
-![Tielinkit](k38.JPG)
+*Käyttöliittymä*
+
+**Yläpalkki** (1) on käyttöliittymän ylin osa. Siinä on Digiroad-logo, sekä oikealla painikkeet:
+* Lisätyt viivamaiset kohteet
+	* Lista viivamaisista kohteista, jotka luodaan yöllä liikennemerkkien luomisen/päivityksen seurauksena.
+* Tietolajien kuntasivu
+	* Kuntakäyttäjä voi merkitä tietolajeja tarkistetuiksi, sekä tarkistaa yksityisteiden ilmoitusten tilanteen.
+* Tiedotteet
+	* Tiedotteita liittyen Digiroadiin.
+* Käyttöohje
+	* Linkki Digiroad-ylläpitosovelluksen käyttöohjeeseen.
+* Palaute työkalusta
+	* Avaa ikkunan, jossa käyttäjä voi lähettää palautetta liittyen ylläpitosovellukseen.
+
+**Alapalkki** (2) on käyttöliittymän alin osa. Siinä on vasemmalta oikealle:
+* Valintapainikkeet kartan taustalle: Maastokartta, Ortokuvat ja Taustakarttasarja (oletus). 
+* Tietolajeja ladatessa tähän keskelle ilmestyy latauspalkki. 
+* Painikkeesta ”Muokkaa aloitussivua” voi käyttäjä muokata sitä, mikä näkymä hänelle latautuu aina ylläpitosovellusta käynnistäessä. 
+* Tieto kunnasta, minkä alueella karttaikkuna on.
+* ETRS89-TM35FIN koordinaatit kartalla näkyvän kohdistin -ristin (3) kohdalla.
+* ”Merkitse” -painike, jota napauttamalla voi asettaa merkin itselleen kartalla näkyvän kohdistin -ristin kohdalle.
+* ”Kohdistin” -valintaruutu, jota napauttamalla saa kohdistin -ristin pois ja päälle.
+* ”Tieosoiteinfo” -valintaruutu, jota napauttamalla saa tieosoitetiedot näkyviin viemällä hiiren tielinkin päälle.
+
+Keskellä ruutua on **Karttaikkuna** (4). Karttaikkunassa näkyy käyttäjän valitsema tausta sekä visualisoitavaksi valittu tietolaji. Karttaikkunan oikeassa alalaidassa on **Zoomauspainikkeet** (5), joita naputtamalla voi loitontaa tai lähentää karttaikkunaa.
+
+Vasemmalla käyttöliittymässä ylhäältä alaspäin lähdettäessä on ensimmäisenä **Hakukenttä** (6), josta voi etsiä tietoa edellä mainitusti.
+
+Hakukentän alla on painike (7), jolla saa auki **Tietolajivalikon**. Tästä valikosta voi valita tietolajin, joka näkyy karttaikkunassa. 
+
+Näiden alla on **Tietolajipaneeli**	 (8), joka sisältää:
+* Riippuen tietolajista, tietolajipainikkeen alla on mahdollisesti **Radionappeja** tai **Valintaruutuja** (9), joista voi valita mitä ominaisuutta tietolajista visualisoidaan kartalla. 
+* Näiden alla (tai niiden puuttuessa) on **Selite** (10). Selitteessä kerrotaan, millä tavalla tietolajit on kuvattu karttaikkunassa. 
+* Näiden alla on tietolajista riippuen mahdollisesti valintaruutuja, joista saa näkyviin ja pois näkyviltä tiettyjä ominaisuuksia. 
+* Toisilla tietolajeilla on **Työkalupainikkeet** (11), joita napauttamalla saa valittua erilaisia työkaluja tietolajien muokkaamiseen.
+* Alimmaisena tietolajipaneelissa on ”Siirry muokkaustilaan” -painike (12), jota painamalla siirrytään muokkaustilaan.
+
+Oikealla käyttöliittymässä on **Ominaisuustietoikkuna** (13). Tähän kuvautuu valitun kohteen ominaisuustiedot eri lailla tietolajista riippuen. Erilaisia vaihtoehtoja muokkaustilassa oleville ominaisuustietojen kuvauksille on:
+* **Syötekenttä**, johon voi syöttää näppäimistöltä tekstiä.
+* **Alasvetovalikko**, josta voi valita tietolajille ominaisia valintoja.
+* **Radionapit** ja **Valintaruudut**: pyöreistä radionapeista voi valita vain yhden, kun taas neliömäisistä valintaruuduista voi valita haluamansa määrän.
+
+Asioita tallentaessa ja joskus uusia alueita ladatessa karttaikkunaan ilmestyy **Spinneri** (14) ilmoittamaan käynnissä olevasta latauksesta. 
+
+![Spinneri](kuvaus3.png)
+
+*Spinneri*
+
+# 3. Tielinkki
+
+Tielinkki on tien, kadun, kävelyn ja pyöräilyn väylän tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttaikkunaan valitaan tielinkit valitsemalla tietolajivalikosta Tielinkit.
+
+![Tielinkit](Manuaali7.PNG)
 
 _Tielinkit._
 
-</br>
-####Tielinkkien haku####
+## 3.1 Tielinkkien haku
 
-Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
+Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa n&auml;kyviin karttaikkunassa kaksoisnapauttamalla tielinkki&auml;, jolloin sovelluksen oikeaan laitaan avautuu tielinkin ominaisuustietoikkuna. Ominaisuustietoikkunassa linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://extranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
+ <a href=https://extranet.vayla.fi/digiroad/#linkProperty/450541 target="_blank">https://extranet.vayla.fi/digiroad/#linkProperty/450541</a>
 
-jossa numerosarja 373320541 on tielinkin ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
+jossa numerosarja 450541 on tielinkin ID. Toiminto tarkentaa karttaikkunan haetun tielinkin kohdalle. Tielinkin ominaisuustietoikkuna aukeaa sivun oikealle puolelle.
 
-##3.1 Tielinkin tietojen katselu##
+## 3.2 Tielinkin tietojen katselu
 
-Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat:
+Yksitt&auml;isen tielinkin voi valita napauttamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustietoikkunaan (1). Tielinkin ominaisuustietoja ovat:
 
 - Linkin ID
 - hallinnollinen luokka
 - toiminnallinen luokka
 - liikennevirran suunta
 - tielinkin tyyppi
-- tieto tasosijainnista eli silta, alikulku tai tunneli
+- tieto tasosijainnista eli onko kyseessä silta, alikulku tai tunneli
 - kuntanumero
-- tien nimi (suomi, ruotsi, saame)
-- tien numero
+- tiennimi (suomi, ruotsi, saame)
+- tienumero
 - tieosanumero
 - osoitenumerot vasemmalla ja oikealla (ensimm&auml;inen ja viimeinen numero)
 - Maanmittauslaitoksen ID (MML ID)
 
-Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tiennumero (maantiet) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
+Kerran tielinkkiä napauttamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tienumero (maantiet) tai tiennimi (katuverkko ja yksityistie). Jos karttaikkunassa haluaa valita vain yhden linkin, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;.
 
-Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartalla. Sivun oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Jos tielinkkiketju jatkuu kuntarajan yli, tiennumerolla on useita tien nimi&auml; tai useita tieosanumeroita, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustieton&auml;kym&auml;&auml;n.
+Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu karttaikkunassa. Sivun oikeaan laitaan avautuu tielinkin ominaisuustietoikkuna. Jos tielinkkiketju jatkuu kuntarajan yli, tienumerolla on useita tiennimi&auml; tai useita tieosanumeroita, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustietoikkunaan.
 
-Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai tunneli -tiedot n&auml;y ominaisuustieton&auml;kym&auml;ss&auml;. Jos k&auml;ytt&auml;j&auml; haluaa tarkastella n&auml;it&auml; tietoja, tulee tielinkki valita yksitt&auml;in tuplaklikkaamalla.
+Kun tielinkkiketju on valittuna, eiv&auml;t osoitenumerot ja silta, alikulku tai tunneli -tiedot n&auml;y ominaisuustietoikkunassa. Jos k&auml;ytt&auml;j&auml; haluaa tarkastella n&auml;it&auml; tietoja, tulee tielinkki valita yksitt&auml;in kaksoisnapauttamalla.
 
-![Tielinkkiketju](k54.jpg)
+![Tielinkkiketju](Manuaali8.png)
 
-_Tielinkkiketjun valinta (klikattu kerran)._
+_Tielinkkiketjun valinta (napautettu kerran)._
 
-![Yksitt&auml;isen tielinkin valinta](k55.jpg)
+![Yksitt&auml;isen tielinkin valinta](Manuaali9.png)
 
-_Yksitt&auml;isen tielinkin valinta (tuplaklikkaus)._
+_Yksitt&auml;isen tielinkin valinta kaksoisnapauttamalla._
 
-Tielinkeille voi valita visualisoinnin Tietolajit -paletista tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin, hallinnollisen luokan tai silta, alikulku tai tunneli -tason mukaan. Silta, alikulku tai tunneli -tasolla kohteet piirret&auml;&auml;n kartalle tasosijainnin mukaisessa j&auml;rjestyksess&auml;, esimerkiksi alikulku piirret&auml;&auml;n silta, taso 1 -linkin alle. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t sovelluksen vasemmassa laidassa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
+Tielinkeille voi valita visualisointitason sovelluksen vasemman reunan karttaselitenäkymästä. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin, hallinnollisen luokan tai silta, alikulku tai tunneli -tason mukaan. Silta, alikulku tai tunneli -tasolla kohteet piirret&auml;&auml;n kartalle tasosijainnin mukaisessa j&auml;rjestyksess&auml;, esimerkiksi alikulku piirret&auml;&auml;n silta, taso 1 -linkin alle. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t sovelluksen vasemmassa laidassa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
 
 Toiminnallisen luokan selitteet ovat:
 
-Luokka 1: Ohjeellisesti valtatie tai seudullinen p&auml;&auml;katu
-Luokka 2: Ohjeellisesti kantatie tai seudullinen p&auml;&auml;katu
-Luokka 3: Ohjeellisesti seututie tai alueellinen p&auml;&auml;katu
-Luokka 4: Ohjeellisesti yhdystie tai kokoojakatu
-Luokka 5: Liitynt&auml;katu, t&auml;rke&auml; yksityistie
-Luokka 6: Muu yksityistie
-Luokka 7: Ajopolku
-Luokka 8: Kevyen liikenteen v&auml;yl&auml;
+* Luokka 1: Ohjeellisesti valtatie tai seudullinen p&auml;&auml;katu
+* Luokka 2: Ohjeellisesti kantatie tai seudullinen p&auml;&auml;katu
+* Luokka 3: Ohjeellisesti seututie tai alueellinen p&auml;&auml;katu
+* Luokka 4: Ohjeellisesti yhdystie tai kokoojakatu
+* Luokka 5: Liitynt&auml;katu tai t&auml;rke&auml; yksityistie
+* Luokka 6: Muu yksityistie
+* Luokka 7: Ajopolku
+* Luokka 8: Kävelyn ja pyöräilyn väylä
 
-![Tielinkit visualisoitu toiminnallisen luokan mukaan](k7.jpg)
+![Tielinkit visualisoitu toiminnallisen luokan mukaan](Manuaali10.PNG)
 
 _Tielinkit visualisoitu toiminnallisen luokan mukaan._
 
-![Tielinkit visualisoitu tielinkin tyypin mukaan](k41.JPG)
+![Tielinkit visualisoitu tielinkin tyypin mukaan](Manuaali11.PNG)
 
 _Tielinkit visualisoitu tielinkin tyypin mukaan._
 
-![Tielinkit visualisoitu hallinnollisen luokan mukaan](k46.JPG)
+![Tielinkit visualisoitu hallinnollisen luokan mukaan](Manuaali12.PNG)
 
 _Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
-![Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan](k180.JPG)
+![Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan](Manuaali13.PNG)
 
 _Tielinkit visualisoitu silta, alkulku tai tunneli -tason mukaan._
 
-##3.2 Tielinkin ominaisuustietojen muokkaus##
+## 3.3 Tielinkin ominaisuustietojen muokkaus
 
 Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan.
 
-Muokattava tielinkki valitaan klikkaamalla sen geometriaa (2). Kerran klikkaamalla tulee valituksi koko tielinkkiketju, eli ominaisuustiedoiltaan yhtenev&auml;t tielinkit.
+Muokattava tielinkki valitaan napauttamalla sen geometriaa (2). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli ominaisuustiedoiltaan yhtenev&auml;t tielinkit.
 
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden tielinkin, sen voi tehd&auml; tuplaklikkamalla tielinkki&auml;.
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden tielinkin, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;.
 
 Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi ovat muokattavissa (3). Ketjuvalinta korjaa kaikkien ketjuun valittuna olevien tielinkkien tiedot.
 
-![Tielinkin ominaisuustietojen muokkaus.](k39.JPG)
+![Tielinkin ominaisuustietojen muokkaus.](Manuaali14.PNG)
 
-_Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (klikattu kerran)._
+_Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (napautettu kerran)._
 
-</br>
-####Tielinkkien muokkaus aluevalintaty&ouml;kalulla####
+## 3.4 Korjattavat tielinkit
 
-Useamman tielinkin arvoa tietyll&auml; alueella voi muokata aluevalintaty&ouml;kalulla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valitut tielinkit korostuvat kartalla. Valinnan j&auml;lkeen avautuu ikkuna, jossa voi valita tielinkeille alasvetovalikoista uuden toiminnallisen luokan (3) ja /tai tielinkin tyypin (4). Muutokset tallennetaan tallenna-painikkeesta. Jos alasvetovalikosta ei valita uutta arvoa, s&auml;ilyy tielinkill&auml; vanha arvo. Peruuta-painikkeesta voi perua muutoksen.
+Digiroadin sovelluksessa uudet tielinkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (2). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan (kunta, valtio, yksityinen). Linkki on kartalla mustaksi visualisoituneena (1), kunnes toiminnallinen luokka tai linkin tyyppitiedot on lis&auml;tty järjestelmään. Korjattavien linkkien listaan p&auml;&auml;see tielinkkitasolta ominaisuustietoikkunan alareunassa olevan painikkeen kautta (3). Listasta voi napauttaa korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta sen jälkeen, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
 
-![Tielinkkien monivalintap&auml;ivitys.](k56.jpg)
+Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi. Korjattavien linkkien listaan ei tule uusia kevyen liikenteen v&auml;ylien, ajopolkujen ja ajoteiden tielinkkej&auml;, koska n&auml;iden tiedot saadaan Maanmittauslaitokselta. Toiminnallinen luokka ja tielinkin tyyppi t&auml;ydennet&auml;&auml;n n&auml;ille tielinkille automaattisesti. 
 
-_Tielinkkien p&auml;ivitys aluevalintaty&ouml;kalulla._
-
-</br>
-####Korjattavat tielinkit####
-
-Uudet linkit ovat korjattavien linkkien listalla, koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (1). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan. Linkki on kartalla musta, kunnes tieto on lis&auml;tty. Korjattavien linkkien listaan p&auml;&auml;see tielinkki-tasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (2). Listasta voi klikata korjattavaa tielinkki&auml; (3), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta vasta sitten, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
-
-Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot voi korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi. Korjattavien linkkien listaan ei tule uusia kevyen liikenteen v&auml;ylien, ajopolkujen ja ajoteiden tielinkkej&auml;, koska n&auml;iden tiedot saadaan Maanmittauslaitokselta. Toiminnallinen luokka ja tielinkin tyyppi t&auml;ydennet&auml;&auml;n n&auml;ille tielinkille automaattisesti. 
-
-![Korjattava linkki](k47.jpg)
+![Korjattava linkki](Manuaali15.PNG)
 
 _Korjattava linkki._
 
-![Korjattavien linkkien lista](k50.JPG)
+![Korjattavien linkkien lista](Manuaali16.PNG)
 
 _Korjattavien linkkien lista._
 
-4. Joukkoliikenteen pys&auml;kki
---------------------------------
+# 4. Kaistan mallinnustyökalu [TIETOLAJI EI VIELÄ KÄYTTÖVALMIINA SOVELLUKSESSA]
 
-Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajit-paletista (1) Joukkoliikenteen pys&auml;kit. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
+Kartalle voi valita tietolajivalikosta (1) Kaistan mallinnustyökalu -valinnan. Työkalu mahdollistaa aiempaa tarkempien kaistatietojen ylläpitämisen mm. liikenneohjauslaitteiden sijoittamisen sujuvoittamiseksi. Karttaikkunaa zoomaamalla geometriat visualisoituvat kaistatietojen mukaan, joiden kategoriat ovat:
 
-Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta Hallinnollinen luokka-valinnan pois. Sininen v&auml;ri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
+* Pääkaista
+* Lisäkaista
+* Tielinkillä 1 lisäkaista
+* Tielenkillä 2 lisäkaistaa
+* Tielinkillä 3 lisäkaistaa
+* Tielinkillä 4 lisäkaistaa
+* Tielinkillä 5 lisäkaistaa
+* Tielinkillä 6 lisäkaistaa tai enemmän
 
-![Hallinnollinen luokka](k22.JPG)
+Jos tielle ei ole kaistatietoa saatavilla, se visualisoituu harmaalla värillä.
+
+![Kaistan mallinnustyökalu -valinta.](kmt1.png)
+
+_Kaistan mallinnustyökalu -valinta._
+
+## 4.1 Kaistan mallinnustyökalu -tietojen katselu
+
+Kaistan mallinnustyökalun kohteita voidaan valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli kaikki geometriat, joilla on samat kaistatiedot tietolajissa ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;. Valitut tielinkit korostuvat karttaikkunassa ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai tielinkkiketjun kaistan mallinnustyökalun ominaisuustietoikkuna (3). Ominaisuustietoikkunan yläosassa on visualisoitu tielinkillä olevien kaistojen numerot ja niiden sijainnit suhteessa toisiinsa. Valittu kaista on korostettuna keltaisella värillä (4). Kaistavalintaa voi muuttaa napauttamalla ominaisuustietoikkunassa lisäkaistan kuvaketta (6) , jolloin karttaikkunaan visualisoituu lisäkaista pääkaistan rinnalle (7). Ominaisuustietoikkunassa on nähtävissä myös valinnan tieosoitetiedot sekä kaistan tiedot. Lisäksi ominaisuustietoikkunassa näkyy, milloin tiedot on lisätty järjestelmään sekä milloin niitä on muokattu viimeksi. Tietolajipaneelin selitteessä (5) eritelty kaistavaihtoehdot toisistaan.
+
+![Kaistan mallinnustyökalu -katselutila.](kmt2.png)
+![Kaistan mallinnustyökalu -katselutila 2.](kmt3.png)
+
+_Kaistan mallinnustyökalu -katselutila._
+
+Pääkaistojen numerot (8) visualisoituvat karttaikkunassa myös kyseisten kaistojen päälle, kun ikkunaa zoomataan tarpeeksi lähelle. Karttaikkunaan voi tietolajipaneelin työkalupalkin valintaruutujen kautta myös valita näkyviin täydentävän geometrian (tielinkkien historiatiedot) sekä kävelyn ja pyöräilyn väylät (9).
+
+Kaistanumerointi muodostuu seuraavasti:
+
+Ensimmäinen numero määräytyy seuraavasti:
+* 1X = kaista tieosoitteen kasvusuuntaan (tieosoitteistetut tiet ja kadut)
+* 2X = kaista tieosoitteen kasvusuuntaa vastaan (tieosoitteistetut tiet ja kadut)
+
+Toinen numero määräytyy seuraavasti:
+* X1 = pääkaista
+* X2 = ensimmäinen lisäkaista pääkaistan vasemmalla puolella
+* X3 = ensimmäinen lisäkaista pääkaistan oikealla puolella
+* X4 = toinen lisäkaista pääkaistan vasemmalla puolella
+* X5 = toinen lisäkaistan pääkaistan oikealla puolella
+* X6 = kolmas lisäkaista pääkaistan vasemmalla puolella
+* X7 = kolmas lisäkaistan pääkaistan oikealla puolella
+* X8 = neljäs lisäkaista pääkaistan vasemmalla puolella
+* X9 = neljäs lisäkaista pääkaistan oikealla puolella
+
+![Kaistanumerot.](kmt4.png)
+
+_Kaistan mallinnustyökalu -katselutila ja lisävalinnat._
+
+## 4.2 Kaistojen muokkaus mallinnustyökalulla 
+
+Kaistoja muokataan muokkaustilassa (10). Muokattava kohde valitaan napauttamalla sen geometriaa. Kerran napauttamalla tulee valituksi koko ketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on samat kaistatiedot arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa (11). Muutokset tallennetaan painamalla Tallenna-painiketta (12) oikeasta alakulmasta. Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (13). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kaistan mallinnustyökalu -valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+![Muokkaustila.](kmt5.png)
+
+_Kaistan mallinnustyökalu -muokkaustila._
+
+### Kaistojen lisääminen tielinkkien avulla
+
+Tielinkillä olevalle pääkaistalle voi lisätä lisäkaistoja ensin valitsemalla linkin geometrian (14) (yksittäinen tielinkki tai linkkiketju) sovelluksen ollessa kaistan mallinnustyökalun muokkaustilassa. Ominaisuustietoikkunaan (15) avautuu linkin/linkkiketjun kaistatiedot, minkä jälkeen ominaisuustietoikkunan alaosasta voi valita kummalle puolelle tielinkkiä kaista lisätään (16).  
+
+![Kaistan lisääminen linkkien avulla.](kmt6.png)
+
+_Kaistan lisääminen tielinkkien avulla 1._
+
+Seuraavaksi lisätty kaista piirtyy karttaikkunaan pääkaistan rinnalle (17) ja ominaisuustietoikkunan yläosaan keltaisella korostettuna (18). Lisäkaistan ominaisuustietoihin muodostuu automaattisesti pääkaistan mukaiset tieosoitetiedot (19) sekä kaistanumero. Lisäkaistalle tulee lisäksi määrittää kaistan tyyppi (useita eri vaihtoehtoja), kaistan alkupäivämäärä sekä mahdollinen loppupäivämäärä (jos tiedossa) (20). Poista kaista -painiketta (21) painamalla voi lisäysvaiheessa poistaa virheellisen lisäkaistan, jos on tarve. Muutokset tallennetaan tallenna-painikkeesta ja peruutetaan painamalla peruuta.
+
+![Kaistan lisääminen linkkien avulla2.](kmt7.png)
+
+_Kaistan lisääminen linkkien avulla 2._
+
+### Kaistan lisääminen tieosoitteen avulla [toteutus kesken]
+
+### Kaistojen katkaiseminen mallinnustyökalulla
+
+Lisäkaistoja voi tarvittaessa katkaista leikkaustyökalua käyttämällä (huom! pääkaistoja ei voi katkoa työkalulla). Ensin muokkaustilassa käyttäjä valitsee yksittäisen katkaistavan tielinkin valintatyökalua (22) käyttämällä (hiirellä kaksoisnapautetaan tielinkkiä), minkä jälkeen ominaisuustietoikkunan yläosan kaistavisualisoinnista (23) valitaan lisäkaista karttaikkunaan näkyviin. 
+
+![Kaistan katkaisu1.](kmt8.png)
+
+_Kaistan katkaisu 1._
+
+Leikkaustyökalulla (24) voi määrittää lyhyille tiepätkille tarkat lisäkaistatiedot. Leikkausty&ouml;kalulla napautetaan tielinkin geometriasta kohtaa, josta rajoitus halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaistun lisäkaistan osille voi määrittää eriävät lisäkaistatiedot. Uusille kohteille valitaan arvot oikean laidan ominaisuustietoikkunasta. Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (25). Uudet kaistojen lukum&auml;&auml;r&auml;tiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille osuuksille eri arvot, jotta tallennus on mahdollista.
+
+![Kaistan katkaisu2.](kmt9.png)
+
+_Kaistan katkaisu 2._
+
+### Kaistatiedon päättäminen
+
+Olemassa olevan lisäkaistan voi merkata päättyneeksi muokkaustilassa, jolloin kaista poistuu sovelluksesta ja merkataan historiatietoihin päättyneeksi kaistaksi. Tämä tapahtuu ensin valitsemalla lisäkaista näkyviin ominaisuustietoikkunan kautta sekä päätä kaista -painiketta painamalla (26). Valinnan jälkeen näytölle ilmestyy ponnahdusikkuna, jossa varmistetaan haluatko varmasti päättää kaistan.
+
+![Kaistan päättäminen.](kmt10.png)
+
+_Kaistan päättäminen._
+
+## 4.3 Kaistatietojen tarkastelu tieosoiteinfo-työkalulla
+
+Kaistatietoja voi tarkastella kaistan mallinnustyökalu myös tieosoiteinfo-työkalulla. Työkalu (27) valitaan alapalkin valintaruudusta valituksi, minkä jälkeen tielinkkien päällä voi leijutella hiirtä, jolloin näkyviin ilmestyy tieosoitetiedot ja kaistatiedot (28).
+
+![Tieosoiteinfo.](kmt11.png)
+
+_Tieosoiteinfo-työkalu ja kaistatiedot._
+
+# 5. Nopeusrajoitus
+
+Nopeusrajoitus on liikenneväylälle asetettu tieto ajoneuvon suurimmasta sallitusta ajonopeudesta. Nopeusrajoitukset voi asettaa aktiiviseksi tasoksi tietolajivalikosta (1). Kartan eri mittakaavatasoilla nopeusrajoitusten visualisointi muuttuu, jotta niiden erottaminen olisi helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan selitteessä tietolajipaneelissa.
+
+![Nopeusrajoitusten valinta](Nopeusrajoitus1.PNG)
+
+_Nopeusrajoitusten valinta._
+
+## 5.1 Nopeusrajoitusten tietojen katselu
+
+Yksitt&auml;isen nopeusrajoituksen voi valita napauttamalla kartalta sen geometriaa.
+
+Kerran napauttamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityistillä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla nopeusrajoituksen geometriaa karttaikkunassa.
+
+Huom! Nopeusrajoitusten ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
+
+Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla ja karttaikkunan oikeaan laitaan avautuu nopeusrajoituksen ominaisuustietoikkuna. Ominaisuustietoikkuna sisältää tiedot nopeusrajoituksen arvosta (km/h), valittujen linkkien lukumäärästä ja historiatiedoista eli milloin tieto on lisätty järjestelmään ja millon sitä on viimeksi muokattu.
+
+![Nopeusrajoituksen tietojen katselu](Nopeusrajoitus2.PNG)
+
+_Nopeusrajoituksen tietojen katselu, kun valittuna on nopeusrajoitusketju (napautettu kerran)._
+
+![Nopeusrajoituksen tietojen katselu](Nopeusrajoitus3.PNG)
+
+_Nopeusrajoituksen tietojen katselu, kun valittuna on yksitt&auml;inen nopeusrajoitus (kaksoisnapautus)._
+
+### Nopeusrajoitusten visualisointi
+
+Nopeusrajoitukset on visualisoitu kartalle eri tavoin riippuen niiden vaikutussuunnasta. Nopeusrajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan. Jos vaikutussuunta on molempiin suuntiin, nopeusrajoitus on visualisoitu yhdell&auml; paksulla viivalla (1). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (2).
+
+Digiroad-yll&auml;pitosovellus yhdist&auml;&auml; nopeusrajoitukset molempiin suuntiin voimassa olevaksi, jos tielinkill&auml; on vain yksi nopeusrajoitus. Käytännössä tämä tarkoittaa sitä, että kaikki tapaukset, joissa nopeusrajoituksen arvo molempiin suuntiin on sama, visualisoituu rajoitus molempiin suuntiin voimassa olevana. Joissain tapauksissa nopeusrajoitukset voivat muuttua kesken tielinkin tai nopeurajoitusarvo on eri suuntiin kulkeville kaistoille eri. Tällöin nopeusrajoitukset visualisoituvat ylläpitosovelluksessa ohuemmilla viivoilla tiegeometrian viereen (2). 
+
+Nopeusrajoituksen muokkauksessa on mahdollisuus jakaa molempiin suuntiin voimassa oleva nopeusrajoitus yhteen suuntaan voimassa olevaksi.
+
+![Nopeusrajoitusten visualisointi](Nopeusrajoitus4.PNG)
+
+_Nopeusrajoitusten visualisointi._
+
+## 5.2 Nopeusrajoitusten muokkaus
+
+Muokkaustilassa nopeusrajoituksille voi antaa uusia arvoja, niit&auml; voi katkaista ja muuttaa yksisuuntaisiksi. Nopeusrajoitusten arvoja voi muokata kolmella tavalla:
+
+1. Koko nopeusrajoitusketjulle.
+1. Yksitt&auml;isen linkin mittaiselle osuudelle tai tielinkin osalle.
+1. Monivalinnan avulla kokonaiselle alueelle.
+
+### Nopeusrajoituksen arvon muokkaus
+
+Muokattava nopeusrajoitus valitaan napauttamalla sen geometriaa. Kerran napauttamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo sekä tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityistiellä). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, voi sen tehd&auml; kaksoisnapauttamalla nopeusrajoitusta.
+
+Huom! Nopeusrajoitusten ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
+
+Tietoja muokataan ominaisuustietoikkunassa valitsemalla nopeusrajoitukselle uusi arvo ominaisuustietoikkunan alasvetovalikosta (3). Muutokset tulee tallentaa tai perua ennen kuin siirrytään muokkaamaan uutta kohdetta. 
+
+![Nopeusrajoituksen muokkaus.](Nopeusrajoitus5.PNG)
+
+_Nopeusrajoitusketjun arvon muokkaus (napautettu kerran)._
+
+### Nopeusrajoitusten muokkaus monivalintaty&ouml;kalulla
+
+Usean tielinkin nopeusrajoitusarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (4). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki nopeusrajoitukset piirretyn alueen sisällä ja nopeusrajoitukset, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu alasvetovalikko (5), josta nopeusrajoituksille määritellään uusi arvo. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Useamman nopeusrajoituksen arvon muokkaus.](Nopeusrajoitus6.PNG)
+
+_Useamman nopeusrajoituksen arvon muokkaus kerralla._
+
+### Nopeusrajoituksen katkaiseminen
+
+Nopeusrajoituksen voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka löytyy työkaluvalikosta (6). Leikkaustyökalulla napautetaan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Nopeusrajoituksen katkaisu valitsee aina vain yhden tielinkin mittaisen osion nopeusrajoitusta, ei nopeusrajoitusketjua.
+
+![Nopeusrajoituksen katkaiseminen.](Nopeusrajoitus7.PNG)
+
+_Nopeusrajoituksen katkaiseminen._
+
+Nopeusrajoituksen katkaisussa tielinkin osille valitaan uudet nopeusrajoitusarvot sovelluksen oikean reunan ominaisuustietoikkunan alasvetovalikoista (8). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet A ja B osoittavat, kummasta rajoituksesta on kyse. Uudet nopeusrajoitukset tallennetaan tallenna-painikkeella ja tai perutaan peruuta-painikkeella (9), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Nopeusrajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; nopeusrajoituksille eri arvot (7), jotta tallennus on mahdollista.
+
+### Nopeusrajoituksen muuttaminen yksisuuntaiseksi
+
+Molempiin suuntiin voimassa olevan nopeusrajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n tielinkkikohtaisesti.
+
+Muutos tehd&auml;&auml;n kaksoisnapauttamalla kyseist&auml; nopeusrajoitusta (10), jolloin oikeaan laitaan tulee painike "Jaa nopeusrajoitus yksisuuntaiseksi" (11).
+
+![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](Nopeusrajoitus8.PNG)
+
+_Nopeusrajoituksen valinta ja muuttaminen yksisuuntaiseksi._
+
+Painikkeen painamisen j&auml;lkeen voi uusille nopeusrajoituksille antaa arvot alasvetovalikoista (12). A ja B -kirjaimet alasvetovalikkojen vieress&auml; vastaavat nopeusrajoituksia kartalla (13). Arvojen pit&auml;&auml; erota toisistaan, jotta tallentaminen on mahdollista.
+
+![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](Nopeusrajoitus9.PNG)
+
+_Uusien yksisuuntaisten nopeusrajoitusten arvon valinta._
+
+Uudet nopeusrajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Jos tallennuksen j&auml;lkeen yhteen suuntaan voimassa oleville nopeusrajoituksille antaa saman arvon, sovellus yhdist&auml;&auml; ne molempiin voimassa oleviksi.
+
+### Tuntemattomat nopeusrajoitukset
+
+Jos tielinkille ei ole asetettu nopeusrajoitusta, n&auml;kyy se k&auml;ytt&ouml;liittym&auml;ss&auml; mustana eli tuntemattomana nopeusrajoituksena. Nopeusrajoitus on tuntematon, jos nopeusrajoitustietoa ei ole toimitettu Digiroad-j&auml;rjestelm&auml;&auml;n. Uusille, j&auml;rjestelm&auml;&auml;n lis&auml;tyille tielinkeille, tulee lis&auml;t&auml; nopeusrajoitus.
+
+Tuntemattomalle nopeusrajoitukselle voi antaa arvon alasvetovalikosta ja niit&auml; voi muokata my&ouml;s monivalintaty&ouml;kalun avulla. Tuntemattomia nopeusrajoituksia ei kuitenkaan voi katkaista katkaisutyökalulla, eikä niitä voi jakaa yksisuuntaisiksi ennen nopeusrajoituksen määrittämistä. Kun tuntemattomalle nopeusrajoitukselle on annettu arvo, onnistuu niiden muokkaus täydellisesti.
+
+![Tuntematon nopeusrajoitus.](Nopeusrajoitus10.PNG)
+
+_Tuntematon nopeusrajoitus._
+
+Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoitusten ominaisuustietoikkunasta (14). Nopeusrajoitukset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listan pituus on rajoitettu kymmeneen nopeusrajoitukseen, mutta kunkin hallinnollisen luokan vieress&auml; lukee korjattavien nopeusrajoitusten kokonaism&auml;&auml;r&auml;.
+
+Nopeusrajoituksesta on listassa linkki, jota napauttamalla karttaikkuna kohdistuu suoraan nopeusrajoituksen kohdalle ja sille voi asettaa arvon. Nopeusrajoituslinkin voi avata uuteen v&auml;lilehteen napauttamalla linkki&auml; Ctrl-painike pohjassa. Muuten linkki avautuu samaan v&auml;lilehteen. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Tuntematon nopeusrajoitus.](Nopeusrajoitus11.PNG)
+
+_Tuntemattomien nopeusrajoitusten lista._
+
+# 6. Kääntymisrajoitus
+
+Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajivalikosta (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset tulevat n&auml;kyviin paksumpina viivoina, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymism&auml;&auml;r&auml;ykset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml; (2), on sininen ja linkki, jolle ei saa k&auml;&auml;nty&auml; (3) on punainen.
+
+Joissain tapauksissa (U-k&auml;&auml;nn&ouml;s, liikenneympyr&auml;n ohittava erillinen k&auml;&auml;ntymiskaista oikealle) k&auml;&auml;ntymisrajoitus saattaa koostua useammista linkeist&auml;. T&auml;ll&ouml;in ns. v&auml;lilinkki (4) on visualisoitu vihre&auml;ksi. V&auml;lilinkki yhdist&auml;&auml; sen linkin, jolta k&auml;&auml;ntyminen on kielletty (sininen linkki) siihen linkkiin, jolle k&auml;&auml;ntyminen on kielletty&auml; (punainen linkki).
+
+Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajivalikossa. Tielinkeill&auml;, joiden liikennevirran suunta on vain yhteen suuntaan, on visualisoitu suuntanuoli kuvaamaan liikennevirran suuntaa.
+
+![K&auml;&auml;ntymisrajoitus](kraj_1.png)
+
+_K&auml;&auml;ntymisrajoitusten valinta._
+
+## 6.1 K&auml;&auml;ntymisrajoituksen tietojen katselu
+
+Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita napauttamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (5) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustietoikkunaan (6).
+
+![K&auml;&auml;ntymisrajoituksen visualisointi](kraj_2.png)
+
+_K&auml;&auml;ntymisrajoituksen tietojen katselu._
+
+## 6.2 K&auml;&auml;ntymisrajoitusten muokkaus
+
+K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa (7). Muokattava kohde valitaan napauttamalla sen geometriaa (8). Tietoja muokataan ominaisuustietoikkunassa (9), josta valitaan haluttu k&auml;&auml;ntymisrajoitus, napauttamalla muokkaa-painiketta (10). Muokattavia tietoja ovat k&auml;&auml;ntymisrajoituksen lis&auml;kilven mukainen voimassaoloaika, ajoneuvotyypit, joita k&auml;&auml;ntymisrajoitus ei koske eli poikkeukset sek&auml; mahdollinen muu tarkenne. 
+
+Muokkaustilassa on mahdollista my&ouml;s poistaa olemassaolevia k&auml;&auml;ntymisrajoituksia rastimalla Poista-sarake (11). Muokkaukset ja poisto hyv&auml;ksyt&auml;&auml;n Tallenna-painiketta (12) painamalla. Poiston yhteydess&auml; h&auml;vi&auml;&auml; koko k&auml;&auml;ntymisrajoitus ja sit&auml; koskevat poikkeukset! Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois k&auml;&auml;ntymisrajoituksen valinnasta, sovellus avaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. 
+
+![K&auml;&auml;ntymisrajoitusten muokkaus.pt1](kraj_3.png)
+
+![K&auml;&auml;ntymisrajoitusten muokkaus.pt2](kraj_4.png)
+
+_K&auml;&auml;ntymisrajoitusten muokkaus._
+
+### Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen
+
+Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustietoikkuna (13), jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttaikkunassa vastaavat kirjaimet (14). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin! 
+
+Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa painamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (15). Ominaisuustietoikunaan aukeaa lomake (16), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustietoikkunassa alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (17). Valitse viimeinen linkki -painike, mik&auml;li aiemmin valitsemasi linkki on k&auml;&auml;ntymisrajoituksen kohdelinkki. Vahvista valinta painamalla tallenna-nappulaa.
+ 
+ Huom! K&auml;&auml;ntymisrajoitukseen valittuja linkkej&auml; ei ole mahdollista poistaa/lis&auml;t&auml; yksitellen vaan koko k&auml;&auml;ntymisrajoitus tulee poistaa, mik&auml;li siihen kuuluvien linkkien sijaintia/m&auml;&auml;r&auml;&auml; on tarve muokata. Poista vanha rajoitus valitsemalla sen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustietoikkunaan ilmestyy Poista-sarake (11). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
+
+![K&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen](kraj_5.png)
+
+_K&auml;&auml;ntymisrajoitusten lis&auml;&auml;minen._
+
+### Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille (U-k&auml;&auml;nn&ouml;kset tai liikenneympyr&auml;n ohittavat rampit)
+
+Mik&auml;li haluat tehd&auml; k&auml;&auml;ntymisrajoituksen, jossa k&auml;&auml;ntymisrajoituksen l&auml;hde ja kohde eiv&auml;t ole per&auml;kk&auml;iset linkit, lue n&auml;m&auml; ohjeet! Kahden linkin mittaisen rajoituksen tekeminen onnistuu yll&auml;olevan ohjeen avulla.
+
+Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustietoikkuna, jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttaikkunassa vastaavat kirjaimet (14). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin!
+
+Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa painamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (15). Ominaisuustietoikkunaan aukeaa lomake (16), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustietoikkunassa alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (17). Valitse listalta se linkki, jolle haluat jatkaa k&auml;&auml;ntymisrajoitusta (18). Jos t&auml;m&auml; linkki on muodostamasi ketjun viimeinen, valitse "viimeinen linkki". Piirto saattaa kest&auml;&auml; jonkin aikaa, joten odota rauhassa ennen muutosten tallentamista. 
+
+Muussa tapauksessa toista edellinen vaihe ja valitse listalta se linkki, jolle haluat k&auml;&auml;ntymisrajoitusta jatkaa. Etene n&auml;in, kunnes olet valinnut ketjun viimeisen linkin (k&auml;&auml;ntymisrajoituksen kohdelinkin). Lopuksi paina Tallenna-nappia, jolloin tekem&auml;si k&auml;&auml;ntymisrajoitus tallentuu.
+
+![Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille](kraj_6.png)
+
+_Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille_
+
+### Uuden k&auml;&auml;ntymisrajoituksen poistaminen
+
+K&auml;&auml;ntymisrajoitus poistetaan valitsemalla halutun rajoituksen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustietoikkunaan ilmestyy Poista-sarake (11). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
+
+# 7. Ajoneuvokohtaiset rajoitukset 
+
+Ajoneuvokohtaiset rajoutukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. N&auml;it&auml; ovat esimerkiksi moottoriajoneuvokiellot. My&ouml;s l&auml;piajokiellot ovat ajoneuvokohtaisia rajoituksia. Ajoneuvokohtaisessa rajoituksessa voi olla my&ouml;s poikkeus, esimerkiksi huoltoajo sallittu. Karttaikkunaan voi valita ajoneuvokohtaiset rajoitukset valitsemalla tietolajivalikosta (1) Ajoneuvokohtaiset rajoitukset. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on ajoneuvokohtainen rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
+
+![Valinta.](akr1.png)
+
+_Ajoneuvokohtaisen rajoituksen valinta._
+
+## 7.1 Ajoneuvokohtaisen rajoituksen katselu
+
+Yksitt&auml;isen ajoneuvokohtaisen rajoituksen voi valita napauttamalla kartalta sen geometriaa (2).
+Kerran napauttamalla tulee valituksi koko rajoitusketju, eli osuus, jossa ajoneuvokohtaisella rajoituksella on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla rajoitusta. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu ajoneuvokohtaisen rajoituksen ominaisuustietoikkuna (3). Ominaisuustietoikkunassa on ajoneuvokohtaisen rajoituksen tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](akr2.png)
+
+_Ajoneuvokohtaisen rajoituksen tietojen katselu._
+
+Ajoneuvokohtaiset rajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Rajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, rajoitus on visualisoitu yhdell&auml; paksulla viivalla (4). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (5).
+
+![Visualisointi.](akr3.png)
+
+_Ajoneuvokohtaisen rajoituksen vaikutussuunnan visualisointi._
+
+## 7.2 Ajoneuvokohtaisen rajoituksen muokkaus
+
+Ajoneuvokohtaisille rajoituksille voi antaa muokkaustilassa tietoja. Muutokset tallennetaan tallenna-painikkeesta ja ennen tallennusta ne voi peruuttaa peruuta-painikkeesta.
+
+Ajoneuvokohtaisia rajoituksia voi muokata kolmella tavalla:
+1.	Koko ajoneuvorajoitusketjulle (esim. koko kadulle).
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+3.	Monivalinnan avulla kokonaiselle alueelle.
+
+### Ajoneuvokohtaisen rajoituksen muokkaus ja lis&auml;ys
+
+Muokattava rajoitus valitaan napauttamalla sen geometriaa (6). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). 
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla ajoneuvokohtaista rajoitusta.
+
+Tietoja muokataan ominaisuustietoikkunassa olevien alasvetovalikkojen avulla (7). Ajoneuvokohtaisella rajoituksella voi olla my&ouml;s poikkeuksia (ajoneuvoja, joita rajoitus ei koske) (8) sek&auml; voimassaolokellonaika ma-pe, la, su (9). Kellonaika ilmoitetaan samassa muodossa, mit&auml; se on maastossa olevassa lis&auml;kilvess&auml;.
+
+![Muokkaus.](akr4.png)
+
+_Ajoneuvokohtaisen rajoituksen muokkaus._
+
+Tielinkit, joilla ei ole ajoneuvokohtaista rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi ajoneuvokohtainen rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (10). Valitsemalla alasvetovalikosta rajoituksen tyyppi (11), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja poikkeuksille.
+
+![Lisays.](akr5.png)
+
+_Ajoneuvokohtaisen rajoituksen lis&auml;ys._
+
+### Ajoneuvokohtaisen rajoituksen poistaminen
+
+Ajoneuvokohtaisia rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustietoikkunasta rajoituksen pois (12). My&ouml;s rajoituksen ominaisuuksia eli voimassaoloaikaa ja poikkeuksia voi poistaa ominaisuustietoikkunan rukseista. (13) 
+
+![Poisto.](akr6.png)
+
+_Ajoneuvokohtaisen rajoituksen poistaminen._
+
+### Useamman ajoneuvokohtaisen rajoituksen muokkaus monivalintaty&ouml;kalulla
+
+Useamman kuin yhden tielinkin ajoneuvokohtaiset rajoitustiedot voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla joko laatikko- (14) tai monikulmiovalintatyökalu (15) päälle. Laatikkovalintatyökalulla voi vetää laatikon, jota leikkaavat ja sen sisällä olevat rajoitukset tulevat valituiksi. Monikulmiovalintatyökalulla voi napauttelemalla luoda kulmia monikulmiolle ja kaksoisnapauttamalla lopettaa kulmion luomisen. Kaikki kulmiota leikkaavat ja sen sisällä olevat rajoitukset tulevat valituiksi. Valinnan j&auml;lkeen avautuu ikkuna (16), jossa valitaan ajoneuvokohtaisen rajoituksien tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla (17). Peruuta-painikkeesta voi perua muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat ajoneuvokohtaisten rajoitusten tiedot. P&auml;&auml;llekk&auml;isi&auml; rajoituksia ei voi siis luoda.
+
+![Muokkaus useita.](akr7.png)
+
+_Useamman ajoneuvokohtaisen rajoituksen tietojen muokkaus kerralla._
+
+### Ajoneuvokohtaisen rajoituksen katkaiseminen
+
+Ajoneuvokohtaisen rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (18). Leikkausty&ouml;kalulla napautetaan rajoituksen geometriasta kohtaa, josta se halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion rajoitusta, ei koko ketjua.
+
+Ajoneuvokohtaisen rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (19). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (20).
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](akr8.png)
+
+_Ajoneuvokohtaisen rajoituksen katkaiseminen._
+
+### Ajoneuvokohtaisen rajoituksen muuttaminen yksisuuntaiseksi
+
+Molempiin suuntiin voimassa olevan ajoneuvokohtaisen rajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti.
+
+Muutos tehd&auml;&auml;n kaksoisnapauttamalla kyseist&auml; ajoneuvokohtaista rajoitusta (21), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (22).
+
+![Yksisuuntaisuus.](akr9.png)
+
+_Ajoneuvokohtaisen rajoituksen valinta ja muuttaminen yksisuuntaiseksi._
+
+Painikkeen painamisen j&auml;lkeen voi uusille ajoneuvokohtaisille rajoituksille antaa arvot alasvetovalikoista (23). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat kohteita kartalla (24). 
+
+![Arvot.](akr10.png)
+
+_Uusien yksisuuntaisten ajoneuvokohtaisen rajoitusten arvojen valinta._
+
+Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+# 8. Pysäköintikielto
+
+Pysäköintikielto on viivamainen kohde. Pysäköintikielto voi olla tielinkin mittainen tai sitä lyhyempi viiva. Pysäköintikielto-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun zoomaa lähemmäksi. Jos tielinkille on ilmoitettu pysähtymiskielto, se piirtyy kartalle punaisella viivalla (2) tai jos sille on ilmoitettu pysäköintikielto, se piirtyy kartalle turkoosilla viivalla (3). Kiellottomat tielinkit ovat harmaita (4). Joissain tapauksissa pysäköintikiellot voivat muuttua kesken tielinkin tai pysäköintikieltoarvo on eri suuntiin kulkeville kaistoille eri. Tällöin pysäköintikiellot visualisoituvat ylläpitosovelluksessa ohuemmilla viivoilla tiegeometrian viereen.
+Pysäköintikiellon muokkauksessa on mahdollisuus jakaa molempiin suuntiin voimassa oleva nopeusrajoitus yhteen suuntaan voimassa olevaksi.
+
+![Pysäköintikielto](pk1.png)
+
+*Pysäköintikielto-tietolaji*
+
+## 8.1 Pysäköintikieltotietojen katselu
+
+Kun kohdetta napauttaa kartalta, se korostuu (5). ja ominaisuustietoikkunaan tulee näkyviin sen tiedot (6). Kerran napauttamalla tulee valituksi koko pysäköintikieltoketju, eli kaikki linkit, joilla on sama pysäköintikieltotieto ja tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie). Jos käyttäjä haluaa valita vain yhden linkin mittaisen pätkän tarkasteluun, sen voi tehdä kaksoisnapauttamalla linkkiä. Pysäköintikiellolla on: 
+* ID
+* lisätty järjestelmään ja muokattu viimeksi -tiedot
+* tieto linkkien lukumäärästä pysäköintikieltoketjussa
+* radionappi valinnalle ”Ei pysäköintikieltoa” ja ”Pysäköintikielto”, jonka valinnan jälkeen aktivoituu kaksi alasvetovalikkoa, joista ensimmäisestä voi valita joko ”Pysäköinti-” tai ”Pysähtyminen kielletty, ja toisesta voi valita voimassaoloajan. 
+Myös kaksisuuntaiseksi jakamisen nappi aktivoituu.
+
+![Pysäköintikiellon katselu](pk2.png)
+
+*Pysäköintikieltotiedon katselu*
+
+## 8.2 Pysäköintikieltotietojen muokkaus
+
+Pysäköintikieltotietoja voi muokata muokkaustilassa. Pysäköintikiellon voi lisätä, poistaa ja pysäköintikieltogeometrian voi katkaista sekä muuttaa kaksisuuntaisiksi. Myös pysäköintikiellon tyyppiä ja aikaa voi muokata. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuperäinen tieto jää voimaan.
+
+### Pysäköintikieltotiedon lisäys
+
+Uusi pysäköintikielto lisätään valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietoikkunassa "Pysäköintikielto" (7). Tämän alta alasvetovalikosta (8) valitaan joko pysäköinti- tai pysähtymiskielto. Uusi pysäköintikieltotieto näkyy kartalla turkoosina ja pysähtymiskielto punaisena.
+
+Pysäköintikiellon voi myös lisätä lisäämällä tielle liikennemerkin C37 tai C38 (pysäyttäminen tai pysäköinti kielletty). Tällöin kaikille linkeille, joilla on sama tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie) generoituu seuraavan yön aikana automaattisesti pysäköintikieltotieto.
+
+![Pysäköintikiellon lisäys](pk3.png)
+
+*Pysäköintikieltotiedon lisäys*
+
+### Pysäköintikieltotiedon poistaminen
+
+Pysäköintikieltotiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan ominaisuustietoikkunasta kohdan "Ei pysäköintikieltoa" (9) ja painamalla tallenna-painiketta. Kun pysäköintikieltotieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Pysäköintikiellon poistaminen](pk4.png)
+
+*Pysäköintikieltotiedon poistaminen*
+
+### Pysäköintikiellon muokkaus monivalintatyökalulla
+
+Usealle linkille voi lisätä tai poistaa pysäköintikiellon kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (10), jolloin ctrl-näppäimen irti päästämällä avautuu valaistuksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (11) tai monikulmiotyökalua (12). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen avautuu ikkuna, jossa pysäköintikieltotietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Pysäköintikiellon monivalinta](pk5.png)
+
+*Pysäköintikiellon monivalinta*
+
+### Pysäköintikiellon katkaisu
+
+Tarvittaessa pysäköintikiellon voi katkaista leikkaustyökalulla (13). Leikkaustyökalulla napautetaan kiellon geometriasta kohtaa, josta se halutaan katkaista. Kiellon geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Kiellon katkaisu valitsee aina vain yhden tielinkin mittaisen osion kieltoa, ei kieltoketjua. Kiellon katkaisussa uusille kielloille valitaan arvot ominaisuustietoikkunassa (14). Kartalla ja valikkojen vieressä olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (15). Uudet pysäköintikieltotiedot tallennetaan tallenna-painikkeesta (16). Katkaisun voi peruuttaa peruuta-painikkeella (17), jolloin alkuperäinen rajoitus jää voimaan.
+Huom! Pysäköintikiellon katkaisussa tulee määrittää uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
+
+![Pysäköintikiellon katkaisu](pk6.png)
+
+*Pysäköintikiellon katkaisu*
+
+### Pysäköintikiellon muuttaminen kaksisuuntaiseksi
+
+Molempiin suuntiin voimassa olevan kiellon voi muuttaa kaksisuuntaiseksi, eli molempiin suuntiin eri arvoiksi, jos kyseisellä tielinkillä liikennevirran suunta on molempiin suuntiin. Muutos tehdään tielinkkikohtaisesti.
+
+Muutos tehdään kaksoisnapauttamalla kyseistä kieltoa (18), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (19). Jos napauttaa kiellotonta linkkiä ja tekee tämän kaksisuuntaiseksi jaon, muuttaa sovellus linkille vain pysähtymiskiellon. Kaksisuuntaiseksi jako tuleekin tehdä vain linkille, jolla on jo valmiiksi kielto.
+
+![Pysäköintikiellon muuttaminen kaksisuuntaiseksi](pk7.png)
+
+*Pysäköintikiellon valinta ja muuttaminen kaksisuuntaiseksi*
+
+Painikkeen painamisen jälkeen voi uusille kielloille antaa arvot alasvetovalikoista (20). A ja B -kirjaimet alasvetovalikkojen vieressä vastaavat kieltoja kartalla (21). Arvojen pitää erota toisistaan, jotta tallentaminen on mahdollista.
+
+![Pysäköintikiellon arvojen valinta](pk8.png)
+
+*Uusien kaksisuuntaisten pysäköintikieltojen arvon valinta*
+
+Uudet kiellot tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen kielto jää voimaan.
+Jos tallennuksen jälkeen yhteen suuntaan voimassa oleville kielloille antaa saman arvon, sovellus yhdistää ne molempiin voimassa oleviksi.
+
+# 9. VAK-rahoitus (Vaarallisten aineiden kuljetus)
+
+Vaarallisten aineiden kuljetus –rajoitus eli VAK-rajoitukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. VAK-rajoituksessa voi olla my&ouml;s poikkeus, kuten kellonaika, jolloin rajoitus on voimassa. Karttaikkunaan voi valita VAK-rajoitukset valitsemalla tietolajivalikosta (1) VAK-rajoitus. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on VAK-rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
+
+![Valinta.](vak1.png)
+
+_VAK-rajoituksen valinta._
+
+## 9.1 VAK-rajoituksen tietojen katselu
+
+Yksitt&auml;isen VAK-rajoituksen voi valita napauttamalla kartalta sen geometriaa. Kerran napauttamalla tulee valituksi koko rajoitusketju, eli osuus, jossa VAK-rajoituksella on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla rajoitusta. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla (2). Sivun oikeaan laitaan avautuu VAK-rajoituksen ominaisuustietoikkuna. Ominaisuustietoikkunassa on VAK-rajoituksen tiedot (3) kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](vak2.png)
+
+_VAK-rajoituksen tietojen katselu._
+
+VAK-rajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Rajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, rajoitus on visualisoitu yhdell&auml; paksulla viivalla. Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan.
+
+## 9.2 VAK-rajoituksen muokkaus
+
+VAK-rajoituksille voi antaa muokkaustilassa tietoja. VAK-rajoituksia voi muokata kolmella tavalla:
+
+1.	Koko VAK-rajoitusketjulle (esim. koko kadulle).
+1.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+1.	Monivalinnan avulla kokonaiselle alueelle.
+
+### VAK-rajoituksen muokkaus ja lis&auml;ys
+
+Muokattava rajoitus valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla VAK-rajoitusta.
+
+Tietoja muokataan ominaisuustietoikkunassa olevien alasvetovalikkojen avulla (5). VAK-rajoituksella voi olla my&ouml;s voimassaolokellonaika (6). Kellonaika ilmoitetaan samassa muodossa, mit&auml; se on maastossa olevassa lis&auml;kilvess&auml;.
+
+![Muokkaus.](vak3.png)
+
+_VAK-rajoituksen muokkaus._
+
+Tielinkit, joilla ei ole VAK-rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi VAK-rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (7). Valitsemalla alasvetovalikosta rajoituksen tyyppi (8), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja toiselle rajoitukselle.
+
+VAK-rajoituksen voi myös lisätä lisäämällä tielle liikennemerkin C8 Vaarallisten aineiden kuljettaminen kielletty. Tällöin kaikille linkeille, joilla on sama tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie) generoituu seuraavan yön aikana automaattisesti VAK-kieltotieto.
+
+![Lis&auml;ys.](vak4.png)
+
+_VAK-rajoituksen lis&auml;ys_
+
+### VAK-rajoituksen poistaminen
+
+VAK-rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustietoikkunasta rajoituksen pois (9). My&ouml;s rajoituksen voimassaoloajan voi poistaa ominaisuustietoikkunan rukseista (10). Muutokset tallentuu tallenna-painikkeesta.
+
+![Poisto.](vak5.png)
+
+_VAK-rajoituksen poistaminen._
+
+### Useamman VAK-rajoituksen muokkaus monivalintaty&ouml;kalulla
+
+Useamman kuin yhden tielinkin VAK-rajoitustiedot voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella muokattavia tielinkkejä. Toinen vaihtoehto on käyttää työkalupalkin aluevalintatyökaluja (11), joita ovat monikulmio- ja laatikkotyökalut. Työkaluilla piirretään alue hiiren vasemmalla painikkeella. Valituksi tulevat kaikki tielinkit monikulmion/laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (12), jossa valitaan VAK-rajoituksien tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla (13). Peruuta-painikkeesta voi perua muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat VAK-rajoitusten tiedot. P&auml;&auml;llekk&auml;isi&auml; rajoituksia ei voi siis luoda.
+
+![Monivalinta.](vak6.png)
+
+_Useamman VAK-rajoituksen tietojen muokkaus kerralla._
+
+### VAK-rajoituksen katkaiseminen
+
+VAK-rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (14). Leikkausty&ouml;kalulla napautetaan rajoituksen geometriasta kohtaa, josta se halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion rajoitusta, ei koko ketjua.
+
+VAK-rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (15). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (16). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](vak7.png)
+
+_VAK-rajoituksen katkaiseminen._
+
+### VAK-rajoituksen muuttaminen yksisuuntaiseksi
+
+Molempiin suuntiin voimassa olevan VAK-rajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti. Muutos tehd&auml;&auml;n kaksoisnapauttamalla kyseist&auml; VAK-rajoitusta (17), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (18).
+
+![Yksisuuntaiseksi.](vak8.png)
+
+_VAK-rajoituksen valinta ja muuttaminen yksisuuntaiseksi._
+
+Painikkeen painamisen j&auml;lkeen voi uusille VAK-rajoituksille antaa arvot alasvetovalikoista (19). Kirjaimet kartalla vastaavat alasvetovalikkojen vieressä olevia kirjaimia (20).
+
+![Yksisuuntaisen arvo.](vak9.png)
+
+_Uusien yksisuuntaisten VAK-rajoitusten arvojen valinta._
+
+Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+# 10. Käpy tietolaji (ei vielä otettu ylläpidettäväksi)
+
+Käpy tietolaji on useisiin väylätyyppeihin jakautunut viivamainen tietolaji, joka kuvaa onko tielinkeillä sallittu kävellä tai pyöräillä. Karttaikkunaan saa tietolajin näkyviin valitsemalla sen tietolajivalikosta (1). Karttaa tarkennettaessa tietolajia kuvaavat väylätyypit tulevat näkyviin eri väreillä.
+
+![Valinta.](kt1.png)
+
+_Käpy tietolajin valinta._
+
+## 10.1 Käpy tietolajin tietojen katselu
+
+Yksitt&auml;isen Käpy tietolajin kohteen voi valita napauttamalla kartalta sen geometriaa. Kerran napauttamalla tulee valituksi koko ketju, eli osuus, jossa linkeillä on samat käpy-väylätiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). Karttaikkunan vasemman puolen tietolajipaneelin legendassa on eritelty kävelyyn ja pyöräilyyn liittyvät väylätyypit (2).
+
+Jos käyttäjä haluaa valita vain yhden linkin mittaisen pätkän tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla geometriaa. Valitun ketjun tai yksitt&auml;isen käpykohteen geometria korostuu kartalla (3). Sivun oikeaan laitaan avautuu Käpy tietolajin ominaisuustietoikkuna. Ominaisuustietoikkunassa on Käpy tietolajin tiedot (4) kyseisell&auml; tielinkill&auml;/tielinkeill&auml; (ei/kyllä käpy tietolaji sekä väylätyypin tarkenne), valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](kt2.png)
+
+_Käpytietojen katselu._
+
+Väylätyyppejä ja tarkennuksia:
+
+* Pyöräily ja kävely kielletty
+* Pyöräily kielletty
+* Jalankulun ja pyöräilyn väylä (tyyppi tuntematon)
+* Katu
+  * Kunnan omistama katuverkko
+* Maantie tai yksityistie
+* Pyöräkatu
+  * Pääasiassa pyöräilyn käyttöön tarkoitettu katu, jolla autot ovat väistämisvelvollisia pyöräilijään nähden
+* Kylätie
+  * Väylä, jolla on tiemerkinnällä tai muuten erotettu ajoradasta levennetty osa jalankulun ja pyöräilyn käyttöön
+* Pihakatu
+  * Jalankulkijalla on esteetön liikkumisoikeus ja väylä on sallittu ajoneuvoliikenteelle nopeusrajoitus 20 km/h
+* Kävelykatu
+  * Ensisijaisesti jalankulun käyttöön varattu alue, jolla suurin sallittu ajonopeus on 20 km/h
+* Pyöräkaista
+* Pyörätie
+  * Pyörätie on lähtökohtaisesti yksisuuntainen
+* Kaksisuuntainen pyörätie
+* Yhdistetty pyörätie ja jalkakäytävä, yksisuuntainen pyörille
+  * Väylätyypillä jalankulkijat ja pyöräilijät käyttävät samoja alueita ja väylä koostuu lähtökohtaisesti aina vain yhdestä kaistasta
+  * Jos ajosuunnat on erotettu toisistaan keskiviivalla, väylälle voidaan lisätä kaksi kaistaa jotka kuvaavat ajosuuntia. Tällöin kuvataan rinnakkain kaksi vierekkäistä yhdistetty pyörätie ja jalkakäytävä kaistaa, joilla on eri suunta
+* Yhdistetty pyörätie ja jalkakäytävä, kaksisuuntainen pyörille
+* Puistokäytävä
+  * Polkua hoidetumpi ja yleensä leveämpi puistokäytävä, joka on usein merkittävä osa jalankulun ja pyöräilyn verkkoa
+* Jalkakäytävä
+  * Jalankulkijoille tarkoitettu tien osa
+  * jalkakäytävää ei ole aina merkitty erikseen, mutta pyörätie on. Siten merkitsemätön korotettu väylä katuverkolla on lähtökohtaisesti jalkakäytävä
+  * Jalkakäytävällä ei ole suuntaa, ellei erityistapauksessa sitä ole erikseen osoitettu esimerkiksi tiemerkinnällä
+* Pururata
+  * Pururata muistuttaa puistokäytävää, mutta pyöräily on lähtökohtaisesti kielletty
+* Ajopolku
+  * Muu yksityis- tai metsätie, joka on jalankulun ja pyöräilyn käytössä ja on ajattavissa maastoajoneuvolla
+* Polku
+  * Kapeampi ja usein heikommin hoidettu väylä
+  * "Maastoa"
+* Lossi tai lautta
+
+Käpy tietolajin kohteet on visualisoitu eri tavoin riippuen vaikutussuunnasta. Tieto voi olla suuntautunut väylällä molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, väylätieto on visualisoitu yhdell&auml; paksulla viivalla. Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan.
+
+## 10.2 Käpy tietolajin muokkaus
+
+Käpy tietolajin tietoja voi muokata muokkaustilassa kolmella tavalla:
+
+1.	Koko Käpy tietolajin ketjulle (esim. koko kadulle).
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+3.	Monivalinnan avulla kokonaiselle alueelle.
+
+### Käpy tietolajin muokkaus ja lis&auml;ys
+
+Muokattava tielinkki valitaan napauttamalla sen geometriaa (5). Kerran napauttamalla tulee valituksi koko käpy-väyläketju, eli kaikki linkit, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkkiä.
+
+Tietoja muokataan ominaisuustietoikkunassa olevien valintojen avulla (6), joissa voi muokata tietoa siitä onko väylä käpy tietolajiin kuuluva vai ei (eli jalankulun ja pyöräilyn väylä). Lisäksi käpy-väylätyyppiä voi muuttaa tarvittaessa.
+
+Tielinkit, joilla ei ole Käpy tietolajiin kuuluvia on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi käpy tietolajin kohde lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Sen jälkeen ominaisuustietoikkunassa valitaan radionapista väylä käpy tietolajiin kuuluvaksi sekä mahdollinen väylätyypin tarkennus.
+
+![Muokkaus.](kt3.png)
+
+_Käpy tietolajin muokkaus._
+
+### Käpy tietolajin kohteen poistaminen
+
+Käpy-kohteilta voi poistaa valitsemalla kartalta kohteen, ja painamalla ominaisuustietoikkunan radionapista "ei käpy tietolaji" (7). Muutokset tallentuu tallenna-painikkeesta ja peruuntuvat peruuta-painikkeesta (8).
+
+![Poisto.](kt4.png)
+
+_Käpy tietolajin kohteen poistaminen._
+
+### Useamman Käpy-kohteen muokkaus monivalintaty&ouml;kalulla
+
+Useamman kuin yhden tielinkin käpy-tiedot voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella muokattavia tielinkkejä. Toinen vaihtoehto on käyttää työkalupalkin aluevalintatyökaluja (9), joita ovat monikulmio- ja laatikkotyökalut. Työkaluilla piirretään alue hiiren vasemmalla painikkeella. Valituksi tulevat kaikki tielinkit monikulmion/laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (10), jossa valitaan Käpy tietolajin tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla. Peruuta-painikkeesta voi perua muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat Käpy tietolajin tiedot. P&auml;&auml;llekk&auml;isi&auml; tietoja ei voi siis luoda.
+
+![Monivalinta.](kt5.png)
+
+_Useamman Käpy-kohteen tietojen muokkaus kerralla._
+
+### Käpy tietolajin kohteen katkaiseminen
+
+Käpy tietolajin kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla napautetaan tiegeometriasta kohtaa, josta se halutaan katkaista. Käpy-kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen käpy-kohteen, ei koko ketjua.
+
+Käpy tietolajin kohteen katkaisussa uusille kohteille valitaan tiedot oikean laidan ominaisuustietovalikossa (12). Kartalla ja ominaisuustietoikkunassa olevat kirjaimet osoittavat, kummasta käpy-kohteesta on kyse (13). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](kt6.png)
+
+_Käpy tietolajin kohteen katkaiseminen._
+
+## 10.3 Käpy tietolajin kohteen muuttaminen yksisuuntaiseksi
+
+Molempiin suuntiin voimassa olevan Käpy-kohteen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti. Muutos tehd&auml;&auml;n kaksoisnapauttamalla kyseist&auml; Käpy tietolajin kohdetta (14), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (15).
+
+![Yksisuuntaiseksi.](kt7.png)
+
+_Käpy tietolajin kohteen valinta ja muuttaminen yksisuuntaiseksi._
+
+Painikkeen painamisen j&auml;lkeen voi valita uusille Käpy-kohteille tietoja (16). Kirjaimet kartalla vastaavat ominaisuustietoikkunassa olevia kirjaimia (17).
+
+![Yksisuuntaisen arvo.](kt8.png)
+
+_Uusien yksisuuntaisten Käpy tietolajikohteiden tietojen valinta._
+
+Uudet tiedot tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+# 11. Suurin sallittu -tietolajit
+
+Kartalle voi valita tietolajivalikosta (1) Suurin sallittu -tietolajeja. Suurin sallittu -arvon omaavat geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+
+Suurin sallittu -tietolajit (7 tietolajia):
+
+* __Suurin sallittu massa__
+* __Yhdistelm&auml;n suurin sallittu massa__
+* __Suurin sallittu akselimassa__
+* __Suurin sallittu telimassa__
+* __Suurin sallittu korkeus__
+* __Suurin sallittu pituus__
+* __Suurin sallittu leveys__
+
+![Suurin sallittu -valinta](ss_1.png)
+
+_Suurin sallittu -valinta._
+
+## 11.1 Suurin sallittu -tietojen katselu
+
+Yksitt&auml;isen suurin sallittu -kohteen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustietoikkuna (3).
+
+![Suurimman sallitun tietojen katselu](ss_2.png)
+
+_Suurin sallittu -katselutila._
+
+## 11.2 Suurin sallittu -ominaisuustietojen muokkaus
+
+Muokkaustilassa Suurin sallittu -rajoituksille voi antaa uusia arvoja ja niit&auml; voi katkaista. Rajoituksien arvoja voi muokata kolmella tavalla:
+1.	Koko rajoitusketjulle kerralla.
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
+3.	Monivalinnan avulla kokonaiselle alueelle.
+
+
+### Rajoituksen arvon muokkaus
+
+Suurin sallittu -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki per&auml;kk&auml;iset rajoitukset, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos käyttäjä haluaa valita vain yhden linkin mittaisen pätkän muokattavaksi, sen voi tehdä kaksoisnapauttamalla tielinkkiä. Tietoja muokataan ominaisuustietoikkunassa (5). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (6). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (7).
+
+Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+Huom! Rajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa rajoituksissa.
+
+![Suurin sallittu -valinnan muokkaus](ss_3.png)
+
+_Suurin sallittu -valinnan muokkaus._
+
+### Suurin sallittu -kohteiden muokkaus monivalintatyökaluilla
+
+Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (8), jolloin ctrl-näppäimen irti päästämällä avautuu rajoituksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (9) tai monikulmiotyökalua (10). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita alueet leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Useamman rajoituksen arvon muokkaus kerralla](ss_4.png)
+
+_Useamman rajoituksen arvon muokkaus kerralla._
+
+### Suurin sallittu -kohteen katkaisu
+
+Rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (11). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla napautetaan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (12). 
+
+Rajoituksen katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
+
+![Suurin sallittu -kohteen katkaisu](ss_5.png)
+
+_Suurin sallittu -kohteen katkaisu._
+
+Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan ominaisuustietoikkunasta (13). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (14). Uudet rajoitukset tallennetaan tallenna-painikkeesta (15). Katkaisun voi peruuttaa peruuta-painikkeella (16), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Rajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
+
+![Suurin sallittu -kohteen katkaisu](ss_6.png)
+
+_Suurin sallittu -kohteen katkaisu._
+
+### Suurin sallittu -kohteen poistaminen
+
+Tielinkin suurin sallittu -kohde poistetaan ominaisuustietoikkunassa (17) valitsemalla Rajoitus-kohdasta "Ei rajoitusta".
+
+![Suurin sallittu -kohteen poistaminen](ss_7.png)
+
+_Suurin sallittu -kohteen poistaminen._
+
+### Uuden suurin sallittu -kohteen lis&auml;&auml;minen
+
+Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla linkin geometrian (18) Suurin sallittu -muokkaustilassa. Ominaisuustietoikkunaan (19) avautuu tielinkin suurin sallittu -kohteen tiedot. Valitaan "Rajoitus" ja sy&ouml;tet&auml;&auml;n suurin sallittu arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu arvo tallennetaan painamalla Tallenna (20). Uuden suurin sallittu -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (21).
+
+![Suurin sallittu -kohteen lis&auml;ys](ss_8.png)
+
+_Suurin sallittu -kohteen lis&auml;&auml;minen._
+
+# 12. Päällyste
+
+"Päällyste" on viivamainen kohde, joka voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Päällyste-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu p&auml;&auml;llyste, se piirtyy kartalle (2). P&auml;&auml;llyst&auml;m&auml;tt&ouml;m&auml;ksi merkatut tielinkit ovat harmaita (3). P&auml;&auml;llystyksen mahdollisina arvoina on useita päällysteisiin viittaavia päällysteluokkia.
+P&auml;&auml;llystetiedon l&auml;hde tielinkille on Maanmittauslaitoksen maastotietokanta.
+
+![Paallyste](päällyste1.png)
+
+_Päällystenäkymä._
+
+## 12.1 P&auml;&auml;llystetietojen katselu
+
+Kun kohdetta napauttaa kartalta, se korostuu (4). ja ominaisuustietoikkunaan tulee n&auml;kyviin sen tiedot (5). Kerran napauttamalla tulee valituksi koko p&auml;&auml;llysteketju, eli kaikki linkit, joilla on sama p&auml;&auml;llystetieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. P&auml;&auml;llystyksell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; p&auml;&auml;llystyksen arvo kyll&auml;/ei. Taulussa on myös tieto päällysteluokasta, jossa on useita mahdollisia vaihtoehtoja, sekä tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
+
+![Paallyste katselu](päällyste2.png)
+
+_P&auml;&auml;llystetiedon katselu._
+
+## 12.2 P&auml;&auml;llystetietojen muokkaus
+
+P&auml;&auml;llystetietoja voi muokata muokkaustilassa. P&auml;&auml;llystetiedon voi lis&auml;t&auml;, poistaa ja p&auml;&auml;llystegeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+P&auml;&auml;llysteen arvoa voi muokata kolmella tavalla:
+
+1. Koko p&auml;&auml;llysteketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+### P&auml;&auml;llystetiedon lis&auml;ys
+
+Uusi p&auml;&auml;llystetieto lis&auml;t&auml;&auml;n valitsemalla kartalta geometria ja valitsemalla oikean laidan ominaisuustietoikkunassa "P&auml;&auml;llyste" sekä päällysteluokka (6). Uusi p&auml;&auml;llystystieto n&auml;kyy kartalla päällysteluokalle ominaisella värillä.
+
+![Paallyste lisays](päällyste3.png)
+
+_P&auml;&auml;llystetiedon lis&auml;ys._
+
+### P&auml;&auml;llystetiedon poistaminen
+
+P&auml;&auml;llystetiedon voi poistaa valitsemalla p&auml;&auml;llystetyn kohteen ja oikean laidan ominaisuustietoikkunasta kohdan "Ei p&auml;&auml;llystett&auml;" (7). Kun p&auml;&auml;llystetieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Paallyste poisto](päällyste4.png)
+
+_P&auml;&auml;llystetiedon poistaminen._
+
+### P&auml;&auml;llystetiedon muokkaus monivalintaty&ouml;kalulla
+
+Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla painamalla valintatyökalua (8) sekä pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa valitsemalla useita tielinkkejä hiiren vasemmalla näppäimellä. Lisäksi on mahdollista käyttää laatikko- (9) ja monikulmiovalintatyökaluja (10). Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita kuvio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo sekä päällysteluokka ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Paallyste monivalinta](päällyste5.png)
+
+_P&auml;&auml;llysteen monivalinta._
+
+### P&auml;&auml;llysteen katkaisu
+
+Tarvittaessa p&auml;&auml;llysteen voi katkaista leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla napautetaan p&auml;&auml;llysteen geometriasta kohtaa, josta se halutaan katkaista. P&auml;&auml;llysteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. P&auml;&auml;llysteen katkaisussa uusille tieosuuksille valitaan arvot oikean laidan ominaisuustietoikkunasta (12). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (13). Uudet p&auml;&auml;llystetiedot tallennetaan tallenna-painikkeesta (14). Katkaisun voi peruuttaa peruuta-painikkeella (15), jolloin alkuper&auml;inen p&auml;&auml;llystetieto j&auml;&auml; voimaan.
+
+Huom! P&auml;&auml;llysteen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Paallyste katko](päällyste6.png)
+
+_P&auml;&auml;llystegeometrian katkaisu._
+
+# 13. Leveys
+
+Kartalle voi valita tietolajivalikosta (1) Leveys-valinnan, joka kuvaa tien leveyttä. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Tielinkit, joiden leveys tiedet&auml;&auml;n on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joiden leveys ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;. Tien leveys ilmoitetaan senttimetrein&auml; (cm).
+
+![Leveys](leveys1.png)
+
+_Leveys-valinta._
+
+## 13.1 Leveyden katselu
+
+Yksitt&auml;isen leveyskohteen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko leveysketju, eli kaikki linkit, joilla on sama tien leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustietoikkuna (3). Tien leveydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; tieto siitä, onko kohteessa leveys-arvoa ja tien leveyden arvo senttimetrein&auml;. Taulusta löytyy myös tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
+
+![Leveyden katselu](leveys2.png)
+
+_Leveys-katselutila._
+
+## 13.2 Leveyskohteiden muokkaus
+
+Leveystietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa leveydelle voi antaa uuden arvon (cm), tietoja voi poistaa sek&auml; leveysgeometrian voi katkaista. Tien leveyden arvoa voi muokata kolmella tavalla:
+
+1. Koko leveysketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+### Leveyden muokkaus
+
+Leveysvalintaa muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko leveysketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa (5). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (6). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (7). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+Huom! Leveyden arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
+
+![Leveys muokkaus](leveys3.png)
+
+_Leveyden muokkaus._
+
+### Leveyden muokkaus monivalintaty&ouml;kalulla
+
+Useamman kuin yhden tielinkin leveyden voi muuttaa kerralla. Halutut tielinkit valitaan valintatyökalulla (8) painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla näppäimellä halutut tielinkit. Vaihtoehtoisesti voi käyttää laatikko- (9) tai monikulmiovalintatyökaluja (10), joilla piirretään linkkien päälle valinta-alueet. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan tien leveyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Tien leveys monivalinta](leveys4.png)
+
+_Useamman leveystiedon muokkaus kerralla._
+
+### Leveyskohteen katkaisu
+
+Leveyskohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (11). Siten leikkausty&ouml;kalun avulla voi muuttaa tien leveytt&auml; lyhyill&auml; tieosuuksilla. Leikkausty&ouml;kalulla napautetaan leveyden geometriasta kohtaa, josta leveystieto halutaan katkaista. Leveyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (12).
+Katkaisuty&ouml;kalu valitsee aina vain linkin mittaisen osion geometriasta, ei koko leveysketjua.
+
+![Tien leveys katkaisu](leveys5.png)
+
+_Leveysgeometrian katkaisu._
+
+Katkaistun leveystiedon osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille m&auml;&auml;ritell&auml;&auml;n arvot oikean laidan ominaisuustietoikkunan kentiss&auml; (13). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (14). Uudet leveystiedot tallennetaan tallenna-painikkeesta (15). Katkaisun voi peruuttaa peruuta-painikkeella (16), jolloin alkuper&auml;inen tien leveys j&auml;&auml; voimaan.
+
+Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille tieosuuksille eri arvot, jotta tallennus on mahdollista.
+
+![Tien leveys katkaisu2](leveys6.png)
+
+_Leveyskohteen katkaisu._
+
+### Leveyskohteen poistaminen
+
+Tielinkin leveyskohde poistetaan ominaisuustietoikkunassa (17) valitsemalla Leveys-kohdasta "Leveys ei tiedossa".
+
+![Tien leveys poisto](leveys7.png)
+
+_Leveyskohteen poistaminen._
+
+### Uuden leveyskohteen lis&auml;&auml;minen
+
+Tielinkille voi lis&auml;t&auml; leveyskohteen valitsemalla linkin geometrian (18) leveyden muokkaustilassa. Ominaisuustietoikkunaan (19) avautuu tielinkin leveyden tiedot. Valitaan "Leveys tiedossa" ja sy&ouml;tet&auml;&auml;n leveys sy&ouml;tekentt&auml;&auml;n.  Leveys tallennetaan painamalla Tallenna (20). Uuden tien leveys -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (21).
+
+![Tien leveys lisays](leveys8.png)
+
+_Leveyskohteen lis&auml;&auml;minen._
+
+# 14. Valaistus
+
+Valaistus on viivamainen kohde. Valaistus voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Valaistus-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu valaistus, se piirtyy kartalle punaisella viivalla (2). Valaisemattomat tielinkit ovat harmaita (3). Valaistuksen arvo on kyll&auml; tai ei. 
+
+![Valaistus](valaistus1.png)
+
+_Valaistus-tietolaji._
+
+## 14.1 Valaistustietojen katselu
+
+Kun kohdetta napauttaa kartalta, se korostuu (4). ja ominaisuustietoikkunaan tulee n&auml;kyviin sen tiedot (5). Kerran napauttamalla tulee valituksi koko valaistusketju, eli kaikki linkit, joilla on sama valaistustieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. Valaistuksella on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; valaistuksen arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valaistusketjussa.
+
+![Valaistustiedon katselu](valaistus2.png)
+
+_Valaistustiedon katselu._
+
+## 14.2 Valaistustietojen muokkaus
+
+Valaistus-tietoja voi muokata muokkaustilassa. Valaistuksen voi lis&auml;t&auml;, poistaa ja valaistusgeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+### Valaistustiedon lis&auml;ys
+
+Uusi valaistus lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietoikkunassa "Valaistus" (6). Uusi valaistus-tieto n&auml;kyy kartalla punaisena.
+
+![Valaistustiedon lis&auml;ys](valaistus3.png)
+
+_Valaistustiedon lis&auml;ys._
+
+### Valaistustiedon poistaminen
+
+Valaistustiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan ominaisuustietoikkunasta kohdan "Ei valaistusta" (7). Kun valaistustieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Valaistustiedon poistaminen](valaistus4.png)
+
+_Valaistustiedon poistaminen._
+
+### Valaistuksen muokkaus monivalintaty&ouml;kalulla
+
+Usealle linkille voi lisätä tai poistaa valaistuksen kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (8), jolloin ctrl-näppäimen irti päästämällä avautuu valaistuksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (9) tai monikulmiotyökalua (10). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu napauttamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaa. Valinnan jälkeen avautuu ikkuna, jossa valaistustietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Valaistuksen monivalinta](valaistus5.png)
+
+_Valaistuksen monivalinta._
+
+### Valaistuksen katkaisu
+
+Tarvittaessa valaistuksen voi katkaista leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla napautetaan valaistuksen geometriasta kohtaa, josta se halutaan katkaista. Valaistuksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot ominaisuustietoikkunassa (12). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (13). Uudet valaistustiedot tallennetaan tallenna-painikkeesta (14). Katkaisun voi peruuttaa peruuta-painikkeella (15), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Valaistuksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
+
+![Valaistusgeometrian katkaisu](valaistus6.png)
+
+_Valaistusgeometrian katkaisu._
+
+# 15. Kantavuus
+
+Kantavuus-tietolajia ei ole vielä otettu käyttöön Digiroadissa.
+
+Kantavuus on liikenneväylälle asetettu tieto tien suurimmasta kantavuudesta. Kantavuuksien lisäksi tietolajissa on kuvattu routivuuskerroin. Kantavuudet voi asettaa aktiiviseksi tasoksi tietolajivalikosta (1) ja kevätkantavuuden tai routivuuskertoimen voi asettaa visualisoitavaksi tietolajipaneelin radionapeista (2). Kartan eri mittakaavatasoilla kantavuuksien visualisointi muuttuu, jotta niiden erottaminen olisi helpompaa. Kantavuudet on visualisoitu eri v&auml;rein kantavuuden arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t sovelluksen vasemman reunan selitteessä tietolajipaneelissa.
+
+![Kantavuuksien valinta](ka1.png)
+
+_Kantavuuksien valinta._
+
+## 15.1 Kantavuuksien tietojen katselu
+
+Yksitt&auml;isen kantavuuden voi valita napauttamalla kartalta sen geometriaa.
+
+Kerran napauttamalla tulee valituksi koko kantavuusketju, eli kaikki kantavuudet, joilla on sama kantavuuden arvo ja tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityisteillä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla kantavuuden geometriaa karttaikkunassa.
+
+Valitun kantavuusketjun tai yksitt&auml;isen kantavuuden geometria korostuu kartalla ja karttaikkunan oikeaan laitaan avautuu kantavuuden ominaisuustietoikkuna. Ominaisuustietoikkuna sisältää tiedot kantavuustiedon lisäys- ja muokkauspäivämäärästä, valittujen linkkien lukumäärästä, tiedon siitä, onko kantavuutta vai ei, kevätkantavuuden arvon, routivuuskertoimen ja mittauspäivän. 
+
+![Kantavuuden tietojen katselu](ka2.png)
+
+_Kantavuuden tietojen katselu, kun valittuna on kantavuusketju (napautettu kerran)._
+
+![Kantavuuden tietojen katselu](ka3.png)
+
+_Kantavuuden tietojen katselu, kun valittuna on yksitt&auml;inen kantavuus (kaksoisnapautus)._
+
+
+## 15.2 Kantavuuksien muokkaus
+
+Muokkaustilassa kantavuuksille voi antaa uusia arvoja tai poistaa olemassaolevia. Kantavuuksien arvoja voi muokata kolmella tavalla:
+
+1. Koko kantavuusketjulle.
+1. Yksitt&auml;isen linkin mittaiselle osuudelle tai tielinkin osalle.
+1. Monivalinnan avulla kokonaiselle alueelle.
+
+### Kantavuuden arvon muokkaus
+
+Muokattava kantavuus valitaan napauttamalla sen geometriaa (3). Kerran napauttamalla tulee valituksi koko kantavuusketju, eli kaikki kantavuudet, joilla on sama kantavuuden arvo sekä tienumero (maantiell&auml;) tai tiennimi (katuverkolla ja yksityistiellä). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, voi sen tehd&auml; kaksoisnapauttamalla kantavuutta.
+
+Tietoja muokataan ominaisuustietoikkunassa syöttämällä kantavuudelle uusi arvo ominaisuustietotaulun syötekenttään (4), valitsemalla routivuuskertoimelle uuden arvon alasvetovalikosta (5) ja/tai syöttämällä uusi arvo mittauspäivälle (6). Muutokset tulee tallentaa tai perua ennen kuin siirrytään muokkaamaan uutta kohdetta. Kantavuus tulee olla valittuna radionapeista (7), jotta arvoja voi syöttää ja muokata
+
+![Kantavuuden muokkaus.](ka4.png)
+
+_Kantavuusketjun arvon muokkaus (napautettu kerran)._
+
+### Kantavuuksien muokkaus monivalintaty&ouml;kalulla
+
+Usean tielinkin kantavuusarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (8). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki kantavuudet piirretyn alueen sisällä ja kantavuudet, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), josta kantavuuksille määritellään uudet arvot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Useamman kantavuuden arvon muokkaus.](ka5_2.png)
+
+_Useamman kantavuuden arvon muokkaus kerralla._
+
+### Kantavuuden katkaiseminen
+
+Kantavuuden voi jakaa kahteen osaan leikkaus- eli saksityökalulla, joka löytyy työkaluvalikosta (10). Leikkaustyökalulla klikataan kantavuuden geometriasta kohtaa, josta kantavuus halutaan katkaista. Kantavuuden geometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Kantavuuden katkaisu valitsee aina vain yhden tielinkin mittaisen osion kantavuusta, ei kantavuusketjua.
+
+![Kantavuuden katkaiseminen.](ka6.png)
+
+_Kantavuuden katkaiseminen._
+
+Kantavuuden katkaisussa tielinkin osille valitaan uudet kantavuusarvot sovelluksen oikean reunan ominaisuustietotaulusta (11). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet A ja B (12) osoittavat, kummasta rajoituksesta on kyse. Uudet kantavuudet tallennetaan tallenna-painikkeella ja tai perutaan peruuta-painikkeella (13), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Kantavuuden katkaisussa tulee m&auml;&auml;ritt&auml;&auml; kantavuuksille eri arvot, jotta tallennus on mahdollista.
+
+
+# 16. Kelirikko
+
+Kelirikko on viivamainen tietolaji, joka kuvaa kelirikon aikaisia rajoituksia ja tien alttiutta kelirikolle. Kelirikko voi olla tielinkin mittainen tai sitä lyhyempi. Kelirikko-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on ilmoitettu kelirikko, joka on katseluhetkellä voimassa, se piirtyy kartalle punaisella viivalla. Siniset tielinkit puolestaan tarkoittavat, että tielle on määritelty kelirikkoaikainen rajoitus, mutta se ei ole katseluhetkellä voimassa. Tiet, joilla ei ole kelirikkoa ovat harmaita. Kelirikko voidaan ilmoittaa vuosittain tiettynä aikana toistuvasti voimassa olevaksi tai yleisenä tietona siitä, että tie on kelirikolle altis. Kelirikolle voidaan määritellä tietty painorajoitus.
+
+![Kelirikko](Kelirikko1.PNG)
+
+_Kelirikko._
+
+## 16.1 Kelirikkotietojen katselu
+
+Kun kelirikkokohdetta napauttaa kartalta, se korostuu (2) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko kelirikkoketju, eli kaikki tielinkit, joilla on sama kelirikkotieto ja tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Kelirikon ominaisuustietoja ovat (3) kelirikon aikainen painorajoitus, kelirikkokausi, kelirikon toistuvuus vuosittain (kyllä/ei). Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä kelirikkoketjussa (4).
+
+![Kelirikko katselu](Kelirikko2.1.PNG)
+
+_Kelirikkotiedon katselu._
+
+## 16.2 Kelirikkotietojen muokkaus
+
+Kelirikkotietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa kelirikolle voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista saksi-työkalulla. Kelirikon arvoa voi muokata kolmella tavalla:
+
+1. Koko kelirikkoketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+![Kelirikko muokkaus](Kelirikko3.png)
+
+_Kelirikkotiedon muokkaus._
+
+### Kelirikkotiedon lis&auml;ys
+
+Uusi kelirikkotieto lisätään järjestelmään asettamalla ensin tietolajivalikosta kelirikko-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle kelirikkotieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Kelirikko-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten kelirikkoaikainen painorajoitus (6), kelirikkokausi (7) voidaan asettaa. Kelirikko voidaan kelirikkokauden avulla laittaa vuosittain toistuvaksi (8). Kelirikkotiedon pystyy tallentamaan myös ilman tarkentavia tietoja, jolloin tielle asetetaan yleinen kelirikkotieto eli tieto siitä, että tie on kelirikolle altis (10). Kelirikkotieto näkyy karttaikkunassa punaisena (9) silloin kuin kelirikko on katseluhetkellä voimassa ja sinisenä silloin, kun tiellä on kelirikko, mutta se ei ole katseluhetkellä voimassa tai tie on altis kelirikolle. Tiedot tallennetaan painamalla Tallenna-painiketta (11).
+
+![Kelirikko lis&auml;ys](Kelirikko4.PNG)
+
+_Kelirikkotiedon lis&auml;ys._
+
+### Kelirikkotiedon poistaminen
+
+Kelirikkotiedon voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta kelirikko halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei kelirikkoa" (12) mahdollistaa kelirikkotiedon poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun kelirikkotieto on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
+
+![Kelirikko poisto](Kelirikko5.PNG)
+
+_Kelirikkotiedon poistaminen._
+
+### Kelirikkojen muokkaus monivalintaty&ouml;kalulla
+
+Kelirikkotietoa voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille kelirikkotieto halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin pohjassa, jolloin ctrl-näppäimen irti päästämällä avautuu kelirikon muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua tai monikulmiotyökalua (13). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna (14), jossa määritellään kelirikon ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Kelirikko monivalinta](Kelirikko6.PNG)
+
+_Kelirikon monivalinta._
+
+### Kelirikkotiedon katkaisu
+
+Tarvittaessa kelirikon voi katkaista leikkaustyökalulla. Leikkaustyökalulla napautetaan kelirikon geometriasta kohtaa, josta se halutaan katkaista (15). Kelirikon tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Kelirikon katkaisussa uusille geometrioille asetetaan uudet ominaisuustiedot karttaikkunan oikean reunan ominaisuustietoikkunasta (16). Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse. Uudet kelirikkotiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko kelirikkoketjua.
+
+Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Kelirikko katkaisu](Kelirikko7.PNG)
+
+_Kelirikkogeometrian katkaisu._
+
+# 17. Tietyöt
+
+Tietyöt on viivamainen tietolaji, joka kuvaa tieverkkojen kohteita, joilla suoritetaan tietöitä. Tietyö voi olla tielinkin mittainen tai sitä lyhyempi. Tietyö-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on ilmoitettu tietyö, joka on katseluhetkellä voimassa, se piirtyy kartalle punaisella viivalla. Siniset tielinkit puolestaan tarkoittavat, että tielle on määritelty tuleva tai mennyt tietyö. Tiet, joilla ei ole tietyötä ovat harmaita. Tietyölle voidaan asettaa myös työn yksilöivä tunnus.
+
+![Tietyö](tt1.png)
+
+_Tietyö._
+
+## 17.1 Tietyötietojen katselu
+
+Kun tietyökohdetta napauttaa kartalta, se korostuu (2) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko tietyöketju, eli kaikki tielinkit, joilla on sama tietyötieto ja tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Tietyön ominaisuustietoja ovat (3) tietyö (on/ei vaihtoehdot), työn tunnus sekä tietyön arvioitu kesto. Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi sekä tieto linkkien lukumäärästä tietyöketjussa (4).
+
+![Tietyö katselu](tt2.png)
+
+_Tietyötietojen katselu._
+
+## 17.2 Tietyötietojen muokkaus ja lisäys
+
+Tietyön tietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa tietyölle voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista leikkaustyökalulla. Tietyön arvoa voi muokata kolmella tavalla:
+
+1. Koko tietyöketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+### Tietyötiedon lis&auml;ys
+
+Uusi tietyötieto lisätään järjestelmään asettamalla ensin tietolajivalikosta tietyö-tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle tietyötieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Tietyö-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten työn tunnus (6) ja arvioitu kesto (7) voidaan asettaa. Tietyölle pakollinen tieto on sen kesto eli arvioitu alkamis- ja päättymispäivämäärä. Valinnaisena lisätietona tietyölle voi asettaa työn tunnuksen. Tietyötieto näkyy karttaikkunassa punaisena silloin kuin tietyö on katseluhetkellä voimassa ja sinisenä (8) silloin, kun tielle on tulossa tietyö tai se on päättynyt. Tiedot tallennetaan painamalla Tallenna-painiketta (9).
+
+Tietyötiedon voi myös lisätä lisäämällä tielle liikennemerkin A11 Tietyö, ja kirjaamalla merkille alku- ja loppupäivämäärän. Tällöin kaikille linkeille, joilla on sama tiennumero (maantiellä) tai tiennimi (katuverkko ja yksityistie) generoituu seuraavan yön aikana automaattisesti tietyötieto.
+
+![Tietyö lis&auml;ys](tt3.png)
+
+_Tietyötiedon lis&auml;ys._
+
+### Tietyötietojen poistaminen
+
+Tietyötiedon voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta tietyö halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei tietyötä" (10) mahdollistaa tietyötietojen poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun tietyötieto on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
+
+![Tietyö poisto](tt4.png)
+
+_Tietyötiedon poistaminen._
+
+### Tietyötietojen muokkaus monivalintaty&ouml;kalulla
+
+Tietyötietoa voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille tietyötieto halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin pohjassa, jolloin ctrl-näppäimen irti päästämällä avautuu tietyön muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua tai monikulmiotyökalua (11). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna (12), jossa määritellään tietyön ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Tietyö monivalinta](tt5.png)
+
+_Tietyön monivalinta._
+
+### Tietyötiedon katkaisu
+
+Tarvittaessa tietyön voi katkaista leikkaustyökalulla. Leikkaustyökalulla napautetaan tietyön geometriasta kohtaa, josta se halutaan katkaista (13). Tietyön tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Tietyön katkaisussa uusille geometrioille asetetaan uudet ominaisuustiedot karttaikkunan oikean reunan ominaisuustietoikkunasta (14). Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse. Uudet tietyötiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko tietyöketjua.
+
+Huom! Tietyön katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Tietyö katkaisu](tt6.png)
+
+_Tietyögeometrian katkaisu._
+
+# 18. Eurooppatienumero
+
+Eurooppatien numerot kattavat maantiet ja muutaman kaupungin kadut. Eurooppatienumerot merkitään vain numerolla (ei lisätä E-kirjainta). Karttaikkunaan voi valita eurooppatienumerot tietolajivalikosta (1). Karttaa tarkennettaessa kohteet tulevat n&auml;kyviin. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on eurooppatienumero.
+ 
+![Valinta.](eutie1.png)
+
+_Eurooppatienumeroiden valinta._
+
+## 18.1 Eurooppatienumeron tietojen katselu
+
+Eurooppatienumeron voi valita napauttamalla kartalta sen geometriaa.
+
+Kerran napauttamalla tulee valituksi koko ketju, eli osuus, jossa eurooppatienumerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla eurooppatienumerollista tielinkki&auml;. Valitun ketjun tai yksitt&auml;isen tielinkin mittainen osuus geometriasta korostuu kartalla. Sivun oikeaan laitaan avautuu eurooppatienumeron ominaisuustietoikkuna.
+
+Ominaisuustietoikkunassa on eurooppatienumeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](eutie2.png)
+
+_Eurooppatienumeron tietojen katselu._
+
+## 18.2 Eurooppatienumeron muokkaus
+
+Eurooppatienumero viivageometrialle voi antaa muokkaustilassa tietoja. Eurooppatienumeroa voi muokata kolmella tavalla:
+
+1.	Koko eurooppatienumeroketjulle
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle
+3.	Laatikko- tai monikulmiovalintatyökalun avulla kokonaiselle alueelle.
+
+Jos samalla tielinkill&auml; on kaksi eurooppatienumeroa, ne erotetaan lis&auml;&auml;m&auml;ll&auml; pilkku ja väli syötekentt&auml;&auml;n numeroiden välille, esimerkiksi 4, 8
+
+### Eurooppatienumeron muokkaus ja lis&auml;ys
+
+Muokattava kohde valitaan napauttamalla sen geometriaa. Kerran napauttamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla kohdetta. Syötekentt&auml;&auml;n voidaan p&auml;ivitt&auml;&auml; eurooppatienumero (2).
+
+Tielinkit, joilla ei ole eurooppatienumeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi eurooppatienumero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan eurooppatienumero ja syötekentt&auml;&auml;n (2) kirjoitetaan eurooppatien numero.
+ 
+![Muokkaus.](eutie3.png)
+
+_Eurooppatienumeroiden muokkaus._
+
+### Eurooppatienumeron poistaminen
+
+Eurooppatienumeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei eurooppatienumeroa. Muutokset tallentuu tallenna-painikkeesta (4) tai ne voi kumota peruuta-painikkeesta (5).
+
+### Useamman eurooppatienumero muokkaus monivalintaty&ouml;kalulla
+
+Useamman kuin yhden tielinkin eurooppatienumeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla joko laatikko- (6) tai monikulmiovalintatyökalu (7) päälle. Laatikkovalintatyökalulla voi vetää laatikon, jota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Monikulmiovalintatyökalulla voi napsauttelemalla luoda kulmia monikulmiolle ja kaksoisnapauttamalla lopettaa kulmion luomisen. Kaikki kulmiota leikkaavat ja sen sisällä olevat linkit tulevat valituiksi. Valinnan j&auml;lkeen avautuu ikkuna (8), jossa kirjataan eurooppatienumero ko. viivoille (9). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiemmat eurooppatienumerotiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
+
+![Muokkaus2.](eutie4.png)
+
+_Useamman eurooppatienumeron tietojen muokkaus kerralla._
+
+### Eurooppatienumeron katkaiseminen
+
+Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (10). Leikkausty&ouml;kalulla napautetaan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
+
+Eurooppatienumeron katkaisussa uusille kohteille valitaan arvot oikean laidan radionapeista (11). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (12). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](eutie5.png)
+
+_Eurooppatienumeron katkaiseminen._
+
+# 19. Liittymänumero
+
+Liittym&auml;numeroilla tarkoitetaan numeroituja moottoriteiden eritasoliittymi&auml;. Liittym&auml;numerot annetaan Digiroadissa rampeille. Karttaikkunaan voi valita liittym&auml;numerot tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on liittym&auml;numerot.
+ 
+![Valinta.](ln1.png)
+
+_Liittym&auml;numeron valinta._
+
+## 19.1 Liittym&auml;numeron tietojen katselu
+
+Liittym&auml;numeron voi valita napauttamalla kartalta sen geometriaa. Kerran napauttamalla tulee valituksi koko liittym&auml;numeroketju, eli osuus, jossa liittym&auml;numerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla liittym&auml;numerollista tielinkki&auml;. Valitun tielinkkiketjun tai yksitt&auml;isen kohteen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu liittym&auml;numeron ominaisuustietoikkuna.
+
+Ominaisuustietoikkunassa on kohteen ID, liittym&auml;numeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
+
+![Katselu.](k176.JPG)
+
+_Liittym&auml;numeron tietojen katselu._
+
+## 19.2 Liittym&auml;numeron muokkaus
+
+Liittym&auml;numeron viivageometrialle voi antaa muokkaustilassa tietoja. Liittym&auml;numeroa voi muokata kolmella tavalla:
+
+1.	Koko liittym&auml;numeroketjulle
+2.	Yksitt&auml;isen linkin mittaiselle osuudelle
+3.	Monivalinnan avulla kokonaiselle alueelle (ei yleens&auml; tarpeen t&auml;ss&auml; tietolajissa).
+
+### Liittym&auml;numeron muokkaus ja lis&auml;ys
+
+Muokattava tielinkki valitaan napauttamalla sen geometriaa. Kerran napauttamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplanapauttamalla kohdetta. Syötekenttään voidaan p&auml;ivitt&auml;&auml; liittym&auml;numero (2).
+
+Tielinkit, joilla ei ole liittym&auml;numeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi liittym&auml;numero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan liittym&auml;numero(t) ja syötekenttään (2) kirjoitetaan liittym&auml;n numero. Yhdell&auml; tielinkill&auml; on yleens&auml; yksi liittym&auml;numero, mutta niit&auml; voi olla my&ouml;s kaksi tai useampi. Ne eritell&auml;&auml;n rivinvaihdolla (enter) syötekentässä (2).
+
+![Muokkaus.](ln3.png)
+
+_Liittym&auml;numeron muokkaus._
+
+### Liittym&auml;numeron poistaminen
+
+Liittym&auml;numeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei liittym&auml;numeroa. Muutokset tallentuu tallenna-painikkeesta (4) tai ne voi kumota peruuta-painikkeesta (5). Siirry katselutilaan –painikkeesta (6) p&auml;&auml;see pois muokkaustilasta.
+
+### Useamman liittym&auml;numeron muokkaus monivalintaty&ouml;kalulla
+
+Useamman kuin yhden tielinkin liittym&auml;numeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella valittavia tielinkkejä. Toinen tapa on muokkaustilan käyttää muokkaustilan työkalupalkin (7) monikulmio- ja laatikkovalintatyökaluja. Valituksi tulevat kaikki tielinkit laatikon/monikulmion sis&auml;ll&auml; ja tielinkit, joita laatikko/monikulmio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (8), jossa kirjataan liittym&auml;numero ko. viivoille (9). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
+
+Huom! Muutos kumoaa kaikki valitun alueen aiempien liittym&auml;numeroiden tiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
+ 
+![Muokkaus2.](ln4.png)
+
+_Useamman liittym&auml;numeron tietojen muokkaus kerralla._
+
+### Liittym&auml;numeron katkaiseminen
+
+Liittym&auml;numeron voi jakaa kahteen osaan leikkausty&ouml;kalulla (10). Leikkausty&ouml;kalulla napautetaan kohteen geometriasta kohtaa, josta se halutaan katkaista. Liittym&auml;numeron geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
+
+Liittym&auml;numeron katkaisussa kohteille valitaan arvot oikean laidan radionapeista (11). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (12). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
+
+![Katkaisu.](ln5.png)
+
+_Liittym&auml;numeron katkaiseminen._
+
+# 20. Hoitoluokat
+
+Hoitoluokat on viivamainen tietolaji, joka jakautuu kahteen hoitoluokkaan: talvihoitoluokkaan ja viherhoitoluokkaan. Talvihoitoluokka kuvaa hoidon tarpeen tasoa talvella sekä sitä, kuinka nopeasti hoitotoimenpiteet on aloitettava. Viherhoitoluokka puolestaan kuvaa viheralueen yleistä ilmettä, käyttöä sekä hoidon huoltotasoja. Hoitoluokat-tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on määritetty hoitoluokka, se värjäytyy hoitoluokalla ominaisella tavalla. Tiet, joille ei ole määritelty hoitoluokkaa ovat harmaita. 
+
+![Hoitoluokat](hl1.png)
+
+_Hoitoluokat._
+
+## 20.1 Hoitoluokkatietojen katselu
+
+Kun hoitoluokkakohdetta napauttaa kartalta, se korostuu (2) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko hoitoluokkaketju, eli kaikki tielinkit, joilla on sama hoitoluokka ja tienumero (maantiellä) tai tiennimi (katuverkolla). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Hoitoluokan ominaisuustietoja ovat (3) hoitoluokka (on/ei valinnat), talvihoitoluokka sekä viherhoitoluokka. Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä hoitoluokkaketjussa. Vasemman laidan tietolajipaneelissa (4) on valittavissa radionapilla talvi- tai viherhoitoluokka. Valinnan myötä karttaikkunan näkymä ja tietolajipaneelin selite muuttuu vastaamaan valittua hoitoluokkaa.
+
+![Hoitoluokat katselu](hl2.png)
+
+_Hoitoluokkatietojen katselu._
+
+Valtion teillä on erilainen talvihoitoluokittelu kuin kunnan omistamilla teillä. Lisäksi kunnan omistamilla teillä ei määritellä viherhoitoluokkaa ollenkaan.
+
+Talvihoitoluokat valtion teillä:
+
+* lse = Liukkaudentorjunta ilman toimenpideaikaa
+* ls = Normaalisti aina paljaana
+* l = Normaalisti paljaana
+* lb = Pääosin suolattava, ajoittain hieman liukas
+* lc = Pääosin hiekoitettava, ohut lumipolanne sallittu
+* II = Pääosin lumipintainen
+* III = Pääosin lumipintainen, pisin toimenpideaika
+* L = Kevyen liikenteen laatukäytävät
+* K1 = Melko vilkkaat kevyen liikenteen väylät
+* K2 = Kevyen liikenteen väylien perus talvihoitotaso
+* Kevyen liikenteen väylät, joilla ei talvihoitoa
+
+Talvihoitoluokat kuntien omistamilla teillä:
+
+* Pääkadut ja vilkkaat väylät
+* Kokoojakadut
+* Tonttikadut
+
+Kevyen liikenteen väylät:
+* A-luokan väylät
+* B-luokan väylät
+* C-luokan väylät
+
+Viherhoitoluokat:
+
+Normaalit hoitoluokat:
+* N1 = 2-ajorataiset tiet
+* N2 = Valta- ja kantatiet sekä vilkkaat seututiet
+* N3 = Muut tiet
+
+Taajamien hoitoluokat: 
+* T1 = Puistomainen taajamassa
+* T2 = Luonnonmukainen taajamassa
+
+Erityisalueet:
+* E1 = Puistomainen erityisalue
+* E2 = Luonnonmukainen erityisalue
+* Y = Ympäristötekijä
+
+Lisäksi tietolajipaneelin selitteessä on kategoriat linkeille, joilla on "Vain viherhoitoluokka" (musta) sekä "Ei hoitoluokkaa" (harmaa).
+
+## 20.2 Hoitoluokkatietojen muokkaus
+
+Hoitoluokkatietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa hoitoluokalle voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista leikkaustyökalulla. Hoitoluokkaa voi muokata kolmella tavalla:
+
+1. Koko hoitoluokkaketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+![Hoitoluokka muokkaus](hl3.png)
+
+_Hoitoluokkatietojen muokkaus._
+
+### Hoitoluokkatieton lis&auml;ys
+
+Uusi hoitoluokkatieto lisätään järjestelmään asettamalla ensin tietolajivalikosta Hoitoluokat-tietolaji aktiiviseksi. Tämän jälkeen tulee tietolajipaneelin radionapeista valita joko talvi- tai viherhoitoluokka (huom. vain kunnan omistamilla teillä on mahdollista muokata tietoja). Karttaikkunassa tulee napauttaa tielinkin geometriaa, jolle hoitoluokka halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Hoitoluokka-radionappi aktiiviseksi (5), minkä jälkeen tarkennetaan hoitoluokka alasvetovalikosta. Tiedot tallennetaan painamalla Tallenna-painiketta (6).
+
+### Hoitoluokkatiedon poistaminen
+
+Hoitoluokkatiedon voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta hoitoluokka halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei hoitoluokkaa" (7) mahdollistaa hoitoluokkatietojen poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun hoitoluokkatieto on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
+
+![Hoitoluokka poisto](hl4.png)
+
+_Hoitoluokkatiedon poistaminen._
+
+### Hoitoluokkatietojen muokkaus monivalintaty&ouml;kalulla
+
+Hoitoluokkatietoja voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille hoitoluokka halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin pohjassa, jolloin ctrl-näppäimen irti päästämällä avautuu hoitoluokan muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua tai monikulmiotyökalua (8). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), jossa määritellään hoitoluokan ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Hoitoluokka monivalinta](hl5.png)
+
+_Hoitoluokan monivalinta._
+
+### Hoitoluokkatiedon katkaisu
+
+Tarvittaessa hoitoluokkaketjun voi katkaista leikkaustyökalulla (10). Leikkaustyökalulla napautetaan hoitoluokkageometriasta kohtaa, josta se halutaan katkaista (11). Hoitoluokan tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Hoitoluokan katkaisussa uusille geometrioille asetetaan uudet ominaisuustiedot karttaikkunan oikean reunan ominaisuustietoikkunasta (12). Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse. Uudet hoitoluokkatiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko hoitoluokkaketjua.
+
+Huom! Hoitoluokan katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Hoitoluokka katkaisu](hl6.png)
+
+_Hoitoluokkaketjun katkaisu._
+
+# 21. Kaistojen lukumäärä
+
+Kartalle voi valita tietolajivalikosta (1) Kaistojen lukum&auml;&auml;r&auml; -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla kaistojen lukum&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;.
+
+![Kaistojen lukum&auml;&auml;r&auml; -valinta.](klm1.png)
+
+_Kaistojen lukum&auml;&auml;r&auml; -valinta._
+
+## 21.1 Kaistojen lukum&auml;&auml;r&auml; -tietojen katselu
+
+Yksitt&auml;isen kaistojen lukum&auml;&auml;r&auml; -kohteen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli kaikki geometriat, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai tielinkkiketjun kaistojen lukum&auml;&auml;r&auml;n ominaisuustietoikkuna (3).
+
+![Kaistojen lukum&auml;&auml;r&auml; -katselutila.](klm2.png)
+
+_Kaistojen lukum&auml;&auml;r&auml; -katselutila._
+
+## 21.2 Kaistojen lukum&auml;&auml;r&auml;n muokkaus
+
+Muokkaustilassa kaistojen lukum&auml;&auml;r&auml;&auml; voi muuttaa ja geometrioita voi katkaista. Kaistojen lukum&auml;&auml;r&auml; -tietoja voi muokata kolmella tavalla:
+1. Koko tielinkkiketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+### Kaistojen lukum&auml;&auml;r&auml;n muokkaus
+
+Kaistojen lukum&auml;&auml;r&auml;&auml; muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko ketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa(5). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (6). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (7). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kaistojen lukum&auml;&auml;r&auml; -valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+Huom! Kaistojen lukum&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
+
+![Kaistojen lukum&auml;&auml;r&auml;n muokkaus.](klm3.png)
+
+_Kaistojen lukum&auml;&auml;r&auml;n muokkaus._
+
+### Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla
+
+Usealle linkille voi lisätä tai poistaa kaistojen lukumäärä-tiedon kerralla valitsemalla ctrl-näppäin pohjassa useamman tielinkin valintatyökalulla (8), jolloin ctrl-näppäimen irti päästämällä avautuu valaistuksen muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua (9) tai monikulmiotyökalua (10). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu napauttamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki linkit laatikon/monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen avautuu ikkuna, jossa kaistojen lukumäärä-tietoa voi muokata ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla.](klm4.png)
+
+_Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla._
+
+### Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu
+
+Kaistojen lukum&auml;&auml;r&auml;n geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (11). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; tielinkki&auml; lyhyemmille tieosuuksille eri kaistojen lukum&auml;&auml;ri&auml;. Leikkausty&ouml;kalulla napautetaan tielinkin geometriasta kohtaa, josta rajoitus halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (12).
+
+Tielinkin katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
+
+![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](klm5.png)
+
+_Kaistojen lukum&auml;&auml;r&auml; -kohteen katkaisu._
+
+Katkaistun tielinkin osille generoidaan molemmille uusi ID. Tielinkin katkaisussa uusille kohteille valitaan arvot oikean laidan ominausuustietoikkunasta (13). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (14). Uudet kaistojen lukum&auml;&auml;r&auml;tiedot tallennetaan tallenna-painikkeesta (15). Katkaisun voi peruuttaa peruuta-painikkeella (16), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille osuuksille eri arvot, jotta tallennus on mahdollista.
+
+![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](klm6.png)
+
+_Kaistojen lukum&auml;&auml;r&auml; -kohteen katkaisu._
+
+### Kaistojen lukumäärän jakaminen yksisuuntaiseksi
+
+Molempiin suuntiin voimassa olevan kaistojen lukumäärä-tiedon voi muuttaa yksisuuntaiseksi, jos kyseisellä tielinkillä liikennevirran suunta on molempiin suuntiin. Muutos tehdään siis tielinkkikohtaisesti. Muutos tehdään kaksoisnapauttamalla kyseistä kaistojen lukumäärää (17), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (18). 
+
+![Kaistojen lukumäärän jakaminen](klm7.png)
+
+_Kaistojen lukumäärän jakaminen yksisuuntaiseksi._
+
+Painikkeen painamisen jälkeen voi uusille kaistojen lukumäärille syöttää arvot syötekenttään (19). Kirjaimet kartalla vastaavat alasvetovalikkojen vieressä olevia kirjaimia (20). Uudet lukumäärät tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen lukumäärä jää voimaan.
+
+![Kaistojen lukumäärän jakaminen](klm8.png)
+
+_Kaistojen lukumäärän jakaminen yksisuuntaiseksi._
+
+### Kaistojen lukum&auml;&auml;r&auml; -tiedon poistaminen
+
+Tielinkin kaistojen lukum&auml;&auml;r&auml; -tieto poistetaan ominaisuustietoikkunassa valitsemalla Lukum&auml;&auml;r&auml;-kohdasta "Ei tietoa" (21).
+
+![Kaistojen lukum&auml;&auml;r&auml; kohteen poistaminen.](klm9.png)
+
+_Kaistojen lukum&auml;&auml;r&auml; -kohteen poistaminen._
+
+### Uuden kaistojen lukum&auml;&auml;r&auml; -tiedon lis&auml;&auml;minen
+
+Tielinkille voi lis&auml;t&auml; kaistojen lukum&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (22) Kaistojen lukum&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustietoikkunaan (23) avautuu tielinkin kaistojen lukum&auml;&auml;r&auml;n tiedot. Valitaan "Kaistojen lukum&auml;&auml;r&auml; / suunta" ja sy&ouml;tet&auml;&auml;n kaistojen lukum&auml;&auml;r&auml; sy&ouml;tekentt&auml;&auml;n. Kaistojen lukum&auml;&auml;r&auml; tallennetaan painamalla Tallenna (24). Uuden kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (25).
+
+![Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen.](klm10.png)
+
+_Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
+
+# 22. Joukkoliikennekaista
+
+Joukkoliikennekaista on viivamainen kohde, joka voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Joukkoliikennekaista-tietolajin saa kartalle valitsemalla sen tietolajivalikosta (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu joukkoliikennekaista, se piirtyy kartalle punaisella viivalla (2). Tielinkit ilman joukkoliikennekaistaa ovat harmaita (3). Joukkoliikennekaistan arvo on kyll&auml; tai ei.
+
+![Joukkoliikennekaista.](jl1.png)
+
+_Joukkoliikennekaista._
+
+## 22.1 Joukkoliikennekaistatietojen katselu
+
+Kun kohdetta napauttaa kartalta, se korostuu (4) ja ominaisuustietoikkunaan tulee n&auml;kyviin sen tiedot (5). Kerran napauttamalla tulee valituksi koko joukkoliikennekaistaketju, eli kaikki linkit, joilla on sama tieto joukkoliikennekaistasta ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. Joukkoliikennekaistatiedolla on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; joukkoliikennekaistan arvo kyll&auml;/ei, tieto siitä, milloin tiedot on tarkistettu sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; joukkoliikennekaistaketjussa.
+
+![Joukkoliikennekaistatiedon katselu.](jl2.png)
+
+_Joukkoliikennekaistatiedon katselu._
+
+## 22.2 Joukkoliikennekaistatietojen muokkaus
+
+Joukkoliikennekaistatietoja voi muokata muokkaustilassa. Joukkoliikennekaistan voi lis&auml;t&auml;, poistaa ja geometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+### Joukkoliikennekaistan lis&auml;ys
+
+Uusi joukkoliikennekaista lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietoikkunasta "Joukkoliikennekaista" sekä mahdollinen tarkennus kaistan lisäkilvessä ilmoitetusta voimassaoloajasta (6). Uusi joukkoliikennekaistatieto n&auml;kyy kartalla punaisena.
+
+![Joukkoliikennekaistan lis&auml;ys.](jl3.png)
+
+_Joukkoliikennekaistan lis&auml;ys._
+
+### Joukkoliikennekaistan poistaminen
+
+Joukkoliikennekaistan voi poistaa valitsemalla joukkoliikennekaistatiedon ja oikean laidan ominaisuustietoikkunasta kohdan "Ei joukkoliikennekaistaa" (7). Kun joukkoliikennekaista on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Joukkoliikennekaistan poistaminen.](jl4.png)
+
+_Joukkoliikennekaistan poistaminen._
+
+### Joukkoliikennekaistatietojen muokkaus monivalintaty&ouml;kalulla
+
+Usealle linkille voi lis&auml;t&auml; tai poistaa joukkoliikennekaistan valintatyökalulla (8) kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja napauttamalla tielinkkejä hiiren vasemmalla näppäimellä. Toinen tapa on käyttää laatikko- (9) tai monikulmiotyökalua (10), joilla voi piirtää tielinkkien päälle alueen.  Valituksi tulevat kaikki linkit laatikon/monikulmion sis&auml;ll&auml; ja linkit, joita kuvio leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan onko linkeill&auml; joukkoliikennekaistaa vai ei sekä mahdollisen lisäkilvessä ilmoitetun voimassaolon tiedot. Tiedot tallennetaan painamalla tallenna ja peruuta-painikkeesta voi perua muutokset.
+
+![Joukkoliikennekaistan monivalinta.](jl5.png)
+
+_Joukkoliikennekaistan monivalinta._
+
+### Joukkoliikennekaistatiedon katkaisu
+
+Tarvittaessa joukkoliikennekaistatiedon voi katkaista leikkausty&ouml;kalulla (11). Leikkausty&ouml;kalulla napautetaan joukkoliikennekaistan geometriasta kohtaa, josta se halutaan katkaista. Joukkoliikennekaistan geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Joukkoliikennekaistan katkaisussa uusille geometrioille valitaan arvot oikean laidan ominaisuustietoikkunasta (12). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (13). Uudet joukkoliikennekaistatiedot tallennetaan tallenna-painikkeesta (14). Katkaisun voi peruuttaa peruuta-painikkeella (15), jolloin alkuper&auml;inen joukkoliikennekaistatieto j&auml;&auml; voimaan.
+
+Huom! Joukkoliikennekaistan katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
+
+![Joukkoliikennekaistageometrian katkaisu.](jl6.png)
+
+_Joukkoliikennekaistageometrian katkaisu._
+
+# 23. Talvinopeusrajoitus
+
+Kartalle voi valita tietolajivalikosta (1) Talvinopeusrajoitus-tietolajin. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Talvinopeusrajoitukset on visualisoitu geometrioihin eri väreillä riippuen nopeusrajoituksesta ja tielinkit, joilla talvinopeusrajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+
+![Talvinopeusrajoitusvalinta.](tal1.png)
+
+_Talvinopeusrajoitusvalinta._
+
+## 23.1 Talvinopeusrajoituksen tietojen katselu
+
+Yksitt&auml;isen talvinopeusrajoituksen voi valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustietoikkuna (3).
+
+![Talvinopeusrajoituksen katselutila.](tal2.png)
+
+_Talvinopeusrajoituksen katselutila._
+
+## 23.2 Talvinopeusrajoituksen ominaisuustietojen muokkaus
+
+Muokkaustilassa talvinopeusrajoituksille voi antaa uusia arvoja ja niit&auml; voi katkaista. Rajoituksien arvoja voi muokata kolmella tavalla:
+1. Koko rajoitusketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+### Rajoituksen arvon muokkaus
+
+Talvinopeusrajoitusta muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko rajoitusketju, eli kaikki per&auml;kk&auml;iset rajoitukset, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa (5). Muutokset tallennetaan painamalla Tallenna-painiketta (6). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (7). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois talvinopeusrajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+![Talvinopeusrajoituksen muokkaus.](tal3.png)
+
+_Talvinopeusrajoituksen muokkaus._
+
+### Talvinopeusrajoitusten muokkaus monivalintaty&ouml;kalulla
+
+Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja napauttamalla hiiren vasemmalla painikkeella valittavia tielinkkejä. Toinen tapa on käyttää työkalupalkin aluevalintatyökaluja, joita ovat monikulmio- ja laatikkotyökalut (alla olevassa kuvassa huomioitu punaisella). Työkalujen avulla piirretään kartalle alue, jolta tielinkit valitaan. Valituksi tulevat kaikki linkit alueen sis&auml;ll&auml; ja linkit, joita alue leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+
+![Useamman rajoituksen arvon muokkaus kerralla.](tal4_2.png)
+
+_Useamman rajoituksen arvon muokkaus kerralla._
+
+### Talvinopeusrajoituskohteen katkaisu
+
+Talvinopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (8). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla napautetaan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (9).
+
+Rajoituksen katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
+
+![Talvinopeusrajoituskohteen katkaisu.](tal5.png)
+
+_Talvinopeusrajoituskohteen katkaisu._
+
+Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan ominaisuustietoikkunasta (10). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (11). Uudet rajoitukset tallennetaan tallenna-painikkeesta (12). Katkaisun voi peruuttaa peruuta-painikkeella (13), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
+
+Huom! Rajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
+
+![Talvinopeusrajoituskohteen katkaisu.](tal6.png)
+
+_Talvinopeusrajoituskohteen katkaisu._
+
+### Talvinopeusrajoituksen poistaminen
+
+Tielinkin talvinopeusrajoitus poistetaan ominaisuustietoikkunassa (14) valitsemalla Rajoitus-kohdasta "Ei talvinopeusrajoitusta".
+
+![Talvinopeusrajoituksen poistaminen.](tal7.png)
+
+_Talvinopeusrajoituksen poistaminen._
+
+### Uuden talvinopeusrajoituksen lis&auml;&auml;minen
+
+Tielinkille voi lis&auml;t&auml; talvinopeusrajoituksen valitsemalla linkin geometrian (15) Talvinopeusrajoitus-muokkaustilassa. Ominaisuustietoikkunaan (16) avautuu tielinkin talvinopeusrajoituksen tiedot. Valitaan "Talvinopeusrajoitus" ja valitaan rajoituksen arvo valikosta. Talvinopeusrajoitus tallennetaan painamalla Tallenna-painiketta (17). Talvinopeusrajoituksen lis&auml;&auml;misen voi perua Peruuta-painikkeella (18).
+
+![Talvinopeusrajoituksen lis&auml;&auml;minen.](tal8.png)
+
+_Talvinopeusrajoituksen lis&auml;&auml;minen._
+
+# 24 Liikennem&auml;&auml;r&auml;
+
+Kartalle voi valita tietolajipaletista (1) Liikennem&auml;&auml;r&auml;-valinnan. Liikennem&auml;&auml;r&auml; on viivamainen tietolaji, ja sen arvo ilmoitetaan kokonaisulukuna ajoneuvoa/vuorokausi. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat, joille liikennemäärä on merkattu on visualisoitu punaisella v&auml;rill&auml; (2) ja tielinkit, joiden liikennem&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml; (3).
+
+![Liikennemäärän valinta](lkm1.png)
+
+_Liikennem&auml;&auml;r&auml; -valinta._
+
+## 24.1 Liikennem&auml;&auml;r&auml;tietojen katselu
+
+Yksitt&auml;isen liikennem&auml;&auml;r&auml;kohteen voi valita napauttamalla kartalta sen geometriaa (4). Kerran napauttamalla tulee valituksi koko liikennem&auml;&auml;r&auml;ketju, eli kaikki tieosuudet, joilla on sama liikennem&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla linkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustietoikkuna (5). Liikennem&auml;&auml;r&auml;ll&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot, tieto linkkien lukum&auml;&auml;r&auml;st&auml; linkkiketjussa sekä liikennem&auml;&auml;r&auml;n arvo (kokonaisluku).
+
+![Liikennemäärän katselu](lkm2.png)
+
+_Liikennem&auml;&auml;r&auml;-katselutila._
+
+## 24.2 Liikennem&auml;&auml;rien ominaisuustietojen muokkaus
+
+Liikennem&auml;&auml;r&auml;n voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa liikennem&auml;&auml;r&auml;lle voi antaa uuden arvon (kokonaisluku ajoneuvoa/vuorokausi), tietoja voi poistaa sek&auml; liikennem&auml;&auml;r&auml;geometrian voi katkaista. Liikennem&auml;&auml;r&auml;n arvoa voi muokata kolmella tavalla:
+
+1. Koko liikennem&auml;&auml;r&auml;ketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+### Liikennem&auml;&auml;r&auml;n arvon muokkaus
+
+Liikennem&auml;&auml;r&auml;valintaa muokataan muokkaustilassa. Muokattava kohde valitaan napauttamalla sen geometriaa (4). Kerran napauttamalla tulee valituksi koko tielinkkiketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustietoikkunassa (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+Huom! Liikennem&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
+
+![Liikennemäärän muokkaus](lkm3.png)
+
+_Liikennem&auml;&auml;r&auml;n muokkaus._
+
+### Liikennem&auml;&auml;rien muokkaus monivalintaty&ouml;kalulla
+
+Usean tielinkin liikennemääräarvon voi muuttaa kerralla monivalintatyökalulla, jota kuvaa Digiroad-sovelluksen työkaluvalikon suora- ja viisikulmiosymbolit (8). Monivalintatyökalun aktivoimisen jälkeen kartalle on mahdollista piirtää aluerajaus, jolloin valituksi tulevat kaikki liikennemäärät piirretyn alueen sisällä ja liikennemäärät, joita alue leikkaa. Valinnan jälkeen karttaikkunaan avautuu ikkuna (9), josta liikennemäärille määritellään uudet arvot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Liikennemäärän monivalinta](lkm4.png)
+
+_Useamman tieosuuden liikennem&auml;&auml;r&auml;n muokkaus kerralla._
+
+### Liikennem&auml;&auml;r&auml;kohteen katkaisu
+
+Liikennem&auml;&auml;r&auml;kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta liikennem&auml;&auml;r&auml;tieto halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Liikennem&auml;&auml;r&auml;geometrian katkaisu valitsee aina vain linkin mittaisen osion geometriasta, ei koko liikennem&auml;&auml;r&auml;ketjua.
+Geometrian katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen liikennem&auml;&auml;r&auml;tieto j&auml;&auml; voimaan.
+
+Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille liikennem&auml;&auml;r&auml;tiedoille eri arvot, jotta tallennus on mahdollista.
+
+![Liikennemäärän katkaisu](lkm5.png)
+
+_Liikennem&auml;&auml;r&auml;kohteen katkaisu._
+
+### Liikennem&auml;&auml;r&auml;kohteen poistaminen
+
+Tielinkin suurin liikennem&auml;&auml;r&auml;tieto poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla "Ei tiedossa".
+
+![Liikennemäärän poisto](lkm6.png)
+
+_Liikennem&auml;&auml;r&auml;tiedon poistaminen._
+
+### Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen
+
+Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian Liikennem&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustietoikkunaan avautuu tielinkin liikennem&auml;&auml;r&auml;tiedot. Valitaan "Liikennem&auml;&auml;r&auml;" ja sy&ouml;tet&auml;&auml;n arvo sy&ouml;tekentt&auml;&auml;n. Liikennem&auml;&auml;r&auml;tieto tallennetaan painamalla Tallenna. Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella.
+
+
+# 25. Joukkoliikenteen pysäkki
+
+Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttaikkunaan voi valita pys&auml;kkej&auml; valitsemalla tietolajivalikosta (1) "Joukkoliikenteen pysäkki". Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Lisäksi tietolajivalikosta saa näkyviin palvelupisteet-näkymän, johon kuuluu erilaisia julkisen liikenteen palvelupisteitä, kuten metroasemat ja rautatieasemat. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
+
+Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois painamalla tietolajivalikon (1) "Joukkoliikenteen pysäkki" valintaruudusta Hallinnollinen luokka -valinnan pois. Sininen väri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
+
+![Hallinnollinen luokka](pysäkit_1.png)
 
 _Joukkoliikenteen pys&auml;kkien valinta._
 
-##4.1 Joukkoliikenteen pys&auml;kkien haku##
+## 25.1 Joukkoliikenteen pys&auml;kkien haku
 
 Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin valtakunnallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Sovelluksen t&auml;ytyy olla pys&auml;kkin&auml;kym&auml;ss&auml; pys&auml;kki&auml; haettaessa. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.liikennevirasto.fi/digiroad/#massTransitStop/95374  target="_blank">https://extranet.liikennevirasto.fi/digiroad/#massTransitStop/95374   </a>(17)
+ <a href=https://extranet.vayla.fi/digiroad/#massTransitStop/95374  target="_blank">https://extranet.vayla.fi/digiroad/#massTransitStopNationalId/164599   </a>(2)
 
-jossa numerosarja 95374 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustieton&auml;kym&auml; (6) aukeaa sivun oikealle puolelle. 
+jossa numerosarja 164599 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustietoikkuna (3) aukeaa sivun oikealle puolelle. 
 
-![Pys&auml;kkien haku](k6.jpg)
+![Pys&auml;kkien haku](pysäkit_2_2.png)
 
 _Joukkoliikenteen pys&auml;kkien haku._
 
-##4.2 Pys&auml;kin tietojen katselu##
+## 25.2 Pys&auml;kin tietojen katselu
 
-Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; klikataan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View (5) ja ominaisuustieto -n&auml;kym&auml;t (6). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (4)
+Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; napautetaan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View -näkymä (4) ja ominaisuustietoikkuna (5). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (6)
 
 Jos kaksi tai useampi pys&auml;kki ovat alle kuuden metrin p&auml;&auml;ss&auml; toisistaan, esitet&auml;&auml;n pys&auml;kit k&auml;ytt&ouml;liittym&auml;ss&auml; p&auml;&auml;llekk&auml;in ryhmiteltyn&auml;. P&auml;&auml;llekk&auml;in asettelu mahdollistaa pys&auml;kin tarkastelun ilman, ett&auml; samassa sijainnissa olevia pys&auml;kkej&auml; tarvitsee siirt&auml;&auml;. 
 
-Ominaisuustieto-n&auml;kym&auml;ss&auml; kentti&auml; ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu Google Street View uudelle v&auml;lilehdelle. Huom! Kun Google Street View avautuu, ei k&auml;ytt&auml;j&auml; ole siell&auml; t&auml;ysin samassa kohdassa, mik&auml; sovelluksessa n&auml;kyy pys&auml;kin ominaisuustiedoissa. Sijaintiheitto on noin 50-100 metri&auml;. Virhe johtuu Googlen tekemist&auml; muutoksista Street Viewiin. T&auml;m&auml; ei kuitenkaan vaikuta pys&auml;kin asetteluun Digiroad-sovelluksessa siell&auml; n&auml;kyv&auml;n Street View n&auml;kym&auml;n avulla.
+Ominaisuustietoikkunassa kentti&auml; ei voi muokata. Google Street View -kuvaa napauttamalla avautuu katunäkymä uudelle v&auml;lilehdelle. Huom! Kun Google Street View avautuu, ei k&auml;ytt&auml;j&auml; ole siell&auml; t&auml;ysin samassa kohdassa, joka sovelluksessa n&auml;kyy pys&auml;kin ominaisuustiedoissa. Sijaintiheitto on noin 50-100 metri&auml;. Virhe johtuu Googlen tekemist&auml; muutoksista Street Viewiin. T&auml;m&auml; ei kuitenkaan vaikuta pys&auml;kin asetteluun Digiroad-sovelluksessa siell&auml; n&auml;kyv&auml;n Street View n&auml;kym&auml;n avulla.
 
-Pys&auml;kin valinnan saa pois klikkaamalla karttaa.
+Pys&auml;kin valinnan saa pois napauttamalla karttaa.
 
-![Pys&auml;kin tietojen katselu](k9.jpg)
+![Pys&auml;kin tietojen katselu](pysäkit_3.png)
 
 _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
-##4.3 Kelluvat pys&auml;kit##
+## 25.3 Kelluvat pys&auml;kit
 
-Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Kelluvat pys&auml;kit on korostettu karttan&auml;kym&auml;ss&auml; alla olevan kuvan tavoin, ja niiden ominaisuustieton&auml;kym&auml;ss&auml; on huomautus, ett&auml; pys&auml;kki tulisi siirt&auml;&auml; tielinkille, jotta kelluvuus poistuu (kts. [Pys&auml;kin siirt&auml;minen](#Pys&auml;kin_siirt&auml;minen)). 
+Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Kelluvat pys&auml;kit on korostettu karttaikkunassa alla olevan kuvan tavoin, ja niiden ominaisuustietoikkunassa on huomautus, ett&auml; pys&auml;kki tulisi siirt&auml;&auml; tielinkille, jotta kelluvuus poistuu (kts. [Pys&auml;kin siirt&auml;minen](#Pys&auml;kin_siirt&auml;minen)). 
 
-![Kelluva pys&auml;kki](k29.JPG)
+![Kelluva pys&auml;kki](pysäkit_4.png)
 
 _Kelluvat pys&auml;kit on visualisoitu eri tavoin._
 
-</br>
-Kelluvat pys&auml;kit on listattu omaan listaan, johon on linkki pys&auml;kkien ominaisuustieton&auml;kym&auml;ss&auml; (1). Pys&auml;kit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne pys&auml;kit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Kelluvat pys&auml;kit on listattu omaan listaan, johon on linkki pys&auml;kkien ominaisuustietoikkunassa (7). Pys&auml;kit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne pys&auml;kit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Kelluvien pys&auml;kkien lista](k30.JPG)
+![Kelluvien pys&auml;kkien lista](pysäkit_5.PNG)
 
 _Kelluvien pys&auml;kkien lista._
 
-##4.4 Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus##
+## 25.4 Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus
 
-Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkausty&ouml;kalun (12). Muokattava pys&auml;kki valitaan hiirell&auml; klikkaamalla. P&auml;&auml;llekk&auml;in esitetyist&auml; pys&auml;keist&auml; voi valita yhden pys&auml;kin klikkaamalla pys&auml;kki&auml;. Pinosta valitun pys&auml;kin erottaa sille avautuvasta infoikkunasta. Valittaessa pys&auml;kin sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (5) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (6). Jos pys&auml;kill&auml; ei ole tyyppi&auml;, tulee se asettaa ennen tallentamista. Pys&auml;kkien ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
+Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkausty&ouml;kalun (8). Muokattava pys&auml;kki valitaan hiirell&auml; napauttamalla. P&auml;&auml;llekk&auml;in esitetyist&auml; pys&auml;keist&auml; voi valita yhden pys&auml;kin napauttamalla pys&auml;kki&auml;. Pinosta valitun pys&auml;kin erottaa sille avautuvasta infoikkunasta. Valittaessa pys&auml;kin sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (9) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (10). Jos pys&auml;kill&auml; ei ole tyyppi&auml;, tulee se asettaa ennen tallentamista. Pys&auml;kkien ominaisuustietoikkunassa n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
 
-Pys&auml;kin valinnan saa pois klikkaamalla karttaa, kun tallennus tai peruutus on tehty.
+Pys&auml;kin valinnan saa pois napauttamalla karttaa, kun tallennus tai peruutus on tehty.
 
-Muokkaustoiminnallisuudet poikkeavat hieman kunnan kadun ja maantien pys&auml;kkien v&auml;lill&auml;, riippuen siit&auml; onko pys&auml;kki kunnan vai Elyn yll&auml;pit&auml;m&auml;, eri ominaisuustietojen t&auml;ytt&auml;minen on sallittua. P&auml;&auml;s&auml;&auml;nt&ouml;n&auml; on, ett&auml; kuntak&auml;ytt&auml;j&auml;ll&auml; muokattavissa on kaikki ne kent&auml;t, joita h&auml;nen on enimmill&auml;&auml;n tarpeen muokata. Samoin ELYn pys&auml;kkivastaavalla on muokattavissa ne kent&auml;t, joita h&auml;nen on tarpeen yll&auml;pit&auml;&auml; (t&auml;ydent&auml;v&auml;t varustetiedot yll&auml;pidet&auml;&auml;n HARJA-j&auml;rjestelm&auml;ss&auml; ja ovat OTH-sovelluksessa ainoastaan read-only n&auml;kym&auml;n&auml;).
+Muokkaustoiminnallisuudet poikkeavat hieman kunnan kadun ja maantien pys&auml;kkien v&auml;lill&auml;, riippuen siit&auml; onko pys&auml;kki kunnan vai ELYn yll&auml;pit&auml;m&auml;, eri ominaisuustietojen t&auml;ytt&auml;minen on sallittua. P&auml;&auml;s&auml;&auml;nt&ouml;n&auml; on, ett&auml; kuntak&auml;ytt&auml;j&auml;ll&auml; muokattavissa on kaikki ne kent&auml;t, joita h&auml;nen on enimmill&auml;&auml;n tarpeen muokata. Samoin ELYn pys&auml;kkivastaavalla on muokattavissa ne kent&auml;t, joita h&auml;nen on tarpeen yll&auml;pit&auml;&auml; (t&auml;ydent&auml;v&auml;t varustetiedot yll&auml;pidet&auml;&auml;n HARJA-j&auml;rjestelm&auml;ss&auml; ja ovat sovelluksessa ainoastaan read-only n&auml;kym&auml;n&auml;).
 
-![Pys&auml;kin ominaisuustietojen muokkaus.](k12.jpg)
+![Pys&auml;kin ominaisuustietojen muokkaus.](pysäkit_6.png)
 
 _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
-##4.5 Pys&auml;kin vaikutussuunnan muuttaminen##
+## 25.5 Pys&auml;kin vaikutussuunnan muuttaminen
 
-Googlen Street View -n&auml;kym&auml; (5) sivun oikeassa laidassa on suunnattu suuntaan, jossa pys&auml;kin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla n&auml;kym&auml;&auml; avautuu Googlen Street View -v&auml;lilehti, jossa pys&auml;kin ymp&auml;rist&ouml;&auml; voi tarkastella tarkemmin. Kartalla pys&auml;kin vaikutussuunta n&auml;kyy pisarana pys&auml;kkikuvakkeella (10). Pisaran k&auml;rki osoittaa pys&auml;kin vaikutussuunnan suuntaan.
+Googlen Street View -n&auml;kym&auml; (edellinen kuva) sivun oikeassa laidassa on suunnattu suuntaan, jossa pys&auml;kin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla n&auml;kym&auml;&auml; avautuu Googlen Street View -v&auml;lilehti, jossa pys&auml;kin ymp&auml;rist&ouml;&auml; voi tarkastella tarkemmin. Kartalla pys&auml;kin vaikutussuunta n&auml;kyy pisarana pys&auml;kkikuvakkeella (11). Pisaran k&auml;rki osoittaa pys&auml;kin vaikutussuuntaan.
 
-Pys&auml;kin vaikutussuunnan voi muuttaa ominaisuustieton&auml;kym&auml;ss&auml; (6) painamalla "Vaihda suuntaa"-painiketta (18). Pys&auml;kin vaikutussuuntaa muutettaessa Googlen Street View -n&auml;kym&auml; (5) muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta k&auml;&auml;ntyy. Mik&auml;li ”Vaihda suuntaa” – painike ei ole valittavissa, on pys&auml;kki yksisuuntaisella tielinkill&auml;, eik&auml; sen suuntaa voida k&auml;&auml;nt&auml;&auml; ajoradan liikennevirran suunnan vastaiseksi. Jos tielinkin suunta on virheellinen (tai sen kuuluisi olla molempiin suuntiin, tulee ensin korjata tielinkin suunta, jotta pys&auml;kin suunta voidaan korjata).
+Pys&auml;kin vaikutussuunnan voi muuttaa ominaisuustietoikkunassa painamalla "Vaihda suuntaa"-painiketta (12). Pys&auml;kin vaikutussuuntaa muutettaessa Googlen Street View -n&auml;kym&auml; muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta k&auml;&auml;ntyy. Mik&auml;li ”Vaihda suuntaa” – painike ei ole valittavissa, on pys&auml;kki yksisuuntaisella tielinkill&auml;, eik&auml; sen suuntaa voida k&auml;&auml;nt&auml;&auml; ajoradan liikennevirran suunnan vastaiseksi. Jos tielinkin suunta on virheellinen (tai sen kuuluisi olla molempiin suuntiin, tulee ensin korjata tielinkin suunta, jotta pys&auml;kin suunta voidaan korjata).
 
-![Pys&auml;kin vaikutussuunnan muuttaminen.](k13.jpg)
+![Pys&auml;kin vaikutussuunnan muuttaminen.](pysäkit_7.png)
 
-_Joukkoliikenteen pys&auml;kin vaikutussuunnan voi muuttaa painamalla "Vaihda suuntaa"-painiketta (18)._
+_Joukkoliikenteen pys&auml;kin vaikutussuunnan voi muuttaa painamalla "Vaihda suuntaa"-painiketta (12)._
 
-##4.6 Pys&auml;kin voimassaolop&auml;ivien muokkaus##
+## 25.6 Pys&auml;kin voimassaolop&auml;ivien muokkaus
 
-Ensimm&auml;inen voimassaolop&auml;iv&auml; (19) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, josta l&auml;htien pys&auml;kki on k&auml;yt&ouml;ss&auml;. Viimeinen voimassaolop&auml;iv&auml; (20) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;. Molempia p&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata ominaisuustieto -n&auml;kym&auml;n (6) kautta. P&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata joko kirjoittamalla ne p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n muodossa pp.kk.vvvv tai valitsemalla ne kalenterista, joka avautuu, kun p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml; klikkaa.
+Ensimm&auml;inen voimassaolop&auml;iv&auml; (13) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, josta l&auml;htien pys&auml;kki on k&auml;yt&ouml;ss&auml;. Viimeinen voimassaolop&auml;iv&auml; (14) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;. Molempia p&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata ominaisuustietoikkunan (15) kautta. P&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata joko kirjoittamalla ne p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n muodossa pp.kk.vvvv tai valitsemalla ne kalenterista, joka avautuu, kun p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml; napauttaa.
 
 P&auml;iv&auml;m&auml;&auml;ri&auml; ei voi asettaa ristiin siten, ett&auml; "Ensimm&auml;inen voimassaolop&auml;iv&auml;" olisi my&ouml;hemmin kuin "Viimeinen voimassaolop&auml;iv&auml;". Kalenterissa ei-sallitut p&auml;iv&auml;m&auml;&auml;r&auml;t eiv&auml;t ole valittavissa. Jos p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n kirjoittaa p&auml;iv&auml;m&auml;&auml;r&auml;n, joka asettaa p&auml;iv&auml;m&auml;&auml;r&auml;t ristiin, ei p&auml;iv&auml;m&auml;&auml;r&auml; tallennu.
 
 Jos "Ensimm&auml;inen voimassaolop&auml;iv&auml;" tai "Viimeinen voimassaolop&auml;iv&auml;" ei ole tiedossa, voi kalenterista valita "ei tietoa".
-Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; tierekisterin tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi OTH siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
+Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; tierekisterin tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi sovellus siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
 
-![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](k14.jpg)
+![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](pysäkit_8.png)
 
 _Pys&auml;kin voimassaolop&auml;ivien muokkaus._
 
-##4.7 Pys&auml;kin muiden ominaisuustietojen muokkaus##
+## 25.7 Pys&auml;kin muiden ominaisuustietojen muokkaus
 
-Muita ominaisuustietoja voi muokata oikeassa laidassa olevan ominaisuustieton&auml;kym&auml;n (6) kautta. Tietoja muokataan joko kirjoittamalla tietokentt&auml;&auml;n, valitsemalla pudotusvalikosta tieto tai merkitsem&auml;ll&auml; rasti ruutuun oikean/oikeiden tietojen kohdalle.
+Muita ominaisuustietoja voi muokata oikeassa laidassa olevan ominaisuustietoikkunan (16) kautta. Tietoja muokataan joko kirjoittamalla tietokentt&auml;&auml;n, valitsemalla pudotusvalikosta tieto tai merkitsem&auml;ll&auml; rasti ruutuun oikean/oikeiden tietojen kohdalle.
 
-![Pys&auml;kin muiden ominaisuustietojen muokkaus.](k15.jpg)
+![Pys&auml;kin muiden ominaisuustietojen muokkaus.](pysäkit_9.png)
 
 _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
-</br>
-
-####Ominaisuustiedot:####
+### Ominaisuustiedot:
 
 Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&auml;n sy&ouml;tt&auml;mi&auml;. Sy&ouml;tett&auml;v&auml;t ominaisuustietokent&auml;t ovat tekstikentti&auml;, joihin ominaisuustieto kirjoitetaan merkkijonona, monivalintoja, josta voi valita oikeat vaihtoehdot tai pudotusvalikkovalintoja, joista voi valita yhden vaihtoehdon. Maantien pys&auml;kin varustetiedoista ne, joita ei voi muokata sovelluksessa p&auml;ivittyv&auml;t tierekisterin kautta.
 
@@ -366,13 +2067,14 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Liitetty terminaaliin|Mikäli pysäkki on liitetty johonkin pysäkkiterminaaliin (esim. linja-autoasemaan), näkyy kentässä terminaalipysäkin ID. Jos pysäkki ei kuulu terminaaliin, kenttä ei ole näkyvissä.||||
 |Maastokoordinaatti Y|Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Maastokoordinaatti Z|Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.||||
-|Liikenn&ouml;intisuunta|Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:"Keskustaan".||||
-|Vaikutussuunta|Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla (9). Google Street View (4) osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.||||
+|Liikenn&ouml;intisuunta|Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi: "Keskustaan".||||
+|Vaikutussuunta|Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla. Google Street View osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.||||
 |Liikenn&ouml;intisuuntima|Sovellus laskee itse tiegeometriasta. Pohjoinen on nolla astetta ja koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Ilmoitetaan asteluvun mukaan pohjoinen, it&auml;, etel&auml; tai l&auml;nsi.|x|||
 |Ensimm&auml;inen voimassaolop&auml;iv&auml;|P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on ensimm&auml;isen kerran k&auml;yt&ouml;ss&auml;.||||
 |Viimeinen voimassaolop&auml;iv&auml;|P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;.||||
 |Inventointip&auml;iv&auml;|Maantien pys&auml;kin muokkausp&auml;iv&auml;m&auml;&auml;r&auml;|||x|
 |Pys&auml;kin tyyppi|Pakollinen tieto! Linja-autojen paikallisliikenne, raitiovaunu, linja-autojen kaukoliikenne, linja-autojen pikavuoro tai virtuaalipys&auml;kki (virtuaalipys&auml;kin kanssa ei voi valita muita tyyppej&auml;).||||
+|Pysäkin palvelutaso|Ilmaisee pysäkin palvelutason. Mahdolliset arvot: "Terminaali", "Keskeinen solmupysäkki", "Vilkas pysäkki", "Peruspysäkki", "Vähän käytetty pysäkki", "Jättöpysäkki", "Virtuaalipysäkki", "Pysäkit, jotka eivät ole linja-autoliikenteen käytössä" & "Ei tietoa" (oletus).||||
 |Korotettu|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Katos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Mainoskatos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos, joka sis&auml;lt&auml;&auml; mainoksia. Pys&auml;kin kunnossapidosta vastaa t&auml;ll&ouml;in mainosten yll&auml;pit&auml;j&auml;. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
@@ -386,15 +2088,15 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Saattomahdollisuus henkil&ouml;autolla|Ilmaisee, mik&auml;li (valtatien varrella olevaa) pys&auml;ki&auml; varten on rakennettu erillinen matkustajien nouto/saatto-alue. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;|Keskusta-alueen ulkopuolella olevan pys&auml;kki- tai terminaalialueen l&auml;heisyydess&auml; sijaitsevien, auton pys&auml;k&ouml;imist&auml; varten varattujen parkkipaikkojen m&auml;&auml;r&auml;. Kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, mik&auml;li liitynt&auml;pys&auml;k&ouml;intipaikkoja ei ole. Mik&auml;li liitynt&auml;pys&auml;k&ouml;intipaikat palvelevat useampaa pys&auml;kki&auml;, t&auml;ytet&auml;&auml;n tiedot liitynt&auml;pys&auml;k&ouml;innist&auml; erikseen kullekin pys&auml;kille.||||
 |Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot|Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen lis&auml;tiedot.||||
-|Pys&auml;kin omistaja|Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto. Erikoistapauksia varten (esim. uudenmaan ELY).||||
+|Pys&auml;kin omistaja|Kunta, Helsingin seudun liikenne, ELY-keskus tai Väylävirasto. Erikoistapauksia varten (esim. uudenmaan ELY).||||
 |Palauteosoite|Osoite, johon pys&auml;kist&auml; voi laittaa palautetta. Esimerkiksi s&auml;hk&ouml;postiosoite.||||
 |Lis&auml;tiedot|Julkiset kommentit. Esimerkiksi: "Alueella tiet&ouml;it&auml;".||||
 
-##4.8 Pys&auml;kin siirt&auml;minen##
+## 25.8 Pys&auml;kin siirt&auml;minen
 
-Pys&auml;kki&auml; siirret&auml;&auml;n k&auml;ytt&auml;m&auml;ll&auml; muokkausty&ouml;kalua (12). Pys&auml;kkej&auml; voi siirt&auml;&auml; vain tarpeeksi tarkalta mittakaavatasolta, joka on 1:10 000 tai tarkempi (9).
+Pys&auml;kki&auml; siirret&auml;&auml;n k&auml;ytt&auml;m&auml;ll&auml; muokkausty&ouml;kalua (17). Pys&auml;kkej&auml; voi siirt&auml;&auml; mittakaavatasolta, joka on 1:20 000 tai tarkempi (18).
 
-Siirt&auml;minen tapahtuu tarttumalla pys&auml;kkiin kiinni ja raahaamalla se oikeaan paikkaan. Pys&auml;kki liikkuu vain olemassa olevia tielinkkej&auml; (ei tielinkeill&auml;, jotka ovat kevyen liikenteen v&auml;yli&auml; tai lautta/lossi v&auml;yli&auml;) pitkin ja k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimien maantieteellisten rajojen sis&auml;puolella. Jos pys&auml;kin irrottaa tielinkist&auml;, kiinnittyy se automaattisesti l&auml;himp&auml;&auml;n tielinkkiin, joka on k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimalla maantietellisell&auml; alueella. Jos riitt&auml;v&auml;n l&auml;hell&auml;  ei ole toista tielinkki&auml;, ei pys&auml;kki irtoa linkilt&auml;, jolla se on. Tielinkki, jonka p&auml;&auml;ll&auml; pys&auml;kki on, n&auml;kyy sinisell&auml; korostusv&auml;rill&auml;. Kun pys&auml;kist&auml; p&auml;&auml;stet&auml;&auml;n irti (lasketaan se uuteen sijaintiin), oikealle avautuu Google Street View (5) ja ominaisuustieto -n&auml;kym&auml; (6), jonka kautta voi halutessaan muokata muita ominaisuustietoja. Pys&auml;kin siirt&auml;minen ei muuta pys&auml;kin mitattuja maastokoordinaatteja vaan ne s&auml;ilyv&auml;t ennallaan. 
+Siirt&auml;minen tapahtuu tarttumalla pys&auml;kkiin kiinni ja raahaamalla se oikeaan paikkaan. Pys&auml;kki liikkuu vain olemassa olevia tielinkkej&auml; (ei tielinkeill&auml;, jotka ovat kevyen liikenteen v&auml;yli&auml; tai lautta/lossi v&auml;yli&auml;) pitkin ja k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimien maantieteellisten rajojen sis&auml;puolella. Jos pys&auml;kin irrottaa tielinkist&auml;, kiinnittyy se automaattisesti l&auml;himp&auml;&auml;n tielinkkiin, joka on k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimalla maantietellisell&auml; alueella. Jos riitt&auml;v&auml;n l&auml;hell&auml;  ei ole toista tielinkki&auml;, ei pys&auml;kki irtoa linkilt&auml;, jolla se on. Tielinkki, jonka p&auml;&auml;ll&auml; pys&auml;kki on, n&auml;kyy sinisell&auml; korostusv&auml;rill&auml;. Kun pys&auml;kist&auml; p&auml;&auml;stet&auml;&auml;n irti (lasketaan se uuteen sijaintiin), oikealle avautuu Google Street View (19) ja ominaisuustietoikkuna (20), jonka kautta voi halutessaan muokata muita ominaisuustietoja. Pys&auml;kin siirt&auml;minen ei muuta pys&auml;kin mitattuja maastokoordinaatteja vaan ne s&auml;ilyv&auml;t ennallaan. 
 
 **Kunnan yll&auml;pit&auml;m&auml;n pys&auml;kin siirt&auml;minen**
 
@@ -403,1326 +2105,192 @@ Kunnan yll&auml;pit&auml;m&auml;&auml; pys&auml;kki&auml; siirrett&auml;ess&auml
 **Elyn yll&auml;pit&auml;m&auml;n pys&auml;kin siirt&auml;minen**
 Maantien pys&auml;kki&auml; siirrett&auml;ess&auml; yli 50 metri&auml; sovellus kysyy varmistuksen pys&auml;kin siirrolle. Jos pys&auml;kki&auml; siirret&auml;&auml;n yli 50 metri&auml;, lakkautetaan vanha pys&auml;kki ja luodaan uusi pys&auml;kki. Pys&auml;kki saa uuden valtakunnallisen Id:n ja Livi-tunnuksen. 
 
-![Pys&auml;kin siirto yli 50 metri&auml;](pysakin_siirto_yli50m.png)
+![Pys&auml;kin siirto yli 50 metri&auml;](pysäkit_10.PNG)
 
 _Pys&auml;kin siirto yli 50 metri&auml;._
 
-</br>
-Pys&auml;kin uusi sijainti tallettuu painamalla Tallenna-painiketta (15). Painamalla Peruuta-painiketta (16) pys&auml;kki palautuu alkuper&auml;iselle paikalleen. Jos pys&auml;kilt&auml; puuttuu tyyppi, tulee se t&auml;ydent&auml;&auml; ennen tallentamista. Pys&auml;kkien ominaisustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
+Pys&auml;kin uusi sijainti tallettuu painamalla Tallenna-painiketta (21). Painamalla Peruuta-painiketta (22) pys&auml;kki palautuu alkuper&auml;iselle paikalleen. Jos pys&auml;kilt&auml; puuttuu tyyppi, tulee se t&auml;ydent&auml;&auml; ennen tallentamista. Pys&auml;kkien ominaisuustietoikkunassa n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
 
 Siirrett&auml;ess&auml; pys&auml;kki&auml;, joka on pinossa, j&auml;&auml; pinoon siirrett&auml;v&auml;n pys&auml;kin kohdalle rako, kunnes siirron tallentaa tai peruuttaa. Jos pys&auml;kin siirt&auml;&auml; alle kuuden metrin p&auml;&auml;h&auml;n toisesta/toisista pys&auml;keist&auml;, siirtyy pys&auml;kki osaksi pinoa.
 
 Pys&auml;kin siirto t&auml;ytyy tallentaa tai peruuttaa ennen kuin voi siirty&auml; muokkaamaan muita pys&auml;kkej&auml; tai pois muokkaustilasta. Sovellus ilmoittaa tehdyst&auml; muutoksesta muutos-dialogilla.
 
-![Pys&auml;kin siirt&auml;minen.](pysakin_siirto.jpg)
+![Pys&auml;kin siirt&auml;minen.](pysäkit_11.png)
 
 _Joukkoliikenteen pys&auml;kin siirt&auml;minen._
 
-##4.9 Uuden pys&auml;kin lis&auml;&auml;minen##
+## 25.9 Uuden pys&auml;kin lis&auml;&auml;minen
 
-Uusia pys&auml;kkej&auml; voi lis&auml;t&auml;, kun mittakaavataso on 1:10 000 tai tarkempi. T&auml;m&auml; mittakaavataso on yht&auml; tasoa tarkempi kuin uloin mittakaavataso jolla pys&auml;kit n&auml;ytet&auml;&auml;n. Uusi pys&auml;kki luodaan klikkaamalla kartan tiest&ouml;st&auml; haluttu sijainti pys&auml;kille lis&auml;ysty&ouml;kalulla (13). Jos valitulla kohdalla ei ole tielinkki&auml;, muodostuu pys&auml;kki l&auml;himm&auml;lle tielinkille. Jos pys&auml;kin yritt&auml;&auml; luoda liian kauas l&auml;himm&auml;st&auml; tielinkist&auml;, ei pys&auml;kki&auml; muodostu. Uusi pys&auml;kki on korostettu sinisell&auml; v&auml;rill&auml; (4) ja sivun oikealle puolelle avautuu Google Street View (5) ja ominaisuustieton&auml;kym&auml; (6), jossa pys&auml;kille tallennetaan tiedossa olevat ominaisuustiedot.
+Uusia pys&auml;kkej&auml; voi lis&auml;t&auml;, kun mittakaavataso on 1:20 000 tai tarkempi (23). Uusi pys&auml;kki luodaan napauttamalla kartan tiest&ouml;st&auml; haluttu sijainti pys&auml;kille lis&auml;ysty&ouml;kalulla (24). Jos valitulla kohdalla ei ole tielinkki&auml;, muodostuu pys&auml;kki l&auml;himm&auml;lle tielinkille. Jos pys&auml;kin yritt&auml;&auml; luoda liian kauas l&auml;himm&auml;st&auml; tielinkist&auml;, ei pys&auml;kki&auml; muodostu. Uusi pys&auml;kki on korostettu sinisell&auml; v&auml;rill&auml; (25) ja sivun oikealle puolelle avautuu Google Street View (26) ja ominaisuustietoikkuna (27), jossa pys&auml;kille tallennetaan tiedossa olevat ominaisuustiedot.
 
 Sovellus muodostaa osan ominaisuustiedoista itse, jos niit&auml; ei m&auml;&auml;ritet&auml;. "Ensimm&auml;inen voimassaolop&auml;iv&auml;" oletetaan meneill&auml;&auml;n olevaksi p&auml;iv&auml;m&auml;&auml;r&auml;ksi. Pys&auml;kin vaikutussuunta oletetaan alla olevan linkin digitointisuunnaksi. Kaikkien varusteiden oletusarvo on "Ei tietoa". Lis&auml;ksi valtakunnallinen tunnus ja Livi-tunnus maantien pys&auml;kille muodostuu automaattisesti Digiroadin omasta numeroavaruudesta eik&auml; k&auml;ytt&auml;j&auml;n tarvitse sit&auml; itse asettaa.
 
-Pys&auml;kin tyyppi on pakollinen tieto eik&auml; uutta pys&auml;kki&auml; voi tallentaa, jos sit&auml; ei ole m&auml;&auml;ritetty. Uuden pys&auml;kin ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kin pakollisia tietoja puuttuu. Kun ominaisuustiedot on kirjattu, painetaan Tallenna-painiketta (21) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruuta-painiketta (22). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko "Tallenna" tai "Peruuta".
+Pys&auml;kin tyyppi on pakollinen tieto eik&auml; uutta pys&auml;kki&auml; voi tallentaa, jos sit&auml; ei ole m&auml;&auml;ritetty. Uuden pys&auml;kin ominaisuustietoikkunassa n&auml;kyy ilmoitus, jos pys&auml;kin pakollisia tietoja puuttuu. Kun ominaisuustiedot on kirjattu, painetaan Tallenna-painiketta (28) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruuta-painiketta (29). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on painettu joko "Tallenna" tai "Peruuta".
 
-Uuden pys&auml;kin voi lis&auml;t&auml; alle kuuden metrin p&auml;&auml;h&auml;n olemassa olevasta pys&auml;kist&auml;. Kunta yll&auml;pit&auml;j&auml; ei voi lis&auml;t&auml; uutta pys&auml;kki&auml; maantielle.
+Uuden pys&auml;kin voi lis&auml;t&auml; alle kuuden metrin p&auml;&auml;h&auml;n olemassa olevasta pys&auml;kist&auml;. Kuntaylläpitäjä ei voi lis&auml;t&auml; uutta pys&auml;kki&auml; maantielle.
 
 __Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:__
 
 1. Aktivoi muokkaustila.
 1. Etsi kartalta kohta, jonne haluat pys&auml;kin lis&auml;t&auml;.
-1. Tarkenna mittakaava 1:10 000 tai tarkemmaksi (9).
-1. Valitse lis&auml;ysty&ouml;kalu (13).
-1. Klikkaa linkin kohtaa, johon haluat lis&auml;t&auml; pys&auml;kin.
-1. Lis&auml;&auml; ominaisuustieto -n&auml;kym&auml;&auml;n (6) pakolliset ja olemassa olevat tiedot pys&auml;kist&auml;.
-1. Jos et haluakaan luoda ko. pys&auml;kki&auml;, paina Peruuta-painiketta (22).
-1. Kun olet lis&auml;nnyt haluamasi tiedot, paina Tallenna-painiketta (21).
+1. Tarkenna mittakaava 1:20 000 tai tarkemmaksi (23).
+1. Valitse lis&auml;ysty&ouml;kalu (24).
+1. Napauta linkin kohtaa, johon haluat lis&auml;t&auml; pys&auml;kin.
+1. Lis&auml;&auml; ominaisuustietoikkunaan (27) pakolliset ja olemassa olevat tiedot pys&auml;kist&auml;.
+1. Jos et haluakaan luoda ko. pys&auml;kki&auml;, paina Peruuta-painiketta (29).
+1. Kun olet lis&auml;nnyt haluamasi tiedot, paina Tallenna-painiketta (28).
 
-![Pys&auml;kin lis&auml;&auml;minen.](k16.jpg)
+![Pys&auml;kin lis&auml;&auml;minen.](pysäkit_12.png)
 
 _Joukkoliikenteen pys&auml;kin lis&auml;&auml;minen._
 
-##4.10 Pys&auml;kin m&auml;&auml;ritt&auml;minen k&auml;yt&ouml;st&auml; poistuneeksi##
+## 25.10 Pys&auml;kin m&auml;&auml;ritt&auml;minen k&auml;yt&ouml;st&auml; poistuneeksi
 
-Olemassa oleva pys&auml;kki m&auml;&auml;ritet&auml;&auml;n k&auml;yt&ouml;st&auml; poistuneeksi muokkausty&ouml;kalulla (12). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pys&auml;kin voi m&auml;&auml;ritt&auml;&auml; k&auml;yt&ouml;st&auml; poistuneeksi (9). K&auml;yt&ouml;st&auml; poistunut pys&auml;kki valitaan klikkaamalla pys&auml;kkikuvaketta, jolloin avautuu ominaisuustieton&auml;kym&auml; (6). Valittu pys&auml;kki korostuu sinisell&auml; huomiov&auml;rill&auml; (4). Pys&auml;kin k&auml;yt&ouml;st&auml; poistuneeksi m&auml;&auml;ritt&auml;minen suoritetaan asettamalla ominaisuustieton&auml;kym&auml;n (6) "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (20) pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;. Jos haluat palauttaa pys&auml;kin voimassaolevaksi, valitse viimeinen voimassaolop&auml;iv&auml;-aikavalikosta ”ei tietoa”. Pys&auml;kki palautuu voimassaolevaksi tallentamalla valinta.
+Olemassa oleva pys&auml;kki m&auml;&auml;ritet&auml;&auml;n k&auml;yt&ouml;st&auml; poistuneeksi muokkausty&ouml;kalulla (30). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi (31), jotta pys&auml;kin voi m&auml;&auml;ritt&auml;&auml; k&auml;yt&ouml;st&auml; poistuneeksi. K&auml;yt&ouml;st&auml; poistunut pys&auml;kki valitaan napauttamalla pys&auml;kkikuvaketta, jolloin avautuu ominaisuustietoikkuna (32). Valittu pys&auml;kki korostuu sinisell&auml; huomiov&auml;rill&auml; (33). Pys&auml;kin k&auml;yt&ouml;st&auml; poistuneeksi m&auml;&auml;ritt&auml;minen suoritetaan asettamalla ominaisuustietoikkunan (32) "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (34) pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;. Jos haluat palauttaa pys&auml;kin voimassaolevaksi, valitse viimeinen voimassaolop&auml;iv&auml;-aikavalikosta ”ei tietoa”. Pys&auml;kki palautuu voimassaolevaksi tallentamalla valinta.
 
-Jos pys&auml;kki on poistettu maastosta kokonaan, eik&auml; k&auml;yt&ouml;st&auml; poistunutta pys&auml;kki&auml; tulla en&auml;&auml; ottamaan uudelleen k&auml;ytt&ouml;&ouml;n, voi pys&auml;kin poistaa kokonaan valitsemalla ominaisuustaulun (6) alareunasta Poista Poistunutta pys&auml;kki&auml; ei voi en&auml;&auml; palauttaa voimassaolevaksi. Jos pys&auml;kin viimeinen voimassaolop&auml;iv&auml; on menneisyydess&auml;, aktivoituu kartalla "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinta. Pys&auml;kin kuvake h&auml;vi&auml;&auml; kartalta, kun "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinnan sulkee.
+Jos pys&auml;kki on poistettu maastosta kokonaan, eik&auml; k&auml;yt&ouml;st&auml; poistunutta pys&auml;kki&auml; tulla en&auml;&auml; ottamaan uudelleen k&auml;ytt&ouml;&ouml;n, voi pys&auml;kin poistaa kokonaan valitsemalla ominaisuustietoikkunan (32) alareunasta "Poista". Poistunutta pys&auml;kki&auml; ei voi en&auml;&auml; palauttaa voimassaolevaksi. Jos pys&auml;kin viimeinen voimassaolop&auml;iv&auml; on menneisyydess&auml;, aktivoituu kartalla "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinta. Pys&auml;kin kuvake h&auml;vi&auml;&auml; kartalta, kun "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinnan sulkee.
 
 __Vanhan pys&auml;kin poistamisen vaiheet:__
 
 1. Aktivoi muokkaustila.
 1. Etsi kartalta pys&auml;kki, jonka haluat poistaa.
-1. Tarkenna kartan mittakaava 1:20 000 tai tarkemmaksi (9).
-1. Valitse muokkausty&ouml;kalu (12).
-1. Klikkaa pys&auml;kki&auml; (4).
-1. Aseta pys&auml;kille "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (20) viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; kirjoittamalla tai valitsemalla se kalenterista, joka avautuu klikkaamalla "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;.
+1. Tarkenna kartan mittakaava 1:20 000 tai tarkemmaksi (31).
+1. Valitse muokkausty&ouml;kalu (30).
+1. Napauta hiirellä pys&auml;kki&auml; (33).
+1. Aseta pys&auml;kille "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (34) viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; kirjoittamalla tai valitsemalla se kalenterista, joka avautuu napauttamalla "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;.
 1. Jos et halua poistaa pys&auml;kki&auml;, valitse kalenterista "Ei tietoa".
-1. Pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; tallentuu painamalla Tallenna-painiketta (15).
+1. Pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; tallentuu painamalla Tallenna-painiketta (35).
 1. Jos pys&auml;kki on poistettu maastosta, eik&auml; poistuvaa pys&auml;kki&auml; ole tarkoitus ottaa uudelleen k&auml;ytt&ouml;&ouml;n, valitaan ominaisuustaulun lopusta ”Poista”. HUOM! Poistettua pys&auml;kki&auml; ei voi en&auml;&auml; palauttaa olemassaolevaksi!
 
-![Pys&auml;kin poistaminen.](k17.jpg)
+![Pys&auml;kin poistaminen.](pysäkit_13.png)
 
 _Joukkoliikenteen pys&auml;kin poistaminen._
 
-5. Nopeusrajoitus
---------------------
+# 26. Esterakennelma
 
-Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. Lis&auml;ksi nopeusrajoituksilla on ympyr&auml;, joka kertoo nopeusrajoituksen arvon. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
+Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalla tietolajivalikosta (1) "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; esterakennelmia.
 
-![Nopeusrajoitusten valinta](k18.jpg)
-
-_Nopeusrajoitusten valinta._
-
-##5.1 Nopeusrajoituksen tietojen katselu##
-
-Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa.
-
-Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta.
-
-Huom! Nopeusrajoituksien ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
-
-Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
-
-Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen arvo (km/h), valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
-
-![Nopeusrajoituksen tietojen katselu](k24.JPG)
-
-_Nopeusrajoituksen tietojen katselu, kun valittuna on nopeusrajoitusketju (klikattu kerran)._
-
-![Nopeusrajoituksen tietojen katselu](k51.JPG)
-
-_Nopeusrajoituksen tietojen katselu, kun valittuna on yksitt&auml;inen nopeusrajoitus (tuplaklikkaus)._
-
-###Nopeusrajoitusten visualisointi###
-
-Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusrajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan. Jos vaikutussuunta on molempiin suuntiin, nopeusrajoitus on visualisoitu yhdell&auml; paksulla viivalla (1). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (2).
-
-Digiroad-yll&auml;pitosovellus yhdist&auml;&auml; nopeusrajoitukset molempiin suuntiin voimassa olevaksi, jos tielinkill&auml; on vain yksinopeusrajoitus. K&auml;yt&auml;nn&ouml;ss&auml; siis kaikki tapaukset, joissa nopeusrajoituksen arvo molempiin suuntiin on sama, eik&auml; arvo vaihdu kesken tielinkin, visualisoidaan molempiin suuntiin voimassa olevana. Erityisesti risteysalueella nopeusrajoitukset voivat muuttua kesken tielinkin (2) tai rajoituksen arvo eri suuntiin on eri (2, 3), jolloin ne visualisoituvat yll&auml;pitosovelluksessa ohuemmilla viivoilla tiegeometrian viereen.
-
-Nopeusrajoituksen muokkauksessa on mahdollisuus jakaa molempiin suuntiin voimassa oleva nopeusrajoitus yhteen suuntaan voimassa olevaksi.
-
-![Nopeusrajoitusten visualisointi](k27.JPG)
-
-_Nopeusrajoitusten visualisointi._
-
-##5.2 Nopeusrajoituksien muokkaus##
-
-Muokkaustilassa nopeusrajoituksille voi antaa uusia arvoja, niit&auml; voi katkaista sek&auml; muuttaa yksisuuntaisiksi. Nopeusrajoituksien arvoja voi muokata kolmella tavalla:
-
-1. Koko nopeusrajoitusketjulle.
-1. Yksitt&auml;isen linkin mittaiselle osuudelle.
-1. Monivalinnan avulla kokonaiselle alueelle.
-
-###Nopeusrajoituksen arvon muokkaus###
-
-Muokattava nopeusrajoitus valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). 
-
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta.
-
-Huom! Nopeusrajoituksien ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
-
-Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; valitsemalla nopeusrajoitukselle uusi arvo alasvetovalikosta (5). Muutokset tallennetaan painamalla Tallenna-painiketta. Ennen Tallenna-painikkeen painamista muutokset voi perua painamalla Peruuta-painiketta. Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
-
-![Nopeusrajoituksen muokkaus.](k26.png)
-
-_Nopeusrajoitusketjun arvon muokkaus (klikattu kerran)._
-
-</br>
-####Nopeusrajoituksien muokkaus monivalintaty&ouml;kalulla####
-
-Useamman kuin yhden nopeusrajoituksen arvon voi muuttaa kerralla. Halutut nopeusrajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko nopeusrajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki nopeusrajoitukset laatikon sis&auml;ll&auml; ja nopeusrajoitukset, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan nopeusrajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Useamman nopeusrajoituksen arvon muokkaus.](k40.JPG)
-
-_Useamman nopeusrajoituksen arvon muokkaus kerralla._
-
-</br>
-####Nopeusrajoituksen katkaiseminen####
-
-Nopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (13). Leikkausty&ouml;kalulla klikataan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;.
-
-Nopeusrajoituksen katkaisu valitsee aina vain linkin mittaisen osion nopeusrajoitusta, ei nopeusrajoitusketjua.
-
-![Nopeusrajoituksen katkaiseminen.](k28.jpg)
-
-_Nopeusrajoituksen katkaiseminen._
-
-</br>
-Nopeusrajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (4). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet nopeusrajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
-
-Huom! Nopeusrajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; nopeusrajoituksille eri arvot, jotta tallennus on mahdollista.
-
-###Nopeusrajoituksen muuttaminen yksisuuntaiseksi###
-
-Molempiin suuntiin voimassa olevan nopeusrajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti.
-
-Muutos tehd&auml;&auml;n tuplaklikkaamalla kyseist&auml; nopeusrajoitusta (1), jolloin oikeaan laitaan tulee painike "Jaa nopeusrajoitus yksisuuntaiseksi" (2).
-
-![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](k52.jpg)
-
-_Nopeusrajoituksen valinta ja muuttaminen yksisuuntaiseksi._
-
-Painikkeen painamisen j&auml;lkeen voi uusille nopeusrajoituksille antaa arvot alasvetovalikoista (3). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat nopeusrajoituksia kartalla (4). Arvojen pit&auml;&auml; erota toisistaan, jotta tallentaminen on mahdollista.
-
-![Nopeusrajoituksen muuttaminen yksisuuntaiseksi.](k53.jpg)
-
-_Uusien yksisuuntaisten nopeusrajoitusten arvon valinta._
-
-</br>
-Uudet nopeusrajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
-
-Jos tallennuksen j&auml;lkeen yhteen suuntaan voimassa oleville nopeusrajoituksille antaa saman arvon, sovellus yhdist&auml;&auml; ne molempiin voimassa oleviksi.
-
-###Tuntemattomat nopeusrajoitukset###
-
-Jos nopeusrajoitus ko. linkill&auml; ei ole tiedossa, n&auml;kyy se k&auml;ytt&ouml;liittym&auml;ss&auml; mustana eli tuntemattomana nopeusrajoituksena.
-
-Nopeusrajoitus on tuntematon, jos nopeusrajoitustietoa ei ole toimitettu Digiroad-j&auml;rjestelm&auml;&auml;n. Uusille, j&auml;rjestelm&auml;&auml;n lis&auml;tyille tielinkeille, tulee lis&auml;t&auml; nopeusrajoitus.
-
-Tuntemattomalle nopeusrajoitukselle voi antaa arvon alasvetovalikosta ja niit&auml; voi muokata my&ouml;s monivalintaty&ouml;kalun avulla. Tuntemattomia nopeusrajoituksia ei kuitenkaan voi katkaista katkaisuty&ouml;kalulla, eik&auml; niit&auml; voi jakaa yksisuuntaisiksi. Tuntemattomille nopeusrajoituksille tulee antaa ensin arvo, jotta niiden muokkaus t&auml;ydellisesti onnistuu.
-
-![Tuntematon nopeusrajoitus.](k48.jpg)
-
-_Tuntematon nopeusrajoitus._
-
-Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoitusten ominaisuustieton&auml;kym&auml;st&auml; (1). Nopeusrajoitukset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listan pituus on rajoitettu kymmeneen nopeusrajoitukseen, mutta kunkin hallinnollisen luokan vieress&auml; lukee my&ouml;s korjattavien nopeusrajoitusten kokonaism&auml;&auml;r&auml;.
-
-Nopeusrajoituksesta on listassa linkki, josta p&auml;&auml;see suoraan nopeusrajoituksen kohdalle sovelluksessa ja sille voi asettaa arvon. Nopeusrajoituslinkin voi avata uuteen v&auml;lilehteen klikkaamalla linkki&auml; Ctrl-painike pohjassa. Muuten linkki avautuu samaan v&auml;lilehteen. Lista sulkeutuu Sulje lista -painikkeesta.
-
-
-![Tuntematon nopeusrajoitus.](k49.JPG)
-
-_Tuntemattomien nopeusrajoitusten lista._
-
-6. K&auml;&auml;ntymisrajoitus
-----------------------------------
-
-Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-paletista (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset tulevat n&auml;kyviin paksumpina viivoina, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymism&auml;&auml;r&auml;ykset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml; (2), on sininen ja linkki, jolle ei saa k&auml;&auml;nty&auml; (3) on punainen.
-
-Joissain tapauksissa (U-k&auml;&auml;nn&ouml;s, liikenneympyr&auml;n ohittava erillinen k&auml;&auml;ntymiskaista oikealle) k&auml;&auml;ntymisrajoitus saattaa koostua useammista linkeist&auml;. T&auml;ll&ouml;in ns. v&auml;lilinkki (4) on visualisoitu vihre&auml;ksi. V&auml;lilinkki yhdist&auml;&auml; sen linkin, jolta k&auml;&auml;ntyminen on kielletty (sininen linkki) siihen linkkiin, jolle k&auml;&auml;ntyminen on kielletty&auml; (punainen linkki).
-
-Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajit-paletissa. Tielinkeill&auml;, joiden liikennevirran suunta on vain yhteen suuntaan, on visualisoitu suuntanuoli kuvaamaan liikennevirran suuntaa.
-
-![K&auml;&auml;ntymisrajoitus](KR_kohdat_1_4.png)
-
-_K&auml;&auml;ntymisrajoitusten valinta._
-
-##6.1 K&auml;&auml;ntymisrajoituksen tietojen katselu##
-
-Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (4) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6).
-
-![K&auml;&auml;ntymisrajoituksen visualisointi](KR_kohdat_5.PNG)
-
-_K&auml;&auml;ntymisrajoituksen tietojen katselu._
-
-##6.2 K&auml;&auml;ntymisrajoitusten muokkaus##
-
-K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa (5). Muokattava kohde valitaan klikkaamalla sen geometriaa (6). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (7), josta valitaan haluttu k&auml;&auml;ntymisrajoitus, klikkaamalla muokkaa-painiketta (8). Muokattavia tietoja ovat k&auml;&auml;ntymisrajoituksen lis&auml;kilven mukainen voimassaoloaika, ajoneuvotyypit, joita k&auml;&auml;ntymisrajoitus ei koske eli poikkeukset sek&auml; mahdollinen muu tarkenne. 
-
-Muokkaustilassa on mahdollista my&ouml;s poistaa olemassaolevia k&auml;&auml;ntymisrajoituksia rastimalla Poista-sarake (9). Muokkaukset ja poisto hyv&auml;ksyt&auml;&auml;n Tallenna-painiketta (10) klikkaamalla. Poiston yhteydess&auml; h&auml;vi&auml;&auml; koko k&auml;&auml;ntymisrajoitus ja sit&auml; koskevat poikkeukset! Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois k&auml;&auml;ntymisrajoituksen valinnasta, sovellus avaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. 
-
-![K&auml;&auml;ntymisrajoitusten muokkaus.pt1](KR_kohdat_6_8.png)
-
-![K&auml;&auml;ntymisrajoitusten muokkaus.pt2](KR_kohdat_9_10.png)
-
-_K&auml;&auml;ntymisrajoitusten muokkaus._
-
-</br>
-####Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen####
-
-Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustieton&auml;kym&auml; (11), jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (12). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin! 
-
-Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa klikkaamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (13). Ominaisuustieton&auml;kym&auml;&auml;n aukeaa lomake (14), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustieton&auml;kym&auml;ss&auml; alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (15). Valitse viimeinen linkki -painike, mik&auml;li aiemmin valitsemasi linkki on k&auml;&auml;ntymisrajoituksen kohde linkki. Vahvista valinta painamalla tallenna-nappulaa.
- 
- Huom! K&auml;&auml;ntymisrajoitukseen valittuja linkkej&auml; ei ole mahdollista poistaa/lis&auml;t&auml; yksitellen vaan koko k&auml;&auml;ntymisrajoitus tulee poistaa, mik&auml;li siihen kuuluvien linkkien sijaintia/m&auml;&auml;r&auml;&auml; on tarve muokata. Poista vanha rajoitus valitsemalla sen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustieton&auml;kym&auml;&auml;n ilmestyy Poista-sarake (9). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
-
-![K&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen](KR_kohdat_11_13.png)
-
-_K&auml;&auml;ntymisrajoitusten lis&auml;&auml;minen._
-
-</br>
-####Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille (U-k&auml;&auml;nn&ouml;kset tai liikenneympyr&auml;n ohittavat rampit)####
-
-Mik&auml;li haluat tehd&auml; k&auml;&auml;ntymisrajoituksen, jossa k&auml;&auml;ntymisrajoituksen l&auml;hde ja kohde eiv&auml;t ole per&auml;kk&auml;iset linkit, lue n&auml;m&auml; ohjeet! Kahden linkin mittaisen rajoituksen tekeminen onnistuu yll&auml;olevan ohjeen avulla.
-
-Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde (mist&auml; k&auml;&auml;ntyminen jonnekin toisaalle on rajoitettu liikennemerkill&auml;). Sivun oikeaan laitaan aukeaa ominaisuustieton&auml;kym&auml; (11), jossa on n&auml;kyvill&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit sek&auml; niit&auml; karttan&auml;kym&auml;ss&auml; vastaavat kirjaimet (12). Piirto saattaa kest&auml;&auml; jonkin aikaa, joten valinnan j&auml;lkeen odota rauhassa, ett&auml; kirjaimet piirtyv&auml;t n&auml;kyviin!
-
-Valitse se linkki, jolle haluat k&auml;&auml;ntymisrajoituksen kohdistaa klikkaamalla kyseisen linkin kohdalla Uusi rajoitus -painiketta (13). Ominaisuustieton&auml;kym&auml;&auml;n aukeaa lomake (14), johon voi tallentaa k&auml;&auml;ntymisrajoitukseen liittyv&auml;t lis&auml;kilven tiedot. Valitse tarvittavat lis&auml;tiedot vetovalikoista, mik&auml;li tarpeen. T&auml;m&auml;n j&auml;lkeen siirry ominaisuustieton&auml;kym&auml;ss&auml; alemmas kohtaan "Jatka k&auml;&auml;ntymisrajoitusta" (15). Valitse listalta se linkki, jolle haluat jatkaa k&auml;&auml;ntymisrajoitusta (16). Jos t&auml;m&auml; linkki on muodostamasi ketjun viimeinen, valitse "viimeinen linkki". Piirto saattaa kest&auml;&auml; jonkin aikaa, joten odota rauhassa ennen muutosten tallentamista. 
-
-Muussa tapauksessa toista edellinen vaihe ja valitse listalta se linkki, jolle haluat k&auml;&auml;ntymisrajoitusta jatkaa. Etene n&auml;in, kunnes olet valinnut ketjun viimeisen linkin (k&auml;&auml;ntymisrajoituksen kohdelinkin). Lopuksi paina Tallenna-nappia, jolloin tekem&auml;si k&auml;&auml;ntymisrajoitus tallentuu.
-
-![Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille](KR_kohdat_14_16.png)
-
-_Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen usealle per&auml;kk&auml;iselle linkille_
-
-</br>
-####Uuden k&auml;&auml;ntymisrajoituksen poistaminen####
-
-K&auml;&auml;ntymisrajoitus poistetaan valitsemalla halutun rajoituksen l&auml;hdelinkki ja painamalla muokkaa-nappia. T&auml;m&auml;n j&auml;lkeen ominaisuustieton&auml;kym&auml;&auml;n ilmestyy Poista-sarake (9). Sen rastimalla ja tallentamalla valinnan k&auml;&auml;ntymisrajoitus poistuu.
-
-7. Suurin sallittu X 7
-----------------------
-
-Kartalle voi valita tietolajit-paletista (1) Suurin sallittu -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
-
-Suurin sallittu x7:
-
-__Suurin sallittu massa__
-__Yhdistelm&auml;n suurin sallittu massa__
-__Suurin sallittu akselimassa__
-__Suurin sallittu telimassa__
-__Suurin sallittu korkeus__
-__Ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus__
-__Suurin sallittu leveys__
-
-![Suurin sallittu -valinta](k37.JPG)
-
-_Suurin sallittu -valinta._
-
-##7.1 Suurin sallittu x7 tietojen katselu##
-
-Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustieton&auml;kym&auml; (6).
-
-![Suurimman sallitun tietojen katselu](k31.JPG)
-
-_Suurin sallittu -katselutila._
-
-##7.2 Suurin sallittu x7 ominaisuustietojen muokkaus##
-
-Muokkaustilassa Suurin sallittu -rajoituksille voi antaa uusia arvoja ja niit&auml; voi katkaista. Rajoituksien arvoja voi muokata kolmella tavalla:
-1.	Koko rajoitusketjulle kerralla.
-2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
-3.	Monivalinnan avulla kokonaiselle alueelle.
-
-
-###Rajoituksen arvon muokkaus###
-
-Suurin sallittu -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki per&auml;kk&auml;iset rajoitukset, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9).
-
-Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
-
-Huom! Rajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa rajoituksissa.
-
-![Suurin sallittu -valinnan muokkaus](k34.JPG)
-
-_Suurin sallittu -valinnan muokkaus._
-
-###Suurin sallittu -kohteiden muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko rajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Useamman rajoituksen arvon muokkaus kerralla](k62.JPG)
-
-_Useamman rajoituksen arvon muokkaus kerralla._
-
-</br>
-####Suurin sallittu -kohteen katkaisu####
-
-Rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2). 
-
-Rajoituksen katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
-
-![Suurin sallittu -kohteen katkaisu](k35.JPG)
-
-_Suurin sallittu -kohteen katkaisu._
-
-</br>
-Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
-
-Huom! Rajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
-
-![Suurin sallittu -kohteen katkaisu](k36.JPG)
-
-_Suurin sallittu -kohteen katkaisu._
-
-</br>
-####Suurin sallittu -kohteen poistaminen####
-
-Tielinkin suurin sallittu -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei rajoitusta".
-
-![Suurin sallittu -kohteen poistaminen](k33.JPG)
-
-_Suurin sallittu -kohteen poistaminen._
-
-</br>
-####Uuden suurin sallittu -kohteen lis&auml;&auml;minen####
-
-Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla linkin geometrian (4) Suurin sallittu -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurin sallittu -kohteen tiedot. Valitaan "Rajoitus" ja sy&ouml;tet&auml;&auml;n suurin sallittu arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu arvo tallennetaan painamalla Tallenna (8). Uuden suurin sallittu -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
-
-![Suurin sallittu -kohteen lis&auml;ys](k34.JPG)
-
-_Suurin sallittu -kohteen lis&auml;&auml;minen._
-
-8. Valaistu tie
-----------------------
-
-Valaistu tie on viivamainen kohde. Valaistus voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Valaistu tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu valaistus, se piirtyy kartalle punaisella viivalla (2). Valaisemattomat tielinkit ovat harmaita (3). Valaistuksen arvo on kyll&auml; tai ei. 
-
-![Valaistu tie](k57.jpg)
-
-_Valaistu tie._
-
-##8.1 Valaistustietojen katselu##
-
-Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko valaistusketju, eli kaikki linkit, joilla on sama valaistustieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Valaistuksella on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; valaistuksen arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valaistusketjussa.
-
-![Valaistustiedon katselu](k58.jpg)
-
-_Valaistustiedon katselu._
-
-##8.2 Valaistustietojen muokkaus##
-
-Valaistus-tietoja voi muokata muokkaustilassa. Valaistuksen voi lis&auml;t&auml;, poistaa ja valaistusgeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-
-###Valaistustiedon lis&auml;ys###
-
-Uusi valaistus lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Valaistus" (6). Uusi valaistus-tieto n&auml;kyy kartalla punaisena.
-
-![Valaistustiedon lis&auml;ys](k59.jpg)
-
-_Valaistustiedon lis&auml;ys._
-
-###Valaistustiedon poistaminen###
-
-Valaistustiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei valaistusta" (7). Kun valaistustieto on poistettu, kohde muuttuu kartalla harmaaksi.
-
-![Valaistustiedon poistaminen](k60.jpg)
-
-_Valaistustiedon poistaminen._
-
-###Valaistuksen muokkaus monivalintaty&ouml;kalulla###
-
-Usealle linkille voi lis&auml;t&auml; tai poistaa valaistuksen kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan valaistuksen arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Valaistuksen monivalinta](k63.JPG)
-
-_Valaistuksen monivalinta._
-
-###Valaistuksen katkaisu###
-
-Tarvittaessa valaistuksen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan valaistuksen geometriasta kohtaa, josta se halutaan katkaista. Valaistuksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet valaistustiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
-
-Huom! Valaistuksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
-
-![Valaistusgeometrian katkaisu](k61.jpg)
-
-_Valaistusgeometrian katkaisu._
-
-
-9. Kelirikko
-----------------------
-
-Kelirikko on viivamainen kohde. Kelirikko voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Kelirikko -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu kelirikko, se piirtyy kartalle punaisella viivalla (2). Tielinkit, joilla ei ole kelirikkoa ovat harmaita (3). Kelirikon arvo on kyll&auml; tai ei.
-
-![Kelirikko](k64.JPG)
-
-_Kelirikko._
-
-##9.1 Kelirikkotietojen katselu##
-
-Kun kohdetta klikkaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko kelirikkoketju, eli kaikki linkit, joilla on sama kelirikkotieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Kelirikkotiedolla on lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; kelirikon arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; kelirikkoketjussa. 
-
-![Kelirikko katselu](k65.JPG)
-
-_Kelirikkotiedon katselu._
-
-##9.2 Kelirikkotietojen muokkaus##
-
-Kelirikkotietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Muokkaustilassa kelirikolle voi antaa uuden arvon (kyll&auml;/ei) ja niit&auml; voi katkaista. Kelirikon arvoa voi muokata kolmella tavalla:
-
-1. Koko kelirikkoketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-![Kelirikko muokkaus](k66.JPG)
-
-_Kelirikkotiedon muokkaus._
-
-###Kelirikkotiedon lis&auml;ys###
-Uusi kelirikkotieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Kelirikko" (6). Uusi kelirikkotieto n&auml;kyy kartalla punaisena.
-
-![Kelirikko lis&auml;ys](k67.JPG)
-
-_Kelirikkotiedon lis&auml;ys._
-
-###Kelirikkotiedon poistaminen###
-
-Kelirikkotiedon voi poistaa valitsemalla tielinkin, jolla on kelirikko ja oikean laidan ominaisuustietotaulusta kohdan "Ei kelirikkoa" (7). Kun kelirikkotieto on poistettu, kohde muuttuu kartalla harmaaksi.
-
-![Kelirikko poisto](k68.JPG)
-
-_Kelirikkotiedon poistaminen._
-
-###Kelirikkojen muokkaus monivalintaty&ouml;kalulla###
-
-Usealle linkille voi lis&auml;t&auml; tai poistaa kelirikon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan kelirikon arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Kelirikko monivalinta](k69.JPG)
-
-_Kelirikon monivalinta._
-
-###Kelirikkotiedon katkaisu###
-
-Tarvittaessa kelirikon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan kelirikon geometriasta kohtaa, josta se halutaan katkaista. Kelirikon geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Kelirikon katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet kelirikkotiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Katkaisuty&ouml;kalu valitsee aina vain linkin mittaisen osion geometriasta, ei koko kelirikkoketjua.
-
-Huom! Kelirikon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
-
-![Kelirikko katkaisu](k70.JPG)
-
-_Kelirikkogeometrian katkaisu._
-
-10. Tien leveys
-----------------------
-
-Kartalle voi valita tietolajit-paletista (1) Tien leveys -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Tielinkit, joiden leveys tiedet&auml;&auml;n on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joiden leveys ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;. Tien leveys ilmoitetaan senttimetrein&auml; (cm).
-
-![Tien leveys](k71.JPG)
-
-_Tien leveys -valinta._
-
-##10.1 Tien leveyden katselu##
-
-Yksitt&auml;isen tien leveys -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki linkit, joilla on sama tien leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustieton&auml;kym&auml; (6). Tien leveydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; tien leveyden arvo senttimetrein&auml;, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
-
-![Tien leveys katselu](k72.JPG)
-
-_Tien leveys -katselutila._
-
-##10.2 Tien leveys -kohteiden muokkaus##
-
-Tien leveys -tietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Muokkaustilassa tien leveydelle voi antaa uuden arvon (cm), tietoja voi poistaa sek&auml; leveysgeometrian voi katkaista. Tien leveyden arvoa voi muokata kolmella tavalla:
-
-1. Koko leveysketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-###Tien leveyden muokkaus###
-
-Tien leveys -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko leveysketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama leveys ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
-
-Huom! Tien leveyden arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
-
-![Tien leveys muokkaus](k73.JPG)
-
-_Tien leveyden muokkaus._
-
-###Tien leveyden muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden tielinkin leveyden voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko linkkien p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan tien leveyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Tien leveys monivalinta](k74.JPG)
-
-_Useamman tien leveyden muokkaus kerralla._
-
-###Tien leveys -kohteen katkaisu###
-
-Tien leveys -kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi muuttaa tien leveytt&auml; lyhyill&auml; tieosuuksilla. Leikkausty&ouml;kalulla klikataan leveyden geometriasta kohtaa, josta leveystieto halutaan katkaista. Leveyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2).
-Katkaisuty&ouml;kalu valitsee aina vain linkin mittaisen osion geometriasta, ei koko leveysketjua.
-
-![Tien leveys katkaisu](k75.JPG)
-
-_Tien leveys -geometrian katkaisu._
-
-Katkaistun leveystiedon osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille m&auml;&auml;ritell&auml;&auml;n arvot oikean laidan kentiss&auml; (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet leveystiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tien leveys j&auml;&auml; voimaan.
-
-Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille tieosuuksille eri arvot, jotta tallennus on mahdollista.
-
-![Tien leveys katkaisu2](k76.JPG)
-
-_Tien leveys -kohteen katkaisu._
-
-###Tien leveys -kohteen poistaminen###
-
-Tielinkin tien leveys -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Leveys-kohdasta "Leveys ei tiedossa".
-
-![Tien leveys poisto](k77.JPG)
-
-_Tien leveys -kohteen poistaminen._
-
-###Uuden tien leveys -kohteen lis&auml;&auml;minen###
-
-Tielinkille voi lis&auml;t&auml; tien leveys -kohteen valitsemalla linkin geometrian (4) Tien leveys -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin leveyden tiedot. Valitaan "Leveys tiedossa" ja sy&ouml;tet&auml;&auml;n leveys sy&ouml;tekentt&auml;&auml;n.  Tien leveys tallennetaan painamalla Tallenna (8). Uuden tien leveys -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
-
-![Tien leveys lisays](k78.JPG)
-
-_Tien leveys -kohteen lis&auml;&auml;minen._
-
-11. Ruuhkautumisherkkyys
-----------------------
-
-Ruuhkautumisherkkyys on viivamainen kohde. Ruuhkautumisherkkyys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Ruuhkautumisherkkyys -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu ruuhkautumisherkkyys, se piirtyy kartalle punaisella viivalla (2). Ruuhkautumattomat tielinkit ovat harmaita (3). Ruuhkautumisherkkyyden arvo on kyll&auml; tai ei.
-
-![Ruuhka](k79.JPG)
-
-_Ruuhkautumisherkkyys._
-
-##11.1 Ruuhkautumisherkkyystietojen katselu##
-
-Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko ruuhkautumisherkkyysketju, eli kaikki linkit, joilla on sama ruuhkautumisherkkyystieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Ruuhkautumisherkkyydell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; ruuhkautumisherkkyyden arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; valittuna olevasta tielinkkiketjusta.
-
-![Ruuhka katselu](k80.JPG)
-
-_Ruuhkautumisherkkyystiedon katselu._
-
-##11.2 Ruuhkautumisherkkyystietojen muokkaus##
-
-Ruuhkautumisherkkyys-tietoja voi muokata muokkaustilassa. Ruuhkautumisherkkyyden voi lis&auml;t&auml;, poistaa ja ruuhkautumisherkkyysgeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Ruuhkautumisherkkyyden arvoa voi muokata kolmella tavalla:
-
-1. Koko ruuhkautumisherkkyysketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-###Ruuhkautumisherkkyystiedon lis&auml;ys###
-
-Uusi ruuhkautumisherkkyystieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Ruuhkautumisherkk&auml;" (6). Uusi ruuhkautumisherkkyys-tieto n&auml;kyy kartalla punaisena.
-
-![Ruuhka lisays](k81.JPG)
-
-_Ruuhkautumisherkkyystiedon lis&auml;ys._
-
-###Ruuhkautumisherkkyystiedon poistaminen###
-
-Ruuhkautumisherkkyystiedon voi poistaa valitsemalla ruuhkautumisherk&auml;n kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei ruuhkautumisherkk&auml; " (7). Kun ruuhkautumisherkkyystieto on poistettu, kohde muuttuu kartalla harmaaksi.
-
-![Ruuhka poisto](k82.JPG)
-
-_Ruuhkautumisherkkyystiedon poistaminen._
-
-###Ruuhkautumisherkkyyden muokkaus monivalintaty&ouml;kalulla###
-
-Usealle linkille voi lis&auml;t&auml; tai poistaa ruuhkautumisherkkyystiedon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan ruuhkautumisherkkyyden arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Ruuhka monivalinta](k83.JPG)
-
-_Ruuhkautumisherkkyyden monivalinta._
-
-###Ruuhkautumisherkkyystiedon katkaisu###
-
-Tarvittaessa ruuhkautumisherkkyystiedon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan ruuhkautumisherkkyyden geometriasta kohtaa, josta se halutaan katkaista. Ruuhkautumisherkkyyden geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Ruuhkautumisherkkyystiedon katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta tieosuudesta on kyse (5). Uudet ruuhkautumisherkkyystiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-
-Huom! Ruuhkautumisherkkyystiedon katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
-
-![Ruuhka katko](k84.jpg)
-
-_Ruuhkautumisherkkyysgeometrian katkaisu._
-
-12. P&auml;&auml;llystetty tie
-----------------------
-
-P&auml;&auml;llystetty tie on viivamainen kohde. P&auml;&auml;llystys voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. P&auml;&auml;llystetty tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu p&auml;&auml;llyste, se piirtyy kartalle punaisella viivalla (2). P&auml;&auml;llyst&auml;m&auml;tt&ouml;m&auml;ksi merkatut tielinkit ovat harmaita (3). P&auml;&auml;llystyksen arvo on kyll&auml; tai ei.
-P&auml;&auml;llyste -tiedon l&auml;hde tielinkille on Maanmittauslaitoksen maastotietokanta.
-
-![Paallyste](k85.JPG)
-
-_P&auml;&auml;llystetty tie._
-
-##12.1 P&auml;&auml;llystetietojen katselu##
-
-Kun kohdetta klikkaa kartalta, se korostuu (4). ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko p&auml;&auml;llysteketju, eli kaikki linkit, joilla on sama p&auml;&auml;llystetieto ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. P&auml;&auml;llystyksell&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; p&auml;&auml;llystyksen arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
-
-![Paallyste katselu](k86.JPG)
-
-_P&auml;&auml;llystetiedon katselu._
-
-##12.2 P&auml;&auml;llystetietojen muokkaus##
-
-P&auml;&auml;llystetietoja voi muokata muokkaustilassa. P&auml;&auml;llystetiedon voi lis&auml;t&auml;, poistaa ja p&auml;&auml;llystegeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-P&auml;&auml;llysteen arvoa voi muokata kolmella tavalla:
-
-1. Koko p&auml;&auml;llysteketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-###P&auml;&auml;llystetiedon lis&auml;ys###
-
-Uusi p&auml;&auml;llystetieto lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "P&auml;&auml;llyste" (6). Uusi p&auml;&auml;llystystieto n&auml;kyy kartalla punaisena.
-
-![Paallyste lisays](k87.JPG)
-
-_P&auml;&auml;llystetiedon lis&auml;ys._
-
-###P&auml;&auml;llystetiedon poistaminen###
-
-P&auml;&auml;llystetiedon voi poistaa valitsemalla p&auml;&auml;llystetyn kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei p&auml;&auml;llystett&auml;" (7). Kun p&auml;&auml;llystetieto on poistettu, kohde muuttuu kartalla harmaaksi.
-
-![Paallyste poisto](k88.JPG)
-
-_P&auml;&auml;llystetiedon poistaminen._
-
-###P&auml;&auml;llystetiedon muokkaus monivalintaty&ouml;kalulla###
-
-Usealle linkille voi lis&auml;t&auml; tai poistaa p&auml;&auml;llystetiedon kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan p&auml;&auml;llysteen arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Paallyste monivalinta](k89.JPG)
-
-_P&auml;&auml;llysteen monivalinta._
-
-###P&auml;&auml;llysteen katkaisu###
-
-Tarvittaessa p&auml;&auml;llysteen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan p&auml;&auml;llysteen geometriasta kohtaa, josta se halutaan katkaista. P&auml;&auml;llysteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. P&auml;&auml;llysteen katkaisussa uusille tieosuuksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet p&auml;&auml;llystetiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen p&auml;&auml;llystetieto j&auml;&auml; voimaan.
-
-Huom! P&auml;&auml;llysteen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
-
-![Paallyste katko](k90.JPG)
-
-_P&auml;&auml;llystegeometrian katkaisu._
-
-13. Liikennem&auml;&auml;r&auml;
-----------------------
-
-Kartalle voi valita tietolajit-paletista (1) Liikennem&auml;&auml;r&auml;-valinnan. Liikennem&auml;&auml;r&auml; on viivamainen tietolaji, ja sen arvo ilmoitetaan kokonaisulukuna ajoneuvoa/vuorokausi. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; (2) ja tielinkit, joiden liikennem&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml; (3).
-
-![Liikennemaara](k91.JPG)
-
-_Liikennem&auml;&auml;r&auml; -valinta._
-
-##13.1 Liikennem&auml;&auml;r&auml;tietojen katselu##
-
-Yksitt&auml;isen liikennem&auml;&auml;r&auml;kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko liikennem&auml;&auml;r&auml;ketju, eli kaikki tieosuudet, joilla on sama liikennem&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai linkkiketjun ominaisuustieton&auml;kym&auml; (6). Liikennem&auml;&auml;r&auml;ll&auml; on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; liikennem&auml;&auml;r&auml;n arvo (kokonaisluku), sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; p&auml;&auml;llysteketjussa.
-
-![Liikennemaarakatselu](k92.JPG)
-
-_Liikennem&auml;&auml;r&auml;-katselutila._
-
-##13.2 Liikennem&auml;&auml;rien ominaisuustietojen muokkaus##
-
-Liikennem&auml;&auml;r&auml;n voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-Muokkaustilassa liikennem&auml;&auml;r&auml;lle voi antaa uuden arvon (kokonaisluku ajoneuvoa/vuorokausi), tietoja voi poistaa sek&auml; liikennem&auml;&auml;r&auml;geometrian voi katkaista. Liikennem&auml;&auml;r&auml;n arvoa voi muokata kolmella tavalla:
-
-1. Koko liikennem&auml;&auml;r&auml;ketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-###Liikennem&auml;&auml;r&auml;n arvon muokkaus###
-
-Liikennem&auml;&auml;r&auml;valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko tielinkkiketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois tielinkin valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
-
-Huom! Liikennem&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
-
-![Liikennemaara muokkaus](k93.JPG)
-
-_Liikennem&auml;&auml;r&auml;n muokkaus._
-
-###Liikennem&auml;&auml;rien muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden tielinkin liikennem&auml;&auml;r&auml;arvon voi muuttaa kerralla. Halutut geometriat valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko rajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan liikennem&auml;&auml;r&auml;lle tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Liikennemaara monivalinta](k94.JPG)
-
-_Useamman tieosuuden liikennem&auml;&auml;r&auml;n muokkaus kerralla._
-
-###Liikennem&auml;&auml;r&auml;kohteen katkaisu###
-
-Liikennem&auml;&auml;r&auml;kohteen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta liikennem&auml;&auml;r&auml;tieto halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Liikennem&auml;&auml;r&auml;geometrian katkaisu valitsee aina vain linkin mittaisen osion geometriasta, ei koko liikennem&auml;&auml;r&auml;ketjua.
-Katkaistun geometrian osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Geometrian katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen liikennem&auml;&auml;r&auml;tieto j&auml;&auml; voimaan.
-
-Huom! Geometrian katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille liikennem&auml;&auml;r&auml;tiedoille eri arvot, jotta tallennus on mahdollista.
-
-![Liikennemaara katkaisu](k95.JPG)
-
-_Liikennem&auml;&auml;r&auml;kohteen katkaisu._
-
-###Liikennem&auml;&auml;r&auml;kohteen poistaminen###
-
-Tielinkin suurin liikennem&auml;&auml;r&auml;tieto poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla "Ei tiedossa".
-
-![Liikennemaara poisto](k96.JPG)
-
-_Liikennem&auml;&auml;r&auml;tiedon poistaminen._
-
-###Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen###
-
-Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (4) Liikennem&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin liikennem&auml;&auml;r&auml;tiedot. Valitaan "Liikennem&auml;&auml;r&auml;" ja sy&ouml;tet&auml;&auml;n arvo sy&ouml;tekentt&auml;&auml;n. Liikennem&auml;&auml;r&auml;tieto tallennetaan painamalla Tallenna (8). Uuden liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
-
-![Liikennemaara lisays](k97.JPG)
-
-_Liikennem&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
-
-14. Talvinopeusrajoitus
-----------------------
-
-Kartalle voi valita tietolajit-paletista (1) Talvinopeusrajoitus-tietolajin. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla talvinopeusrajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
-
-![Talvinopeusrajoitusvalinta.](k98.JPG)
-
-_Talvinopeusrajoitusvalinta._
-
-##14.1 Talvinopeusrajoituksen tietojen katselu##
-
-Yksitt&auml;isen talvinopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on sama rajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla rajoitusta. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun rajoituksen tai rajoitusketjun ominaisuustieton&auml;kym&auml; (6).
-
-![Talvinopeusrajoituksen katselutila.](k99.JPG)
-
-_Talvinopeusrajoituksen katselutila._
-
-##14.2 Talvinopeusrajoituksen ominaisuustietojen muokkaus##
-
-Muokkaustilassa talvinopeusrajoituksille voi antaa uusia arvoja ja niit&auml; voi katkaista. Rajoituksien arvoja voi muokata kolmella tavalla:
-1. Koko rajoitusketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-###Rajoituksen arvon muokkaus###
-
-Talvinopeusrajoitusta muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki per&auml;kk&auml;iset rajoitukset, joilla on sama arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois talvinopeusrajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
-
-![Talvinopeusrajoituksen muokkaus.](k100.JPG)
-
-_Talvinopeusrajoituksen muokkaus._
-
-###Talvinopeusrajoitusten muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden rajoituksen arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko rajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan rajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Useamman rajoituksen arvon muokkaus kerralla.](k101.JPG)
-
-_Useamman rajoituksen arvon muokkaus kerralla._
-
-###Talvinopeusrajoituskohteen katkaisu###
-
-Talvinopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2).
-
-Rajoituksen katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
-
-![Talvinopeusrajoituskohteen katkaisu.](k102.JPG)
-
-_Talvinopeusrajoituskohteen katkaisu._
-
-Katkaistun rajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5). Uudet rajoitukset tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
-
-Huom! Rajoituksen katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille rajoituksille eri arvot, jotta tallennus on mahdollista.
-
-![Talvinopeusrajoituskohteen katkaisu.](k103.JPG)
-
-_Talvinopeusrajoituskohteen katkaisu._
-
-###Talvinopeusrajoituksen poistaminen###
-
-Tielinkin talvinopeusrajoitus poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei talvinopeusrajoitusta".
-
-![Talvinopeusrajoituksen poistaminen.](k104.JPG)
-
-_Talvinopeusrajoituksen poistaminen._
-
-###Uuden talvinopeusrajoituksen lis&auml;&auml;minen###
-
-Tielinkille voi lis&auml;t&auml; talvinopeusrajoituksen valitsemalla linkin geometrian (4) Talvinopeusrajoitus-muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin talvinopeusrajoituksen tiedot. Valitaan "Talvinopeusrajoitus" ja valitaan rajoituksen arvo valikosta. Talvinopeusrajoitus tallennetaan painamalla Tallenna (8). Talvinopeusrajoituksen lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
-
-![Talvinopeusrajoituksen lis&auml;&auml;minen.](k105.JPG)
-
-_Talvinopeusrajoituksen lis&auml;&auml;minen._
-
-15. Joukkoliikennekaista
-----------------------
-
-Joukkoliikennekaista on viivamainen kohde. Joukkoliikennekaista voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Joukkoliikennekaista-tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu joukkoliikennekaista, se piirtyy kartalle punaisella viivalla (2). Tielinkit ilman joukkoliikennekaistaa ovat harmaita (3). Joukkoliikennekaistan arvo on kyll&auml; tai ei.
-
-![Joukkoliikennekaista.](k106.JPG)
-
-_Joukkoliikennekaista._
-
-##15.1 Joukkoliikennekaistatietojen katselu##
-
-Kun kohdetta klikkaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Kerran klikkaamalla tulee valituksi koko joukkoliikennekaistaketju, eli kaikki linkit, joilla on sama tieto joukkoliikennekaistasta ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;. Joukkoliikennekaistatiedolla on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; joukkoliikennekaistan arvo kyll&auml;/ei, sek&auml; tieto linkkien lukum&auml;&auml;r&auml;st&auml; joukkoliikennekaistaketjussa.
-
-![Joukkoliikennekaistatiedon katselu.](k107.JPG)
-
-_Joukkoliikennekaistatiedon katselu._
-
-##15.2 Joukkoliikennekaistatietojen muokkaus##
-
-Joukkoliikennekaistatietoja voi muokata muokkaustilassa. Joukkoliikennekaistan voi lis&auml;t&auml;, poistaa ja geometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-
-###Joukkoliikennekaistan lis&auml;ys###
-
-Uusi joukkoliikennekaista lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Joukkoliikennekaista" (6). Uusi joukkoliikennekaistatieto n&auml;kyy kartalla punaisena.
-
-![Joukkoliikennekaistan lis&auml;ys.](k108.JPG)
-
-_Joukkoliikennekaistan lis&auml;ys._
-
-###Joukkoliikennekaistan poistaminen###
-
-Joukkoliikennekaistan voi poistaa valitsemalla joukkoliikennekaistatiedon ja oikean laidan ominaisuustietotaulusta kohdan "Ei joukkoliikennekaistaa" (7). Kun joukkoliikennekaista on poistettu, kohde muuttuu kartalla harmaaksi.
-
-![Joukkoliikennekaistan poistaminen.](k109.JPG)
-
-_Joukkoliikennekaistan poistaminen._
-
-###Joukkoliikennekaistatietojen muokkaus monivalintaty&ouml;kalulla###
-
-Usealle linkille voi lis&auml;t&auml; tai poistaa joukkoliikennekaistan kerralla pit&auml;m&auml;ll&auml; muokkaustilassa n&auml;pp&auml;imist&ouml;lt&auml; Ctrl-painiketta pohjassa ja piirt&auml;m&auml;ll&auml; laatikko haluttujen linkkien p&auml;&auml;lle hiiren vasemmalla n&auml;pp&auml;imell&auml;. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan onko linkeill&auml; joukkoliikennekaistaa vai ei ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Joukkoliikennekaistan monivalinta.](k110.JPG)
-
-_Joukkoliikennekaistan monivalinta._
-
-###Joukkoliikennekaistatiedon katkaisu###
-
-Tarvittaessa joukkoliikennekaistatiedon voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan joukkoliikennekaistan geometriasta kohtaa, josta se halutaan katkaista. Joukkoliikennekaistan geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Joukkoliikennekaistan katkaisussa uusille geometrioille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet joukkoliikennekaistatiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen joukkoliikennekaistatieto j&auml;&auml; voimaan.
-
-Huom! Joukkoliikennekaistan katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
-
-![Joukkoliikennekaistageometrian katkaisu.](k111.JPG)
-
-_Joukkoliikennekaistageometrian katkaisu._
-
-16. Kaistojen lukum&auml;&auml;r&auml; (toistaiseksi n&auml;kyviss&auml; vain operaattorik&auml;ytt&auml;jille)
-----------------------
-
-Kaistojen lukum&auml;&auml;r&auml; n&auml;kyy t&auml;ll&auml; hetkell&auml; vain operaattorik&auml;ytt&auml;jille, koska tietolajia ei ole m&auml;&auml;ritelty uuteen Digiroad-j&auml;rjestelm&auml;&auml;n.
-
-Kartalle voi valita tietolajit-paletista (1) Kaistojen lukum&auml;&auml;r&auml; -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla kaistojen lukum&auml;&auml;r&auml; ei ole tiedossa, on visualisoitu harmaalla v&auml;rill&auml;.
-
-![Kaistojen lukum&auml;&auml;r&auml; -valinta.](k112.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml; -valinta._
-
-##16.1 Kaistojen lukum&auml;&auml;r&auml; -tietojen katselu##
-
-Yksitt&auml;isen kaistojen lukum&auml;&auml;r&auml; -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko tielinkkiketju, eli kaikki geometriat, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkaamalla tielinkki&auml;. Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai tielinkkiketjun kaistojen lukum&auml;&auml;r&auml;n ominaisuustieton&auml;kym&auml; (6).
-Kaistojen lukum&auml;&auml;r&auml; –tietolajin m&auml;&auml;rittely on toistaiseksi kesken, eik&auml; sen arvoja / lukum&auml;&auml;r&auml;n ilmaisutapaa ole viel&auml; p&auml;&auml;tetty.
-
-![Kaistojen lukum&auml;&auml;r&auml; -katselutila.](k113.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml; -katselutila._
-
-##16.2 Kaistojen lukum&auml;&auml;r&auml;n muokkaus##
-
-Muokkaustilassa kaistojen lukum&auml;&auml;r&auml;&auml; voi muuttaa ja geometrioita voi katkaista. Kaistojen lukum&auml;&auml;r&auml; -tietoja voi muokata kolmella tavalla:
-1. Koko tielinkkiketjulle kerralla.
-2. Yksitt&auml;isen linkin mittaiselle osuudelle.
-3. Monivalinnan avulla kokonaiselle alueelle.
-
-###Kaistojen lukum&auml;&auml;r&auml;n muokkaus###
-
-Kaistojen lukum&auml;&auml;r&auml;&auml; muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko ketju, eli kaikki per&auml;kk&auml;iset tielinkit, joilla on sama kaistojen lukum&auml;&auml;r&auml;n arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kaistojen lukum&auml;&auml;r&auml; -valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
-
-Huom! Kaistojen lukum&auml;&auml;r&auml;n arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa tiedoissa.
-
-![Kaistojen lukum&auml;&auml;r&auml;n muokkaus.](k114.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml;n muokkaus._
-
-###Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden kaistojen lukum&auml;&auml;r&auml;n arvon voi muuttaa kerralla. Halutut rajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki linkit laatikon sis&auml;ll&auml; ja linkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa sy&ouml;tet&auml;&auml;n kaistojen lukum&auml;&auml;r&auml; ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
-
-![Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla.](k115.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml;n muokkaus monivalintaty&ouml;kalulla._
-
-###Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu###
-
-Kaistojen lukum&auml;&auml;r&auml;n geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; tielinkki&auml; lyhyemmille tieosuuksille eri kaistojen lukum&auml;&auml;ri&auml;. Leikkausty&ouml;kalulla klikataan tielinkin geometriasta kohtaa, josta rajoitus halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2).
-
-Tielinkin katkaisu valitsee aina vain linkin mittaisen osion rajoituksesta, ei koko rajoitusketjua.
-
-![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](k116.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml; -kohteen katkaisu._
-
-Katkaistun tielinkin osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen ID, ja lyhyemm&auml;lle generoidaan uusi ID. Tielinkin katkaisussa uusille kohteille valitaan arvot oikean laidan valikoista (4). Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (5). Uudet kaistojen lukum&auml;&auml;r&auml;tiedot tallennetaan tallenna-painikkeesta (6). Katkaisun voi peruuttaa peruuta-painikkeella (7), jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
-
-Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille osuuksille eri arvot, jotta tallennus on mahdollista.
-
-![Kaistojen lukum&auml;&auml;r&auml; kohteen katkaisu.](k117.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml; -kohteen katkaisu._
-
-###Kaistojen lukum&auml;&auml;r&auml; -tiedon poistaminen###
-
-Tielinkin kaistojen lukum&auml;&auml;r&auml; -tieto poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Lukum&auml;&auml;r&auml;-kohdasta "Linkin mukainen tyypillinen kaistam&auml;&auml;r&auml;".
-
-![Kaistojen lukum&auml;&auml;r&auml; kohteen poistaminen.](k118.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml; -kohteen poistaminen._
-
-###Uuden kaistojen lukum&auml;&auml;r&auml; -tiedon lis&auml;&auml;minen###
-
-Tielinkille voi lis&auml;t&auml; kaistojen lukum&auml;&auml;r&auml;tiedon valitsemalla linkin geometrian (4) Kaistojen lukum&auml;&auml;r&auml; -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin kaistojen lukum&auml;&auml;r&auml;n tiedot. Valitaan "Kaistojen lukum&auml;&auml;r&auml; / suunta" ja sy&ouml;tet&auml;&auml;n kaistojen lukum&auml;&auml;r&auml; sy&ouml;tekentt&auml;&auml;n. Kaistojen lukum&auml;&auml;r&auml; tallennetaan painamalla Tallenna (8). Uuden kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;misen voi perua Peruuta-painikkeella (9).
-
-![Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen.](k119.JPG)
-
-_Kaistojen lukum&auml;&auml;r&auml;tiedon lis&auml;&auml;minen._
-
-17. Ajoneuvokohtainen rajoitus 
-----------------------
-
-Ajoneuvokohtaiset rajoutukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. N&auml;it&auml; ovat esimerkiksi moottoriajoneuvokiellot. My&ouml;s l&auml;piajokiellot ovat ajoneuvokohtaisia rajoituksia. Ajoneuvokohtaisessa rajoituksessa voi olla my&ouml;s poikkeus, esimerkiksi huoltoajo sallittu. Karttan&auml;kym&auml;&auml;n voi valita ajoneuvokohtaiset rajoitukset valitsemalla tietolajit-paletista (1) Ajoneuvokohtaiset rajoitukset. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on ajoneuvokohtainen rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
-
-![Valinta.](k121.jpg)
-
-_Ajoneuvokohtaisen rajoituksen valinta._
-
-##17.1 Ajoneuvokohtaisen rajoituksen katselu##
-
-Yksitt&auml;isen ajoneuvokohtaisen rajoituksen voi valita klikkaamalla kartalta sen geometriaa (1).
-Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli osuus, jossa ajoneuvokohtaisella rajoituksella on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
-
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla rajoitusta. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu ajoneuvokohtaisen rajoituksen ominaisuustieton&auml;kym&auml; (2). Ominaisuustieton&auml;kym&auml;ss&auml; on ajoneuvokohtaisen rajoituksen tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
-
-![Katselu.](k122.jpg)
-
-_Ajoneuvokohtaisen rajoituksen tietojen katselu._
-
-Ajoneuvokohtaiset rajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Rajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, rajoitus on visualisoitu yhdell&auml; paksulla viivalla (1). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (2).
-
-![Visualisointi.](k123.jpg)
-
-_Ajoneuvokohtaisen rajoituksen vaikutussuunnan visualisointi._
-
-##17.2 Ajoneuvokohtaisen rajoituksen muokkaus##
-
-Ajoneuvokohtaisille rajoituksille voi antaa muokkaustilassa tietoja. Muutokset tallennetaan tallenna-painikkeesta ja ennen tallennusta ne voi peruuttaa peruuta-painikkeesta.
-
-Ajoneuvokohtaisia rajoituksia voi muokata kolmella tavalla:
-1.	Koko ajoneuvorajoitusketjulle (esim. koko kadulle).
-2.	Yksitt&auml;isen linkin mittaiselle osuudelle.
-3.	Monivalinnan avulla kokonaiselle alueelle.
-
-###Ajoneuvokohtaisen rajoituksen muokkaus ja lis&auml;ys###
-
-Muokattava rajoitus valitaan klikkaamalla sen geometriaa (4). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). 
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla ajoneuvokohtaista rajoitusta.
-
-Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; olevien alasvetovalikkojen avulla (5). Ajoneuvokohtaisella rajoituksella voi olla my&ouml;s poikkeuksia (ajoneuvoja, joita rajoitus ei koske) (6) sek&auml; voimassaolokellonaika ma-pe, la, su (7). Kellonaika ilmoitetaan samassa muodossa, mit&auml; se on maastossa olevassa lis&auml;kilvess&auml;.
-
-![Muokkaus.](k124.jpg)
-
-_Ajoneuvokohtaisen rajoituksen muokkaus._
-
-Tielinkit, joilla ei ole ajoneuvokohtaista rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi ajoneuvokohtainen rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (8). Valitsemalla alasvetovalikosta rajoituksen tyyppi (9), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja poikkeuksille.
-
-![Lisays.](k125.jpg)
-
-_Ajoneuvokohtaisen rajoituksen lis&auml;ys._
-
-###Ajoneuvokohtaisen rajoituksen poistaminen###
-
-Ajoneuvokohtaisia rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustieton&auml;kym&auml;st&auml; rajoituksen pois (1). My&ouml;s rajoituksen ominaisuuksia eli voimassaoloaikaa ja poikkeuksia voi poistaa ominaisuustieton&auml;kym&auml;n rukseista. (2) 
-
-![Poisto.](k126.jpg)
-
-_Ajoneuvokohtaisen rajoituksen poistaminen._
-
-###Useamman ajoneuvokohtaisen rajoituksen muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden tielinkin ajoneuvokohtaiset rajoitustiedot voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (1), jossa valitaan ajoneuvokohtaisenrajoituksien tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla (2). Peruuta-painikkeesta voi perua muutoksen.
-
-Huom! Muutos kumoaa kaikki valitun alueen aiemmat ajoneuvokohtaisten rajoitusten tiedot. P&auml;&auml;llekk&auml;isi&auml; rajoituksia ei voi siis luoda.
-
-![Muokkaus useita.](k127.jpg)
-
-_Useamman ajoneuvokohtaisen rajoituksen tietojen muokkaus kerralla._
-
-###Ajoneuvokohtaisen rajoituksen katkaiseminen###
-
-Ajoneuvokohtaisen rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta se halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion rajoitusta, ei koko ketjua.
-
-Ajoneuvokohtaisen rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (4). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (5).
-
-Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
-
-![Katkaisu.](k128.jpg)
-
-_Ajoneuvokohtaisen rajoituksen katkaiseminen._
-
-###Ajoneuvokohtaisen rajoituksen muuttaminen yksisuuntaiseksi###
-
-Molempiin suuntiin voimassa olevan ajoneuvokohtaisen rajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti.
-
-Muutos tehd&auml;&auml;n tuplaklikkaamalla kyseist&auml; ajoneuvokohtaista rajoitusta (1), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (2).
-
-![Yksisuuntaisuus.](k129.jpg)
-
-_Ajoneuvokohtaisen rajoituksen valinta ja muuttaminen yksisuuntaiseksi._
-
-Painikkeen painamisen j&auml;lkeen voi uusille ajoneuvokohtaisille rajoituksille antaa arvot alasvetovalikoista (3). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat kohteita kartalla (4). 
-
-![Arvot.](k130.jpg)
-
-_Uusien yksisuuntaisten ajoneuvokohtaisen rajoitusten arvojen valinta._
-
-Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
-
-18. Vaarallisten aineiden kuljetus (VAK)
-----------------------------------------
-
-Vaarallisten aineiden kuljetus –rajoitus eli VAK-rajoitukset ovat rajoituksia, jotka koskevat vain tiettyj&auml; ajoneuvoja. VAK-rajoituksessa voi olla my&ouml;s poikkeus, kuten kellonaika, jolloin rajoitus on voimassa. Karttan&auml;kym&auml;&auml;n voi valita VAK-rajoitukset valitsemalla tietolajit-paletista (1) VAK-rajoitus. Karttaa tarkennettaessa rajoitukset tulevat n&auml;kyviin. Tielinkit, joilla on VAK-rajoitus, on visualisoitu punaisella v&auml;rill&auml;.
-
-![Valinta.](k131.JPG)
-
-_VAK-rajoituksen valinta._
-
-##18.1 VAK-rajoituksen tietojen katselu##
-
-Yksitt&auml;isen VAK-rajoituksen voi valita klikkaamalla kartalta sen geometriaa. Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli osuus, jossa VAK-rajoituksella on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
-
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla rajoitusta. Valitun rajoitusketjun tai yksitt&auml;isen rajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu VAK-rajoituksen ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; on VAK-rajoituksen tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
-
-![Katselu.](k132.JPG)
-
-_VAK-rajoituksen tietojen katselu._
-
-VAK-rajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Rajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan.  Jos vaikutussuunta on molempiin suuntiin, rajoitus on visualisoitu yhdell&auml; paksulla viivalla (1). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (2).
-
-![Visuaali.](k133.JPG)
-
-_VAK-rajoituksen vaikutussuunnan visualisointi._
-
-##18.2 VAK-rajoituksen muokkaus##
-
-VAK-rajoituksille voi antaa muokkaustilassa tietoja. VAK-rajoituksia voi muokata kolmella tavalla:
-
-1.	Koko VAK-rajoitusketjulle (esim. koko kadulle).
-1.	Yksitt&auml;isen linkin mittaiselle osuudelle.
-1.	Monivalinnan avulla kokonaiselle alueelle.
-
-###VAK-rajoituksen muokkaus ja lis&auml;ys###
-
-Muokattava rajoitus valitaan klikkaamalla sen geometriaa (1). Kerran klikkaamalla tulee valituksi koko rajoitusketju, eli kaikki rajoitukset, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla VAK-rajoitusta.
-
-Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; olevien alasvetovalikkojen avulla (2). VAK-rajoituksella voi olla my&ouml;s voimassaolokellonaika (3). Kellonaika ilmoitetaan samassa muodossa, mit&auml; se on maastossa olevassa lis&auml;kilvess&auml;.
-
-![Muokkaus.](k134.JPG)
-
-_VAK-rajoituksen muokkaus._
-
-Tielinkit, joilla ei ole VAK-rajoitusta on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi VAK-rajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml; (4). Valitsemalla alasvetovalikosta rajoituksen tyyppi (5), tulee t&auml;m&auml;n j&auml;lkeen n&auml;kyviin lis&auml;&auml; valikkoja voimassaolokellonajalle ja toiselle rajoitukselle.
-
-![Lis&auml;ys.](k135.jpg)
-
-_VAK-rajoituksen lis&auml;ys_
-
-###VAK-rajoituksen poistaminen###
-
-VAK-rajoituksia voi poistaa valitsemalla kartalta rajoituksen, ja ruksimalla ominaisuustieton&auml;kym&auml;st&auml; rajoituksen pois (1). My&ouml;s rajoituksen voimassaoloajan voi poistaa ominaisuustieton&auml;kym&auml;n rukseista (2). Muutokset tallentuu tallenna-napista.
-
-![Poisto.](k136.JPG)
-
-_VAK-rajoituksen poistaminen._
-
-###Useamman VAK-rajoituksen muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden tielinkin VAK-rajoitustiedot voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (1), jossa valitaan VAK-rajoituksien tiedot ko. alueella ja valitut linkit ovat korostettuna kartalla (2). Peruuta-painikkeesta voi perua muutoksen.
-
-Huom! Muutos kumoaa kaikki valitun alueen aiemmat VAK-rajoitusten tiedot. P&auml;&auml;llekk&auml;isi&auml; rajoituksia ei voi siis luoda.
-
-![Monivalinta.](k137.JPG)
-
-_Useamman VAK-rajoituksen tietojen muokkaus kerralla._
-
-###VAK-rajoituksen katkaiseminen###
-
-VAK-rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta se halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion rajoitusta, ei koko ketjua.
-
-VAK-rajoituksen katkaisussa uusille rajoituksille valitaan arvot oikean laidan alasvetovalikoista (2). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta rajoituksesta on kyse (3). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
-
-Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
-
-![Katkaisu.](k138.JPG)
-
-_VAK-rajoituksen katkaiseminen._
-
-##18.3 VAK-rajoituksen muuttaminen yksisuuntaiseksi##
-
-Molempiin suuntiin voimassa olevan VAK-rajoituksen voi muuttaa yksisuuntaiseksi, jos kyseisell&auml; tielinkill&auml; liikennevirran suunta on molempiin suuntiin. Muutos tehd&auml;&auml;n siis tielinkkikohtaisesti. Muutos tehd&auml;&auml;n tuplaklikkaamalla kyseist&auml; VAK-rajoitusta (1), jolloin oikeaan laitaan tulee painike "Jaa kaksisuuntaiseksi" (2).
-
-![Yksisuuntaiseksi.](k139.JPG)
-
-_VAK-rajoituksen valinta ja muuttaminen yksisuuntaiseksi._
-
-Painikkeen painamisen j&auml;lkeen voi uusille VAK-rajoituksille antaa arvot alasvetovalikoista (3). Kirjaimet alasvetovalikkojen vieress&auml; vastaavat kohteita kartalla (4).
-
-![Yksisuuntaisen arvo.](k140.JPG)
-
-_Uusien yksisuuntaisten VAK-rajoitusten arvojen valinta._
-
-Uudet rajoitukset tallennetaan tallenna-painikkeesta. Jakamisen voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen rajoitus j&auml;&auml; voimaan.
-
-19. Suojatie
-----------------------
-
-Suojatie on ajoradan ylitt&auml;miseen tarkoitettu kohta. Karttan&auml;kym&auml;&auml;n voi valita suojatiet tietolajit-paletista (1) ”Suojatie”. Kartalle tulevat esiin suojatiemerkinn&auml;t sinisen&auml; ympyr&auml;n&auml;. Punaisella ympyr&auml;ll&auml; olevat suojatiemerkinn&auml;t kuvaavat geometrian ulkopuolella olevia suojateit&auml;.
-
-![Valinta.](k141.JPG)
-
-_Suojatiemerkinn&auml;n valinta._
-
-##19.1 Suojatiemerkinn&auml;n tietojen katselu##
-
-Yksitt&auml;isen suojatiemerkinn&auml;n voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu suojatiemerkinn&auml;n ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa klikkaamalla taustakarttaa.
-
-![Valinta.](k142.JPG)
-
-_Suojatien katselu._
-
-##19.2 Suojatiemerkinn&auml;n muokkaus##
-
-Suojatiemerkinn&auml;n voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
-
-###Suojatiemerkinn&auml;n poisto, siirto ja lis&auml;ys###
-
-Muokattava suojatie valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu suojatiemerkint&auml; voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla.
-
-Yksitt&auml;ist&auml; suojatiemerkint&auml;&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Linkki, jolle suojatie siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla.
-
-![Muokkaustila.](k145.JPG)
-
-_Suojatien muokkaustila._
-
-</br>
-Suojatiemerkint&auml; voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (6). Suojatiemerkint&auml; lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (7).
-
-###Geometrian ulkopuolelle j&auml;&auml;neet suojatiet###
-
-Geometrian ulkopuolelle j&auml;&auml;neet suojatiet on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Suojatiemerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
-
-![Merkinta.](k143.JPG)
-
-_Geometrian ulkopuolinen suojatiemerkint&auml; on v&auml;rilt&auml;&auml;n punainen._
-
-</br>
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (2). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan suojatien kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
-
-![Ulkopuoliset suojatiet.](k144.JPG)
-
-_Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
-
-20. Esterakennelma
-----------------------
-
-Esterakennelma on tien normaalin k&auml;yt&ouml;n est&auml;v&auml; rakennelma. Esterakennelmat jaetaan avattaviin puomeihin ja suljettuihin yhteyksiin. Kartalle voi valita esterakennelmat valitsemalle tietolajit(1) -paletista "Esterakennelma". Suljetut yhteydet n&auml;kyv&auml;t kartalla sinisell&auml; ympyr&auml;ll&auml; ja avattavat puomit vihre&auml;ll&auml; ympyr&auml;ll&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; esterakennelmia.
-
-![Valinta.](k146.jpg)
+![Valinta.](este1.png)
 
 _Esterakennelman valinta._
 
-##20.1 Esterakennelman tietojen katselu##
+## 26.1 Esterakennelman tietojen katselu
 
-Yksitt&auml;isen esterakennelman voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu esterakennelman ominaisuustieton&auml;kym&auml; (3). Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; esterakennelman tyyppi eli suljettu yhteys tai avattava puomi. Valinnan voi poistaa klikkaamalla muualle.
+Yksitt&auml;isen esterakennelman voi valita napauttamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu esterakennelman ominaisuustietoikkuna (3). Ominaisuustietoikkunassa n&auml;kyy esterakennelman ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; esterakennelman tyyppi eli suljettu yhteys tai avattava puomi. Valinnan voi poistaa napauttamalla muualle.
 
-![Katselu.](k147.jpg)
+![Katselu.](este2.png)
 
 _Esterakennelman katselu._
 
-##20.2 Esterakennelman muokkaus##
+## 26.2 Esterakennelman muokkaus
 
 Esterakennelman voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml;. Lis&auml;ksi olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa avattavan puomin ja suljetun yhteyden v&auml;lill&auml; alasvetovalikosta. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
 
-###Esterakennelman poisto, siirto, lis&auml;ys ja tyyppi###
+### Esterakennelman poisto, siirto, lis&auml;ys ja tyyppi
 
-Muokattava esterakennelma valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu esterakennelma voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta. Muutokset voidaan kumota peruuta-napilla. Olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa oikean laidan alasvetovalikosta valitsemalla suljettu yhteys tai avattava puomi (5). Kohteen visualisointi kartalla muuttuu valinnan mukaan.
+Muokattava esterakennelma valitaan napauttamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu esterakennelma voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta. Muutokset voidaan kumota peruuta-napilla. Olemassa olevan esterakennelman tyyppi&auml; voi vaihtaa oikean laidan alasvetovalikosta valitsemalla suljettu yhteys tai avattava puomi (5). Kohteen visualisointi kartalla muuttuu valinnan mukaan.
 
-![Muokkaus.](k148.jpg)
+![Muokkaus.](este3.png)
 
 _Esterakennelman muokkaus._
 
-Yksitt&auml;ist&auml; esterakennelma voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle esterakennelma siirtyy, korostuu kartalla sinisell&auml; (8). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
+Yksittäinen esterakennelma voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle esterakennelma siirtyy, korostuu kartalla sinisell&auml; (6). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
 
-![Siirto.](k152.jpg)
+![Siirto.](este4.png)
 
 _Esterakennelman siirto._
 
-Esterakennelma voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Esterakennelma lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttan&auml;kym&auml; tummenee. Esterakennelmalle valitaan oikeasta laidasta tyyppi eli suljettu yhteys tai avattava puomi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. 
+Esterakennelma voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Esterakennelma lis&auml;t&auml;&auml;n haluttuun tien kohtaan napauttamalla karttaa (8), jolloin karttaikkuna tummenee. Esterakennelmalle valitaan oikeasta laidasta tyyppi eli suljettu yhteys tai avattava puomi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. 
 
-![Lisays.](k149.jpg)
+![Lisays.](este5.png)
 
 _Esterakennelman lis&auml;ys._
 
 Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella.
 
-###Geometrian ulkopuolelle j&auml;&auml;neet esterakennelmat###
+### Geometrian ulkopuolelle j&auml;&auml;neet esterakennelmat
 
 Geometrian ulkopuolelle j&auml;&auml;neet esterakennelmat on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Esterakennelmaa siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; esterakennelmilla on oma lista (2). Esterakennelmat on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne esterakennelmat, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan esterakennelmaan on listassa linkki, josta p&auml;&auml;see suoraan esterakennelman kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; esterakennelmilla on oma lista (10). Esterakennelmat on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne esterakennelmat, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan esterakennelmaan on listassa linkki, josta p&auml;&auml;see suoraan esterakennelman kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Merkinta.](k150.jpg)
+![Merkinta.](este6.png)
 
 _Geometrian ulkopuolinen esterakennelma on v&auml;rilt&auml;&auml;n punainen._
 
-![Ulkopuoliset esterakennelmat.](k151.jpg)
+![Ulkopuoliset esterakennelmat.](este7.PNG)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden esterakennelmien lista._
 
-21. Rautatien tasoristeys
-----------------------
+# 27. Rautatien tasoristeys
 
-Kartalle voi valita rautatien tasoristeykset valitsemalle tietolajit(1) -paletista "Rautatien tasoristeys". Rautatien tasoristeykset n&auml;kyv&auml;t kartalla sinisen&auml; ympyr&auml;n&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; tasoristeyksi&auml;.
+Karttaikkunaan voi valita rautatien tasoristeykset valitsemalle tietolajivalikosta (1) "Rautatien tasoristeys". Rautatien tasoristeykset n&auml;kyv&auml;t kartalla sinisen&auml; ympyr&auml;n&auml;. Punaiset ympyr&auml;t ovat geometrian ulkopuolelle j&auml;&auml;neit&auml; tasoristeyksi&auml;.
 
-![Valinta.](k153.jpg)
+![Valinta.](taso1.png)
 
 _Rautatien tasoristeyksen valinta._
 
-##21.1 Rautatien tasoristeyksen tietojen katselu##
+## 27.1 Rautatien tasoristeyksen tietojen katselu
 
-Yksitt&auml;isen tasoristeyksen voi valita klikkaamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu tasoristeyksen ominaisuustieton&auml;kym&auml; (3). Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot, tasoristeyksen turvavarustus sek&auml; nimi. Valinnan voi poistaa klikkaamalla muualle.
+Yksitt&auml;isen tasoristeyksen voi valita napauttamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu tasoristeyksen ominaisuustietoikkuna (3). Ominaisuustietoikkunassa n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot, tasoristeystunnus, tasoristeyksen turvavarustus sek&auml; nimi. Valinnan voi poistaa napauttamalla muualle.
 
-![Katselu.](k154.jpg)
+![Katselu.](taso2.png)
 
 _Rautatien tasoristeyksen katselu._
 
-##21.2 Rautatien tasoristeyksen muokkaus##
+## 27.2 Rautatien tasoristeyksen muokkaus
 
-Rautatien tasoristeyksen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml;. Lis&auml;ksi olemassa olevan tasoristeyksen turvavarustusta voi muokata alasvetovalikosta ja nime&auml; voi muokata. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+Rautatien tasoristeyksen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml;. Lis&auml;ksi olemassa olevan tasoristeyksen turvavarustusta voi muokata alasvetovalikosta ja tasoristeystunnusta sekä nime&auml; voi muokata. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
 
-###Rautatien tasoristeyksen ominaisuustietojen muokkaus, siirto, poisto ja lis&auml;ys###
+### Rautatien tasoristeyksen ominaisuustietojen muokkaus, siirto, poisto ja lis&auml;ys
 
-Muokattava tasoristeys valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu tasoristeys voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4). Olemassa olevan tasoristeyksen turvavarustuksen tietoja voi vaihtaa oikean laidan alasvetovalikosta. Muutokset tallennetaan tallenna-painikkeesta tai voi perua peruuta-painikkeesta (6).
+Muokattava tasoristeys valitaan napauttamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu tasoristeys voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4). Olemassa olevan tasoristeyksen turvavarustuksen tietoja voi vaihtaa oikean laidan alasvetovalikosta. Muutokset tallennetaan tallenna-painikkeesta tai voi perua peruuta-painikkeesta (5).
 
-![Muokkaus.](k155.jpg)
+![Muokkaus.](taso3.png)
 
 _Rautatien tasoristeyksen muokkaus._
 
-Yksitt&auml;ist&auml; tasoristeyst&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle tasoristeys siirtyy, korostuu kartalla sinisell&auml; (8). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-napilla.
+Yksitt&auml;ist&auml; tasoristeyst&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle tasoristeys siirtyy, korostuu kartalla sinisell&auml; (6). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-painikkeella.
 
-![Siirto.](k156.jpg)
+![Siirto.](taso4.png)
 
 _Rautatien tasoristeyksen siirto._
 
-Uusi tasoristeys voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Tasoristeys lis&auml;t&auml;&auml;n haluttuun tien kohtaan klikkaamalla karttaa (8), jolloin karttan&auml;kym&auml; tummenee. Tasoristeykselle valitaan oikean laidan alasvetovalikosta turvavarustus-tieto sek&auml; kirjoitetaan nimi (9). Uusi kohde tallennetaan painamalla Tallenna-nappia. Lis&auml;yksen voi perua peruuta-painikkeesta.
+Uusi tasoristeys voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (7). Tasoristeys lis&auml;t&auml;&auml;n haluttuun tien kohtaan napauttamalla karttaa (8), jolloin karttaikkuna tummenee. Tasoristeykselle valitaan oikean laidan alasvetovalikosta turvavarustus-tieto sek&auml; kirjoitetaan tasoristeystunnus ja nimi (9). Uusi kohde tallennetaan painamalla tallenna-painiketta. Lis&auml;yksen voi perua peruuta-painikkeesta.
 
-![Lisays.](k157.jpg)
+![Lisays.](taso5.png)
 
 _Rautatien tasoristeyksen lis&auml;ys._
 
 Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella.
 
-###Geometrian ulkopuolelle j&auml;&auml;neet rautatien tasoristeykset###
+### Geometrian ulkopuolelle j&auml;&auml;neet rautatien tasoristeykset
 
-Geometrian ulkopuolelle j&auml;&auml;neet tasoristeykset on korostettu kartalla punaisella ympyr&auml;ll&auml; (1). N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Tasoristeyst&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+Geometrian ulkopuolelle j&auml;&auml;neet tasoristeykset on korostettu kartalla punaisella ympyr&auml;ll&auml; (10). N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Tasoristeyst&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; tasoristeyksill&auml; on oma lista (2). Tasoristeykset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne tasoristeykset, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan tasoristeykseen on listassa linkki, josta p&auml;&auml;see suoraan tasoristeyksen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; tasoristeyksill&auml; on oma lista (11). Tasoristeykset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne tasoristeykset, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan tasoristeykseen on listassa linkki, josta p&auml;&auml;see suoraan tasoristeyksen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Merkinta.](k158.jpg)
+![Merkinta.](taso6.png)
 
 _Geometrian ulkopuolinen rautatien tasoristeys on v&auml;rilt&auml;&auml;n punainen._
 
-![Ulkopuoliset tasoristeykset.](k159.jpg)
+![Ulkopuoliset tasoristeykset.](taso7.PNG)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden rautatien tasoristeysten lista._
 
-22. Opastustaulu ja sen informaatio
-----------------------
+# 28. Opastustaulu ja sen informaatio
 
-Opastustaulu ja sen informaatio ovat moottori- ja moottoriliikenneteill&auml; sijaitseva tai niille opastava tienviitta. Karttan&auml;kym&auml;&auml;n voi valita opastustaulut tietolajit-paletista (1). Kartalle tulevat esiin opastustaulut sinisen&auml; nuolena. Nuolen suunta kuvaa opastustaulun vaikutussuuntaa. Punaisella nuolella olevat opastustaulut kuvaavat geometrian ulkopuolella olevia opastustauluja.
+Opastustaulu ja sen informaatio ovat moottori- ja moottoriliikenneteill&auml; sijaitseva tai niille opastava tienviitta. Karttaikkunaan voi valita opastustaulut tietolajivalikosta (1). Kartalle tulevat esiin opastustaulut sinisen&auml; nuolena. Nuolen suunta kuvaa opastustaulun vaikutussuuntaa. Punaisella nuolella olevat opastustaulut kuvaavat geometrian ulkopuolella olevia opastustauluja.
 
-![Valinta.](k161.JPG)
+![Valinta.](opas1.png)
 
 _Opastustaulun valinta._
 
-##22.1 Opastustaulun tietojen katselu##
+## 28.1 Opastustaulun tietojen katselu
 
-Yksitt&auml;isen opastustaulun voi valita klikkaamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu opastustaulun ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot ja opastustaulun informaatio. Valinnan voi purkaa klikkaamalla taustakarttaa.
+Yksitt&auml;isen opastustaulun voi valita napauttamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu opastustaulun ominaisuustietoikkuna. Ominaisuustietoikkunassa n&auml;kyy opastustaulun ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sekä opastustaulun informaatio. Valinnan voi purkaa napauttamalla taustakarttaa.
 
-![Katselu.](k162.JPG)
+![Katselu.](opas2.png)
 
 _Opastustaulun katselu._
 
@@ -1730,8 +2298,8 @@ __Opastustaulun informaation sis&auml;lt&ouml;__
 
 Informaatiokent&auml;ss&auml; on seuraavat tiedot puolipisteell&auml; eroteltuina ja useampi kohde rivinvaihdolla:
 
-PAIKKAKUNNAT;V&auml;RI;SIJAINTI
-PAIKKAKUNNAT;V&auml;RI;SIJAINTI
+PAIKKAKUNNAT;VÄRI;SIJAINTI
+PAIKKAKUNNAT;VÄRI;SIJAINTI
 
 Kenttien sis&auml;ll&auml; tiedot on eroteltu kaksoispisteell&auml;. Esim:
 
@@ -1749,259 +2317,303 @@ Taustav&auml;ri:
 	
 Sijainti: Taulun et&auml;isyys liittym&auml;st&auml; metrein&auml;.
 
-##22.2 Opastustaulun muokkaus##
+## 28.2 Opastustaulun muokkaus
 
 Opastustaulun voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
 
-###Opastustaulun siirto, muokkaus ja poisto###
+### Opastustaulun siirto, muokkaus ja poisto
 
-Muokattava opastustaulu valitaan klikkaamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu opastustaulu voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (3) ja painamalla tallenna painiketta (4). Muutokset voidaan kumota peruuta-napilla (5).
+Muokattava opastustaulu valitaan napauttamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu opastustaulu voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna-painiketta (3). Muutokset voidaan kumota peruuta-painikkeella (4).
 
-Yksitt&auml;ist&auml; opastustaulua voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle opastustaulu siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (4). Muutokset voidaan kumota peruuta-napilla(5).
+Yksitt&auml;ist&auml; opastustaulua voidaan my&ouml;s siirt&auml;&auml;. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle opastustaulu siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-painikkeella (4).
 
-Muokkaustilassa opastustaulun tekstikentt&auml;&auml;n (6) pystyy my&ouml;s lis&auml;t&auml; informaatiota ja vaihtaa vaikutussuuntaa (7). 
+Muokkaustilassa opastustaulun tekstikentt&auml;&auml;n (5) pystyy my&ouml;s lis&auml;t&auml; informaatiota ja vaihtaa vaikutussuuntaa (6). 
 
-![Muokkaus.](k163.JPG)
+![Muokkaus.](opas3.png)
 
 _Opastustaulun muokkaus._
 
-###Opastustaulun lis&auml;ys###
+### Opastustaulun lis&auml;ys
 
-Opastustaulu voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis&auml;&auml;-painiketta (8). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (9).
+Opastustaulu voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkissa lisäyspainiketta (7). Opastustaulu lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan tallenna-painiketta (3). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
 
-###Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut###
+### Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut
 
 Geometrian ulkopuolelle j&auml;&auml;neet opastustaulut on korostettu kartalla punaisella nuolella. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Opastustaulumerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu. Ennen opastustaulun korjaamista tiegeometrialle, tulee alla olevan tielinkit tiedot olla tarvittaessa korjattu.
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; opastustauluilla on oma lista (2). Opastustaulut on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne opastustaulut, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Opastustauluista on listassa linkki, josta p&auml;&auml;see suoraan opastustaulun kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; opastustauluilla on oma lista (9). Opastustaulut on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne opastustaulut, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Opastustauluista on listassa linkki, josta p&auml;&auml;see suoraan opastustaulun kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Ulkopuolella1.](k164.JPG)
+![Ulkopuolella1.](opas4.png)
 
 _Geometrian ulkopuolinen opastustaulu on v&auml;rilt&auml;&auml;n punainen._
 
-![Ulkopuolella2.](k165.JPG)
+![Ulkopuolella2.](opas5.PNG)
 
 _Geometrian ulkopuolelle j&auml;&auml;neiden opastustaulujen lista._
 
-23. Palvelupiste
-----------------------
+# 29. Suojatie
 
-Palvelu on liikenneverkon k&auml;ytt&auml;j&auml;&auml; auttava ja tukeva palvelu kuten pys&auml;k&ouml;intitalo tai linja-autoasema. Palvelulla on geometriapiste (palvelupiste), joka sijaitsee palvelun sijaintikohdassa (rakennuksen tai kiinteist&ouml;n keskikohdassa). Yhdess&auml; palvelupisteess&auml; voi olla useita palveluita. Karttan&auml;kym&auml;&auml;n voi valita palvelupisteet tietolajit-paletista (1). Kartalle tulevat esiin palvelupisteet sinisen&auml; ympyr&auml;n&auml;.
+Suojatie on ajoradan ylitt&auml;miseen tarkoitettu kohta. Karttaikkunaan voi valita suojatiet tietolajivalikosta (1) ”Suojatie”. Kartalle tulevat esiin suojatiemerkinn&auml;t sinisen&auml; ympyr&auml;n&auml;. Punaisella ympyr&auml;ll&auml; olevat suojatiemerkinn&auml;t kuvaavat geometrian ulkopuolella olevia suojateit&auml;. 
+
+![Valinta.](suojatie1.png)
+
+_Suojatiemerkinn&auml;n valinta._
+
+## 29.1 Suojatiemerkinn&auml;n tietojen katselu
+
+Yksitt&auml;isen suojatiemerkinn&auml;n voi valita napauttamalla kartalta sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Sivun oikeaan laitaan avautuu suojatiemerkinn&auml;n ominaisuustietoikkuna. Ominaisuustietoikkunassa n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa napauttamalla taustakarttaa.
+
+![Valinta.](suojatie2.png)
+
+_Suojatien katselu._
+
+## 29.2 Suojatiemerkinn&auml;n muokkaus
+
+Suojatiemerkinn&auml;n voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+### Suojatiemerkinn&auml;n poisto, siirto ja lis&auml;ys
+
+Muokattava suojatie valitaan napauttamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu suojatiemerkint&auml; voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna painiketta (3). Muutokset voidaan kumota peruuta-napilla.
+
+Yksitt&auml;ist&auml; suojatiemerkint&auml;&auml; voidaan my&ouml;s siirt&auml;&auml; valitsemalla kohde. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Linkki, jolle suojatie siirtyy, korostuu sinisell&auml;. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-napilla.
+
+![Muokkaustila.](suojatie3.png)
+
+_Suojatien muokkaustila._
+
+Suojatiemerkint&auml; voidaan lis&auml;t&auml; valitsemalla vasemmalta lis&auml;ys-ty&ouml;kalu (plussa) (4). Suojatiemerkint&auml; lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (5).
+
+### Geometrian ulkopuolelle j&auml;&auml;neet suojatiet
+
+Geometrian ulkopuolelle j&auml;&auml;neet suojatiet on korostettu kartalla punaisella ympyr&auml;ll&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Suojatiemerkint&auml;&auml; siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+
+![Merkinta.](suojatie4.png)
+
+_Geometrian ulkopuolinen suojatiemerkint&auml; on v&auml;rilt&auml;&auml;n punainen._
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; suojateill&auml; on oma lista (6). Suojatiet on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne suojatiet, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Suojatiest&auml; on listassa linkki, josta p&auml;&auml;see suoraan suojatien kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Ulkopuoliset suojatiet.](suojatie5_2.png)
+
+_Geometrian ulkopuolelle j&auml;&auml;neiden suojateiden lista._
+
+# 30. Liikennevalot
+
+Valo-ohjatuissa liittymiss&auml; liikennevalot on kuvattu pisteinä, joilla on niiden vaikutussuuntaa kuvaavat nuolet. Karttaikkunaan voi valita liikennevalot tietolajivalikosta (1). Uuden vuonna 2020 voimaan tulleen tieliikennelain myötä Digiroadiin kerätään tarkempaa tietoa liikennevaloista, joten tietolajipaneelissa ja kartalla on näkyvillä sekä vanhan että uuden tietomallin mukaiset opastinlaitteet. Vanhan mallin liikennevalot näyttäytyvät kartalla sinisinä pisteinä. Punaisilla pisteillä visualisoituna liikennevalot ovat puolestaan geometrian ulkopuolella olevia kohteita. Uuden tietomallin mukaiset liikennevalot näkyvät karttaikkunassa pisteinä, joilla on vaikutussuuntanuoli. Uuden tietomallin mukaisesti oranssilla visualisoidut liikennevalot indikoivat, että niissä on useita opastinlaitteita. Puolestaan valkoisella visualisoidut kohteet indikoivat risteyksessä olevan vain yksi opastinlaite.
  
-![Valinta.](k167.JPG)
-
-_Palvelupisteiden valinta._
-
-##23.1 Palvelupisteen tietojen katselu##
-
-Yksitt&auml;isen palvelupisteen voi valita klikkaamalla kartalta sen geometriaa.
-
-Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu palvelupisteen ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi –tiedot. Palvelulla on nimi, palvelun tyyppi, lis&auml;tieto ja  lepoalueella, pys&auml;k&ouml;intialueella, kuorma-autojen pys&auml;k&ouml;intialueella ja rautatieasemalla on tarkentava tyyppi. Valinnan voi purkaa klikkaamalla taustakarttaa.
- 
-![Katselu.](k168.JPG)
-
-_Palvelupisteiden katselu._
-
-##23.2 Palvelupisteen muokkaus##
-
-Palvelupisteen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
-
-###Palvelupisteen poisto###
-
-Muokattava palvelupiste valitaan klikkaamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu palvelupiste voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna painiketta (3). Muutokset voidaan kumota peruuta-napilla (4).
-
-###Palvelupsiteen siirto ja muokkaus###
-
-Yksitt&auml;ist&auml; palvelupistett&auml; voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Palvelupisteen sijainti ei ole riippuvainen tien geometriasta, vaan sen voi sijoittaa mihin kohtaan tahansa. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-napilla(4).
-
-Muokkaustilassa palvelupisteeseen voidaan lis&auml;t&auml; uusi palvelu (5) tai yksitt&auml;inen palvelu voidaan poistaa (6). Palveluun voidaan m&auml;&auml;ritt&auml;&auml; palvelun nimi (7) ja lis&auml;tieto (8). Joihinkin palveluihin on valittavissa my&ouml;s tarkentava lis&auml;kentt&auml; (9), kuten lepoalueella, pys&auml;k&ouml;intialueella, kuorma-autojen pys&auml;k&ouml;intialueella ja rautatieasemalla.
-
-![Muokkaus.](k169.JPG)
-
-_Palvelupisteiden muokkaus._
-
-###Palvelupisteen lis&auml;ys###
-
-Palvelupiste voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta lis&auml;&auml;-painiketta (10). Palvelupiste lis&auml;t&auml;&auml;n haluttuun kohtaan ja painetaan Tallenna-nappia (3) tai kumotaan Peruuta-painikkeesta (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (11).
-
-24. Eurooppatienumero
-----------------------
-
-Eurooppatien numerot kattavat maantiet ja muutaman kaupungin kadut. Eurooppatienumerot ovat muotoa E+nro. Karttan&auml;kym&auml;&auml;n voi valita eurooppatienumerot tietolajit-paletista (1). Karttaa tarkennettaessa kohteet tulevat n&auml;kyviin. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on eurooppatienumero.
- 
-![Valinta.](k170.JPG)
-
-_Eurooppatienumeroiden valinta._
-
-##24.1 Eurooppatienumeron tietojen katselu##
-
-Eurooppatienumeron voi valita klikkaamalla kartalta sen geometriaa.
-
-Kerran klikkaamalla tulee valituksi koko ketju, eli osuus, jossa eurooppatienumerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). 
-
-Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla eurooppatienumerollista tielinkki&auml;. Valittu ketjun tai yksitt&auml;isen tielinkin mittainen osuus geometriasta korostuu kartalla. Sivun oikeaan laitaan avautuu eurooppatienumeron ominaisuustieton&auml;kym&auml;.
-
-Ominaisuustieton&auml;kym&auml;ss&auml; on eurooppatienumeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
-
-![Katselu.](k171.JPG)
-
-_Eurooppatienumeron tietojen katselu._
-
-##24.2 Eurooppatienumeron muokkaus##
-
-Eurooppatienumero viivageometrialle voi antaa muokkaustilassa tietoja. Eurooppatienumeroa voi muokata kolmella tavalla:
-
-1.	Koko eurooppatienumeroketjulle
-2.	Yksitt&auml;isen linkin mittaiselle osuudelle
-3.	Monivalinnan avulla kokonaiselle alueelle.
-
-Jos samalla tielinkill&auml; on kaksi eurooppatienumeroa, ne erotetaan lis&auml;&auml;m&auml;ll&auml; rivin vaihto tekstikentt&auml;&auml;n (enter), esimerkiksi
-E4
-E8
-
-###Eurooppatienumeron muokkaus ja lis&auml;ys###
-
-Muokattava kohde valitaan klikkaamalla sen geometriaa. Kerran klikkaamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla kohdetta. Tekstikentt&auml;&auml;n voidaan p&auml;ivitt&auml;&auml; eurooppatienumero (2).
-
-Tielinkit, joilla ei ole eurooppatienumeroa on visualisoitu kartalle harmaalla v&auml;rill&auml; (4). Uusi eurooppatienumero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan eurooppatienumero ja testikentt&auml;&auml;n (2) kirjoitetaan eurooppatien numero.
- 
-![Muokkaus.](k172.JPG)
-
-_Eurooppatienumeroiden muokkaus._
-
-###Eurooppatienumeron poistaminen###
-
-Eurooppatienumeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei eurooppatienumeroa. Muutokset tallentuu tallenna-napista (5) tai ne voi kumota peruuta-napista (6).
-
-###Useamman eurooppatienumero muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden tielinkin eurooppatienumeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (7), jossa kirjataan eurooppatienumero ko. viivoille (8). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
-
-Huom! Muutos kumoaa kaikki valitun alueen aiemmat eurooppatienumero tiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
-
-![Muokkaus2.](k173.JPG)
-
-_Useamman eurooppatienumeron tietojen muokkaus kerralla._
-
-###Eurooppatienumeron katkaiseminen###
-
-Eurooppatienumeron geometrian voi jakaa kahteen osaan leikkausty&ouml;kalulla (9). Leikkausty&ouml;kalulla klikataan eurooppatienumeron geometriasta kohtaa, josta se halutaan katkaista. Kohteen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
-
-Eurooppatienumeron katkaisussa uusille kohteille valitaan arvot oikean laidan radionapeista (10). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (11). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
-
-Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
-
-![Katkaisu.](k174.JPG)
-
-_Eurooppatienumeron katkaiseminen._
-
-25. Liittym&auml;numero
-----------------------
-
-Liittym&auml;numeroilla tarkoitetaan numeroituja moottoriteiden eritasoliittymi&auml;. Liittym&auml;numerot annetaan Digiroadissa rampeille. Karttan&auml;kym&auml;&auml;n voi valita liittym&auml;numerot tietolajit-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Punaisella v&auml;rill&auml; on visualisoitu ne tielinkit, joilla on liittym&auml;numerot.
- 
-![Valinta.](k175.JPG)
-
-_Liittym&auml;numeron valinta._
-
-##25.1 Liittym&auml;numeron tietojen katselu##
-
-Liittym&auml;numeron voi valita klikkaamalla kartalta sen geometriaa. Kerran klikkaamalla tulee valituksi koko liittym&auml;numeroketju, eli osuus, jossa liittym&auml;numerolla on samat tiedot ja sama tien nimi (katuverkko) tai tien numero (maantie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla liittym&auml;numerollista tielinkki&auml;. Valitun tielinkkiketjun tai yksitt&auml;isen kohteen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu liittym&auml;numeron ominaisuustieton&auml;kym&auml;.
-
-Ominaisuustieton&auml;kym&auml;ss&auml; on liittym&auml;numeron tiedot kyseisell&auml; tielinkill&auml;/tielinkeill&auml;, valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
-
-![Katselu.](k176.JPG)
-
-_Liittym&auml;numeron tietojen katselu._
-
-##25.2 Liittym&auml;numeron muokkaus##
-
-Liittym&auml;numeron viivageometrialle voi antaa muokkaustilassa tietoja. Liittym&auml;numeroa voi muokata kolmella tavalla:
-
-1.	Koko liittym&auml;numeroketjulle
-2.	Yksitt&auml;isen linkin mittaiselle osuudelle
-3.	Monivalinnan avulla kokonaiselle alueelle (ei yleens&auml; tarpeen t&auml;ss&auml; tietolajissa).
-
-###Liittym&auml;numeron muokkaus ja lis&auml;ys###
-
-Muokattava tielinkki valitaan klikkaamalla sen geometriaa. Kerran klikkaamalla tulee valituksi koko tielinkkiketju, joilla on samat arvot ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie).  Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla kohdetta. Tekstikentt&auml;&auml;n voidaan p&auml;ivitt&auml;&auml; liittym&auml;numero (2).
-
-Tielinkit, joilla ei ole liittym&auml;numeroa on visualisoitu kartalle harmaalla v&auml;rill&auml;. Uusi liittym&auml;numero lis&auml;t&auml;&auml;n valitsemalla kartalta geometria, jolle se halutaan lis&auml;t&auml;. Radionapista (3) valitaan liittym&auml;numero(t) ja testikentt&auml;&auml;n (2) kirjoitetaan liittym&auml;n numero. Yhdell&auml; tielinkill&auml; on yleens&auml; yksi liittym&auml;numero, mutta niit&auml; voi olla my&ouml;s kaksi tai useampi. Ne eritell&auml;&auml;n rivinvaihdolla (enter) tekstikent&auml;ss&auml; (2).
-
-![Muokkaus.](k177.JPG)
-
-_Liittym&auml;numeron muokkaus._
-
-###Liittym&auml;numeron poistaminen###
-
-Liittym&auml;numeron voi poistaa valitsemalla kartalta halutun viivan, ja valitsemalla radionapeista (3) ei liittym&auml;numeroa. Muutokset tallentuu tallenna-napista (4) tai ne voi kumota peruuta-napista (5). Siirry katselutilaan –painikkeesta (6) p&auml;&auml;see pois muokkaustilasta.
-
-###Useamman liittym&auml;numeron muokkaus monivalintaty&ouml;kalulla###
-
-Useamman kuin yhden tielinkin liittym&auml;numeron voi muuttaa kerralla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna (10), jossa kirjataan liittym&auml;numero ko. viivoille (11). Muutos tallennetaan tai peruuta-painikkeesta voi kumota muutoksen.
-
-Huom! Muutos kumoaa kaikki valitun alueen aiempien liittym&auml;numeroiden tiedot. P&auml;&auml;llekk&auml;isi&auml; kohteita ei voi siis luoda.
- 
-![Muokkaus2.](k178.JPG)
-
-_Useamman liittym&auml;numeron tietojen muokkaus kerralla._
-
-###Liittym&auml;numeron katkaiseminen###
-
-Liittym&auml;numeron voi jakaa kahteen osaan leikkausty&ouml;kalulla (7). Leikkausty&ouml;kalulla klikataan kohteen geometriasta kohtaa, josta se halutaan katkaista. Liittym&auml;numeron geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisu valitsee aina vain tielinkin mittaisen osion, ei koko ketjua.
-
-Liittym&auml;numeron katkaisussa kohteille valitaan arvot oikean laidan radionapeista (8). Kartalla ja alasvetovalikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta kohteesta on kyse (9). Muutokset tallennetaan tallenna-painikkeesta tai vastaavasti kumotaan peruuta-painikkeesta.
-
-Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille kohteille eri arvot, jotta tallennus on mahdollista.
-
-![Katkaisu.](k179.JPG)
-
-_Liittym&auml;numeron katkaiseminen._
-
-26. Liikennevalo
-----------------------
-
-Valo-ohjatuissa liittymiss&auml; liikennevalo on kuvattu pisteen&auml;. Karttan&auml;kym&auml;&auml;n voi valita liikennevalot tietolajit-paletista (1). Kartalle tulevat esiin liikennevalot sinisen&auml; pisteen&auml;. Punaisella pisteell&auml; olevat liikennevalot ovat geometrian ulkopuolella olevia liikennevaloja.
- 
-![Valinta.](k181.JPG)
+![Valinta.](liik1.png)
 
 _Liikennevalojen valinta._
 
-##26.1 Liikennevalon tietojen katselu##
+## 30.1 Liikennevalojen tietojen katselu
 
-Yksitt&auml;isen liikennevalon voi valita klikkaamalla kartalta sen geometriaa.  Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu liikennevalon ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy liikennevalon ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Valinnan voi purkaa klikkaamalla taustakarttaa.
+Liikennevalokohteen voi valita napauttamalla kartalta sen geometriaa, jolloin valitun kohteen geometria korostuu ja sivun oikeaan laitaan avautuu liikennevalon ominaisuustietoikkuna. Ominaisuustietoikkunassa näkyy useita ominaisuustietoja, joita voi tallentaa liikennevaloille (2), kuten esimerkiksi liikennevalojen tyyppi, opastimen rakennelma sekä opastimen suhteellinen sijainti tiellä. Valinnan voi purkaa napauttamalla taustakarttaa. Huom! Vanhan tietomallin liikennevalojen tietoja voi katsella vain päivittämällä tiedot uuden tietomallin mukaisiksi. Tämä tapahtuu napauttamalla vanhan tietomallin pysäkin kuvaketta ja painamalla "Siirry muokkaamaan liikennevaloa" -painiketta, jolloin tiedot voi päivittää.
 
-![Katselu.](k182.JPG)
+![Katselu.](liik2.png)
 
 _Liikennevalokohteen katselu._
 
-###Geometrian ulkopuolelle j&auml;&auml;neet liikennevalot###
+### Geometrian ulkopuolelle j&auml;&auml;neet liikennevalot
 
-Geometrian ulkopuolelle j&auml;&auml;neet liikennevalot on korostettu kartalla punaisella pisteell&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Liikennevaloa siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+Geometrian ulkopuolelle j&auml;&auml;neet liikennevalot on korostettu kartalla punaisella pisteell&auml;. N&auml;in voi k&auml;yd&auml; jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Liikennevaloa siirt&auml;m&auml;ll&auml; muokkaustilassa geometriavirhe poistuu.
 
-![punainen.](k183.JPG)
+![punainen.](liik3.png)
 
-_Geometrian ulkopuolinen liikennevalo on n&auml;kyy kartalla punaisena pisteen&auml;._
+_Geometrian ulkopuoliset liikennevalot näkyvät kartalla punaisina pisteinä._
 
-Geometrian ulkopuolelle j&auml;&auml;neill&auml; liikennevaloilla on oma lista (2). Liikennevalot on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne liikennevalot, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Liikennevalosta on listassa linkki, josta p&auml;&auml;see suoraan pisteen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; liikennevaloilla on oma lista (3). Liikennevalot on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne liikennevalot, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Liikennevalosta on listassa linkki, josta p&auml;&auml;see suoraan pisteen kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
-![Lista.](k184.JPG)
+![Lista.](liik4.PNG)
 
 _Geometrian ulkopuoliset liikennevalot._
 
-##26.2 Liikennevalon muokkaus##
+## 30.2 Liikennevalojen muokkaus
 
-Liikennevalon voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden kohteen muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+Liikennevalojen tietoja voi muokata, kohteen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden kohteen muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
 
-###Liikennevalon poisto, siirto ja lis&auml;ys###
+### Liikennevalojen tietojen muokkaus, kohteen poisto, siirto ja lis&auml;ys
 
-Muokattava kohde valitaan klikkaamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu liikennevalo voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (4) ja painamalla tallenna painiketta (5). Muutokset voidaan kumota peruuta-napilla (6).
+HUOM! Muokatessa vanhan tietomallin mukaisia liikennevaloja, esiin tulee uuden tietomallin mukainen ominaisuustietoikkuna, jonka tiedot täyttämällä kohde päivittyy uuteen tietomalliin. 
 
-Yksitt&auml;ist&auml; liikennevaloa voidaan my&ouml;s siirt&auml;&auml;. Ensin klikataan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle liikennevalo siirtyy, korostuu kartalla sinisell&auml; v&auml;rill&auml;. Siirto tallentuu tallenna-painikkeella (5). Muutokset voidaan kumota peruuta-napilla (6).
+Muokattava kohde valitaan napauttamalla sen geometriaa. Valitun kohteen geometria korostuu ja sivun oikeaan laitaan avautuu ominaisuustietoikkuna (4), johon voi täydentää liikennevalojen tietoja. Valittu opastinlaite voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (5). Muutokset voidaan tallentaa painamalla tallenna-painiketta (6) tai kumota peruuta-painikkeella (7).
 
-![Muokkaus.](k185.JPG)
+Yksitt&auml;ist&auml; liikennevaloa voidaan my&ouml;s siirt&auml;&auml;. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Tielinkki, jolle liikennevalo siirtyy, korostuu kartalla sinisell&auml; v&auml;rill&auml;. Siirto tallentuu tallenna-painikkeella (6). Muutokset voidaan kumota peruuta-painikkeella (7).
+
+![Muokkaus.](liik5.png)
+
+![Muokkaus2.](liik6.png)
 
 _Liikennevalokohteiden muokkaus._
 
-Liikennevalomerkint&auml; voidaan lis&auml;t&auml; klikkaamalla vasemmassa yl&auml;kulmasta plussaa eli lis&auml;ys-ty&ouml;kalua (7). Liikennevalo lis&auml;t&auml;&auml;n haluttuun tien kohtaan ja painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (8).
+Liikennevalomerkint&auml; voidaan lis&auml;t&auml; painamalla vasemmassa yl&auml;kulmasta plus-painiketta eli lis&auml;ysty&ouml;kalua (8). Liikennevalo lis&auml;t&auml;&auml;n haluttuun tien kohtaan, minkä jälkeen sivun oikeaan laitaan avautuu ominaisuustietoikkuna (9), johon liikennevalojen tiedot täydennetään, minkä jälkeen painetaan Tallenna-nappia. Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (10).
 
+![Lisäys.](liik7.png)
+
+# 31. Liikennemerkit
+
+Liikennemerkit ovat tieverkolla olevia tieliikenteen ohjauslaitteita, jotka on jaoteltu Digiroadissa kahdeksaan ryhmään: 
+
+* Varoitusmerkit
+* Etuajo-oikeus ja väistämismerkit 
+* Kielto- ja rajoitusmerkit
+* Määräysmerkit 
+* Sääntömerkit
+* Opastusmerkit 
+* Palvelukohteet
+* Muut merkit
+
+Kartalle voi valita liikennemerkit valitsemalla tietolajivalikosta (1) "Liikennemerkit", jolloin kohteet visualisoituvat karttaikkunassa pisteinä, joilla on niiden vaikutussuuntaa kuvaavat nuolet. Tarpeeksi lähelle karttaikkunaa zoomatessa liikennemerkit visualisoituvat niiden tietosisältöä ilmaisevina kuvina.  
+
+![Valinta.](lm1.png)
+
+_Liikennemerkkien valinta._
+
+## 31.1 Liikennemerkin tietojen katselu
+
+Yksitt&auml;isen liikennemerkin voi valita napauttamalla kartalta sen geometriaa. Valitun kohteen geometria korostuu (2). Sivun oikeaan laitaan avautuu liikennemerkin ominaisuustietoikkuna (3). Ominaisuustietoikkunassa näkyy useita merkkiin liittyviä ominaisuustietoja, kuten sen tyyppi, arvo/tekstisisältö, maastokoordinaatit sekä mahdollisten lisäkilpien tiedot. Valinnan voi poistaa napauttamalla muualle.
+
+![Katselu.](lm2.png)
+
+Liikennemerkin katselu._
+
+## 31.2 Liikennemerkin muokkaus
+
+Liikennemerkin voi poistaa, siirtää tai lisätä. Lisäksi olemassa olevan liikennemerkin ominaisuustietoja voi muokata liikennemerkin ominaisuustietoikkunassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osioon tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+### Liikennemerkin poisto, siirto, lis&auml;ys ja tietojen muokkaus
+
+Muokattava liikennemerkki valitaan napauttamalla sen geometriaa. Valitun merkinn&auml;n geometria korostuu. Valittu liikennemerkki voidaan poistaa raksittamalla ominaisuustietoikkunan alaosassa oleva poista-ruutu (4) ja painamalla tallenna-painiketta. Muutokset voidaan kumota peruuta-painikkeella. Olemassa olevan liikennemerkin ominaisuustietoja voi muokata ominaisuustietoikkunassa (5). Liikennemerkeillä on lukuisia ominaisuustietoja ja esimerkiksi kohteen tyyppiä, sen tietosisältöä sekä vaikutussuuntaa voi muokata. Vaikutussuunta kuvautuu liikennemerkissä vaikutussuuntanuolella (6), joka osoittaa merkin vaikutusalueen suuntaan. Muokkaukset tallennetaan painamalla tallenna-painiketta, jolloin kohteen visualisointi kartalla muuttuu ominaisuustietojen muokkauksen yhteydessä. Muutokset voidaan kumota peruuta-painikkeella.
+
+![Poisto.](lm3.png)
+![Muokkaus.](lm4.png)
+
+_Liikennemerkin muokkaus._
+
+Yksittäistä liikennemerkkiä voidaan myös siirtää valitsemalla kohde. Ensin napautetaan siirrettävä kohde valituksi. T&auml;m&auml;n j&auml;lkeen kohde voidaan raahata haluttuun kohtaan. Linkki, jolle liikennemerkki siirtyy, korostuu kartalla sinisell&auml; (7). Siirto tallentuu tallenna-painikkeella. Muutokset voidaan kumota peruuta-painikkeella.
+
+![Siirto.](lm5.png)
+
+_Liikennemerkin siirto._
+
+Liikennemerkki voidaan lis&auml;t&auml; valitsemalla työkalupalkista lis&auml;ys-ty&ouml;kalu (plussa) (8). Liikennemerkki lis&auml;t&auml;&auml;n haluttuun tien kohtaan napauttamalla karttaa (9), jolloin karttaikkuna tummenee. Liikennemerkille täytetään ominaisuustietoikkunassa kohteen tiedot (10). Uusi kohde tallennetaan painamalla Tallenna-nappia. 
+
+![Lisays.](lm6.png)
+
+_Liikennemerkin lis&auml;ys._
+
+Liikennemerkille voi myös lisätä lisäkilpiä ominaisuustietoikkunassa valitsemalla Linkitä lisäkilpiä -valintaruudun (11). Lisäkilvelle voi täyttää useita ominaisuustietoja (12), esimerkiksi sen tyyppi ja tekstisisältö.
+
+![Lisäkilpi.](lm7.png)
+
+_Lisäkilven lisäys_
+
+Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella.
+
+### Geometrian ulkopuolelle j&auml;&auml;neet liikennemerkit
+
+Liikennemerkki voi jäädä geometrian ulkopuolelle, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Liikennemerkkiä siirt&auml;m&auml;ll&auml; geometriavirhe poistuu.
+
+Geometrian ulkopuolelle j&auml;&auml;neill&auml; liikennemerkeillä on oma lista (13). Liikennemerkit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne liikennemerkit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Korjattavaan liikennemerkkiin on listassa linkki, josta p&auml;&auml;see suoraan merkin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Merkinta.](lm8.png)
+
+_Geometrian ulkopuoliset liikennemerkit löytyvät painikkeen takaa._
+
+![Ulkopuoliset liikennemerkit.](lm9.PNG)
+
+_Geometrian ulkopuolelle j&auml;&auml;neiden liikennemerkkien lista._
+
+# 32. Palvelupiste
+
+Palvelu on liikenneverkon k&auml;ytt&auml;j&auml;&auml; auttava ja tukeva palvelu kuten pys&auml;k&ouml;intitalo tai linja-autoasema. Palvelulla on geometriapiste (palvelupiste), joka sijaitsee palvelun sijaintikohdassa (rakennuksen tai kiinteist&ouml;n keskikohdassa). Yhdess&auml; palvelupisteess&auml; voi olla useita palveluita. Karttaikkunaan voi valita palvelupisteet tietolajivalikosta (1). Kartalle visualisoituvat palvelupisteet sinisen ympyrän päälle.
+ 
+![Valinta.](pal1.png)
+
+_Palvelupisteiden valinta._
+
+## 32.1 Palvelupisteen tietojen katselu
+
+Yksitt&auml;isen palvelupisteen voi valita napauttamalla kartalta sen geometriaa.
+
+Valitun kohteen geometria korostuu. Sivun oikeaan laitaan avautuu palvelupisteen ominaisuustietoikkuna. Ominaisuustietoikkunassa n&auml;kyy lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot. Palvelupisteillä on myös muita ominaisuustietoja, jotka vaihtelevat palvelupisteestä riippuen. Valinnan voi purkaa napauttamalla taustakarttaa.
+ 
+![Katselu.](pal2.png)
+
+_Palvelupisteiden katselu._
+
+## 32.2 Palvelupisteen muokkaus
+
+Palvelupisteen voi poistaa, siirt&auml;&auml; tai lis&auml;t&auml; uuden merkinn&auml;n muokkaustilassa. Muokkaustilaan p&auml;&auml;see Siirry muokkaustilaan -painikkeesta. N&auml;yt&ouml;n yl&auml;osaan tulee ilmoitus muokkaustilaan siirtymisest&auml;.
+
+### Palvelupisteen poisto
+
+Muokattava palvelupiste valitaan napauttamalla sen geometriaa. Valitun kohteen geometria korostuu. Valittu palvelupiste voidaan poistaa raksittamalla oikeassa laidassa oleva poista-ruutu (2) ja painamalla tallenna-painiketta (3). Muutokset voidaan kumota peruuta-painikkeella (4).
+
+### Palvelupsiteen siirto ja muokkaus
+
+Yksitt&auml;ist&auml; palvelupistett&auml; voidaan my&ouml;s siirt&auml;&auml;. Ensin napautetaan siirrett&auml;v&auml; kohde valituksi. T&auml;m&auml;n j&auml;lkeen merkint&auml; voidaan raahata haluttuun kohtaan. Palvelupisteen sijainti ei ole riippuvainen tien geometriasta, vaan sen voi sijoittaa mihin kohtaan tahansa. Siirto tallentuu tallenna-painikkeella (3). Muutokset voidaan kumota peruuta-painikkeella(4).
+
+Muokkaustilassa palvelupisteeseen voidaan lis&auml;t&auml; uusi palvelu (5) tai yksitt&auml;inen palvelu voidaan poistaa (6). Palveluun voidaan m&auml;&auml;ritt&auml;&auml; palvelun nimi (7) ja lis&auml;tieto (8). Joihinkin palveluihin on valittavissa my&ouml;s tarkentava lis&auml;kentt&auml; (9), kuten lepoalueella, pys&auml;k&ouml;intialueella, kuorma-autojen pys&auml;k&ouml;intialueella ja rautatieasemalla.
+
+![Muokkaus.](pal3.png)
+
+_Palvelupisteiden muokkaus._
+
+### Palvelupisteen lis&auml;ys
+
+Palvelupiste voidaan lis&auml;t&auml; painamalla muokkaustilan työkalupalkin lisää-painiketta (10). Palvelupiste lis&auml;t&auml;&auml;n haluttuun kohtaan ja painetaan tallenna-painiketta (3) tai kumotaan peruuta-painikkeesta (4). Takaisin katselutilaan p&auml;&auml;see siirry katselutilaan –painikkeella (11).
+
+# 33. Rautateiden huoltotie (Vain ELYn ylläpidossa)
+
+Rautateiden huoltotie on viivamainen tietolaji, joka on vain ELY-keskusten ylläpidossa. Huoltotie voi olla tielinkin mittainen tai sitä lyhyempi. Rautateiden huoltotie -tietolajin saa näkyviin kartalle valitsemalla sen aktiiviseksi tietolajivalikosta (1). Kohteet tulevat näkyviin kartalle, kun liikkuu kartalla lähemmäksi. Jos tielinkille on tallennettu tieto huoltotien olemassaolosta, se visualisoituu karttaikkunaan ominaisuustietojensa mukaisesti. Rautateiden huoltotietietoja voi tallentaa vain tielinkeille, joiden toiminnallinen luokka on suurempi kuin 4. 
+
+![Rautateiden huoltotie](rh1.png)
+
+_Rautateiden huoltotie._
+
+## 33.1 Rautateiden huoltotie -tietojen katselu
+
+Huoltotiet voidaan visualisoida sovelluksessa joko käyttöoikeuden tai huoltovastuun perusteella. Valinta tapahtuu vasemman reunan tietolajipaneelin radionappia painamalla (2). Kun huoltotiekohdetta napauttaa kartalta, se korostuu (3) ja ominaisuustietoikkunaan avautuu kohteen tiedot. Kerran napauttamalla tulee valituksi koko huoltotieketju, eli kaikki tielinkit, joilla on sama huoltotietieto sekä tienumero (maantiellä) tai tiennimi (katuverkolla ja yksityistiellä). Jos käyttäjä haluaa valita vain yhden tielinkin tarkasteluun, voi sen tehdä kaksoisnapauttamalla tielinkkiä. Rautateiden huoltotien ominaisuustietoja ovat (4) huoltotie (kyllä/ei vaihtoehdot), käyttöoikeus, huoltovastuu, tiehoitokunta sekä tarkistettu-painike. Lisäksi ominaisuustietoikkunassa näkyy, milloin tieto on lisätty järjestelmään ja milloin sitä muokattu viimeksi, sekä tieto linkkien lukumäärästä huoltotieketjussa.
+
+![Huoltotietietojen katselu](rh2.png)
+
+_Rautateiden huoltotie -tietolajin katselu._
+
+## 33.2 Rautateiden huoltotie -tietolajin muokkaus
+
+Huoltotietietoja voi muokata muokkaustilassa. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Muokkaustilassa huoltoteille voi antaa uudet ominaisuustiedot ja niit&auml; voi katkaista leikkaustyökalulla. Huoltoteitä voi muokata kolmella tavalla:
+
+1. Koko huoltotieketjulle kerralla.
+2. Yksitt&auml;isen linkin mittaiselle osuudelle.
+3. Monivalinnan avulla kokonaiselle alueelle.
+
+![Huoltotiemuokkaus](rh3.png)
+
+_Huoltotietiedon muokkaus._
+
+### Huoltotietietojen lisäys
+
+Uusi huoltotie lisätään järjestelmään asettamalla ensin tietolajivalikosta rautateiden huoltotie -tietolaji aktiiviseksi. Tämän jälkeen tulee karttaikkunasta napauttaa tielinkin geometriaa, jolle huoltotietieto halutaan lisätä. Karttaikkunan oikean reunan ominaisuustietoikkunaan tulee asettaa Huoltotie-radionappi aktiiviseksi (5), jonka jälkeen tarkentavia ominaisuustietoja kuten käyttöoikeus, huoltovastuu sekä tiehoitokunta kelirikkokausi voidaan asettaa. Huoltotiet visualisoituvat karttaikkunassa joko käyttöoikeustyyppien tai huoltovastuun mukaan riippuen tietolajivalikon radionapin visualisointivalinnasta. Tiedot tallennetaan painamalla Tallenna-painiketta tai peruutetaan painamalla Peruuta (6). Ylläpitäjä voi myös merkata kohteen tarkistetuksi. Tarkistamattomien kohteiden listaa voi tarkastella tarkistamattomien kohteiden listan kautta (7).
+
+### Rautateiden huoltotietiedon poistaminen
+
+Huoltotien voi poistaa napauttamalla karttaikkunasta tielinkkiä, jolta huoltotietieto halutaan poistaa. Tällöin ruudun oikeaan reunaan avautuu kohteen ominaisuustietoikkuna, jossa radionappi "Ei huoltotietä" (8) mahdollistaa huoltotietiedon poistamisen kyseiseltä tielinkiltä tai linkkiketjulta. Muutos tulee tallentaa tai peruuttaa ennen uuden kohteen muokkaamista. Kun huoltotie on poistettu, kohde muuttuu karttaikkunassa harmaaksi.
+
+![Huoltotie poisto](rh4.png)
+
+_Huoltotietiedon poistaminen._
+
+### Rautateiden huoltotie -tietolajin muokkaus monivalintaty&ouml;kalulla
+
+Huoltoteitä voi muokata tai asettaa useammalle tielinkille kerralla. Tielinkit, joille huoltotietieto halutaan asettaa, valitaan napauttamalla niitä ctrl-näppäin pohjassa, jolloin ctrl-näppäimen irti päästämällä avautuu huoltotien muokkausikkuna. Toinen tapa on valita aluevalintatyökaluilla tielinkit käyttämällä joko laatikkotyökalua tai monikulmiotyökalua (9). Laatikkotyökalua käytettäessä valinta päättyy, kun laatikon piirto on lukittu painamalla hiiren vasenta näppäintä. Monikulmiotyökalulla piirtäminen lopetetaan kaksoisnapauttamalla hiiren vasenta näppäintä. Valituksi tulevat kaikki tielinkit laatikon tai monikulmion sisällä ja linkit, joita alueet leikkaavat. Valinnan jälkeen karttaikkunaan avautuu ikkuna (10), jossa määritellään huoltotien ominaisuustiedot. Muutokset tulee tallentaa tai perua ennen seuraavaan kohteeseen siirtymistä.
+
+![Huoltotie monivalinta](rh5.png)
+
+_Huoltoteiden monivalinta._
+
+### Rautateiden huoltotien katkaisu
+
+Tarvittaessa huoltotien voi katkaista leikkaustyökalulla (edellisen kuvan kohta 11). Leikkaustyökalulla napautetaan huoltotien geometriasta kohtaa, josta se halutaan katkaista. Huoltotien tiegeometrian päällä työkalu näkyy ristinä, jotta tarkka katkaisukohta on helppo määrittää. Huoltotien katkaisussa uusille geometrioille asetetaan uudet ominaisuustiedot karttaikkunan oikean reunan ominaisuustietoikkunasta. Kartalla ja valikkojen vieressä olevat A ja B kirjaimet osoittavat, kummasta geometriasta on kyse. Uudet huoltotietiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuperäinen tieto jää voimaan. Katkaisutyökalu valitsee aina vain yhden linkin mittaisen osion geometriasta, ei koko huoltotieketjuja.
+
+Huom! Huoltotien katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille geometrioille eri arvot, jotta tallennus on mahdollista.
