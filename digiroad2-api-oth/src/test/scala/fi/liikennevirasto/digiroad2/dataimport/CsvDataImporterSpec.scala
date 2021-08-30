@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitS
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
-import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -576,7 +576,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("Create valid lane", Tag("db")) {
     runWithRollback {
-      when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewLane]], any[LaneRoadAddressInfo],
+      when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewIncomeLane]], any[LaneRoadAddressInfo],
         any[Int], any[String], any[Boolean])).thenReturn()
 
       when(lanesCsvImporter.laneService.expireAllLanesInStateRoad(any[String])).thenReturn()

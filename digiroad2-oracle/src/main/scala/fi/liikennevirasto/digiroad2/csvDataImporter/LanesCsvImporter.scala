@@ -188,7 +188,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
                         LaneProperty("start_date", Seq(LanePropertyValue(startDate)))                          )
 
         //id, start measure, end measure and municipalityCode doesnt matter
-        val incomingLane = NewLane(0, 0, 0, 0, isExpired = false, isDeleted = false, properties)
+        val incomingLane = NewIncomeLane(0, 0, 0, 0, isExpired = false, isDeleted = false, properties)
         val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
         laneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username, false)
       }
