@@ -187,10 +187,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, startupAsseId: Int)
 
   val StateRoadRestrictedAssetsForOperator = Set(DamagedByThaw.typeId, MassTransitLane.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
+    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId,TrafficVolume.typeId)
   
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
+    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId,TrafficVolume.typeId)
 
   val minVisibleZoom = 8
   val maxZoom = 9
@@ -1232,8 +1232,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService = getLinearAssetService(typeId)
-    if (typeId == TrafficVolume.typeId)
-      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssetIds = (parsedBody \ "ids").extract[Set[Long]]
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
@@ -1308,8 +1306,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService =  getLinearAssetService(typeId)
-    if (typeId == TrafficVolume.typeId)
-      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     usedService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       extractLinearAssetValue(parsedBody \ "existingValue"),
@@ -1322,8 +1318,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService =  getLinearAssetService(typeId)
-    if (typeId == TrafficVolume.typeId)
-      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     usedService.separate(params("id").toLong,
       extractLinearAssetValue(parsedBody \ "valueTowardsDigitization"),
       extractLinearAssetValue(parsedBody \ "valueAgainstDigitization"),
@@ -1593,8 +1587,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
-    if (typeId == TrafficVolume.typeId)
-      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
 
     val roadLinks = roadLinkService.fetchVVHRoadlinksAndComplementary((existingAssets.map(_.linkId) ++ newLinearAssets.map(_.linkId)).toSet)
     if (typeId == MaintenanceRoadAsset.typeId) {
@@ -2323,10 +2315,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[Long]](halt(BadRequest("Malformed 'linkIds' parameter")))
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
-    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewIncomeLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
 
     validateUserRightsForLanes(linkIds, user)
-    laneService.processNewIncomeLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
+    laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
   }
 
   post("/lanesByRoadAddress") {
@@ -2334,7 +2326,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val laneRoadAddressInfo = (parsedBody \ "laneRoadAddressInfo").extractOrElse[LaneRoadAddressInfo](halt(BadRequest("Malformed 'laneRoadAddressInfo' parameter")))
-    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Set[NewIncomeLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Set[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
 
     validateUserRightsForRoadAddress(laneRoadAddressInfo, user)
     LaneUtils.processNewLanesByRoadAddress(incomingLanes, laneRoadAddressInfo,sideCode, user.username)

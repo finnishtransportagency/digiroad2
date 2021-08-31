@@ -524,7 +524,7 @@
         title: 'Liikennemäärä',
         newTitle: 'Uusi liikennemäärä',
         className: 'traffic-volume',
-        unit: 'ajoneuvoa/vuorokausi',
+        unit: 'ajon./vrk',
         isSeparable: false,
         allowComplementaryLinks: false,
         editControlLabels: {
@@ -534,7 +534,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
       {
@@ -1016,9 +1016,12 @@
                 {id: 9, label: 'Joukkoliikenteen kaista / taksikaista'},
                 {id: 10, label: 'Raskaan liikenteen kaista'},
                 {id: 11, label: 'Vaihtuvasuuntainen kaista'},
-                {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
-                {id: 21, label: 'Jalankulun kaista'},
-                {id: 22, label: 'Pyöräilykaista'},
+                {id: 12, label: 'Pyöräkaista'},
+                {id: 20, label: 'Yhdistetty pyörätie ja jalkakäytävä'},
+                {id: 21, label: 'Jalkakäytävä'},
+                {id: 22, label: 'Pyörätie'},
+                {id: 23, label: 'Kävelykatu'},
+                {id: 24, label: 'Pyöräkatu'},
               ],  defaultValue: "2", weight: 12
             },
             {
