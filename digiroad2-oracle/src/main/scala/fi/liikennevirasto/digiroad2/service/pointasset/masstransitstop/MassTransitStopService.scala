@@ -633,7 +633,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
-    val filter = s"WHERE a.asset_type_id = $typeId AND floating = 0 and (" +
+    val filter = s"WHERE a.asset_type_id = $typeId AND floating = '0' and (" +
       s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
       s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or " +
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "+
