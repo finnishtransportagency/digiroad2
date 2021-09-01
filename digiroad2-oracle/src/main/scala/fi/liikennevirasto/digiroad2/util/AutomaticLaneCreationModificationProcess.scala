@@ -93,7 +93,7 @@ object AutomaticLaneCreationModificationProcess {
         }
       }
       // check if there is already lane in part of section
-      // further requirement engineering is needed is for situation when lane already exist
+      // further requirement engineering is needed for situation when lane already exist
       val laneExist = false
 
       //get startpoint and endpoint, for each link Mvalue in start and MValue in end
