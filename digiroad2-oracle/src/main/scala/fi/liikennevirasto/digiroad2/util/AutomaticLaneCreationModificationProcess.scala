@@ -5,10 +5,11 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient, Source}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, NewLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
+import fi.liikennevirasto.digiroad2.util.LaneUtils.vvhClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -42,6 +43,10 @@ object AutomaticLaneCreationModificationProcess {
       val pedestrianAndCycleRoute = Seq(70000, 99999)
       val path = Seq(62000, 62999)
 
+
+      val laneRoadAddressInfo = LaneRoadAddressInfo(source.roadNumber, source.roadPartNumber,initialDistance = source.startAddrMValue,source.roadPartNumber, endDistance = source.endAddrMValue,source.track.value)
+      
+      
       def mapPropertiesDefaultValue(source: Source, laneCode: Int, laneType: Int = 1): Seq[LaneProperty] = {
         Seq(
           LaneProperty("lane_type", Seq(LanePropertyValue(value = laneType))),
@@ -49,7 +54,8 @@ object AutomaticLaneCreationModificationProcess {
           LaneProperty("roadNumber", Seq(LanePropertyValue(value = source.roadNumber))),
           LaneProperty("roadPartNumber", Seq(LanePropertyValue(value = source.roadPartNumber))),
           LaneProperty("track", Seq(LanePropertyValue(value = source.track))),
-          LaneProperty("administrativeClass", Seq(LanePropertyValue(value = source.administrativeValues)))
+          LaneProperty("administrativeClass", Seq(LanePropertyValue(value = source.administrativeValues))),
+          LaneProperty("start_date", Seq(LanePropertyValue(value = DateTime.now()))) // what format
         )
       }
 
@@ -57,7 +63,7 @@ object AutomaticLaneCreationModificationProcess {
         (range.head to range.last).contains(number)
       }
 
-      def laneCodeAndSideCode(source: Source): (Option[Int], Option[ Int]) = {
+      def laneCode(source: Source): Option[Int] = {
 
         val (track, roadNumber, roadPartNumber) = (source.track, source.roadNumber, source.roadPartNumber)
 
@@ -74,51 +80,73 @@ object AutomaticLaneCreationModificationProcess {
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
           checkRange(roadPartNumber.toInt, Seq(995, 999)))
 
+        // Side code is determined by lane code ?
+        // Lane Code first number tell 
         //Track 2: Lane Code 21
         if (track.value == 2) {
-          (Some(MainLane.againstDirection), Some(SideCode(2).value))
+          Some(MainLane.againstDirection)
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance) {
-          (Some(MainLane.motorwayMaintenance), Some(SideCode(3).value))
+          Some(MainLane.motorwayMaintenance)
         } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
           //Track 1: Lane Code 11
           //Track 0, roadNumbers 20000 - 39999: Lane Code 11
-          (Some(MainLane.towardsDirection), Some(SideCode(1).value))
+          Some(MainLane.towardsDirection)
         }else{
-          (None,None)
+          None
         }
       }
-
-      // TODO get set(linkIds) from vkm by  tieosoite, 
-      // TODO get MValues of links from VKM
+      // map links to roadAdress
+      // TODO Is there some possibility to reuse logic of CSV import/LaneUtils class?
+      // TODO Links and its mValue from VKM or from links?
       // check if there is already lane in part of section
       val laneExist = false
-      val startMeasureFromVKM = 0
-      val endMeasureFromVKM = 0
-      if (laneExist) {
 
-        val mValues = Seq(LaneProperty("startAddrMValue", Seq(LanePropertyValue(value =startMeasureFromVKM))),
-          LaneProperty("endAddrMValue", Seq(LanePropertyValue(value = endMeasureFromVKM))))
+      //get startpoint and endpoint, for each link Mvalue in start and MValue in end
+      val startMeasureFromVKMOrVVH = 0
+      val endMeasureFromVKMOrVVH = 0
+      val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+      val municipalityCodeVKM = 0 //?
+      if (laneExist) {
+        
+        // TODO In code there is now two set of MValues. One for saving, other as properties of lane to lane_attribute table
+        val mValues = Seq(LaneProperty("startAddrMValue", Seq(LanePropertyValue(value =startMeasureFromVKMOrVVH))),
+          LaneProperty("endAddrMValue", Seq(LanePropertyValue(value = endMeasureFromVKMOrVVH))))
         
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
-          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get, 20) ++ mValues
+          mapPropertiesDefaultValue(source, laneCode(source).get, 20) ++ mValues
         } else {
-          mapPropertiesDefaultValue(source, laneCodeAndSideCode(source)._1.get) ++ mValues
+          mapPropertiesDefaultValue(source, laneCode(source).get) ++ mValues
         }
         
         //Track 0, roadNumbers 1-19999 and 40000 - 61999: Lane Code 11 and 21
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
+          // for loop/map all  something like this links.map(link =>{add} )
           val newLanes = Seq(
-            NewLane(0, startMeasure = startMeasureFromVKM,
-              endMeasure = endMeasureFromVKM, 0, properties = mapPropertiesDefaultValue(source, 11), sideCode = Some(1)),
-            NewLane(0, startMeasure = startMeasureFromVKM,
-              endMeasure = endMeasureFromVKM, 0, properties = mapPropertiesDefaultValue(source, 21), sideCode =  Some(2)))
-          laneService.createNewFromChange(newLanes, Set(0, 1, 2, 3), user)
+            PersistedLane ( id= 0, linkId= 0, sideCode= 0, laneCode= laneCode(source).get, municipalityCode= municipalityCodeVKM,
+              startMeasure= startMeasureFromVKMOrVVH, endMeasure= endMeasureFromVKMOrVVH,
+              createdBy = Some(user), createdDateTime=  Some(DateTime.now()),
+              modifiedBy= None, modifiedDateTime= None,
+              expiredBy= None, expiredDateTime = None, expired= false,
+              vvhTimeStamp= vvhTimeStamp, geomModifiedDate= None, attributes= mapPropertiesDefaultValue(source, 11) ),
+              PersistedLane ( id= 0, linkId= 0, sideCode= 0, laneCode= laneCode(source).get, municipalityCode= municipalityCodeVKM,
+              startMeasure= startMeasureFromVKMOrVVH, endMeasure= endMeasureFromVKMOrVVH,
+              createdBy = Some(user), createdDateTime=  Some(DateTime.now()),
+              modifiedBy= None, modifiedDateTime= None,
+              expiredBy= None, expiredDateTime = None, expired= false,
+              vvhTimeStamp= vvhTimeStamp, geomModifiedDate= None, attributes=  mapPropertiesDefaultValue(source, 21) )
+          )
+          newLanes.map(laneService.createWithoutTransaction(_, user))
         } else {
-          val newLane = Seq(NewLane(0, startMeasure = startMeasureFromVKM,
-            endMeasure = endMeasureFromVKM, 0, properties = newLaneProperties, sideCode =  Some(laneCodeAndSideCode(source)._2.get)))
-          laneService.createNewFromChange(newLane, Set(0, 1, 2, 3), user)
+          // for loop/map all something like this links.map(link =>{add} )
+          val newLane =  PersistedLane ( id= 0, linkId= 0, sideCode= 0, laneCode= laneCode(source).get, municipalityCode= municipalityCodeVKM,
+            startMeasure= startMeasureFromVKMOrVVH, endMeasure= endMeasureFromVKMOrVVH,
+            createdBy = Some(user), createdDateTime=  Some(DateTime.now()),
+            modifiedBy= None, modifiedDateTime= None,
+            expiredBy= None, expiredDateTime = None, expired= false,
+            vvhTimeStamp= vvhTimeStamp, geomModifiedDate= None, attributes= newLaneProperties )
+          laneService.createWithoutTransaction(newLane, user)
         }
       } else {
         // continue old lane to new part
