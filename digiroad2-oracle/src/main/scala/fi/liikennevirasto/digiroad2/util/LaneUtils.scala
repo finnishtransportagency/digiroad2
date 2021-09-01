@@ -81,24 +81,47 @@ object LaneUtils {
     }
 
     def calculateStartAndEndPoint(road: RoadAddressTEMP, startPoint: Double, endPoint: Double )= {
-
+      // roadpart       ---------------
+      // lane roadpart    -----------------
+      // evaluete roadaddress with it linearvalues
       val (start, end) = if (road.roadPart > laneRoadAddressInfo.initialRoadPartNumber && road.roadPart < laneRoadAddressInfo.endRoadPartNumber) {
         ( road.startMValue, road.endMValue)
-
       }
+      // roadpart         -------
+      // lane roadpart    -------
       else if (road.roadPart == laneRoadAddressInfo.initialRoadPartNumber && road.roadPart == laneRoadAddressInfo.endRoadPartNumber) {
-
+        
+        // roadaddress m values               -------
+        // lane roadaddress m values   -------
+        // or
+        // roadaddress m values       -------
+        // lane roadaddress m values         -------
         if (!(road.endAddressM > laneRoadAddressInfo.initialDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
           (None, None)
 
+        // roadaddress m values        ---
+        // lane roadaddress m values   ---
+        // or
+        // roadaddress m values        -------
+        // lane roadaddress m values    ---
         else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance) {
           ( startPoint, endPoint )
 
         }
+        // roadaddress m values        -------
+        // lane roadaddress m values   ----------
+        // or
+        // roadaddress m values        -------
+        // lane roadaddress m values      ------
         else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM < laneRoadAddressInfo.endDistance) {
           ( startPoint, road.endMValue )
 
         }
+        // roadaddress m values       -----------
+        // lane roadaddress m values      -------
+        // or 
+        // roadaddress m values       --------------
+        // lane roadaddress m values      ------- 
         else if (road.startAddressM > laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance) {
           ( road.startMValue, endPoint )
 
@@ -109,11 +132,18 @@ object LaneUtils {
         }
 
       }
+      // roadpart         -------
+      // lane roadpart    ---------
       else if (road.roadPart == laneRoadAddressInfo.initialRoadPartNumber) {
+        // roadpart addressM        -------
+        // lane roadpart addressM          -------
         if (road.endAddressM <= laneRoadAddressInfo.initialDistance) {
           (None, None)
 
-        } else if (road.startAddressM < laneRoadAddressInfo.initialDistance) {
+        }
+        // roadpart     addressM             -------
+        // lane roadpart addressM     -------  
+        else if (road.startAddressM < laneRoadAddressInfo.initialDistance) {
           ( startPoint, road.endMValue )
 
         } else {
@@ -121,11 +151,18 @@ object LaneUtils {
         }
 
       }
+      // roadpart           -------
+      // lane roadpart   ----------
       else if (road.roadPart == laneRoadAddressInfo.endRoadPartNumber) {
+        // roadpart addressM               -------
+        // lane roadpart addressM   -------
         if (road.startAddressM >= laneRoadAddressInfo.endDistance) {
           (None, None)
 
-        } else if (road.endAddressM > laneRoadAddressInfo.endDistance) {
+        }
+        // roadpart addressM        -------
+        // lane roadpart addressM           -------
+        else if (road.endAddressM > laneRoadAddressInfo.endDistance) {
           ( road.startMValue, endPoint )
 
         } else {
