@@ -947,7 +947,7 @@ trait LaneOperations {
         result.head
       }
   }
-  
+
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
     def treatChangeSetData(changeSetToTreat: Seq[baseAdjustment]): Unit = {
       val toAdjustLanes = getPersistedLanesByIds(changeSetToTreat.map(_.laneId).toSet, false)
