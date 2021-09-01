@@ -1,15 +1,13 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient, Source}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{ LaneProperty, LanePropertyValue, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
-import fi.liikennevirasto.digiroad2.util.LaneUtils.vvhClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -42,10 +40,6 @@ object AutomaticLaneCreationModificationProcess {
       val maintenanceHole = Seq(30000, 39999)
       val pedestrianAndCycleRoute = Seq(70000, 99999)
       val path = Seq(62000, 62999)
-
-
-      val laneRoadAddressInfo = LaneRoadAddressInfo(source.roadNumber, source.roadPartNumber,initialDistance = source.startAddrMValue,source.roadPartNumber, endDistance = source.endAddrMValue,source.track.value)
-      
       
       def mapPropertiesDefaultValue(source: Source, laneCode: Int, laneType: Int = 1): Seq[LaneProperty] = {
         Seq(
@@ -72,38 +66,34 @@ object AutomaticLaneCreationModificationProcess {
 
         val (track, roadNumber, roadPartNumber) = (source.track, source.roadNumber, source.roadPartNumber)
 
-        // roadNumbers 70000 - 99999: Lane Code 31
-        // roadNumbers 62000 - 62999: Lane Code 31
-        val pedestrianAndCycleRouteAndPathCheck = (checkRange(roadNumber.toInt, path) ||
-          checkRange(roadNumber.toInt, pedestrianAndCycleRoute))
+        // RoadNumbers 70000 - 99999: Lane Code 31
+        // RoadNumbers 62000 - 62999: Lane Code 31
+        val pedestrianAndCycleRouteAndPathCheck = (checkRange(roadNumber.toInt, path) 
+                                                || checkRange(roadNumber.toInt, pedestrianAndCycleRoute))
 
-        // roadNumbers 30000-39999 roadPartNumber 9 Lane Code 31
+        // RoadNumbers 30000 - 39999 RoadPartNumber 9: Lane Code 31
         val maintenanceHoleCheck = checkRange(roadNumber.toInt, maintenanceHole) && roadPartNumber == 9
 
-        //Track 0, roadNumbers 20000 - 29999, roadPartNumbers 995-999: Lane Code 31
-        val checkMotorwayMaintenance = (track.value == 0 &&
+        // RoadNumbers 20000 - 29999, RoadPartNumbers 995-999, Track 0: Lane Code 31
+        val checkMotorwayMaintenance = track.value == 0 &&
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
-          checkRange(roadPartNumber.toInt, Seq(995, 999)))
-
-        // Side code is determined by lane code ?
-        // Lane Code first number tell 
-        //Track 2: Lane Code 21
+          checkRange(roadPartNumber.toInt, Seq(995, 999))
+       
         if (track.value == 2) {
+          // Track 2: Lane Code 21
           Some(MainLane.againstDirection)
         } else if (pedestrianAndCycleRouteAndPathCheck || maintenanceHoleCheck || checkMotorwayMaintenance) {
           Some(MainLane.motorwayMaintenance)
         } else if (track.value == 1 || (track.value == 0 && checkRange(roadNumber.toInt, Seq(20000, 39999)))) {
-          //Track 1: Lane Code 11
-          //Track 0, roadNumbers 20000 - 39999: Lane Code 11
+          // Track 1: Lane Code 11
+          // RoadNumbers 20000 - 39999, Track 0: Lane Code 11
           Some(MainLane.towardsDirection)
         }else{
           None
         }
       }
-      // map links to roadAdress
-      // TODO Is there some possibility to reuse logic of CSV import/LaneUtils class?
-      // TODO Links and its mValue from VKM or from links?
       // check if there is already lane in part of section
+      // further requirement engineering is needed is for situation when lane already exist
       val laneExist = false
 
       //get startpoint and endpoint, for each link Mvalue in start and MValue in end
@@ -111,6 +101,7 @@ object AutomaticLaneCreationModificationProcess {
       val endMeasureFromVKMOrVVH = 0
       val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
       val municipalityCodeVKM = 0 //?
+      lazy val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
       if (laneExist) {
         
         // new lane to empty road
@@ -120,7 +111,7 @@ object AutomaticLaneCreationModificationProcess {
           mapPropertiesDefaultValue(source, laneCode(source).get)
         }
         
-        //Track 0, roadNumbers 1-19999 and 40000 - 61999: Lane Code 11 and 21
+        //Track 0, RoadNumbers 1-19999 and 40000 - 61999: Lane Code 11 and 21
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           // for loop/map all  something like this links.map(link =>{add} )
@@ -149,12 +140,6 @@ object AutomaticLaneCreationModificationProcess {
             vvhTimeStamp= vvhTimeStamp, geomModifiedDate= None, attributes= newLaneProperties )
           laneService.createWithoutTransaction(newLane, user)
         }
-      } else {
-        // continue old lane to new part
-
-        // get lane by linkId
-
-        // copy old lane info and add to new section
       }
     }
 
