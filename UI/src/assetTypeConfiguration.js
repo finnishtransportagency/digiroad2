@@ -984,7 +984,7 @@
         className: 'lane-modelling-tool',
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         editControlLabels: {
-          title: 'Kaistan mallinnustyökalu',
+          title: 'Kaistan mallinnustyökalu'
         },
         isSeparable: false,
         allowMapViewOnly: true,
@@ -1021,11 +1021,11 @@
                 {id: 21, label: 'Jalkakäytävä'},
                 {id: 22, label: 'Pyörätie'},
                 {id: 23, label: 'Kävelykatu'},
-                {id: 24, label: 'Pyöräkatu'},
+                {id: 24, label: 'Pyöräkatu'}
               ],  defaultValue: "2", weight: 12
             },
             {
-              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13
+              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13, required: true
             },
             {
               label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 14
