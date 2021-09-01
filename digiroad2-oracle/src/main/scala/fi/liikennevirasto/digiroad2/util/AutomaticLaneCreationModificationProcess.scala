@@ -168,7 +168,7 @@ object AutomaticLaneCreationModificationProcess {
     
     if(changeInformations.isDefined){
       withDynTransaction {
-        changeInformations.foreach(change=>{
+        changeInformations.get.foreach(change=>{
           // add operation
         })
       }
