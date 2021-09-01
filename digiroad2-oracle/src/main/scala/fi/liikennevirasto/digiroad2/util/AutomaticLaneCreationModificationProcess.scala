@@ -40,18 +40,18 @@ object AutomaticLaneCreationModificationProcess {
       val maintenanceHole = Seq(30000, 39999)
       val pedestrianAndCycleRoute = Seq(70000, 99999)
       val path = Seq(62000, 62999)
-      
+
       def mapPropertiesDefaultValue(source: Source, laneCode: Int, laneType: Int = 1): Seq[LaneProperty] = {
         Seq(
           LaneProperty("lane_type", Seq(LanePropertyValue(value = laneType))),
           LaneProperty("lane_code", Seq(LanePropertyValue(value = laneCode))),
-          
+
           // RoadAddress
           LaneProperty("roadNumber", Seq(LanePropertyValue(value = source.roadNumber))),
           LaneProperty("roadPartNumber", Seq(LanePropertyValue(value = source.roadPartNumber))),
-          LaneProperty("startAddrMValue", Seq(LanePropertyValue(value =source.startAddrMValue))),
+          LaneProperty("startAddrMValue", Seq(LanePropertyValue(value = source.startAddrMValue))),
           LaneProperty("endAddrMValue", Seq(LanePropertyValue(value = source.endAddrMValue))),
-          
+
           LaneProperty("track", Seq(LanePropertyValue(value = source.track))),
           LaneProperty("administrativeClass", Seq(LanePropertyValue(value = source.administrativeValues))),
           LaneProperty("start_date", Seq(LanePropertyValue(value = DateTime.now()))) // what format
@@ -68,8 +68,8 @@ object AutomaticLaneCreationModificationProcess {
 
         // RoadNumbers 70000 - 99999: Lane Code 31
         // RoadNumbers 62000 - 62999: Lane Code 31
-        val pedestrianAndCycleRouteAndPathCheck = (checkRange(roadNumber.toInt, path) 
-                                                || checkRange(roadNumber.toInt, pedestrianAndCycleRoute))
+        val pedestrianAndCycleRouteAndPathCheck = (checkRange(roadNumber.toInt, path)
+          || checkRange(roadNumber.toInt, pedestrianAndCycleRoute))
 
         // RoadNumbers 30000 - 39999 RoadPartNumber 9: Lane Code 31
         val maintenanceHoleCheck = checkRange(roadNumber.toInt, maintenanceHole) && roadPartNumber == 9
@@ -78,7 +78,7 @@ object AutomaticLaneCreationModificationProcess {
         val checkMotorwayMaintenance = track.value == 0 &&
           checkRange(roadNumber.toInt, Seq(20000, 29999)) &&
           checkRange(roadPartNumber.toInt, Seq(995, 999))
-       
+
         if (track.value == 2) {
           // Track 2: Lane Code 21
           Some(MainLane.againstDirection)
@@ -88,10 +88,11 @@ object AutomaticLaneCreationModificationProcess {
           // Track 1: Lane Code 11
           // RoadNumbers 20000 - 39999, Track 0: Lane Code 11
           Some(MainLane.towardsDirection)
-        }else{
+        } else {
           None
         }
       }
+
       // check if there is already lane in part of section
       // further requirement engineering is needed for situation when lane already exist
       val laneExist = false
@@ -102,41 +103,46 @@ object AutomaticLaneCreationModificationProcess {
       val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
       val municipalityCodeVKM = 0 //?
       if (laneExist) {
-        
+
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
           mapPropertiesDefaultValue(source, laneCode(source).get, 20)
         } else {
           mapPropertiesDefaultValue(source, laneCode(source).get)
         }
-        
+
         //Track 0, RoadNumbers 1-19999 and 40000 - 61999: Lane Code 11 and 21
         if (source.track.value == 0 && (checkRange(source.roadNumber.toInt, Seq(1, 19999))
           || checkRange(source.roadNumber.toInt, Seq(40000, 61999)))) {
           // for loop/map all  something like this links.map(link =>{add} )
           val newLanes = Seq(
-            PersistedLane ( id= 0, linkId= 0, sideCode= 0, laneCode= laneCode(source).get, municipalityCode= municipalityCodeVKM,
-              startMeasure= startMeasureFromVKMOrVVH, endMeasure= endMeasureFromVKMOrVVH,
-              createdBy = Some(user), createdDateTime=  Some(DateTime.now()),
-              modifiedBy= None, modifiedDateTime= None,
-              expiredBy= None, expiredDateTime = None, expired= false,
-              vvhTimeStamp= vvhTimeStamp, geomModifiedDate= None, attributes= mapPropertiesDefaultValue(source, 11) ),
-              PersistedLane ( id= 0, linkId= 0, sideCode= 0, laneCode= laneCode(source).get, municipalityCode= municipalityCodeVKM,
-              startMeasure= startMeasureFromVKMOrVVH, endMeasure= endMeasureFromVKMOrVVH,
-              createdBy = Some(user), createdDateTime=  Some(DateTime.now()),
-              modifiedBy= None, modifiedDateTime= None,
-              expiredBy= None, expiredDateTime = None, expired= false,
-              vvhTimeStamp= vvhTimeStamp, geomModifiedDate= None, attributes=  mapPropertiesDefaultValue(source, 21) )
-          )
+            PersistedLane(id = 0, linkId = 0, sideCode = 0,
+                          laneCode = laneCode(source).get, municipalityCode = municipalityCodeVKM,
+                          startMeasure = startMeasureFromVKMOrVVH, endMeasure = endMeasureFromVKMOrVVH,
+                          createdBy = Some(user), createdDateTime = Some(DateTime.now()),
+                          modifiedBy = None, modifiedDateTime = None,
+                          expiredBy = None, expiredDateTime = None, expired = false,
+                          vvhTimeStamp = vvhTimeStamp, geomModifiedDate = None,
+                          attributes = mapPropertiesDefaultValue(source, 11)),
+            PersistedLane(id = 0, linkId = 0, sideCode = 0,
+                          laneCode = laneCode(source).get, municipalityCode = municipalityCodeVKM,
+                          startMeasure = startMeasureFromVKMOrVVH, endMeasure = endMeasureFromVKMOrVVH,
+                          createdBy = Some(user), createdDateTime = Some(DateTime.now()),
+                          modifiedBy = None, modifiedDateTime = None,
+                          expiredBy = None, expiredDateTime = None, expired = false,
+                          vvhTimeStamp = vvhTimeStamp, geomModifiedDate = None,
+                          attributes = mapPropertiesDefaultValue(source, 21)))
           newLanes.map(laneService.createWithoutTransaction(_, user))
         } else {
           // for loop/map all something like this links.map(link =>{add} )
-          val newLane =  PersistedLane ( id= 0, linkId= 0, sideCode= 0, laneCode= laneCode(source).get, municipalityCode= municipalityCodeVKM,
-            startMeasure= startMeasureFromVKMOrVVH, endMeasure= endMeasureFromVKMOrVVH,
-            createdBy = Some(user), createdDateTime=  Some(DateTime.now()),
-            modifiedBy= None, modifiedDateTime= None,
-            expiredBy= None, expiredDateTime = None, expired= false,
-            vvhTimeStamp= vvhTimeStamp, geomModifiedDate= None, attributes= newLaneProperties )
+          val newLane = PersistedLane(id = 0, linkId = 0, sideCode = 0,
+                                      laneCode = laneCode(source).get, municipalityCode = municipalityCodeVKM,
+                                      startMeasure = startMeasureFromVKMOrVVH, endMeasure = endMeasureFromVKMOrVVH,
+                                      createdBy = Some(user), createdDateTime = Some(DateTime.now()),
+                                      modifiedBy = None, modifiedDateTime = None,
+                                      expiredBy = None, expiredDateTime = None, expired = false,
+                                      vvhTimeStamp = vvhTimeStamp, geomModifiedDate = None,
+                                      attributes = newLaneProperties)
           laneService.createWithoutTransaction(newLane, user)
         }
       }
