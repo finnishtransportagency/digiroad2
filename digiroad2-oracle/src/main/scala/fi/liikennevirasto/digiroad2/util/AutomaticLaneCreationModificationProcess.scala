@@ -51,8 +51,13 @@ object AutomaticLaneCreationModificationProcess {
         Seq(
           LaneProperty("lane_type", Seq(LanePropertyValue(value = laneType))),
           LaneProperty("lane_code", Seq(LanePropertyValue(value = laneCode))),
+          
+          // RoadAddress
           LaneProperty("roadNumber", Seq(LanePropertyValue(value = source.roadNumber))),
           LaneProperty("roadPartNumber", Seq(LanePropertyValue(value = source.roadPartNumber))),
+          LaneProperty("startAddrMValue", Seq(LanePropertyValue(value =source.startAddrMValue))),
+          LaneProperty("endAddrMValue", Seq(LanePropertyValue(value = source.endAddrMValue))),
+          
           LaneProperty("track", Seq(LanePropertyValue(value = source.track))),
           LaneProperty("administrativeClass", Seq(LanePropertyValue(value = source.administrativeValues))),
           LaneProperty("start_date", Seq(LanePropertyValue(value = DateTime.now()))) // what format
@@ -108,15 +113,11 @@ object AutomaticLaneCreationModificationProcess {
       val municipalityCodeVKM = 0 //?
       if (laneExist) {
         
-        // TODO In code there is now two set of MValues. One for saving, other as properties of lane to lane_attribute table
-        val mValues = Seq(LaneProperty("startAddrMValue", Seq(LanePropertyValue(value =startMeasureFromVKMOrVVH))),
-          LaneProperty("endAddrMValue", Seq(LanePropertyValue(value = endMeasureFromVKMOrVVH))))
-        
         // new lane to empty road
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
-          mapPropertiesDefaultValue(source, laneCode(source).get, 20) ++ mValues
+          mapPropertiesDefaultValue(source, laneCode(source).get, 20)
         } else {
-          mapPropertiesDefaultValue(source, laneCode(source).get) ++ mValues
+          mapPropertiesDefaultValue(source, laneCode(source).get)
         }
         
         //Track 0, roadNumbers 1-19999 and 40000 - 61999: Lane Code 11 and 21
