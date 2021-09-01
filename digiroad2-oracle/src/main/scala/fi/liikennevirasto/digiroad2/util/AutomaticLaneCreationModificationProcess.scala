@@ -101,7 +101,6 @@ object AutomaticLaneCreationModificationProcess {
       val endMeasureFromVKMOrVVH = 0
       val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
       val municipalityCodeVKM = 0 //?
-      lazy val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
       if (laneExist) {
         
         // new lane to empty road
