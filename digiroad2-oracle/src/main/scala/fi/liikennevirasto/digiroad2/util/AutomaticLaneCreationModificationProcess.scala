@@ -88,8 +88,7 @@ object AutomaticLaneCreationModificationProcess {
       val municipalityCodeVKM = 0 //?
       if (laneExist) {
         val dateTimeNow = DateTime.now().toString(DateTimeFormat.forPattern("dd.MM.yyyy"))
-
-        // new lane to empty road
+        
         val newLaneProperties = if (checkRange(source.roadNumber.toInt, pedestrianAndCycleRoute)) {
           Seq(
             LaneProperty("lane_type", Seq(LanePropertyValue(value = 20))),
