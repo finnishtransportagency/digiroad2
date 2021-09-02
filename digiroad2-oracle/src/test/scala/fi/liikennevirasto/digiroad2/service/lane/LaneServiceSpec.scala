@@ -1420,21 +1420,6 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Populate start date automatically") {
-    val lanes = Set(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11),
-      NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
-
-    val currentTime = DateTime.now().toString(DatePropertyFormat)
-
-    val populatedLanes = ServiceWithDao.populateStartDate(lanes)
-
-    populatedLanes.size should be(2)
-    populatedLanes.map(_.properties.length) should be(Set(2, 3))
-
-    val lanePopulated = populatedLanes.find(lane => !LaneNumber.isMainLane(ServiceWithDao.getLaneCode(lane).toInt)).get
-    lanePopulated.properties.find(_.publicId == "start_date").get.values.head.value.toString should be(currentTime)
-  }
-
   test("Correctly create view only segmented lanes") {
     val roadLink11 = RoadLink(11L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None)

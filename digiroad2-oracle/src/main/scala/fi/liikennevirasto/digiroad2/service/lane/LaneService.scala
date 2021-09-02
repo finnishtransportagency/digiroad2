@@ -1030,10 +1030,10 @@ trait LaneOperations {
       val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode)
       val laneCodesToBeDeleted = actionsLanes.lanesToDelete.map(getLaneCode(_).toInt)
 
-      create(populateStartDate(actionsLanes.lanesToInsert).toSeq, linkIds, sideCode, username) ++
+      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username) ++
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
       deleteMultipleLanes(laneCodesToBeDeleted, linkIds, username) ++
-      createMultiLanesOnLink(populateStartDate(actionsLanes.multiLanesOnLink).toSeq, linkIds, sideCode, username)
+      createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
     }
   }
 
@@ -1140,34 +1140,6 @@ trait LaneOperations {
         }
       }
     }.toSeq
-  }
-
-  /**
-   * Populates start date property of lanes that don't have it filled with current date
-   * Main lanes are not altered
-   * @param lanes lanes to populate start date property
-   * @return lanes with populated start date property
-   */
-  def populateStartDate(lanes: Set[NewLane]): Set[NewLane] = {
-    val lanePropertyDateValues = Seq(LanePropertyValue(DateTime.now().toString(DatePropertyFormat)))
-
-    lanes.map { lane =>
-      //There is no start date in main lanes so return unaltered lane
-      if(LaneNumber.isMainLane(getLaneCode(lane).toInt)){
-        lane
-      }else{
-        val property = lane.properties.find(_.publicId == "start_date")
-
-        val updatedProperty = property match {
-          case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty =>
-            prop.copy(values = lanePropertyDateValues)
-          case Some(prop) => prop
-          case _ => LaneProperty("start_date", lanePropertyDateValues)
-        }
-
-        lane.copy(properties = lane.properties.filterNot(_.publicId == updatedProperty.publicId) ++ Seq(updatedProperty))
-      }
-    }
   }
 
   /**
