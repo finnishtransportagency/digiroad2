@@ -1142,30 +1142,6 @@ trait LaneOperations {
     }.toSeq
   }
 
-  /**
-   * Checks that start date property of lanes are provided
-   * @param lanes lanes to process
-   * @return
-   */
-  def missingStartDates(lanes: Set[NewLane]): Boolean = {
-    var missingStartDates = false
-    lanes.foreach( lane =>
-      if (!LaneNumber.isMainLane(getLaneCode(lane).toInt)){
-        val property = lane.properties.find(_.publicId == "start_date")
-        if (property.isEmpty) {
-          missingStartDates = true
-        } else {
-          property match {
-            case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty =>
-              missingStartDates = true
-            case _ =>
-          }
-        }
-      }
-    )
-    missingStartDates
-  }
-
 
   def expireAllLanesInStateRoad(username: String): Any = {
     val existingLinkIds = dao.getAllLinkIdsInLanePosition()
