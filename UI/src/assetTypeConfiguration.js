@@ -1063,10 +1063,13 @@
               var isValidDate = true;
               var startDate = Property.getPropertyByPublicId(fields, 'start_date');
               var endDate = Property.getPropertyByPublicId(fields, 'end_date');
+              var laneCode = Property.getPropertyByPublicId(fields, 'lane_code');
+              var isMainLane = (laneCode && !_.isEmpty(laneCode.values) && !_.isUndefined(_.head(laneCode.values))) ?
+                  _.head(laneCode.values).value.toString()[1] === "1" : false;
 
               if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(_.head(startDate.values)) && !_.isUndefined(_.head(endDate.values)))
                 isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
-              else if (!startDate || _.isEmpty(startDate.values)) isValidDate = false;
+              else if (!isMainLane && (!startDate || _.isEmpty(startDate.values))) isValidDate = false;
               return isValidDate;
             };
 
