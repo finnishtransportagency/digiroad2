@@ -171,6 +171,12 @@ object LaneUtils {
 
           val isMainLane = MAIN_LANES.contains(laneCode)
 
+          if (!isMainLane) {
+            val startDateProperty = lane.properties.find(_.publicId == "start_date").getOrElse(throw new IllegalArgumentException("Start Date attribute not found on additional lane!"))
+            val startDateValue = startDateProperty.values.head.value
+            if (startDateValue == None || startDateValue.toString.trim.isEmpty) throw new IllegalArgumentException("Start Date attribute Empty on additional lane!")
+          }
+
           val startDifferenceAddr = laneRoadAddressInfo.initialDistance - road.startAddressM
           val startPoint = if (isMainLane || startDifferenceAddr <= 0) road.startMValue else startDifferenceAddr
           val endDifferenceAddr = road.endAddressM - laneRoadAddressInfo.endDistance

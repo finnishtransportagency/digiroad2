@@ -910,6 +910,9 @@ trait LaneOperations {
         newLanes.map { newLane =>
           val laneCode = newLane.properties.find(_.publicId == "lane_code")
                                           .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+          if (!LaneNumber.isMainLane(laneCode.values.head.value.toString.toInt)) {
+            newLane.properties.find(_.publicId == "start_date").getOrElse(throw new IllegalArgumentException("Start Date attribute not found on additional lane!"))
+          }
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
@@ -930,6 +933,10 @@ trait LaneOperations {
 
             val laneCode = newLane.properties.find(_.publicId == "lane_code")
                                              .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+
+            if (!LaneNumber.isMainLane(laneCode.values.head.value.toString.toInt)) {
+              newLane.properties.find(_.publicId == "start_date").getOrElse(throw new IllegalArgumentException("Start Date attribute not found on additional lane!"))
+            }
 
             val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
                             viiteRoadLinks(linkId).head
