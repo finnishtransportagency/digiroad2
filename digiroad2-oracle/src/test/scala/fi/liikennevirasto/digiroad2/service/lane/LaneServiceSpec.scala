@@ -45,11 +45,13 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   val lanePropertiesValues12 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+                                LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                               )
 
   val lanePropertiesValues14 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(14))),
-                                   LaneProperty("lane_type", Seq(LanePropertyValue("3")))
+                                   LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+                                   LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                                   )
 
 
@@ -59,11 +61,9 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   val lanePropertiesValues22 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(22))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+                                LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                               )
-
-  val laneStartDatePropertyValue = Seq(LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))))
-  val lanePropertiesValues12WithStartDate = lanePropertiesValues12 ++ laneStartDatePropertyValue
 
 
 
@@ -395,7 +395,8 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("5")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
       val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -444,11 +445,11 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
-        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
+        lanePropertiesValues12.contains(laneProp) should be(true)
       }
 
       val lane12B = lanesAfterSplit.filter(l => l.startMeasure == 250.0).head
-      val lanePropertiesSubLaneSplit2WithStartDate = lanePropertiesSubLaneSplit2 ++ laneStartDatePropertyValue
+      val lanePropertiesSubLaneSplit2WithStartDate = lanePropertiesSubLaneSplit2
       lane12B.startMeasure should be(250.0)
       lane12B.endMeasure should be(500.0)
       lane12B.attributes.foreach { laneProp =>
@@ -478,7 +479,8 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("5")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
       val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -505,12 +507,12 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
-        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
+        lanePropertiesValues12.contains(laneProp) should be(true)
       }
 
 
       val lane12B = currentLanes.filter(_.id == newSubLane12SplitBId).head
-      val lanePropertiesSubLaneSplit2WithStartDate = lanePropertiesSubLaneSplit2 ++ laneStartDatePropertyValue
+      val lanePropertiesSubLaneSplit2WithStartDate = lanePropertiesSubLaneSplit2
       lane12B.id should be(newSubLane12SplitBId)
       lane12B.startMeasure should be(250.0)
       lane12B.endMeasure should be(500.0)
@@ -537,7 +539,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12AfterSplit.endMeasure should be(500)
       lane12AfterSplit.expired should be(false)
       lane12AfterSplit.attributes.foreach { laneProp =>
-        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
+        lanePropertiesValues12.contains(laneProp) should be(true)
       }
 
 
@@ -572,16 +574,18 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val modifiedLaneProperties1 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("6")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("6"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
       val modifiedLaneProperties2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("8")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("8"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
-      val modifiedLaneProperties1WithStartDate = modifiedLaneProperties1 ++ laneStartDatePropertyValue
-      val modifiedLaneProperties2WithStartDate = modifiedLaneProperties2 ++ laneStartDatePropertyValue
+      val modifiedLaneProperties1WithStartDate = modifiedLaneProperties1
+      val modifiedLaneProperties2WithStartDate = modifiedLaneProperties2
 
       val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
       val subLane12SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
@@ -606,7 +610,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
-        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
+        lanePropertiesValues12.contains(laneProp) should be(true)
       }
 
       val lane12B = currentLanes.filter(_.id == newSubLane12SplitBId).head
@@ -678,7 +682,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Delete sub lane in middle of lanes") {
     runWithRollback {
       val lanePropertiesValues14To12 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
       val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -893,7 +898,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Expire a sub lane and then create another at same lane code with different properties") {
     runWithRollback {
       val newLanePropertiesValues12 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
       //NewIncomeLanes to create
@@ -1034,7 +1040,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Expire a inner sub lane in various links") {
     runWithRollback {
       val lanePropertiesValues14To12 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
       val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -1396,7 +1403,8 @@ class LaneServiceSpec extends LaneTestSupporter {
     //2 divides because two new lanes with same old lane
     runWithRollback {
       val lanePropertiesValues12B = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
       )
 
       val newLane12 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
@@ -1417,6 +1425,18 @@ class LaneServiceSpec extends LaneTestSupporter {
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Divided, LaneChangeType.Divided))
       val lanesDivides = lanesChanged.filter(_.changeType == LaneChangeType.Divided)
       lanesDivides.map(_.oldLane.get.id) should be(Seq(lane12Id, lane12Id))
+    }
+  }
+
+  test("Do not create additional lane without start_date") {
+    runWithRollback {
+      val lanePropertiesValues16 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
+      )
+      val thrown = intercept[IllegalArgumentException] {
+        ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues16)), Set(100L), 1, usernameTest)
+      }
+      thrown.getMessage should be("Start Date attribute not found on additional lane!")
     }
   }
 
