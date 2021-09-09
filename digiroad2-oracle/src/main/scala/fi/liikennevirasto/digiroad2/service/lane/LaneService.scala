@@ -513,6 +513,16 @@ trait LaneOperations {
       None
   }
 
+  private def getLaneCodeForValidLane(lane: NewLane): LaneProperty = {
+    val laneCode = lane.properties.find(_.publicId == "lane_code")
+                                  .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+    if (!LaneNumber.isMainLane(laneCode.values.head.value.toString.toInt)) {
+      lane.properties.find(_.publicId == "start_date")
+                     .getOrElse(throw new IllegalArgumentException("Start Date attribute not found on additional lane!"))
+    }
+    laneCode
+  }
+
   def fetchExistingMainLanesByRoadLinks( roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLane] = {
     val linkIds = roadLinks.map(_.linkId)
 
@@ -908,11 +918,7 @@ trait LaneOperations {
         val linkId = linkIds.head
 
         newLanes.map { newLane =>
-          val laneCode = newLane.properties.find(_.publicId == "lane_code")
-                                          .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
-          if (!LaneNumber.isMainLane(laneCode.values.head.value.toString.toInt)) {
-            newLane.properties.find(_.publicId == "start_date").getOrElse(throw new IllegalArgumentException("Start Date attribute not found on additional lane!"))
-          }
+          val laneCode = getLaneCodeForValidLane(newLane)
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
@@ -931,12 +937,7 @@ trait LaneOperations {
 
           newLanes.map { newLane =>
 
-            val laneCode = newLane.properties.find(_.publicId == "lane_code")
-                                             .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
-
-            if (!LaneNumber.isMainLane(laneCode.values.head.value.toString.toInt)) {
-              newLane.properties.find(_.publicId == "start_date").getOrElse(throw new IllegalArgumentException("Start Date attribute not found on additional lane!"))
-            }
+            val laneCode = getLaneCodeForValidLane(newLane)
 
             val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
                             viiteRoadLinks(linkId).head
