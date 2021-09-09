@@ -177,7 +177,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val laneType = getPropertyValue(props, "lane type").toInt
 
         val startDate = getPropertyValueOption(props, "start date").getOrElse("")
-        val isMainLane = laneCode.nonEmpty && laneCode.endsWith("1")
+        val isMainLane = LaneNumber.isMainLane(laneCode.toInt)
 
         val sideCode = track match {
           case 1 | 2 => SideCode.BothDirections
