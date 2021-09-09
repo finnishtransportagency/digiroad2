@@ -922,10 +922,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     val roadLinks =
       if (user.isOperator()) {
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal)).filter(_.administrativeClass.value != 1)
+        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal)).filter(_.administrativeClass != State)
       }
       else if (user.isMunicipalityMaintainer()) {
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities).filter(_.administrativeClass.value != 1)
+        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities).filter(_.administrativeClass.value != State)
       }
       else getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
 
