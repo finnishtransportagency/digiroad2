@@ -102,6 +102,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
+  def startDateRequiredOnLane(csvRowWithHeaders: Map[String, String]): Boolean = {
+    val laneCodeValue = csvRowWithHeaders.getOrElse("kaista", "")
+    val laneCode = if (laneCodeValue.trim.nonEmpty) laneCodeValue.toInt else 0
+    !LaneNumber.isMainLane(laneCode)
+  }
+
   def assetRowToAttributes(csvRowWithHeaders: Map[String, String]): ParsedRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) {
       (result, parameter) =>
@@ -112,6 +118,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             result.copy(_1 = List(key) ::: result._1, _2 = result._2)
           else if (nonMandatoryFieldsMapping.contains(key))
             result.copy(_2 = AssetProperty(columnName = nonMandatoryFieldsMapping(key), value = value) :: result._2)
+          else if (dateFieldMapping.contains(key) && startDateRequiredOnLane(csvRowWithHeaders))
+            result.copy(_1 = List(key) ::: result._1, _2 = result._2)
           else
             result
         } else {
