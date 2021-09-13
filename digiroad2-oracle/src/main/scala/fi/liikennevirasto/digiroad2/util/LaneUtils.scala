@@ -160,23 +160,10 @@ object LaneUtils {
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
 
         lanesToInsert.flatMap { lane =>
-          val laneCodeProperty = lane.properties.find(_.publicId == "lane_code")
-                                                .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
-
-          val laneCodeValue = laneCodeProperty.values.head.value
-          val laneCode = if ( laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty )
-                          laneCodeValue.toString.trim.toInt
-                         else
-                          throw new IllegalArgumentException("Lane Code attribute Empty!")
+          val laneCode = laneService.getLaneCode(lane).toInt
+          laneService.validateStartDate(lane, laneCode)
 
           val isMainLane = MAIN_LANES.contains(laneCode)
-
-          if (!isMainLane) {
-            val startDateProperty = lane.properties.find(_.publicId == "start_date")
-                                                    .getOrElse(throw new IllegalArgumentException("Start Date attribute not found on additional lane!"))
-            val startDateValue = startDateProperty.values.head.value
-            if (startDateValue == None || startDateValue.toString.trim.isEmpty) throw new IllegalArgumentException("Start Date attribute Empty on additional lane!")
-          }
 
           val startDifferenceAddr = laneRoadAddressInfo.initialDistance - road.startAddressM
           val startPoint = if (isMainLane || startDifferenceAddr <= 0) road.startMValue else startDifferenceAddr
