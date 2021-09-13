@@ -921,17 +921,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val diagonal = Vector3d(10, 10, 0)
 
     val roadLinks =
-      if (user.isOperator()) {
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal)).filter(_.administrativeClass != State)
-      }
-      else if (user.isMunicipalityMaintainer()) {
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities).filter(_.administrativeClass.value != State)
-      }
+      if (user.isOperator()) getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
       else getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
 
+    val onlyAuthorizedRoadLinks = {
+      if(user.isOperator() || user.isMunicipalityMaintainer()) roadLinks.filter(_.administrativeClass != State)
+      else roadLinks
+    }
+
+
     val closestRoadLinks =
-      if (roadLinks.isEmpty) Seq.empty[RoadLink]
-      else  enrichRoadLinksFromVVH(roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0))
+      if (onlyAuthorizedRoadLinks.isEmpty) Seq.empty[RoadLink]
+      else  enrichRoadLinksFromVVH(onlyAuthorizedRoadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0))
 
     if (forCarTraffic) closestRoadLinks.filter(_.linkType != CycleOrPedestrianPath )
     else closestRoadLinks
