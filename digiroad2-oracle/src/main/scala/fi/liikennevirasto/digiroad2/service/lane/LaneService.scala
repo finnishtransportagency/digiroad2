@@ -791,6 +791,14 @@ trait LaneOperations {
       throw new IllegalArgumentException("Lane code attribute not found!")
   }
 
+  def validateStartDate(newLane: NewLane, laneCode: Int): Unit = {
+    if (!LaneNumber.isMainLane(laneCode)) {
+      val startDateValue = getPropertyValue(newLane.properties, "start_date")
+      if (startDateValue == None || startDateValue.toString.trim.isEmpty)
+        throw new IllegalArgumentException("Start Date attribute not found on additional lane!")
+    }
+  }
+
   def isSomePropertyDifferent(oldLane: PersistedLane, newLaneProperties: Seq[LaneProperty]): Boolean = {
     oldLane.attributes.length != newLaneProperties.length ||
       oldLane.attributes.exists { property =>
@@ -908,10 +916,10 @@ trait LaneOperations {
         val linkId = linkIds.head
 
         newLanes.map { newLane =>
-          val laneCode = newLane.properties.find(_.publicId == "lane_code")
-                                          .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+          val laneCode = getLaneCode(newLane)
+          validateStartDate(newLane, laneCode.toInt)
 
-          val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+          val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
                                       expired = false, vvhTimeStamp, None, newLane.properties)
 
@@ -928,15 +936,15 @@ trait LaneOperations {
 
           newLanes.map { newLane =>
 
-            val laneCode = newLane.properties.find(_.publicId == "lane_code")
-                                             .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+            val laneCode = getLaneCode(newLane)
+            validateStartDate(newLane, laneCode.toInt)
 
             val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
                             viiteRoadLinks(linkId).head
                            else
                             throw new InvalidParameterException(s"No RoadLink found: $linkId")
 
-            val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+            val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
                                   roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None, None, None,
                                   expired = false, vvhTimeStamp, None, newLane.properties)
 
@@ -1030,10 +1038,10 @@ trait LaneOperations {
       val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode)
       val laneCodesToBeDeleted = actionsLanes.lanesToDelete.map(getLaneCode(_).toInt)
 
-      create(populateStartDate(actionsLanes.lanesToInsert).toSeq, linkIds, sideCode, username) ++
+      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username) ++
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
       deleteMultipleLanes(laneCodesToBeDeleted, linkIds, username) ++
-      createMultiLanesOnLink(populateStartDate(actionsLanes.multiLanesOnLink).toSeq, linkIds, sideCode, username)
+      createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
     }
   }
 
@@ -1140,34 +1148,6 @@ trait LaneOperations {
         }
       }
     }.toSeq
-  }
-
-  /**
-   * Populates start date property of lanes that don't have it filled with current date
-   * Main lanes are not altered
-   * @param lanes lanes to populate start date property
-   * @return lanes with populated start date property
-   */
-  def populateStartDate(lanes: Set[NewLane]): Set[NewLane] = {
-    val lanePropertyDateValues = Seq(LanePropertyValue(DateTime.now().toString(DatePropertyFormat)))
-
-    lanes.map { lane =>
-      //There is no start date in main lanes so return unaltered lane
-      if(LaneNumber.isMainLane(getLaneCode(lane).toInt)){
-        lane
-      }else{
-        val property = lane.properties.find(_.publicId == "start_date")
-
-        val updatedProperty = property match {
-          case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty =>
-            prop.copy(values = lanePropertyDateValues)
-          case Some(prop) => prop
-          case _ => LaneProperty("start_date", lanePropertyDateValues)
-        }
-
-        lane.copy(properties = lane.properties.filterNot(_.publicId == updatedProperty.publicId) ++ Seq(updatedProperty))
-      }
-    }
   }
 
 

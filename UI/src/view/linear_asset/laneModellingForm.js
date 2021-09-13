@@ -36,10 +36,8 @@
         var someValue = _.head(fieldValue, function(values) { return values.value ; });
         var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
 
-        me.element = $('' +
-          '<div class="form-group">' +
-          '<label class="control-label">' + field.label + '</label>' +
-          '</div>');
+        me.element = $('<div class="form-group" />');
+        me.element.append($('<label class="control-label" />').addClass(me.required() ? 'required' : '').text(field.label));
 
         var inputLabel = $('<input type="text" ' + me.disabled() + '/>').addClass('form-control')
           .attr('id', field.publicId + sideCode)
@@ -542,7 +540,7 @@
         createdDate : selectedAsset.createdAt ? ' ' + selectedAsset.createdAt: ''
       };
 
-      return $('<div class="wrapper read-only">' +
+      return $('<div class="wrapper">' +
           '   <div class="form form-horizontal form-dark asset-factory">' +
           '     <div class="form-group">' +
           '       <p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + self.informationLog(info.createdDate, info.createdBy)+ '</p>' +
@@ -552,7 +550,7 @@
           '     </div>' +
           self.userInformationLog() +
           '   </div>' +
-          '</div>');
+          '</div>').addClass(applicationModel.isReadOnly() ? "read-only" : "edit-mode");
 
     }
 

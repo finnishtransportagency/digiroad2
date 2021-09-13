@@ -1640,6 +1640,23 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def missingStartDates(lanes: Set[NewLane]): Boolean = {
+    lanes.exists { lane =>
+      if (LaneNumber.isMainLane(laneService.getLaneCode(lane).toInt)) false
+      else {
+        val property = lane.properties.find(_.publicId == "start_date")
+        if (property.isEmpty) true
+        else {
+          property match {
+            case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty => true
+            case _ => false
+          }
+        }
+      }
+    }
+  }
+
+
   get("/manoeuvres") {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -2316,6 +2333,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[Long]](halt(BadRequest("Malformed 'linkIds' parameter")))
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    if (missingStartDates(incomingLanes.toSet)) halt(BadRequest("Missing required 'start_date' on one or more lanes"))
 
     validateUserRightsForLanes(linkIds, user)
     laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
@@ -2327,6 +2345,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val laneRoadAddressInfo = (parsedBody \ "laneRoadAddressInfo").extractOrElse[LaneRoadAddressInfo](halt(BadRequest("Malformed 'laneRoadAddressInfo' parameter")))
     val incomingLanes = (parsedBody \ "lanes").extractOrElse[Set[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    if (missingStartDates(incomingLanes)) halt(BadRequest("Missing required 'start_date' on one or more lanes"))
 
     validateUserRightsForRoadAddress(laneRoadAddressInfo, user)
     LaneUtils.processNewLanesByRoadAddress(incomingLanes, laneRoadAddressInfo,sideCode, user.username)

@@ -153,21 +153,15 @@ object LaneUtils {
       val filteredRoadAddresses = getRoadAddressToProcess()
 
       //Get only the lanes to create
-      val lanesToInsert = laneService.populateStartDate(newLanes.filter(_.id == 0))
+      val lanesToInsert = newLanes.filter(_.id == 0)
 
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
 
         lanesToInsert.flatMap { lane =>
-          val laneCodeProperty = lane.properties.find(_.publicId == "lane_code")
-                                                .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
-
-          val laneCodeValue = laneCodeProperty.values.head.value
-          val laneCode = if ( laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty )
-                          laneCodeValue.toString.trim.toInt
-                         else
-                          throw new IllegalArgumentException("Lane Code attribute Empty!")
+          val laneCode = laneService.getLaneCode(lane).toInt
+          laneService.validateStartDate(lane, laneCode)
 
           val isMainLane = MAIN_LANES.contains(laneCode)
 
