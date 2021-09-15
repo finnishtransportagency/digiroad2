@@ -152,11 +152,27 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       ManoeuvreElement(0, linkPair._1, linkPair._2, ElementTypes.IntermediateElement)
     )
 
+    if (isValidLinkChain(linkPairs) == false) return false
+
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
     val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null, false)
 
     isValidManoeuvre(roadLinks)(manoeuvre)
+  }
+
+  /**
+    * Check if the chain makes sense and is truly a chain. Loops through the linkPairs and checks
+    * that each pair's starting roadlink is not equal to next pair's
+    * ending roadlink, also checks that pair's starting and ending roadlinks are not the same roadlink.
+    * @param linkPairs sequence containing the start and end roadlinks for each pair
+    * @return false if chain breaks the rules, otherwise true
+    */
+  private def isValidLinkChain(linkPairs: Seq[(Long, Long)]) : Boolean = {
+    for( i <- 0 until linkPairs.length - 1){
+    if( linkPairs(i)._1 == linkPairs(i + 1)._2 || linkPairs(i)._1 == linkPairs(i)._2 || linkPairs(i+1)._1 == linkPairs(i+1)._2) return false
+  }
+  true
   }
 
   private def getBySourceRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
