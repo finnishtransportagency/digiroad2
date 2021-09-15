@@ -152,6 +152,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       ManoeuvreElement(0, linkPair._1, linkPair._2, ElementTypes.IntermediateElement)
     )
 
+    for( x <- 0 until linkPairs.length - 1){
+      if( linkPairs(x)._1 == linkPairs(x + 1)._2 || linkPairs(x)._1 == linkPairs(x)._2 || linkPairs(x+1)._1 == linkPairs(x+1)._2) return false
+    }
+
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
     val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null, false)
