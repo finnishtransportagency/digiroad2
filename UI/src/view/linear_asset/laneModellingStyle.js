@@ -15,7 +15,7 @@
       if (_.isUndefined(laneCode))
         return false;
 
-      return _.head(laneCode.values).value.toString()[1] == "1";
+      return _.head(laneCode.values).value.toString()[0] == "1";
     };
 
     this.getNewFeatureProperties = function(linearAssets, laneNumber){
@@ -27,7 +27,7 @@
             return property.publicId === "lane_code";
           });
 
-          return _.head(laneCode.values).value == laneNumber || _.head(laneCode.values).value.toString()[1] == '1';
+          return _.head(laneCode.values).value == laneNumber || _.head(laneCode.values).value.toString()[0] == '1';
         });
       }
 
