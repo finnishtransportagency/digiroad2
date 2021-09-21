@@ -56,7 +56,7 @@ case class LaneRoadAddressInfo ( roadNumber: Long, initialRoadPartNumber: Long, 
   * Values for lane numbers
   */
 //sealed trait LaneNumber {
-//  def laneCode: Int
+//  def towardsDirection: Int
 //  def againstDirection : Int
 //}
 //
@@ -78,71 +78,71 @@ case class LaneRoadAddressInfo ( roadNumber: Long, initialRoadPartNumber: Long, 
 //      if (index == 3)
 //        MainLane
 //      else if (index == 1)
-//        values.find(_.laneCode == value).getOrElse(Unknown)
+//        values.find(_.towardsDirection == value).getOrElse(Unknown)
 //      else
 //        values.find(_.againstDirection == value).getOrElse(Unknown)
 //    }
 //  }
 //
 //  def isMainLane (laneCode : Int): Boolean = {
-//    val mainLanes = Seq(MainLane.laneCode, MainLane.againstDirection, MainLane.motorwayMaintenance)
+//    val mainLanes = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 //
 //    mainLanes.contains(laneCode)
 //  }
 //
 //  def isValidLaneNumber (laneCode: Int): Boolean = {
 //    val lanesNumbers = values.filterNot(_ == Unknown)
-//    lanesNumbers.exists(x => x.againstDirection == laneCode || x.laneCode == laneCode) || MainLane.motorwayMaintenance == laneCode
+//    lanesNumbers.exists(x => x.againstDirection == laneCode || x.towardsDirection == laneCode) || MainLane.motorwayMaintenance == laneCode
 //  }
 //
 //  case object MainLane extends LaneNumber {
-//    def laneCode = 11
+//    def towardsDirection = 11
 //    def againstDirection = 21
 //    def motorwayMaintenance: Int = 31
 //  }
 //
 //  case object FirstLeftAdditional extends LaneNumber {
-//    def laneCode = 12
+//    def towardsDirection = 12
 //    def againstDirection = 22
 //  }
 //
 //  case object FirstRightAdditional extends LaneNumber {
-//    def laneCode = 13
+//    def towardsDirection = 13
 //    def againstDirection = 23
 //  }
 //
 //  case object SecondLeftAdditional extends LaneNumber {
-//    def laneCode = 14
+//    def towardsDirection = 14
 //    def againstDirection = 24
 //  }
 //
 //  case object SecondRightAdditional extends LaneNumber {
-//    def laneCode = 15
+//    def towardsDirection = 15
 //    def againstDirection = 25
 //  }
 //
 //  case object ThirdLeftAdditional extends LaneNumber {
-//    def laneCode = 16
+//    def towardsDirection = 16
 //    def againstDirection = 26
 //  }
 //
 //  case object ThirdRightAdditional extends LaneNumber {
-//    def laneCode = 17
+//    def towardsDirection = 17
 //    def againstDirection = 27
 //  }
 //
 //  case object FourthLeftAdditional extends LaneNumber {
-//    def laneCode = 18
+//    def towardsDirection = 18
 //    def againstDirection = 28
 //  }
 //
 //  case object FourthRightAdditional extends LaneNumber {
-//    def laneCode = 19
+//    def towardsDirection = 19
 //    def againstDirection = 29
 //  }
 //
 //  case object Unknown extends LaneNumber {
-//    def laneCode = 99
+//    def towardsDirection = 99
 //    def againstDirection = 99
 //  }
 //}
