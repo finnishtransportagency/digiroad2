@@ -264,6 +264,11 @@
                 value = administrativeClassValues[_.head(selectedLinks)[publicId]];
                 break;
               default:
+                var headObject=_.head(selectedLinks);
+                if (_.isUndefined(headObject[publicId])){
+                  console.log(publicId);
+                  console.log(_.head(selectedLinks));
+                }
                 value = _.head(selectedLinks)[publicId];
             }
 
@@ -364,7 +369,7 @@
       var addLeftLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button>').click(function() {
         var nextLaneNumber;
         if(_.isEmpty(even)){
-          nextLaneNumber = parseInt(odd + '2');
+          nextLaneNumber = 2;
         }else{
           nextLaneNumber = parseInt(_.max(even)) + 2;
         }
