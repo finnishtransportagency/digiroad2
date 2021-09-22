@@ -309,7 +309,7 @@
           var laneNumber = parseInt(number);
           lanesAssets.setCurrentLane(laneNumber);
 
-          if(laneNumber == "1"){
+          if(laneNumber == 1){
             currentFormStructure = mainLaneFormStructure;
           }else{
             newLaneStructure(laneNumber);
@@ -494,7 +494,7 @@
 
         selectedAsset.setCurrentLane(currentLaneNumber);
 
-        if(currentLaneNumber == "1"){
+        if(currentLaneNumber == 1){
           currentFormStructure = mainLaneFormStructure;
         }else{
           newLaneStructure(currentLaneNumber);
@@ -506,7 +506,7 @@
       expireLane.prop('disabled', lane.id === 0);
       deleteLane.prop('disabled', lane.id !== 0);
 
-      if(currentLaneNumber !== "1")
+      if(currentLaneNumber !== 1)
         body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
     }
 
