@@ -60,6 +60,8 @@ sealed trait LaneNumber {
   def againstDirection : Int
 }
 
+
+
 object LaneNumber {
   val values = Set(MainLane, FirstLeftAdditional, FirstRightAdditional, SecondLeftAdditional, SecondRightAdditional,
     ThirdLeftAdditional, ThirdRightAdditional, FourthLeftAdditional, FourthRightAdditional, Unknown)
@@ -143,9 +145,83 @@ object LaneNumber {
     def towardsDirection = 99
     def againstDirection = 99
   }
-
 }
 
+
+sealed trait LaneNumberOneDigit {
+  def laneCode: Int
+}
+
+object LaneNumberOneDigit {
+  val values = Set(MainLane, FirstLeftAdditional, FirstRightAdditional, SecondLeftAdditional, SecondRightAdditional,
+    ThirdLeftAdditional, ThirdRightAdditional, FourthLeftAdditional, FourthRightAdditional, Unknown)
+
+  def apply(value: Int): LaneNumberOneDigit = {
+    val valueAsStr = value.toString
+
+    if(valueAsStr.length != 1 ) {
+      Unknown
+
+    } else {
+      values.find(_.laneCode == value).getOrElse(Unknown)
+    }
+  }
+
+
+  def isMainLane (laneCode : Int): Boolean = {
+    if (laneCode == 1) true
+    else{
+      false
+    }
+  }
+
+  def isValidLaneNumber (laneCode: Int): Boolean = {
+    val lanesNumbers = values.filterNot(_ == Unknown)
+    lanesNumbers.exists(x => x.laneCode == laneCode)
+  }
+
+  case object MainLane extends LaneNumberOneDigit {
+    def laneCode = 1
+
+  }
+
+  case object FirstLeftAdditional extends LaneNumberOneDigit {
+    def laneCode = 2
+  }
+
+  case object FirstRightAdditional extends LaneNumberOneDigit {
+    def laneCode = 3
+  }
+
+  case object SecondLeftAdditional extends LaneNumberOneDigit {
+    def laneCode = 4
+  }
+
+  case object SecondRightAdditional extends LaneNumberOneDigit {
+    def laneCode = 5
+  }
+
+  case object ThirdLeftAdditional extends LaneNumberOneDigit {
+    def laneCode = 6
+  }
+
+  case object ThirdRightAdditional extends LaneNumberOneDigit {
+    def laneCode = 7
+  }
+
+  case object FourthLeftAdditional extends LaneNumberOneDigit {
+    def laneCode = 8
+  }
+
+  case object FourthRightAdditional extends LaneNumberOneDigit {
+    def laneCode = 9
+  }
+
+  case object Unknown extends LaneNumberOneDigit{
+    def laneCode = 99
+  }
+
+}
 
 /**
   * Values for lane types

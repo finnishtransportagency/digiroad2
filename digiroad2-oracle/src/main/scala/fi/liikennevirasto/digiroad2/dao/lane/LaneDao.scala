@@ -2,17 +2,18 @@ package fi.liikennevirasto.digiroad2.dao.lane
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, PersistedLane, _}
+import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
+import fi.liikennevirasto.digiroad2.lane.LaneNumberOneDigit.MainLane
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+
 import scala.language.implicitConversions
 
 
@@ -130,7 +131,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   def fetchLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
     val lanesCodeToFilter =
       if (mainLanes)
-        Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
+        Seq(MainLane.laneCode)
       else
         Seq()
 
@@ -316,7 +317,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     val oldLaneCode = sql"""SELECT lane_code FROM LANE WHERE id = ${lane.id}""".as[Int].first
 
-    if (LaneNumber.isMainLane(oldLaneCode) && oldLaneCode != lane.laneCode)
+    if (LaneNumberOneDigit.isMainLane(oldLaneCode) && oldLaneCode != lane.laneCode)
       throw new IllegalArgumentException("Cannot change the code of main lane!")
 
     sqlu"""UPDATE LANE
