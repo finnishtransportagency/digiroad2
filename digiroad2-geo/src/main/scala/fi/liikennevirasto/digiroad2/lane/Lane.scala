@@ -55,97 +55,97 @@ case class LaneRoadAddressInfo ( roadNumber: Long, initialRoadPartNumber: Long, 
 /**
   * Values for lane numbers
   */
-//sealed trait LaneNumber {
-//  def towardsDirection: Int
-//  def againstDirection : Int
-//}
-//
-//
-//
-//object LaneNumber {
-//  val values = Set(MainLane, FirstLeftAdditional, FirstRightAdditional, SecondLeftAdditional, SecondRightAdditional,
-//    ThirdLeftAdditional, ThirdRightAdditional, FourthLeftAdditional, FourthRightAdditional, Unknown)
-//
-//  def apply(value: Int): LaneNumber = {
-//    val valueAsStr = value.toString
-//
-//    if(valueAsStr.length != 2 ) {
-//      Unknown
-//
-//    } else {
-//      val index = valueAsStr.substring(0, 1).toInt
-//
-//      if (index == 3)
-//        MainLane
-//      else if (index == 1)
-//        values.find(_.towardsDirection == value).getOrElse(Unknown)
-//      else
-//        values.find(_.againstDirection == value).getOrElse(Unknown)
-//    }
-//  }
-//
-//  def isMainLane (laneCode : Int): Boolean = {
-//    val mainLanes = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
-//
-//    mainLanes.contains(laneCode)
-//  }
-//
-//  def isValidLaneNumber (laneCode: Int): Boolean = {
-//    val lanesNumbers = values.filterNot(_ == Unknown)
-//    lanesNumbers.exists(x => x.againstDirection == laneCode || x.towardsDirection == laneCode) || MainLane.motorwayMaintenance == laneCode
-//  }
-//
-//  case object MainLane extends LaneNumber {
-//    def towardsDirection = 11
-//    def againstDirection = 21
-//    def motorwayMaintenance: Int = 31
-//  }
-//
-//  case object FirstLeftAdditional extends LaneNumber {
-//    def towardsDirection = 12
-//    def againstDirection = 22
-//  }
-//
-//  case object FirstRightAdditional extends LaneNumber {
-//    def towardsDirection = 13
-//    def againstDirection = 23
-//  }
-//
-//  case object SecondLeftAdditional extends LaneNumber {
-//    def towardsDirection = 14
-//    def againstDirection = 24
-//  }
-//
-//  case object SecondRightAdditional extends LaneNumber {
-//    def towardsDirection = 15
-//    def againstDirection = 25
-//  }
-//
-//  case object ThirdLeftAdditional extends LaneNumber {
-//    def towardsDirection = 16
-//    def againstDirection = 26
-//  }
-//
-//  case object ThirdRightAdditional extends LaneNumber {
-//    def towardsDirection = 17
-//    def againstDirection = 27
-//  }
-//
-//  case object FourthLeftAdditional extends LaneNumber {
-//    def towardsDirection = 18
-//    def againstDirection = 28
-//  }
-//
-//  case object FourthRightAdditional extends LaneNumber {
-//    def towardsDirection = 19
-//    def againstDirection = 29
-//  }
-//
-//  case object Unknown extends LaneNumber {
-//    def towardsDirection = 99
-//    def againstDirection = 99
-//  }
-//}
+sealed trait LaneNumber {
+  def towardsDirection: Int
+  def againstDirection : Int
+}
+
+
+
+object LaneNumber {
+  val values = Set(MainLane, FirstLeftAdditional, FirstRightAdditional, SecondLeftAdditional, SecondRightAdditional,
+    ThirdLeftAdditional, ThirdRightAdditional, FourthLeftAdditional, FourthRightAdditional, Unknown)
+
+  def apply(value: Int): LaneNumber = {
+    val valueAsStr = value.toString
+
+    if(valueAsStr.length != 2 ) {
+      Unknown
+
+    } else {
+      val index = valueAsStr.substring(0, 1).toInt
+
+      if (index == 3)
+        MainLane
+      else if (index == 1)
+        values.find(_.towardsDirection == value).getOrElse(Unknown)
+      else
+        values.find(_.againstDirection == value).getOrElse(Unknown)
+    }
+  }
+
+  def isMainLane (laneCode : Int): Boolean = {
+    val mainLanes = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
+
+    mainLanes.contains(laneCode)
+  }
+
+  def isValidLaneNumber (laneCode: Int): Boolean = {
+    val lanesNumbers = values.filterNot(_ == Unknown)
+    lanesNumbers.exists(x => x.againstDirection == laneCode || x.towardsDirection == laneCode) || MainLane.motorwayMaintenance == laneCode
+  }
+
+  case object MainLane extends LaneNumber {
+    def towardsDirection = 11
+    def againstDirection = 21
+    def motorwayMaintenance: Int = 31
+  }
+
+  case object FirstLeftAdditional extends LaneNumber {
+    def towardsDirection = 12
+    def againstDirection = 22
+  }
+
+  case object FirstRightAdditional extends LaneNumber {
+    def towardsDirection = 13
+    def againstDirection = 23
+  }
+
+  case object SecondLeftAdditional extends LaneNumber {
+    def towardsDirection = 14
+    def againstDirection = 24
+  }
+
+  case object SecondRightAdditional extends LaneNumber {
+    def towardsDirection = 15
+    def againstDirection = 25
+  }
+
+  case object ThirdLeftAdditional extends LaneNumber {
+    def towardsDirection = 16
+    def againstDirection = 26
+  }
+
+  case object ThirdRightAdditional extends LaneNumber {
+    def towardsDirection = 17
+    def againstDirection = 27
+  }
+
+  case object FourthLeftAdditional extends LaneNumber {
+    def towardsDirection = 18
+    def againstDirection = 28
+  }
+
+  case object FourthRightAdditional extends LaneNumber {
+    def towardsDirection = 19
+    def againstDirection = 29
+  }
+
+  case object Unknown extends LaneNumber {
+    def towardsDirection = 99
+    def againstDirection = 99
+  }
+}
 
 
 sealed trait LaneNumberOneDigit {

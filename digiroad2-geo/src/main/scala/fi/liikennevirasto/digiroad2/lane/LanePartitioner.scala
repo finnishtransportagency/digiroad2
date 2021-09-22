@@ -43,7 +43,7 @@ object LanePartitioner extends GraphPartitioner {
 
       val (linksToPartition, linksToPass) = linkGroups.partition { case ((roadIdentifier, _, _, _), _) => roadIdentifier.isDefined }
       val clustersAux = linksToPartition.values.map(_.values.flatten.filter(lane =>
-        LaneNumber.isMainLane(lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]))
+        LaneNumberOneDigit.isMainLane(lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]))
       )
 
       val clusters = for (linkGroup <- clustersAux.asInstanceOf[Seq[Seq[T]]];
