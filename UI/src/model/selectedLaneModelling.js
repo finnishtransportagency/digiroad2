@@ -320,7 +320,7 @@
 
     this.setNewLane = function(laneNumber) {
       var laneToClone;
-      if(laneNumber.toString() == 2){
+      if(laneNumber == 2){
         laneToClone = self.getLane(laneNumber-1);
       }else{
         laneToClone = self.getLane(laneNumber-2);
@@ -328,7 +328,7 @@
 
       var newLane = _.cloneDeep(_.omit(laneToClone, ['marker', 'createdBy', 'createdAt', 'modifiedBy', 'modifiedAt', 'properties']));
 
-      var outerLaneIsMainLane = laneNumber.toString() == 2 || laneNumber.toString() == 3;
+      var outerLaneIsMainLane = laneNumber == 2 || laneNumber == 3;
 
       var properties = _.filter(newLane.properties, function (property) {
         if(outerLaneIsMainLane)
