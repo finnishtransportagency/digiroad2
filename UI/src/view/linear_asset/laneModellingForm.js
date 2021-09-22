@@ -484,9 +484,9 @@
       var prepareLanesStructure = function () {
         if(_.isUndefined(selectedAsset.getLane(currentLaneNumber))){
           if(currentLaneNumber == "2"){
-            currentLaneNumber = currentLaneNumber - 1
+            currentLaneNumber = currentLaneNumber - 1;
           }else{
-            currentLaneNumber = currentLaneNumber -2;
+            currentLaneNumber = currentLaneNumber - 2;
           }
         }
         selectedAsset.setCurrentLane(currentLaneNumber);
