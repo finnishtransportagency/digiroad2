@@ -264,11 +264,6 @@
                 value = administrativeClassValues[_.head(selectedLinks)[publicId]];
                 break;
               default:
-                var headObject=_.head(selectedLinks);
-                if (_.isUndefined(headObject[publicId])){
-                  console.log(publicId);
-                  console.log(_.head(selectedLinks));
-                }
                 value = _.head(selectedLinks)[publicId];
             }
 
@@ -373,7 +368,6 @@
         }else{
           nextLaneNumber = parseInt(_.max(even)) + 2;
         }
-
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
         newLaneStructure(nextLaneNumber);
@@ -383,7 +377,6 @@
 
       var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
-
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
         newLaneStructure(nextLaneNumber);
@@ -491,12 +484,11 @@
       var prepareLanesStructure = function () {
         if(_.isUndefined(selectedAsset.getLane(currentLaneNumber))){
           if(currentLaneNumber == "2"){
-            currentLaneNumber = parseInt(currentLaneNumber + '1');
+            currentLaneNumber = currentLaneNumber - 1
           }else{
-            currentLaneNumber = currentLaneNumber-2;
+            currentLaneNumber = currentLaneNumber -2;
           }
         }
-
         selectedAsset.setCurrentLane(currentLaneNumber);
 
         if(currentLaneNumber == 1){
@@ -583,7 +575,7 @@
           noButtonLbl: 'Peruuta',
           successCallback: function() {
             selectedLinearAsset.save(isAddByRoadAddressActive);
-            selectedLinearAsset.setCurrentLane(parseInt(laneNumber + '1'));
+            selectedLinearAsset.setCurrentLane(parseInt(laneNumber)+1);
             currentFormStructure = mainLaneFormStructure;
           }
         };
@@ -612,7 +604,7 @@
       var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
       var element = $('<button />').prop('disabled', !selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
-        selectedLinearAsset.setCurrentLane(parseInt(laneNumber + '1'));
+        selectedLinearAsset.setCurrentLane(parseInt(laneNumber)+1);
         currentFormStructure = mainLaneFormStructure;
         selectedLinearAsset.cancel();
       });
