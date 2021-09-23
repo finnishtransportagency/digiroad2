@@ -14,6 +14,8 @@ ScalatraBootstrap extends LifeCycle {
   implicit val swagger = new OthSwagger
 
   override def init(context: ServletContext) {
+   
+    
     context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
       Digiroad2Context.roadAddressService,
       Digiroad2Context.speedLimitService,
@@ -37,20 +39,17 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new ImportDataApi(Digiroad2Context.roadLinkService), "/api/import/*")
     context.mount(new ExportDataApi(Digiroad2Context.roadLinkService), "/api/export/*")
     Digiroad2Context.massTransitStopService.massTransitStopEnumeratedPropertyValues
-    context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService, swagger), "/api/integration/*")
-    context.mount(new ChangeApi(swagger), "/api/changes/*")
-    context.mount(new MunicipalityApi(Digiroad2Context.vvhClient,
-      Digiroad2Context.roadLinkService,
-      Digiroad2Context.speedLimitService,
-      Digiroad2Context.pavedRoadService,
-      Digiroad2Context.obstacleService,
-      swagger
-    ), "/api/municipality/*")
-    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService, swagger), "/api/livi/*")
+
     if (!Digiroad2Properties.tierekisteriEnabled) {
       // Mount for manual testing purposes but do not use them
       context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
     }
     context.mount(new ResourcesApp, "/api-docs")
+    // external Api
+    context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService, swagger), "/externalApi/integration/*")
+    context.mount(new ChangeApi(swagger), "/externalApi/changes/*")
+    context.mount(new MunicipalityApi(Digiroad2Context.vvhClient, Digiroad2Context.roadLinkService, Digiroad2Context.speedLimitService, Digiroad2Context.pavedRoadService, Digiroad2Context.obstacleService,
+      swagger), "/externalApi/municipality/*")
+    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService, swagger), "/externalApi/livi/*")
   }
 }
