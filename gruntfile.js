@@ -94,6 +94,14 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
+            context: '/externalApi',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          },
+          {
             context: '/digiroad/api-docs',
             host: '127.0.0.1',
             port: '8080',
