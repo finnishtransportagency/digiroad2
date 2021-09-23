@@ -106,7 +106,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case Some(_) =>
             None
           case _ =>
-            Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+            Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("width","integer",true,Seq(DynamicPropertyValue(roadLink.extractMTKClass(roadLink.attributes).width))))))),
               0, GeometryUtils.geometryLength(roadLink.geometry), Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId,
               changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls)))
         }
@@ -118,7 +118,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             case _ => (asset.startMeasure, asset.endMeasure)
           }
 
-        PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+        PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("width","integer",true,Seq(roadLink.extractMTKClass(roadLink.attributes).width.asInstanceOf[DynamicPropertyValue])))))),
           startMeasure, endMeasure, asset.createdBy, asset.createdDateTime, Some("vvh_mtkclass_default"), None, false, LinearAssetTypes.RoadWidthAssetTypeId,
           changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls))}
       case _ =>
