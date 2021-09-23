@@ -135,6 +135,22 @@ Resources:
         - Field: path-pattern
           Values: ['*']
       ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 2
+  
+  BlockUserFromUsinExternalAPI:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - FixedResponseConfig:
+          - ContentType: 'text/plain'
+            MessageBody: 'Use ApiGateway'
+            StatusCode: String
+          Type: 'fixed-response'
+      Conditions:
+        - Field: path-pattern
+          Values: [ '/externalApi/*' ]
+      ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 1
 
   EcsService:
