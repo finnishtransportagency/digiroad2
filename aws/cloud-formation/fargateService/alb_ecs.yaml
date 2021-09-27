@@ -135,7 +135,7 @@ Resources:
         - Field: path-pattern
           Values: ['*']
       ListenerArn: !Ref PrivateLoadBalancerListener
-      Priority: 2
+      Priority: 3
   
   BlockUserFromUsinExternalAPI:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -150,6 +150,19 @@ Resources:
       Conditions:
         - Field: path-pattern
           Values: [ '/externalApi/*' ]
+      ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 2
+  
+  AllowApiGateway:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'TargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: host-header
+          Values: [ 'devapi.testivaylapilvi.fi' ]
       ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 1
 
