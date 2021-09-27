@@ -143,9 +143,9 @@ Resources:
     Properties:
       Actions:
         - FixedResponseConfig:
-          - ContentType: 'text/plain'
+            ContentType: 'text/plain'
             MessageBody: 'Use ApiGateway'
-            StatusCode: String
+            StatusCode: '403'
           Type: 'fixed-response'
       Conditions:
         - Field: path-pattern
