@@ -144,7 +144,7 @@ Resources:
       Actions:
         - FixedResponseConfig:
             ContentType: 'text/plain'
-            MessageBody: 'Use ApiGateway'
+            MessageBody: 'Selainkäyttö on nykyään estetty. Voit käyttää palvelua devapi.testiväyläpilvi.fi'
             StatusCode: '403'
           Type: 'fixed-response'
       Conditions:
