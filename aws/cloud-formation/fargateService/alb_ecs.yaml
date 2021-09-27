@@ -137,7 +137,7 @@ Resources:
       ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 3
   
-  BlockUserFromUsinExternalAPI:
+  BlockUserFromUsingExternalAPI:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     DependsOn: PrivateLoadBalancerListener
     Properties:
