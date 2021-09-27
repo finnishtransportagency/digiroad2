@@ -32,6 +32,36 @@ Resources:
           ComputeEnvironment:
             Ref: ComputeEnvironment
 
+  JobQueueDailyJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "DailyQueue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ComputeEnvironment
+
+  JobQueueWeeklyJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "WeeklyQueue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ComputeEnvironment
+
+  JobQueueAnnualJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "AnnualQueue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ComputeEnvironment
+
   ComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
