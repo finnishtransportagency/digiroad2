@@ -143,8 +143,8 @@ Resources:
     Properties:
       Actions:
         - FixedResponseConfig:
-            ContentType: 'text/plain'
-            MessageBody: 'Selainkäyttö on nykyään estetty. Voit käyttää palvelua devapi.testivaylapilvi.fi'
+            ContentType: 'text/html'
+            MessageBody: 'Selaink&auml;ytt&ouml; on nyky&auml;&auml;n estetty. Voit k&auml;ytt&auml;&auml; palvelua devapi.testivaylapilvi.fi'
             StatusCode: '403'
           Type: 'fixed-response'
       Conditions:
