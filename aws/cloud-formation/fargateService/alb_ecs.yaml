@@ -135,6 +135,35 @@ Resources:
         - Field: path-pattern
           Values: ['*']
       ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 3
+  
+  BlockUserFromUsingExternalAPI:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - FixedResponseConfig:
+            ContentType: 'text/html'
+            MessageBody: 'Selaink&auml;ytt&ouml; on nyky&auml;&auml;n estetty. Voit k&auml;ytt&auml;&auml; palvelua devapi.testivaylapilvi.fi'
+            StatusCode: '403'
+          Type: 'fixed-response'
+      Conditions:
+        - Field: path-pattern
+          Values: [ '/externalApi/*' ]
+      ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 2
+  
+  AllowApiGateway:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'TargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: host-header
+          Values: [ 'devapi.testivaylapilvi.fi' ]
+      ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 1
 
   EcsService:
