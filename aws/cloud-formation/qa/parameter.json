@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "TaskDefinitionForService",
+    "ParameterValue": "digiroad2-QA"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "QA"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ContainerPort",
+    "ParameterValue": "8080"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0b4e33ad8202e91e4"
+  },
+  {
+    "ParameterKey": "IpRangeForYourNetwork",
+    "ParameterValue": "100.64.1.0/24"
+  }
+]
