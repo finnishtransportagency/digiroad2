@@ -138,7 +138,10 @@
       }
     ],
     "logConfiguration": {
-      "logDriver": "awslogs"
+      "logDriver": "awslogs",
+      "options":{
+        "awslogs-group": "DEV/batch/job"
+      }
     },
     "secrets": [
       {
