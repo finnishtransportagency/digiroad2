@@ -134,6 +134,7 @@ Resources:
                   - 'ecr:BatchGetImage'
 
                   # Allow the ECS tasks to upload logs to CloudWatch
+                  - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
 
