@@ -169,10 +169,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             validateRequiredProperties(linearAsset.typeId, props)
             dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
 
-
-
-
-          case _ => logger.info("Updating assets: " + linearAsset.id + " properties failed")
+          case _ => logger.error("Updating asset's " + linearAsset.id + " properties failed")
         }
       }
       if (newLinearAssets.nonEmpty)
