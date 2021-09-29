@@ -186,11 +186,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, startupAsseId: Int)
 
-  val StateRoadRestrictedAssetsForOperator = Set(DamagedByThaw.typeId, MassTransitLane.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId,TrafficVolume.typeId)
-  
-  val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId,TrafficVolume.typeId)
+  val StateRoadRestrictedAssets = Set(TrHeightLimit.typeId, TrWidthLimit.typeId, TrTrailerTruckWeightLimit.typeId,
+    TrAxleWeightLimit.typeId, TrBogieWeightLimit.typeId, TrWeightLimit.typeId)
 
   val minVisibleZoom = 8
   val maxZoom = 9
@@ -1630,14 +1627,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateAdministrativeClass(typeId: Int, user: User, municipality: Int)(administrativeClass: AdministrativeClass): Unit  = {
-    val isNotElyExceptionAndIsStateRoad = !user.isAnElyException(municipality) && administrativeClass == State
-    if(user.isOperator()){
-      if (isNotElyExceptionAndIsStateRoad  && StateRoadRestrictedAssetsForOperator.contains(typeId))
-        halt(BadRequest("Modification restriction for this asset on state roads"))
-    }else{
-      if ( isNotElyExceptionAndIsStateRoad && StateRoadRestrictedAssets.contains(typeId))
-        halt(BadRequest("Modification restriction for this asset on state roads"))
-    }
+    if ( !user.isAnElyException(municipality) && administrativeClass == State && StateRoadRestrictedAssets.contains(typeId))
+      halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 
   private def missingStartDates(lanes: Set[NewLane]): Boolean = {
