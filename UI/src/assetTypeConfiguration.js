@@ -165,7 +165,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
@@ -197,7 +197,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
@@ -229,7 +229,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
@@ -261,7 +261,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
@@ -294,7 +294,7 @@
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
@@ -382,7 +382,7 @@
           enabled: 'Valaistus',
           disabled: 'Ei valaistusta'
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -411,7 +411,7 @@
           disabled: 'Ei kelirikkoa',
           additionalInfo: 'Kelirikolle altis tie'
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
         style: new RoadDamagedByThawStyle(),
@@ -463,7 +463,7 @@
           showUnit: true
         },
         label: new DynamicAssetLabel(),
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -490,7 +490,7 @@
           enabled: 'Päällyste',
           disabled: 'Ei päällystettä'
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
         style: new PavedRoadStyle(),
         label: new LinearAssetWithSuggestLayer(),
@@ -534,7 +534,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
       {
@@ -553,7 +553,7 @@
           enabled: 'Joukkoliikennekaista',
           disabled: 'Ei joukkoliikennekaistaa'
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -649,7 +649,7 @@
           enabled: 'Eurooppatienumero(t)',
           disabled: 'Ei eurooppatienumeroa'
         },
-        authorizationPolicy: new LinearEuropeanRoadsAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true
@@ -794,7 +794,7 @@
                     ]
                 }),
         isVerifiable: false,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         layer: CareClassLayer,
         style: new CareClassStyle(),
         collection: CareClassCollection
@@ -823,7 +823,7 @@
             return field.hasValue() && (fieldPropertyType === "integer" || fieldPropertyType === "single_choice" && field.getValue() !== '999');
           });
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
         form: new DynamicAssetForm({
           fields: [
@@ -856,7 +856,7 @@
           disabled: 'Ei tietyötä',
           additionalInfo: 'Tuleva/mennyt tietyö'
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
         style: new RoadWorkStyle(),
         label: new LinearAssetWithSuggestLayer(),
@@ -894,7 +894,7 @@
           enabled: 'Pysäköintikielto',
           disabled: 'Ei pysäköintikieltoa'
         },
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
         style: new ParkingProhibitionStyle(),
         form: new DynamicAssetForm ( {
@@ -1133,7 +1133,7 @@
         saveCondition: saveConditionWithSuggested,
         hasInaccurate: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
-        authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new PointStateRoadExcludeOperatorAuthorizationPolicy(),
         showRoadLinkInfo: true,
         label: new SuggestionLabel()
       },
@@ -1389,7 +1389,7 @@
           newAssetLabel: 'liikennemerkki'
         },
         layer : TrafficRegulationLayer,
-        authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new PointStateRoadExcludeOperatorAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,
         isSuggestedAsset: true,
