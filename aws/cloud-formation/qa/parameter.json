@@ -25,14 +25,10 @@
   }, 
   {
   "ParameterKey": "ApiGatewayUrl",
-  "ParameterValue": ""
+  "ParameterValue": "insert"
 },
   {
     "ParameterKey": "ContainerPort",
     "ParameterValue": "8080"
-  },
-  {
-    "ParameterKey": "VpcIDOfSystem",
-    "ParameterValue": "vpc-0b4e33ad8202e91e4"
   }
 ]

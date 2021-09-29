@@ -21,9 +21,6 @@ Parameters:
     Type: Number
     Default: 80
     Description: Port of the container
-  VpcIDOfSystem:
-    Type: AWS::EC2::VPC::Id
-    Description: VPC of your system
   TaskDefinitionForService:
     Type: String
     Description: Task definition for your service
@@ -106,7 +103,9 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 10
-      VpcId: !Ref VpcIDOfSystem
+      VpcId:
+        Fn::ImportValue:
+          !Join [ '-', [ !Ref NetworkStackName, 'VPC-Id' ] ]
       Tags:
         - Key: Name
           Value: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalancer-TargetGroup']]
@@ -226,7 +225,10 @@ Resources:
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-      VpcId: !Ref VpcIDOfSystem
+      VpcId:
+        Fn::ImportValue:
+          !Join [ '-', [ !Ref NetworkStackName, 'VPC-Id' ] ]
+        
   #The security group, that is protecting the containers.
   #This probably will allow traffic only from the VPC
   WebServiceSecurityGroup:
@@ -266,7 +268,9 @@ Resources:
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-      VpcId: !Ref VpcIDOfSystem
+      VpcId:
+        Fn::ImportValue:
+          !Join [ '-', [ !Ref NetworkStackName, 'VPC-Id' ] ]
 
   # Creates CNAME record "alb.<accountName>.vaylapilvi.aws" that points to alb-1234567.eu-west-1.elb.amazonaws.com
   CnameRecordDigiroad:

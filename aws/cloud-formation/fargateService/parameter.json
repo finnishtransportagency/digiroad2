@@ -28,19 +28,7 @@
     "ParameterValue": "8080"
   },
   {
-    "ParameterKey": "VpcIDOfSystem",
-    "ParameterValue": "vpc-0f430b7fedef04ba3"
-  },
-  {
     "ParameterKey": "ApiGatewayUrl",
     "ParameterValue": "devapi.testivaylapilvi.fi"
-  },
-  {
-    "ParameterKey": "DigiroadDatabaseSecurityGroup",
-    "ParameterValue": "sg-0ced3d4a7245fb3ed"
-  },
-  {
-    "ParameterKey": "IpRangeForYourNetwork",
-    "ParameterValue": "100.64.1.0/24"
   }
 ]
