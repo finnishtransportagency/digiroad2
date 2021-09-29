@@ -597,7 +597,7 @@
         isVerifiable: false,
         showValidationErrorLabel: false,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl,
         label: new WinterSpeedLimitLabel()
       },
@@ -619,7 +619,7 @@
         isVerifiable: true,
         showValidationErrorLabel: false,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         label: new SuggestionLabel()
@@ -643,7 +643,7 @@
         showValidationErrorLabel: false,
         hasInaccurate: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         label: new SuggestionLabel()
@@ -689,7 +689,7 @@
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         showValidationErrorLabel: false,
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -753,7 +753,7 @@
         label: new LinearAssetLabel(),
         isVerifiable: true,
         showValidationErrorLabel: false,
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true,
         minZoomForContent: oneKmZoomLvl
@@ -1006,7 +1006,7 @@
         title: 'Kaistan mallinnustyökalu',
         newTitle: 'Uusi kaistan mallinnustyökalu',
         className: 'lane-modelling-tool',
-        authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         editControlLabels: {
           title: 'Kaistan mallinnustyökalu'
         },
@@ -1188,7 +1188,7 @@
           manyFloatingAssetsLabel: 'esterakennelmat',
           newAssetLabel: 'esterakennelma'
         },
-        authorizationPolicy: new PointStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
         saveCondition: saveConditionWithSuggested,
         hasMunicipalityValidation: true,
@@ -1222,7 +1222,7 @@
           var propertyValue = parseInt(_.find(selected.propertyData, function(prop){ return prop.publicId === 'turvavarustus'; }).values[0].propertyValue);
           return (propertyValue ? propertyValue !== 0 : false) && (!(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator());
         },
-        authorizationPolicy: new PointStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: RailwayCrossingForm,
         isSuggestedAsset: true,
         hasMunicipalityValidation: true,
@@ -1247,7 +1247,7 @@
           manyFloatingAssetsLabel: 'opastustaulut',
           newAssetLabel: 'opastustaulu'
         },
-        authorizationPolicy: new PointStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: DirectionalTrafficSignForm,
         isSuggestedAsset: true,
         saveCondition: saveConditionWithSuggested,
@@ -1369,7 +1369,7 @@
 
           return suggestedAssetCondition && isValidNumericalFields && isValidLane;
         },
-        authorizationPolicy: new PointStateRoadExcludeOperatorAuthorizationPolicy(),
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: TrafficLightForm,
         label: new SuggestionLabel(),
         showRoadLinkInfo: true,
