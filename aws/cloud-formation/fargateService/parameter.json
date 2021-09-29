@@ -32,6 +32,10 @@
     "ParameterValue": "vpc-0f430b7fedef04ba3"
   },
   {
+    "ParameterKey": "ApiGatewayUrl",
+    "ParameterValue": "devapi.testivaylapilvi.fi"
+  },
+  {
     "ParameterKey": "DigiroadDatabaseSecurityGroup",
     "ParameterValue": "sg-0ced3d4a7245fb3ed"
   },
