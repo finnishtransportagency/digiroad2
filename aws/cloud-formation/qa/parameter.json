@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "NetworkStackName",
-    "ParameterValue": "Digiroad-OTH-kehitys"
+    "ParameterValue": "DigiroadTest"
   },
   {
     "ParameterKey": "ApplicationName",
@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "TaskDefinitionForService",
-    "ParameterValue": "digiroad2-QA"
+    "ParameterValue": "digiroad2-qa"
   },
   {
     "ParameterKey": "Environment",
@@ -22,7 +22,11 @@
   {
     "ParameterKey": "Project",
     "ParameterValue": "digiroad2"
-  },
+  }, 
+  {
+  "ParameterKey": "ApiGatewayUrl",
+  "ParameterValue": ""
+},
   {
     "ParameterKey": "ContainerPort",
     "ParameterValue": "8080"
@@ -30,9 +34,5 @@
   {
     "ParameterKey": "VpcIDOfSystem",
     "ParameterValue": "vpc-0b4e33ad8202e91e4"
-  },
-  {
-    "ParameterKey": "IpRangeForYourNetwork",
-    "ParameterValue": "100.64.1.0/24"
   }
 ]

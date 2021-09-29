@@ -1,8 +1,8 @@
  {
-    "family": "digiroad2-dev",
+    "family": "digiroad2-qa",
     "cpu": "1024",
     "memory": "2048",
-    "executionRoleArn": "arn:aws:iam::475079312496:role/devTaskDefinitionRight-ECSTaskExecutionRoleForTask-AN683PJ3RZSA",
+    "executionRoleArn": "arn:aws:iam::475079312496:role/qaTaskDefinitionRight-QAECSTaskExecutionRoleForTas-160S3U4B42Y7O",
     "networkMode": "awsvpc",
     "requiresCompatibilities": [
       "FARGATE"
@@ -10,7 +10,7 @@
     "containerDefinitions": [
       {
         "name": "digiroad2",
-        "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:qa",
+        "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:QA",
         "portMappings": [
           {
             "containerPort": 8080
