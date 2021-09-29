@@ -545,7 +545,7 @@
           showUnit: true
         },
         label: new LinearAssetLabel(),
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true
       },
       {
