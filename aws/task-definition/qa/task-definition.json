@@ -10,7 +10,7 @@
     "containerDefinitions": [
       {
         "name": "digiroad2",
-        "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:QA",
+        "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:qa",
         "portMappings": [
           {
             "containerPort": 8080
@@ -227,7 +227,7 @@
       },
       {
         "key": "Environment",
-        "value": "QA"
+        "value": "qa"
       },
       {
         "key": "Owner",
