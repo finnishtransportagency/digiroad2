@@ -1,14 +1,13 @@
 (function(root) {
-  root.LinearStateRoadAuthorizationPolicy = function() {
+  root.LinearExcludeOperatorAuthorizationPolicy = function() {
     AuthorizationPolicy.call(this);
 
     var me = this;
 
     this.formEditModeAccess = function(selectedAsset) {
       var isMaintainerAndHaveRights = (me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
-      var isMaintainerWithRightsOrOperator = isMaintainerAndHaveRights || me.isOperator();
 
-      return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerWithRightsOrOperator );
+      return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerAndHaveRights || me.isOperator());
     };
 
     this.handleSuggestedAsset = function(selectedAsset, value, layerMode) {

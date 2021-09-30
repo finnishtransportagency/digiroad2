@@ -190,7 +190,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     TrAxleWeightLimit.typeId, TrBogieWeightLimit.typeId, TrWeightLimit.typeId)
 
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
+    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId, TrafficVolume.typeId)
 
   val minVisibleZoom = 8
   val maxZoom = 9
