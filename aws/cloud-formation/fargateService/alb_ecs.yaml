@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: ECS Fargate service in private subnets
 Parameters:
-  ##Digiroad-OTH-kehitys
   NetworkStackName:
     Description: Name of the network stack
     Type: String
@@ -155,7 +154,6 @@ Resources:
       Conditions:
         - Field: host-header
           Values: [ !Ref ApiGatewayUrl ]
-         # Values: [ 'devapi.testivaylapilvi.fi' ]
       ListenerArn: !Ref PrivateLoadBalancerListener
       Priority: 1
 
