@@ -10,6 +10,9 @@ Parameters:
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
+  SNSTopicName:
+    Type: String
+    Description: Name of SNS topic
 
 Resources:
   JobQueueAdHoc:
@@ -162,9 +165,9 @@ Resources:
       DisplayName: "AWS Batch Job Has Failed"
       FifoTopic: FALSE
       Subscription: 
-        - Endpoint: "niko.lahtinen@sitowise.com"
+        - Endpoint: "kehitys@digiroad.fi"
           Protocol: "email"
-      TopicName: "BatchFailTopic"
+      TopicName: !Ref SNSTopicName
 
   BatchEventRule:
     Type: AWS::Events::Rule
@@ -173,8 +176,8 @@ Resources:
       EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
       Name: "BatchEventNotify"
       State: "ENABLED"
-      Targets: 
-        - Arn: "arn:aws:sns:eu-west-1:475079312496:BatchFailTopic"
+      Targets:
+        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref SNSTopicName]]
           Id: "123321"
 
 
