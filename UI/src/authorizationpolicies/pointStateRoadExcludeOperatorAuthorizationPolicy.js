@@ -1,5 +1,5 @@
 (function (root) {
-    root.PointExcludeOperatorAuthorizationPolicy = function () {
+    root.PointStateRoadExcludeOperatorAuthorizationPolicy = function () {
         AuthorizationPolicy.call(this);
         var me = this;
 

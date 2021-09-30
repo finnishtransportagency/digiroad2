@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearExcludeOperatorAuthorizationPolicy = function() {
+  root.LinearStateRoadExcludeOperatorAuthorizationPolicy = function() {
     AuthorizationPolicy.call(this);
 
     var me = this;
