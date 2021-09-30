@@ -9,7 +9,7 @@ Parameters:
     Description: Name of the application (no whitespace or special characters)
     Type: String
   Environment:
-    Description: "Environment of the application, that these resources are created for. Used when tagging the resources"
+    Description: "Environment of the application, that these resources are created for. Used when tagging and naming the resources"
     Type: String
   Owner:
     Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
@@ -200,8 +200,8 @@ Resources:
   LoadBalanserSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: DigiroadLoadBalanserSecurityGroup
-      GroupName: DigiroadLoadBalanserSecurityGroup
+      GroupDescription: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalanserSecurityGroup']]
+      GroupName: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'LoadBalanserSecurityGroup']]
       SecurityGroupIngress:
         - IpProtocol: "-1"
           CidrIp: 0.0.0.0/0
@@ -235,7 +235,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
-      GroupName: DigiroadWebService
+      GroupName: !Join ['-', [!Ref Environment,!Ref ApplicationName, 'WebServiceSecurityGroup']]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
