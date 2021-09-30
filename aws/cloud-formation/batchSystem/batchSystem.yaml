@@ -156,6 +156,28 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
 
+  BatchSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: "AWS Batch Job Has Failed"
+      FifoTopic: FALSE
+      Subscription: 
+        - Endpoint: "niko.lahtinen@sitowise.com"
+          Protocol: "email"
+      TopicName: "BatchFailTopic"
+
+  BatchEventRule:
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "Send SNS email for failed batch jobs"
+      EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
+      Name: "BatchEventNotify"
+      State: "ENABLED"
+      Targets: 
+        - Arn: "arn:aws:sns:eu-west-1:475079312496:BatchFailTopic"
+          Id: "123321"
+
+
 Outputs:
   BatchTaskRoleARN:
     Description: BatchTaskRole
