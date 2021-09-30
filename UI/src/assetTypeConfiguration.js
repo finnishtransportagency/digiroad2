@@ -664,7 +664,7 @@
           enabled: 'Eurooppatienumero(t)',
           disabled: 'Ei eurooppatienumeroa'
         },
-        authorizationPolicy: new LinearEuropeanRoadsAuthorizationPolicy(),
+        authorizationPolicy: new LinearExcludeOperatorAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         showValidationErrorLabel: false,
