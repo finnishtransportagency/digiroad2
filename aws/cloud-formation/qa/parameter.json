@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "QA"
+    "ParameterValue": "qa"
   },
   {
     "ParameterKey": "Owner",
@@ -25,7 +25,7 @@
   }, 
   {
   "ParameterKey": "ApiGatewayUrl",
-  "ParameterValue": "insert"
+  "ParameterValue": "qaapi.testivaylapilvi.fi"
 },
   {
     "ParameterKey": "ContainerPort",
