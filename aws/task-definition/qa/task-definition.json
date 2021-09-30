@@ -213,7 +213,7 @@
         "logConfiguration": {
           "logDriver": "awslogs",
           "options": {
-            "awslogs-group": "/ecs/QA-digiroad2-ECS-logs",
+            "awslogs-group": "/ecs/qa-digiroad2-ECS-logs",
             "awslogs-region": "eu-west-1",
             "awslogs-stream-prefix": "ecs"
           }
