@@ -1,18 +1,18 @@
 (function (root) {
-    root.PointStateRoadAuthorizationPolicy = function () {
+    root.PointStateRoadExcludeOperatorAuthorizationPolicy = function () {
         AuthorizationPolicy.call(this);
         var me = this;
 
         this.formEditModeAccess = function (selectedAsset) {
             var isMaintainerAndHaveRights = (me.isMunicipalityMaintainer()) || me.isElyMaintainer() && me.hasRightsInMunicipality(selectedAsset.getMunicipalityCode());
 
-            return me.isStateExclusions(selectedAsset) || (( isMaintainerAndHaveRights || me.isOperator()) && !me.isState(selectedAsset.get()));
+            return me.isStateExclusions(selectedAsset) || (isMaintainerAndHaveRights && !me.isState(selectedAsset.get())) || me.isOperator();
         };
 
         this.filterRoadLinks = function (roadLink) {
             var isMaintainerAndHaveRights = (me.isMunicipalityMaintainer()) || me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
 
-            return me.isStateExclusions(roadLink) ||(( isMaintainerAndHaveRights || me.isOperator()) && !me.isState(roadLink) );
+            return me.isStateExclusions(roadLink) ||( isMaintainerAndHaveRights && !me.isState(roadLink) ) || me.isOperator();
         };
     };
 })(this);
