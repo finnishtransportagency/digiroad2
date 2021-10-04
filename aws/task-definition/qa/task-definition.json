@@ -72,7 +72,7 @@
           },
           {
             "name": "tierekisteriRestApiEndPoint",
-            "value": "https://testioag.vayla.fi/trrest/devtest/"
+            "value": "https://testioag.vayla.fi/trrest/qa/"
           },
           {
             "name": "tierekisteri.enabled",
