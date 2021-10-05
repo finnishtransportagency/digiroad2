@@ -15,4 +15,4 @@ aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-inp
 # Replace the <VERSION> with the new version. You can find the new version number from the JSON returned by the previous command:
 #         "taskDefinitionArn": "arn:aws:ecs:eu-west-1:783354560127:task-definition/Viite-dev:<VERSION>",
 #
-#aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster dev-digiroad2-ECS-Cluster-Private --service dev-digiroad2-ECS-Service-Private --task-definition digiroad2-dev:<number> --force-new-deployment
+#aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster dev-digiroad2-ECS-Cluster-Private --service dev-digiroad2-ECS-Service-Private --task-definition digiroad2-dev:<VERSION> --force-new-deployment
