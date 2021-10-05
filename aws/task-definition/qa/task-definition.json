@@ -112,11 +112,11 @@
           },
           {
             "name": "bonecp.jdbcUrl",
-            "value": "jdbc:postgresql://rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/?currentSchema=dr2user"
+            "value": "jdbc:postgresql://rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/digiroadtest"
           },
           {
             "name": "bonecp.username",
-            "value": "digiroad"
+            "value": "digiroadtest"
           },
           {
             "name": "tierekisteri.username",
@@ -128,7 +128,7 @@
           },
           {
             "name": "oag.username",
-            "value": "qa_oag"
+            "value": "svc_clouddr"
           },
           {
             "name": "emailTo",
