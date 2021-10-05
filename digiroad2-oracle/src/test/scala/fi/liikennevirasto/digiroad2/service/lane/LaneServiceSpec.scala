@@ -1204,7 +1204,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
       val thrown = intercept[IllegalArgumentException] {
-        ServiceWithDao.validateStartDate(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues), 2)
+        ServiceWithDao.validateStartDateOneDigit(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues), 2)
       }
       thrown.getMessage should be("Start Date attribute not found on additional lane!")
     }
