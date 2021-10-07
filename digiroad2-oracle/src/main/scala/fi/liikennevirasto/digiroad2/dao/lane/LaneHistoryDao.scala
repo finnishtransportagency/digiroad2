@@ -112,6 +112,18 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
     """.execute
   }
 
+  def expireHistoryLanes(historyLaneIds: Seq[Long], username: String): Unit = {
+    MassQuery.withIds(historyLaneIds.toSet) { idTableName =>
+      sqlu"""
+           UPDATE LANE_HISTORY
+           SET EXPIRED_DATE = current_timestamp,
+               EXPIRED_BY = $username,
+               VALID_TO = current_timestamp
+           WHERE ID IN (SELECT id FROM #$idTableName)
+    """.execute
+    }
+  }
+
   def convertLaneRowToPersistedLane(lanes: Seq[LaneHistoryRow]): Seq[PersistedHistoryLane] = {
     lanes.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
