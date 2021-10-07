@@ -59,7 +59,6 @@ object MainLanePopulationProcess {
         Seq(roadLink.copy(trafficDirection = TrafficDirection.TowardsDigitizing),
             roadLink.copy(trafficDirection = TrafficDirection.AgainstDigitizing))
       case _ if twoWayLanes.contains((roadLink.functionalClass, roadLink.linkType)) =>
-        println(roadLink.functionalClass + " - " + roadLink.linkType + " - " + roadLink.roadPartNumber + " - " + roadLink.roadNumber + " - " + roadLink.linkId)
         Seq(roadLink.copy(trafficDirection = TrafficDirection.BothDirections))
       case _ =>
         Seq(roadLink)
