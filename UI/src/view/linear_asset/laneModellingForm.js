@@ -309,7 +309,7 @@
           var laneNumber = parseInt(number);
           lanesAssets.setCurrentLane(laneNumber);
 
-          if(laneNumber.toString()[1] == "1"){
+          if(laneNumber == 1){
             currentFormStructure = mainLaneFormStructure;
           }else{
             newLaneStructure(laneNumber);
@@ -332,7 +332,7 @@
         var previewList = $('<table class="preview">');
 
         var numberHeaders =$('<tr class="number-header">').append(_.map(_.reverse(even).concat(odd), function (number) {
-          return $('<th>' + (number.toString()[1] == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
+          return $('<th>' + (number == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
         }));
 
         var oddListElements = _.map(odd, function (number) {
@@ -364,27 +364,25 @@
       var addLeftLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button>').click(function() {
         var nextLaneNumber;
         if(_.isEmpty(even)){
-          nextLaneNumber = parseInt(odd.toString()[0] + '2');
+          nextLaneNumber = 2;
         }else{
           nextLaneNumber = parseInt(_.max(even)) + 2;
         }
-
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
         newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
-      }).prop("disabled", !_.isEmpty(even) && _.max(even).toString()[1] == 8));
+      }).prop("disabled", !_.isEmpty(even) && _.max(even) == 8));
 
       var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
-
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
         newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
-      }).prop("disabled", !_.isEmpty(odd) && _.max(odd).toString()[1] == 9));
+      }).prop("disabled", !_.isEmpty(odd) && _.max(odd) == 9));
 
       var selectedRoadLink = selectedAsset.getSelectedRoadlink();
       var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary">Lisää kaista tieosoitteen avulla</button>').click(function() {
@@ -485,16 +483,15 @@
 
       var prepareLanesStructure = function () {
         if(_.isUndefined(selectedAsset.getLane(currentLaneNumber))){
-          if(currentLaneNumber.toString()[1] == "2"){
-            currentLaneNumber = parseInt(currentLaneNumber.toString()[0] + '1');
+          if(currentLaneNumber == "2"){
+            currentLaneNumber = currentLaneNumber - 1;
           }else{
-            currentLaneNumber = currentLaneNumber-2;
+            currentLaneNumber = currentLaneNumber - 2;
           }
         }
-
         selectedAsset.setCurrentLane(currentLaneNumber);
 
-        if(currentLaneNumber.toString()[1] == "1"){
+        if(currentLaneNumber == 1){
           currentFormStructure = mainLaneFormStructure;
         }else{
           newLaneStructure(currentLaneNumber);
@@ -506,7 +503,7 @@
       expireLane.prop('disabled', lane.id === 0);
       deleteLane.prop('disabled', lane.id !== 0);
 
-      if(currentLaneNumber.toString()[1] !== "1")
+      if(currentLaneNumber !== 1)
         body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
     }
 
@@ -578,7 +575,7 @@
           noButtonLbl: 'Peruuta',
           successCallback: function() {
             selectedLinearAsset.save(isAddByRoadAddressActive);
-            selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
+            selectedLinearAsset.setCurrentLane(parseInt(laneNumber)+1);
             currentFormStructure = mainLaneFormStructure;
           }
         };
@@ -607,7 +604,7 @@
       var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
       var element = $('<button />').prop('disabled', !selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
-        selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
+        selectedLinearAsset.setCurrentLane(parseInt(laneNumber)+1);
         currentFormStructure = mainLaneFormStructure;
         selectedLinearAsset.cancel();
       });

@@ -186,11 +186,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, startupAsseId: Int)
 
-  val StateRoadRestrictedAssetsForOperator = Set(DamagedByThaw.typeId, MassTransitLane.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId,TrafficVolume.typeId)
-  
+  val StateRoadRestrictedAssetsForOperator = Set(TrHeightLimit.typeId, TrWidthLimit.typeId, TrTrailerTruckWeightLimit.typeId,
+    TrAxleWeightLimit.typeId, TrBogieWeightLimit.typeId, TrWeightLimit.typeId)
+
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId,TrafficVolume.typeId)
+    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId, TrafficVolume.typeId)
 
   val minVisibleZoom = 8
   val maxZoom = 9
@@ -1642,7 +1642,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def missingStartDates(lanes: Set[NewLane]): Boolean = {
     lanes.exists { lane =>
-      if (LaneNumber.isMainLane(laneService.getLaneCode(lane).toInt)) false
+      if (LaneNumberOneDigit.isMainLane(laneService.getLaneCode(lane).toInt)) false
       else {
         val property = lane.properties.find(_.publicId == "start_date")
         if (property.isEmpty) true

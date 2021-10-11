@@ -7,19 +7,7 @@
         </encoder>
     </appender>
 
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/digiroad2.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/digiroad2.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <root level="info">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="FILE"/>
     </root>
 </configuration>

@@ -10,5 +10,9 @@
   {
     "ParameterKey": "DigiroadDatabaseSecurityGroup",
     "ParameterValue": "sg-0ced3d4a7245fb3ed"
+  },
+  {
+    "ParameterKey": "SNSTopicName",
+    "ParameterValue": "BatchFailTopic"
   }
 ]
