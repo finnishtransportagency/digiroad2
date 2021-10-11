@@ -102,6 +102,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
+  def startDateRequiredOnLane(csvRowWithHeaders: Map[String, String]): Boolean = {
+    val laneCodeValue = csvRowWithHeaders.getOrElse("kaista", "")
+    val laneCode = if (laneCodeValue.trim.nonEmpty) laneCodeValue.toInt else 0
+    !LaneNumber.isMainLane(laneCode)
+  }
+
   def assetRowToAttributes(csvRowWithHeaders: Map[String, String]): ParsedRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) {
       (result, parameter) =>
@@ -112,6 +118,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             result.copy(_1 = List(key) ::: result._1, _2 = result._2)
           else if (nonMandatoryFieldsMapping.contains(key))
             result.copy(_2 = AssetProperty(columnName = nonMandatoryFieldsMapping(key), value = value) :: result._2)
+          else if (dateFieldMapping.contains(key) && startDateRequiredOnLane(csvRowWithHeaders))
+            result.copy(_1 = List(key) ::: result._1, _2 = result._2)
           else
             result
         } else {
@@ -177,18 +185,19 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val laneType = getPropertyValue(props, "lane type").toInt
 
         val startDate = getPropertyValueOption(props, "start date").getOrElse("")
+        val isMainLane = LaneNumber.isMainLane(laneCode.toInt)
 
         val sideCode = track match {
           case 1 | 2 => SideCode.BothDirections
           case _ => if (laneCode.charAt(0).getNumericValue == 1) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         }
 
-        val properties = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
-                        LaneProperty("lane_type", Seq(LanePropertyValue(laneType))),
-                        LaneProperty("start_date", Seq(LanePropertyValue(startDate)))                          )
+        val laneProps = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
+                        LaneProperty("lane_type", Seq(LanePropertyValue(laneType))))
+        val properties = if (!isMainLane && startDate.nonEmpty) laneProps ++ Seq(LaneProperty("start_date", Seq(LanePropertyValue(startDate)))) else laneProps
 
         //id, start measure, end measure and municipalityCode doesnt matter
-        val incomingLane = NewIncomeLane(0, 0, 0, 0, isExpired = false, isDeleted = false, properties)
+        val incomingLane = NewLane(0, 0, 0, 0, isExpired = false, isDeleted = false, properties)
         val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
         laneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username, false)
       }

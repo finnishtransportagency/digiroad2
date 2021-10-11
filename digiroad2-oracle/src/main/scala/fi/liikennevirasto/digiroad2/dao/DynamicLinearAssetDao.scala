@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, PersistedLinearAsset}
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.slf4j.{Logger, LoggerFactory}
@@ -27,21 +27,21 @@ class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val filterFloating = if (includeFloating) "" else " and a.floating = 0"
-    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
-               when np.value is not null then to_char(np.value)
-               when e.value is not null then to_char(e.value)
+               when np.value is not null then cast(np.value as text)
+               when e.value is not null then cast(e.value as text)
                when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -73,13 +73,13 @@ class DynamicLinearAssetDao {
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
                when tp.value_fi is not null then tp.value_fi
-               when np.value is not null then to_char(np.value)
-               when e.value is not null then to_char(e.value)
+               when np.value is not null then cast(np.value as text)
+               when e.value is not null then cast(e.value as text)
                when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
                else null
          end as value,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id,
                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -92,7 +92,7 @@ class DynamicLinearAssetDao {
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          where a.floating = 0 """.as[DynamicAssetRow](getDynamicAssetRow).list
+          where a.floating = '0' """.as[DynamicAssetRow](getDynamicAssetRow).list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -337,7 +337,7 @@ class DynamicLinearAssetDao {
 
   def getAssetRequiredProperties(typeId: Int): Map[String, String] ={
     val requiredProperties =
-      sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
+      sql"""select public_id, property_type from property where asset_type_id = $typeId and required = '1'""".as[(String, String)].iterator.toMap
 
     requiredProperties
   }
@@ -449,15 +449,15 @@ class DynamicLinearAssetDao {
           select a.id as asset_id, pos.link_id, pos.side_code,
           case
             when tp.value_fi is not null then tp.value_fi
-            when np.value is not null then to_char(np.value)
-            when e.value is not null then to_char(e.value)
+            when np.value is not null then cast(np.value as text)
+            when e.value is not null then cast(e.value as text)
             when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
             else null
           end as value,
           pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
           a.created_by, a.created_date, a.modified_by, a.modified_date,
           case
-            when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
+            when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
             pos.modified_date as pos_modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source,
             DENSE_RANK() over (ORDER BY a.id) line_number
           from asset a
@@ -478,9 +478,9 @@ class DynamicLinearAssetDao {
             or
             (a.created_date > $sinceDate and a.created_date <= $untilDate)
           )
-          and a.floating = 0
+          and a.floating = '0'
           #$withAutoAdjustFilter
-        ) #$recordLimit"""
+        ) derivedAsset #$recordLimit"""
       .as[(Long, Long, Int, Option[String], Double, Double, String, String, Boolean, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
       val groupedAssets = assets.groupBy(_._1)

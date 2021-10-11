@@ -1,13 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset, State}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.{AssetServiceValidator, _}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
@@ -15,26 +13,16 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 
+import scala.sys.exit
+
 object AssetValidatorProcess {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val roadLinkService : RoadLinkService = {
@@ -100,10 +88,10 @@ object AssetValidatorProcess {
   def verifyInaccurateSpeedLimits(): Unit = {
     println("Start inaccurate SpeedLimit verification\n")
     println(DateTime.now())
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
 
     //Expire all inaccuratedAssets
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
 
       //Get All Municipalities
@@ -149,20 +137,12 @@ object AssetValidatorProcess {
   )
 
   def main(args:Array[String]) : Unit = {
-    import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
+    val batchMode = Digiroad2Properties.batchMode
+    if (!batchMode) {
       println("*******************************************************************************************")
-      println("YOU ARE RUNNING VALIDATOR ASSET PROCESS AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("TURN batchMode true TO RUN VALIDATOR ASSET PROCESS")
       println("*******************************************************************************************")
-      breakable {
-        while (true) {
-          val input = Console.readLine()
-          if (input.trim() == "YES") {
-            break()
-          }
-        }
-      }
+      exit()
     }
 
     if(args.size < 1){

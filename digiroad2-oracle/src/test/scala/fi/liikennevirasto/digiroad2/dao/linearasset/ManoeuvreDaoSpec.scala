@@ -43,7 +43,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       dao.addManoeuvreExceptions(id, exceptions)
       val updated = dao.find(id).get
       updated shouldNot be(persisted)
-      updated.exceptions should be(exceptions)
+      updated.exceptions.sorted should be(exceptions)
     }
   }
 
@@ -63,7 +63,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       newManoeuvre shouldNot be(persisted)
       newManoeuvre.additionalInfo should be("Additional Info")
       newManoeuvre.validityPeriods should be(validityPeriod)
-      newManoeuvre.exceptions should be(exceptions)
+      newManoeuvre.exceptions.sorted should be(exceptions)
     }
   }
 

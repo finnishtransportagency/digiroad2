@@ -163,6 +163,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
@@ -195,6 +196,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
@@ -227,6 +229,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
@@ -259,6 +262,7 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
@@ -291,6 +295,7 @@
         label: new DynamicAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -322,6 +327,7 @@
         label: new DynamicAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -354,6 +360,7 @@
         label: new DynamicAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
@@ -384,6 +391,7 @@
         },
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
@@ -413,6 +421,7 @@
         },
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         label: new RoadDamagedByThawLabel(),
         style: new RoadDamagedByThawStyle(),
         saveCondition: function (fields) {
@@ -465,6 +474,7 @@
         label: new DynamicAssetLabel(),
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
@@ -492,6 +502,7 @@
         },
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         style: new PavedRoadStyle(),
         label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm({
@@ -555,6 +566,7 @@
         },
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         form: new DynamicAssetForm({
@@ -583,6 +595,7 @@
         possibleValues: [100, 80, 70, 60],
         style : new WinterSpeedLimitStyle(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl,
@@ -604,6 +617,7 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
+        showValidationErrorLabel: false,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
@@ -626,6 +640,7 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
+        showValidationErrorLabel: false,
         hasInaccurate: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -652,6 +667,7 @@
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -672,6 +688,7 @@
         },
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true
       },
@@ -711,6 +728,7 @@
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
         isVerifiable: true,
+        showValidationErrorLabel: false,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
@@ -734,6 +752,7 @@
         },
         label: new LinearAssetLabel(),
         isVerifiable: true,
+        showValidationErrorLabel: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true,
@@ -793,7 +812,10 @@
                         }
                     ]
                 }),
-        isVerifiable: false,
+        isVerifiable: false
+
+        showValidationErrorLabel: false,
+        AwsPostGist
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         layer: CareClassLayer,
         style: new CareClassStyle(),
@@ -825,6 +847,7 @@
         },
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         form: new DynamicAssetForm({
           fields: [
             {label: "Kevätkantavuus", type: 'integer', publicId: "kevatkantavuus", unit: "MN/m<sup>2</sup>", weight: 1},
@@ -858,6 +881,7 @@
         },
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         style: new RoadWorkStyle(),
         label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm ( {
@@ -896,6 +920,7 @@
         },
         authorizationPolicy: new LinearStateRoadExcludeOperatorAuthorizationPolicy(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         style: new ParkingProhibitionStyle(),
         form: new DynamicAssetForm ( {
           fields : [
@@ -931,6 +956,7 @@
         },
         authorizationPolicy: new CyclingAndWalkingAuthorizationPolicy(),
         isVerifiable: false,
+        showValidationErrorLabel: false,
         style: new CyclingAndWalkingStyle(),
         form: new DynamicAssetForm ( {
           fields : [
@@ -984,13 +1010,14 @@
         className: 'lane-modelling-tool',
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         editControlLabels: {
-          title: 'Kaistan mallinnustyökalu',
+          title: 'Kaistan mallinnustyökalu'
         },
         isSeparable: false,
         allowMapViewOnly: true,
         allowComplementaryLinks: true,
         allowWalkingCyclingLinks: true,
         isVerifiable: false,
+        showValidationErrorLabel: true,
         style: new LaneModellingStyle(),
         form: new LaneModellingForm({
           fields : [
@@ -1016,13 +1043,16 @@
                 {id: 9, label: 'Joukkoliikenteen kaista / taksikaista'},
                 {id: 10, label: 'Raskaan liikenteen kaista'},
                 {id: 11, label: 'Vaihtuvasuuntainen kaista'},
-                {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
-                {id: 21, label: 'Jalankulun kaista'},
-                {id: 22, label: 'Pyöräilykaista'},
+                {id: 12, label: 'Pyöräkaista'},
+                {id: 20, label: 'Yhdistetty pyörätie ja jalkakäytävä'},
+                {id: 21, label: 'Jalkakäytävä'},
+                {id: 22, label: 'Pyörätie'},
+                {id: 23, label: 'Kävelykatu'},
+                {id: 24, label: 'Pyöräkatu'}
               ],  defaultValue: "2", weight: 12
             },
             {
-              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13
+              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13, required: true
             },
             {
               label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 14
@@ -1035,9 +1065,13 @@
               var isValidDate = true;
               var startDate = Property.getPropertyByPublicId(fields, 'start_date');
               var endDate = Property.getPropertyByPublicId(fields, 'end_date');
+              var laneCode = Property.getPropertyByPublicId(fields, 'lane_code');
+              var isMainLane = (laneCode && !_.isEmpty(laneCode.values) && !_.isUndefined(_.head(laneCode.values))) ?
+                  _.head(laneCode.values).value.toString().endsWith('1') : false;
 
               if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(_.head(startDate.values)) && !_.isUndefined(_.head(endDate.values)))
                 isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
+              else if (!isMainLane && (!startDate || _.isEmpty(startDate.values))) isValidDate = false;
               return isValidDate;
             };
 

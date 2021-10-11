@@ -973,6 +973,7 @@
 
       this.createFooterElement = function() {
           return $('<div class="linear-asset form-controls" style="display: none"></div>')
+            .append(self.validationErrorLabel(self._assetTypeConfiguration).element)
             .append(self.verificationButton(self._assetTypeConfiguration).element)
             .append(self.saveButton(self._assetTypeConfiguration, formStructure).element)
             .append(self.cancelButton(self._assetTypeConfiguration).element);
@@ -1270,6 +1271,30 @@
                     if(!_.isEmpty(propertiesB)) selectedAsset.setBValue({properties: propertiesB.concat(currentPropertyValue)});
                 }
             });
+        };
+
+        this.validationErrorLabel = function(assetTypeConfiguration) {
+            var element = assetTypeConfiguration.showValidationErrorLabel ?
+                $('<span />').addClass('validation-error').text('Pakollisia tietoja puuttuu') : '';
+
+            var updateVisibility = function() {
+                if(!_.isEmpty(element)) {
+                    if (!self.isSaveable()) {
+                        element.show();
+                        if (assetTypeConfiguration.isVerifiable) element.css('display', 'block');
+                    } else element.hide();
+                }
+            };
+
+            updateVisibility();
+
+            eventbus.on(self.events('valueChanged'), function() {
+                updateVisibility();
+            }, this);
+
+            return {
+                element: element
+            };
         };
 
         this.saveButton = function(assetTypeConfiguration) {

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, T
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -158,8 +158,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def eventbus: DigiroadEventBus = new DummyEventBus
-    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-    override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+    override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+    override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient

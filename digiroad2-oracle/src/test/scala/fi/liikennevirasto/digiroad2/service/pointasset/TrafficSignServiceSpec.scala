@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, Queries}
+import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -25,6 +25,7 @@ import Database.dynamicSession
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.asset.HazmatTransportProhibitionClass.HazmatProhibitionTypeA
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 
 class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -41,7 +42,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   val batchProcessName = "batch_process_trafficSigns"
   private val typePublicId = "trafficSigns_type"
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
+  val mockUserProvider = MockitoSugar.mock[PostGISUserProvider]
   val vvHRoadlink1 = Seq(VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val vvHRoadlink2 = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvHRoadlink1.map(toRoadLink))
@@ -86,7 +87,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("46"))),
     SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
     SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
@@ -570,10 +571,10 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
-      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId,0, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId,'0', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, 300153, 300144, timestamp '2016-12-17 19:01:13.000000', null)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11,(select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 19:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
@@ -590,16 +591,16 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
-      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId, 1, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId, '1', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, 300153, 300144, timestamp '2016-12-17 19:01:13.000000', null)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, (select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 19:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$trafficSignsTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$trafficSignsTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
-      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(2, 300153, 300144, timestamp '2016-12-17 20:01:13.000000', null)""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(2, (select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 20:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())

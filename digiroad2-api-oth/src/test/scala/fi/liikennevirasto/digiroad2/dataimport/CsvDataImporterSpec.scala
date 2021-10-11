@@ -8,9 +8,9 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitS
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
-import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -25,18 +25,18 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 
 object sTestTransactions {
-  def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
+  def runWithRollback(ds: DataSource = PostGISDatabase.ds)(f: => Unit): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       f
       dynamicSession.rollback()
     }
   }
-  def withDynTransaction[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+  def withDynTransaction[T](ds: DataSource = PostGISDatabase.ds)(f: => T): T = {
     Database.forDataSource(ds).withDynTransaction {
       f
     }
   }
-  def withDynSession[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+  def withDynSession[T](ds: DataSource = PostGISDatabase.ds)(f: => T): T = {
     Database.forDataSource(ds).withDynSession {
       f
     }
@@ -576,7 +576,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("Create valid lane", Tag("db")) {
     runWithRollback {
-      when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewIncomeLane]], any[LaneRoadAddressInfo],
+      when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewLane]], any[LaneRoadAddressInfo],
         any[Int], any[String], any[Boolean])).thenReturn()
 
       when(lanesCsvImporter.laneService.expireAllLanesInStateRoad(any[String])).thenReturn()

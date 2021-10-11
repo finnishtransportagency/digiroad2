@@ -1,10 +1,8 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import java.nio.charset.Charset
-
-import com.newrelic.api.agent.NewRelic
-import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, Digiroad2Context}
-import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
+import fi.liikennevirasto.digiroad2.EventBusMassTransitStop
+import fi.liikennevirasto.digiroad2.util.{AssetPropertiesReader, Digiroad2Properties, OAGAuthPropertyReader}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -13,10 +11,9 @@ import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
 
 object ValluSender extends AssetPropertiesReader {
-  val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
-  val sendingEnabled = Digiroad2Context.getProperty("digiroad2.vallu.server.sending_enabled").toBoolean
-  val address = Digiroad2Context.getProperty("digiroad2.vallu.server.address")
+  val sendingEnabled = Digiroad2Properties.valluServerSendingEnabled
+  val address = Digiroad2Properties.valluServerAddress
 
   val config = RequestConfig.custom()
     .setSocketTimeout(60 * 1000)
@@ -35,10 +32,12 @@ object ValluSender extends AssetPropertiesReader {
   private def postToVallu(payload: String) = {
     val entity = new StringEntity(payload, ContentType.create("text/xml", "UTF-8"))
     val httpPost = new HttpPost(address)
+    val oagAuth = new OAGAuthPropertyReader
+    httpPost.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
-      messageLogger.info(s"Got response (${response.getStatusLine.getStatusCode}) ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
+      applicationLogger.info(s"VALLU Got response (${response.getStatusLine.getStatusCode}) ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
       EntityUtils.consume(entity)
     } finally {
       response.close()
@@ -48,17 +47,18 @@ object ValluSender extends AssetPropertiesReader {
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
       if (sendingEnabled) {
-        messageLogger.info(s"Sending to vallu: $payload")
+        applicationLogger.info(s"VALLU Sending to vallu: $payload")
         thunk(payload)
       } else {
-        messageLogger.info(s"Messaging is disabled, xml was $payload")
+        applicationLogger.info(s"VALLU Messaging is disabled, xml was $payload")
       }
     } catch {
       case e: Exception => {
-        NewRelic.noticeError(e)
-        applicationLogger.error("Error occurred", e)
-        messageLogger.error("=====Error in sending Message to Vallu, message below ======")
-        messageLogger.error(payload)
+
+        applicationLogger.error("VALLU Error occurred", e)
+        applicationLogger.error("=====Error in sending Message to Vallu, message below ======")
+        applicationLogger.error(payload)
+
       }
     }
   }

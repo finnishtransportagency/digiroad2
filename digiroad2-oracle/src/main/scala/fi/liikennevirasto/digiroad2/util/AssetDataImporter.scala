@@ -1,24 +1,19 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.util.Properties
-
-import javax.sql.DataSource
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import org.joda.time.format.{DateTimeFormat, PeriodFormat}
+import org.joda.time.format.PeriodFormat
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
@@ -43,8 +38,6 @@ AssetDataImporter {
                            roadLinkId: Long,
                            municipalityCode: Int,
                            bearing: Double)
-  case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
-                            rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
   case class PropertyWrapper(shelterTypePropertyId: Long, accessibilityPropertyId: Long, administratorPropertyId: Long,
                              busStopAssetTypeId: Long, busStopTypePropertyId: Long, busStopLiViPropertyId: Long, busStopSuggestedPropertyId: Long)
@@ -54,21 +47,11 @@ AssetDataImporter {
   }
 
   case object TemporaryTables extends ImportDataSet {
-    lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/import.bonecp.properties"))
-      new BoneCPDataSource(cfg)
-    }
-
-    def database() = Database.forDataSource(dataSource)
+    def database() = Database.forDataSource(PostGISDatabase.ds)
   }
 
   case object Conversion extends ImportDataSet {
-    lazy val dataSource: DataSource = {
-      val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
-      new BoneCPDataSource(cfg)
-    }
-
-    def database() = Database.forDataSource(dataSource)
+    def database() = Database.forDataSource(PostGISDatabase.ds)
     val roadLinkTable: String = "tielinkki"
     val busStopTable: String = "lineaarilokaatio"
   }
@@ -80,18 +63,12 @@ AssetDataImporter {
 
 class AssetDataImporter {
   val logger = LoggerFactory.getLogger(getClass)
-  lazy val ds: DataSource = initDataSource
 
   val Modifier = "dr1conversion"
 
-  def withDynTransaction(f: => Unit): Unit = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
 
-  implicit object SetStruct extends SetParameter[STRUCT] {
-    def apply(v: STRUCT, pp: PositionedParameters) {
-      pp.setObject(v, java.sql.Types.STRUCT)
-    }
-  }
 
   def time[A](f: => A) = {
     val s = System.nanoTime
@@ -119,7 +96,7 @@ class AssetDataImporter {
     val splitAssetsWithoutLinkIdFilter = """
       a.created_by like 'split_linearasset_%'
       and lrm.link_id is null
-      and (a.valid_to > sysdate or a.valid_to is null)"""
+      and (a.valid_to > current_timestamp or a.valid_to is null)"""
     val (minId, maxId) = getAssetIdRangeWithFilter(typeId, splitAssetsWithoutLinkIdFilter)
     val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
     chunks.foreach { case(chunkStart, chunkEnd) =>
@@ -142,8 +119,8 @@ class AssetDataImporter {
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
-    OracleDatabase.withDynTransaction {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, floating, CREATED_DATE, CREATED_BY) values (?, ?, ?, SYSDATE, 'dr1_conversion')")
+    PostGISDatabase.withDynTransaction {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, floating, CREATED_DATE, CREATED_BY) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
       val propertyPS = dynamicSession.prepareStatement("insert into text_property_value (id, asset_id, property_id, value_fi) values (?, ?, ?, ?)")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
@@ -224,14 +201,14 @@ class AssetDataImporter {
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
 
-    val insertCount = OracleDatabase.withDynTransaction {
+    val insertCount = PostGISDatabase.withDynTransaction {
       insertProhibitions(typeId, conversionResults)
     }
     println(s"*** Persisted $insertCount linear assets in ${humanReadableDurationSince(startTime)}")
   }
 
   def insertProhibitions(typeId: Int, conversionResults: Seq[Either[String, PersistedLinearAsset]]): Int = {
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, current_timestamp, 'dr1_conversion')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
       val valuePS = dynamicSession.prepareStatement("insert into prohibition_value (id, asset_id, type) values (?, ?, ?)")
@@ -372,7 +349,7 @@ class AssetDataImporter {
   }
 
   def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, ids: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+    val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
 
     val assets = MassQuery.withIds(ids.toSet) { idTableName =>
       sql"""
@@ -382,7 +359,7 @@ class AssetDataImporter {
                pe.type,
                pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired,
+               case when a.valid_to <= current_timestamp then 1 else 0 end as expired,
                pvp.start_minute, pvp.end_minute, pos.link_source
                a.verified_by, a.verified_date, a.information_source
           from asset a
@@ -393,7 +370,7 @@ class AssetDataImporter {
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
           where a.asset_type_id = $prohibitionAssetTypeId
-          and (a.valid_to > sysdate or a.valid_to is null)
+          and (a.valid_to > current_timestamp or a.valid_to is null)
           #$floatingFilter"""
         .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String],
             Option[DateTime], Boolean, Int, Int, Int, Option[String], Option[DateTime], Option[Int])].list
@@ -419,7 +396,7 @@ class AssetDataImporter {
   }
 
   def importHazmatProhibitions() = {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val assetIds =
         sql"""
           select a.id from asset a
@@ -470,7 +447,7 @@ class AssetDataImporter {
   }
 
   def getTypeProperties = {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       val shelterTypePropertyId = sql"select p.id from property p where p.public_id = 'katos'".as[Long].first
       val accessibilityPropertyId = sql"select p.id from property p where p.public_id = 'esteettomyys_liikuntarajoitteiselle'".as[Long].first
       val administratorPropertyId = sql"select p.id from property p where p.public_id = 'tietojen_yllapitaja'".as[Long].first
@@ -484,7 +461,7 @@ class AssetDataImporter {
   }
 
   def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       val assetId = busStop.assetId.getOrElse(Sequences.nextPrimaryKeySeqValue)
 
       sqlu"""
@@ -514,7 +491,7 @@ class AssetDataImporter {
 
   def adjustToNewDigitization(vvhHost: String) = {
     val vvhClient = new VVHClient(vvhHost)
-    val municipalities = OracleDatabase.withDynSession { Queries.getMunicipalities }
+    val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[Long]()
 
     withDynTransaction {
@@ -617,7 +594,7 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 #$multiSegmentFilter
+        where a.asset_type_id = $typeId and floating = '0' #$multiSegmentFilter
       """.as[(Int, Int)].first
     }
   }
@@ -638,13 +615,13 @@ class AssetDataImporter {
       sql"""
         select min(a.id), max(a.id)
         from asset a
-        where a.asset_type_id = $typeId and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+        where a.asset_type_id = $typeId and floating = '0' and (select count(*) from asset_link where asset_id = a.id) > 1
       """.as[(Int, Int)].first
     }
   }
 
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null, null)
 
     withDynTransaction {
       val speedLimitLinks = sql"""
@@ -656,7 +633,7 @@ class AssetDataImporter {
             join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
             join enumerated_value e on s.enumerated_value_id = e.id
             where a.asset_type_id = 20
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Option[Int], Double, Double, Int)].list
@@ -674,7 +651,7 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao(null, null)
 
     withDynTransaction {
       val linearAssetLinks = sql"""
@@ -684,7 +661,7 @@ class AssetDataImporter {
             join lrm_position pos on al.position_id = pos.id
             left join number_property_value n on a.id = n.asset_id
             where a.asset_type_id = $typeId
-            and floating = 0
+            and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int], Int)].list
@@ -699,7 +676,7 @@ class AssetDataImporter {
       if (assetsIdsToExpire.size > 0) {
         val assetsIdsToExpireString = assetsIdsToExpire.mkString(",")
         sqlu"""update asset
-               set modified_by = 'expired_splitted_linearasset', modified_date = sysdate, valid_to = sysdate
+               set modified_by = 'expired_splitted_linearasset', modified_date = current_timestamp, valid_to = current_timestamp-INTERVAL'1 DAYS'
                where id in (#$assetsIdsToExpireString)""".execute
       }
       println(s"removed ${assetsIdsToExpire.size} multilink assets")
@@ -710,7 +687,7 @@ class AssetDataImporter {
     withDynTransaction {
       sqlu"""
         update asset
-          set modified_by = 'expired_asset_without_mml', modified_date = sysdate, valid_to = sysdate
+          set modified_by = 'expired_asset_without_mml', modified_date = current_timestamp, valid_to = current_timestamp
           where id in (
             select a.id
             from asset a
@@ -718,7 +695,7 @@ class AssetDataImporter {
             join lrm_position lrm on lrm.id = al.position_id
             where a.created_by like 'split_linearasset_%'
             and lrm.link_id is null
-            and (a.valid_to > sysdate or a.valid_to is null)
+            and (a.valid_to > current_timestamp or a.valid_to is null)
             and a.id between $chunkStart and $chunkEnd
             and a.asset_type_id = $typeId)
         """.execute
@@ -741,7 +718,7 @@ class AssetDataImporter {
   def splitMultiLinkAssetsToSingleLinkAssets(typeId: Int) {
     val chunkSize = 1000
     val multiLinkLinearAssetsFilter = """
-        (a.valid_to > sysdate or a.valid_to is null)
+        (a.valid_to > current_timestamp or a.valid_to is null)
         and (select count(*) from asset_link where asset_id = a.id) > 1"""
     val (minId, maxId) = getAssetIdRangeWithFilter(typeId, multiLinkLinearAssetsFilter)
     val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
@@ -755,7 +732,7 @@ class AssetDataImporter {
   def unfloatLinearAssets(): Unit = {
     withDynTransaction {
       sqlu"""
-        update asset a set floating=0
+        update asset a set floating='0'
         where a.asset_type_id in (30,40,50,60,70,80,90,100)
         and (select count(*) from asset_link where asset_id = a.id) > 1""".execute
     }
@@ -764,14 +741,14 @@ class AssetDataImporter {
   def insertTextPropertyData(propertyId: Long, assetId: Long, text:String) {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $text, ' ', $Modifier)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $text, ' ', $Modifier)
     """.execute
   }
 
 def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+      values (nextval('primary_key_seq'), $propertyId, $assetId, $value)
     """.execute
   }
 
@@ -791,7 +768,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   def insertMultipleChoiceValue(propertyId: Long, assetId: Long, value: Int) {
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_by)
-      values (primary_key_seq.nextval, $propertyId, $assetId,
+      values (nextval('primary_key_seq'), $propertyId, $assetId,
         (select id from enumerated_value where value = $value and property_id = $propertyId), $Modifier)
     """.execute
   }
@@ -829,14 +806,14 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                          left join text_property_value tv on tv.property_id = p.id and tv.asset_id = a.id
                          left join number_property_value np on np.property_id = p.id and np.asset_id = a.id
                          where a.asset_type_id = 10
-                 group by  a.id, a.floating)
+                 group by  a.id, a.floating) derivedAsset
                  where liviId is not NULL
       """.as[(Long, Int, String, Int)].list
     }
   }
 
   def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
-    implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
+    implicit val getPoint = GetResult(r => objectToPoint(r.nextObject))
     sql"""
       select a.id, lrm.link_id, geometry, lrm.start_measure, np.value
       from
@@ -845,7 +822,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 1 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '1' and a.municipality_code = $municipality
       """.as[(Long, Long, Point, Double, Option[Int])].list
   }
 
@@ -858,7 +835,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join lrm_position lrm on al.position_id  = lrm.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-      where a.asset_type_id = $assetTypeId and a.floating = 0 and a.municipality_code = $municipality
+      where a.asset_type_id = $assetTypeId and a.floating = '0' and a.municipality_code = $municipality
       """.as[(Long, Long, Option[Int])].list
   }
 
@@ -929,25 +906,9 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def getPropertyId: Long = {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
-    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
-    sqlu"""update asset set floating = 1 where id = $id""".execute
+    val id = PostGISObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
+    sqlu"""update asset set floating = '1' where id = $id""".execute
     id
-  }
-
-  private[this] def initDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
-    val cfg = new BoneCPConfig(localProperties)
-    new BoneCPDataSource(cfg)
-  }
-
-  lazy val localProperties: Properties = {
-    val props = new Properties()
-    try {
-      props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    } catch {
-      case e: Exception => throw new RuntimeException("Can't load local.properties for env: " + System.getProperty("env"), e)
-    }
-    props
   }
 
   /**
@@ -1148,7 +1109,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def createTextPropertyValue(assetId: Long, propertyVal: Int, vname : String) = {
       sqlu"""
         INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-        VALUES(primary_key_seq.nextval,$assetId,$propertyVal,$vname,'vvh_generated')
+        VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,'vvh_generated')
       """.execute
     }
 
@@ -1162,7 +1123,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def createTextPropertyValue(assetId: Long, propertyVal: Long, vname : String, modifiedBy: String) = {
       sqlu"""
           INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-          VALUES(primary_key_seq.nextval,$assetId,$propertyVal,$vname,$modifiedBy)
+          VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,$modifiedBy)
         """.execute
     }
 
@@ -1178,10 +1139,10 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       if(notExist){
         sqlu"""
           INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-          VALUES(primary_key_seq.nextval,$assetId,$propertyVal,$vname,$modifiedBy)
+          VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,$modifiedBy)
         """.execute
       }else{
-        sqlu"update text_property_value set value_fi = $vname, modified_date = sysdate, modified_by = $modifiedBy where asset_id = $assetId and property_id = $propertyVal".execute
+        sqlu"update text_property_value set value_fi = $vname, modified_date = current_timestamp, modified_by = $modifiedBy where asset_id = $assetId and property_id = $propertyVal".execute
       }
     }
 
@@ -1192,12 +1153,12 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
 
     sqlu"""
          insert into asset(id, asset_type_id, created_by, created_date)
-         values ($assetId, $typeId, $createdBy, sysdate)
+         values ($assetId, $typeId, $createdBy, current_timestamp)
     """.execute
 
     sqlu"""
          insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date)
-         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, SYSDATE)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, current_timestamp)
       """.execute
 
     sqlu"""
@@ -1218,11 +1179,11 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             join number_property_value prop on prop.asset_id = a.id
             join #$idTableName i on i.id = pos.link_id
             where a.asset_type_id = $typeId
-            and (a.valid_to > sysdate or a.valid_to is null)""".as[(Long, Int, Long)].list
+            and (a.valid_to > current_timestamp or a.valid_to is null)""".as[(Long, Int, Long)].list
     }
   }
   def getAssetsByLinkIds(typeId: Long, linkId: Seq[Long], includeExpire: Boolean) = {
-    val filter = if (includeExpire) "" else "and (a.valid_to > sysdate or a.valid_to is null)"
+    val filter = if (includeExpire) "" else "and (a.valid_to > current_timestamp or a.valid_to is null)"
     MassQuery.withIds(linkId.toSet) { idTableName =>
       sql"""
             select a.id, pos.link_id, pos.start_measure, pos.end_measure

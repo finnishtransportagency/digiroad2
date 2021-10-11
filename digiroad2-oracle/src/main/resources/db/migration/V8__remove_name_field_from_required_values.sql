@@ -1,1 +1,0 @@
-update property set required = 0, modified_date = sysdate, modified_by = 'db_migration_v8' where public_id = 'nimi_suomeksi';

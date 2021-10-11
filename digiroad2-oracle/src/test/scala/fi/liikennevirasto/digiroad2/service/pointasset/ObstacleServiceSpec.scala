@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.ArgumentMatchers._
@@ -47,11 +47,10 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   val service = new ObstacleService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
-
     override def withDynSession[T](f: => T): T = f
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
@@ -195,78 +194,75 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch a list of floating Obstacles") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val lastIdUpdate = 0
       val lineRange = 1000
       val obstacleAssetTypeId = 220
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (1,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (1,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 6000, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (1,${lrmPositionsIds(0)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400000, 1, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400000, 1, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 6000, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (3,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (3,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(2)}, 7000, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (3,${lrmPositionsIds(2)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400003, 3, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400003, 3, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (4,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (4,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(3)}, 8000, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (4,${lrmPositionsIds(3)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400004, 4, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400004, 4, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (5,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (5,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(4)}, 9000, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (5,${lrmPositionsIds(4)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400005, 5, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400005, 5, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (6,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (6,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(5)}, 1000, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (6,${lrmPositionsIds(5)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400006, 6, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400006, 6, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (7,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (7,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(6)}, 1100, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (7,${lrmPositionsIds(6)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400007, 7, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400007, 7, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (8,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (8,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(7)}, 1200, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (8,${lrmPositionsIds(7)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400008, 8, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400008, 8, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (9,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (9,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(8)}, 1300, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (9,${lrmPositionsIds(8)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400009, 9, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400009, 9, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (10,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (10,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(9)}, 1400, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (10,${lrmPositionsIds(9)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400010, 10, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400010, 10, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (11,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (11,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 1500, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""
-            UPDATE asset SET geometry = MDSYS.SDO_GEOMETRY(4401,
-              3067,
-              NULL,
-              MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-              MDSYS.SDO_ORDINATE_ARRAY(374443.764141219, 6677245.28337185, 0, 0))
+            UPDATE asset
+               SET geometry = ST_GeomFromText('POINT(374443.764141219 6677245.28337185 0 0)',3067)
             WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
           """.execute
 
 
-      val result = service.getFloatingObstacles(1, lastIdUpdate, lineRange).sortBy(_.id)
+      val result = service.getFloatingObstacles('1', lastIdUpdate, lineRange).sortBy(_.id)
 
       result.foreach { fields =>
         fields.floating should be(true)
@@ -289,7 +285,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update floating obstacle") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val obstacle = service.getById(600046).get
       val newMvalue = obstacle.mValue+1
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
@@ -377,10 +373,10 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val obstacleAssetTypeId = 220
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
-      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId,0, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId,'0', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
       val assets = service.getPersistedAssetsByIds(Set(11))
@@ -402,16 +398,16 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val obstacleAssetTypeId = 220
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
-      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId, 1, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId, '1', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
-      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,'1')""".execute
       sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 388553075, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, 300080, 1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())

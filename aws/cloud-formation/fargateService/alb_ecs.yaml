@@ -1,0 +1,292 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ECS Fargate service in private subnets
+Parameters:
+  ##Digiroad-OTH-kehitys
+  NetworkStackName:
+    Description: Name of the network stack
+    Type: String
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
+  Environment:
+    Description: "Environment of the application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  ContainerPort:
+    Type: Number
+    Default: 80
+    Description: Port of the container
+  VpcIDOfSystem:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC of your system
+  DigiroadDatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Databases security group
+  TaskDefinitionForService:
+    Type: String
+    Description: Task definition for your service
+  IpRangeForYourNetwork:
+    Type: String
+    ConstraintDescription: Requires a /24 CIDR block
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(24))$"
+    Description: Ip range of your network, VPC CIDR
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['-', [!Ref ApplicationName, 'ECS-Cluster-Private']]
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'ECS-Cluster']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/ecs/', !Ref ApplicationName, '-ECS-logs']]
+      RetentionInDays: 14
+
+  PrivateLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internal
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: 30
+        - Key: routing.http2.enabled
+          Value: true
+      Subnets:
+        - Fn::ImportValue:
+            !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
+        - Fn::ImportValue:
+            !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
+      SecurityGroups: [!Ref LoadBalanserSecurityGroup]
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  PrivateLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - PrivateLoadBalancer
+      - TargetGroup
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: 'forward'
+      LoadBalancerArn: !Ref PrivateLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: PrivateLoadBalancer
+    Properties:
+      HealthCheckIntervalSeconds: 300
+      HealthCheckPath: /  # If you have a more sophisticated container health check endpoint, add its path here
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      TargetType: ip
+      Name: !Join ['-', [!Ref ApplicationName, 'TargetGroup']]
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 10
+      VpcId:
+        Fn::ImportValue:
+          !Join ['-', [!Ref NetworkStackName, 'VPC-Id']]
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'LoadBalancer-TargetGroup']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  LoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'TargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values: ['*']
+      ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 3
+  
+  BlockUserFromUsingExternalAPI:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - FixedResponseConfig:
+            ContentType: 'text/html'
+            MessageBody: 'Selaink&auml;ytt&ouml; on nyky&auml;&auml;n estetty. Voit k&auml;ytt&auml;&auml; palvelua devapi.testivaylapilvi.fi'
+            StatusCode: '403'
+          Type: 'fixed-response'
+      Conditions:
+        - Field: path-pattern
+          Values: [ '/externalApi/*' ]
+      ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 2
+  
+  AllowApiGateway:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: PrivateLoadBalancerListener
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'TargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: host-header
+          Values: [ 'devapi.testivaylapilvi.fi' ]
+      ListenerArn: !Ref PrivateLoadBalancerListener
+      Priority: 1
+
+  EcsService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ECSCluster
+      - TargetGroup
+      - PrivateLoadBalancerListener
+    Properties:
+      Cluster: !Ref ECSCluster
+      ServiceName: !Join ['-', [!Ref ApplicationName, 'ECS-Service-Private']]
+      DesiredCount: 2
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !Ref WebServiceSecurityGroup
+          Subnets:
+            - Fn::ImportValue:
+                !Join ['-', [!Ref NetworkStackName, 'Subnet1-Id']]
+            - Fn::ImportValue:
+                !Join ['-', [!Ref NetworkStackName, 'Subnet2-Id']]
+      LaunchType: FARGATE
+      TaskDefinition: !Ref TaskDefinitionForService
+      LoadBalancers:
+        - ContainerName: !Ref ApplicationName
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [!Ref ApplicationName, 'ECS-Service']]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  #The security group, that is protecting the load balancer.
+  #This probably will allow traffic from the TGW
+  LoadBalanserSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: DigiroadLoadBalanserSecurityGroup
+      GroupName: DigiroadLoadBalanserSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: "-1"
+          CidrIpv6: ::/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          DestinationSecurityGroupId: !Ref WebServiceSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref ApplicationName, 'LoadBalanser-Security-Group' ] ]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+      VpcId: !Ref VpcIDOfSystem
+  #The security group, that is protecting the containers.
+  #This probably will allow traffic only from the VPC
+  WebServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
+      GroupName: DigiroadWebService
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref ApplicationName, 'WebService-Security-Group' ] ]
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+      VpcId: !Ref VpcIDOfSystem
+
+  # Creates CNAME record "alb.<accountName>.vaylapilvi.aws" that points to alb-1234567.eu-west-1.elb.amazonaws.com
+  CnameRecordDigiroad:
+    Type: Custom::VaylapilviRoute53Record
+    Properties:
+      ServiceToken: arn:aws:sns:eu-west-1:434599271542:Vaylapilvi-Route53-Record
+      Type: CNAME
+      Name: digiroadalb
+      Records:
+        - !GetAtt PrivateLoadBalancer.DNSName
+      Comment: Application load balancer
+
+Outputs:
+  ALBDNSName:
+    Description: DNSname for the private Application Load Balancer
+    Value: !GetAtt PrivateLoadBalancer.DNSName

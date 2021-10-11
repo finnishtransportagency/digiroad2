@@ -3,25 +3,25 @@ package fi.liikennevirasto.digiroad2.util
 import java.io.{BufferedWriter, File, FileWriter}
 
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.{DateTime, Seconds}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new RoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus, new DummySerializer)
-  val linearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
 
   val Source = 1
   val Destination = 3
 
   def generateDroppedManoeuvres() = {
-    val manoeuvres = OracleDatabase.withDynSession {
+    val manoeuvres = PostGISDatabase.withDynSession {
       sql"""
            select m.id, m.ADDITIONAL_INFO, m.TYPE, me.link_id, me.ELEMENT_TYPE
            from manoeuvre m
@@ -45,7 +45,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val droppedManoeuvres = manoeuvresWithDroppedLinks ++ manoeuvresWithCycleOrPedestrianLink ++ detachedManoeuvres
     val droppedManoeuvresWithExceptionsAndValidityPeriods =
       droppedManoeuvres.mapValues { rows =>
-        OracleDatabase.withDynSession {
+        PostGISDatabase.withDynSession {
           val exceptions = sql"""select exception_type from manoeuvre_exceptions where manoeuvre_id = ${rows(0)._1}""".as[Int].list
           val validityPeriods = sql"""select type, start_hour, end_hour, start_minute, end_minute from manoeuvre_validity_period where manoeuvre_id = ${rows(0)._1}
            """.as[(Int, Int, Int, Int, Int)].list.map { case (dayOfWeek, startHour, endHour, startMinute, endMinute) =>
@@ -58,7 +58,7 @@ class CsvGenerator(vvhServiceHost: String) {
   }
 
   def getIdsAndLinkIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
+    Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       sql"""
         select dr1_id, link_id
           from tielinkki_ctas
@@ -95,14 +95,14 @@ class CsvGenerator(vvhServiceHost: String) {
     val startTime = DateTime.now()
     def elapsedTime = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
 
-    val limits = OracleDatabase.withDynSession {
+    val limits = PostGISDatabase.withDynSession {
       sql"""
            select pos.link_id, pos.start_measure, pos.end_measure, a.floating
            from asset a
            join ASSET_LINK al on a.id = al.asset_id
            join LRM_POSITION pos on al.position_id = pos.id
            where a.asset_type_id = $assetTypeId
-           and (valid_to is null or valid_to > sysdate)
+           and (valid_to is null or valid_to > current_timestamp)
          """.as[(Long, Double, Double, Boolean)].list
     }
     println(s"*** fetched prohibitions of type ID $assetTypeId from DB in $elapsedTime seconds")
@@ -116,7 +116,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val floatingLimits = limits.filter(_._4)
     val droppedLinkIds = (floatingLimits ++ nonExistingLimits).map(_._1)
 
-    val droppedProhibitions =  OracleDatabase.withDynTransaction {
+    val droppedProhibitions =  PostGISDatabase.withDynTransaction {
       linearAssetDao.fetchProhibitionsByLinkIds(assetTypeId, droppedLinkIds, includeFloating = true)
     }
 
@@ -191,7 +191,7 @@ class CsvGenerator(vvhServiceHost: String) {
   def generateCsvForTextualLinearAssets(assetTypeId: Int, assetName: String) = {
     val startTime = DateTime.now()
     val runtime = Runtime.getRuntime()
-    val limits = OracleDatabase.withDynSession {
+    val limits = PostGISDatabase.withDynSession {
       sql"""
            select pos.link_id, pos.start_measure, pos.end_measure, s.VALUE_FI, a.asset_type_id, a.floating
            from asset a
@@ -199,7 +199,7 @@ class CsvGenerator(vvhServiceHost: String) {
            join LRM_POSITION pos on al.position_id = pos.id
            left join text_property_value s on s.asset_id = a.id
            where a.asset_type_id in ($assetTypeId)
-           and (valid_to is null or valid_to > sysdate)
+           and (valid_to is null or valid_to > current_timestamp)
          """.as[(Long, Double, Double, String, Int, Boolean)].list.toSet
     }
     println(s"*** fetched all $assetName from DB in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
@@ -227,7 +227,7 @@ class CsvGenerator(vvhServiceHost: String) {
                                           assetName: String,
                                           startTime: DateTime) = {
     val runtime = Runtime.getRuntime()
-    val limits = OracleDatabase.withDynSession {
+    val limits = PostGISDatabase.withDynSession {
       sql"""
            select pos.link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id, a.floating
            from asset a
@@ -235,7 +235,7 @@ class CsvGenerator(vvhServiceHost: String) {
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
            where a.asset_type_id in ($assetTypeId)
-           and (valid_to is null or valid_to > sysdate)
+           and (valid_to is null or valid_to > current_timestamp)
          """.as[(Long, Double, Double, Int, Int, Boolean)].list
     }
     println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)

@@ -28,7 +28,7 @@ import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.model.LRMPosition
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{LightGeometryMassTransitStop, MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
@@ -50,7 +50,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
       val assetTypeId = r.nextLong
       val validFrom = r.nextDateOption.map(new LocalDate(_))
       val validTo = r.nextDateOption.map(new LocalDate(_))
-      val point = r.nextBytesOption.map(bytesToPoint)
+      val point = r.nextObjectOption().map(objectToPoint)
       val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
@@ -116,7 +116,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
             select '1'
             from multiple_choice_value aux_mc
             join enumerated_value aux_e on aux_mc.enumerated_value_id = aux_e.id and aux_e.value = '7'
-            where aux_mc.asset_id = a.id) and (a.valid_to > sysdate or a.valid_to is null)
+            where aux_mc.asset_id = a.id) and (a.valid_to > current_timestamp or a.valid_to is null)
       """
     queryToServicePoint(queryFilter(query))
   }
@@ -147,10 +147,11 @@ class ServicePointBusStopDao extends MassTransitStopDao {
   }
 
   def insertAsset(id: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int): Unit = {
-    sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry)
-           select $id, national_bus_stop_id_seq.nextval, $typeId, $creator, $municipalityCode,
-           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0))
-           from dual
+    val pointGeometry =Queries.pointGeometry(lon,lat)
+    sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry) values (
+           $id, nextval('national_bus_stop_id_seq'), $typeId, $creator, $municipalityCode,
+           ST_GeomFromText($pointGeometry,3067)
+    )
       """.execute
   }
 

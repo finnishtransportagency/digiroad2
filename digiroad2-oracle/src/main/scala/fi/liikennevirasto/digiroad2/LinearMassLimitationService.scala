@@ -3,14 +3,14 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetTypeInfo, AxleWeightLimit, BogieWeightLimit, BoundingRectangle, SideCode, TotalWeightLimit, TrailerTruckWeightLimit}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 case class MassLimitationAsset(linkId: Long, administrativeClass: AdministrativeClass, sideCode: Int, value: Option[Value], geometry: Seq[Point],
                               attributes: Map[String, Any] = Map())
 
 class LinearMassLimitationService(roadLinkService: RoadLinkService, dynamicDao: DynamicLinearAssetDao) {
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   final val MassLimitationAssetTypes = Seq(TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
 
