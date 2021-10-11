@@ -81,7 +81,7 @@
               return property.publicId === "lane_code";
             }).values).value;
 
-            return !selectedLane.isOuterLane(laneNumber) || laneNumber.toString()[1] == "1" ||
+            return !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 ||
               !_.isUndefined(properties.marker) || properties.selectedLinks.length > 1 || selectedLane.isAddByRoadAddress();
           })
           .map(function(feature) {

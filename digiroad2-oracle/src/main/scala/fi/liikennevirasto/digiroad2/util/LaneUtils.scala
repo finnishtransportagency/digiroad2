@@ -174,7 +174,7 @@ object LaneUtils {
 
           calculateStartAndEndPoint(road, startPoint, endPoint) match {
             case (start: Double, end: Double) =>
-              Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCode, road.municipalityCode.getOrElse(0).toLong,
+              Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCode.toString.substring(1).toInt, road.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
 
