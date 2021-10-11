@@ -34,7 +34,7 @@
         var coordinates = me.getCoordinates(me.getPoints(asset));
         var lineString = new ol.geom.LineString(coordinates);
         var value = me.getValue(asset);
-        //TODO check if there is need to place label by side code?
+
         return GeometryUtils.calculateMidpointOfLineString(lineString, (value == '1' ? 2 : 3));
       });
     };
