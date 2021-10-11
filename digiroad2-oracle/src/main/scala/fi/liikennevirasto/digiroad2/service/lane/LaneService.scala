@@ -1,22 +1,22 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
-import java.security.InvalidParameterException
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.LaneUtils.roadLinkTempDAO
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
+
+import java.security.InvalidParameterException
+import scala.collection.DebugUtils
 
 
 case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink])
@@ -69,9 +69,9 @@ trait LaneOperations {
     * @return
     */
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): (Seq[Seq[PieceWiseLane]], Seq[RoadLink]) = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
     val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
-    val linearAssets = getLanesByRoadLinks(filteredRoadLinks, change)
+    val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
 
@@ -131,37 +131,16 @@ trait LaneOperations {
     }.toSeq
   }
 
-  protected def getLanesByRoadLinks(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
-    val mappedChanges = LaneUtils.getMappedChanges(changes)
-    val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
-    val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
-
-    val timing = System.currentTimeMillis
-    val (assetsOnChangedLinks, lanesWithoutChangedLinks) = existingAssets.partition(a => LaneUtils.newChangeInfoDetected(a, mappedChanges))
-
-    val initChangeSet = ChangeSet(
-      expiredLaneIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)) // Get only the assets marked to remove
-                                      .map(_.id)                                             // Get only the Ids
-                                      .toSet
-                                      .filterNot( _ == 0L)                                   // Remove the new assets (ID == 0 )
-                      )
-
-    val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
-    val newLanes = projectedLanes ++ lanesWithoutChangedLinks
-
-    if (newLanes.nonEmpty) {
-      logger.info("Finnish transfer %d assets at %d ms after start".format(newLanes.length, System.currentTimeMillis - timing))
-    }
-
-    val allLanes = assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks
-    val groupedAssets = allLanes.groupBy(_.linkId)
-    val (filledTopology, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changedSet))
-
-    val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
-    val modifiedLanes = projectedLanes.filterNot(lane => generatedMappedById(lane.id).nonEmpty) ++ changeSet.generatedPersistedLanes
-
-    publish(eventBus, changeSet, modifiedLanes)
-    filledTopology
+  protected def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
+    val lanes = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct)
+    val lanesMapped = lanes.groupBy(_.linkId)
+    var pwLanes : Seq[PieceWiseLane] = Seq()
+    roadLinks.foreach(rl => try {
+      pwLanes = pwLanes ++ laneFiller.toLPieceWiseLane(lanesMapped(rl.linkId), rl)}
+    catch {
+      case e: NoSuchElementException => logger.info("No lanes on roadlink: " + rl.linkId)
+    })
+    pwLanes
   }
 
   def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]) {
@@ -170,7 +149,7 @@ trait LaneOperations {
   }
 
 
-  protected def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], lanesToUpdate: Seq[PersistedLane],
+   def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], lanesToUpdate: Seq[PersistedLane],
                                                        currentLanes: Seq[PersistedLane], changes: Seq[ChangeInfo], changeSet: ChangeSet) : (Seq[PersistedLane], ChangeSet) ={
 
     val (replacementChanges, otherChanges) = changes.partition( ChangeType.isReplacementChange)
@@ -579,6 +558,10 @@ trait LaneOperations {
 
   def getPropertyValue(pwLane: PieceWiseLane, publicIdToSearch: String): Option[LanePropertyValue] = {
     pwLane.laneAttributes.find(_.publicId == publicIdToSearch).get.values.headOption
+  }
+
+  def getPropertyValue(pLane: PersistedLane, publicIdToSearch: String): Option[LanePropertyValue] = {
+    pLane.attributes.find(_.publicId == publicIdToSearch).get.values.headOption
   }
 
   def getLaneCode (newLane: NewLane): String = {
