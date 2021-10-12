@@ -26,6 +26,7 @@ trait GraphPartitioner {
 
   private def clusterGraph(graph: Graph): Seq[Graph] = {
     val partitioner = new org.geotools.graph.util.graph.GraphPartitioner(graph)
+    println(graph)
     partitioner.partition()
     partitioner.getPartitions.toList.asInstanceOf[List[Graph]]
   }

@@ -46,6 +46,7 @@ object LanePartitioner extends GraphPartitioner {
         LaneNumberOneDigit.isMainLane(lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]))
       )
 
+      println("CLUSTER AUX" + clustersAux)
       val clusters = for (linkGroup <- clustersAux.asInstanceOf[Seq[Seq[T]]];
                           cluster <- clusterLinks(linkGroup)) yield cluster
 
