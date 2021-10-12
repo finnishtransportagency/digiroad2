@@ -26,6 +26,9 @@ Parameters:
   ApiGatewayUrl:
     Type: String
     Description: ApiGateWay Url
+  RouteRecordName:
+    Type: String
+    Description: RouteRecordName
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -276,7 +279,7 @@ Resources:
     Properties:
       ServiceToken: arn:aws:sns:eu-west-1:434599271542:Vaylapilvi-Route53-Record
       Type: CNAME
-      Name: digiroadalb
+      Name: !Ref RouteRecordName
       Records:
         - !GetAtt PrivateLoadBalancer.DNSName
       Comment: Application load balancer
