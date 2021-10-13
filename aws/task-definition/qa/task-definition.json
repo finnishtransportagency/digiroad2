@@ -60,7 +60,7 @@
           },
           {
             "name": "viiteRestApiEndPoint",
-            "value": "https://InsertQAVersio.testivaylapilvi.fi/viite/api/viite/"
+            "value": "https://testapi.testivaylapilvi.fi/viite/api/viite/"
           },
           {
             "name": "authenticationTestMode",
@@ -108,7 +108,7 @@
           },
           {
             "name": "feedbackAssetsEndPoint",
-            "value": "https://InsertQAVersio.testivaylapilvi.fi/"
+            "value": "https://digiroadtest.testivaylapilvi.fi/"
           },
           {
             "name": "bonecp.jdbcUrl",
