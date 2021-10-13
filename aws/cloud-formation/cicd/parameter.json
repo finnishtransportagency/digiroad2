@@ -17,11 +17,11 @@
   },
   {
     "ParameterKey": "EcsClusterName",
-    "ParameterValue": "digiroad2-ECS-Cluster-Private"
+    "ParameterValue": "dev-digiroad2-ECS-Cluster-Private"
   },
   {
     "ParameterKey": "EcsServiceName",
-    "ParameterValue": "digiroad2-ECS-Service-Private"
+    "ParameterValue": "dev-digiroad2-ECS-Service-Private"
   },
   {
     "ParameterKey": "EcrRepositoryName",
