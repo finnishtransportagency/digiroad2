@@ -15,6 +15,7 @@ import org.joda.time.DateTime
 import org.scalatest._
 
 import scala.collection.JavaConversions.collectionAsScalaIterable
+import scala.math.Ordering.Implicits.seqDerivedOrdering
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
   test("truncate empty geometry") {
@@ -339,9 +340,9 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
   test("partitionTesti") {
 
 
-    def clusterLinks[T <: PolyLine](links: Seq[T], tolerance: Double = 0.5): Seq[Graph] = {
+    def clusterLinks(links: Seq[PieceWiseLane], tolerance: Double = 0.5): Seq[Graph] = {
       val generator = new BasicLineGraphGenerator(tolerance)
-      links.foreach { link =>
+      links.sortBy(_.endMeasure).foreach { link =>
         val (sp, ep) = GeometryUtils.geometryEndpoints(link.geometry)
         val segment = new LineSegment(sp.x, sp.y, ep.x, ep.y)
         val graphable = generator.add(segment)
@@ -370,7 +371,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
 //        PieceWiseLane(641979,6394251,1,false,List(Point(531665.217,6754977.278,109.13400000000547), Point(531687.864,6754979.955,109.36199999999371), Point(531707.661,6754982.146,109.30999999999767), Point(531727.472,6754984.207,109.17399999999907), Point(531747.297,6754986.138,109.01600000000326), Point(531767.133,6754987.938,108.83900000000722), Point(531786.981,6754989.608,108.60400000000664), Point(531806.84,6754991.147,108.34799999999814), Point(531826.708,6754992.555,108.19000000000233), Point(531846.585,6754993.833,108.01799999999639), Point(531866.47,6754994.98,107.82099999999627), Point(531886.362,6754995.996,107.54499999999825), Point(531906.26,6754996.882,107.33000000000175), Point(531926.164,6754997.636,107.12600000000384), Point(531946.073,6754998.26,106.90799999999581), Point(531965.985,6754998.752,106.6420000000071), Point(531978.136,6754998.988,106.47900000000664), Point(531997.793,6754999.271,106.28299999999581), Point(532017.452,6754999.446,106.07600000000093), Point(532037.111,6754999.533,105.86199999999371), Point(532056.77,6754999.551,105.62900000000081), Point(532076.43,6754999.52,105.38099999999395), Point(532096.089,6754999.458,105.18300000000454), Point(532106.614,6754999.42,105.0679999999993), Point(532126.606,6754999.346,104.89500000000407), Point(532136.602,6754999.309,104.80499999999302), Point(532146.598,6754999.272,104.72500000000582), Point(532166.59,6754999.199,104.51399999999558), Point(532186.582,6754999.125,104.26200000000244), Point(532194.2957472635,6754999.097000917,104.1970021296185)),0.0,529.975,Set(Point(531665.217,6754977.278,109.13400000000547), Point(532194.2957472635,6754999.097000917,104.1970021296185)),None,None,Some("silari"),None,1633651200000L,None,State,List(LaneProperty("lane_type",Stream(LanePropertyValue(1))), LaneProperty("lane_code",List(LanePropertyValue(1)))),Map("municipality" -> 441, "trafficDirection" -> AgainstDigitizing))))
 
 
-    //      List(List(
+//          List(List(
 //    PieceWiseLane(642582,6864079,3,false,List(Point(503375.022,6752350.872,103.23399999999674), Point(503317.774,6752360.868,102.92799999999988), Point(503285.507,6752367.211,102.62600000000384), Point(503238.926,6752377.185,102.22500000000582), Point(503181.289,6752390.027,101.6079999999929), Point(503072.26,6752419.574,100.42299999999523), Point(502997.219,6752439.594,99.59500000000116), Point(502980.207,6752443.941,99.43700000000536)),0.0,405.872,Set(Point(503375.022,6752350.872,103.23399999999674), Point(502980.207,6752443.941,99.43700000000536)),None,None,Some("silari"),None,1633651200000L,None,State,List(LaneProperty("lane_type",Stream(LanePropertyValue(1))), LaneProperty("lane_code",List(LanePropertyValue(1)))),Map("municipality" -> 286, "trafficDirection" -> BothDirections)),
 //    PieceWiseLane(642549,2025377,2,false,List(Point(503911.921,6752313.412,102.27599999999802), Point(503806.729,6752313.918,102.59500000000116), Point(503732.16,6752315.361,102.88499999999476), Point(503660.709,6752318.628,103.15200000000186), Point(503589.237,6752324.361,103.40200000000186), Point(503471.806,6752336.621,103.4600000000064), Point(503423.872,6752343.332,103.36900000000605), Point(503375.022,6752350.872,103.23399999999674)),0.0,538.903,Set(Point(503911.921,6752313.412,102.27599999999802), Point(503375.022,6752350.872,103.23399999999674)),None,None,Some("silari"),None,1633651200000L,None,State,List(LaneProperty("lane_type",Stream(LanePropertyValue(1))), LaneProperty("lane_code",List(LanePropertyValue(1)))),Map("municipality" -> 286, "trafficDirection" -> BothDirections)),
 //    PieceWiseLane(642558,6864079,2,false,List(Point(503375.022,6752350.872,103.23399999999674), Point(503317.774,6752360.868,102.92799999999988), Point(503285.507,6752367.211,102.62600000000384), Point(503238.926,6752377.185,102.22500000000582), Point(503181.289,6752390.027,101.6079999999929), Point(503072.26,6752419.574,100.42299999999523), Point(502997.219,6752439.594,99.59500000000116), Point(502980.207,6752443.941,99.43700000000536)),0.0,405.872,Set(Point(503375.022,6752350.872,103.23399999999674), Point(502980.207,6752443.941,99.43700000000536)),None,None,Some("silari"),None,1633651200000L,None,State,List(LaneProperty("lane_type",Stream(LanePropertyValue(1))), LaneProperty("lane_code",List(LanePropertyValue(1)))),Map("municipality" -> 286, "trafficDirection" -> BothDirections)),
@@ -388,5 +389,7 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
 
 
     }
+
+
 
 }

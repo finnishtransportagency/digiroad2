@@ -2,10 +2,13 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import com.vividsolutions.jts.geom.LineSegment
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge
+
 import scala.collection.JavaConversions._
+import scala.math.Ordering.Implicits.seqDerivedOrdering
 
 trait GraphPartitioner {
   protected def clusterLinks[T <: PolyLine](links: Seq[T], tolerance: Double = 0.5): Seq[Graph] = {
@@ -26,7 +29,6 @@ trait GraphPartitioner {
 
   private def clusterGraph(graph: Graph): Seq[Graph] = {
     val partitioner = new org.geotools.graph.util.graph.GraphPartitioner(graph)
-    println(graph)
     partitioner.partition()
     partitioner.getPartitions.toList.asInstanceOf[List[Graph]]
   }

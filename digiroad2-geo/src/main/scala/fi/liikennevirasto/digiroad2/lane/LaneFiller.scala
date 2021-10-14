@@ -196,6 +196,8 @@ class LaneFiller {
   }
 
 
+
+
   private def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double) = {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart

@@ -134,13 +134,9 @@ trait LaneOperations {
   protected def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
     val lanes = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct)
     val lanesMapped = lanes.groupBy(_.linkId)
-    var pwLanes : Seq[PieceWiseLane] = Seq()
-    roadLinks.foreach(rl => try {
-      pwLanes = pwLanes ++ laneFiller.toLPieceWiseLane(lanesMapped(rl.linkId), rl)}
-    catch {
-      case e: NoSuchElementException => logger.info("No lanes on roadlink: " + rl.linkId)
-    })
-    pwLanes
+    val filledTopology = laneFiller.fillTopology(roadLinks, lanesMapped)._1
+
+    filledTopology
   }
 
   def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]) {
