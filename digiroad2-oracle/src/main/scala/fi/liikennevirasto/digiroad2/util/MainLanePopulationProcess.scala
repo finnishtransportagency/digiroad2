@@ -73,8 +73,10 @@ object MainLanePopulationProcess {
     // If not initial process, filter out roadLinks that already have main lanes
     val roadLinksWithoutMainLanes =
       if (initialProcessing) roadLinks
-      else roadLinks.filterNot(link => laneService.fetchExistingMainLanesByRoadLinks(roadLinks, Seq())
-                                                  .exists(_.linkId == link.linkId))
+      else {
+        val existingLanes = laneService.fetchExistingMainLanesByRoadLinks(roadLinks, Seq())
+        roadLinks.filterNot(link => existingLanes.exists(_.linkId == link.linkId))
+      }
 
     val municipalityMainLanes = roadLinksWithoutMainLanes.flatMap { roadLink =>
       splitLinksApplicableForBothDirections(roadLink).map { linkWithDirection =>
