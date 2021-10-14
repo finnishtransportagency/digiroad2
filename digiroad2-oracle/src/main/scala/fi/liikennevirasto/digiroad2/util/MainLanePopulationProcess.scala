@@ -38,8 +38,9 @@ object MainLanePopulationProcess {
     val createdVVHTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
     val sideCode = toSideCode(roadLink.trafficDirection).value
     val laneCode = 1
-    val startMeasure = 0
-    val endMeasure = roadLink.length
+    val startMeasure = 0.0
+    // Use three decimals
+    val endMeasure = Math.round(roadLink.length * 1000).toDouble / 1000
 
     val laneProperties = Seq(
       LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
