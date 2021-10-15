@@ -40,8 +40,7 @@ object ChangeLanesAccordingToRoadLinkChanges {
     //logger.info("Getting changed links\nSince: " + since + "\nUntil: " + until)
     val changedVVHRoadLinks = roadLinkService.getChanged(since, until)
     val linkIds : Set[Long] = changedVVHRoadLinks.map(_.link.linkId).toSet
-
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+    val roadLinks = changedVVHRoadLinks.map(_.link)
     val changes = Await.result(vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds), Duration.Inf)
 
     val changedLanes = handleChanges(roadLinks, changes)
