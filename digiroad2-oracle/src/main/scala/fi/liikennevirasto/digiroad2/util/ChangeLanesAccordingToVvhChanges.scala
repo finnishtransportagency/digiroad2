@@ -2,19 +2,17 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.lane.{PersistedLane, PieceWiseLane}
+import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
-import fi.liikennevirasto.digiroad2.util.LaneUtils.laneService.eventBus
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-object ChangeLanesAccordingToRoadLinkChanges {
+object ChangeLanesAccordingToVvhChanges {
 
   lazy val vvhClient: VVHClient = {
     new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -28,8 +26,6 @@ object ChangeLanesAccordingToRoadLinkChanges {
     new LaneService(roadLinkService, new DummyEventBus)
   }
 
-  val logger = LoggerFactory.getLogger(getClass)
-
   // Main process, gets roadlinks from VVH which have been changed in the past 24 hours.
   // handleChanges changes lanes on these roadlinks according to VVH change info
   def process(): Unit = {
@@ -37,8 +33,11 @@ object ChangeLanesAccordingToRoadLinkChanges {
     val until = DateTime.now()
 
     println("Getting changed links Since: " + since + " Until: " + until)
-    //logger.info("Getting changed links\nSince: " + since + "\nUntil: " + until)
+    val timing = System.currentTimeMillis
+
     val changedVVHRoadLinks = roadLinkService.getChanged(since, until)
+    println("Getting changed roadlinks from VVH took: " + ((System.currentTimeMillis() - timing) / 1000) + " seconds")
+
     val linkIds : Set[Long] = changedVVHRoadLinks.map(_.link.linkId).toSet
     val roadLinks = changedVVHRoadLinks.map(_.link)
     val changes = Await.result(vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds), Duration.Inf)
@@ -46,7 +45,6 @@ object ChangeLanesAccordingToRoadLinkChanges {
     val changedLanes = handleChanges(roadLinks, changes)
 
     println("Lanes changed: " + changedLanes.map(_.id).mkString("\n"))
-    //logger.info("Lanes changed: " + changedLanes.map(_.id).mkString("\n"))
 
   }
 
@@ -69,7 +67,7 @@ object ChangeLanesAccordingToRoadLinkChanges {
     val newLanes = projectedLanes ++ lanesWithoutChangedLinks
 
     if (newLanes.nonEmpty) {
-      logger.info("Finnish transfer %d assets at %d ms after start".format(newLanes.length, System.currentTimeMillis - timing))
+      println("Finnish transfer %d assets at %d ms after start".format(newLanes.length, System.currentTimeMillis - timing))
     }
 
     val allLanes = assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks
@@ -80,6 +78,7 @@ object ChangeLanesAccordingToRoadLinkChanges {
     val modifiedLanes = projectedLanes.filterNot(lane => generatedMappedById(lane.id).nonEmpty) ++ changeSet.generatedPersistedLanes
 
     laneService.updateChangeSet(changeSet)
+    laneService.persistModifiedLinearAssets(modifiedLanes)
     filledTopology
   }
 
