@@ -79,6 +79,8 @@ object MainLanePopulationProcess {
         roadLinks.filterNot(link => existingLanes.exists(_.linkId == link.linkId))
       }
 
+    println(roadLinksWithoutMainLanes.length + " road links without main lanes")
+
     val municipalityMainLanes = roadLinksWithoutMainLanes.flatMap { roadLink =>
       splitLinksApplicableForBothDirections(roadLink).map { linkWithDirection =>
         addMainLane(linkWithDirection)
