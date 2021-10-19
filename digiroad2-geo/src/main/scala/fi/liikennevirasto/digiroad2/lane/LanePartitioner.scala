@@ -85,7 +85,7 @@ object LanePartitioner extends GraphPartitioner {
       )
 
       val clusters = for (linkGroup <- clustersAux.asInstanceOf[Seq[Seq[T]]];
-                          cluster <- clusterLinks(linkGroup.sortBy(_.linkId))) yield cluster
+                          cluster <- clusterLinks(linkGroup)) yield cluster
 
       clusters.map(linksFromCluster) ++ linksToPass.values.flatMap(_.values).toSeq ++ cutLaneConfiguration.values.toSeq
     }

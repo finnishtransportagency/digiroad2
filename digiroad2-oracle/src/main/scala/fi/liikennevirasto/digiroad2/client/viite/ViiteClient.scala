@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
 import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, Track}
-import org.apache.commons.codec.binary.Base64
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -40,10 +39,7 @@ trait ViiteClientOperations {
   protected def mapFields[A](data:A): Option[List[ViiteType]]
 
   def addAuthorizationHeader(request: HttpRequestBase) = {
-    val password=Base64.encodeBase64String(("kalpa" + ":" + "RVu35UvVyzuMHw2").getBytes)
-    logger.info(password)
     request.addHeader("X-API-Key", viiteApiKey)
-    request.addHeader("Authorization", "Basic " +  password)
   }
 
   protected def get[T](url: String): Either[T, ViiteError] = {
