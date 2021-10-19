@@ -7,8 +7,9 @@ import fi.liikennevirasto.digiroad2.linearasset.{GraphPartitioner, RoadLink}
 object LanePartitioner extends GraphPartitioner {
 
 
-  protected def partitionAdditionalLanes[T <: Lane](additionalLanesOnRoad: Seq[T]): Seq[T] = {
-    val additionalLanesMapped = additionalLanesOnRoad.groupBy(lane => lane.laneAttributes.find(_.publicId == "lane_code").get.values.headOption match {
+  protected def partitionAdditionalLanes(additionalLanesOnRoad: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
+    val additionalLanesMapped = additionalLanesOnRoad.groupBy(lane =>
+      lane.laneAttributes.find(_.publicId == "lane_code").get.values.headOption match {
       case Some(laneValue) =>
         laneValue.value
       case _ => false
@@ -16,7 +17,7 @@ object LanePartitioner extends GraphPartitioner {
     additionalLanesMapped.values.toSeq.flatten
   }
 
-  protected def partitionByMainLane[T <: Lane](lanes: Seq[T]): (Seq[T], Seq[T]) = {
+  protected def partitionByMainLane(lanes: Seq[PieceWiseLane]): (Seq[PieceWiseLane], Seq[PieceWiseLane]) = {
     val (mainLanes, additionalLanes) = lanes.partition({ lane =>
       lane.laneAttributes.find(_.publicId == "lane_code").get.values.headOption match {
         case Some(laneValue) =>
@@ -27,7 +28,7 @@ object LanePartitioner extends GraphPartitioner {
     (mainLanes, additionalLanes)
   }
 
-  def partitionBySideCodeAndLaneCode[T <: Lane](linearAssets: Seq[T]): Seq[Seq[T]] = {
+  def partitionBySideCodeAndLaneCode(linearAssets: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
     val (lanesOnOneDirectionRoad, lanesOnTwoDirectionRoad) = linearAssets.partition(_.sideCode == SideCode.BothDirections.value)
     val (lanesOnTowards, lanesOnAgainst) = lanesOnTwoDirectionRoad.partition(_.sideCode == SideCode.TowardsDigitizing.value)
 
@@ -39,24 +40,24 @@ object LanePartitioner extends GraphPartitioner {
     val partitionedAdditionalLanesTowards = partitionAdditionalLanes(additionalLanesOnTowards)
     val partitionedAdditionalLanesAgainst = partitionAdditionalLanes(additionalLanesOnAgainst)
 
-    Seq(mainLanesOnOneDirectionRoad, mainLanesOnTowards, mainLanesOnAgainst, partitionedAdditionalLanesOne, partitionedAdditionalLanesTowards, partitionedAdditionalLanesAgainst)
+    Seq(mainLanesOnOneDirectionRoad, mainLanesOnTowards, mainLanesOnAgainst, partitionedAdditionalLanesOne,
+      partitionedAdditionalLanesTowards, partitionedAdditionalLanesAgainst)
 
   }
 
-  def partition[T <: Lane](lanes: Seq[T], roadLinks: Map[Long, RoadLink]): Seq[Seq[T]] = {
-    def groupLanes(lanes: Seq[T]): Seq[Seq[T]] = {
+  def partition(lanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
+    def groupLanes(lanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
       val groupedLanesByRoadLinkAndSideCode = lanes.groupBy(lane => (lane.linkId, lane.sideCode))
 
       val (cutLaneConfiguration, uncutLaneConfiguration) = groupedLanesByRoadLinkAndSideCode.partition { case ((roadLinkId, _), lanes) =>
         roadLinks.get(roadLinkId) match {
           case Some(roadLink) =>
             lanes.exists { lane =>
-              val pieceWiseLane = lane.asInstanceOf[PieceWiseLane]
 
               //end measures(have max 3 decimal digits) and roadlink length have different number of decimal digits
               val roadLinkLength = Math.round(roadLink.length * 1000).toDouble / 1000
 
-              pieceWiseLane.startMeasure != 0.0d || pieceWiseLane.endMeasure != roadLinkLength
+              lane.startMeasure != 0.0d || lane.endMeasure != roadLinkLength
             }
           case _ => false
         }
@@ -84,7 +85,7 @@ object LanePartitioner extends GraphPartitioner {
         LaneNumberOneDigit.isMainLane(lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]))
       )
 
-      val clusters = for (linkGroup <- clustersAux.asInstanceOf[Seq[Seq[T]]];
+      val clusters = for (linkGroup <- clustersAux.asInstanceOf[Seq[Seq[PieceWiseLane]]];
                           cluster <- clusterLinks(linkGroup)) yield cluster
 
       clusters.map(linksFromCluster) ++ linksToPass.values.flatMap(_.values).toSeq ++ cutLaneConfiguration.values.toSeq
