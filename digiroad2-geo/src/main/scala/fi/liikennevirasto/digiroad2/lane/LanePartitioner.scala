@@ -7,26 +7,28 @@ import fi.liikennevirasto.digiroad2.linearasset.{GraphPartitioner, RoadLink}
 object LanePartitioner extends GraphPartitioner {
 
 
-  protected def partitionAdditionalLanes[T <: Lane](additionalLanesOnRoad: Seq[T]): (Seq[T], Seq[T], Seq[T], Seq[T], Seq[T], Seq[T], Seq[T], Seq[T]) = {
+  protected def partitionAdditionalLanes[T <: Lane](additionalLanesOnRoad: Seq[T]): Seq[T] = {
     val additionalLanesMapped = additionalLanesOnRoad.groupBy(lane => lane.laneAttributes.find(_.publicId == "lane_code").get.values.headOption match {
       case Some(laneValue) =>
         laneValue.value
       case _ => false
     })
 
-    val firstLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FirstLeftAdditional.laneCode, Seq[T]())
-    val firstRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FirstRightAdditional.laneCode, Seq[T]())
+    additionalLanesMapped.values.toSeq.flatten
 
-    val secondLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.SecondLeftAdditional.laneCode, Seq[T]())
-    val secondRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.SecondRightAdditional.laneCode, Seq[T]())
-
-    val thirdLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.ThirdLeftAdditional.laneCode, Seq[T]())
-    val thirdRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.ThirdRightAdditional.laneCode, Seq[T]())
-
-    val fourthLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FourthLeftAdditional.laneCode, Seq[T]())
-    val fourthRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FourthRightAdditional.laneCode, Seq[T]())
-
-    (firstLeftAdditional, firstRightAdditional, secondLeftAdditional, secondRightAdditional, thirdLeftAdditional, thirdRightAdditional, fourthLeftAdditional, fourthRightAdditional)
+//    val firstLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FirstLeftAdditional.laneCode, Seq[T]())
+//    val firstRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FirstRightAdditional.laneCode, Seq[T]())
+//
+//    val secondLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.SecondLeftAdditional.laneCode, Seq[T]())
+//    val secondRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.SecondRightAdditional.laneCode, Seq[T]())
+//
+//    val thirdLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.ThirdLeftAdditional.laneCode, Seq[T]())
+//    val thirdRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.ThirdRightAdditional.laneCode, Seq[T]())
+//
+//    val fourthLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FourthLeftAdditional.laneCode, Seq[T]())
+//    val fourthRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FourthRightAdditional.laneCode, Seq[T]())
+//
+//    (firstLeftAdditional, firstRightAdditional, secondLeftAdditional, secondRightAdditional, thirdLeftAdditional, thirdRightAdditional, fourthLeftAdditional, fourthRightAdditional)
 
   }
 
@@ -49,24 +51,29 @@ object LanePartitioner extends GraphPartitioner {
     val (mainLanesOnTowards, additionalLanesOnTowards) = partitionByMainLane(lanesOnTowards)
     val (mainLanesOnAgainst, additionalLanesOnAgainst) = partitionByMainLane(lanesOnAgainst)
 
+    val partitionedAdditionalLanesOne = partitionAdditionalLanes(additionalLanesOnOneDirectionRoad)
+    val partitionedAdditionalLanesTowards = partitionAdditionalLanes(additionalLanesOnTowards)
+    val partitionedAdditionalLanesAgainst = partitionAdditionalLanes(additionalLanesOnAgainst)
 
-    val (firstLeftAdditionalOne, firstRightAdditionalOne, secondLeftAdditionalOne, secondRightAdditionalOne,
-    thirdLeftAdditionalOne, thirdRightAdditionalOne, fourthLeftAdditionalOne, fourthRightAdditionalOne) = partitionAdditionalLanes(additionalLanesOnOneDirectionRoad)
+    Seq(mainLanesOnOneDirectionRoad, mainLanesOnTowards, mainLanesOnAgainst, partitionedAdditionalLanesOne, partitionedAdditionalLanesTowards, partitionedAdditionalLanesAgainst)
 
-    val (firstLeftAdditionalTowards, firstRightAdditionalTowards, secondLeftAdditionalTowards, secondRightAdditionalTowards,
-    thirdLeftAdditionalTowards, thirdRightAdditionalTowards, fourthLeftAdditionalTowards, fourthRightAdditionalTowards) = partitionAdditionalLanes(additionalLanesOnTowards)
-
-    val (firstLeftAdditionalAgainst, firstRightAdditionalAgainst, secondLeftAdditionalAgainst, secondRightAdditionalAgainst,
-    thirdLeftAdditionalAgainst, thirdRightAdditionalAgainst, fourthLeftAdditionalAgainst, fourthRightAdditionalAgainst) = partitionAdditionalLanes(additionalLanesOnAgainst)
-
-    Seq(mainLanesOnOneDirectionRoad, mainLanesOnTowards, mainLanesOnAgainst, firstLeftAdditionalOne, firstRightAdditionalOne, secondLeftAdditionalOne, secondRightAdditionalOne,
-      thirdLeftAdditionalOne, thirdRightAdditionalOne, fourthLeftAdditionalOne, fourthRightAdditionalOne,
-
-      firstLeftAdditionalTowards, firstRightAdditionalTowards, secondLeftAdditionalTowards, secondRightAdditionalTowards,
-      thirdLeftAdditionalTowards, thirdRightAdditionalTowards, fourthLeftAdditionalTowards, fourthRightAdditionalTowards,
-
-      firstLeftAdditionalAgainst, firstRightAdditionalAgainst, secondLeftAdditionalAgainst, secondRightAdditionalAgainst,
-      thirdLeftAdditionalAgainst, thirdRightAdditionalAgainst, fourthLeftAdditionalAgainst, fourthRightAdditionalAgainst)
+//    val (firstLeftAdditionalOne, firstRightAdditionalOne, secondLeftAdditionalOne, secondRightAdditionalOne,
+//    thirdLeftAdditionalOne, thirdRightAdditionalOne, fourthLeftAdditionalOne, fourthRightAdditionalOne) = partitionAdditionalLanes(additionalLanesOnOneDirectionRoad)
+//
+//    val (firstLeftAdditionalTowards, firstRightAdditionalTowards, secondLeftAdditionalTowards, secondRightAdditionalTowards,
+//    thirdLeftAdditionalTowards, thirdRightAdditionalTowards, fourthLeftAdditionalTowards, fourthRightAdditionalTowards) = partitionAdditionalLanes(additionalLanesOnTowards)
+//
+//    val (firstLeftAdditionalAgainst, firstRightAdditionalAgainst, secondLeftAdditionalAgainst, secondRightAdditionalAgainst,
+//    thirdLeftAdditionalAgainst, thirdRightAdditionalAgainst, fourthLeftAdditionalAgainst, fourthRightAdditionalAgainst) = partitionAdditionalLanes(additionalLanesOnAgainst)
+//
+//    Seq(mainLanesOnOneDirectionRoad, mainLanesOnTowards, mainLanesOnAgainst, firstLeftAdditionalOne, firstRightAdditionalOne, secondLeftAdditionalOne, secondRightAdditionalOne,
+//      thirdLeftAdditionalOne, thirdRightAdditionalOne, fourthLeftAdditionalOne, fourthRightAdditionalOne,
+//
+//      firstLeftAdditionalTowards, firstRightAdditionalTowards, secondLeftAdditionalTowards, secondRightAdditionalTowards,
+//      thirdLeftAdditionalTowards, thirdRightAdditionalTowards, fourthLeftAdditionalTowards, fourthRightAdditionalTowards,
+//
+//      firstLeftAdditionalAgainst, firstRightAdditionalAgainst, secondLeftAdditionalAgainst, secondRightAdditionalAgainst,
+//      thirdLeftAdditionalAgainst, thirdRightAdditionalAgainst, fourthLeftAdditionalAgainst, fourthRightAdditionalAgainst)
   }
 
   def partition[T <: Lane](lanes: Seq[T], roadLinks: Map[Long, RoadLink]): Seq[Seq[T]] = {
@@ -76,7 +83,7 @@ object LanePartitioner extends GraphPartitioner {
       val (cutLaneConfiguration, uncutLaneConfiguration) = groupedLanesByRoadLinkAndSideCode.partition { case ((roadLinkId, _), lanes) =>
         roadLinks.get(roadLinkId) match {
           case Some(roadLink) =>
-            lanes.exists{lane =>
+            lanes.exists { lane =>
               val pieceWiseLane = lane.asInstanceOf[PieceWiseLane]
 
               //end measures(have max 3 decimal digits) and roadlink length have different number of decimal digits
@@ -117,10 +124,7 @@ object LanePartitioner extends GraphPartitioner {
     }
 
     val partitionedLanes = partitionBySideCodeAndLaneCode(lanes)
-    var result = Seq[Seq[T]]()
-    partitionedLanes.foreach(lanes => result = result ++ groupLanes(lanes))
-    result
-
+    partitionedLanes.flatMap(lane => groupLanes(lane))
   }
 
 }
