@@ -13,23 +13,7 @@ object LanePartitioner extends GraphPartitioner {
         laneValue.value
       case _ => false
     })
-
     additionalLanesMapped.values.toSeq.flatten
-
-//    val firstLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FirstLeftAdditional.laneCode, Seq[T]())
-//    val firstRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FirstRightAdditional.laneCode, Seq[T]())
-//
-//    val secondLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.SecondLeftAdditional.laneCode, Seq[T]())
-//    val secondRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.SecondRightAdditional.laneCode, Seq[T]())
-//
-//    val thirdLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.ThirdLeftAdditional.laneCode, Seq[T]())
-//    val thirdRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.ThirdRightAdditional.laneCode, Seq[T]())
-//
-//    val fourthLeftAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FourthLeftAdditional.laneCode, Seq[T]())
-//    val fourthRightAdditional = additionalLanesMapped.getOrElse(LaneNumberOneDigit.FourthRightAdditional.laneCode, Seq[T]())
-//
-//    (firstLeftAdditional, firstRightAdditional, secondLeftAdditional, secondRightAdditional, thirdLeftAdditional, thirdRightAdditional, fourthLeftAdditional, fourthRightAdditional)
-
   }
 
   protected def partitionByMainLane[T <: Lane](lanes: Seq[T]): (Seq[T], Seq[T]) = {
@@ -57,23 +41,6 @@ object LanePartitioner extends GraphPartitioner {
 
     Seq(mainLanesOnOneDirectionRoad, mainLanesOnTowards, mainLanesOnAgainst, partitionedAdditionalLanesOne, partitionedAdditionalLanesTowards, partitionedAdditionalLanesAgainst)
 
-//    val (firstLeftAdditionalOne, firstRightAdditionalOne, secondLeftAdditionalOne, secondRightAdditionalOne,
-//    thirdLeftAdditionalOne, thirdRightAdditionalOne, fourthLeftAdditionalOne, fourthRightAdditionalOne) = partitionAdditionalLanes(additionalLanesOnOneDirectionRoad)
-//
-//    val (firstLeftAdditionalTowards, firstRightAdditionalTowards, secondLeftAdditionalTowards, secondRightAdditionalTowards,
-//    thirdLeftAdditionalTowards, thirdRightAdditionalTowards, fourthLeftAdditionalTowards, fourthRightAdditionalTowards) = partitionAdditionalLanes(additionalLanesOnTowards)
-//
-//    val (firstLeftAdditionalAgainst, firstRightAdditionalAgainst, secondLeftAdditionalAgainst, secondRightAdditionalAgainst,
-//    thirdLeftAdditionalAgainst, thirdRightAdditionalAgainst, fourthLeftAdditionalAgainst, fourthRightAdditionalAgainst) = partitionAdditionalLanes(additionalLanesOnAgainst)
-//
-//    Seq(mainLanesOnOneDirectionRoad, mainLanesOnTowards, mainLanesOnAgainst, firstLeftAdditionalOne, firstRightAdditionalOne, secondLeftAdditionalOne, secondRightAdditionalOne,
-//      thirdLeftAdditionalOne, thirdRightAdditionalOne, fourthLeftAdditionalOne, fourthRightAdditionalOne,
-//
-//      firstLeftAdditionalTowards, firstRightAdditionalTowards, secondLeftAdditionalTowards, secondRightAdditionalTowards,
-//      thirdLeftAdditionalTowards, thirdRightAdditionalTowards, fourthLeftAdditionalTowards, fourthRightAdditionalTowards,
-//
-//      firstLeftAdditionalAgainst, firstRightAdditionalAgainst, secondLeftAdditionalAgainst, secondRightAdditionalAgainst,
-//      thirdLeftAdditionalAgainst, thirdRightAdditionalAgainst, fourthLeftAdditionalAgainst, fourthRightAdditionalAgainst)
   }
 
   def partition[T <: Lane](lanes: Seq[T], roadLinks: Map[Long, RoadLink]): Seq[Seq[T]] = {
