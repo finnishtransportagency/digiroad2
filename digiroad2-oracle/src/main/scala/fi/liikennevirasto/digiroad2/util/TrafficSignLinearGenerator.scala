@@ -527,7 +527,7 @@ trait TrafficSignLinearGenerator {
     }.toSet
   }
 
-  private def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[RoadLink] = {
+   def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[RoadLink] = {
     val tsRoadNameInfo =
       if (signRoadLink.attributes.get("ROADNAME_FI").exists(_.toString.trim.nonEmpty)) {
         Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_FI").toString)
@@ -535,11 +535,16 @@ trait TrafficSignLinearGenerator {
         Some("ROADNAME_SE", signRoadLink.attributes("ROADNAME_SE").toString)
       } else
         None
-
-    //RoadLink with the same Finnish/Swedish name
-    tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
-      roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
-    }.getOrElse(Seq(signRoadLink))
+    var result:Seq[RoadLink] = Seq()
+     try {
+       //RoadLink with the same Finnish/Swedish name
+       result= tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
+         roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
+       }.getOrElse(Seq(signRoadLink))
+     }catch {
+       case _ => println("Vvh call by roadname failed, used name was: "+tsRoadNameInfo.toString);
+     }
+     result
   }
 
   def isToUpdateRelation(newSeg: TrafficSignToLinear)(oldSeg: TrafficSignToLinear): Boolean = {
