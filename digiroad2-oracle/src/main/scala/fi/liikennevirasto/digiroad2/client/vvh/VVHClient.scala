@@ -930,7 +930,13 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Used by VVHClient.fetchByLinkId,
     */
   def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[VVHRoadlink] = {
-    queryByNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
+  var result:Seq[VVHRoadlink] = null
+    try {
+      result = queryByNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
+    } catch {
+      case vvhFailed:VVHClientException => println("Vvh call by roadname failed, used name was: "+roadNames.toString());println(vvhFailed.toString)
+    }
+    result
   }
 
   /**
