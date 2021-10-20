@@ -930,7 +930,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Used by VVHClient.fetchByLinkId,
     */
   def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[VVHRoadlink] = {
-  queryByNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
+    queryByNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
   }
 
   /**
