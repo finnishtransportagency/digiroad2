@@ -52,9 +52,9 @@ object MainLanePopulationProcess {
       createdVVHTimeStamp, None, laneProperties)
   }
 
-  // Split main lanes applicable for both directions
+  // Split road links by traffic direction
   // Two way lanes allowed only for service openings, cycleOrPedestrianPath and TractorRoad
-  private def splitLinksApplicableForBothDirections(roadLink: RoadLink): Seq[RoadLink] = {
+  private def splitLinksByTrafficDirection(roadLink: RoadLink): Seq[RoadLink] = {
     roadLink.trafficDirection match {
       case TrafficDirection.BothDirections if !twoWayLanes.contains((roadLink.functionalClass, roadLink.linkType)) =>
         Seq(roadLink.copy(trafficDirection = TrafficDirection.TowardsDigitizing),
@@ -82,8 +82,8 @@ object MainLanePopulationProcess {
     println(roadLinksWithoutMainLanes.length + " road links without main lanes")
 
     val municipalityMainLanes = roadLinksWithoutMainLanes.flatMap { roadLink =>
-      splitLinksApplicableForBothDirections(roadLink).map { linkWithDirection =>
-        addMainLane(linkWithDirection)
+      splitLinksByTrafficDirection(roadLink).map { linkWithUpdatedDirection =>
+        addMainLane(linkWithUpdatedDirection)
       }
     }
     PostGISDatabase.withDynTransaction(municipalityMainLanes.foreach(laneService.createWithoutTransaction(_, username)))
