@@ -535,6 +535,7 @@ trait TrafficSignLinearGenerator {
         Some("ROADNAME_SE", signRoadLink.attributes("ROADNAME_SE").toString)
       } else
         None
+        
     //RoadLink with the same Finnish/Swedish name
     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
       "[\']".r.findFirstMatchIn(roadNameSource) match {
