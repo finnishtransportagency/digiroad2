@@ -535,16 +535,19 @@ trait TrafficSignLinearGenerator {
         Some("ROADNAME_SE", signRoadLink.attributes("ROADNAME_SE").toString)
       } else
         None
-    var result:Seq[RoadLink] = Seq()
-     try {
-       //RoadLink with the same Finnish/Swedish name
-       result= tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
-         roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
-       }.getOrElse(Seq(signRoadLink))
-     }catch {
-       case _ => println("Vvh call by roadname failed, used name was: "+tsRoadNameInfo.toString);
-     }
-     result
+    
+
+     //RoadLink with the same Finnish/Swedish name
+     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
+       "[\']".r.findFirstMatchIn(roadNameSource) match {
+         case Some(_)=>{
+           println("Vvh can not handle ' symbol, requested road : "+roadNameSource);Seq()
+         }
+         case None =>{
+           roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
+         }
+       }
+     }.getOrElse(Seq(signRoadLink))
   }
 
   def isToUpdateRelation(newSeg: TrafficSignToLinear)(oldSeg: TrafficSignToLinear): Boolean = {
