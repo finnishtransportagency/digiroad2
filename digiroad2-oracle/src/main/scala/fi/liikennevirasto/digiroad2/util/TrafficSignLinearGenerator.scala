@@ -527,7 +527,7 @@ trait TrafficSignLinearGenerator {
     }.toSet
   }
 
-   def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[RoadLink] = {
+  private def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[RoadLink] = {
     val tsRoadNameInfo =
       if (signRoadLink.attributes.get("ROADNAME_FI").exists(_.toString.trim.nonEmpty)) {
         Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_FI").toString)
