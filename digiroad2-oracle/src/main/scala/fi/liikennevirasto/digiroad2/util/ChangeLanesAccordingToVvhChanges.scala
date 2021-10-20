@@ -37,7 +37,7 @@ object ChangeLanesAccordingToVvhChanges {
 
     val linkIds : Set[Long] = changedVVHRoadLinks.map(_.link.linkId).toSet
     val roadLinks = changedVVHRoadLinks.map(_.link)
-    val changes = vvhClient.roadLinkChangeInfo.fetchByLinkIds(linkIds)
+    val changes = roadLinkService.getChangeInfo(linkIds)
 
     val changedLanes = handleChanges(roadLinks, changes)
 
