@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 object MainLanePopulationProcess {
 
@@ -33,6 +34,8 @@ object MainLanePopulationProcess {
       (UnknownFunctionalClass.value, SpecialTransportWithGate),
       (PrimitiveRoad.value, TractorRoad),
       (WalkingAndCyclingPath.value, CycleOrPedestrianPath))
+
+  private val logger = LoggerFactory.getLogger(getClass)
 
   private def addMainLane(roadLink: RoadLink): PersistedLane = {
     val createdVVHTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
@@ -67,7 +70,7 @@ object MainLanePopulationProcess {
   }
 
   private def mainLanesForMunicipality(municipality: Int, initialProcessing: Boolean): Unit = {
-    println("Working on municipality -> " + municipality)
+    logger.info("Working on municipality -> " + municipality)
 
     val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
 
@@ -79,7 +82,7 @@ object MainLanePopulationProcess {
         roadLinks.filterNot(link => existingLanes.exists(_.linkId == link.linkId))
       }
 
-    println(roadLinksWithoutMainLanes.length + " road links without main lanes")
+    logger.info(roadLinksWithoutMainLanes.length + " road links without main lanes.")
 
     val municipalityMainLanes = roadLinksWithoutMainLanes.flatMap { roadLink =>
       splitLinksByTrafficDirection(roadLink).map { linkWithUpdatedDirection =>
@@ -91,8 +94,7 @@ object MainLanePopulationProcess {
 
   // Main process
   def process(initialProcessing: Boolean = false): Unit = {
-    println("Start to populate main lanes from road links\n")
-    println(DateTime.now())
+    logger.info(s"Start to populate main lanes from road links ${DateTime.now()}")
 
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
@@ -102,28 +104,23 @@ object MainLanePopulationProcess {
       mainLanesForMunicipality(municipality, initialProcessing)
     }
 
-    println("")
-    println("Finished populating main lanes\n")
-    println(DateTime.now())
+    logger.info(s"Finished populating main lanes ${DateTime.now()}")
   }
 
-  // Moves all existing lanes to history and creates new main lanes from vvh roadlinks
+  // Moves all existing lanes to history and creates new main lanes from vvh road links
   def initialProcess(): Unit = {
-    println("Start to remove existing lanes\n")
-    println(DateTime.now())
+    logger.info(s"Start to remove existing lanes ${DateTime.now()}")
 
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
 
     municipalities.foreach { municipality =>
-      println("Deleting lanes from municipality -> " + municipality)
+      logger.info("Deleting lanes from municipality -> " + municipality)
       PostGISDatabase.withDynTransaction(laneService.expireAllMunicipalityLanes(municipality, username))
     }
 
-    println("")
-    println("Finished removing lanes\n")
-    println(DateTime.now())
+    logger.info(s"Finished removing lanes ${DateTime.now()}")
 
     // Populate main lanes from road links
     process(initialProcessing = true)
