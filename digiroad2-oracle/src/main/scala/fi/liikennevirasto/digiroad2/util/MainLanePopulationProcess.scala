@@ -29,11 +29,9 @@ object MainLanePopulationProcess {
 
   lazy val username = "auto_generated_lane"
 
-  lazy val twoWayLanes: Seq[(Int, LinkType)] = Seq(
-      (UnknownFunctionalClass.value, SpecialTransportWithoutGate),
-      (UnknownFunctionalClass.value, SpecialTransportWithGate),
-      (PrimitiveRoad.value, TractorRoad),
-      (WalkingAndCyclingPath.value, CycleOrPedestrianPath))
+  lazy val twoWayLanes: Seq[LinkType] = Seq(
+      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess,
+      TractorRoad, CycleOrPedestrianPath)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -55,16 +53,10 @@ object MainLanePopulationProcess {
       createdVVHTimeStamp, None, laneProperties)
   }
 
-  // Two way lanes allowed only for links that are service openings, cycle or pedestrian path,
-  // or tractor road
-  private def linkWithTwoWayLane(roadLink: RoadLink): Boolean = {
-    twoWayLanes.contains((roadLink.functionalClass, roadLink.linkType)) ||
-      roadLink.linkType == MotorwayServiceAccess
-  }
-
   // Split road links by traffic direction
+  // Two way lanes allowed only for links that are service openings, cycle or pedestrian path, or tractor road
   private def splitLinksByTrafficDirection(roadLink: RoadLink): Seq[RoadLink] = {
-    val twoWayLane = linkWithTwoWayLane(roadLink)
+    val twoWayLane = twoWayLanes.contains(roadLink.linkType)
     roadLink.trafficDirection match {
       case TrafficDirection.BothDirections if !twoWayLane =>
         Seq(roadLink.copy(trafficDirection = TrafficDirection.TowardsDigitizing),
