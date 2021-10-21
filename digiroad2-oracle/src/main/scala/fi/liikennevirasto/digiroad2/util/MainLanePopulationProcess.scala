@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, PrimitiveRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection, UnknownFunctionalClass, WalkingAndCyclingPath}
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, PrimitiveRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection, UnknownFunctionalClass, WalkingAndCyclingPath}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -55,14 +55,21 @@ object MainLanePopulationProcess {
       createdVVHTimeStamp, None, laneProperties)
   }
 
+  // Two way lanes allowed only for links that are service openings, cycle or pedestrian path,
+  // or tractor road
+  private def linkWithTwoWayLane(roadLink: RoadLink): Boolean = {
+    twoWayLanes.contains((roadLink.functionalClass, roadLink.linkType)) ||
+      roadLink.linkType == MotorwayServiceAccess
+  }
+
   // Split road links by traffic direction
-  // Two way lanes allowed only for service openings, cycleOrPedestrianPath and TractorRoad
   private def splitLinksByTrafficDirection(roadLink: RoadLink): Seq[RoadLink] = {
+    val twoWayLane = linkWithTwoWayLane(roadLink)
     roadLink.trafficDirection match {
-      case TrafficDirection.BothDirections if !twoWayLanes.contains((roadLink.functionalClass, roadLink.linkType)) =>
+      case TrafficDirection.BothDirections if !twoWayLane =>
         Seq(roadLink.copy(trafficDirection = TrafficDirection.TowardsDigitizing),
             roadLink.copy(trafficDirection = TrafficDirection.AgainstDigitizing))
-      case _ if twoWayLanes.contains((roadLink.functionalClass, roadLink.linkType)) =>
+      case _ if twoWayLane =>
         Seq(roadLink.copy(trafficDirection = TrafficDirection.BothDirections))
       case _ =>
         Seq(roadLink)
