@@ -966,7 +966,7 @@ trait LaneOperations {
     dao.expireLanesByLinkId( stateRoadLinks.map(_.linkId).toSet, username)
   }
 
-  // Used by main lane population process
+  // Used by initial main lane population process
   def expireAllMunicipalityLanes(municipality: Int, username: String): Unit = {
     val lanes = dao.fetchLanesByMunicipality(municipality)
     val lanesWithHistoryId = lanes.map(_.id)
