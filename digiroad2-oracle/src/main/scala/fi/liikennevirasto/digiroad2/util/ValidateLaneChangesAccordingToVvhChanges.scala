@@ -55,7 +55,8 @@ object ValidateLaneChangesAccordingToVvhChanges {
         case MotorwayServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad
           if mainLanes.size != 1 => Some(roadLink)
 
-        case _ if mainLanes.size != 2 => Some(roadLink)
+        case _ => if (mainLanes.size != 2) Some(roadLink)
+        else None
       }
 
       case TowardsDigitizing | AgainstDigitizing if mainLanes.size != 1 => Some(roadLink)
@@ -89,13 +90,6 @@ object ValidateLaneChangesAccordingToVvhChanges {
     DuplicateLanes.filterNot(_.isEmpty)
   }
 
-  def validateLinkType(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
-    val cyclingAndWalkingLinks = roadLinks.filter(_.linkType.value == CycleOrPedestrianPath.value)
-    val cyclingAndWalkingLinkIds = cyclingAndWalkingLinks.map(_.linkId)
-    val lanesOnLinksWithInvalidType = for (lane <- lanes if cyclingAndWalkingLinkIds.contains(lane.linkId)) yield lane
-    lanesOnLinksWithInvalidType
-  }
-
   //Process to find any errors on lanes caused by ChangeLanesAccordingToVVHChanges.
   //Runs a series of validations on lanes located on changed roadlinks
   def process(): Unit = {
@@ -113,12 +107,10 @@ object ValidateLaneChangesAccordingToVvhChanges {
 
     val duplicateLanes = validateForDuplicateLanes(roadLinks, allLanesOnRoadLinks)
     val roadLinksWithInvalidAmountOfMl = validateMainLaneAmount(roadLinks, mainLanesOnRoadLinks)
-    val lanesOnLinksWithInvalidType = validateLinkType(roadLinks, allLanesOnRoadLinks)
     val lanesWithInconsistentSideCodes = validateLaneSideCodeConsistency(roadLinks, allLanesOnRoadLinks)
 
     logger.info("Duplicate lanes: " + duplicateLanes.flatten.map(_.id) + "\n" +
       "Roadlinks with invalid amount of main lanes: " + roadLinksWithInvalidAmountOfMl.map(_.linkId) + "\n" +
-      "Lanes on roadlink with invalid type: " + lanesOnLinksWithInvalidType.map(_.id) + "\n" +
       "Lanes with inconsistent side codes: " + lanesWithInconsistentSideCodes.map(_.id))
 
 

@@ -23,35 +23,40 @@ class ValidateLaneChangesAccordingToVvhChangesSpec extends FunSuite with Matcher
     val rlAgainst = createRoadLink(2, TrafficDirection.AgainstDigitizing)
     val rlTowards = createRoadLink(3, TrafficDirection.TowardsDigitizing)
     val rlCyclingAndWalking = createRoadLink(4, TrafficDirection.BothDirections, CycleOrPedestrianPath)
+    val rlSpecialTransport = createRoadLink(5, TrafficDirection.BothDirections, SpecialTransportWithGate)
+    val rlUnknown = createRoadLink(6, TrafficDirection.BothDirections, UnknownLinkType)
 
-    Seq(rlBothDirections, rlAgainst, rlTowards, rlCyclingAndWalking)
+    Seq(rlBothDirections, rlAgainst, rlTowards, rlCyclingAndWalking, rlSpecialTransport, rlUnknown)
   }
 
   def createLanes() : Seq[PersistedLane] = {
     val mainLaneTowards = createLane(1, 1, 2, 1)
     val mainLaneAgainst1 = createLane(2, 1, 3, 1)
     val mainLaneAgainst2 = createLane(3,1,3,1)
+
     val additionalLaneAgainstInconsistent = createLane(4, 3, 3, 2)
     val mainLaneOnCycling = createLane(5, 4, 1, 1)
 
+    val mainLaneOnUnknown1 = createLane(6, 6, 1, 1)
+    val mainLaneOnUnknown2 = createLane(7, 6, 1, 1)
 
-    Seq(mainLaneTowards, mainLaneAgainst1, mainLaneAgainst2, mainLaneOnCycling, additionalLaneAgainstInconsistent)
+    Seq(mainLaneTowards, mainLaneAgainst1, mainLaneAgainst2, mainLaneOnCycling, additionalLaneAgainstInconsistent, mainLaneOnUnknown1, mainLaneOnUnknown2)
   }
 
-  test("Two duplicate lanes should be found") {
+  test("Four duplicate lanes should be found") {
     val roadLinks = createRoadLinks()
     val lanes = createLanes()
 
     val duplicateLanes = validateForDuplicateLanes(roadLinks, lanes).flatten
-    duplicateLanes.size should equal(2)
+    duplicateLanes.size should equal(4)
   }
 
-  test("Three roadlinks with invalid amount of mainlanes should be found"){
+  test("Five roadlinks with invalid amount of mainlanes should be found"){
     val roadLinks = createRoadLinks()
     val lanes = createLanes()
 
     val roadLinksWithInvalidAmountOfMl = validateMainLaneAmount(roadLinks, lanes)
-    roadLinksWithInvalidAmountOfMl.size should equal(3)
+    roadLinksWithInvalidAmountOfMl.size should equal(4)
   }
 
   test("One inconsistent lane should be found"){
