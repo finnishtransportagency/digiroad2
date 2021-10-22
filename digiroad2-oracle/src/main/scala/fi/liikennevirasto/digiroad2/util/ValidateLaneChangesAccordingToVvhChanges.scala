@@ -85,15 +85,15 @@ object ValidateLaneChangesAccordingToVvhChanges {
     lanesWithInconsistentSideCodes.flatten
   }
 
-  def validateForDuplicateLanes(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[Seq[PersistedLane]] = {
+  def validateForDuplicateLanes(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
     val DuplicateLanes = for (rl <- roadLinks) yield checkForDuplicateLanes(rl, lanes.filter(_.linkId == rl.linkId))
-    DuplicateLanes.filterNot(_.isEmpty)
+    DuplicateLanes.filterNot(_.isEmpty).flatten
   }
 
   //Process to find any errors on lanes caused by ChangeLanesAccordingToVVHChanges.
   //Runs a series of validations on lanes located on changed roadlinks
   def process(): Unit = {
-    val since = DateTime.now().minusDays(2)
+    val since = DateTime.now().minusDays(1)
     val until = DateTime.now()
 
     logger.info("Getting changed links Since: " + since + " Until: " + until)
@@ -101,6 +101,9 @@ object ValidateLaneChangesAccordingToVvhChanges {
     val roadLinks = LogUtils.time(logger, "Get changed roadlinks")(
       roadLinkService.getChanged(since, until).map(_.link)
     )
+
+    logger.info(roadLinks.size + " roadlinks changed since " + since)
+
     val roadLinkIds = roadLinks.map(_.linkId)
     val allLanesOnRoadLinks = laneService.fetchAllLanesByLinkIds(roadLinkIds)
     val mainLanesOnRoadLinks = allLanesOnRoadLinks.filter(lane => lane.laneCode == LaneNumberOneDigit.MainLane.laneCode)
@@ -109,7 +112,7 @@ object ValidateLaneChangesAccordingToVvhChanges {
     val roadLinksWithInvalidAmountOfMl = validateMainLaneAmount(roadLinks, mainLanesOnRoadLinks)
     val lanesWithInconsistentSideCodes = validateLaneSideCodeConsistency(roadLinks, allLanesOnRoadLinks)
 
-    logger.info("Duplicate lanes: " + duplicateLanes.flatten.map(_.id) + "\n" +
+    logger.info("Duplicate lanes: " + duplicateLanes.map(_.id) + "\n" +
       "Roadlinks with invalid amount of main lanes: " + roadLinksWithInvalidAmountOfMl.map(_.linkId) + "\n" +
       "Lanes with inconsistent side codes: " + lanesWithInconsistentSideCodes.map(_.id))
 

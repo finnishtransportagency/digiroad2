@@ -47,7 +47,7 @@ class ValidateLaneChangesAccordingToVvhChangesSpec extends FunSuite with Matcher
     val roadLinks = createRoadLinks()
     val lanes = createLanes()
 
-    val duplicateLanes = validateForDuplicateLanes(roadLinks, lanes).flatten
+    val duplicateLanes = validateForDuplicateLanes(roadLinks, lanes)
     duplicateLanes.size should equal(4)
   }
 
