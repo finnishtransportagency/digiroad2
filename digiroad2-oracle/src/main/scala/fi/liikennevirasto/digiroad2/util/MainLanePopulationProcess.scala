@@ -78,7 +78,7 @@ object MainLanePopulationProcess {
       if (initialProcessing) roadLinks
       else {
         val existingLanes = laneService.fetchExistingMainLanesByRoadLinks(roadLinks, Seq())
-        roadLinks.filterNot(link => existingLanes.exists(_.linkId == link.linkId))
+        roadLinks.filterNot(roadLink => existingLanes.exists(_.linkId == roadLink.linkId))
       }
 
     logger.info(roadLinksWithoutMainLanes.length + " road links without main lanes.")
