@@ -19,6 +19,7 @@ import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.Caching
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
+import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.vvhClient
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
@@ -1648,5 +1649,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         changeType = "Modify"
       )
     }
+  }
+
+  def getChangeInfo(linkIds: Set[Long]): Seq[ChangeInfo] ={
+    vvhClient.roadLinkChangeInfo.fetchByLinkIds(linkIds)
   }
 }

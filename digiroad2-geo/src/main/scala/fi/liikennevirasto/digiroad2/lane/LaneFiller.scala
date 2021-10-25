@@ -63,7 +63,7 @@ class LaneFiller {
     }
   }
 
-  private def toLPieceWiseLane(dbLanes: Seq[PersistedLane], roadLink: RoadLink): Seq[PieceWiseLane] = {
+  def toLPieceWiseLane(dbLanes: Seq[PersistedLane], roadLink: RoadLink): Seq[PieceWiseLane] = {
     dbLanes.map { dbLane =>
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbLane.startMeasure, dbLane.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)

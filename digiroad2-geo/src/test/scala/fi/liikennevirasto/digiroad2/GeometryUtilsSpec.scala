@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.GeometryUtils._
-import org.joda.time.DateTime
 import org.scalatest._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {

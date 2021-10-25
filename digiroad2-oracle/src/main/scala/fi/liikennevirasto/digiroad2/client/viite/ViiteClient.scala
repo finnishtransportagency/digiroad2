@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.client.viite
 
 import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
-
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
 import fi.liikennevirasto.digiroad2.dao.RoadAddress
