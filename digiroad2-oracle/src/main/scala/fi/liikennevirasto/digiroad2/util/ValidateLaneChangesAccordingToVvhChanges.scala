@@ -38,13 +38,9 @@ object ValidateLaneChangesAccordingToVvhChanges {
 
   def checkLaneSideCodeConsistency(roadLink: RoadLink, lanesOnLink: Seq[PersistedLane]): Seq[PersistedLane] = {
     roadLink.trafficDirection match {
-
       case TowardsDigitizing => lanesOnLink.filter(_.sideCode != SideCode.TowardsDigitizing.value)
-
       case AgainstDigitizing => lanesOnLink.filter(_.sideCode != SideCode.AgainstDigitizing.value)
-
       case BothDirections => checkBothDirectionsConsistency(lanesOnLink)
-
       case _ => Seq()
     }
   }
@@ -55,13 +51,10 @@ object ValidateLaneChangesAccordingToVvhChanges {
       case BothDirections => roadLink.linkType match {
         case MotorwayServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad
           if mainLanes.size != 1 => Some(roadLink)
-
         case _ => if (mainLanes.size != 2) Some(roadLink)
         else None
       }
-
       case TowardsDigitizing | AgainstDigitizing if mainLanes.size != 1 => Some(roadLink)
-
       case _ => None
     }
 
@@ -118,8 +111,5 @@ object ValidateLaneChangesAccordingToVvhChanges {
     logger.info("Duplicate lanes: " + duplicateLanes.map(_.id) + "\n" +
       "Roadlinks with invalid amount of main lanes: " + roadLinksWithInvalidAmountOfMl.map(_.linkId) + "\n" +
       "Lanes with inconsistent side codes: " + lanesWithInconsistentSideCodes.map(_.id))
-
-
   }
-
 }
