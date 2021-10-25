@@ -29,14 +29,15 @@ object ValidateLaneChangesAccordingToVvhChanges {
 
   def checkBothDirectionsConsistency(lanesOnLink: Seq[PersistedLane]): Seq[PersistedLane] = {
     val hasBothDirectionLanes = lanesOnLink.exists(_.sideCode == SideCode.BothDirections.value)
-    val hasOneDirectionLanes = lanesOnLink.exists(_.sideCode == SideCode.TowardsDigitizing.value) || lanesOnLink.exists(_.sideCode == SideCode.AgainstDigitizing.value)
+    val hasOneDirectionLanes = lanesOnLink.exists(_.sideCode == SideCode.TowardsDigitizing.value) ||
+      lanesOnLink.exists(_.sideCode == SideCode.AgainstDigitizing.value)
 
     if (hasBothDirectionLanes && hasOneDirectionLanes) lanesOnLink
     else Seq()
   }
 
-  def checkLaneSideCodeConsistency(rl: RoadLink, lanesOnLink: Seq[PersistedLane]): Seq[PersistedLane] = {
-    rl.trafficDirection match {
+  def checkLaneSideCodeConsistency(roadLink: RoadLink, lanesOnLink: Seq[PersistedLane]): Seq[PersistedLane] = {
+    roadLink.trafficDirection match {
 
       case TowardsDigitizing => lanesOnLink.filter(_.sideCode != SideCode.TowardsDigitizing.value)
 
@@ -66,27 +67,29 @@ object ValidateLaneChangesAccordingToVvhChanges {
 
   }
 
-  def checkForDuplicateLanes(rl: RoadLink, lanesOnLink: Seq[PersistedLane]): Seq[PersistedLane] = {
+  def checkForDuplicateLanes(lanesOnLink: Seq[PersistedLane]): Seq[PersistedLane] = {
     val duplicateLanes = for (laneToCompare <- lanesOnLink) yield
-      lanesOnLink.filter(lane => (lane.laneCode == laneToCompare.laneCode) && (lane.sideCode == laneToCompare.sideCode) && lane.id != laneToCompare.id)
+      lanesOnLink.filter(lane => (lane.laneCode == laneToCompare.laneCode) &&
+        (lane.sideCode == laneToCompare.sideCode) && lane.id != laneToCompare.id)
 
     duplicateLanes.flatten
   }
 
   def validateMainLaneAmount(roadLinks: Seq[RoadLink], mainLanesOnRoadLinks: Seq[PersistedLane]): Seq[RoadLink] = {
-    val roadLinksWithInvalidAmount = for (rl <- roadLinks) yield
-      checkLinksMainLanes(rl, mainLanesOnRoadLinks.filter(mainLane => mainLane.linkId == rl.linkId))
+    val roadLinksWithInvalidAmount = for (roadLink <- roadLinks) yield
+      checkLinksMainLanes(roadLink, mainLanesOnRoadLinks.filter(mainLane => mainLane.linkId == roadLink.linkId))
 
     roadLinksWithInvalidAmount.flatten
   }
 
   def validateLaneSideCodeConsistency(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
-    val lanesWithInconsistentSideCodes = for (rl <- roadLinks) yield checkLaneSideCodeConsistency(rl, lanes.filter(_.linkId == rl.linkId))
+    val lanesWithInconsistentSideCodes = for (roadLink <- roadLinks) yield
+      checkLaneSideCodeConsistency(roadLink, lanes.filter(_.linkId == roadLink.linkId))
     lanesWithInconsistentSideCodes.flatten
   }
 
   def validateForDuplicateLanes(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
-    val DuplicateLanes = for (rl <- roadLinks) yield checkForDuplicateLanes(rl, lanes.filter(_.linkId == rl.linkId))
+    val DuplicateLanes = for (roadLink <- roadLinks) yield checkForDuplicateLanes(lanes.filter(_.linkId == roadLink.linkId))
     DuplicateLanes.filterNot(_.isEmpty).flatten
   }
 
