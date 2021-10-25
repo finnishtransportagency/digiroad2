@@ -82,6 +82,11 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
      """.as[LightLane].list
   }
 
+  def fetchLanesByMunicipality(municipalityCode: Int): Seq[PersistedLane] = {
+    val filter = s""" WHERE l.municipality_code = $municipalityCode"""
+    getLanesFilterQuery(withFilter(filter))
+  }
+
   protected def withFilter(filter: String)(query: String): String = {
     query + " " + filter
   }
@@ -291,6 +296,20 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     sqlu"""DELETE FROM LANE_LINK WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE WHERE id = $laneId""".execute
     sqlu"""DELETE FROM LANE_POSITION WHERE id = $lanePositionId""".execute
+  }
+
+  def deleteEntryLanes(laneIds: Seq[Long]): Unit = {
+    MassQuery.withIds(laneIds.toSet) { idTableName =>
+      val lanePositionIds = sql"""SELECT lane_position_id FROM LANE_LINK WHERE LANE_ID IN (SELECT id FROM #$idTableName)""".as[Long].list
+
+      sqlu"""DELETE FROM LANE_ATTRIBUTE WHERE lane_id IN ( SELECT id FROM #$idTableName )""".execute
+      sqlu"""DELETE FROM LANE_LINK WHERE lane_id IN ( SELECT id FROM #$idTableName )""".execute
+      sqlu"""DELETE FROM LANE WHERE id IN ( SELECT id FROM #$idTableName )""".execute
+
+      MassQuery.withIds(lanePositionIds.toSet) { lpIdTableName =>
+        sqlu"""DELETE FROM LANE_POSITION WHERE id IN (SELECT id FROM #$lpIdTableName)""".execute
+      }
+    }
   }
 
 

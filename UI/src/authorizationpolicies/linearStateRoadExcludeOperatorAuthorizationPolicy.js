@@ -1,16 +1,13 @@
 (function(root) {
-  root.LinearEuropeanRoadsAuthorizationPolicy = function() {
+  root.LinearStateRoadExcludeOperatorAuthorizationPolicy = function() {
     AuthorizationPolicy.call(this);
 
     var me = this;
 
     this.formEditModeAccess = function(selectedAsset) {
       var isMaintainerAndHaveRights = (me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
-      if(me.isOperator()){
-        return true;
-      }else{
-        return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerAndHaveRights );
-      }
+
+      return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerAndHaveRights || me.isOperator());
     };
 
     this.handleSuggestedAsset = function(selectedAsset, value, layerMode) {

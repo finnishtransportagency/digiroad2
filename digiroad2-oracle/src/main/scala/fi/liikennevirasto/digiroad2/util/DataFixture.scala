@@ -433,7 +433,7 @@ object DataFixture {
     val municipalities: Seq[Int] =
       PostGISDatabase.withDynSession {
         Queries.getMunicipalities
-    }
+      }
 
     val floatingReasonPublicId = "kellumisen_syy"
     val administrationClassPublicId = "linkin_hallinnollinen_luokka"
@@ -1438,7 +1438,7 @@ object DataFixture {
       additionalPanelIdToExpire.foreach { case (id, linkId, signType) =>
         //this code is commented until final OK is given by the client to delete additional signs. improvements to this batch were made in DROTH-1917
         //uncomment to perform one time batch in which additional panel properties are copied to main sign and then deleted.
-//        trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
+        //        trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
         println(s"Additional panel expired with id $id and type ${TrafficSignType.applyOTHValue(signType).toString} on linkId $linkId")
       }
     }
@@ -1525,32 +1525,32 @@ object DataFixture {
     }
 
     municipalities.foreach { municipality =>
-        println(s"Fetching traffic signs for municipality: $municipality")
-        val trafficSigns = trafficSignService.getByMunicipality(municipality)
-        println(s"Number of existing assets: ${trafficSigns.length}")
-        trafficSigns.foreach { trafficSign =>
-          val createdDate = trafficSign.createdAt.get
-          val migrationDate = DateTime.parse("2020-05-14T15:32:46", DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss"))
-          if (createdDate.isBefore(migrationDate)) {
-            PostGISDatabase.withDynTransaction {
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "structure", structure_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "life_cycle", life_cycle_propertyId, "single_choice", propertyValues = Seq(PropertyValue("3", Some("Käytössä pysyvästi"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "urgency_of_repair", repair_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "type_of_damage", damage_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "lane_type", lane_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "coating_type", coating_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "condition", condition_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "location_specifier", locationSpecifier_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
-              PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "old_traffic_code", old_trafficSign_code_propertyId, "checkbox", propertyValues = Seq(PropertyValue("1", Some("Väärä"), false)))
-              Queries.updateAdditionalPanelProperties(trafficSign.id)
-            }
-          }
-          else {
-            println("New traffic sign, no need to update - " + trafficSign.id)
+      println(s"Fetching traffic signs for municipality: $municipality")
+      val trafficSigns = trafficSignService.getByMunicipality(municipality)
+      println(s"Number of existing assets: ${trafficSigns.length}")
+      trafficSigns.foreach { trafficSign =>
+        val createdDate = trafficSign.createdAt.get
+        val migrationDate = DateTime.parse("2020-05-14T15:32:46", DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss"))
+        if (createdDate.isBefore(migrationDate)) {
+          PostGISDatabase.withDynTransaction {
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "structure", structure_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "life_cycle", life_cycle_propertyId, "single_choice", propertyValues = Seq(PropertyValue("3", Some("Käytössä pysyvästi"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "urgency_of_repair", repair_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "type_of_damage", damage_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "lane_type", lane_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "coating_type", coating_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "condition", condition_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "location_specifier", locationSpecifier_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+            PostGISTrafficSignDao.createOrUpdateProperties(trafficSign.id, "old_traffic_code", old_trafficSign_code_propertyId, "checkbox", propertyValues = Seq(PropertyValue("1", Some("Väärä"), false)))
+            Queries.updateAdditionalPanelProperties(trafficSign.id)
           }
         }
+        else {
+          println("New traffic sign, no need to update - " + trafficSign.id)
+        }
+      }
       println("Traffic Sign updates complete " + DateTime.now())
     }
   }
@@ -2013,11 +2013,11 @@ object DataFixture {
             val diffMunicipalities = elyMunicipalities.diff(municipalities) ++ municipalities.diff(elyMunicipalities)
             if(diffMunicipalities.nonEmpty)
               println("inaccurate authorizedMunicipalities for elys ")
-              if (elyMunicipalities.diff(municipalities).nonEmpty) print(s"missing user municipalities -> ${elyMunicipalities.diff(municipalities)}" )
-              if (municipalities.diff(elyMunicipalities).nonEmpty) {
-                print(s"exceeded user municipalities -> ${municipalities.diff(elyMunicipalities)}" )
-                userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(authorizedMunicipalities = elyMunicipalities)))
-              }
+            if (elyMunicipalities.diff(municipalities).nonEmpty) print(s"missing user municipalities -> ${elyMunicipalities.diff(municipalities)}" )
+            if (municipalities.diff(elyMunicipalities).nonEmpty) {
+              print(s"exceeded user municipalities -> ${municipalities.diff(elyMunicipalities)}" )
+              userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(authorizedMunicipalities = elyMunicipalities)))
+            }
 
             //Normally the user shouldn't have more than 4 ely
             if (municipalityInfo.map(_.ely).toSet.size > 4)
@@ -2354,7 +2354,7 @@ object DataFixture {
 
   def GetAccessRightID(linkId:Long):String ={
     PostGISDatabase.withDynSession {
-     val response= LinkAttributesDao.getExistingValues(linkId).getOrElse("ACCESS_RIGHT_ID", "")
+      val response= LinkAttributesDao.getExistingValues(linkId).getOrElse("ACCESS_RIGHT_ID", "")
       response
     }
 
@@ -2421,7 +2421,7 @@ object DataFixture {
   def newRoadAddressFromViite(): Unit ={
     AutomaticLaneCreationModificationProcess.process()
   }
-  
+
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
     "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
@@ -2500,10 +2500,10 @@ object DataFixture {
   def main(args:Array[String]) : Unit = {
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
-        println("*************************************************************************************")
-        println("TURN ENV batchMode true TO RUN FIXTURE RESET")
-        println("*************************************************************************************")
-        exit()
+      println("*************************************************************************************")
+      println("TURN ENV batchMode true TO RUN FIXTURE RESET")
+      println("*************************************************************************************")
+      exit()
     } else
       println("")
 
@@ -2658,6 +2658,10 @@ object DataFixture {
         ChangeLanesAccordingToVvhChanges.process()
       case Some("validate_lane_changes_according_to_VVH_changes") =>
         ValidateLaneChangesAccordingToVvhChanges.process()
+      case Some("populate_new_link_with_main_lanes") =>
+        MainLanePopulationProcess.process()
+      case Some("initial_main_lane_population") =>
+        MainLanePopulationProcess.initialProcess()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2674,7 +2678,9 @@ object DataFixture {
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite | change_lanes_according_to_VVH_changes |" +
-        " validate_lane_changes_according_to_VVH_changes")
+        " validate_lane_changes_according_to_VVH_changes | populate_new_link_with_main_lanes | initial_main_lane_population")
+
+
     }
   }
 }
