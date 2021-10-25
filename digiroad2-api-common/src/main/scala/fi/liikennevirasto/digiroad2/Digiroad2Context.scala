@@ -73,20 +73,6 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
   }
 }
 
-class LanesUpdater(laneService: LaneService) extends Actor {
-  def receive = {
-    case x: LaneFiller.ChangeSet => laneService.updateChangeSet(x )
-    case _            => println("LinearAssetUpdater: Received unknown message")
-  }
-}
-
-class LanesSaveModified[T](laneService: LaneService) extends Actor {
-  def receive = {
-    case x: Seq[T] => laneService.persistModifiedLinearAssets(x.asInstanceOf[Seq[PersistedLane]])
-    case _             => println("laneSaveModified: Received unknown message")
-  }
-}
-
 class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   def receive = {
     case x: ChangeSet => persistLinearAssetChanges(x)
@@ -427,13 +413,6 @@ object Digiroad2Context {
 
   val pedestrianCrossingVerifier = system.actorOf(Props(classOf[PedestrianCrossingValidation], pedestrianCrossingValidator), name = "pedestrianCrossingValidator")
   eventbus.subscribe(pedestrianCrossingVerifier, "pedestrianCrossing:Validator")
-
-  val lanesUpdater = system.actorOf(Props(classOf[LanesUpdater], laneService), name = "lanesUpdater")
-  eventbus.subscribe(lanesUpdater, "lanes:updater")
-
-  val lanesSaveModified = system.actorOf(Props(classOf[LanesSaveModified[PersistedLane]], laneService), name = "saveModifiedLanes")
-  eventbus.subscribe(lanesSaveModified, "lanes:saveModifiedLanes")
-
 
   lazy val authenticationTestModeEnabled: Boolean = {
     Digiroad2Properties.authenticationTestMode
