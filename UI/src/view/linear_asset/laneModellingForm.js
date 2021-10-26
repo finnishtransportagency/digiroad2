@@ -254,11 +254,16 @@
                 break;
               case "startAddrMValue":
                   roadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  value = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  if (roadPartNumber !== Infinity){
+                    value = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  }
+
                 break;
               case "endAddrMValue":
                   roadPartNumber = Math.max.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  value = Math.max.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  if (roadPartNumber !== -Infinity) {
+                    value = Math.max.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  }
                 break;
               case "administrativeClass":
                 value = administrativeClassValues[_.head(selectedLinks)[publicId]];
