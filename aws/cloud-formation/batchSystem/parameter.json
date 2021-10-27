@@ -4,12 +4,16 @@
     "ParameterValue": "Digiroad-OTH-kehitys"
   },
   {
-    "ParameterKey": "VpcIDOfSystem",
+    "ParameterKey": "QANetworkStackName",
+    "ParameterValue": "DigiroadTest"
+  },
+  {
+    "ParameterKey": "DEVVpcIDOfSystem",
     "ParameterValue": "vpc-0f430b7fedef04ba3"
   },
   {
-    "ParameterKey": "DigiroadDatabaseSecurityGroup",
-    "ParameterValue": "sg-0ced3d4a7245fb3ed"
+    "ParameterKey": "QAVpcIDOfSystem",
+    "ParameterValue": "vpc-0b4e33ad8202e91e4"
   },
   {
     "ParameterKey": "SNSTopicName",
