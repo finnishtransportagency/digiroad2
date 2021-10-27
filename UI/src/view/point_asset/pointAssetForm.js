@@ -306,7 +306,11 @@ root.PointAssetForm = function() {
 
     propertyValue = _.isEmpty(propertyValue) ? propertyDefaultValue : propertyValue;
 
-    var selectableValues = _.map(propertyValues, function (label) {
+    var sortedPropertyValues = _.sortBy(propertyValues, function(property) {
+        return parseFloat(property.propertyValue);
+    });
+
+    var selectableValues = _.map(sortedPropertyValues, function (label) {
       return $('<option>',
           { selected: propertyValue == label.propertyValue,
             value: parseFloat(label.propertyValue),

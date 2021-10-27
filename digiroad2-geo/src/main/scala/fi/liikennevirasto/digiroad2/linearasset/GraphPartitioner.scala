@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge
+
 import scala.collection.JavaConversions._
 
 trait GraphPartitioner {
@@ -26,7 +27,7 @@ trait GraphPartitioner {
 
   private def clusterGraph(graph: Graph): Seq[Graph] = {
     val partitioner = new org.geotools.graph.util.graph.GraphPartitioner(graph)
-    partitioner.partition()
+    partitioner.partition() //geotools GraphPartitioner throws ArrayIndexOutOfBoundsException if graph has 3 or more links between two nodes
     partitioner.getPartitions.toList.asInstanceOf[List[Graph]]
   }
 }

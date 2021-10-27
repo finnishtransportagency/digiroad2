@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, _}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
@@ -39,14 +39,14 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mVLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-  val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
+  val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
 
   val multiTypePropSeq = DynamicAssetValue(
@@ -93,31 +93,31 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
+    override def dao: PostGISLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
+    override def assetDao: PostGISAssetDao = mockAssetDao
     def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 }
 class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
   object ServiceWithDao extends DynamicLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
+    override def assetDao: PostGISAssetDao = mockAssetDao
     override def dynamicLinearAssetDao: DynamicLinearAssetDao = mVLinearAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
@@ -131,11 +131,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, 30, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, 30, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, 30, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, 30, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
@@ -153,11 +153,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, 30, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, 30, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, 30, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, 30, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
@@ -176,11 +176,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, $typeId, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, $typeId, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, $typeId, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = propertyData1, sideCode = 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
@@ -220,11 +220,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, $typeId, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, $typeId, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, $typeId, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
@@ -257,11 +257,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, $typeId, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, $typeId, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, $typeId, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
@@ -289,11 +289,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, $typeId, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, $typeId, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, $typeId, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
@@ -330,11 +330,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, 140, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, 140, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, 140, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, 140, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
@@ -354,11 +354,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
         //Text property value
         sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, 40, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, 40, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
         //Long Text property value
         sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, 40, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, 40, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, propertyData5, 1, 0, None)), 40, "testuser")
@@ -387,11 +387,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, 40, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, 40, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, 40, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, 40, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(2, 0, 60, propertyData5, 1, 0, None)), 40, "dr1_conversion")
@@ -418,11 +418,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       //Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId1, 40, 'text', 0, 'testuser', 'nimi_suomeksiTest', null)""".execute
+           VALUES ($propId1, 40, 'text', '0', 'testuser', 'nimi_suomeksiTest', null)""".execute
 
       //Long Text property value
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-           VALUES ($propId2, 40, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
+           VALUES ($propId2, 40, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
 

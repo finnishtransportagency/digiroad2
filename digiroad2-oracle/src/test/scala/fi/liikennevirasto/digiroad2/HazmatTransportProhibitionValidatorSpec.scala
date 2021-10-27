@@ -3,10 +3,10 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService}
@@ -23,10 +23,10 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
-  val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockLinearAssetDao: PostGISLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
 
   class TestHazmatProhibitionValidator extends HazmatTransportProhibitionValidator {
-    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
+    override lazy val dao: PostGISLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
   }
@@ -34,7 +34,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
   val prohibitionValidator = new TestHazmatProhibitionValidator
 
   test("prohibition traffic sign validation should return false") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 5.0), Point(10, 10.0)), 5, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -57,7 +57,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("prohibition traffic sign validation should find match asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(0.0, .0), Point(0, 10.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(0.0, 20.0), Point(0.0, 30.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -80,7 +80,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
   }
 
   test("prohibition traffic validation should have all with asset") {
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val roadLink1 = RoadLink(1001l, Seq(Point(10.0, 0.0), Point(10, 10.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 10.0), Point(10, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 20.0), Point(0.0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))

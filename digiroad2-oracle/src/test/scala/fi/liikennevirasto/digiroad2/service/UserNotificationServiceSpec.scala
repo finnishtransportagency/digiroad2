@@ -1,27 +1,19 @@
 package fi.liikennevirasto.digiroad2.service
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.dao.UserNotificationDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 
 class UserNotificationServiceSpec extends FunSuite with Matchers {
-
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
-    new BoneCPDataSource(cfg)
-  }
-
   object ServiceWithDao extends UserNotificationService(){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
     override def dao: UserNotificationDao = new UserNotificationDao
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("get user notifications info"){
     runWithRollback {

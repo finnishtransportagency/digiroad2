@@ -1,6 +1,6 @@
 import io.gatling.sbt.GatlingPlugin
 import sbt._
-import sbt.Keys._
+import sbt.Keys.{unmanagedResourceDirectories, _}
 import org.scalatra.sbt._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.MergeStrategy
@@ -13,35 +13,63 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
-  val env = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
-  val testEnv = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
-  lazy val geoJar = Project (
-    Digiroad2GeoName,
-    file(Digiroad2GeoName),
-    settings = Defaults.defaultSettings ++ Seq(
-      organization := Organization,
-      name := Digiroad2GeoName,
-      version := Version,
-      scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
-      scalacOptions ++= Seq("-unchecked", "-feature"),
-      libraryDependencies ++= Seq(
-        "org.joda" % "joda-convert" % "2.0.1",
-        "joda-time" % "joda-time" % "2.9.9",
-        "com.typesafe.akka" %% "akka-actor" % "2.5.12",
-        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-graph/19.0/gt-graph-19.0.jar",
-        "org.geotools" % "gt-main" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-main/19.0/gt-main-19.0.jar",
-        "org.geotools" % "gt-api" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-api/19.0/gt-api-19.0.jar",
-        "org.geotools" % "gt-referencing" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-referencing/19.0/gt-referencing-19.0.jar",
-        "org.geotools" % "gt-metadata" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-metadata/19.0/gt-metadata-19.0.jar",
-        "org.geotools" % "gt-opengis" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-opengis/19.0/gt-opengis-19.0.jar",
-        "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
-        "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
-        "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
+
+  // Get build id to check if executing in aws environment.
+  val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
+
+  lazy val geoJar =awsBuildId match {
+    case null => {
+      Project (
+        Digiroad2GeoName,
+        file(Digiroad2GeoName),
+        settings = Defaults.defaultSettings ++ Seq(
+          organization := Organization,
+          name := Digiroad2GeoName,
+          version := Version,
+          scalaVersion := ScalaVersion,
+          resolvers += Classpaths.typesafeReleases,
+          scalacOptions ++= Seq("-unchecked", "-feature"),
+          libraryDependencies ++= Seq(
+            "org.joda" % "joda-convert" % "2.0.1",
+            "joda-time" % "joda-time" % "2.9.9",
+            "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+            "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+            "org.geotools" % "gt-graph" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-graph/19.0/gt-graph-19.0.jar",
+            "org.geotools" % "gt-main" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-main/19.0/gt-main-19.0.jar",
+            "org.geotools" % "gt-api" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-api/19.0/gt-api-19.0.jar",
+            "org.geotools" % "gt-referencing" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-referencing/19.0/gt-referencing-19.0.jar",
+            "org.geotools" % "gt-metadata" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-metadata/19.0/gt-metadata-19.0.jar",
+            "org.geotools" % "gt-opengis" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-opengis/19.0/gt-opengis-19.0.jar",
+            "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
+            "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
+            "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
+          )
+        )
       )
-    )
-  )
+    }
+    case _ => {
+      Project (
+        Digiroad2GeoName,
+        file(Digiroad2GeoName),
+        settings = Defaults.defaultSettings ++ Seq(
+          organization := Organization,
+          name := Digiroad2GeoName,
+          version := Version,
+          scalaVersion := ScalaVersion,
+          resolvers += Classpaths.typesafeReleases,
+          scalacOptions ++= Seq("-unchecked", "-feature"),
+          libraryDependencies ++= Seq(
+            "org.joda" % "joda-convert" % "2.0.1",
+            "joda-time" % "joda-time" % "2.9.9",
+            "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+            "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+            "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
+            "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
+          )
+        )
+      )
+    }
+  }
 
   val Digiroad2OracleName = "digiroad2-oracle"
   lazy val oracleJar = Project (
@@ -72,15 +100,15 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
-        "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
-        "com.oracle" % "sdoapi" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoapi/11.2.0/sdoapi-11.2.0.jar",
-        "com.oracle" % "sdoutl" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoutl/11.2.0/sdoutl-11.2.0.jar",
+        "com.googlecode.flyway" % "flyway-core" % "2.3.1",
         "javax.mail" % "javax.mail-api" % "1.6.1",
-        "com.sun.mail" % "javax.mail" % "1.6.1"
+        "com.sun.mail" % "javax.mail" % "1.6.1",
+        "org.postgresql" % "postgresql" % "42.2.5",
+        "net.postgis" % "postgis-jdbc" % "2.3.0",
+        "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+        "net.spy" % "spymemcached" % "2.12.3"
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(geoJar)
 
@@ -115,9 +143,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(geoJar, oracleJar)
 
@@ -152,9 +178,7 @@ object Digiroad2Build extends Build {
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
       ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
-      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf" /  env
+      unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
   ) dependsOn(geoJar, oracleJar, commonApiJar % "compile->compile;test->test")
 
@@ -195,9 +219,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.15.v20160210" % "container;compile",
         "org.eclipse.jetty" % "jetty-jmx" % "9.2.15.v20160210" % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
-      ),
-      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
-      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
+      )
     )
   ) dependsOn(geoJar, oracleJar, commonApiJar, othApiJar) aggregate
     (geoJar, oracleJar, commonApiJar, othApiJar)
@@ -215,6 +237,7 @@ object Digiroad2Build extends Build {
     mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     {
       case x if x.endsWith("about.html") => MergeStrategy.discard
+      case x if x.endsWith("env.properties") => MergeStrategy.discard
       case x => old(x)
     } }
   )

@@ -1,17 +1,17 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.util.{NoSuchElementException, Properties}
+import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, OracleAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -22,19 +22,14 @@ import org.slf4j.LoggerFactory
 case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
 
 class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkService: RoadLinkService) {
-  val dao: OracleSpeedLimitDao = new OracleSpeedLimitDao(vvhClient, roadLinkService)
+  val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(vvhClient, roadLinkService)
   val inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
-  val assetDao: OracleAssetDao = new OracleAssetDao()
+  val assetDao: PostGISAssetDao = new PostGISAssetDao()
   val logger = LoggerFactory.getLogger(getClass)
   val polygonTools: PolygonTools = new PolygonTools
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   private val RECORD_NUMBER = 4000
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
 
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkService, eventbus)

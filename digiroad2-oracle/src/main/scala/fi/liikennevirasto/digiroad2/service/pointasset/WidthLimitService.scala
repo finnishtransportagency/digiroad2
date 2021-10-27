@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import fi.liikennevirasto.digiroad2.dao.pointasset.OracleWidthLimitDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISWidthLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2._
@@ -62,7 +62,7 @@ class WidthLimitService(val roadLinkService: RoadLinkService) extends PointAsset
   }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[WidthLimit] = {
-    OracleWidthLimitDao.fetchByFilter(queryFilter)
+    PostGISWidthLimitDao.fetchByFilter(queryFilter)
   }
 
   override def create(asset: IncomingWidthLimit, username: String, roadLink: RoadLink, newTransaction: Boolean) = throw new UnsupportedOperationException("Not Supported Method")

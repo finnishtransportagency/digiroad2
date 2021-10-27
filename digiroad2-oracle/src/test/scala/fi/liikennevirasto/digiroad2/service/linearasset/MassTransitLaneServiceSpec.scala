@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -18,12 +18,12 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
   object mtlServiceWithDao extends MassTransitLaneService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
+    override def assetDao: PostGISAssetDao = mockAssetDao
     override def dynamicLinearAssetDao: DynamicLinearAssetDao = mVLinearAssetDao
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")

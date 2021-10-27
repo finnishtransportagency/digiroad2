@@ -210,14 +210,14 @@
             '</div>' +
             staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
             staticField('Kuntanumero', 'municipalityCode') +
-            staticField('Tien nimi (Suomi)', 'roadNameFi') +
-            staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
-            staticField('Tien nimi (Saame)', 'roadNameSm') +
-            staticField('Tien numero', 'roadNumber') +
+            staticField('Tienimi (Suomi)', 'roadNameFi') +
+            staticField('Tienimi (Ruotsi)', 'roadNameSe') +
+            staticField('Tienimi (Saame)', 'roadNameSm') +
+            staticField('Tienumero', 'roadNumber') +
             staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Ajorata', 'track') +
-            staticField('Etäisyys tieosan alusta', 'startAddrMValue') +
-            staticField('Etäisyys tieosan lopusta', 'endAddrMValue') +
+            staticField('Tielinkin alkuetäisyys tieosan alusta', 'startAddrMValue') +
+            staticField('Tielinkin loppuetäisyys tieosan alusta', 'endAddrMValue') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
             staticField('MML ID', 'mmlId') +

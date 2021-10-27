@@ -24,23 +24,9 @@ class MunicipalityApiRequestSpec extends FunSuite with Matchers with BeforeAndAf
 
   addServlet(municipalityApi, "/*")
 
-  def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
-    val credentials = username + ":" + password
-    val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials
-    get(uri, Seq.empty, Map("Authorization" -> authorizationToken))(f)
-  }
-
-  def getAuthorizationHeader[A](username: String, password: String): Map[String, String] = {
-    val credentials = username + ":" + password
-    val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials
-    Map("Authorization" -> authorizationToken)
-  }
-
   test("invalid json throws internal server error"){
     val payLoad = """[{"dattasettid": "apispecId", "geojson": {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"LineString","coordinates":[[10,10],[50,50]]},"properties":{"id":"apispecId","name":"Teststreet","type":"Roadlink","sideCode":1,"speedLimit":"50","pavementClass":"1","functionalClass":"Katu"}}]}, "matchedRoadlinks": [[999999], [999999]]}]"""
-    putJsonWithUserAuth("/" + "assetUpdateFromAWS", payLoad.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+    put("/" + "assetUpdateFromAWS", payLoad.getBytes, Map("Content-type" -> "application/json")) {
         status should equal(500)
     }
   }

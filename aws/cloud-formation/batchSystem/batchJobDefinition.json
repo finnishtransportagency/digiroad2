@@ -1,0 +1,169 @@
+{
+  "jobDefinitionName": "BatchJob",
+  "type": "container",
+  "retryStrategy": {
+    "attempts": 1
+  },
+  "timeout": {
+    "attemptDurationSeconds": 172800
+  },
+  "platformCapabilities": [
+    "FARGATE"
+  ],
+  "containerProperties": {
+    "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:latest",
+    "resourceRequirements" : [
+      {
+        "type": "MEMORY",
+        "value": "8192"
+      },
+      {
+        "type": "VCPU",
+        "value": "2"
+      }
+    ],
+    "executionRoleArn": "arn:aws:iam::475079312496:role/batchSystem-BatchTaskRole-GSUD7E3H8KV4",
+    "environment": [
+      {
+        "name": "containerCPU",
+        "value": "-XX:ActiveProcessorCount=2"
+      },
+    {
+        "name": "speedLimitProvider",
+        "value": "fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService"
+      },
+      {
+        "name": "userProvider",
+        "value": "fi.liikennevirasto.digiroad2.dao.PostGISUserProvider"
+      },
+      {
+        "name": "municipalityProvider",
+        "value": "fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider"
+      },
+      {
+        "name": "eventBus",
+        "value": "fi.liikennevirasto.digiroad2.DigiroadEventBus"
+      },
+      {
+        "name": "useVVHGeometry",
+        "value": "true"
+      },
+      {
+        "name": "vvhServiceHost",
+        "value": "haproxy.vayla.fi"
+      },
+      {
+        "name": "vvhRestApiEndPoint",
+        "value": "https://haproxy.vayla.fi:2027/vvhdata/"
+      },
+      {
+        "name": "vvhRoadlink.frozen",
+        "value": "false"
+      },
+      {
+        "name": "viiteRestApiEndPoint",
+        "value": "https://devapi.testivaylapilvi.fi/viite/api/viite/"
+      },
+      {
+        "name": "vkmUrl",
+        "value": "http://testioag.vayla.fi"
+      },
+      {
+        "name": "tierekisteriRestApiEndPoint",
+        "value": "http://testioag.vayla.fi/trrest/devtest/"
+      },
+      {
+        "name": "tierekisteri.enabled",
+        "value": "true"
+      },
+      {
+        "name": "viite.importTimeStamp",
+        "value": "1510876800000"
+      },
+      {
+        "name": "http.proxySet",
+        "value": "true"
+      },
+      {
+        "name": "http.proxyHost",
+        "value": "127.0.0.1"
+      },
+      {
+        "name": "http.proxyPort",
+        "value": "3128"
+      },
+      {
+        "name": "http.nonProxyHosts",
+        "value": "172.17.*|localhost|127.*"
+      },
+      {
+        "name": "bonecp.jdbcUrl",
+        "value": "jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2?currentSchema=dr2user"
+      },
+      {
+        "name": "bonecp.username",
+        "value": "digiroad2dbuser"
+      },
+      {
+        "name": "tierekisteri.username",
+        "value": "trrestoth"
+      },
+      {
+        "name": "tierekisteri.old.username",
+        "value": "trrest"
+      },
+      {
+        "name": "oag.username",
+        "value": "svc_clouddr"
+      },
+      {
+        "name": "batchMode",
+        "value": "true"
+      },
+      {
+        "name": "caching",
+        "value": "true"
+      },
+      {
+        "name": "cacheHostname",
+        "value": "roadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com"
+      },
+      {
+        "name": "cacheHostPort",
+        "value": "11211"
+      },
+      {
+        "name": "cacheTTL",
+        "value": "72000"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options":{
+        "awslogs-group": "DEV/batch/job"
+      }
+    },
+    "secrets": [
+      {
+        "name": "bonecp.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
+      },
+      {
+        "name": "tierekisteri.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.password"
+      },
+      {
+        "name": "tierekisteri.old.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/tierekisteri.old.password"
+      },
+      {
+        "name": "oag.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
+      },
+      {
+        "name": "viite.apikey",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
+      }
+    ]
+  }
+}

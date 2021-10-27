@@ -4,14 +4,8 @@ import java.util.Properties
 
 class SmtpPropertyReader {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/smtp.properties"))
-    props
-  }
-
   def getDestination: String = {
-    val loadedKeyString = properties.getProperty("email.to")
+    val loadedKeyString = Digiroad2Properties.emailTo
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing email Password")
     loadedKeyString
@@ -19,7 +13,7 @@ class SmtpPropertyReader {
 
 
   def getHost: String = {
-    val loadedKeyString = properties.getProperty("email.host")
+    val loadedKeyString = Digiroad2Properties.emailHost
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing email Password")
     loadedKeyString
@@ -27,7 +21,7 @@ class SmtpPropertyReader {
 
 
   def getPort: String = {
-    val loadedKeyString = properties.getProperty("email.port")
+    val loadedKeyString = Digiroad2Properties.emailPort
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing email Password")
     loadedKeyString

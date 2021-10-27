@@ -21,7 +21,7 @@
         var previewList = $('<table class="preview">');
 
         var numberHeaders = $('<tr class="number-header">').append(_.map(_.reverse(even).concat(odd), function (number) {
-          return $('<th>' + (number.toString()[1] == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
+          return $('<th>' + (number == 1 ? 'Pääkaista' : 'Lisäkaista') + '</th>');
         }));
 
         var oddListElements = _.map(odd, function (number) {
@@ -57,7 +57,7 @@
       }else{
         var laneCode = Property.getPropertyByPublicId(asset.properties, 'lane_code');
 
-        if (_.head(laneCode.values).value.toString()[1] == '1') {
+        if (_.head(laneCode.values).value == 1) {
           if (asset.sideCode === 1) {
             return asset;
           }

@@ -1,0 +1,190 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  NetworkStackName:
+    Description: Name of the network stack
+    Type: String
+  DigiroadDatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Databases security group
+  VpcIDOfSystem:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC of your system
+  SNSTopicName:
+    Type: String
+    Description: Name of SNS topic
+
+Resources:
+  JobQueueAdHoc:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "AdHoc"
+      Priority: 1
+      ComputeEnvironmentOrder:
+      - Order: 1
+        ComputeEnvironment:
+          Ref: ComputeEnvironment
+
+  JobQueueUpdateIncompleteList:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "UpdateIncompleteList"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ComputeEnvironment
+
+  JobQueueDailyJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "DailyQueue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ComputeEnvironment
+
+  JobQueueWeeklyJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "WeeklyQueue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ComputeEnvironment
+
+  JobQueueAnnualJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "AnnualQueue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ComputeEnvironment
+
+  ComputeEnvironment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      ComputeEnvironmentName: "BatchCompute"
+      ComputeResources:
+        Type: FARGATE
+        MaxvCpus: 32
+        Subnets:
+          - Fn::ImportValue:
+              !Join [ '-', [ !Ref NetworkStackName, 'Subnet1-Id' ] ]
+          - Fn::ImportValue:
+              !Join [ '-', [ !Ref NetworkStackName, 'Subnet2-Id' ] ]
+        SecurityGroupIds:
+          - !Ref BatchSecurityGroup
+      ServiceRole:
+        Ref: BatchServiceRole
+
+  BatchSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
+      GroupName: BatchSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcIDOfSystem
+
+  BatchTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: AmazonBatchECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  # Allow the ECS Tasks to download images from ECR
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+
+                  # Allow the ECS tasks to upload logs to CloudWatch
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:GetParametersByPath'
+                Resource: '*'
+
+  BatchServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: batch.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+
+  BatchSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: "AWS Batch Job Has Failed"
+      FifoTopic: FALSE
+      Subscription: 
+        - Endpoint: "kehitys@digiroad.fi"
+          Protocol: "email"
+      TopicName: !Ref SNSTopicName
+
+  BatchEventRule:
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "Send SNS email for failed batch jobs"
+      EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
+      Name: "BatchEventNotify"
+      State: "ENABLED"
+      Targets:
+        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref SNSTopicName]]
+          Id: "123321"
+
+
+Outputs:
+  BatchTaskRoleARN:
+    Description: BatchTaskRole
+    Value: !GetAtt BatchTaskRole.Arn
+  BatchExecutionArn:
+    Description: BatchServiceRole
+    Value: !GetAtt BatchServiceRole.Arn

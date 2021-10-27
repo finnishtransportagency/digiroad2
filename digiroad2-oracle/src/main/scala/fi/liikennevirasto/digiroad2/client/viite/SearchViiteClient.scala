@@ -90,5 +90,5 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
 
     Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.apply(sideCode), Seq(), false, None, None, None ))
   }
-
+  override protected def mapFields[A](data: A): Option[List[RoadAddress]] = ???
 }

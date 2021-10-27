@@ -20,12 +20,11 @@ import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import scala.util.Try
 
-class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
+class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
-    basicAuth
     contentType = formats("json")
   }
 

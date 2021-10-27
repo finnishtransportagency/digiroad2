@@ -37,20 +37,13 @@ case class propertiesFields(
                              addInfo: String
                            )
 
-class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
-
-  override def baseAuth: String = "serviceRoad."
-  override val realm: String = "Service Road API"
+class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
 
   protected val applicationDescription = "Service Road API "
 
   val MAX_BOUNDING_BOX = 100000000
 
   protected implicit def jsonFormats: Formats = DefaultFormats
-
-  before() {
-    basicAuth
-  }
 
   val getServiceRoadByBoundingBox =
     (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByBoundingBox")

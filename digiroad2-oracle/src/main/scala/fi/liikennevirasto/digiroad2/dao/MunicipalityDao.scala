@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.Queries.objectToPoint
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
@@ -16,7 +16,7 @@ class MunicipalityDao {
   implicit val getMapViewZoom = new GetResult[MapViewZoom] {
     def apply(r: PositionedResult) = {
 
-      val geometry = r.nextBytesOption().map(bytesToPoint).get
+      val geometry = r.nextObjectOption().map(objectToPoint).get
       val zoom = r.nextInt()
 
       MapViewZoom(geometry, zoom)
@@ -66,9 +66,8 @@ class MunicipalityDao {
     sql"""
           select m.id, m.ely_nro,
                  case when m.name_fi is not null then m.name_fi else m.name_sv end as name
-          from municipality m,
-               table(sdo_util.getvertices(m.geometry)) t
-            where trunc( t.x ) = ${coordinates.x} and trunc( t.y ) = ${coordinates.y}
+          from municipality m
+            where ST_X(m.geometry) = ${coordinates.x} and ST_Y(m.geometry) = ${coordinates.y}
       """.as[MunicipalityInfo].list
   }
 
@@ -91,33 +90,31 @@ class MunicipalityDao {
   }
 
   def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] =  {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sql"""select geometry, zoom from municipality where id = $municipalityId""".as[MapViewZoom].firstOption
     }
   }
 
-
   def getCenterViewArea(area: Int): Option[MapViewZoom] =  {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sql"""select geometry, zoom from service_area where id = $area""".as[MapViewZoom].firstOption
     }
   }
 
-
   def getCenterViewEly(ely: Int): Option[MapViewZoom] =  {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sql"""select geometry, zoom from ely where id = $ely""".as[MapViewZoom].firstOption
     }
   }
 
   def getElysByMunicipalities(municipalities: Set[Int]): Seq[Int] =  {
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sql"""select ELY_NRO from municipality  where id in (#${municipalities.mkString(",")} ) group by ELY_NRO""".as[Int].list
     }
   }
 
   def getElysIdAndNamesByCode(elys: Set[Int]): Seq[(Int, String)] ={
-    OracleDatabase.withDynSession {
+    PostGISDatabase.withDynSession {
       sql"""select id, name_fi from ely where id in (#${elys.mkString(",")} )""".as[(Int, String)].list
     }
   }
@@ -129,9 +126,8 @@ class MunicipalityDao {
          		when e.name_fi is not null then e.name_fi
          		else e.name_sv
          	end as name
-         from ely e,
-              table(sdo_util.getvertices(e.geometry)) t
-         	where trunc( t.x ) = $lon and trunc( t.y ) = $lat
+         from ely e
+         	where ST_X(m.geometry) = $lon and ST_Y(m.geometry) = $lat
        """.as[(Int, String)].list
   }
 }

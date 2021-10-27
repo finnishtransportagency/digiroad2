@@ -4,10 +4,10 @@ import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleMaintenanceDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -45,28 +45,28 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
   when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(1)
 
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
-  val mockMaintenanceDao = MockitoSugar.mock[OracleMaintenanceDao]
+  val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
+  val mockMaintenanceDao = MockitoSugar.mock[PostGISMaintenanceDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-  val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
+  val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(1)))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, MaintenanceRoadAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
-  val maintenanceDao = new OracleMaintenanceDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val maintenanceDao = new PostGISMaintenanceDao(mockVVHClient, mockRoadLinkService)
   val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
-    override def maintenanceDAO: OracleMaintenanceDao = maintenanceDao
+    override def maintenanceDAO: PostGISMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = new OracleAssetDao
+    override def assetDao: PostGISAssetDao = new PostGISAssetDao
     override def dynamicLinearAssetDao: DynamicLinearAssetDao = dynamicLinearAssetDAO
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -74,13 +74,13 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   object MaintenanceServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
-    override def maintenanceDAO: OracleMaintenanceDao = mockMaintenanceDao
+    override def maintenanceDAO: PostGISMaintenanceDao = mockMaintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
+    override def assetDao: PostGISAssetDao = mockAssetDao
     override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
     override def getInaccurateRecords(typeId: Int,municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
@@ -195,7 +195,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
 
   test("Fetch Active Maintenance Road By Polygon, with an empty result") {
     when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(Seq(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59)))).thenReturn(Seq(388562360l))
-    OracleDatabase.withDynTransaction {
+    PostGISDatabase.withDynTransaction {
       val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1)
       assets.length should be(0)
     }

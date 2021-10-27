@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangl
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
@@ -48,7 +48,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
   def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
@@ -152,11 +152,27 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       ManoeuvreElement(0, linkPair._1, linkPair._2, ElementTypes.IntermediateElement)
     )
 
+    if (isValidLinkChain(linkPairs) == false) return false
+
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
     val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null, false)
 
     isValidManoeuvre(roadLinks)(manoeuvre)
+  }
+
+  /**
+    * Check if the chain makes sense and is truly a chain. Loops through the linkPairs and checks
+    * that each pair's starting roadlink is not equal to next pair's
+    * ending roadlink, also checks that pair's starting and ending roadlinks are not the same roadlink.
+    * @param linkPairs sequence containing the start and end roadlinks for each pair
+    * @return false if chain breaks the rules, otherwise true
+    */
+  private def isValidLinkChain(linkPairs: Seq[(Long, Long)]) : Boolean = {
+    for( i <- 0 until linkPairs.length - 1){
+    if( linkPairs(i)._1 == linkPairs(i + 1)._2 || linkPairs(i)._1 == linkPairs(i)._2 || linkPairs(i+1)._1 == linkPairs(i+1)._2) return false
+  }
+  true
   }
 
   private def getBySourceRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {

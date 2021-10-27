@@ -6,15 +6,15 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPointMassLimitationDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.lane.{LaneFiller, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.middleware.{CsvDataExporterInfo, CsvDataImporterInfo, DataExportManager, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
@@ -24,6 +24,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, JsonSerializer}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
@@ -69,20 +70,6 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
         massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
       }
     }
-  }
-}
-
-class LanesUpdater(laneService: LaneService) extends Actor {
-  def receive = {
-    case x: LaneFiller.ChangeSet => laneService.updateChangeSet(x )
-    case _            => println("LinearAssetUpdater: Received unknown message")
-  }
-}
-
-class LanesSaveModified[T](laneService: LaneService) extends Actor {
-  def receive = {
-    case x: Seq[T] => laneService.persistModifiedLinearAssets(x.asInstanceOf[Seq[PersistedLane]])
-    case _             => println("laneSaveModified: Received unknown message")
   }
 }
 
@@ -315,16 +302,6 @@ object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-  lazy val revisionInfo: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/revision.properties"))
-    props
-  }
 
   val system = ActorSystem("Digiroad2")
 
@@ -437,15 +414,8 @@ object Digiroad2Context {
   val pedestrianCrossingVerifier = system.actorOf(Props(classOf[PedestrianCrossingValidation], pedestrianCrossingValidator), name = "pedestrianCrossingValidator")
   eventbus.subscribe(pedestrianCrossingVerifier, "pedestrianCrossing:Validator")
 
-  val lanesUpdater = system.actorOf(Props(classOf[LanesUpdater], laneService), name = "lanesUpdater")
-  eventbus.subscribe(lanesUpdater, "lanes:updater")
-
-  val lanesSaveModified = system.actorOf(Props(classOf[LanesSaveModified[PersistedLane]], laneService), name = "saveModifiedLanes")
-  eventbus.subscribe(lanesSaveModified, "lanes:saveModifiedLanes")
-
-
   lazy val authenticationTestModeEnabled: Boolean = {
-    properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
+    Digiroad2Properties.authenticationTestMode
   }
 
   lazy val assetPropertyService: AssetPropertyService = {
@@ -461,32 +431,32 @@ object Digiroad2Context {
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+    Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val municipalityProvider: MunicipalityProvider = {
-    Class.forName(properties.getProperty("digiroad2.municipalityProvider")).newInstance().asInstanceOf[MunicipalityProvider]
+    Class.forName(Digiroad2Properties.municipalityProvider).newInstance().asInstanceOf[MunicipalityProvider]
   }
 
   lazy val eventbus: DigiroadEventBus = {
-    Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
+    Class.forName(Digiroad2Properties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
   lazy val vvhClient: VVHClient = {
-    new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
-  lazy val linearAssetDao: OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val linearAssetDao: PostGISLinearAssetDao = {
+    new PostGISLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build)
   }
 
@@ -554,17 +524,10 @@ object Digiroad2Context {
     new UserNotificationService()
   }
 
-  lazy val revision: String = {
-    revisionInfo.getProperty("digiroad2.revision")
-  }
-  lazy val deploy_date: String = {
-    revisionInfo.getProperty("digiroad2.latestDeploy")
-  }
-
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
-      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+      override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
@@ -674,7 +637,7 @@ object Digiroad2Context {
   }
 
   lazy val pointMassLimitationService: PointMassLimitationService = {
-    new PointMassLimitationService(roadLinkService, new OraclePointMassLimitationDao)
+    new PointMassLimitationService(roadLinkService, new PostGISPointMassLimitationDao)
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
@@ -747,12 +710,4 @@ object Digiroad2Context {
     new PedestrianCrossingValidator()
   }
 
-  val env = System.getProperty("env")
-  def getProperty(name: String) = {
-    val property = properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name for enviroment: $env")
-  }
 }

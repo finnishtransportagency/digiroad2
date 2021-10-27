@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "DigiroadTest"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "TaskDefinitionForService",
+    "ParameterValue": "digiroad2-qa"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  }, 
+  {
+  "ParameterKey": "ApiGatewayUrl",
+  "ParameterValue": "api.testivaylapilvi.fi"
+},
+  {
+    "ParameterKey": "ContainerPort",
+    "ParameterValue": "8080"
+  },
+  {
+    "ParameterKey": "RouteRecordName",
+    "ParameterValue": "digiroadtest"
+  }
+]

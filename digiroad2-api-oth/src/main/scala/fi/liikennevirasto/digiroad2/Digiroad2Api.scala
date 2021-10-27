@@ -6,7 +6,7 @@ import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
-import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
+import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
@@ -93,7 +93,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
-    with RequestHeaderAuthentication {
+    with JWTAuthentication {
 
   val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
@@ -188,9 +188,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   val StateRoadRestrictedAssetsForOperator = Set(TrHeightLimit.typeId, TrWidthLimit.typeId, TrTrailerTruckWeightLimit.typeId,
     TrAxleWeightLimit.typeId, TrBogieWeightLimit.typeId, TrWeightLimit.typeId)
-  
+
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
-    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId,TrafficVolume.typeId)
+    PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId, TrafficVolume.typeId)
 
   val minVisibleZoom = 8
   val maxZoom = 9
@@ -232,7 +232,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom, assetTypeId)
       case _  => None
     }
-
     val location = userPreferences match {
       case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3, preference._4)
       case _ =>
@@ -1641,6 +1640,23 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def missingStartDates(lanes: Set[NewLane]): Boolean = {
+    lanes.exists { lane =>
+      if (LaneNumberOneDigit.isMainLane(laneService.getLaneCode(lane).toInt)) false
+      else {
+        val property = lane.properties.find(_.publicId == "start_date")
+        if (property.isEmpty) true
+        else {
+          property match {
+            case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty => true
+            case _ => false
+          }
+        }
+      }
+    }
+  }
+
+
   get("/manoeuvres") {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -2316,10 +2332,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[Long]](halt(BadRequest("Malformed 'linkIds' parameter")))
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
-    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewIncomeLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    if (missingStartDates(incomingLanes.toSet)) halt(BadRequest("Missing required 'start_date' on one or more lanes"))
 
     validateUserRightsForLanes(linkIds, user)
-    laneService.processNewIncomeLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
+    laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
   }
 
   post("/lanesByRoadAddress") {
@@ -2327,7 +2344,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val laneRoadAddressInfo = (parsedBody \ "laneRoadAddressInfo").extractOrElse[LaneRoadAddressInfo](halt(BadRequest("Malformed 'laneRoadAddressInfo' parameter")))
-    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Set[NewIncomeLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Set[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    if (missingStartDates(incomingLanes)) halt(BadRequest("Missing required 'start_date' on one or more lanes"))
 
     validateUserRightsForRoadAddress(laneRoadAddressInfo, user)
     LaneUtils.processNewLanesByRoadAddress(incomingLanes, laneRoadAddressInfo,sideCode, user.username)

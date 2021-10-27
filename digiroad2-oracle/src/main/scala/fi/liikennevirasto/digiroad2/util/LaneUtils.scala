@@ -6,8 +6,8 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -16,39 +16,25 @@ import org.joda.time.DateTime
 
 
 case class LaneUtils(){
-  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
-    LaneUtils.processNewLanesByRoadAddress(newIncomeLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
+  def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+                                   sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
+    LaneUtils.processNewLanesByRoadAddress(newLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
   }
 }
 object LaneUtils {
   lazy val roadLinkTempDAO: RoadLinkTempDAO = new RoadLinkTempDAO
   val eventbus = new DummyEventBus
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus)
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
-  lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-  lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build()) }
+  lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
+  lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
 
   lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
-  protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
-
-  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+  def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
     def getRoadAddressToProcess(): Set[RoadAddressTEMP] = {
@@ -167,21 +153,15 @@ object LaneUtils {
       val filteredRoadAddresses = getRoadAddressToProcess()
 
       //Get only the lanes to create
-      val lanesToInsert = laneService.populateStartDate(newIncomeLanes.filter(_.id == 0))
+      val lanesToInsert = newLanes.filter(_.id == 0)
 
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
 
         lanesToInsert.flatMap { lane =>
-          val laneCodeProperty = lane.properties.find(_.publicId == "lane_code")
-                                                .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
-
-          val laneCodeValue = laneCodeProperty.values.head.value
-          val laneCode = if ( laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty )
-                          laneCodeValue.toString.trim.toInt
-                         else
-                          throw new IllegalArgumentException("Lane Code attribute Empty!")
+          val laneCode = laneService.getLaneCode(lane).toInt
+          laneService.validateStartDate(lane, laneCode)
 
           val isMainLane = MAIN_LANES.contains(laneCode)
 
@@ -194,7 +174,7 @@ object LaneUtils {
 
           calculateStartAndEndPoint(road, startPoint, endPoint) match {
             case (start: Double, end: Double) =>
-              Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCode, road.municipalityCode.getOrElse(0).toLong,
+              Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCode.toString.substring(1).toInt, road.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
 
@@ -205,7 +185,7 @@ object LaneUtils {
 
       //Create lanes
       allLanesToCreate.map(laneService.createWithoutTransaction(_, username))
-      
+
     }
 
     if(withTransaction) {

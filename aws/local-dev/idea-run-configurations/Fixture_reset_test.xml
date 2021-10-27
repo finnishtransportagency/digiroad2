@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Fixture reset test" type="SbtRunConfiguration" factoryName="sbt Task" singleton="true">
+        <setting name="tasks" value="&quot;project digiroad2-oracle&quot; &quot;run-main fi.liikennevirasto.digiroad2.util.DataFixture test&quot;" />
+        <setting name="vmparams" value="-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled" />
+        <setting name="workingDir" value="$PROJECT_DIR$" />
+        <envs />
+        <method />
+    </configuration>
+</component>

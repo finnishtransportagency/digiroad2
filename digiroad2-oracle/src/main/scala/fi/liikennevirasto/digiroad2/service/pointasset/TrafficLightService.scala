@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Property, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficLightDao, TrafficLight}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISTrafficLightDao, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
@@ -39,9 +39,9 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        OracleTrafficLightDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        OracleTrafficLightDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        PostGISTrafficLightDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
     }
   }
 
@@ -58,7 +58,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   def createFloatingWithoutTransaction(asset: IncomingTrafficLight, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
   }
 
   override def setFloating(persistedAsset: TrafficLight, floating: Boolean) = {
@@ -66,17 +66,17 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   }
 
   override def fetchPointAssets(queryFilter: (String) => String, roadLinks: Seq[RoadLinkLike]): Seq[TrafficLight] = {
-    OracleTrafficLightDao.fetchByFilter(queryFilter)
+    PostGISTrafficLightDao.fetchByFilter(queryFilter)
   }
 
   override def create(asset: IncomingTrafficLight, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     if(newTransaction) {
       withDynTransaction {
-        OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
       }
     } else {
-      OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 
@@ -116,7 +116,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   def fetchSuitableForMergeByRadius(centralPoint: Point, radius: Int): Seq[TrafficLight] = {
     val maxTrafficLights = 6
-    val existingTrafficLights = OracleTrafficLightDao.fetchByRadius(centralPoint, radius)
+    val existingTrafficLights = PostGISTrafficLightDao.fetchByRadius(centralPoint, radius)
     existingTrafficLights.filter { trafficLight => trafficLight.propertyData.count(_.publicId == "trafficLight_type") < maxTrafficLights && !trafficLight.propertyData.exists(_.groupedId == 0 )}
   }
 

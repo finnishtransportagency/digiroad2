@@ -3,8 +3,9 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.joda.time.DateTime
@@ -31,23 +32,23 @@ class NumericValueLinearAssetServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
 
   object ServiceWithDao extends NumericValueLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(ServiceWithDao.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Expire numerical limit") {
     runWithRollback {

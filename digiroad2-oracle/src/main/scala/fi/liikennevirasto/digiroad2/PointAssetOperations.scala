@@ -1,12 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
@@ -14,7 +13,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
@@ -109,12 +107,8 @@ trait  PointAssetOperations{
   final val defaultMultiChoiceValue = 0
   final val defaultSingleChoiceValue = 99
 
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
-    new BoneCPDataSource(cfg)
-  }
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
@@ -137,7 +131,7 @@ trait  PointAssetOperations{
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
-    val filter = s"where a.asset_type_id = $typeId and floating = 0 and (" +
+    val filter = s"where a.asset_type_id = $typeId and floating = '0' and (" +
       s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
       s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or "+
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
@@ -162,7 +156,7 @@ trait  PointAssetOperations{
                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {
 
     withDynTransaction {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
 
@@ -191,7 +185,7 @@ trait  PointAssetOperations{
 
   def getLightGeometryByBoundingBox(bounds: BoundingRectangle): Seq[LightGeometry] = {
     withDynSession {
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       fetchLightGeometry(withValidAssets(filter))
     }
@@ -237,7 +231,7 @@ trait  PointAssetOperations{
           join municipality m on a.municipality_code = m.id
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-          where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > sysdate)"""
+          where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > current_timestamp)"""
 
     StaticQuery.queryNA[(Long, String, Long, Option[Long])](addQueryFilter(query)).list
   }
@@ -374,16 +368,16 @@ trait  PointAssetOperations{
   }
 
   def expireWithoutTransaction(id: Long): Int = {
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
   def expireWithoutTransaction(id: Long, username: String): Int = {
     Queries.updateAssetModified(id, username).first
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
   def expireWithoutTransaction(ids: Seq[Long], username: String): Unit = {
-    val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = sysdate, modified_by = ? where id = ?")
+    val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = current_timestamp, modified_by = ? where id = ?")
 
     ids.foreach { id =>
       expireAsset.setString(1, username)
@@ -424,7 +418,7 @@ trait  PointAssetOperations{
   }
 
   protected def withValidAssets(filter: String)(query: String): String = {
-    withFilter(s"$filter and (a.valid_to is null or a.valid_to > sysdate) and a.valid_from < sysdate")(query)
+    withFilter(s"$filter and (a.valid_to is null or a.valid_to > current_timestamp) and a.valid_from < current_timestamp")(query)
   }
 
   protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: PersistedAsset => (T, Option[FloatingReason]))
@@ -437,7 +431,7 @@ trait  PointAssetOperations{
   def withBoundingBoxFilter(position : Point, meters: Int)(query: String): String = {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
     withFilter(s"Where a.asset_type_id = $typeId and $boundingBoxFilter")(query)
   }
 

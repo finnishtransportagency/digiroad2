@@ -277,7 +277,7 @@ trait MassTransitStopService extends PointAssetOperations {
           join lrm_position lrm on al.position_id = lrm.id
           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'kellumisen_syy'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
-          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate)"""
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > current_timestamp)"""
 
     val queryFilter = isOperator match {
       case Some(false) =>
@@ -490,7 +490,7 @@ trait MassTransitStopService extends PointAssetOperations {
       Map[String, String]("liitetyt_pysakit" -> PropertyTypes.MultipleChoice)
     } else {
       val requiredProperties = withDynSession {
-        sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
+        sql"""select public_id, property_type from property where asset_type_id = $typeId and required = '1' """.as[(String, String)].iterator.toMap
       }
       val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
       requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
@@ -633,7 +633,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
-    val filter = s"WHERE a.asset_type_id = $typeId AND floating = 0 and (" +
+    val filter = s"WHERE a.asset_type_id = $typeId AND floating = '0' and (" +
       s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
       s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or " +
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "+

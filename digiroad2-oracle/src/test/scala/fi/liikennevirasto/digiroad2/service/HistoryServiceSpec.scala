@@ -18,26 +18,23 @@ class HistoryServiceSpec extends FunSuite with Matchers {
   def generateAssets = {
     //Insert expired 2 service points, 1 obstacle, 1 cycling and walking and 1 manoeuvre
     sqlu"""
-        INSERT ALL
-          INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
-            VALUES (1, ${ServicePoints.typeId}, #$testSQLTimestamp, $testUser, SYSDATE)
-          INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
-            VALUES (2, ${ServicePoints.typeId}, #$testSQLTimestamp, $testUser, #$testSQLTimestamp)
+          INSERT INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
+            VALUES (1, ${ServicePoints.typeId}, #$testSQLTimestamp, $testUser, current_timestamp);
+          INSERT INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
+            VALUES (2, ${ServicePoints.typeId}, #$testSQLTimestamp, $testUser, #$testSQLTimestamp);
 
-          INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
-            VALUES (3, ${Obstacles.typeId}, #$testSQLTimestamp, $testUser, #$testSQLTimestamp)
-          INTO LRM_POSITION (ID, LINK_ID, START_MEASURE, SIDE_CODE) VALUES (1, $testLinkId, 100.0, 1)
-          INTO ASSET_LINK (ASSET_ID, POSITION_ID) VALUES (3, 1)
+          INSERT INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
+            VALUES (3, ${Obstacles.typeId}, #$testSQLTimestamp, $testUser, #$testSQLTimestamp);
+          INSERT INTO LRM_POSITION (ID, LINK_ID, START_MEASURE, SIDE_CODE) VALUES (1, $testLinkId, 100.0, 1);
+          INSERT INTO ASSET_LINK (ASSET_ID, POSITION_ID) VALUES (3, 1);
 
-          INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
-            VALUES (4, ${CyclingAndWalking.typeId}, #$testSQLTimestamp, $testUser, #$testSQLTimestamp)
-          INTO LRM_POSITION (ID, LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (2, $testLinkId, 0, 100.0, 1)
-          INTO ASSET_LINK (ASSET_ID, POSITION_ID) VALUES (4, 2)
+          INSERT INTO ASSET (ID, ASSET_TYPE_ID, CREATED_DATE, CREATED_BY, VALID_TO)
+            VALUES (4, ${CyclingAndWalking.typeId}, #$testSQLTimestamp, $testUser, #$testSQLTimestamp);
+          INSERT INTO LRM_POSITION (ID, LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (2, $testLinkId, 0, 100.0, 1);
+          INSERT INTO ASSET_LINK (ASSET_ID, POSITION_ID) VALUES (4, 2);
 
-          INTO MANOEUVRE (ID, TYPE, ADDITIONAL_INFO, CREATED_DATE, CREATED_BY, VALID_TO)
-            VALUES (5, 2, 'test', #$testSQLTimestamp, $testUser, #$testSQLTimestamp)
-
-        SELECT * FROM DUAL
+          INSERT INTO MANOEUVRE (ID, TYPE, ADDITIONAL_INFO, CREATED_DATE, CREATED_BY, VALID_TO)
+            VALUES (5, 2, 'test', #$testSQLTimestamp, $testUser, #$testSQLTimestamp);
       """.execute
   }
 

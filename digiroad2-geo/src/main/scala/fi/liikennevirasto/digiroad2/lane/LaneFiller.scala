@@ -63,7 +63,7 @@ class LaneFiller {
     }
   }
 
-  private def toLPieceWiseLane(dbLanes: Seq[PersistedLane], roadLink: RoadLink): Seq[PieceWiseLane] = {
+  def toLPieceWiseLane(dbLanes: Seq[PersistedLane], roadLink: RoadLink): Seq[PieceWiseLane] = {
     dbLanes.map { dbLane =>
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbLane.startMeasure, dbLane.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
@@ -116,7 +116,7 @@ class LaneFiller {
     if (keeperOpt.nonEmpty) {
       val keeper = keeperOpt.get
       val overlapping = sortedAssets.tail.flatMap(asset => GeometryUtils.overlap(toSegment(keeper), toSegment(asset)) match {
-        case Some(overlap) if keeper.laneCode == asset.laneCode =>
+        case Some(overlap) if keeper.laneCode == asset.laneCode && keeper.sideCode == asset.sideCode=>
           Seq(
             asset.copy(startMeasure = asset.startMeasure, endMeasure = overlap._1),
             asset.copy(id = 0L, startMeasure = overlap._2, endMeasure = asset.endMeasure)

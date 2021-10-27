@@ -1,38 +1,27 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, TrafficVolume}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficVolumeAssetClient
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.OracleAssetDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.PostGISAssetDao
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
+import scala.sys.exit
+
 object TierekisteriDataImporter {
 
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/bonecp.properties"))
-    props
-  }
-
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
   lazy val vvhClient: VVHClient = {
-    new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService : RoadLinkService = {
@@ -43,12 +32,12 @@ object TierekisteriDataImporter {
     new LinearAssetService(roadLinkService, new DummyEventBus)
   }
 
-  lazy val assetDao : OracleAssetDao = {
-    new OracleAssetDao()
+  lazy val assetDao : PostGISAssetDao = {
+    new PostGISAssetDao()
   }
 
-  lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val postGisLinearAssetDao : PostGISLinearAssetDao = {
+    new PostGISLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
@@ -193,20 +182,20 @@ object TierekisteriDataImporter {
   }
 
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
-    OracleDatabase.withDynSession{
+    PostGISDatabase.withDynSession{
       tierekisteriAssetImporter.getLastExecutionDate
     }
   }
 
   //TODO delete this client after migrate the import asset to TierekisteriImporterOperations
   lazy val tierekisteriTrafficVolumeAssetClient : TierekisteriTrafficVolumeAssetClient = {
-    new TierekisteriTrafficVolumeAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    new TierekisteriTrafficVolumeAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
+      Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
   lazy val roadAddressService: RoadAddressService = {
@@ -217,8 +206,8 @@ object TierekisteriDataImporter {
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
     val trafficVolumeId = TrafficVolume.typeId
     println("\nExpiring Traffic Volume From OTH Database")
-    OracleDatabase.withDynSession {
-      oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId)
+    PostGISDatabase.withDynSession {
+      postGisLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId)
     }
     println("\nTraffic Volume data Expired")
 
@@ -241,7 +230,7 @@ object TierekisteriDataImporter {
         val allRoadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
 
         r.foreach { tr =>
-          OracleDatabase.withDynTransaction {
+          PostGISDatabase.withDynTransaction {
 
             println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + tr.roadNumber + " " + tr.startRoadPartNumber + " " + tr.startAddressMValue + " " + tr.endAddressMValue)
             //This was a direct migration from the where clause on the previous RoadAddressDAO query
@@ -372,20 +361,12 @@ object TierekisteriDataImporter {
   }
 
   def main(args:Array[String]) : Unit = {
-    import scala.util.control.Breaks._
-    val username = properties.getProperty("bonecp.username")
-    if (!username.startsWith("dr2dev")) {
+    val batchMode = Digiroad2Properties.batchMode
+    if (!batchMode) {
       println("*******************************************************************************************")
-      println("YOU ARE RUNNING TIEREKISTERI IMPORT AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("TURN ENV batchMode true TO RUN TIEREKISTERI IMPORT")
       println("*******************************************************************************************")
-      breakable {
-        while (true) {
-          val input = Console.readLine()
-          if (input.trim() == "YES") {
-            break()
-          }
-        }
-      }
+      exit()
     }
 
     if(args.length < 2){
