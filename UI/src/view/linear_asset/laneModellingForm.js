@@ -124,13 +124,13 @@
     function hasRoadAddressInfo(selectedLinks) {
       var roadNumber = Property.pickUniqueValues(selectedLinks, 'roadNumber');
       var roadPartNumber = Property.pickUniqueValues(selectedLinks, 'roadPartNumber');
-      var startAddrMValue = Property.pickUniqueValues(selectedLinks, 'startAddrMValue')
-      var endAddrMValue = Property.pickUniqueValues(selectedLinks, 'endAddrMValue')
-      var info = [roadNumber, roadPartNumber, startAddrMValue, endAddrMValue]
+      var startAddrMValue = Property.pickUniqueValues(selectedLinks, 'startAddrMValue');
+      var endAddrMValue = Property.pickUniqueValues(selectedLinks, 'endAddrMValue');
+      var info = [roadNumber, roadPartNumber, startAddrMValue, endAddrMValue];
 
-      if (!info.some(field => _.head(field) === undefined)) return true;
+      if (!_.some(info, function(field) { return _.head(field) === undefined; })) return true;
       return false;
-    };
+    }
 
     var AvailableForms = function(){
       var formFields = {};
@@ -257,7 +257,7 @@
             var roadPartNumber;
             var selectedLinks = asset.selectedLinks;
             var publicId = field.publicId;
-            var hasRoadAddress = hasRoadAddressInfo(selectedLinks)
+            var hasRoadAddress = hasRoadAddressInfo(selectedLinks);
 
             switch (publicId) {
               case "roadNumber":
