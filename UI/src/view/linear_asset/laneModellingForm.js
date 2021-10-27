@@ -121,6 +121,17 @@
       rootElement.find('#feature-attributes-footer').html(self.renderFooter(self._assetTypeConfiguration.selectedLinearAsset));
     }
 
+    function hasRoadAddressInfo(selectedLinks) {
+      var roadNumber = Property.pickUniqueValues(selectedLinks, 'roadNumber');
+      var roadPartNumber = Property.pickUniqueValues(selectedLinks, 'roadPartNumber');
+      var startAddrMValue = Property.pickUniqueValues(selectedLinks, 'startAddrMValue')
+      var endAddrMValue = Property.pickUniqueValues(selectedLinks, 'endAddrMValue')
+      var info = [roadNumber, roadPartNumber, startAddrMValue, endAddrMValue]
+
+      if (!info.some(field => _.head(field) === undefined)) return true;
+      return false;
+    };
+
     var AvailableForms = function(){
       var formFields = {};
 
@@ -246,31 +257,32 @@
             var roadPartNumber;
             var selectedLinks = asset.selectedLinks;
             var publicId = field.publicId;
-
-            switch(publicId) {
-              case "roadNumber":
-              case "roadPartNumber":
-                value = Property.pickUniqueValues(selectedLinks, publicId).join(', ');
-                break;
-              case "startAddrMValue":
-                  roadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  if (roadPartNumber !== Infinity){
+            var hasRoadAddress = hasRoadAddressInfo(selectedLinks)
+              switch (publicId) {
+                case "roadNumber":
+                case "roadPartNumber":
+                  if(hasRoadAddress) {
+                    value = Property.pickUniqueValues(selectedLinks, publicId).join(', ');
+                  }
+                  break;
+                case "startAddrMValue":
+                  if(hasRoadAddress) {
+                    roadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
                     value = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
                   }
-
-                break;
-              case "endAddrMValue":
-                  roadPartNumber = Math.max.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  if (roadPartNumber !== -Infinity) {
+                  break;
+                case "endAddrMValue":
+                  if(hasRoadAddress) {
+                    roadPartNumber = Math.max.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
                     value = Math.max.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
                   }
-                break;
-              case "administrativeClass":
-                value = administrativeClassValues[_.head(selectedLinks)[publicId]];
-                break;
-              default:
-                value = _.head(selectedLinks)[publicId];
-            }
+                  break;
+                case "administrativeClass":
+                  value = administrativeClassValues[_.head(selectedLinks)[publicId]];
+                  break;
+                default:
+                  value = _.head(selectedLinks)[publicId];
+              }
 
             existingProperty = _.isUndefined(value) ? value : {values:[{value: value}]};
           }
