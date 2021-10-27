@@ -339,8 +339,16 @@
         return _.flatMap(_.groupBy(links, 'roadPartNumber'), function (chainByRoadPartNumber) {
           var minAddressMValue = _.minBy(chainByRoadPartNumber, 'startAddrMValue');
           var maxAddressMValue = _.maxBy(chainByRoadPartNumber, 'endAddrMValue');
-          var middleMValue = (maxAddressMValue.endAddrMValue - minAddressMValue.startAddrMValue)/2 + minAddressMValue.startAddrMValue;
-          return _.filter(chainByRoadPartNumber, function(linearAsset) { return linearAsset.startAddrMValue <= middleMValue && linearAsset.endAddrMValue > middleMValue; });
+
+          if(minAddressMValue && maxAddressMValue ) {
+            var middleAddressMValue = (maxAddressMValue.endAddrMValue - minAddressMValue.startAddrMValue) / 2 + minAddressMValue.startAddrMValue;
+            return _.filter(chainByRoadPartNumber, function (linearAsset) {
+              return linearAsset.startAddrMValue <= middleAddressMValue && linearAsset.endAddrMValue > middleAddressMValue;
+            });
+          }
+          else{
+            return chainByRoadPartNumber;
+          }
         });
       });
     };
