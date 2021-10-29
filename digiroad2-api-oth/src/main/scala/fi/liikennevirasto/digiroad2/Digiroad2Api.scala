@@ -2315,6 +2315,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         Map (
           "linkId" -> lane.linkId,
           "sideCode" -> lane.sideCode,
+          "trafficDirection" -> lane.trafficDirection,
           "startMeasure" -> lane.startMeasure,
           "endMeasure" -> lane.endMeasure,
           "points" -> lane.geometry,

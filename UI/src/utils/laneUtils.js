@@ -47,9 +47,16 @@
       }
 
       var baseOffset = reverse ? 3.5 : -3.5;
+      var noOffset = function (){
+        if(asset.sideCode === 1 || ((asset.sideCode === 2 ||asset.sideCode === 3) &&
+            (asset.trafficDirection === 'AgainstDigitizing' || asset.trafficDirection === 'TowardsDigitizing'))) {
+          return true;
+        }
+        return false;
+      };
 
       if(isRoadlink) {
-        if (_.isUndefined(asset.sideCode) || asset.sideCode === 1) {
+        if (_.isUndefined(asset.sideCode) || noOffset()) {
           return asset;
         }
 
@@ -58,7 +65,7 @@
         var laneCode = Property.getPropertyByPublicId(asset.properties, 'lane_code');
 
         if (_.head(laneCode.values).value == 1) {
-          if (asset.sideCode === 1) {
+          if (noOffset()) {
             return asset;
           }
           return getOffsetPoint(asset, baseOffset);

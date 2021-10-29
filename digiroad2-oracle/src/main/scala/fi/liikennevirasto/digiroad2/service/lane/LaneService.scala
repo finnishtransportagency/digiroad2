@@ -126,7 +126,7 @@ trait LaneOperations {
           val consideredLanes = lanes.filter(lane => lane.startMeasure <= startMeasure && lane.endMeasure >= endMeasure).map(_.laneCode)
           val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
 
-          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, geometry, consideredLanes)
+          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, roadLink.trafficDirection, geometry, consideredLanes)
         }
     }.toSeq
   }
