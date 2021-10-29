@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  NetworkStackName:
-    Description: Name of the network stack
+  DEVNetworkStackName:
+    Description: Name of DEV network stack
     Type: String
   QANetworkStackName:
     Description: Name of QA network stack
@@ -68,9 +68,9 @@ Resources:
         MaxvCpus: 32
         Subnets:
           - Fn::ImportValue:
-              !Join [ '-', [ !Ref NetworkStackName, 'Subnet1-Id' ] ]
+              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet1-Id' ] ]
           - Fn::ImportValue:
-              !Join [ '-', [ !Ref NetworkStackName, 'Subnet2-Id' ] ]
+              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet2-Id' ] ]
         SecurityGroupIds:
           - !Ref DEVBatchSecurityGroup
       ServiceRole:

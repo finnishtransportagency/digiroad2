@@ -1,6 +1,6 @@
 [
   {
-    "ParameterKey": "NetworkStackName",
+    "ParameterKey": "DEVNetworkStackName",
     "ParameterValue": "Digiroad-OTH-kehitys"
   },
   {

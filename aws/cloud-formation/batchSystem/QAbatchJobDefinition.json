@@ -1,5 +1,5 @@
 {
-  "jobDefinitionName": "BatchJob",
+  "jobDefinitionName": "QAjob",
   "type": "container",
   "retryStrategy": {
     "attempts": 1
@@ -69,7 +69,7 @@
         "value": "http://testioag.vayla.fi"
       },
       {
-        "name": "tierekisteriRestApiEndPoint",
+        "name": "qatierekisteriRestApiEndPoint",
         "value": "http://testioag.vayla.fi/trrest/devtest/"
       },
       {
@@ -126,7 +126,7 @@
       },
       {
         "name": "cacheHostname",
-        "value": "roadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com"
+        "value": "qaroadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com"
       },
       {
         "name": "cacheHostPort",

@@ -1,5 +1,5 @@
 {
-  "jobDefinitionName": "BatchJob",
+  "jobDefinitionName": "DEVjob",
   "type": "container",
   "retryStrategy": {
     "attempts": 1
