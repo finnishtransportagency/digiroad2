@@ -48,10 +48,8 @@
 
       var baseOffset = reverse ? 3.5 : -3.5;
       var noOffset = function (){
-        if(asset.sideCode === 1 || asset.trafficDirection === 'AgainstDigitizing' || asset.trafficDirection === 'TowardsDigitizing') {
-          return true;
-        }
-        return false;
+        return asset.sideCode === 1 || ((asset.sideCode === 2 || asset.sideCode === 3)
+            && (asset.trafficDirection === 'AgainstDigitizing' || asset.trafficDirection === 'TowardsDigitizing'));
       };
 
       if(isRoadlink) {
