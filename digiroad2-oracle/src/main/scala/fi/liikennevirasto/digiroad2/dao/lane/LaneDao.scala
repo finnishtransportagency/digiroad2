@@ -416,4 +416,14 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     }
   }
 
+  def expireAdditionalLanes(username: String): Unit = {
+    sqlu"""
+       UPDATE LANE SET
+         VALID_TO = current_timestamp,
+         EXPIRED_DATE = current_timestamp,
+         EXPIRED_BY = $username
+       WHERE LANE_CODE NOT IN (1, 11, 21, 31)
+    """.execute
+  }
+
 }

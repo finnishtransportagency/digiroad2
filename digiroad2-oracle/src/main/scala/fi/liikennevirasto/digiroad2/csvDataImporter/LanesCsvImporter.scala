@@ -263,7 +263,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
       // Expire all Lanes in State Roads IF exists some data to create new lanes
       if (result.createdData.nonEmpty) {
-        laneService.expireAllLanesInStateRoad(csvImportUser)
+        laneService.expireAllAdditionalLanes(csvImportUser)
       }
 
       // Create the new lanes
