@@ -153,7 +153,10 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     (optTrack, optLane) match {
       case (Some(track), Some(lane)) =>
         (Track.apply(track.toInt), lane.charAt(0).getNumericValue) match {
-          case (Track.RightSide, 2) | (Track.LeftSide, 1)  => (List(s"Wrong lane number for the track given"), List())
+          case (Track.RightSide, 2) | (Track.LeftSide, 1)  =>
+            (List(s"Wrong lane number for the track given"), List())
+          case (_, _) if lane.charAt(1).getNumericValue == 1 =>
+            (List(s"Not allowed to import main lanes"), List())
           case (_, _) => (List(), List(parsedRow))
         }
       case _ =>
