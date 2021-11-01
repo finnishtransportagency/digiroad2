@@ -1,15 +1,18 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  NetworkStackName:
-    Description: Name of the network stack
+  DEVNetworkStackName:
+    Description: Name of DEV network stack
     Type: String
-  DigiroadDatabaseSecurityGroup:
-    Type: AWS::EC2::SecurityGroup::Id
-    Description: Databases security group
-  VpcIDOfSystem:
+  QANetworkStackName:
+    Description: Name of QA network stack
+    Type: String
+  DEVVpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
-    Description: VPC of your system
+    Description: DEV VPC of your system
+  QAVpcIDOfSystem:
+    Type: AWS::EC2::VPC::Id
+    Description: QA VPC of your system
   SNSTopicName:
     Type: String
     Description: Name of SNS topic
@@ -21,9 +24,9 @@ Resources:
       JobQueueName: "AdHoc"
       Priority: 1
       ComputeEnvironmentOrder:
-      - Order: 1
-        ComputeEnvironment:
-          Ref: ComputeEnvironment
+        - Order: 1
+          ComputeEnvironment:
+            Ref: DEVComputeEnvironment
 
   JobQueueUpdateIncompleteList:
     Type: AWS::Batch::JobQueue
@@ -33,86 +36,80 @@ Resources:
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
-            Ref: ComputeEnvironment
+            Ref: DEVComputeEnvironment
 
-  JobQueueDailyJobQueue:
+  DEVJobQueue:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: "DailyQueue"
+      JobQueueName: "DEV-JobQueue"
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
-            Ref: ComputeEnvironment
+            Ref: DEVComputeEnvironment
 
-  JobQueueWeeklyJobQueue:
+  QAJobQueue:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: "WeeklyQueue"
+      JobQueueName: "QA-JobQueue"
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
-            Ref: ComputeEnvironment
+            Ref: QAComputeEnviroment
 
-  JobQueueAnnualJobQueue:
-    Type: AWS::Batch::JobQueue
-    Properties:
-      JobQueueName: "AnnualQueue"
-      Priority: 1
-      ComputeEnvironmentOrder:
-        - Order: 1
-          ComputeEnvironment:
-            Ref: ComputeEnvironment
-
-  ComputeEnvironment:
+  DEVComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       Type: MANAGED
-      ComputeEnvironmentName: "BatchCompute"
+      ComputeEnvironmentName: "DEV-BatchCompute"
       ComputeResources:
         Type: FARGATE
         MaxvCpus: 32
         Subnets:
           - Fn::ImportValue:
-              !Join [ '-', [ !Ref NetworkStackName, 'Subnet1-Id' ] ]
+              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet1-Id' ] ]
           - Fn::ImportValue:
-              !Join [ '-', [ !Ref NetworkStackName, 'Subnet2-Id' ] ]
+              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet2-Id' ] ]
         SecurityGroupIds:
-          - !Ref BatchSecurityGroup
+          - !Ref DEVBatchSecurityGroup
       ServiceRole:
         Ref: BatchServiceRole
 
-  BatchSecurityGroup:
+  DEVBatchSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
-      GroupName: BatchSecurityGroup
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIpv6: ::/0
-        - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
-          CidrIpv6: ::/0
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref DigiroadDatabaseSecurityGroup
-      SecurityGroupEgress:
-        - IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0
-      VpcId: !Ref VpcIDOfSystem
+      GroupName: DEV-BatchSecurityGroup
+      VpcId: !Ref DEVVpcIDOfSystem
+
+  QAComputeEnviroment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      ComputeEnvironmentName: "QA-BatchCompute"
+      ComputeResources:
+        Type: FARGATE
+        MaxvCpus: 32
+        Subnets:
+          - Fn::ImportValue:
+              !Join [ '-', [ !Ref QANetworkStackName, 'Subnet1-Id' ] ]
+          - Fn::ImportValue:
+              !Join [ '-', [ !Ref QANetworkStackName, 'Subnet2-Id' ] ]
+        SecurityGroupIds:
+          - !Ref QABatchSecurityGroup
+      ServiceRole:
+        Ref: BatchServiceRole
+
+
+
+  QABatchSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
+      GroupName: QA-BatchSecurityGroup
+      VpcId: !Ref QAVpcIDOfSystem
+
 
   BatchTaskRole:
     Type: AWS::IAM::Role
