@@ -164,6 +164,7 @@ object LaneUtils {
           laneService.validateStartDate(lane, laneCode)
 
           val isMainLane = MAIN_LANES.contains(laneCode)
+          val isTwoDigitLaneCode = laneCode.toString.length > 1
 
           val startDifferenceAddr = laneRoadAddressInfo.initialDistance - road.startAddressM
           val startPoint = if (isMainLane || startDifferenceAddr <= 0) road.startMValue else startDifferenceAddr
@@ -171,10 +172,12 @@ object LaneUtils {
           val endPoint = if (isMainLane || endDifferenceAddr <= 0) road.endMValue else road.endMValue - endDifferenceAddr
 
           val finalSideCode = laneService.fixSideCode( road, laneCode.toString )
+          val laneCodeOneDigit = if (isTwoDigitLaneCode) laneCode.toString.substring(1).toInt
+                                 else laneCode
 
           calculateStartAndEndPoint(road, startPoint, endPoint) match {
             case (start: Double, end: Double) =>
-              Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCode.toString.substring(1).toInt, road.municipalityCode.getOrElse(0).toLong,
+              Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCodeOneDigit, road.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
 
