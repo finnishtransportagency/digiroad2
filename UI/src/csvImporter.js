@@ -75,7 +75,7 @@ $(function() {
       });
 
     } else if (assetType === "lanes") {
-        new GenericConfirmPopup('Huom: Kaikki vanha kaistadata poistetaan, ja korvataan uudella', {
+        new GenericConfirmPopup('Huom: Kaikki vanha lisäkaistadata poistetaan, ja korvataan uudella', {
         container: '.csv-content',
         successCallback: function () {
           uploadFile();
