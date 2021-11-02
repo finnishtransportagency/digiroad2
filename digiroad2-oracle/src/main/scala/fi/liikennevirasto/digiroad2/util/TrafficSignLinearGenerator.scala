@@ -19,6 +19,8 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.json4s.jackson.Json
 import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject}
+import org.slf4j.LoggerFactory
+
 import scala.util.Try
 
 
@@ -32,6 +34,8 @@ trait TrafficSignLinearGenerator {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+
+  def logger = LoggerFactory.getLogger(getClass)
 
   val assetType: Int
   case object TrafficSignSerializer extends CustomSerializer[Property](format =>
@@ -526,7 +530,14 @@ trait TrafficSignLinearGenerator {
 
     //RoadLink with the same Finnish/Swedish name
     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
-      roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
+      "[\']".r.findFirstMatchIn(roadNameSource) match {
+        case Some(_) =>
+          logger.warn("Vvh can not handle ' symbol, requested road : " + roadNameSource);
+          Seq()
+        case None =>
+          roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(
+            roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
+      }
     }.getOrElse(Seq(signRoadLink))
   }
 

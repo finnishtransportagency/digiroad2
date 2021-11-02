@@ -1,5 +1,5 @@
 {
-  "jobDefinitionName": "BatchJob",
+  "jobDefinitionName": "DEVjob",
   "type": "container",
   "retryStrategy": {
     "attempts": 1
@@ -28,7 +28,7 @@
         "name": "containerCPU",
         "value": "-XX:ActiveProcessorCount=2"
       },
-    {
+      {
         "name": "speedLimitProvider",
         "value": "fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService"
       },

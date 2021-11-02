@@ -321,12 +321,6 @@
       me.vectorSource.addFeatures(style.renderFeatures(allButSelected));
       me.readOnlyLayer.showLayer();
       me.highLightReadOnlyLayer();
-      if(assetLabel) {
-        var middleLinks = extractMiddleLinksOfChains(_.filter(linearAssetChains, function (chain) { return !_.isEmpty(chain) && _.has(_.head(chain), 'value'); }), allButSelected);
-        var splitChangedAssets = _.partition(middleLinks, function(a){ return (a.sideCode !== 1);});
-        me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), me.offsetBySideCode), me.uiState.zoomLevel));
-        me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), me.offsetBySideCode), me.uiState.zoomLevel));
-      }
     };
 
     var offsetByLaneNumber = function (linearAsset) {
