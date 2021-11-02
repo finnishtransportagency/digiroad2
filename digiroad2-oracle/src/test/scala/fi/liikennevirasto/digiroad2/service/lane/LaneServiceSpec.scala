@@ -1025,6 +1025,20 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
+  test("Testing expiring additional lanes"){
+    runWithRollback {
+      val mainLaneToBeCreated = NewLane(0, 0, 100, 745, isExpired = false, isDeleted = false, lanePropertiesValues1)
+      val additionalLaneToBeCreated = NewLane(0, 0, 100, 745, isExpired = false, isDeleted = false, lanePropertiesValues2)
+      val createdMainLaneID = ServiceWithDao.create(Seq(mainLaneToBeCreated), Set(100L), 2, usernameTest).head
+      val createdAdditionalLaneID = ServiceWithDao.create(Seq(additionalLaneToBeCreated), Set(100L), 2, usernameTest).head
+      laneDao.expireAdditionalLanes(usernameTest)
+      val mainLane = laneDao.fetchLanesByIds(Set(createdMainLaneID))
+      val additionalLane = laneDao.fetchLanesByIds(Set(createdAdditionalLaneID))
+      mainLane.head.expired should be(false)
+      additionalLane.head.expired should be(true)
+    }
+  }
+
   test("Lane Change: Show 2 Add"){
     runWithRollback {
       val newLane1 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues1)
