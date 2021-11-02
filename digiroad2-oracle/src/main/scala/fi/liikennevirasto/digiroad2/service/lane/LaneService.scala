@@ -859,15 +859,6 @@ trait LaneOperations {
     }.toSeq
   }
 
-
-  def expireAllLanesInStateRoad(username: String): Any = {
-    val existingLinkIds = dao.getAllLinkIdsInLanePosition()
-    val stateRoadLinks = roadLinkService.getRoadsLinksFromVVH(existingLinkIds.toSet, false)
-                                      .filter(_.administrativeClass == State)
-
-    dao.expireLanesByLinkId( stateRoadLinks.map(_.linkId).toSet, username)
-  }
-
   def expireAllAdditionalLanes(username: String): Any = {
     dao.expireAdditionalLanes(username)
   }
