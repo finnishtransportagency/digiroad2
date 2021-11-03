@@ -543,7 +543,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       headers.mkString(";") + "\n" + rows
     }
 
-    val laneRow = Map("kaista" -> 11)
+    val laneRow = Map("kaista" -> 12)
 
     val invalidCsv = csvToInputStream(createBadCsvLanes(laneRow))
     val assets = lanesCsvImporter.processing(invalidCsv, testUser)
@@ -565,7 +565,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation for lanes import fails if parameters combinations are invalid", Tag("db")) {
-    val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
+    val laneRow = Map("kaista" -> 12, "katyyppi" -> 2, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
 
     val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
     val assets = lanesCsvImporter.processing(invalidCsv, testUser)
@@ -574,24 +574,35 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow))
   }
 
+  test("validation for lanes import fails if trying to import main lanes", Tag("db")) {
+    val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
+
+    val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser)
+
+    assets.notImportedData.size should be (1)
+    assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow))
+    assets.createdData.size should be(0)
+  }
+
   test("Create valid lane", Tag("db")) {
     runWithRollback {
       when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewLane]], any[LaneRoadAddressInfo],
         any[Int], any[String], any[Boolean])).thenReturn()
 
-      when(lanesCsvImporter.laneService.expireAllLanesInStateRoad(any[String])).thenReturn()
+      when(lanesCsvImporter.laneService.expireAllAdditionalLanes(any[String])).thenReturn()
 
-      val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
+      val laneRow = Map("kaista" -> 12, "katyyppi" -> 2, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
 
       val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
       val assets = lanesCsvImporter.processing(invalidCsv, testUser)
 
       val propertiesCreated = List(AssetProperty("end distance","1000"),
         AssetProperty("road part","999"),
-        AssetProperty("lane","11"),
+        AssetProperty("lane","12"),
         AssetProperty("initial distance","0"),
         AssetProperty("track","1"),
-        AssetProperty("lane type","1"),
+        AssetProperty("lane type","2"),
         AssetProperty("road number","999"))
 
       assets.createdData.size should be(1)

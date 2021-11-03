@@ -483,21 +483,14 @@ trait LaneOperations {
   }
 
   def fixSideCode( roadAddress: RoadAddressTEMP , laneCode: String ): SideCode = {
-    roadAddress.track.value match {
-      case 1 | 2 => SideCode.BothDirections // This means the road may have both ways with something between them (like highways or similar)
-                                            // The representation of the lane will be in the middle 'of the road'
-
-      case _ => roadAddress.sideCode match { // In this case the road have both ways 'connected' so we need to take attention of the SideCode and laneCode
-                                             // This will have influence in representation of the lane
-                      case Some(SideCode.AgainstDigitizing) => if (laneCode.startsWith("1")) SideCode.AgainstDigitizing
-                                                                else SideCode.TowardsDigitizing
-
-                      case Some(SideCode.TowardsDigitizing) => if (laneCode.startsWith("1")) SideCode.TowardsDigitizing
-                                                                else SideCode.AgainstDigitizing
-
-                      case _ => SideCode.BothDirections
-                    }
-      }
+    // Need to pay attention of the SideCode and laneCode. This will have influence in representation of the lane
+    roadAddress.sideCode match {
+      case Some(SideCode.AgainstDigitizing) =>
+        if (laneCode.startsWith("1")) SideCode.AgainstDigitizing else SideCode.TowardsDigitizing
+      case Some(SideCode.TowardsDigitizing) =>
+        if (laneCode.startsWith("1")) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+      case _ => SideCode.BothDirections
+    }
   }
 
   /**
@@ -866,13 +859,8 @@ trait LaneOperations {
     }.toSeq
   }
 
-
-  def expireAllLanesInStateRoad(username: String): Any = {
-    val existingLinkIds = dao.getAllLinkIdsInLanePosition()
-    val stateRoadLinks = roadLinkService.getRoadsLinksFromVVH(existingLinkIds.toSet, false)
-                                      .filter(_.administrativeClass == State)
-
-    dao.expireLanesByLinkId( stateRoadLinks.map(_.linkId).toSet, username)
+  def expireAllAdditionalLanes(username: String): Unit = {
+    dao.expireAdditionalLanes(username)
   }
 
   // Used by initial main lane population process
