@@ -590,7 +590,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewLane]], any[LaneRoadAddressInfo],
         any[Int], any[String], any[Boolean])).thenReturn()
 
-      when(lanesCsvImporter.laneService.expireAllAdditionalLanes(any[String])).thenReturn()
+      lanesCsvImporter.laneService.expireAllAdditionalLanes(any[String])
 
       val laneRow = Map("kaista" -> 12, "katyyppi" -> 2, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
 
