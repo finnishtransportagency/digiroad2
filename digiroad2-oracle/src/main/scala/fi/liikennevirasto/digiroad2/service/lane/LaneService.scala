@@ -859,7 +859,7 @@ trait LaneOperations {
     }.toSeq
   }
 
-  def expireAllAdditionalLanes(username: String): Any = {
+  def expireAllAdditionalLanes(username: String): Unit = {
     dao.expireAdditionalLanes(username)
   }
 
