@@ -19,7 +19,6 @@
     };
 
     self.getGroup = function(segment) {
-      console.trace();
       return _.find(self.linearAssets, function(linearAssetGroup) {
         return _.some(linearAssetGroup, function(la) {
           var laneLaneCode = _.head(Property.getPropertyByPublicId(la.value, 'lane_code').values).value;

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.lane
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{GraphPartitioner, RoadLink}
 
 
@@ -45,8 +45,6 @@ object LanePartitioner extends GraphPartitioner {
       partitionedAdditionalLanesTowards, partitionedAdditionalLanesAgainst)
 
   }
-
-
 
   def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
     def groupLanes(lanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
