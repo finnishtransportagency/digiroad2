@@ -126,10 +126,10 @@ object LanePartitioner extends GraphPartitioner {
               laneAndContinuingLanes.values.head.size == 1 || laneAndContinuingLanes.values.head.isEmpty
             }).getOrElse(lanesOnRoad.head)
           }
-          val onlyStartingLaneEndPoints = startingLane.keys.head.endpoints
-          val onlyContinuingLanesEndPoints = startingLane.values.flatten.flatMap(_.endpoints)
-          val continuingPoint = onlyContinuingLanesEndPoints.find(point =>
-            point.round() == onlyStartingLaneEndPoints.head.round() || point.round() == onlyStartingLaneEndPoints.last.round())
+          val startingEndPoints = startingLane.keys.head.endpoints
+          val continuingEndPoints = startingLane.values.flatten.flatMap(_.endpoints)
+          val continuingPoint = continuingEndPoints.find(point =>
+            point.round() == startingEndPoints.head.round() || point.round() == startingEndPoints.last.round())
           if (continuingPoint.isDefined) {
             getSortedLanes(continuingPoint.get, startingLane.keys.toSeq)
           }
@@ -140,7 +140,7 @@ object LanePartitioner extends GraphPartitioner {
 
       }
 
-//      Returns option of lane continuing from lane that we are inspecting
+      //Returns lanes continuing from from given lane
       def getContinuingWithIdentifier(lane: PieceWiseLane, laneRoadIdentifier: Option[Either[Int,String]]): Seq[PieceWiseLane] = {
         lanes.filter(potentialLane => potentialLane.endpoints.map(point =>
           point.round()).exists(lane.endpoints.map(point =>
@@ -169,9 +169,9 @@ object LanePartitioner extends GraphPartitioner {
       }
 
       val lanesAdjusted = replaceLanesWithWrongSideCode()
-      val groupedLanesByRoadLinkAndSideCode = lanesAdjusted.groupBy(lane => lane.linkId)
+      val groupedLanesByRoadLink = lanesAdjusted.groupBy(lane => lane.linkId)
 
-      val (cutLaneConfiguration, uncutLaneConfiguration) = groupedLanesByRoadLinkAndSideCode.partition { case (roadLinkId, lanes) =>
+      val (cutLaneConfiguration, uncutLaneConfiguration) = groupedLanesByRoadLink.partition { case (roadLinkId, lanes) =>
         roadLinks.get(roadLinkId) match {
           case Some(roadLink) =>
             lanes.exists { lane =>
