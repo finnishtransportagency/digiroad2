@@ -28,10 +28,6 @@
     "ParameterValue": "8080"
   },
   {
-    "ParameterKey": "ApiGatewayUrl",
-    "ParameterValue": "devapi.testivaylapilvi.fi"
-  },
-  {
     "ParameterKey": "RouteRecordName",
     "ParameterValue": "digiroadalb"
   }

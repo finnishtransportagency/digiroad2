@@ -23,9 +23,6 @@ Parameters:
   TaskDefinitionForService:
     Type: String
     Description: Task definition for your service
-  ApiGatewayUrl:
-    Type: String
-    Description: ApiGateWay Url
   RouteRecordName:
     Type: String
     Description: RouteRecordName

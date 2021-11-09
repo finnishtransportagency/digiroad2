@@ -22,11 +22,7 @@
   {
     "ParameterKey": "Project",
     "ParameterValue": "digiroad2"
-  }, 
-  {
-  "ParameterKey": "ApiGatewayUrl",
-  "ParameterValue": "api.testivaylapilvi.fi"
-},
+  },
   {
     "ParameterKey": "ContainerPort",
     "ParameterValue": "8080"
