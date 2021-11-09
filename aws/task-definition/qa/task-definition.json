@@ -60,7 +60,7 @@
           },
           {
             "name": "viiteRestApiEndPoint",
-            "value": "https://testapi.testivaylapilvi.fi/viite/api/viite/"
+            "value": "https://api.testivaylapilvi.fi/viite/api/viite/"
           },
           {
             "name": "authenticationTestMode",
