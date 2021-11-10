@@ -16,4 +16,4 @@ aws ecs register-task-definition --profile vaylaapp --region eu-west-1 --cli-inp
 #         "taskDefinitionArn": "arn:aws:ecs:eu-west-1:783354560127:task-definition/Viite-dev:<VERSION>",
 #
 
-# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster qa-digiroad2-ECS-Cluster-Private --service qa-digiroad2-ECS-Service-Private --task-definition digiroad2-qa:<VERSION> --force-new-deployment
+# aws ecs update-service --profile vaylaapp --region eu-west-1 --cluster qa-digiroad2-ECS-Cluster-Private --service qa-digiroad2-ECS-Service-Private --task-definition digiroad2-qa:15 --force-new-deployment
