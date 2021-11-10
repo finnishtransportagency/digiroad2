@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Motorway, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -9,8 +9,8 @@ import org.scalatest._
 
 class LanePartitionerSpec extends FunSuite with Matchers {
 
-  def createPieceWiseLane(id: Long, sideCode: Int, laneCode: Int): PieceWiseLane = {
-    PieceWiseLane(id, 0l, sideCode, false, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0d, 10d, Set(Point(0.0, 0.0),
+  def createPieceWiseLane(id: Long, linkId: Long, sideCode: Int, laneCode: Int): PieceWiseLane = {
+    PieceWiseLane(id, linkId, sideCode, false, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0d, 10d, Set(Point(0.0, 0.0),
       Point(10.0, 0.0)), None, None, None, None, 0l, None, AdministrativeClass(1), Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode)))))
   }
 
@@ -24,11 +24,11 @@ class LanePartitionerSpec extends FunSuite with Matchers {
   }
 
   def createLanes(): Seq[PieceWiseLane] = {
-    val mainLaneBothDirectionsA = createPieceWiseLane(1l, 1, 1)
-    val mainLaneBothDirectionsB = createPieceWiseLane(2l, 1, 1)
-    val mainLaneTowards = createPieceWiseLane(3l, 2, 1)
-    val firstLeftAdditionalTowards = createPieceWiseLane(4l, 2, 2)
-    val firstRightAdditionalTowards = createPieceWiseLane(5l, 2, 3)
+    val mainLaneBothDirectionsA = createPieceWiseLane(1l, 0l, 1, 1)
+    val mainLaneBothDirectionsB = createPieceWiseLane(2l, 0l,1, 1)
+    val mainLaneTowards = createPieceWiseLane(3l, 1l, 2, 1)
+    val firstLeftAdditionalTowards = createPieceWiseLane(4l, 1l, 2, 2)
+    val firstRightAdditionalTowards = createPieceWiseLane(5l, 1l, 2, 3)
 
     Seq(mainLaneBothDirectionsA, mainLaneBothDirectionsB, mainLaneTowards, firstLeftAdditionalTowards, firstRightAdditionalTowards)
   }
@@ -46,14 +46,18 @@ class LanePartitionerSpec extends FunSuite with Matchers {
     Seq(lane0, lane1,lane2,lane3,lane4,lane5)
   }
 
-  test("Lanes should be partitioned by side code and lanecode") {
+  test("Lanes should be partitioned by side code and lanecode and roadLink trafficDirection") {
     val lanes = createLanes()
-    val lanesPartitioned = partitionBySideCodeAndLaneCode(lanes)
+    val roadLink0 = createRoadLink(0l, Seq(Point(0.0,0.0), Point(1.0,1.0)), BothDirections,"testiKatu")
+    val roadLink1 = createRoadLink(1l, Seq(Point(4.0,4.0), Point(2.0,2.0)), TowardsDigitizing,"testiKatu")
+    val roadLinks = Seq(roadLink0, roadLink1).groupBy(_.linkId).mapValues(_.head)
+    val lanesPartitioned = partitionBySideCodeAndLaneCode(lanes, roadLinks)
 
-    lanesPartitioned.size should equal(6)
-    lanesPartitioned(0).size should equal(2)
-    lanesPartitioned(1).size should equal(1)
-    lanesPartitioned(4).size should equal(2)
+    lanesPartitioned.size should equal(7)
+    lanesPartitioned(0).size should equal(3)
+    lanesPartitioned(1).size should equal(2)
+    lanesPartitioned(4).size should equal(0)
+    lanesPartitioned(5).size should equal(2)
   }
 
   test("Lanes should be partitioned to two groups according to correct sideCode") {
@@ -80,10 +84,11 @@ class LanePartitionerSpec extends FunSuite with Matchers {
     val lane1 = createLaneWithGeometry(2, 2, 2,Point(1.0,1.0), Point(2.0, 2.0))
     val lane2 = createLaneWithGeometry(5, 3 ,2,Point(2.0,2.0), Point(2.0, 3.0))
 
-    val lanesWithContinuing = Seq(Map(lane0 -> Seq(lane1)), Map(lane1 -> Seq(lane2, lane0)), Map(lane2 -> Seq(lane1)))
+    val lanesWithContinuing = Seq(LaneWithContinuingLanes(lane0, Seq(lane1)), LaneWithContinuingLanes(lane1, Seq(lane2, lane0)),
+      LaneWithContinuingLanes(lane2, Seq(lane1)))
     val oneWayRoadLinkId = Seq(3l)
     val startingLane = getStartingLaneTwoAndOneWay(lanesWithContinuing, oneWayRoadLinkId)
-    startingLane.keys.head should equal(lane2)
+    startingLane.lane should equal(lane2)
   }
 
   test("On a circular road startingLane should be first lane in Seq") {
@@ -92,9 +97,8 @@ class LanePartitionerSpec extends FunSuite with Matchers {
     val lane2 = createLaneWithGeometry(5, 3 ,2,Point(2.0,2.0), Point(2.0, 3.0))
     val lane3 = createLaneWithGeometry(5, 3 ,2,Point(2.0,3.0), Point(0.0, 0.0))
 
-
-    val lanesWithContinuing = Seq(Map(lane0 -> Seq(lane1, lane3)), Map(lane1 -> Seq(lane2, lane0)),
-      Map(lane2 -> Seq(lane1,lane3)), Map(lane3 -> Seq(lane2, lane0)))
+    val lanesWithContinuing = Seq(LaneWithContinuingLanes(lane0, Seq(lane1, lane3)), LaneWithContinuingLanes(lane1, Seq(lane2, lane0)),
+      LaneWithContinuingLanes(lane2, Seq(lane1, lane3)), LaneWithContinuingLanes(lane3, Seq(lane2, lane0)))
     val startingLane = getStartingLane(lanesWithContinuing)
     startingLane should equal(lanesWithContinuing.head)
   }
