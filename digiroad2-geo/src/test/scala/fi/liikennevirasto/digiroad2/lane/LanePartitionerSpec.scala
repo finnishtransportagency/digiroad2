@@ -53,11 +53,11 @@ class LanePartitionerSpec extends FunSuite with Matchers {
     val roadLinks = Seq(roadLink0, roadLink1).groupBy(_.linkId).mapValues(_.head)
     val lanesPartitioned = partitionBySideCodeAndLaneCode(lanes, roadLinks)
 
-    lanesPartitioned.size should equal(7)
-    lanesPartitioned(0).size should equal(3)
+    lanesPartitioned.size should equal(8)
+    lanesPartitioned(0).size should equal(1)
     lanesPartitioned(1).size should equal(2)
-    lanesPartitioned(4).size should equal(0)
-    lanesPartitioned(5).size should equal(2)
+    lanesPartitioned(2).size should equal(2)
+    lanesPartitioned(5).size should equal(0)
   }
 
   test("Lanes should be partitioned to two groups according to correct sideCode") {
@@ -79,16 +79,15 @@ class LanePartitionerSpec extends FunSuite with Matchers {
     result(1).contains(lanes(4)) should equal(true)
   }
 
-  test("startingLane should be on oneway trafficDirection roadLink if possible") {
+  test("startingLane should be either one of the last lanes") {
     val lane0 = createLaneWithGeometry(1, 1, 2,Point(0.0,0.0), Point(1.0, 1.0))
     val lane1 = createLaneWithGeometry(2, 2, 2,Point(1.0,1.0), Point(2.0, 2.0))
     val lane2 = createLaneWithGeometry(5, 3 ,2,Point(2.0,2.0), Point(2.0, 3.0))
 
     val lanesWithContinuing = Seq(LaneWithContinuingLanes(lane0, Seq(lane1)), LaneWithContinuingLanes(lane1, Seq(lane2, lane0)),
       LaneWithContinuingLanes(lane2, Seq(lane1)))
-    val oneWayRoadLinkId = Seq(3l)
-    val startingLane = getStartingLaneTwoAndOneWay(lanesWithContinuing, oneWayRoadLinkId)
-    startingLane.lane should equal(lane2)
+    val startingLane = getStartingLane(lanesWithContinuing)
+    Seq(lane0, lane2).contains(startingLane.lane) should equal(true)
   }
 
   test("On a circular road startingLane should be first lane in Seq") {
