@@ -18,25 +18,25 @@ Parameters:
     Description: Name of SNS topic
 
 Resources:
-  JobQueueAdHoc:
+  DEVJobQueueAdHoc:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: "AdHoc"
+      JobQueueName: "DEV-adhoc"
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
             Ref: DEVComputeEnvironment
-
-  JobQueueUpdateIncompleteList:
+            
+  QAJobQueueAdHoc:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: "UpdateIncompleteList"
+      JobQueueName: "QA-adhoc"
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
-            Ref: DEVComputeEnvironment
+            Ref: QAComputeEnviroment
 
   DEVJobQueue:
     Type: AWS::Batch::JobQueue
