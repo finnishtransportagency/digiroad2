@@ -48,7 +48,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Join ['', ['/ecs/',!Ref Environment,'-', !Ref ApplicationName, '-ECS-logs']]
-      RetentionInDays: 182
+      RetentionInDays: 180
 
   PrivateLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
