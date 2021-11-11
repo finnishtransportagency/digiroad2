@@ -35,7 +35,8 @@ object LanePartitioner extends GraphPartitioner {
     val (mainLanesTowards, additionalLanesTowards) = partitionByMainLane(lanesTowards)
     val (mainLanesAgainst, additionalLanesAgainst) = partitionByMainLane(lanesAgainst)
 
-    Seq(mainLanesOnOneDirection, additionalLanesOnOneDirection, mainLanesBothDirections, mainLanesTowards, mainLanesAgainst, additionalLanesBothDirections,
+    Seq(mainLanesOnOneDirection, additionalLanesOnOneDirection, mainLanesBothDirections,
+      mainLanesTowards, mainLanesAgainst, additionalLanesBothDirections,
       additionalLanesTowards, additionalLanesAgainst)
 
   }
@@ -154,7 +155,8 @@ object LanePartitioner extends GraphPartitioner {
       LaneWithContinuingLanes(lane, continuingLanes)
     })).toSeq
 
-    lanesGroupedWithContinuing.flatMap(lanesOnRoad => handleLanes(lanesOnRoad, allLanes))++ laneGroupsWithNoIdentifier.values.flatten
+    lanesGroupedWithContinuing.flatMap(lanesOnRoad =>
+      handleLanes(lanesOnRoad, allLanes))++ laneGroupsWithNoIdentifier.values.flatten
   }
 
   def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
