@@ -53,10 +53,10 @@ class LanePartitionerSpec extends FunSuite with Matchers {
     val roadLinks = Seq(roadLink0, roadLink1).groupBy(_.linkId).mapValues(_.head)
     val lanesPartitioned = partitionBySideCodeAndLaneCode(lanes, roadLinks)
 
-    lanesPartitioned.size should equal(8)
+    lanesPartitioned.size should equal(9)
     lanesPartitioned(0).size should equal(1)
-    lanesPartitioned(1).size should equal(2)
     lanesPartitioned(2).size should equal(2)
+    lanesPartitioned(3).size should equal(2)
     lanesPartitioned(5).size should equal(0)
   }
 

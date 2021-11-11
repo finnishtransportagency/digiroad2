@@ -27,6 +27,7 @@ object LanePartitioner extends GraphPartitioner {
     val (lanesOnOneDirection, lanesOnTwoDirection) = linearAssets.partition(lane =>
       roadLinks(lane.linkId).trafficDirection.value != BothDirections.value)
     val (mainLanesOnOneDirection, additionalLanesOnOneDirection) = partitionByMainLane(lanesOnOneDirection)
+    val (mainLanesOnOneDirectionTowards, mainLanesOnOneDirectionAgainst) = mainLanesOnOneDirection.partition(_.sideCode == SideCode.TowardsDigitizing.value)
 
     val (lanesBothDirections, lanesOneDirection) = lanesOnTwoDirection.partition(_.sideCode == SideCode.BothDirections.value)
     val (lanesTowards, lanesAgainst) = lanesOneDirection.partition(_.sideCode == SideCode.TowardsDigitizing.value)
@@ -35,7 +36,7 @@ object LanePartitioner extends GraphPartitioner {
     val (mainLanesTowards, additionalLanesTowards) = partitionByMainLane(lanesTowards)
     val (mainLanesAgainst, additionalLanesAgainst) = partitionByMainLane(lanesAgainst)
 
-    Seq(mainLanesOnOneDirection, additionalLanesOnOneDirection, mainLanesBothDirections,
+    Seq(mainLanesOnOneDirectionTowards, mainLanesOnOneDirectionAgainst, additionalLanesOnOneDirection, mainLanesBothDirections,
       mainLanesTowards, mainLanesAgainst, additionalLanesBothDirections,
       additionalLanesTowards, additionalLanesAgainst)
 
