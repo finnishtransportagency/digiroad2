@@ -93,7 +93,7 @@ Resources:
       DBName: digiroad2
       DeletionProtection: !Ref DBDeletionProtection
       Engine: postgres
-      EngineVersion: 13.2
+      EngineVersion: 13.3
       AllocatedStorage: 100
       StorageType: gp2
       MasterUsername: digiroad2postgres
@@ -115,28 +115,3 @@ Resources:
           Value: !Ref Environment
     DependsOn:
       - DBSubnetGroup
-    Metadata:
-      'AWS::CloudFormation::Designer':
-        id: ce56302f-fd28-4a57-b896-85837035877a
-Metadata:
-  'AWS::CloudFormation::Designer':
-    ce56302f-fd28-4a57-b896-85837035877a:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 180
-        'y': 90
-      z: 1
-      embeds: []
-      dependson:
-        - 534fb193-987a-4025-a04e-f7bebee5de6c
-    534fb193-987a-4025-a04e-f7bebee5de6c:
-      size:
-        width: 60
-        height: 60
-      position:
-        x: 60
-        'y': 90
-      z: 0
-      embeds: []
