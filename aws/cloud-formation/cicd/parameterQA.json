@@ -1,0 +1,30 @@
+[
+  {
+    "ParameterKey": "PipelineName",
+    "ParameterValue": "qapipeline"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "EcsClusterName",
+    "ParameterValue": "qa-digiroad2-ECS-Cluster-Private"
+  },
+  {
+    "ParameterKey": "EcsServiceName",
+    "ParameterValue": "qa-digiroad2-ECS-Service-Private"
+  },
+  {
+    "ParameterKey": "EcrRepositoryName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "CodeBuildName",
+    "ParameterValue": "qa_tagging"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
+  }
+]
