@@ -1112,8 +1112,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       lanes.map { lane =>
         val laneInfo = lanes.filter(potentialLane => potentialLane.linkId == lane.linkId && potentialLane.sideCode == lane.sideCode)
         val laneCodes = laneInfo.flatMap(laneOnLink => laneService.getPropertyValue(laneOnLink, "lane_code"))
+        val laneCodesSorted = laneCodes.map(_.value.toString()).sorted
         Map(
-          "lanes" -> laneCodes,
+          "lanes" -> laneCodesSorted,
           "id" -> (if (lane.id == 0) None else Some(lane.id)),
           "linkId" -> lane.linkId,
           "sideCode" -> lane.sideCode,
