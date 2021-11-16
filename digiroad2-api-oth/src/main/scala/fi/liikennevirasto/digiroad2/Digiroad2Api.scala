@@ -1110,10 +1110,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   def mapLanes(lanesRoot: Seq[Seq[PieceWiseLane]]): Seq[Seq[Map[String, Any]]] = {
     lanesRoot.map { lanes =>
       lanes.map { lane =>
-        val laneInfo = laneService.fetchExistingLanesByLinkIds(Seq(lane.linkId))
-        val filteredLaneInfo = laneService.filterLanesByDirection(laneInfo, laneService.getPropertyValue(lane, "lane_code").get.value.toString.charAt(0))
+        val laneInfo = lanes.filter(potentialLane => potentialLane.linkId == lane.linkId && potentialLane.sideCode == lane.sideCode)
+        val laneCodes = laneInfo.flatMap(laneOnLink => laneService.getPropertyValue(laneOnLink, "lane_code"))
         Map(
-          "lanes" -> filteredLaneInfo.map(_.laneCode).sorted,
+          "lanes" -> laneCodes,
           "id" -> (if (lane.id == 0) None else Some(lane.id)),
           "linkId" -> lane.linkId,
           "sideCode" -> lane.sideCode,
