@@ -322,16 +322,6 @@ trait LaneOperations {
   }
 
   /**
-    * Filter lanes based on their lane code direction
-    * @param lanes  lanes to be filtered
-    * @param direction  direction to filter (first char of the lane code)
-    * @return filtered lanes by lane code direction
-    */
-  def filterLanesByDirection(lanes: Seq[PersistedLane], direction: Char): Seq[PersistedLane] = {
-    lanes.filter(_.laneCode.toString.charAt(0) == direction)
-  }
-
-  /**
     * Get lanes that were touched between two dates
     * @param sinceDate  start date
     * @param untilDate  end date
