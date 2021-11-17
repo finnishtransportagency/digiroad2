@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.util.VKMPropertyReader
+
 import java.lang.management.ManagementFactory
 import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-
 import org.eclipse.jetty.client.api.Request
 import org.eclipse.jetty.client.{HttpClient, HttpProxy}
 import org.eclipse.jetty.jmx.MBeanContainer
@@ -78,9 +79,13 @@ class VKMProxyServlet extends ProxyServlet {
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
     val parameters = clientRequest.getParameterMap
+    val auth = new VKMPropertyReader
+    
     parameters.foreach { case(key, value) =>
       proxyRequest.param(key, value.mkString(""))
     }
+    
+    proxyRequest.header("X-API-Key", auth.getApiKey)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }

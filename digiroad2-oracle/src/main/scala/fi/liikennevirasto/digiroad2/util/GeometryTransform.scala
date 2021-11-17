@@ -3,13 +3,13 @@ package fi.liikennevirasto.digiroad2.util
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
+
 import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, SSLContext, SSLSession, TrustManager, X509TrustManager}
-import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.{HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -133,6 +133,26 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 }
 
+class VKMPropertyReader {
+  lazy val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/keys.properties"))
+    props
+  }
+
+  private def getPropertyValue(name: String) : String = {
+    val loadedKeyString = properties.getProperty(name)
+    if (loadedKeyString == null)
+      throw new IllegalArgumentException(s"Missing $name")
+    loadedKeyString
+  }
+
+  def getApiKey: String = {
+    getPropertyValue("viitekehysmuunnin.apikey")
+  }
+}
+
+
 class VKMGeometryTransform {
   case class VKMError(content: Map[String, Any], url: String)
 
@@ -148,7 +168,9 @@ class VKMGeometryTransform {
   private def NonPedestrianRoadNumbers = "1-62999"
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
-
+  
+  protected def auth = new VKMPropertyReader
+  
   private def vkmBaseUrl = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -164,10 +186,12 @@ class VKMGeometryTransform {
     paramMap.map(entry => URLEncoder.encode(entry._1, "UTF-8")
       + "=" + URLEncoder.encode(entry._2.toString, "UTF-8")).mkString("&")
   }
-
+  
   private def request(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
+    request.addHeader("X-API-Key", auth.getApiKey)
+    
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400)
