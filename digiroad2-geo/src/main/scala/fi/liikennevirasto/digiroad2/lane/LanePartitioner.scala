@@ -2,12 +2,12 @@ package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
-import fi.liikennevirasto.digiroad2.linearasset.{GraphPartitioner, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 
 import scala.annotation.tailrec
 
 
-object LanePartitioner extends GraphPartitioner {
+object LanePartitioner {
 
   case class LaneWithContinuingLanes(lane: PieceWiseLane, continuingLanes: Seq[PieceWiseLane])
 
@@ -124,7 +124,7 @@ object LanePartitioner extends GraphPartitioner {
       val (laneGroupsWithNoIdentifier, laneGroupsWithIdentifier) = lanesGrouped.partition(group => group._1._1.isEmpty)
       val lanesGroupedWithContinuing = laneGroupsWithIdentifier.map(lanesOnRoad => lanesOnRoad._2.map(lane => {
         val roadIdentifier = lanesOnRoad._1._1
-        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, allLanes, roadLinks)
+        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, lanes, roadLinks)
         LaneWithContinuingLanes(lane, continuingLanes)
       })).toSeq
 
