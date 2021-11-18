@@ -16,12 +16,12 @@ object LanePartitioner {
                                   lanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[PieceWiseLane] = {
     lanes.filter(potentialLane =>
       potentialLane.endpoints.map(point =>
-      point.round()).exists(lane.endpoints.map(point =>
-      point.round()).contains)
-      && potentialLane.id != lane.id &&
-      laneRoadIdentifier == roadLinks(potentialLane.linkId).roadIdentifier &&
+        point.round()).exists(lane.endpoints.map(point =>
+        point.round()).contains)
+        && potentialLane.id != lane.id &&
+        laneRoadIdentifier == roadLinks(potentialLane.linkId).roadIdentifier &&
         potentialLane.laneAttributes.find(_.publicId == "lane_code") == lane.laneAttributes.find(_.publicId == "lane_code") &&
-    potentialLane.sideCode == lane.sideCode)
+        potentialLane.sideCode == lane.sideCode)
   }
 
   //Checks if the lanes sideCode is correct compared to previous lane.
@@ -45,13 +45,13 @@ object LanePartitioner {
     val connectionPoint = currentLane.endpoints.find(point =>
       point.round() == previousLane.endpoints.head.round() || point.round() == previousLane.endpoints.last.round())
     if(connectionPoint.isEmpty) currentLane
-    else{
+    else {
       val isSideCodeCorrect = sideCodeCorrect(previousLane, currentLane, connectionPoint.get)
 
       if (!isSideCodeCorrect) {
         val replacement = allLanes.find(replacementLane =>
           replacementLane.linkId == currentLane.linkId && replacementLane.sideCode != currentLane.sideCode &&
-        replacementLane.laneAttributes.find(_.publicId == "lane_code") == currentLane.laneAttributes.find(_.publicId == "lane_code"))
+          replacementLane.laneAttributes.find(_.publicId == "lane_code") == currentLane.laneAttributes.find(_.publicId == "lane_code"))
         replacement match {
           case Some(replacement) =>
             replacement
