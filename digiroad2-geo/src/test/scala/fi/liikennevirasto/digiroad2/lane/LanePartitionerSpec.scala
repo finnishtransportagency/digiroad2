@@ -46,20 +46,6 @@ class LanePartitionerSpec extends FunSuite with Matchers {
     Seq(lane0, lane1,lane2,lane3,lane4,lane5)
   }
 
-  test("Lanes should be partitioned by side code and lanecode and roadLink trafficDirection") {
-    val lanes = createLanes()
-    val roadLink0 = createRoadLink(0l, Seq(Point(0.0,0.0), Point(1.0,1.0)), BothDirections,"testiKatu")
-    val roadLink1 = createRoadLink(1l, Seq(Point(4.0,4.0), Point(2.0,2.0)), TowardsDigitizing,"testiKatu")
-    val roadLinks = Seq(roadLink0, roadLink1).groupBy(_.linkId).mapValues(_.head)
-    val lanesPartitioned = partitionBySideCodeAndLaneCode(lanes, roadLinks)
-
-    lanesPartitioned.size should equal(9)
-    lanesPartitioned(0).size should equal(1)
-    lanesPartitioned(2).size should equal(2)
-    lanesPartitioned(3).size should equal(2)
-    lanesPartitioned(5).size should equal(0)
-  }
-
   test("Lanes should be partitioned to two groups according to correct sideCode") {
     val roadLink1 = createRoadLink(1, Seq(Point(0.0,0.0), Point(1.0, 1.0)), BothDirections, "testiKatu")
     val roadLink2 = createRoadLink(2, Seq(Point(1.0,1.0), Point(2.0, 2.0)), BothDirections, "testiKatu")
