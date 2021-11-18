@@ -130,7 +130,8 @@ object LanePartitioner {
 
       val resultGroups = lanesGroupedWithContinuing.map(lanesOnRoad =>
         handleLanes(lanesOnRoad, allLanes))
-      resultGroups ++ laneGroupsWithNoIdentifier.values
+      val noRoadAddress =laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
+      resultGroups ++ noRoadAddress
     }
     val (lanesOnOneDirectionLink, lanesOnTwoDirectionLink) = allLanes.partition(lane =>
       roadLinks(lane.linkId).trafficDirection.value != BothDirections.value)
