@@ -72,7 +72,7 @@ class LanePartitionerSpec extends FunSuite with Matchers {
 
     val lanesWithContinuing = Seq(LaneWithContinuingLanes(lane0, Seq(lane1)), LaneWithContinuingLanes(lane1, Seq(lane2, lane0)),
       LaneWithContinuingLanes(lane2, Seq(lane1)))
-    val startingLane = getStartingLane(lanesWithContinuing)
+    val startingLane = getStartingLanes(lanesWithContinuing).head
     Seq(lane0, lane2).contains(startingLane.lane) should equal(true)
   }
 
@@ -84,7 +84,7 @@ class LanePartitionerSpec extends FunSuite with Matchers {
 
     val lanesWithContinuing = Seq(LaneWithContinuingLanes(lane0, Seq(lane1, lane3)), LaneWithContinuingLanes(lane1, Seq(lane2, lane0)),
       LaneWithContinuingLanes(lane2, Seq(lane1, lane3)), LaneWithContinuingLanes(lane3, Seq(lane2, lane0)))
-    val startingLane = getStartingLane(lanesWithContinuing)
+    val startingLane = getStartingLanes(lanesWithContinuing).head
     startingLane should equal(lanesWithContinuing.head)
   }
 
