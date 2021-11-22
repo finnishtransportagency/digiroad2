@@ -115,13 +115,16 @@ object LanePartitioner {
       }
   }
 
-  def getConnectedLanes(connectedLanes: Seq[LaneWithContinuingLanes], usedLanes: Seq[Long], laneGroup: Seq[LaneWithContinuingLanes]): Seq[LaneWithContinuingLanes] = {
+  //Goes through lanes in group recursively and returns lanes that are connected to the starting lane
+  //Function is called for each starting lane in group so no gaps are left, duplicate groups are filtered with .distinct
+  @tailrec
+  def getConnectedLanes(connectedLanes: Seq[LaneWithContinuingLanes], laneGroup: Seq[LaneWithContinuingLanes]): Seq[LaneWithContinuingLanes] = {
     val connectedIds = connectedLanes.map(_.lane.id)
     val nextLane = laneGroup.find(laneWithContinuing => { laneWithContinuing.continuingLanes.contains(connectedLanes.last.lane) &&
       !connectedIds.contains(laneWithContinuing.lane.id)
     })
     nextLane match {
-      case Some(nextLane) => getConnectedLanes(connectedLanes :+ nextLane, usedLanes :+ nextLane.lane.id, laneGroup)
+      case Some(nextLane) => getConnectedLanes(connectedLanes :+ nextLane, laneGroup)
       case _ => connectedLanes
     }
   }
@@ -167,7 +170,7 @@ object LanePartitioner {
       val connectedGroups = partitionedLanesWithContinuing.flatMap(laneGroup => {
         val startingLanes = getStartingLanes(laneGroup)
         val connectedLanes = startingLanes.map(startingLane => {
-          getConnectedLanes(Seq(startingLane), Seq(startingLane.lane.id), laneGroup).sortBy(_.lane.id)
+          getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
         }).distinct
         connectedLanes.map(_.map(_.lane))
       })
