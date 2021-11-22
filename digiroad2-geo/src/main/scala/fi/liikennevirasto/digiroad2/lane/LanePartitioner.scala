@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 
 import scala.annotation.tailrec
+import scala.math.Ordering.Implicits.seqDerivedOrdering
 
 
 object LanePartitioner {
@@ -66,10 +67,12 @@ object LanePartitioner {
 
   //Returns first lane which has only one continuing lane, in other words, the starting lane for road.
   //For circular roads returns a random first value from lanesOnRoad
-  def getStartingLane(lanesOnRoad: Seq[LaneWithContinuingLanes]): LaneWithContinuingLanes ={
-    lanesOnRoad.find(laneAndContinuingLanes => {
+  def getStartingLanes(lanesOnRoad: Seq[LaneWithContinuingLanes]): Seq[LaneWithContinuingLanes] ={
+    val startingLanes = lanesOnRoad.filter(laneAndContinuingLanes => {
       laneAndContinuingLanes.continuingLanes.size == 1 || laneAndContinuingLanes.continuingLanes.isEmpty
-    }).getOrElse(lanesOnRoad.head)
+    })
+    if(startingLanes.isEmpty) Seq(lanesOnRoad.head)
+    else startingLanes
   }
 
   def handleLanes(lanesOnRoad:Seq[LaneWithContinuingLanes], allLanes: Seq[PieceWiseLane]):Seq[PieceWiseLane] = {
@@ -88,7 +91,7 @@ object LanePartitioner {
         }
       }
 
-      val startingLane = getStartingLane(lanesOnRoad)
+      val startingLane = getStartingLanes(lanesOnRoad).head
       val startingEndPoints = startingLane.lane.endpoints
       val continuingEndPoints = startingLane.continuingLanes.flatMap(_.endpoints)
       val continuingPoint = continuingEndPoints.find(point =>
@@ -99,6 +102,16 @@ object LanePartitioner {
       else {
         lanesOnRoad.map(_.lane)
       }
+  }
+
+  def getConnectedLanes(connectedLanes: Seq[LaneWithContinuingLanes], usedLanes: Seq[Long], laneGroup: Seq[LaneWithContinuingLanes]): Seq[LaneWithContinuingLanes] = {
+    val nextLane = laneGroup.find(laneWithContinuing => { laneWithContinuing.continuingLanes.contains(connectedLanes.last.lane) &&
+      !usedLanes.contains(laneWithContinuing.lane.id)
+    })
+    nextLane match {
+      case Some(nextLane) => getConnectedLanes(connectedLanes :+ nextLane, usedLanes :+ nextLane.lane.id, laneGroup)
+      case _ => connectedLanes
+    }
   }
 
   //replaces lane if its sideCode is not correct. SideCode is tied to digitizing direction,
@@ -114,24 +127,43 @@ object LanePartitioner {
   // and replace currentLane with it
   // 7. Repeat steps 4 to 6 until there is no next lane
   def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
+
+    //Groups lanes by roadIdentifier, sideCode, LaneCode, and other lanes on link.
+    //Makes sure that the selection is continuing and there are no gaps in lanes
     def groupLanes(lanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
       val lanesGrouped = lanes.groupBy(lane => {
         val roadLink = roadLinks.get(lane.linkId)
         val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
         val laneCode = lane.laneAttributes.find(_.publicId == "lane_code")
-        (roadIdentifier, lane.sideCode, laneCode)
+
+        val lanesOnLink = lanes.filter(potentialLane => potentialLane.linkId == lane.linkId &&
+        potentialLane.sideCode == lane.sideCode)
+        val laneProperties = lanesOnLink.flatMap(_.laneAttributes.find(_.publicId == "lane_code"))
+        val lanePropValues = laneProperties.map(_.values)
+        val laneCodesOnLink = lanePropValues.flatten.map(_.value.asInstanceOf[Int]).sorted.distinct
+
+        (roadIdentifier, lane.sideCode, laneCode, laneCodesOnLink)
       })
       val (laneGroupsWithNoIdentifier, laneGroupsWithIdentifier) = lanesGrouped.partition(group => group._1._1.isEmpty)
       val lanesGroupedWithContinuing = laneGroupsWithIdentifier.map(lanesOnRoad => lanesOnRoad._2.map(lane => {
         val roadIdentifier = lanesOnRoad._1._1
-        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, lanes, roadLinks)
+        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, lanesOnRoad._2, roadLinks)
         LaneWithContinuingLanes(lane, continuingLanes)
       })).toSeq
 
-      val resultGroups = lanesGroupedWithContinuing.map(lanesOnRoad =>
+      val connectedGroups = lanesGroupedWithContinuing.flatMap(laneGroup => {
+        val startingLanes = getStartingLanes(laneGroup)
+        val connectedLanes = startingLanes.map(startingLane => {
+          getConnectedLanes(Seq(startingLane), Seq(startingLane.lane.id), laneGroup).sortBy(_.lane.id)
+        }).distinct
+        connectedLanes
+      })
+
+      val resultGroup = connectedGroups.map(lanesOnRoad =>
         handleLanes(lanesOnRoad, allLanes))
-      val noRoadAddress =laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
-      resultGroups ++ noRoadAddress
+
+      val noRoadIdentifier = laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
+      resultGroup ++ noRoadIdentifier
     }
     val (lanesOnOneDirectionLink, lanesOnTwoDirectionLink) = allLanes.partition(lane =>
       roadLinks(lane.linkId).trafficDirection.value != BothDirections.value)
