@@ -13,15 +13,15 @@ object LanePartitioner {
 
   //Returns lanes continuing from from given lane
   def getContinuingWithIdentifier(lane: PieceWiseLane, laneRoadIdentifier: Option[Either[Int,String]],
-                                  lanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[PieceWiseLane] = {
-    lanes.filter(potentialLane =>
-      potentialLane.endpoints.map(point =>
-        point.round()).exists(lane.endpoints.map(point =>
-        point.round()).contains)
+                                  lanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink],
+                                  SideCodesCorrected: Boolean = false): Seq[PieceWiseLane] = {
+    val continuingLanes = lanes.filter(potentialLane =>
+      potentialLane.endpoints.map(_.round()).exists(lane.endpoints.map(_.round()).contains)
         && potentialLane.id != lane.id &&
         laneRoadIdentifier == roadLinks(potentialLane.linkId).roadIdentifier &&
-        potentialLane.laneAttributes.find(_.publicId == "lane_code") == lane.laneAttributes.find(_.publicId == "lane_code") &&
-        potentialLane.sideCode == lane.sideCode)
+        potentialLane.laneAttributes.find(_.publicId == "lane_code") == lane.laneAttributes.find(_.publicId == "lane_code"))
+    if(SideCodesCorrected) continuingLanes
+    else continuingLanes.filter(_.sideCode == lane.sideCode)
   }
 
   //Checks if the lanes sideCode is correct compared to previous lane.
@@ -66,12 +66,26 @@ object LanePartitioner {
 
   //Returns first lane which has only one continuing lane, in other words, the starting lane for road.
   //For circular roads returns a random first value from lanesOnRoad
-  def getStartingLane(lanesOnRoad: Seq[LaneWithContinuingLanes]): LaneWithContinuingLanes ={
-    lanesOnRoad.find(laneAndContinuingLanes => {
+  def getStartingLanes(lanesOnRoad: Seq[LaneWithContinuingLanes]): Seq[LaneWithContinuingLanes] ={
+    val startingLanes = lanesOnRoad.filter(laneAndContinuingLanes => {
       laneAndContinuingLanes.continuingLanes.size == 1 || laneAndContinuingLanes.continuingLanes.isEmpty
-    }).getOrElse(lanesOnRoad.head)
+    })
+    if(startingLanes.isEmpty) Seq(lanesOnRoad.head)
+    else startingLanes
   }
 
+  //replaces lane if its sideCode is not correct. SideCode is tied to digitizing direction,
+  //so two adjacent lanes with same sideCode can be on the opposite sides of the road
+  //Algorithm for replacing incorrect lanes:
+  // 1. Group lanes by roadIdentifier and sideCode
+  // 2. Find continuing lanes for each lane
+  // 3. Find starting lane (Lane which has only one continuing lane)
+  // 4. Compare starting lane to it's continuing lane
+  // 5. If sideCodes are equal and lanes' connection point is previous lane's ending point and
+  // current lane's starting point or vice versa then sideCode is OK
+  // 6. If not OK, find lane with same linkId and different sideCode compared to current lane
+  // and replace currentLane with it
+  // 7. Repeat steps 4 to 6 until there is no next lane
   def handleLanes(lanesOnRoad:Seq[LaneWithContinuingLanes], allLanes: Seq[PieceWiseLane]):Seq[PieceWiseLane] = {
       //Goes through roads lanes in order recursively. checkLane switches lane to other sideCode lane if necessary
       @tailrec
@@ -88,7 +102,7 @@ object LanePartitioner {
         }
       }
 
-      val startingLane = getStartingLane(lanesOnRoad)
+      val startingLane = getStartingLanes(lanesOnRoad).head
       val startingEndPoints = startingLane.lane.endpoints
       val continuingEndPoints = startingLane.continuingLanes.flatMap(_.endpoints)
       val continuingPoint = continuingEndPoints.find(point =>
@@ -101,19 +115,26 @@ object LanePartitioner {
       }
   }
 
-  //replaces lane if its sideCode is not correct. SideCode is tied to digitizing direction,
-  //so two adjacent lanes with same sideCode can be on the opposite sides of the road
-  //Algorithm for replacing incorrect lanes:
-  // 1. Group lanes by roadIdentifier and sideCode
-  // 2. Find continuing lanes for each lane
-  // 3. Find starting lane (Lane which has only one continuing lane)
-  // 4. Compare starting lane to it's continuing lane
-  // 5. If sideCodes are equal and lanes' connection point is previous lane's ending point and
-  // current lane's starting point or vice versa then sideCode is OK
-  // 6. If not OK, find lane with same linkId and different sideCode compared to current lane
-  // and replace currentLane with it
-  // 7. Repeat steps 4 to 6 until there is no next lane
+  //Goes through lanes in group recursively and returns lanes that are connected to the starting lane
+  //Function is called for each starting lane in group so no gaps are left, duplicate groups are filtered with .distinct
+  @tailrec
+  def getConnectedLanes(connectedLanes: Seq[LaneWithContinuingLanes], laneGroup: Seq[LaneWithContinuingLanes]): Seq[LaneWithContinuingLanes] = {
+    val connectedIds = connectedLanes.map(_.lane.id)
+    val nextLane = laneGroup.find(laneWithContinuing => { laneWithContinuing.continuingLanes.contains(connectedLanes.last.lane) &&
+      !connectedIds.contains(laneWithContinuing.lane.id)
+    })
+    nextLane match {
+      case Some(nextLane) => getConnectedLanes(connectedLanes :+ nextLane, laneGroup)
+      case _ => connectedLanes
+    }
+  }
+
+  //Returns lanes grouped by corrected sideCode, laneCode, additional lanes and connection (lanes in group must
+  // be geometrically connected together)
   def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
+
+    //Groups lanes by roadIdentifier, sideCode, LaneCode, and other lanes on link.
+    //Makes sure that all the lanes in group are connected and there are no gaps in lane selection
     def groupLanes(lanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
       val lanesGrouped = lanes.groupBy(lane => {
         val roadLink = roadLinks.get(lane.linkId)
@@ -124,14 +145,38 @@ object LanePartitioner {
       val (laneGroupsWithNoIdentifier, laneGroupsWithIdentifier) = lanesGrouped.partition(group => group._1._1.isEmpty)
       val lanesGroupedWithContinuing = laneGroupsWithIdentifier.map(lanesOnRoad => lanesOnRoad._2.map(lane => {
         val roadIdentifier = lanesOnRoad._1._1
-        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, lanes, roadLinks)
+        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, lanesOnRoad._2, roadLinks)
         LaneWithContinuingLanes(lane, continuingLanes)
       })).toSeq
 
-      val resultGroups = lanesGroupedWithContinuing.map(lanesOnRoad =>
+      val lanesGroupedWithCorrectSideCode = lanesGroupedWithContinuing.map(lanesOnRoad =>
         handleLanes(lanesOnRoad, allLanes))
-      val noRoadAddress =laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
-      resultGroups ++ noRoadAddress
+
+      val partitionedByAdditional = lanesGroupedWithCorrectSideCode.flatMap(_.groupBy(lane => {
+        val lanesOnLink = lanes.filter(potentialLane => potentialLane.linkId == lane.linkId &&
+          potentialLane.sideCode == lane.sideCode)
+        val laneProperties = lanesOnLink.flatMap(_.laneAttributes.find(_.publicId == "lane_code"))
+        val lanePropValues = laneProperties.map(_.values)
+        val laneCodesOnLink = lanePropValues.flatten.map(_.value.asInstanceOf[Int]).sorted.distinct
+        laneCodesOnLink
+      }).values)
+
+      val partitionedLanesWithContinuing = partitionedByAdditional.map(laneGroup => laneGroup.map(lane => {
+        val roadIdentifier = roadLinks(lane.linkId).roadIdentifier
+        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, laneGroup, roadLinks, true)
+        LaneWithContinuingLanes(lane, continuingLanes)
+      }))
+
+      val connectedGroups = partitionedLanesWithContinuing.flatMap(laneGroup => {
+        val startingLanes = getStartingLanes(laneGroup)
+        val connectedLanes = startingLanes.map(startingLane => {
+          getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
+        }).distinct
+        connectedLanes.map(_.map(_.lane))
+      })
+
+      val noRoadIdentifier = laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
+      connectedGroups ++ noRoadIdentifier
     }
     val (lanesOnOneDirectionLink, lanesOnTwoDirectionLink) = allLanes.partition(lane =>
       roadLinks(lane.linkId).trafficDirection.value != BothDirections.value)
