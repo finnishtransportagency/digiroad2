@@ -7,10 +7,12 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
+import org.apache.http.HttpHost
 
 import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, SSLContext, SSLSession, TrustManager, X509TrustManager}
 import org.apache.http.client.methods.{HttpGet, HttpRequestBase}
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{HttpClientBuilder, HttpClients}
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 /**
@@ -187,9 +189,26 @@ class VKMGeometryTransform {
       + "=" + URLEncoder.encode(entry._2.toString, "UTF-8")).mkString("&")
   }
   
+  def proxyBuilder ():HttpClientBuilder={
+    val properties = new Properties()
+      properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    
+    val proxyHost = properties.getProperty("http.proxyHost")
+    val proxyPort = properties.getProperty("http.proxyPort")
+    val proxyStatus = properties.getProperty("http.proxySet", "false").toBoolean
+    if (proxyStatus){
+      val hostP = new HttpHost(proxyHost,proxyPort.toInt)
+      val routePlanner = new DefaultProxyRoutePlanner(hostP)
+      val clientBuilder = HttpClients.custom()
+      clientBuilder.setRoutePlanner(routePlanner)
+    } else {
+      HttpClientBuilder.create()
+    }
+  }
+  
   private def request(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
-    val client = HttpClientBuilder.create().build()
+    val client = proxyBuilder().build()
     request.addHeader("X-API-Key", auth.getApiKey)
     
     val response = client.execute(request)
