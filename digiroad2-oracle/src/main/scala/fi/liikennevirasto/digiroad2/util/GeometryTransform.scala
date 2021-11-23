@@ -188,16 +188,16 @@ class VKMGeometryTransform {
     paramMap.map(entry => URLEncoder.encode(entry._1, "UTF-8")
       + "=" + URLEncoder.encode(entry._2.toString, "UTF-8")).mkString("&")
   }
-  
-  def proxyBuilder ():HttpClientBuilder={
+
+  def proxyBuilder(): HttpClientBuilder = {
     val properties = new Properties()
-      properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+
     val proxyHost = properties.getProperty("http.proxyHost")
     val proxyPort = properties.getProperty("http.proxyPort")
     val proxyStatus = properties.getProperty("http.proxySet", "false").toBoolean
-    if (proxyStatus){
-      val hostP = new HttpHost(proxyHost,proxyPort.toInt)
+    if (proxyStatus) {
+      val hostP = new HttpHost(proxyHost, proxyPort.toInt)
       val routePlanner = new DefaultProxyRoutePlanner(hostP)
       val clientBuilder = HttpClients.custom()
       clientBuilder.setRoutePlanner(routePlanner)
