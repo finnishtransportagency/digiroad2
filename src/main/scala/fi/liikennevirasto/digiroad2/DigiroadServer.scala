@@ -70,6 +70,10 @@ class OAGProxyServlet extends ProxyServlet {
 class VKMProxyServlet extends ProxyServlet {
   def regex = "/(digiroad|viite)".r
 
+  override def newHttpClient(): HttpClient = {
+    new HttpClient(new SslContextFactory)
+  }
+  
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -87,5 +91,17 @@ class VKMProxyServlet extends ProxyServlet {
     
     proxyRequest.header("X-API-Key", auth.getApiKey)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
+  }
+  override def getHttpClient: HttpClient = {
+    val client = super.getHttpClient
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    if (properties.getProperty("http.proxySet", "false").toBoolean) {
+      val proxy = new HttpProxy(properties.getProperty("http.proxyHost", "localhost"), properties.getProperty("http.proxyPort", "80").toInt)
+      proxy.getExcludedAddresses.addAll(properties.getProperty("http.nonProxyHosts", "").split("|").toList)
+      client.getProxyConfiguration.getProxies.add(proxy)
+      client.setIdleTimeout(60000)
+    }
+    client
   }
 }
