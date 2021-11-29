@@ -1315,4 +1315,31 @@ class LaneServiceSpec extends LaneTestSupporter {
     verifySegment(SideCode.AgainstDigitizing.value, 50, 80, Seq(1, 2))
     verifySegment(SideCode.AgainstDigitizing.value, 80, 100, Seq(1))
   }
+
+  test("Lane Change: Show 1 Add with roadAddress"){
+    runWithRollback {
+      val newLane1 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues1)
+      val newLane21 = newLane1.copy(properties = lanePropertiesValues1)
+      val dateAtThisMoment = DateTime.now()
+
+      ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane21), Set(101L), 2, usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L,101L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+          "MUNICIPALITYCODE" -> BigInt(745),
+          "ROADNUMBER" -> 100,
+          "ROADNAME_FI" -> "Testitie",
+          "VIITE_ROAD_PART_NUMBER" -> 7,
+          "VIITE_ROAD_NUMBER" -> 100,
+          "VIITE_END_ADDR" -> 2000
+        )),
+          RoadLink(101L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map()))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
+
+      lanesChanged.map(_.changeType) should be(Seq(LaneChangeType.Add))
+    }
+  }
 }
