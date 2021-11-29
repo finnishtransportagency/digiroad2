@@ -2,10 +2,11 @@ package fi.liikennevirasto.digiroad2.client
 
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
-
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
@@ -29,7 +30,6 @@ class VKMClient {
   private def DefaultToleranceMeters = 20.0
 
   private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
-  private val oagAuth = new OAGAuthPropertyReader
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
     paramMap.filter(entry => entry._2.nonEmpty).map(entry => URLEncoder.encode(entry._1, "UTF-8")
@@ -43,8 +43,9 @@ class VKMClient {
 
   private def request(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
-    request.addHeader("Authorization", "Basic " + oagAuth.getAuthInBase64)
-    val client = HttpClientBuilder.create().build()
+    request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
+    val client = HttpClientBuilder.create() .setDefaultRequestConfig(RequestConfig.custom()
+      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400)
