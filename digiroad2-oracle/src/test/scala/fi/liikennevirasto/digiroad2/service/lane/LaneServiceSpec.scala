@@ -2,15 +2,16 @@ package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
-import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, RoadAddress, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -27,6 +28,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockLaneDao = MockitoSugar.mock[LaneDao]
   val mockLaneHistoryDao = MockitoSugar.mock[LaneHistoryDao]
+  val mockVKMClient = MockitoSugar.mock[VKMClient]
 
   val laneDao = new LaneDao(mockVVHClient, mockRoadLinkService)
   val laneHistoryDao = new LaneHistoryDao(mockVVHClient, mockRoadLinkService)
@@ -66,6 +68,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override def vkmClient: VKMClient = mockVKMClient
 
   }
 
@@ -85,7 +88,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def polygonTools: PolygonTools = mockPolygonTools
-
+    override def vkmClient: VKMClient = mockVKMClient
   }
 
   val usernameTest = "testuser"
@@ -1341,5 +1344,31 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       lanesChanged.map(_.changeType) should be(Seq(LaneChangeType.Add))
     }
+  }
+  test("LaneCodes should be correct two digit codes") {
+    val laneTowardsDigitizing = PersistedLane(0, 100L, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
+    val laneAgainstDigitizing = PersistedLane(1, 101L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
+
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L))).thenReturn(
+      Seq(RoadLink(100L, Seq(Point(20.0, 20.0), Point(40, 40.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+        "ROADNUMBER" -> 100
+      ))))
+
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(101L))).thenReturn(
+      Seq(RoadLink(101L, Seq(Point(50.0, 50.0), Point(100.0, 100.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+        "ROADNUMBER" -> 101
+      ))))
+
+    when(mockVKMClient.coordToAddress(Point(20.0, 20.0, 0.0), Some(100), None)).thenReturn(RoadAddress(None, 100, 0, Track.Unknown, 0))
+    when(mockVKMClient.coordToAddress(Point(40.0, 40.0, 0.0), Some(100), None)).thenReturn(RoadAddress(None, 100, 0, Track.Unknown, 100))
+
+    when(mockVKMClient.coordToAddress(Point(50.0, 50.0, 0.0), Some(101), None)).thenReturn(RoadAddress(None, 101, 0, Track.Unknown, 0))
+    when(mockVKMClient.coordToAddress(Point(100.0, 100.0, 0.0), Some(101), None)).thenReturn(RoadAddress(None, 101, 0, Track.Unknown, 100))
+
+    val laneTowardsTwoDigit = ServiceWithDao.persistedLaneToTwoDigitLaneCode(laneTowardsDigitizing).get
+    val laneAgainstTwoDigit = ServiceWithDao.persistedLaneToTwoDigitLaneCode(laneAgainstDigitizing).get
+
+    laneTowardsTwoDigit.laneCode should equal(11)
+    laneAgainstTwoDigit.laneCode should equal(21)
   }
 }

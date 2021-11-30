@@ -32,8 +32,6 @@ object LaneUtils {
   lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
-  lazy val laneFiller: LaneFiller = new LaneFiller
-  lazy val vkmClient: VKMClient = new VKMClient
 
 
   lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
@@ -224,33 +222,5 @@ object LaneUtils {
     )
   }
 
-  def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
-    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId)).head
-    val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
-    val roadNumber = roadLink.attributes.get("ROADNUMBER").asInstanceOf[Option[Int]]
-    val roadPartNumber = roadLink.attributes.get("ROADPARTNUMBER").asInstanceOf[Option[Int]]
 
-    roadNumber match {
-      case Some(_) =>
-        val startingPoint = pwLane.endpoints.minBy(_.y)
-        val endingPoint = pwLane.endpoints.maxBy(_.y)
-        val startingPointAddress = vkmClient.coordToAddress(startingPoint, roadNumber, roadPartNumber)
-        val endingPointAddress = vkmClient.coordToAddress(endingPoint, roadNumber, roadPartNumber)
-        val startingPointM = startingPointAddress.addrM
-        val endingPointM = endingPointAddress.addrM
-
-        val firstDigit = pwLane.sideCode match {
-          case 1 => 3
-          case 2 if startingPointM > endingPointM => 2
-          case 2 if startingPointM < endingPointM => 1
-          case 3 if startingPointM > endingPointM => 1
-          case 3 if startingPointM < endingPointM => 2
-        }
-        val oldLaneCode = lane.laneCode.toString
-        val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
-
-        Option(lane.copy(laneCode = newLaneCode))
-      case None => None
-    }
-  }
 }

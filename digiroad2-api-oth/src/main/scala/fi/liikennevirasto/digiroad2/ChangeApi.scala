@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.lane.LaneChange
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
-import fi.liikennevirasto.digiroad2.util.LaneUtils.{roadLinkService, persistedLaneToTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.vallu.ValluStoreStopChangeMessage._
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.{describeEquipments, describeReachability, transformToISODate}
 import org.joda.time.DateTime
@@ -525,11 +524,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     )
 
   def laneChangeLaneToTwoDigitLaneCode(laneChange: LaneChange): Option[LaneChange] = {
-    val twoDigitLane = persistedLaneToTwoDigitLaneCode(laneChange.lane)
+    val twoDigitLane = laneService.persistedLaneToTwoDigitLaneCode(laneChange.lane)
     twoDigitLane match {
       case Some(_) => laneChange.oldLane match {
         case Some(_) =>
-          val twoDigitOldLane = persistedLaneToTwoDigitLaneCode(laneChange.oldLane.get)
+          val twoDigitOldLane = laneService.persistedLaneToTwoDigitLaneCode(laneChange.oldLane.get)
           Some(laneChange.copy(lane = twoDigitLane.get, oldLane = twoDigitOldLane))
         case _ => Some(laneChange.copy(lane = twoDigitLane.get))
       }
