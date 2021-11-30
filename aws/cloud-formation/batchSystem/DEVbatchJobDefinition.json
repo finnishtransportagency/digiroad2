@@ -66,7 +66,7 @@
       },
       {
         "name": "vkmUrl",
-        "value": "http://testioag.vayla.fi"
+        "value": "https://api.vaylapilvi.fi"
       },
       {
         "name": "tierekisteriRestApiEndPoint",
@@ -163,6 +163,10 @@
       {
         "name": "viite.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
+      },
+      {
+        "name": "vkm.apikey",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viitekehysmuunnin"
       }
     ]
   }
