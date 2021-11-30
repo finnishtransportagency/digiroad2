@@ -2350,7 +2350,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     if (missingStartDates(incomingLanes)) halt(BadRequest("Missing required 'start_date' on one or more lanes"))
 
     validateUserRightsForRoadAddress(laneRoadAddressInfo, user)
-    LaneUtils.processNewLanesByRoadAddress(incomingLanes, laneRoadAddressInfo,sideCode, user.username)
+    laneService.processAddLanesByRoadAddress(incomingLanes, laneRoadAddressInfo, sideCode, user.username)
   }
 
   get("/lane/:linkId/:sideCode") {
