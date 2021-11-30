@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
@@ -29,6 +30,7 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
+  override def vkmClient: VKMClient = new VKMClient
 
 }
 
@@ -44,6 +46,7 @@ trait LaneOperations {
   def eventBus: DigiroadEventBus
   def polygonTools: PolygonTools
   def laneFiller: LaneFiller = new LaneFiller
+  def vkmClient: VKMClient
 
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -863,4 +866,33 @@ trait LaneOperations {
     dao.deleteEntryLanes(lanesWithHistoryId.map(_._1))
   }
 
+  def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
+    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId)).head
+    val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
+    val roadNumber = roadLink.attributes.get("ROADNUMBER").asInstanceOf[Option[Int]]
+    val roadPartNumber = roadLink.attributes.get("ROADPARTNUMBER").asInstanceOf[Option[Int]]
+
+    roadNumber match {
+      case Some(_) =>
+        val startingPoint = pwLane.endpoints.minBy(_.y)
+        val endingPoint = pwLane.endpoints.maxBy(_.y)
+        val startingPointAddress = vkmClient.coordToAddress(startingPoint, roadNumber, roadPartNumber)
+        val endingPointAddress = vkmClient.coordToAddress(endingPoint, roadNumber, roadPartNumber)
+        val startingPointM = startingPointAddress.addrM
+        val endingPointM = endingPointAddress.addrM
+
+        val firstDigit = pwLane.sideCode match {
+          case 1 => 3
+          case 2 if startingPointM > endingPointM => 2
+          case 2 if startingPointM < endingPointM => 1
+          case 3 if startingPointM > endingPointM => 1
+          case 3 if startingPointM < endingPointM => 2
+        }
+        val oldLaneCode = lane.laneCode.toString
+        val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
+
+        Option(lane.copy(laneCode = newLaneCode))
+      case None => None
+    }
+  }
 }
