@@ -1346,8 +1346,8 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
   test("LaneCodes should be correct two digit codes") {
-    val laneTowardsDigitizing = PersistedLane(0, 100L, 2, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
-    val laneAgainstDigitizing = PersistedLane(1, 101L, 3, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
+    val laneTowardsDigitizing = PersistedLane(0, 100L, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
+    val laneAgainstDigitizing = PersistedLane(1, 101L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
 
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L))).thenReturn(
       Seq(RoadLink(100L, Seq(Point(20.0, 20.0), Point(40, 40.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
