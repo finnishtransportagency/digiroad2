@@ -802,7 +802,7 @@ trait LaneOperations {
     }
   }
 
-  def processAddLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+  def processLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    username: String): Set[Long] = {
     withDynTransaction {
       val filteredRoadAddresses = LaneUtils.getRoadAddressToProcess(laneRoadAddressInfo)
@@ -813,6 +813,11 @@ trait LaneOperations {
 
       val roadLinkIds = filteredRoadAddresses.map(_.linkId)
       val linksWithSideCodes = getLinksWithCorrectSideCodes(selectedLane, roadLinkIds, newTransaction = false)
+
+      // Throw error if links are not consecutive
+      if (linksWithSideCodes.size != roadLinkIds.size)
+        throw new InvalidParameterException(s"All links in selection does not have road address.")
+
       val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
@@ -849,10 +854,7 @@ trait LaneOperations {
       }
 
       // Create lanes
-      if (allLanesToCreate.nonEmpty)
-        allLanesToCreate.map(createWithoutTransaction(_, username))
-      else
-        throw new InvalidParameterException(s"All links in selection does not have road address.")
+      allLanesToCreate.map(createWithoutTransaction(_, username))
     }
   }
 
