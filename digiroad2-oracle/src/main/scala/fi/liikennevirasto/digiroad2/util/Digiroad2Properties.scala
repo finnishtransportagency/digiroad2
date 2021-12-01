@@ -16,6 +16,7 @@ trait Digiroad2Properties {
   val viiteRestApiEndPoint: String
   val tierekisteriRestApiEndPoint: String
   val vkmUrl: String
+  val vkmApiKey: String
   val valluServerSengindEnabled: Boolean
   val valluServerAddress: String
   val cacheHostname: String
@@ -72,6 +73,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val sesPassword: String = scala.util.Properties.envOrElse("ses.password", null)
   val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
+  val vkmApiKey: String = scala.util.Properties.envOrElse("vkm.apikey", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
   val valluServerAddress: String = scala.util.Properties.envOrElse("vallu.server.address", null)
   val feedbackAssetsEndPoint: String = scala.util.Properties.envOrElse("feedbackAssetsEndPoint", null)
@@ -151,6 +153,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val viiteRestApiEndPoint: String = envProps.getProperty("viiteRestApiEndPoint")
   override val tierekisteriRestApiEndPoint: String = envProps.getProperty("tierekisteriRestApiEndPoint")
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
+  override val vkmApiKey: String = envProps.getProperty("vkm.apikey")
   override val valluServerSengindEnabled: Boolean = envProps.getProperty("vallu.server.sending_enabled", "true").toBoolean
   override val valluServerAddress: String = envProps.getProperty("vallu.server.address")
   override val cacheHostname: String = envProps.getProperty("cacheHostname", null)
@@ -230,6 +233,7 @@ object Digiroad2Properties {
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
   lazy val tierekisteriRestApiEndPoint: String = properties.tierekisteriRestApiEndPoint
   lazy val vkmUrl: String = properties.vkmUrl
+  lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val valluServerSendingEnabled: Boolean = properties.valluServerSengindEnabled
   lazy val valluServerAddress: String = properties.valluServerAddress
   lazy val cacheHostname: String = properties.cacheHostname

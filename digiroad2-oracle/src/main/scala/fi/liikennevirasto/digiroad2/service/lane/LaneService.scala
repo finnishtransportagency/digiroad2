@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
@@ -29,6 +30,7 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
+  override def vkmClient: VKMClient = new VKMClient
 
 }
 
@@ -44,6 +46,7 @@ trait LaneOperations {
   def eventBus: DigiroadEventBus
   def polygonTools: PolygonTools
   def laneFiller: LaneFiller = new LaneFiller
+  def vkmClient: VKMClient
 
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -356,23 +359,23 @@ trait LaneOperations {
 
     val viiteInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks)
     val vkmInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))
-    val roadLinksWithRoadAddressInfo = viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
-
+    val roadLinksWithRoadAddressInfo = viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation.filter(_.attributes.contains("TEMP_START_ADDR"))
+    val historyLanesWithRoadAddress = historyLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
 
     val upToDateLaneChanges = upToDateLanes.flatMap{ upToDate =>
       val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == upToDate.linkId)
-      val relevantHistory = historyLanes.find(history => history.newId == upToDate.id)
+      val relevantHistory = historyLanesWithRoadAddress.find(history => history.newId == upToDate.id)
 
       relevantHistory match {
         case Some(history) =>
-          val uptoDateLastModification = historyLanes.filter(historyLane =>
+          val uptoDateLastModification = historyLanesWithRoadAddress.filter(historyLane =>
             history.newId == historyLane.oldId && historyLane.newId == 0 &&
               (historyLane.historyCreatedDate.isAfter(history.historyCreatedDate) || historyLane.historyCreatedDate.isEqual(history.historyCreatedDate)))
 
           if (uptoDateLastModification.nonEmpty && upToDate.laneCode != uptoDateLastModification.minBy(_.historyCreatedDate.getMillis).laneCode)
             Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification.minBy(_.historyCreatedDate.getMillis))), LaneChangeType.LaneCodeTransfer, roadLink))
 
-          else if (historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) == 2)
+          else if (historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) == 2)
             Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink))
 
           else if (upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure)
@@ -388,7 +391,7 @@ trait LaneOperations {
           Some(LaneChange(upToDate, None, LaneChangeType.Add, roadLink))
 
         case _ =>
-          val historyRelatedLanes = historyLanes.filter(_.oldId == upToDate.id)
+          val historyRelatedLanes = historyLanesWithRoadAddress.filter(_.oldId == upToDate.id)
 
           if(historyRelatedLanes.nonEmpty){
             val historyLane = historyLaneToPersistedLane(historyRelatedLanes.maxBy(_.historyCreatedDate.getMillis))
@@ -403,12 +406,12 @@ trait LaneOperations {
       }
     }
 
-    val expiredLanes = historyLanes.filter(lane => lane.expired && lane.newId == 0).map{ history =>
+    val expiredLanes = historyLanesWithRoadAddress.filter(lane => lane.expired && lane.newId == 0).map{ history =>
       val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == history.linkId)
       LaneChange(historyLaneToPersistedLane(history), None, LaneChangeType.Expired, roadLink)
     }
 
-    val historyLaneChanges = historyLanes.groupBy(_.oldId).flatMap{ case (_, lanes) =>
+    val historyLaneChanges = historyLanesWithRoadAddress.groupBy(_.oldId).flatMap{ case (_, lanes) =>
       val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == lanes.head.linkId)
 
       val lanesSorted = lanes.sortBy(- _.historyCreatedDate.getMillis)
@@ -420,10 +423,10 @@ trait LaneOperations {
 
         val laneChangeReturned = {
           if (relevantLanes.isEmpty) {
-            val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
+            val newIdRelation = historyLanesWithRoadAddress.find(_.newId == laneAsPersistedLane.id)
 
             newIdRelation match {
-              case Some(relation) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) == 2 =>
+              case Some(relation) if historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) == 2 =>
                 Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Divided, roadLink))
 
               case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
@@ -959,4 +962,33 @@ trait LaneOperations {
     dao.deleteEntryLanes(lanesWithHistoryId.map(_._1))
   }
 
+  def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
+    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId)).head
+    val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
+    val roadNumber = roadLink.attributes.get("ROADNUMBER").asInstanceOf[Option[Int]]
+    val roadPartNumber = roadLink.attributes.get("ROADPARTNUMBER").asInstanceOf[Option[Int]]
+
+    roadNumber match {
+      case Some(_) =>
+        val startingPoint = pwLane.endpoints.minBy(_.y)
+        val endingPoint = pwLane.endpoints.maxBy(_.y)
+        val startingPointAddress = vkmClient.coordToAddress(startingPoint, roadNumber, roadPartNumber)
+        val endingPointAddress = vkmClient.coordToAddress(endingPoint, roadNumber, roadPartNumber)
+        val startingPointM = startingPointAddress.addrM
+        val endingPointM = endingPointAddress.addrM
+
+        val firstDigit = pwLane.sideCode match {
+          case 1 => 3
+          case 2 if startingPointM > endingPointM => 2
+          case 2 if startingPointM < endingPointM => 1
+          case 3 if startingPointM > endingPointM => 1
+          case 3 if startingPointM < endingPointM => 2
+        }
+        val oldLaneCode = lane.laneCode.toString
+        val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
+
+        Option(lane.copy(laneCode = newLaneCode))
+      case None => None
+    }
+  }
 }

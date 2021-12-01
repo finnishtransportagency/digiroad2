@@ -96,7 +96,6 @@ class OAGProxyServlet extends ProxyServlet {
 
 class VKMProxyServlet extends ProxyServlet {
   def regex = "/(digiroad(-dev)?)".r
-  private val oagAuth = new OAGAuthPropertyReader
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def newHttpClient(): HttpClient = {
@@ -120,7 +119,7 @@ class VKMProxyServlet extends ProxyServlet {
     proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
     proxyRequest.getHeaders.remove("X-Iam-Identity")
     
-    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
+    proxyRequest.header("X-API-Key", Digiroad2Properties.vkmApiKey)
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
