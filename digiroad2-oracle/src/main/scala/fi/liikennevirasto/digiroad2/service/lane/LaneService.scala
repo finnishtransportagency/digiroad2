@@ -710,7 +710,7 @@ trait LaneOperations {
    * @return                Map of link ids with correct side code
    */
   def getLinksWithCorrectSideCodes(selectedLane: PersistedLane, linkIds: Set[Long],
-                                   newTransaction: Boolean = true): Map[Long, Int] = {
+                                   newTransaction: Boolean = true): Map[Long, SideCode] = {
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, newTransaction)
 
     // Determine side codes with existing main lanes
@@ -743,15 +743,9 @@ trait LaneOperations {
 
     val linksWithSideCode =
       if (selectedWithinAdjusted == null || selectedWithinAdjusted.sideCode == selectedLane.sideCode)
-        lanesWithAdjustedSideCode.map(lane => (lane.linkId, lane.sideCode))
+        lanesWithAdjustedSideCode.map(lane => (lane.linkId, SideCode.apply(lane.sideCode)))
       else
-        lanesWithAdjustedSideCode.map(lane => {
-          lane.sideCode match {
-            case 2 => (lane.linkId, 3)
-            case 3 => (lane.linkId, 2)
-            case _ => (lane.linkId, lane.sideCode)
-          }
-        })
+        lanesWithAdjustedSideCode.map(lane => (lane.linkId, SideCode.switch(SideCode.apply(lane.sideCode))))
     linksWithSideCode.toMap
   }
 
@@ -803,7 +797,7 @@ trait LaneOperations {
   }
 
   def processLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-                                   username: String): Set[Long] = {
+                                username: String): Set[Long] = {
     withDynTransaction {
       val filteredRoadAddresses = LaneUtils.getRoadAddressToProcess(laneRoadAddressInfo)
       //Get only the lanes to create
@@ -831,8 +825,8 @@ trait LaneOperations {
 
           val persistedLane =
             (start, end, fixedSideCode) match {
-            case (start: Double, end: Double, Some(sideCode: Int)) =>
-              Some(PersistedLane(0, road.linkId, sideCode, laneCode, road.municipalityCode.getOrElse(0).toLong,
+            case (start: Double, end: Double, Some(sideCode: SideCode)) =>
+              Some(PersistedLane(0, road.linkId, sideCode.value, laneCode, road.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
             case _ => None
@@ -842,12 +836,12 @@ trait LaneOperations {
             // Move possible existing lanes to history if exists
             val newLane = persistedLane.get
             val lanesExists = existingLanes.filter(pLane =>
-              pLane.linkId == road.linkId && pLane.sideCode == fixedSideCode.get && pLane.laneCode == laneCode &&
+              pLane.linkId == road.linkId && pLane.sideCode == fixedSideCode.get.value && pLane.laneCode == laneCode &&
               ((newLane.startMeasure >= pLane.startMeasure && newLane.startMeasure < pLane.endMeasure) ||
                 (newLane.endMeasure > pLane.startMeasure && newLane.endMeasure <= pLane.endMeasure))
             )
             if (lanesExists.nonEmpty)
-              lanesExists.foreach(existing => moveToHistory(existing.id, None,true, true, username))
+              lanesExists.foreach(existing => moveToHistory(existing.id, None, true, true, username))
           }
           persistedLane
         }
