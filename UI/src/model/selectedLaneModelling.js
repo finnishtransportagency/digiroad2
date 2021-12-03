@@ -235,6 +235,10 @@
       var sideCode = _.head(self.selection).sideCode;
 
       var lanes = omitUnrelevantProperties(self.selection);
+      var lanesToBeExpired = assetsToBeExpired.flat();
+      lanesToBeExpired.forEach(function(lane){
+        lane.properties = lane.value;
+      });
 
       var payload;
       if(isAddByRoadAddressActive) {
@@ -254,7 +258,7 @@
         payload = {
           linkIds: linkIds,
           sideCode: sideCode,
-          lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired))
+          lanes: lanes.concat(lanesToBeExpired)
         };
       }
 
@@ -368,9 +372,13 @@
 
       //expiredLane could be modified by the user so we need to fetch the original
       var originalExpiredLane = _.find(lanesFetched, {'id': expiredLane.id});
-      originalExpiredLane.isExpired = true;
-      assetsToBeExpired.push(originalExpiredLane);
-
+      originalExpiredLane.value = originalExpiredLane.properties;
+      var expiredGroup = collection.getGroup(originalExpiredLane);
+      expiredGroup.forEach(function(lane){
+        lane.isExpired = true;
+        lane.properties = lane.value;
+        assetsToBeExpired.push(lane);
+      });
       reorganizeLanes(laneNumber);
       self.dirty = true;
     };
