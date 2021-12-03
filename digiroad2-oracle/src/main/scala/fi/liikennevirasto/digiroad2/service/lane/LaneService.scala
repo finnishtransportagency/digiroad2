@@ -76,7 +76,16 @@ trait LaneOperations {
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
 
     val partitionedLanes = LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
-    (partitionedLanes, roadLinksWithoutLanes)
+
+    val lanes = partitionedLanes.map(_.filter { lane =>
+      getPropertyValue(lane, "lane_code") match {
+        case Some(laneValue) =>
+          LaneNumberOneDigit.isMainLane(laneValue.value.asInstanceOf[Int])
+        case _ => false
+      }
+    })
+
+    (lanes, roadLinksWithoutLanes)
   }
 
   /**
@@ -701,9 +710,10 @@ trait LaneOperations {
     * @param linkIds  linkIds where are the lanes to be expired
     * @param username username of the one who expired the lanes
     */
-  def deleteMultipleLanes(laneIds: Set[Long], username: String): Seq[Long] = {
-    if (laneIds.nonEmpty) {
-      laneIds.map(moveToHistory(_, None, true, true, username)).toSeq
+  def deleteMultipleLanes(laneCodes: Set[Int], linkIds: Set[Long], username: String): Seq[Long] = {
+    if (laneCodes.nonEmpty) {
+      val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodes.toSeq)
+      allExistingLanes.map(_.id).map(moveToHistory(_, None, true, true, username))
     } else
       Seq()
   }
@@ -725,11 +735,11 @@ trait LaneOperations {
                       sideCode: Int, username: String): Seq[Long] = {
     withDynTransaction {
       val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode)
-      val laneIdsToBeDeleted = actionsLanes.lanesToDelete.map(_.id)
+      val laneCodesToBeDeleted = actionsLanes.lanesToDelete.map(getLaneCode(_).toInt)
 
       create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username) ++
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
-      deleteMultipleLanes(laneIdsToBeDeleted, username) ++
+      deleteMultipleLanes(laneCodesToBeDeleted, linkIds, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
     }
   }
