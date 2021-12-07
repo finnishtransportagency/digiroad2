@@ -885,11 +885,12 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       //Delete sublane 12 and verify the movement to history tables
-      val subLane2ToExpire = Seq(NewLane(newSubLaneIdLink100, 0, 500, 745, true, false, lanePropertiesValues2))
+      val subLane2ToExpireA = Seq(NewLane(newSubLaneIdLink100, 0, 500, 745, true, false, lanePropertiesValues2))
+      val subLane2ToExpireB= Seq(NewLane(newSubLaneIdLink101, 0, 500, 745, true, false, lanePropertiesValues2))
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane1 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneIdLink100))
-      ServiceWithDao.processNewLanes((currentMainLane1 ++ subLane2ToExpire).toSet, Set(100L, 101L), 1, usernameTest)
+      ServiceWithDao.processNewLanes((currentMainLane1 ++ subLane2ToExpireA ++ subLane2ToExpireB).toSet, Set(100L, 101L), 1, usernameTest)
       val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(1, 2), false)
       currentLanesAfterDelete.size should be(2)
 
@@ -1101,14 +1102,14 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Lane Change: Show 2 Add and 1 expire"){
     runWithRollback {
-      val newLane1 = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues1)
-      val newLane2 = newLane1.copy(properties = lanePropertiesValues2)
+      val newLane1 = NewLane(0L, 0, 100, 745, false, false, lanePropertiesValues1)
+      val newLane2 = newLane1.copy(id = 1L, properties = lanePropertiesValues2)
       val dateAtThisMoment = DateTime.now()
 
       ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest)
       val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest).head
 
-      ServiceWithDao.deleteMultipleLanes(Set(2), Set(100L), usernameTest)
+      ServiceWithDao.deleteMultipleLanes(Set(lane2Id), usernameTest)
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(

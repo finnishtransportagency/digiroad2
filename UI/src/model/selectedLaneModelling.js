@@ -368,9 +368,16 @@
 
       //expiredLane could be modified by the user so we need to fetch the original
       var originalExpiredLane = _.find(lanesFetched, {'id': expiredLane.id});
-      originalExpiredLane.isExpired = true;
-      assetsToBeExpired.push(originalExpiredLane);
-
+      if (linksSelected.length > 1) {
+        var expiredGroup = collection.getGroup(originalExpiredLane);
+        expiredGroup.forEach(function (lane) {
+          lane.isExpired = true;
+          assetsToBeExpired.push(lane);
+        });
+      } else {
+        originalExpiredLane.isExpired = true;
+        assetsToBeExpired.push(originalExpiredLane);
+      }
       reorganizeLanes(laneNumber);
       self.dirty = true;
     };
