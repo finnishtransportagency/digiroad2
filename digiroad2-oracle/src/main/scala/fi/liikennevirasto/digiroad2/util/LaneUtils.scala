@@ -193,8 +193,8 @@ object LaneUtils {
 
     //Fix the start and end point when the roadAddress SideCode is AgainstDigitizing
     (start, end) match {
-      case (_: Double , e: Double) =>  if (road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.AgainstDigitizing)
-        (road.endMValue - e, road.endMValue )
+      case (s: Double , e: Double) =>  if (road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.AgainstDigitizing)
+        (road.endMValue - e, road.endMValue - s)
       else
         (start, end)
       case _  => (None, None)
