@@ -810,7 +810,7 @@ trait LaneOperations {
 
       // Throw error if links are not consecutive
       if (linksWithSideCodes.size != roadLinkIds.size)
-        throw new InvalidParameterException(s"All links in selection does not have road address.")
+        throw new InvalidParameterException(s"All links in selection do not have road address")
 
       val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
 
@@ -823,27 +823,21 @@ trait LaneOperations {
           val fixedSideCode = linksWithSideCodes.get(road.linkId)
           val (start, end) = LaneUtils.calculateStartAndEndPoint(road, laneRoadAddressInfo)
 
-          val persistedLane =
-            (start, end, fixedSideCode) match {
+          (start, end, fixedSideCode) match {
             case (start: Double, end: Double, Some(sideCode: SideCode)) =>
+              val lanesExists = existingLanes.filter(pLane =>
+                pLane.linkId == road.linkId && pLane.sideCode == sideCode.value && pLane.laneCode == laneCode &&
+                ((start >= pLane.startMeasure && start < pLane.endMeasure) ||
+                  (end > pLane.startMeasure && end <= pLane.endMeasure))
+              )
+              if (lanesExists.nonEmpty)
+                throw new InvalidParameterException(s"Lane with given lane code already exists in the selection")
+
               Some(PersistedLane(0, road.linkId, sideCode.value, laneCode, road.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
             case _ => None
           }
-
-          if (persistedLane.isDefined) {
-            // Move possible existing lanes to history if exists
-            val newLane = persistedLane.get
-            val lanesExists = existingLanes.filter(pLane =>
-              pLane.linkId == road.linkId && pLane.sideCode == fixedSideCode.get.value && pLane.laneCode == laneCode &&
-              ((newLane.startMeasure >= pLane.startMeasure && newLane.startMeasure < pLane.endMeasure) ||
-                (newLane.endMeasure > pLane.startMeasure && newLane.endMeasure <= pLane.endMeasure))
-            )
-            if (lanesExists.nonEmpty)
-              lanesExists.foreach(existing => moveToHistory(existing.id, None, true, true, username))
-          }
-          persistedLane
         }
       }
 
