@@ -21,8 +21,8 @@
     self.getGroup = function(segment) {
       return _.find(self.linearAssets, function(linearAssetGroup) {
         return _.some(linearAssetGroup, function(la) {
-          var laneLaneCode = _.head(Property.getPropertyByPublicId(la.value, 'lane_code').values).value;
-          var segmentLaneCode = _.head(Property.getPropertyByPublicId(segment.value, 'lane_code').values).value;
+          var laneLaneCode = _.head(Property.getPropertyByPublicId(la.properties, 'lane_code').values).value;
+          var segmentLaneCode = _.head(Property.getPropertyByPublicId(segment.properties, 'lane_code').values).value;
           return la.linkId == segment.linkId && laneLaneCode == segmentLaneCode && la.sideCode == segment.sideCode;});
       });
     };

@@ -235,9 +235,6 @@
       var sideCode = _.head(self.selection).sideCode;
 
       var lanes = omitUnrelevantProperties(self.selection);
-      assetsToBeExpired.forEach(function(lane){
-        lane.properties = lane.value;
-      });
 
       var payload;
       if(isAddByRoadAddressActive) {
@@ -375,7 +372,6 @@
       var expiredGroup = collection.getGroup(originalExpiredLane);
       expiredGroup.forEach(function(lane){
         lane.isExpired = true;
-        lane.properties = lane.value;
         assetsToBeExpired.push(lane);
       });
       reorganizeLanes(laneNumber);
