@@ -275,12 +275,14 @@ trait LaneOperations {
       None
   }
 
-  def fetchExistingMainLanesByRoadLinks( roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLane] = {
+  def fetchExistingMainLanesByRoadLinks( roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long], newTransaction: Boolean = true): Seq[PersistedLane] = {
     val linkIds = roadLinks.map(_.linkId)
 
-    withDynTransaction {
-      dao.fetchLanesByLinkIds( linkIds ++ removedLinkIds,mainLanes = true)
-    }.filterNot(_.expired)
+    if (newTransaction)
+      withDynTransaction {
+        dao.fetchLanesByLinkIds( linkIds ++ removedLinkIds,mainLanes = true)
+      }.filterNot(_.expired)
+    else dao.fetchLanesByLinkIds( linkIds ++ removedLinkIds,mainLanes = true).filterNot(_.expired)
   }
 
   def fetchExistingLanesByLinkIds(linkIds: Seq[Long], removedLinkIds: Seq[Long] = Seq()): Seq[PersistedLane] = {
@@ -289,10 +291,12 @@ trait LaneOperations {
     }.filterNot(_.expired)
   }
 
-  def fetchAllLanesByLinkIds(linkIds: Seq[Long]): Seq[PersistedLane] = {
-    withDynTransaction {
-      dao.fetchAllLanesByLinkIds(linkIds)
-    }
+  def fetchAllLanesByLinkIds(linkIds: Seq[Long], newTransaction: Boolean = true): Seq[PersistedLane] = {
+    if (newTransaction)
+      withDynTransaction {
+        dao.fetchAllLanesByLinkIds(linkIds)
+      }
+    else dao.fetchLanesByLinkIds(linkIds)
   }
 
   def fetchExistingLanesByLinksIdAndSideCode(linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
@@ -689,7 +693,52 @@ trait LaneOperations {
       }
   }
 
+  /**
+   * Determine links with correct sideCode by selected lane's id
+   * @param selectedLane    Lane we use to determine side code to other links
+   * @param linkIds         Set of continuing link ids
+   * @param newTransaction  Boolean
+   * @return                Map of link ids with correct side code
+   */
+  def getLinksWithCorrectSideCodes(selectedLane: PersistedLane, linkIds: Set[Long],
+                                   newTransaction: Boolean = true): Map[Long, SideCode] = {
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, newTransaction)
 
+    // Determine side codes with existing main lanes
+    val lanes = fetchExistingMainLanesByRoadLinks(roadLinks, Seq(), newTransaction)
+    val pieceWiseLanes = lanes.flatMap(lane => {
+      val link = roadLinks.filter(_.linkId == lane.linkId).head
+      laneFiller.toLPieceWiseLane(Seq(lane), link)
+    })
+
+    val lanesOfInterest = pieceWiseLanes.filter(pieceWise => {
+      val link = roadLinks.filter(_.linkId == pieceWise.linkId).head
+      link.trafficDirection match {
+        case TrafficDirection.BothDirections =>
+          if (pieceWise.sideCode == selectedLane.sideCode) true
+          else false
+        case _ => true
+      }
+    })
+    val lanesWithContinuing = lanesOfInterest.map(lane => {
+      // Add to list if lanes have same endpoint and that tested lane is not the lane we are comparing to
+      val continuingFromLane = lanesOfInterest.filter(continuing =>
+        continuing.endpoints.map(_.round()).exists(lane.endpoints.map(_.round()).contains) &&
+          continuing.id != lane.id
+      )
+      LanePartitioner.LaneWithContinuingLanes(lane, continuingFromLane)
+    })
+
+    val lanesWithAdjustedSideCode = LanePartitioner.handleLanes(lanesWithContinuing, pieceWiseLanes)
+    val selectedWithinAdjusted = lanesWithAdjustedSideCode.find(_.linkId == selectedLane.linkId)
+    val changeSideCode = selectedWithinAdjusted.isDefined && selectedWithinAdjusted.get.sideCode != selectedLane.sideCode
+
+    lanesWithAdjustedSideCode.map(lane => {
+      val sideCode = if (changeSideCode) SideCode.switch(SideCode.apply(lane.sideCode))
+                     else SideCode.apply(lane.sideCode)
+      (lane.linkId, sideCode)
+    }).toMap
+  }
 
   def updatePersistedLaneAttributes( id: Long, attributes: Seq[LaneProperty], username: String): Unit = {
     attributes.foreach{ prop =>
@@ -734,6 +783,56 @@ trait LaneOperations {
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
       deleteMultipleLanes(laneIdsToBeDeleted, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+    }
+  }
+
+  def processLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+                                username: String): Set[Long] = {
+    withDynTransaction {
+      val filteredRoadAddresses = LaneUtils.getRoadAddressToProcess(laneRoadAddressInfo)
+      //Get only the lanes to create
+      val lanesToInsert = newLanes.filter(_.id == 0)
+      val clickedMainLane = newLanes.filter(_.id != 0).head
+      val selectedLane = getPersistedLanesByIds(Set(clickedMainLane.id), newTransaction = false).head
+
+      val roadLinkIds = filteredRoadAddresses.map(_.linkId)
+      val linksWithSideCodes = getLinksWithCorrectSideCodes(selectedLane, roadLinkIds, newTransaction = false)
+
+      // Throw error if links are not consecutive
+      if (linksWithSideCodes.size != roadLinkIds.size)
+        throw new InvalidParameterException(s"All links in selection do not have road address")
+
+      val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
+
+      val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
+        val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+
+        lanesToInsert.flatMap { lane =>
+          val laneCode = getLaneCode(lane).toInt
+          validateStartDate(lane, laneCode)
+          val fixedSideCode = linksWithSideCodes.get(road.linkId)
+          val (start, end) = LaneUtils.calculateStartAndEndPoint(road, laneRoadAddressInfo)
+
+          (start, end, fixedSideCode) match {
+            case (start: Double, end: Double, Some(sideCode: SideCode)) =>
+              val lanesExists = existingLanes.filter(pLane =>
+                pLane.linkId == road.linkId && pLane.sideCode == sideCode.value && pLane.laneCode == laneCode &&
+                ((start >= pLane.startMeasure && start < pLane.endMeasure) ||
+                  (end > pLane.startMeasure && end <= pLane.endMeasure))
+              )
+              if (lanesExists.nonEmpty)
+                throw new InvalidParameterException(s"Lane with given lane code already exists in the selection")
+
+              Some(PersistedLane(0, road.linkId, sideCode.value, laneCode, road.municipalityCode.getOrElse(0).toLong,
+                start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
+                vvhTimeStamp, None, lane.properties))
+            case _ => None
+          }
+        }
+      }
+
+      // Create lanes
+      allLanesToCreate.map(createWithoutTransaction(_, username))
     }
   }
 
