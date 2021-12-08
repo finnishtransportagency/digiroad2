@@ -739,14 +739,14 @@ trait LaneOperations {
     })
 
     val lanesWithAdjustedSideCode = LanePartitioner.handleLanes(lanesWithContinuing, pieceWiseLanes)
-    val selectedWithinAdjusted = lanesWithAdjustedSideCode.find(_.linkId == selectedLane.linkId).orNull
+    val selectedWithinAdjusted = lanesWithAdjustedSideCode.find(_.linkId == selectedLane.linkId)
+    val changeSideCode = selectedWithinAdjusted.isDefined && selectedWithinAdjusted.get.sideCode != selectedLane.sideCode
 
-    val linksWithSideCode =
-      if (selectedWithinAdjusted == null || selectedWithinAdjusted.sideCode == selectedLane.sideCode)
-        lanesWithAdjustedSideCode.map(lane => (lane.linkId, SideCode.apply(lane.sideCode)))
-      else
-        lanesWithAdjustedSideCode.map(lane => (lane.linkId, SideCode.switch(SideCode.apply(lane.sideCode))))
-    linksWithSideCode.toMap
+    lanesWithAdjustedSideCode.map(lane => {
+      val sideCode = if (changeSideCode) SideCode.switch(SideCode.apply(lane.sideCode))
+                     else SideCode.apply(lane.sideCode)
+      (lane.linkId, sideCode)
+    }).toMap
   }
 
   def updatePersistedLaneAttributes( id: Long, attributes: Seq[LaneProperty], username: String): Unit = {
