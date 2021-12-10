@@ -133,9 +133,25 @@ object LanePartitioner {
   // be geometrically connected together)
   def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
 
+    def groupAdditionalLanes(mainLaneGroups: Seq[Seq[PieceWiseLane]], allAdditionalLanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
+      mainLaneGroups.flatMap(mainLaneGroup => {
+        val mainLaneLinkIdsAndSideCodes = mainLaneGroup.map(lane => (lane.linkId, lane.sideCode))
+        val additionalLanesOnLinks = allAdditionalLanes.filter(lane => mainLaneLinkIdsAndSideCodes.map(_._1).contains(lane.linkId))
+        val lanesWithCorrectSideCode = additionalLanesOnLinks.filter(lane => {
+          val linkIdAndSideCode = (lane.linkId, lane.sideCode)
+          mainLaneLinkIdsAndSideCodes.contains(linkIdAndSideCode)
+        })
+        val additionalLanesGroupedByLaneCode = lanesWithCorrectSideCode.groupBy(additionalLane => {
+          val laneCode = additionalLane.laneAttributes.find(_.publicId == "lane_code")
+          laneCode
+        })
+        additionalLanesGroupedByLaneCode.values.toSeq
+      })
+    }
+
     //Groups lanes by roadIdentifier, sideCode, LaneCode, and other lanes on link.
     //Makes sure that all the lanes in group are connected and there are no gaps in lane selection
-    def groupLanes(lanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
+    def groupMainLanes(lanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
       val lanesGrouped = lanes.groupBy(lane => {
         val roadLink = roadLinks.get(lane.linkId)
         val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
@@ -153,7 +169,7 @@ object LanePartitioner {
         handleLanes(lanesOnRoad, allLanes))
 
       val partitionedByAdditional = lanesGroupedWithCorrectSideCode.flatMap(_.groupBy(lane => {
-        val lanesOnLink = lanes.filter(potentialLane => potentialLane.linkId == lane.linkId &&
+        val lanesOnLink = allLanes.filter(potentialLane => potentialLane.linkId == lane.linkId &&
           potentialLane.sideCode == lane.sideCode)
         val laneProperties = lanesOnLink.flatMap(_.laneAttributes.find(_.publicId == "lane_code"))
         val lanePropValues = laneProperties.map(_.values)
@@ -178,8 +194,14 @@ object LanePartitioner {
       val noRoadIdentifier = laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
       connectedGroups ++ noRoadIdentifier
     }
-    val (lanesOnOneDirectionLink, lanesOnTwoDirectionLink) = allLanes.partition(lane =>
+    val (allMainLanes, allAdditionalLanes) = allLanes.partition(lane => {
+      val laneCode = lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]
+      LaneNumberOneDigit.isMainLane(laneCode)
+    })
+    val (lanesOnOneDirectionLink, lanesOnTwoDirectionLink) = allMainLanes.partition(lane =>
       roadLinks(lane.linkId).trafficDirection.value != BothDirections.value)
-    groupLanes(lanesOnOneDirectionLink) ++ groupLanes(lanesOnTwoDirectionLink)
+    val mainLaneGroups = groupMainLanes(lanesOnOneDirectionLink) ++ groupMainLanes(lanesOnTwoDirectionLink)
+    val additionalLaneGroups = groupAdditionalLanes(mainLaneGroups, allAdditionalLanes)
+    mainLaneGroups ++ additionalLaneGroups
   }
 }

@@ -637,7 +637,7 @@ trait LaneOperations {
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def create(newLanes: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  def create(newLanes: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, sideCodesForLinkIds: Seq[SideCodesForLinkIds] = Seq(), vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
 
     if (newLanes.isEmpty || linkIds.isEmpty)
       return Seq()
@@ -662,7 +662,7 @@ trait LaneOperations {
       } else {
         // If we have more than 1 linkId than we have a chain selected
         // Lanes will be created with the size of the link
-        val viiteRoadLinks = LaneUtils.viiteClient.fetchAllByLinkIds(linkIds.toSeq)
+        val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, false)
                                                   .groupBy(_.linkId)
 
         val result = linkIds.map { linkId =>
@@ -672,14 +672,32 @@ trait LaneOperations {
             val laneCode = getLaneCode(newLane)
             validateStartDateOneDigit(newLane, laneCode.toInt)
 
-            val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
-                            viiteRoadLinks(linkId).head
+            val roadLink = if (vvhRoadLinks(linkId).nonEmpty)
+                            vvhRoadLinks(linkId).head
                            else
                             throw new InvalidParameterException(s"No RoadLink found: $linkId")
 
-            val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
-                                  roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None, None, None,
-                                  expired = false, vvhTimeStamp, None, newLane.properties)
+            val endMeasure = Math.round(roadLink.length * 1000).toDouble / 1000
+
+            val laneToInsert = sideCodesForLinkIds.isEmpty match{
+              case true => PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
+                0,endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
+                expired = false, vvhTimeStamp, None, newLane.properties)
+
+              case false =>
+                val correctSideCode = sideCodesForLinkIds.find(_.linkId == linkId)
+                correctSideCode match {
+                  case Some(_) => PersistedLane(0, linkId, correctSideCode.get.sideCode, laneCode.toInt, newLane.municipalityCode,
+                    0,endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
+                    expired = false, vvhTimeStamp, None, newLane.properties)
+
+                  case None => PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
+                    0,endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
+                    expired = false, vvhTimeStamp, None, newLane.properties)
+                }
+            }
+
+
 
             createWithoutTransaction(laneToInsert, username)
           }
@@ -725,12 +743,12 @@ trait LaneOperations {
   }
 
   def processNewLanes(newLanes: Set[NewLane], linkIds: Set[Long],
-                      sideCode: Int, username: String): Seq[Long] = {
+                      sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
     withDynTransaction {
       val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode)
       val laneIdsToBeDeleted = actionsLanes.lanesToDelete.map(_.id)
 
-      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username) ++
+      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
       deleteMultipleLanes(laneIdsToBeDeleted, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
