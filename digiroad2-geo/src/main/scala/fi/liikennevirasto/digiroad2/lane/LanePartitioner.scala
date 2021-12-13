@@ -129,78 +129,83 @@ object LanePartitioner {
     }
   }
 
+  def groupAdditionalLanes(mainLaneGroups: Seq[Seq[PieceWiseLane]], allAdditionalLanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
+    mainLaneGroups.flatMap(mainLaneGroup => {
+      val mainLaneLinkIdsAndSideCodes = mainLaneGroup.map(lane => (lane.linkId, lane.sideCode))
+      val additionalLanesOnLinks = allAdditionalLanes.filter(lane => mainLaneLinkIdsAndSideCodes.map(_._1).contains(lane.linkId))
+      val lanesWithCorrectSideCode = additionalLanesOnLinks.filter(lane => {
+        val linkIdAndSideCode = (lane.linkId, lane.sideCode)
+        mainLaneLinkIdsAndSideCodes.contains(linkIdAndSideCode)
+      })
+      val additionalLanesGroupedByLaneCode = lanesWithCorrectSideCode.groupBy(additionalLane => {
+        val laneCode = additionalLane.laneAttributes.find(_.publicId == "lane_code")
+        laneCode
+      })
+      additionalLanesGroupedByLaneCode.values.toSeq
+    })
+  }
+
+  //Groups lanes by roadIdentifier, sideCode, LaneCode, and other lanes on link.
+  //Makes sure that all the lanes in group are connected and there are no gaps in lane selection
+  def groupMainLanes(lanes: Seq[PieceWiseLane], allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
+    val lanesGrouped = lanes.groupBy(lane => {
+      val roadLink = roadLinks.get(lane.linkId)
+      val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
+      val laneCode = lane.laneAttributes.find(_.publicId == "lane_code")
+      (roadIdentifier, lane.sideCode, laneCode)
+    })
+    //We partition lanes into those with roadIdentifer and to those with not,
+    //becouse without roadIdentifier we cant form groups from lanes
+    val (laneGroupsWithNoIdentifier, laneGroupsWithIdentifier) = lanesGrouped.partition(group => group._1._1.isEmpty)
+    val lanesGroupedWithContinuing = laneGroupsWithIdentifier.map(lanesOnRoad => lanesOnRoad._2.map(lane => {
+      val roadIdentifier = lanesOnRoad._1._1
+      val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, lanesOnRoad._2, roadLinks)
+      LaneWithContinuingLanes(lane, continuingLanes)
+    })).toSeq
+
+    val lanesGroupedWithCorrectSideCode = lanesGroupedWithContinuing.map(lanesOnRoad =>
+      handleLanes(lanesOnRoad, allLanes))
+
+    val partitionedByAdditional = lanesGroupedWithCorrectSideCode.flatMap(_.groupBy(lane => {
+      val lanesOnLink = allLanes.filter(potentialLane => potentialLane.linkId == lane.linkId &&
+        potentialLane.sideCode == lane.sideCode)
+      val laneProperties = lanesOnLink.flatMap(_.laneAttributes.find(_.publicId == "lane_code"))
+      val lanePropValues = laneProperties.map(_.values)
+      val laneCodesOnLink = lanePropValues.flatten.map(_.value.asInstanceOf[Int]).sorted.distinct
+      laneCodesOnLink
+    }).values)
+
+    val partitionedLanesWithContinuing = partitionedByAdditional.map(laneGroup => laneGroup.map(lane => {
+      val roadIdentifier = roadLinks(lane.linkId).roadIdentifier
+      val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, laneGroup, roadLinks, true)
+      LaneWithContinuingLanes(lane, continuingLanes)
+    }))
+
+    val connectedGroups = partitionedLanesWithContinuing.flatMap(laneGroup => {
+      val startingLanes = getStartingLanes(laneGroup)
+      val connectedLanes = startingLanes.map(startingLane => {
+        getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
+      }).distinct
+      connectedLanes.map(_.map(_.lane))
+    })
+
+    val noRoadIdentifier = laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
+    connectedGroups ++ noRoadIdentifier
+  }
+
   //Returns lanes grouped by corrected sideCode, laneCode, additional lanes and connection (lanes in group must
   // be geometrically connected together)
   def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
-
-    def groupAdditionalLanes(mainLaneGroups: Seq[Seq[PieceWiseLane]], allAdditionalLanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
-      mainLaneGroups.flatMap(mainLaneGroup => {
-        val mainLaneLinkIdsAndSideCodes = mainLaneGroup.map(lane => (lane.linkId, lane.sideCode))
-        val additionalLanesOnLinks = allAdditionalLanes.filter(lane => mainLaneLinkIdsAndSideCodes.map(_._1).contains(lane.linkId))
-        val lanesWithCorrectSideCode = additionalLanesOnLinks.filter(lane => {
-          val linkIdAndSideCode = (lane.linkId, lane.sideCode)
-          mainLaneLinkIdsAndSideCodes.contains(linkIdAndSideCode)
-        })
-        val additionalLanesGroupedByLaneCode = lanesWithCorrectSideCode.groupBy(additionalLane => {
-          val laneCode = additionalLane.laneAttributes.find(_.publicId == "lane_code")
-          laneCode
-        })
-        additionalLanesGroupedByLaneCode.values.toSeq
-      })
-    }
-
-    //Groups lanes by roadIdentifier, sideCode, LaneCode, and other lanes on link.
-    //Makes sure that all the lanes in group are connected and there are no gaps in lane selection
-    def groupMainLanes(lanes: Seq[PieceWiseLane]): Seq[Seq[PieceWiseLane]] = {
-      val lanesGrouped = lanes.groupBy(lane => {
-        val roadLink = roadLinks.get(lane.linkId)
-        val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
-        val laneCode = lane.laneAttributes.find(_.publicId == "lane_code")
-        (roadIdentifier, lane.sideCode, laneCode)
-      })
-      val (laneGroupsWithNoIdentifier, laneGroupsWithIdentifier) = lanesGrouped.partition(group => group._1._1.isEmpty)
-      val lanesGroupedWithContinuing = laneGroupsWithIdentifier.map(lanesOnRoad => lanesOnRoad._2.map(lane => {
-        val roadIdentifier = lanesOnRoad._1._1
-        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, lanesOnRoad._2, roadLinks)
-        LaneWithContinuingLanes(lane, continuingLanes)
-      })).toSeq
-
-      val lanesGroupedWithCorrectSideCode = lanesGroupedWithContinuing.map(lanesOnRoad =>
-        handleLanes(lanesOnRoad, allLanes))
-
-      val partitionedByAdditional = lanesGroupedWithCorrectSideCode.flatMap(_.groupBy(lane => {
-        val lanesOnLink = allLanes.filter(potentialLane => potentialLane.linkId == lane.linkId &&
-          potentialLane.sideCode == lane.sideCode)
-        val laneProperties = lanesOnLink.flatMap(_.laneAttributes.find(_.publicId == "lane_code"))
-        val lanePropValues = laneProperties.map(_.values)
-        val laneCodesOnLink = lanePropValues.flatten.map(_.value.asInstanceOf[Int]).sorted.distinct
-        laneCodesOnLink
-      }).values)
-
-      val partitionedLanesWithContinuing = partitionedByAdditional.map(laneGroup => laneGroup.map(lane => {
-        val roadIdentifier = roadLinks(lane.linkId).roadIdentifier
-        val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, laneGroup, roadLinks, true)
-        LaneWithContinuingLanes(lane, continuingLanes)
-      }))
-
-      val connectedGroups = partitionedLanesWithContinuing.flatMap(laneGroup => {
-        val startingLanes = getStartingLanes(laneGroup)
-        val connectedLanes = startingLanes.map(startingLane => {
-          getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
-        }).distinct
-        connectedLanes.map(_.map(_.lane))
-      })
-
-      val noRoadIdentifier = laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
-      connectedGroups ++ noRoadIdentifier
-    }
     val (allMainLanes, allAdditionalLanes) = allLanes.partition(lane => {
       val laneCode = lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]
       LaneNumberOneDigit.isMainLane(laneCode)
     })
     val (lanesOnOneDirectionLink, lanesOnTwoDirectionLink) = allMainLanes.partition(lane =>
       roadLinks(lane.linkId).trafficDirection.value != BothDirections.value)
-    val mainLaneGroups = groupMainLanes(lanesOnOneDirectionLink) ++ groupMainLanes(lanesOnTwoDirectionLink)
+
+    val mainLaneGroups = groupMainLanes(lanesOnOneDirectionLink, allLanes, roadLinks) ++
+      groupMainLanes(lanesOnTwoDirectionLink, allLanes, roadLinks)
+
     val additionalLaneGroups = groupAdditionalLanes(mainLaneGroups, allAdditionalLanes)
     mainLaneGroups ++ additionalLaneGroups
   }
