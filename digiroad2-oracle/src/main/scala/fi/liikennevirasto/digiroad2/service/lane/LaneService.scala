@@ -125,7 +125,7 @@ trait LaneOperations {
     }.toSeq
   }
 
-  protected def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
+   def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
     val lanes = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct)
     val lanesMapped = lanes.groupBy(_.linkId)
     val filledTopology = laneFiller.fillTopology(roadLinks, lanesMapped)._1
@@ -958,6 +958,25 @@ trait LaneOperations {
   def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
     val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId)).head
     val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
+    val newLaneCode = getTwoDigitLaneCode(roadLink, pwLane)
+    newLaneCode match {
+      case Some(_) => Option(lane.copy(laneCode = newLaneCode.get))
+      case None => None
+    }
+  }
+
+  def pieceWiseLaneToTwoDigitLaneCode(pwLane: PieceWiseLane): Option[PieceWiseLane] = {
+    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(pwLane.linkId)).head
+    val newLaneCode = getTwoDigitLaneCode(roadLink, pwLane)
+    newLaneCode match {
+      case Some(_) =>
+        val newLaneAttributes = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(newLaneCode.get))))
+        Option(pwLane.copy(laneAttributes = newLaneAttributes))
+      case None => None
+    }
+  }
+
+  def getTwoDigitLaneCode(roadLink: RoadLink, pwLane: PieceWiseLane ): Option[Int] = {
     val roadNumber = roadLink.attributes.get("ROADNUMBER").asInstanceOf[Option[Int]]
     val roadPartNumber = roadLink.attributes.get("ROADPARTNUMBER").asInstanceOf[Option[Int]]
 
@@ -977,10 +996,10 @@ trait LaneOperations {
           case 3 if startingPointM > endingPointM => 1
           case 3 if startingPointM < endingPointM => 2
         }
-        val oldLaneCode = lane.laneCode.toString
+        val oldLaneCode = pwLane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
         val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
+        Option(newLaneCode)
 
-        Option(lane.copy(laneCode = newLaneCode))
       case None => None
     }
   }

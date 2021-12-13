@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
@@ -154,6 +155,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[PersistedMassTransitStop] = {
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
+
+  def lanesToApi(typeId: Int, municipalityNumber: Int): Unit = {
+    val roadLinksInMunicipality = LogUtils.time(logger, "Kunnan tielinkkien haku"){
+      roadLinkService.getRoadLinksFromVVHByMunicipality(municipalityNumber)
+    }
+//    val roadLinksWithRoadAddress = LogUtils.time(logger, "Viite haku tielinkeille") {
+//      roadAddressService.roadLinkWithRoadAddress(roadLinksInMunicipality).filter(_.attributes.contains("VIITE_ROAD_NUMBER"))
+//    }
+    val lanes = LogUtils.time(logger, "Kaistojen haku") {
+      laneService.getLanesByRoadLinks(roadLinksInMunicipality)
+    }
+    val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(Seq(lanes)).flatten.filter(_.attributes.contains("VIITE_ROAD_NUMBER"))
+  //  val twoDigitLaneCodes = lanesWithRoadAddress.flatMap(lane => laneService.pieceWiseLaneToTwoDigitLaneCode(lane))
+    val lanesGrouped = lanesWithRoadAddress.groupBy(lane => (lane.attributes("VIITE_ROAD_NUMBER"), lane.attributes("VIITE_ROAD_PART_NUMBER")))
+    println("jejje")
+  }
+
 
   def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
@@ -972,6 +990,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
+        case "lanes" => lanesToApi(Lanes.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
