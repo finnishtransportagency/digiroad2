@@ -42,6 +42,8 @@ case class NewLane(id: Long, startMeasure: Double, endMeasure: Double, municipal
 
 case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, trafficDirection: TrafficDirection, geometry: Seq[Point], lanes: Seq[Int])
 
+case class SideCodesForLinkIds(linkId: Long, sideCode: Int)
+
 sealed trait LaneValue {
   def toJson: Any
 }

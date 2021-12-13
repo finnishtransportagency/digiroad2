@@ -2335,10 +2335,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[Long]](halt(BadRequest("Malformed 'linkIds' parameter")))
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
+    val sideCodesForLinks = (parsedBody \ "sideCodesForLinks").extractOrElse[Seq[SideCodesForLinkIds]](halt(BadRequest("Malformed 'sideCodesForLinks' parameter")))
     if (missingStartDates(incomingLanes.toSet)) halt(BadRequest("Missing required 'start_date' on one or more lanes"))
 
     validateUserRightsForLanes(linkIds, user)
-    laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
+    laneService.processNewLanes(incomingLanes.toSet, linkIds, sideCode, user.username, sideCodesForLinks)
   }
 
   post("/lanesByRoadAddress") {
