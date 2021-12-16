@@ -239,11 +239,7 @@ object RoadLinkDAO{
 
     }
 
-    /*def getLinkIds(): Seq[Long] = {
-      sql"""select link_id from traffic_direction""".as[(Seq[Long])]
-    }*/
-
-    def getLinkIds2(): Seq[Long] = {
+    def getLinkIds(): Seq[Long] = {
       sql"""select link_id from traffic_direction""".as[Long].list
     }
   }
