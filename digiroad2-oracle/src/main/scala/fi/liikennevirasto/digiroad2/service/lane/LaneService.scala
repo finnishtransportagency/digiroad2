@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -965,8 +965,7 @@ trait LaneOperations {
     }
   }
 
-  def pieceWiseLaneToTwoDigitLaneCode(pwLane: PieceWiseLane): Option[PieceWiseLane] = {
-    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(pwLane.linkId)).head
+  def pieceWiseLaneToTwoDigitLaneCode(pwLane: PieceWiseLane, roadLink: RoadLink): Option[PieceWiseLane] = {
     val newLaneCode = getTwoDigitLaneCode(roadLink, pwLane)
     newLaneCode match {
       case Some(_) =>
@@ -984,8 +983,12 @@ trait LaneOperations {
       case Some(_) =>
         val startingPoint = pwLane.endpoints.minBy(_.y)
         val endingPoint = pwLane.endpoints.maxBy(_.y)
-        val startingPointAddress = vkmClient.coordToAddress(startingPoint, roadNumber, roadPartNumber)
-        val endingPointAddress = vkmClient.coordToAddress(endingPoint, roadNumber, roadPartNumber)
+        val startingPointAddress = LogUtils.time(logger, "alku pisteen haku"){
+          vkmClient.coordToAddress(startingPoint, roadNumber, roadPartNumber)
+        }
+        val endingPointAddress = LogUtils.time(logger, "loppu pisteen haku"){
+          vkmClient.coordToAddress(endingPoint, roadNumber, roadPartNumber)
+        }
         val startingPointM = startingPointAddress.addrM
         val endingPointM = endingPointAddress.addrM
 
@@ -995,7 +998,9 @@ trait LaneOperations {
           case 2 if startingPointM < endingPointM => 1
           case 3 if startingPointM > endingPointM => 1
           case 3 if startingPointM < endingPointM => 2
+          case _ => 9
         }
+        if(firstDigit == 9)println("ID: " + pwLane.id + "linkkiID: " + pwLane.linkId)
         val oldLaneCode = pwLane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
         val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
         Option(newLaneCode)

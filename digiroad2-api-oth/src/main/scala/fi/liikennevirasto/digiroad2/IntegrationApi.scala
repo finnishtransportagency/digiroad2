@@ -5,6 +5,8 @@ import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
+import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getStartingLanes}
+import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
@@ -27,6 +29,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+  case class VelhoRoad(roadNumber: Any, roadName: Option[String], roadParts: Seq[RoadPart])
+  case class RoadPart(roadNumber: Any, roadPartNumber: Any, lanes: Seq[VelhoLane])
+  case class VelhoLane(laneCode: Int, startAddressM: Long, endAddressM: Long)
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
@@ -156,20 +161,75 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
-  def lanesToApi(typeId: Int, municipalityNumber: Int): Unit = {
+  def lanesToVelhoLanes(twoDigitLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[VelhoRoad] = {
+    val roadNumbers = twoDigitLanes.map(_.attributes("VIITE_ROAD_NUMBER")).distinct
+    val lanesGroupedByRoadNumber = twoDigitLanes.groupBy(_.attributes("VIITE_ROAD_NUMBER")).values
+    val lanesGroupedByRoadNumberAndPartNumber = lanesGroupedByRoadNumber.flatMap(_.groupBy(_.attributes("VIITE_ROAD_PART_NUMBER")).values)
+
+    val allRoadParts = lanesGroupedByRoadNumberAndPartNumber.map(lanes => {
+      val roadPartNumber = lanes.head.attributes("VIITE_ROAD_PART_NUMBER")
+      val roadNumber = lanes.head.attributes("VIITE_ROAD_NUMBER")
+      val lanesGroupedByLaneCode = lanes.groupBy(_.laneAttributes.find(_.publicId == "lane_code")).values
+
+      val lanesWithContinuing = lanesGroupedByLaneCode.map(laneGroup => {
+        laneGroup.map(lane => {
+          val roadIdentifier = roadLinks(lane.linkId).roadIdentifier
+          val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, roadIdentifier, laneGroup, roadLinks, true)
+          LaneWithContinuingLanes(lane, continuingLanes)
+        })
+      }).toSeq
+
+
+      val connectedGroups = lanesWithContinuing.flatMap(laneGroup => {
+        val startingLanes = getStartingLanes(laneGroup)
+        val connectedLanes = startingLanes.map(startingLane => {
+          getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
+        }).distinct
+        connectedLanes.map(_.map(_.lane))
+      })
+
+      val velhoLanes = connectedGroups.map(group => {
+        val laneCode = group.head.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]
+        val startAddressM = group.map(_.attributes("VIITE_START_ADDR")).asInstanceOf[Seq[Long]].min
+        val endAddressM = group.map(_.attributes("VIITE_END_ADDR")).asInstanceOf[Seq[Long]].max
+        VelhoLane(laneCode, startAddressM, endAddressM)
+      }).toSeq
+
+      RoadPart(roadNumber, roadPartNumber, velhoLanes)
+    })
+
+    roadNumbers.map(roadNumber => {
+      val roadParts = allRoadParts.filter(_.roadNumber == roadNumber).toSeq
+      VelhoRoad(roadNumber, None, roadParts)
+    })
+  }
+
+  def lanesToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
     val roadLinksInMunicipality = LogUtils.time(logger, "Kunnan tielinkkien haku"){
-      roadLinkService.getRoadLinksFromVVHByMunicipality(municipalityNumber)
+      roadLinkService.getRoadLinksFromVVH(municipalityNumber)
     }
-//    val roadLinksWithRoadAddress = LogUtils.time(logger, "Viite haku tielinkeille") {
-//      roadAddressService.roadLinkWithRoadAddress(roadLinksInMunicipality).filter(_.attributes.contains("VIITE_ROAD_NUMBER"))
-//    }
     val lanes = LogUtils.time(logger, "Kaistojen haku") {
       laneService.getLanesByRoadLinks(roadLinksInMunicipality)
     }
-    val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(Seq(lanes)).flatten.filter(_.attributes.contains("VIITE_ROAD_NUMBER"))
-  //  val twoDigitLaneCodes = lanesWithRoadAddress.flatMap(lane => laneService.pieceWiseLaneToTwoDigitLaneCode(lane))
-    val lanesGrouped = lanesWithRoadAddress.groupBy(lane => (lane.attributes("VIITE_ROAD_NUMBER"), lane.attributes("VIITE_ROAD_PART_NUMBER")))
-    println("jejje")
+    val (lanesWithViiteAddress, noRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanes)).flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
+    val lanesWithTempAddress =  roadAddressService.experimentalLaneWithRoadAddress(Seq(noRoadAddress)).flatten.filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
+    val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
+    val twoDigitLanes = lanesWithRoadAddress.flatMap(lane => {
+      val roadLink = roadLinksInMunicipality.find(_.linkId == lane.linkId).get
+      LogUtils.time(logger, "pwLane kaksinumeroiseksi") {
+        laneService.pieceWiseLaneToTwoDigitLaneCode(lane, roadLink)
+      }
+    })
+    val velhoLanes = LogUtils.time(logger, "VelhoLanejen teko"){
+      lanesToVelhoLanes(twoDigitLanes, roadLinksInMunicipality.groupBy(_.linkId).mapValues(_.head))
+    }
+    val result = velhoLanes.map { velhoLane =>
+      Map("roadNumber" -> velhoLane.roadNumber,
+          "roadName" -> velhoLane.roadName,
+          "roadParts" -> velhoLane.roadParts
+      )
+    }
+    result
   }
 
 
@@ -208,7 +268,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
-    roadLinks.map { roadLink =>
+    val result = roadLinks.map { roadLink =>
       Map("linkId" -> roadLink.linkId,
         "mmlId" -> roadLink.attributes.get("MTKID"),
         "administrativeClass" -> roadLink.administrativeClass.value,
@@ -234,6 +294,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
                                                                                               .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
                                                                                               .filterNot(_._1 == "ADDITIONAL_INFO")
     }
+    result
   }
 
   def toTimeDomain(validityPeriod: ValidityPeriod): String = {
@@ -990,7 +1051,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
-        case "lanes" => lanesToApi(Lanes.typeId, municipalityNumber)
+        case "lanes" => lanesToApi(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
