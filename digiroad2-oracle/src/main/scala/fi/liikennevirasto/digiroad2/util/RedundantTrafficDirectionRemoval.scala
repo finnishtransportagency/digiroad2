@@ -20,7 +20,7 @@ object RedundantTrafficDirectionRemoval {
   def deleteRedundantTrafficDirectionFromDB(): Unit = {
     withDynTransaction {
       val linkIds = RoadLinkDAO.TrafficDirectionDao.getLinkIds().toSet
-      val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(linkIds = linkIds)
+      val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(linkIds)
       vvhRoadlinks.foreach(vvhRoadLink => findAndDeleteRedundant(vvhRoadLink))
     }
 

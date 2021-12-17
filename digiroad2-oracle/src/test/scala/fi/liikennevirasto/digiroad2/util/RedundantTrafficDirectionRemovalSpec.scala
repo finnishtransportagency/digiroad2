@@ -19,7 +19,7 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
 
   test("A redundant traffic direction is removed, but a valid is not") {
-    val linkSet = PostGISDatabase.withDynTransaction(roadLinkService.fetchVVHRoadlinks(Set(1681765,1611347,1611181,1611380,1611265,1610928,1611183,1611675,1610953,1611480)))
+    val linkSet = roadLinkService.fetchVVHRoadlinks(Set(1681765,1611347,1611181,1611380,1611265,1610928,1611183,1611675,1610953,1611480))
     if (linkSet.isEmpty) {
       cancel("No roadlinks found, so test canceled.")
     }
