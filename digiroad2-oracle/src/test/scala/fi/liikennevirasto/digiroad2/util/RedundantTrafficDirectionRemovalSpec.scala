@@ -1,46 +1,44 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
-  }
 
-  lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-  }
+  val mockedRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockedTrafficDirectionRemoval: RedundantTrafficDirectionRemoval = new RedundantTrafficDirectionRemoval(mockedRoadLinkService)
 
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
 
+  val roadLinkWithRedundantTrafficDirection: VVHRoadlink = VVHRoadlink(1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  val roadLinkWithValidTrafficDirection: VVHRoadlink = VVHRoadlink(2, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+
+  when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
+
   test("A redundant traffic direction is removed, but a valid is not") {
-    val linkSet = roadLinkService.fetchVVHRoadlinks(Set(1681765,1611347,1611181,1611380,1611265,1610928,1611183,1611675,1610953,1611480))
-    if (linkSet.isEmpty) {
-      cancel("No roadlinks found, so test canceled.")
-    }
-    val linkWithRedundantTrafficDirection = linkSet.head
+    val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set(1, 2))
     withDynTransaction {
-      // put the vvh value of the first received link to the traffic direction table, so that it's certainly redundant
-      RoadLinkDAO.insert("traffic_direction", linkWithRedundantTrafficDirection.linkId, None, linkWithRedundantTrafficDirection.trafficDirection.value)
-      // the second traffic direction is set as 10 that it can't incidentally match with any VVH traffic direction value
-      RoadLinkDAO.insert("traffic_direction", 6510465, None, 10)
+      RoadLinkDAO.insert("traffic_direction", linkSet.head.linkId, None, linkSet.head.trafficDirection.value)
+      RoadLinkDAO.insert("traffic_direction", linkSet.last.linkId, None, TrafficDirection.TowardsDigitizing.value)
       val linkIdsBeforeRemoval = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
-      linkIdsBeforeRemoval should contain(linkWithRedundantTrafficDirection.linkId)
-      linkIdsBeforeRemoval should contain(6510465)
+      linkIdsBeforeRemoval should contain(linkSet.head.linkId)
+      linkIdsBeforeRemoval should contain(linkSet.last.linkId)
     }
-    RedundantTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB()
+    mockedTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB()
     withDynTransaction {
       val linkIdsAfterRemoval = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
-      linkIdsAfterRemoval should not contain  linkWithRedundantTrafficDirection.linkId
-      linkIdsAfterRemoval should contain(6510465)
-      RoadLinkDAO.delete("traffic_direction", 6510465)
+      linkIdsAfterRemoval should not contain linkSet.head.linkId
+      linkIdsAfterRemoval should contain(linkSet.last.linkId)
+      RoadLinkDAO.delete("traffic_direction", linkSet.last.linkId)
       val linkIdsAfterCleanUp = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
-      linkIdsAfterCleanUp should not contain 6510465
+      linkIdsAfterCleanUp should not contain linkSet.last.linkId
     }
   }
 }

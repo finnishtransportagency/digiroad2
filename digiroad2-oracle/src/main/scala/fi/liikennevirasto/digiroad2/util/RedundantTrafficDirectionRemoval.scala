@@ -1,19 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
-object RedundantTrafficDirectionRemoval {
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
-  }
-
-  lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-  }
+class RedundantTrafficDirectionRemoval(roadLinkService: RoadLinkService) {
 
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
 
