@@ -201,6 +201,8 @@ object DataFixture {
 
   lazy val municipalityService: MunicipalityService = new MunicipalityService
 
+  lazy val redundantTrafficDirectionRemoval = new RedundantTrafficDirectionRemoval(roadLinkService)
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -2663,7 +2665,6 @@ object DataFixture {
       case Some("initial_main_lane_population") =>
         MainLanePopulationProcess.initialProcess()
       case Some("redundant_traffic_direction_removal") =>
-        val redundantTrafficDirectionRemoval = new RedundantTrafficDirectionRemoval(roadLinkService)
         redundantTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
