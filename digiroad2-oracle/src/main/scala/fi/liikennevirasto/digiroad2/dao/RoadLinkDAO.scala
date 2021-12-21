@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.postgis.MassQuery
+import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.LinkProperties
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -237,6 +237,10 @@ object RoadLinkDAO{
                    link_type = ${linkProperty.linkType.value}
                where link_id = ${linkProperty.linkId}""".execute
 
+    }
+
+    def getLinkIds(): Seq[Long] = {
+      sql"""select link_id from traffic_direction""".as[Long].list
     }
   }
 
