@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -965,14 +965,49 @@ trait LaneOperations {
     }
   }
 
-  def pieceWiseLaneToTwoDigitLaneCode(pwLane: PieceWiseLane, roadLink: RoadLink): Option[PieceWiseLane] = {
-    val newLaneCode = getTwoDigitLaneCode(roadLink, pwLane)
-    newLaneCode match {
-      case Some(_) =>
-        val newLaneAttributes = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(newLaneCode.get))))
-        Option(pwLane.copy(laneAttributes = newLaneAttributes))
-      case None => None
-    }
+  def pieceWiseLanesToTwoDigitWithMassQuery(pwLanes: Seq[PieceWiseLane]): Seq[Option[PieceWiseLane]] = {
+    val vkmParameters = pwLanes.map(lane => {
+      (lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes("ROAD_NUMBER"), lane.attributes("ROAD_PART_NUMBER"))
+    }) ++ pwLanes.map(lane => {
+      (lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes("ROAD_NUMBER"), lane.attributes("ROAD_PART_NUMBER"))
+    })
+
+    val vkmParametesSplit = vkmParameters.grouped(1000).toSeq
+    val roadAddressesSplit = vkmParametesSplit.map(parameterGroup => vkmClient.coordToAddressMassQuery(parameterGroup)).toSeq
+    val roadAddresses = roadAddressesSplit.foldLeft(Map.empty[String, RoadAddress])(_ ++ _)
+
+    pwLanes.map(lane => {
+      val startingAddress = roadAddresses.get(lane.id.toString + "/starting")
+      val endingAddress = roadAddresses.get(lane.id.toString + "/ending")
+
+      (startingAddress, endingAddress) match {
+        case (Some(_), Some(_)) =>
+          val startingPointM = startingAddress.get.addrM
+          val endingPointM = endingAddress.get.addrM
+          val firstDigit = lane.sideCode match {
+            case 1 => Option(3)
+            case 2 if startingPointM > endingPointM => Option(2)
+            case 2 if startingPointM < endingPointM => Option(1)
+            case 3 if startingPointM > endingPointM => Option(1)
+            case 3 if startingPointM < endingPointM => Option(2)
+            case _ if startingPointM == endingPointM=>
+              logger.error("VKM returned same addresses for both endpoints on lane: " + lane.id)
+              None
+          }
+          if (firstDigit.isEmpty) None
+          else {
+            val oldLaneCode = lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
+            val newLaneCode = firstDigit.get.toString.concat(oldLaneCode).toInt
+            val newLaneAttributes = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(newLaneCode))))
+            Option(lane.copy(laneAttributes = newLaneAttributes))
+          }
+
+        case _ =>
+          logger.error("VKM didnt find address for one or two endpoints for lane: " + lane.id)
+          None
+
+      }
+    })
   }
 
   def getTwoDigitLaneCode(roadLink: RoadLink, pwLane: PieceWiseLane ): Option[Int] = {

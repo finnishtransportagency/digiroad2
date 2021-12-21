@@ -5,17 +5,23 @@ import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
+import org.apache.http.NameValuePair
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
+import org.apache.http.client.entity.UrlEncodedFormEntity
 
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.{DefaultHttpClient, HttpClientBuilder}
+import org.apache.http.message.BasicNameValuePair
+import org.apache.http.params.HttpParams
 import org.json4s.jackson.JsonMethods.parse
+import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
+import java.util.ArrayList
 
 class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
-
   protected implicit val jsonFormats: Formats = DefaultFormats
   private def VkmRoad = "tie"
   private def VkmRoadPart = "osa"
@@ -39,6 +45,33 @@ class VKMClient {
   def urlParamsReverse(paramMap: Map[String, Any]) = {
     paramMap.map(entry => URLEncoder.encode(entry._1, "UTF-8")
       + "=" + URLEncoder.encode(entry._2.toString, "UTF-8")).mkString("&")
+  }
+
+  private def postRequest(url: String, json: String): Either[FeatureCollection, VKMError] = {
+    val nvps = new ArrayList[NameValuePair]()
+    nvps.add(new BasicNameValuePair("json", json))
+
+    val request = new HttpPost(url)
+    request.addHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+    request.addHeader("X-API-Key", Digiroad2Properties.vkmApiKey)
+    request.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"))
+
+    val client = HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom()
+      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+
+    val response = client.execute(request)
+    try {
+      if (response.getStatusLine.getStatusCode >= 400)
+        return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+      val aux = response.getEntity.getContent
+      val content: FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
+      val contentFiltered = content.copy(features = content.features.filterNot(_.properties.contains("virheet")))
+      Left(contentFiltered)
+    } catch {
+      case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
   }
 
   private def request(url: String): Either[FeatureCollection, VKMError] = {
@@ -83,6 +116,25 @@ class VKMClient {
   // Verifies all host names by simply returning true.
   object VerifiesAllHostNames extends HostnameVerifier {
     def verify(s: String, sslSession: SSLSession) = true
+  }
+
+  def coordToAddressMassQuery(coords: Seq[(String, Point, Any, Any)]): Map[String,RoadAddress] = {
+    val params = coords.map(coord => Map(
+      VkmQueryIdentifier -> coord._1,
+      VkmRoad -> coord._3,
+      VkmRoadPart -> coord._4,
+      "x" -> coord._2.x,
+      "y" -> coord._2.y
+    ))
+    val jsonValue = Serialization.write(params)
+    val url = vkmBaseUrl + "muunna/"
+    val response = postRequest(url, jsonValue)
+
+    val result = response match {
+      case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+    result.flatten.toMap
   }
 
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
@@ -166,6 +218,19 @@ class VKMClient {
         (addresses(1), RoadSide.Unknown)
       }
     }
+  }
+
+  private def mapMassQueryFields(data: Feature): Map[String, RoadAddress] = {
+    val municipalityCode = data.properties.get(VkmMunicipalityCode)
+    val road = validateAndConvertToInt(VkmRoad, data.properties)
+    val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
+    val track = validateAndConvertToInt(VkmTrackCode, data.properties)
+    val mValue = validateAndConvertToInt(VkmDistance, data.properties)
+    val queryIdentifier = data.properties(VkmQueryIdentifier)
+    if (Track.apply(track).eq(Track.Unknown)) {
+      throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
+    }
+    Map(queryIdentifier -> RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue))
   }
 
   private def mapFields(data: Feature) = {
