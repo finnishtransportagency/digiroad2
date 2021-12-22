@@ -64,7 +64,7 @@
           },
           {
             "name": "viiteRestApiEndPoint",
-            "value": "https://testiextranet.liikennevirasto.fi/viite/api/viite/"
+            "value": "https://api.testivaylapilvi.fi/viite/api/viite/"
           },
           {
             "name": "authenticationTestMode",
