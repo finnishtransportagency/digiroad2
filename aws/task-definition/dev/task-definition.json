@@ -64,7 +64,7 @@
           },
           {
             "name": "viiteRestApiEndPoint",
-            "value": "https://devapi.testivaylapilvi.fi/viite/api/viite/"
+            "value": "https://testiextranet.liikennevirasto.fi/viite/api/viite/"
           },
           {
             "name": "authenticationTestMode",
@@ -190,7 +190,7 @@
           },
           {
             "name": "viite.apikey",
-            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/qa/apikey/viite"
           },
           {
             "name": "vkm.apikey",
