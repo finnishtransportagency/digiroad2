@@ -990,7 +990,7 @@ trait LaneOperations {
             case 2 if startingPointM < endingPointM => Option(1)
             case 3 if startingPointM > endingPointM => Option(1)
             case 3 if startingPointM < endingPointM => Option(2)
-            case _ if startingPointM == endingPointM=>
+            case _ if startingPointM == endingPointM =>
               logger.error("VKM returned same addresses for both endpoints on lane: " + lane.id)
               None
           }
@@ -1018,26 +1018,28 @@ trait LaneOperations {
       case Some(_) =>
         val startingPoint = pwLane.endpoints.minBy(_.y)
         val endingPoint = pwLane.endpoints.maxBy(_.y)
-        val startingPointAddress = LogUtils.time(logger, "alku pisteen haku"){
-          vkmClient.coordToAddress(startingPoint, roadNumber, roadPartNumber)
-        }
-        val endingPointAddress = LogUtils.time(logger, "loppu pisteen haku"){
-          vkmClient.coordToAddress(endingPoint, roadNumber, roadPartNumber)
-        }
+        val startingPointAddress = vkmClient.coordToAddress(startingPoint, roadNumber, roadPartNumber)
+        val endingPointAddress = vkmClient.coordToAddress(endingPoint, roadNumber, roadPartNumber)
+
         val startingPointM = startingPointAddress.addrM
         val endingPointM = endingPointAddress.addrM
 
         val firstDigit = pwLane.sideCode match {
-          case 1 => 3
-          case 2 if startingPointM > endingPointM => 2
-          case 2 if startingPointM < endingPointM => 1
-          case 3 if startingPointM > endingPointM => 1
-          case 3 if startingPointM < endingPointM => 2
+          case 1 => Option(3)
+          case 2 if startingPointM > endingPointM => Option(2)
+          case 2 if startingPointM < endingPointM => Option(1)
+          case 3 if startingPointM > endingPointM => Option(1)
+          case 3 if startingPointM < endingPointM => Option(2)
+          case _ if startingPointM == endingPointM =>
+            logger.error("VKM returned same addresses for both endpoints on lane: " + pwLane.id)
+            None
         }
-        val oldLaneCode = pwLane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
-        val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
-        Option(newLaneCode)
-
+        if (firstDigit.isEmpty) None
+        else{
+          val oldLaneCode = pwLane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
+          val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
+          Option(newLaneCode)
+        }
       case None => None
     }
   }
