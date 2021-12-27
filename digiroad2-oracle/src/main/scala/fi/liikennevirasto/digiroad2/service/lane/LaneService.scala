@@ -1033,9 +1033,7 @@ trait LaneOperations {
           case 2 if startingPointM < endingPointM => 1
           case 3 if startingPointM > endingPointM => 1
           case 3 if startingPointM < endingPointM => 2
-          case _ => 9
         }
-        if(firstDigit == 9)println("ID: " + pwLane.id + "linkkiID: " + pwLane.linkId)
         val oldLaneCode = pwLane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
         val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
         Option(newLaneCode)

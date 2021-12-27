@@ -268,8 +268,4 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   }
 
-  test("lanesToApi test"){
-    integrationApi.lanesToApi(235)
-  }
-
 }
