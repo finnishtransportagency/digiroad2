@@ -1055,7 +1055,7 @@ trait LaneOperations {
         if (firstDigit.isEmpty) None
         else{
           val oldLaneCode = pwLane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
-          val newLaneCode = firstDigit.toString.concat(oldLaneCode).toInt
+          val newLaneCode = firstDigit.get.toString.concat(oldLaneCode).toInt
           Option(newLaneCode)
         }
       case None => None
