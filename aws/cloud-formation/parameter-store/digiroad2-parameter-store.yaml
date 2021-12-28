@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template to create parameters for digiroad.
+
+Parameters:
+  bonecpPassword:
+    Description: bonecpPassword
+    Type: String
+
+  tierekisteriPassword:
+    Description: tierekisteriPassword
+    type: String
+
+  tierekisteriOldPassword:
+    Description: tierekisteriOldPassword
+    type: String
+
+  viiteApikey:
+    Description: ViiteApikey
+    type: String
+
+  VKMApikey:
+    Description: VKMApikey
+    type: String
+
+  SESUsername:
+    Description: SESUsername
+    type: String
+
+  SESPassword:
+    Description: SESPassword
+    type: String
+
+  OAGPassword:
+    Description: OAGPAssword
+    type: String
+
+  GoogleClientId:
+    Description: googlemapapi.client_id
+    type: String
+
+  GoogleCryptoKey:
+    Description: googlemapapi.crypto_key
+    type: String
+
+Resources:
+  bonecpParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/bonecp.password
+      Type: String
+      Value: !ref  bonecpPassword
+
+  tierekisteriParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/tierekisteri.password
+      Type: String
+      Value: !ref  tierekisteriPassword
+
+  tierekisteriOldParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/tierekisteri.old.password
+      Type: String
+      Value: !ref  tierekisteriOldPassword
+
+  ViitePrameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/apikey/viite
+      Type: String
+      Value: !ref  viiteApikey
+
+  VKMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/apikey/viitekehysmuunnin
+      Type: String
+      Value: !ref  VKMApikey
+
+  SESUserParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/ses_username
+      Type: String
+      Value: !ref  SESUsername
+
+  SESPasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/ses_password
+      Type: String
+      Value: !ref  SESPassword
+
+  OAGPasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/authentication.oag.basic.password
+      Type: String
+      Value: !ref  OAGPassword
+
+  GoogleClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/googlemapapi.client_id
+      Type: String
+      Value: !ref  GoogleClientId
+
+  GoogleCryptoKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/googlemapapi.crypto_key
+      Type: String
+      Value: !ref  GoogleCryptoKey
