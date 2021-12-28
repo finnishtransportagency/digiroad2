@@ -5,7 +5,7 @@ import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
-import org.apache.http.NameValuePair
+import org.apache.http.{HttpStatus, NameValuePair}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.entity.UrlEncodedFormEntity
 
@@ -18,6 +18,7 @@ import org.apache.http.params.HttpParams
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
+
 import java.util.ArrayList
 
 class VKMClient {
@@ -61,7 +62,7 @@ class VKMClient {
 
     val response = client.execute(request)
     try {
-      if (response.getStatusLine.getStatusCode >= 400)
+      if (response.getStatusLine.getStatusCode >= HttpStatus.SC_BAD_REQUEST)
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       val aux = response.getEntity.getContent
       val content: FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]

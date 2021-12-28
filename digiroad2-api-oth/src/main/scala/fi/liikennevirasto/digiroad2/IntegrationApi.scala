@@ -214,10 +214,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
 
     val lanesWithNormalRoadAddress = lanesWithRoadAddress.map(lane => {
-      val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", "TEMP_ROAD_NUMBER")
-      val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", "TEMP_ROAD_PART_NUMBER")
-      val startAddr = lane.attributes.getOrElse("VIITE_START_ADDR", "TEMP_START_ADDR")
-      val endAddr = lane.attributes.getOrElse("VIITE_END_ADDR", "TEMP_END_ADDR")
+      val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER"))
+      val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER"))
+      val startAddr = lane.attributes.getOrElse("VIITE_START_ADDR", lane.attributes.get("TEMP_START_ADDR"))
+      val endAddr = lane.attributes.getOrElse("VIITE_END_ADDR", lane.attributes.get("TEMP_END_ADDR"))
       lane.copy(attributes = lane.attributes + ("ROAD_NUMBER" -> roadNumber, "ROAD_PART_NUMBER" -> roadPartNumber,
         "START_ADDR" -> startAddr, "END_ADDR" -> endAddr))
     })
@@ -268,7 +268,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
-    val result = roadLinks.map { roadLink =>
+    roadLinks.map { roadLink =>
       Map("linkId" -> roadLink.linkId,
         "mmlId" -> roadLink.attributes.get("MTKID"),
         "administrativeClass" -> roadLink.administrativeClass.value,
@@ -294,7 +294,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
                                                                                               .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
                                                                                               .filterNot(_._1 == "ADDITIONAL_INFO")
     }
-    result
   }
 
   def toTimeDomain(validityPeriod: ValidityPeriod): String = {
