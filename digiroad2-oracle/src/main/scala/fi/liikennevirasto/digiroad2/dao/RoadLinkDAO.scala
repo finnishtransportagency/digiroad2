@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
-import fi.liikennevirasto.digiroad2.service.LinkProperties
+import fi.liikennevirasto.digiroad2.service.{LinkPropertiesEntries, LinkProperties}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -34,13 +34,54 @@ sealed trait RoadLinkDAO{
   def insertValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
     insertValues(linkProperty, username, value)
   }
+  
+  def insertValuesMass(entries:Seq[MassOperationEntry]): Unit = {
+      /*sqlu""" insert into #$table (id, link_id, #$column, modified_by )
+              select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
+              where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute*/
+
+      val insertLinkPropertyPS = dynamicSession.prepareStatement(
+        s"""insert into $table (id, link_id, $column, modified_by ) select nextval('primary_key_seq'),(?),(?),(?) where not exists (select * from $table where link_id =(?))""")
+      try {
+        entries.foreach { property =>
+          insertLinkPropertyPS.setLong(1, property.linkProperty.linkId)
+          insertLinkPropertyPS.setInt(2, property.value)
+          insertLinkPropertyPS.setString(3, property.username.getOrElse(""))
+          insertLinkPropertyPS.setLong(4, property.linkProperty.linkId)
+          insertLinkPropertyPS.addBatch()
+        }
+        insertLinkPropertyPS.executeBatch()
+      } finally {
+        insertLinkPropertyPS.close()
+      }
+  }
+
+  def updateValuesMass(entries:Seq[MassOperationEntry]): Unit = {
+    val updateLinkPropertyPS = dynamicSession.prepareStatement(
+      s"""update #$table
+        set #$column = (?),
+    modified_date = current_timestamp,
+    modified_by = (?)
+    where link_id = (?)"""
+    )
+    try {
+      entries.foreach { property =>
+        updateLinkPropertyPS.setLong(0, property.value)
+        updateLinkPropertyPS.setString(1, property.username.getOrElse(""))
+        updateLinkPropertyPS.setLong(2, property.linkProperty.linkId)
+        updateLinkPropertyPS.addBatch()
+      }
+      updateLinkPropertyPS.executeBatch()
+    } finally {
+      updateLinkPropertyPS.close()
+    }
+  }
 
   def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
     sqlu""" insert into #$table (id, link_id, #$column, modified_by )
             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
             where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
-
 
   def insertValues(linkId: Long, username: Option[String], value: Int) = {
     sqlu""" insert into #$table (id, link_id, #$column, modified_by )
@@ -101,7 +142,7 @@ sealed trait RoadLinkDAO{
   }
 }
 
-
+case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int,mmlId: Option[Long])
 object RoadLinkDAO{
 
   val FunctionalClass = "functional_class"
@@ -148,6 +189,22 @@ object RoadLinkDAO{
     dao.insertValues(linkProperty, vvhRoadLink, username, value, mmlId)
   }
 
+
+  def insertMass(propertyName: String,entries:Seq[LinkPropertiesEntries]) = {
+    val dao = getDao(propertyName)
+    dao.insertValuesMass(entries.map(e=>{
+      val value = dao.getValue(e.linkProperty)
+      MassOperationEntry(e.linkProperty,e.username,value,e.mmlId)
+    }))
+  }
+  def updateMass(propertyName: String,entries:Seq[LinkPropertiesEntries]) = {
+    val dao = getDao(propertyName)
+    dao.updateValuesMass(entries.map(e=>{
+      val value = dao.getValue(e.linkProperty)
+      MassOperationEntry(e.linkProperty,e.username,value,e.mmlId)
+    }))
+  }
+  
   def insert(propertyName: String, linkId: Long, username: Option[String], value: Int) = {
     val dao = getDao(propertyName)
     dao.insertValues(linkId, username, value)
@@ -229,6 +286,25 @@ object RoadLinkDAO{
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
+    override def insertValuesMass(entries: Seq[MassOperationEntry]): Unit = {
+
+      val insertLinkPropertyPS = dynamicSession.prepareStatement(
+        s"""insert into $table (id, link_id, $column, modified_by,link_type ) select nextval('primary_key_seq'),(?),(?),(?),(?) where not exists (select * from $table where link_id =(?))""")
+      try {
+        entries.foreach { property =>
+          insertLinkPropertyPS.setLong(1, property.linkProperty.linkId)
+          insertLinkPropertyPS.setInt(2, property.value)
+          insertLinkPropertyPS.setString(3, property.username.getOrElse(""))
+          insertLinkPropertyPS.setInt(4, property.linkProperty.linkType.value)
+          insertLinkPropertyPS.setLong(5, property.linkProperty.linkId)
+          insertLinkPropertyPS.addBatch()
+        }
+        insertLinkPropertyPS.executeBatch()
+      } finally {
+        insertLinkPropertyPS.close()
+      }
+    }
+
     override def updateValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
       sqlu"""update #$table
                set #$column = $value,
@@ -238,6 +314,29 @@ object RoadLinkDAO{
                where link_id = ${linkProperty.linkId}""".execute
 
     }
+    override def updateValuesMass(entries:Seq[MassOperationEntry]): Unit ={
+      val updateLinkPropertyPS = dynamicSession.prepareStatement(
+        s"""update $table
+            set $column = (?),
+            modified_date = current_timestamp,
+            modified_by = (?)
+            link_type = (?)
+        where link_id = (?)"""
+      )
+      try {
+        entries.foreach { property =>
+          updateLinkPropertyPS.setLong(0, property.value)
+          updateLinkPropertyPS.setString(1, property.username.getOrElse(""))
+          updateLinkPropertyPS.setLong(2, property.linkProperty.linkId)
+          updateLinkPropertyPS.setInt(3, property.linkProperty.linkType.value)
+          updateLinkPropertyPS.addBatch()
+        }
+        updateLinkPropertyPS.executeBatch()
+      } finally {
+        updateLinkPropertyPS.close()
+      } 
+    }
+    
   }
 
   case object LinkTypeDao extends RoadLinkDAO {
@@ -310,6 +409,14 @@ object RoadLinkDAO{
     }
 
     override def updateValues(linkId: Long, username: Option[String], value: Int) = {
+      throw new UnsupportedOperationException("Administrative Class keeps history, should be used the update values implemented")
+    }
+
+    override def insertValuesMass(entries: Seq[MassOperationEntry]): Unit = {
+      throw new UnsupportedOperationException("Not Implemented")
+    }
+
+    override def updateValuesMass(entries: Seq[MassOperationEntry]): Unit = {
       throw new UnsupportedOperationException("Administrative Class keeps history, should be used the update values implemented")
     }
 

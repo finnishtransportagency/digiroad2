@@ -3,14 +3,14 @@ package fi.liikennevirasto.digiroad2.service
 import java.io.{File, FilenameFilter, IOException}
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
-import java.util.{Date, Properties}
+import java.util.{Date, Properties, Random}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.dao.{MassOperationEntry, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
@@ -27,18 +27,23 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
-case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink], changes: Seq[ChangeInfo] = Nil, roadLinks: Seq[RoadLink] = Nil)
+case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink], changes: Seq[ChangeInfo] = Nil, roadLinks: Seq[RoadLink] = Nil,municipality:Int)
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection,
                           administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[AdditionalInformation] = None,
                           accessRightID: Option[String] = None)
 case class PrivateRoadAssociation(name: String, roadName: String, municipality: String, linkId: Long)
 case class RoadLinkAttributeInfo(id: Long, linkId: Option[Long], name: Option[String], value: Option[String], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
+case class LinkPropertiesEntries(propertyName: String, linkProperty: LinkProperties, username: Option[String],
+                                 vvhRoadLink: VVHRoadlink, latestModifiedAt: Option[String],
+                                 latestModifiedBy: Option[String],mmlId: Option[Long])
+
 
 sealed trait RoadLinkType {
   def value: Int
@@ -568,6 +573,34 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(links, changes), changes, enrichRoadLinksFromVVH(complementaryLinks, changes))
     }
   }
+  def reloadRoadLinksWithComplementaryAndChangesFromVVHReturnEnrichChanges(municipalities: Int): (RoadLinkChangeSet, RoadLinkChangeSet)= {
+    val fut = for{
+      f1Result <- vvhClient.complementaryData.fetchWalkwaysByMunicipalitiesF(municipalities)
+      f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
+      f3Result <- vvhClient.roadLinkData.fetchByMunicipalityF(municipalities)
+    } yield (f1Result, f2Result, f3Result)
+
+    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
+    withDynTransaction {
+      (enrichRoadLinksFromVVHAndReturnChanges(links, changes), enrichRoadLinksFromVVHAndReturnChanges(complementaryLinks, changes))
+    }
+  }
+
+  def reloadRoadLinksWithComplementaryAndChangesFromVVH2(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val fut = for{
+      f1Result <- vvhClient.complementaryData.fetchWalkwaysByMunicipalitiesF(municipalities)
+      f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
+      f3Result <- vvhClient.roadLinkData.fetchByMunicipalityF(municipalities)
+    } yield (f1Result, f2Result, f3Result)  // TODO remove this future when calling batch
+
+    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
+
+    //enrichRoadLinksFromVVH(links, changes,Some(municipalities))
+    //enrichRoadLinksFromVVH(complementaryLinks, changes,Some(municipalities))
+    withDynTransaction {  // TODO easier improvement might be to remove this double call, in some other par of these two set of link are merged maybe it can be also merged here
+      (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes,Some(municipalities)), changes)
+    }
+  }
 
   /**
     * This method returns road links and change data by municipality.
@@ -725,7 +758,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     vvhClient.roadLinkData.fetchByLinkId(id).map(_.geometry)
   }
-
+  // TODO mass
   protected def setLinkProperty(propertyName: String, linkProperty: LinkProperties, username: Option[String],
                                 vvhRoadLink: VVHRoadlink, latestModifiedAt: Option[String],
                                 latestModifiedBy: Option[String]) = {
@@ -741,7 +774,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           insertLinkProperty(propertyName, linkProperty, vvhRoadLink, username, latestModifiedAt, latestModifiedBy)
     }
   }
-
+  
+  // TODO create MassQuery versio of these
   private def insertLinkProperty(propertyName: String, linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink,
                                  username: Option[String], latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String]) = {
@@ -765,7 +799,33 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+case class insertLinkPropertyEntries(propertyName: String, linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink,
+                   username: Option[String], latestModifiedAt: Option[String],
+                   latestModifiedBy: Option[String])
+  private def insertLinkProperties(propertyName: String, linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink,
+                                 username: Option[String], latestModifiedAt: Option[String],
+                                 latestModifiedBy: Option[String]) = {
+    if (latestModifiedAt.isEmpty) {
+      RoadLinkDAO.insert(propertyName, linkProperty, vvhRoadLink, username, checkMMLId(vvhRoadLink))
+    } else{
+      try {
+        var parsedDate = ""
+        if (latestModifiedAt.get.matches("^\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d.*")) {
+          // Finnish date format
+          parsedDate = DateTimePropertyFormat.parseDateTime(latestModifiedAt.get).toString()
+        } else {
+          parsedDate = DateTime.parse(latestModifiedAt.get).toString(ISODateTimeFormat.dateTime())
+        }
+        RoadLinkDAO.insert(propertyName, linkProperty, latestModifiedBy, parsedDate)
+      } catch {
+        case e: Exception =>
+          println("ERR! -> table " + propertyName + " (" + linkProperty.linkId + "): mod timestamp = " + latestModifiedAt.getOrElse("null"))
+          throw e
+      }
+    }
+  }
 
+  // In some future moves these into dao class
   private def fetchOverrides(idTableName: String): Map[Long, (Option[(Long, Int, DateTime, String)],
     Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])] = {
     sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
@@ -957,38 +1017,184 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Updates road link data in OTH db. Used by Digiroad2Context LinkPropertyUpdater Akka actor.
     */
   def updateRoadLinkChanges(roadLinkChangeSet: RoadLinkChangeSet): Unit = {
+    val IDSingleton = Integer.toHexString(new Random().nextInt)
+   
+    val actionID = s"Municipality:${roadLinkChangeSet.municipality}::ID:$IDSingleton"
+    logger.info(actionID)
+    logger.info("updateRoadLinkChanges roadLinks: "+roadLinkChangeSet.roadLinks.size)
+    logger.info("updateRoadLinkChanges changes: "+roadLinkChangeSet.changes.size)
+    logger.info("updateRoadLinkChanges adjustedRoadLinks: "+roadLinkChangeSet.adjustedRoadLinks.size)
+    logger.info("updateRoadLinkChanges incompleteLinks: "+roadLinkChangeSet.incompleteLinks.size)
+ 
+    logger.info("updateRoadLinkChanges thread: "+Thread.currentThread().getName)
+    //println("updateRoadLinkChanges start");
+ 
+      //logger.info("municipality :"+roadLinkChangeSet.roadLinks.head.municipalityCode.toString)
+      withDynTransaction {
+        LogUtils.time(logger,s"ID: $actionID updateRoadLinkChanges updateIncompleteLinks "){
+          updateIncompleteLinks(roadLinkChangeSet.incompleteLinks,actionID=actionID)
+        }
+      } // eesier operation first
+      
     withDynTransaction {
-      updateAutoGeneratedProperties(roadLinkChangeSet.adjustedRoadLinks)
-      updateIncompleteLinks(roadLinkChangeSet.incompleteLinks)
-      fillRoadLinkAttributes(roadLinkChangeSet.roadLinks, roadLinkChangeSet.changes)
+      LogUtils.time(logger,s"ID: $actionID updateRoadLinkChanges updateAutoGeneratedProperties "){
+        updateAutoGeneratedProperties(roadLinkChangeSet.adjustedRoadLinks,actionID=actionID)
+      }
     }
+ 
+    withDynTransaction {
+      LogUtils.time(logger,s"ID: $actionID updateRoadLinkChanges fillRoadLinkAttributes "){
+        fillRoadLinkAttributes(roadLinkChangeSet.roadLinks, roadLinkChangeSet.changes,actionID=actionID)
+      }
+    }
+    //println("updateRoadLinkChanges end");
   }
 
+
+  
   /**
     * Updates road link autogenerated properties (functional class, link type and traffic direction). Used by RoadLinkService.updateRoadLinkChanges.
     */
-  def updateAutoGeneratedProperties(adjustedRoadLinks: Seq[RoadLink]) {
+  def updateAutoGeneratedProperties(adjustedRoadLinks: Seq[RoadLink],actionID:String="") {
     def createUsernameForAutogenerated(modifiedBy: Option[String]): Option[String] =  {
       modifiedBy match {
         case Some("automatic_generation") => modifiedBy
         case _ => None
       }
     }
-    def updateProperties(vvhRoadLinks: Seq[VVHRoadlink])(roadLink: RoadLink): Unit = {
+    def updateProperties(vvhRoadLinks: Seq[VVHRoadlink],roadLink: RoadLink,iteration_id:String): Unit = {
       val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
       // Separate auto-generated links from change info links: username should be empty for change info links
       val username = createUsernameForAutogenerated(roadLink.modifiedBy)
       val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass)
-      vvhRoadLink.foreach {
-        vvh =>
-          if (roadLink.trafficDirection != TrafficDirection.UnknownDirection) setLinkProperty(RoadLinkDAO.TrafficDirection, linkProperty, username, vvh, None, None)
-          if (roadLink.functionalClass != UnknownFunctionalClass.value) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvh, roadLink.modifiedAt, roadLink.modifiedBy)
-          if (roadLink.linkType != UnknownLinkType) setLinkProperty(RoadLinkDAO.LinkType, linkProperty, username, vvh, roadLink.modifiedAt, roadLink.modifiedBy)
-      }
+
+/*      LogUtils.time(logger,s"ID: $actionID updateProperties if clause "){
+        if(vvhRoadLink.isDefined){
+          val link =  vvhRoadLink.get;
+          if (roadLink.trafficDirection != TrafficDirection.UnknownDirection) setLinkProperty(RoadLinkDAO.TrafficDirection, linkProperty, username, link, None, None)
+          if (roadLink.functionalClass != UnknownFunctionalClass.value) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, link, roadLink.modifiedAt, roadLink.modifiedBy)
+          if (roadLink.linkType != UnknownLinkType) setLinkProperty(RoadLinkDAO.LinkType, linkProperty, username, link, roadLink.modifiedAt, roadLink.modifiedBy)
+        }
+      }*/
+      
+    
+        vvhRoadLink.foreach { // this is allways one
+          vvh =>
+            if (roadLink.trafficDirection != TrafficDirection.UnknownDirection) setLinkProperty(RoadLinkDAO.TrafficDirection, linkProperty, username, vvh, None, None)
+            if (roadLink.functionalClass != UnknownFunctionalClass.value) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvh, roadLink.modifiedAt, roadLink.modifiedBy) 
+            if (roadLink.linkType != UnknownLinkType) setLinkProperty(RoadLinkDAO.LinkType, linkProperty, username, vvh, roadLink.modifiedAt, roadLink.modifiedBy)
+        }
+      
     }
     val vvhRoadLinks = vvhClient.roadLinkData.fetchByLinkIds(adjustedRoadLinks.map(_.linkId).toSet)
+      adjustedRoadLinks.foreach(r=>{
+        val IDSingleton = Integer.toHexString(new Random().nextInt)
+        updateProperties(vvhRoadLinks,r,IDSingleton) 
+      })
+      adjustedRoadLinks.foreach(link =>
+        if (link.functionalClass != UnknownFunctionalClass.value && link.linkType != UnknownLinkType) removeIncompleteness(link.linkId)
+      )
+    
+  }
 
-    adjustedRoadLinks.foreach(updateProperties(vvhRoadLinks))
+  def partitionIntoTypes(adjustedRoadLinks: Seq[RoadLink]): (Seq[RoadLink], Seq[RoadLink], Seq[RoadLink]) = {
+    val trafficDirection, functionalClass, linkType: ListBuffer[RoadLink] = new ListBuffer[RoadLink]
+    for (link <- adjustedRoadLinks) {
+      if (link.trafficDirection != TrafficDirection.UnknownDirection) {
+        trafficDirection.append(link)
+      }
+      if (link.functionalClass != UnknownFunctionalClass.value) {
+        functionalClass.append(link)
+      }
+      if (link.linkType != UnknownLinkType) {
+        linkType.append(link)
+      }
+    }
+    (trafficDirection.toSeq, functionalClass.toSeq, linkType.toSeq)
+  }
+
+
+  def separateUpdateAndInsert(entries: Seq[LinkPropertiesEntries]): (Seq[LinkPropertiesEntries], Seq[LinkPropertiesEntries]) = {
+    val updateValues, insertValues: ListBuffer[LinkPropertiesEntries] = new ListBuffer[LinkPropertiesEntries]
+    for (entry <- entries) {
+      val optionalExistingValue: Option[Int] = RoadLinkDAO.get(entry.propertyName, entry.linkProperty.linkId)
+      (optionalExistingValue, RoadLinkDAO.getVVHValue(entry.propertyName, entry.vvhRoadLink)) match {
+        case (Some(_), _) =>
+          updateValues.append(entry)
+        case (None, None) =>
+          insertValues.append(entry)
+        case (None, Some(vvhValue)) =>
+          if (vvhValue != RoadLinkDAO.getValue(entry.propertyName, entry.linkProperty))
+            insertValues.append(entry) // only if it override vvh value
+        case _ => Unit
+      }
+    }
+    (updateValues.toSeq, insertValues.toSeq)
+  }
+
+  def updateAutoGeneratedPropertiesMassInsert(adjustedRoadLinks: Seq[RoadLink], actionID: String = "") {
+    def createUsernameForAutogenerated(modifiedBy: Option[String]): Option[String] = {
+      modifiedBy match {
+        case Some("automatic_generation") => modifiedBy
+        case _ => None
+      }
+    }
+
+    def parseDate(latestModifiedAt: Option[String]): Option[String] = {
+      if (latestModifiedAt.isDefined) {
+        if (latestModifiedAt.get.matches("^\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d.*")) {
+          // Finnish date format
+          Some(DateTimePropertyFormat.parseDateTime(latestModifiedAt.get).toString())
+        } else {
+          Some(DateTime.parse(latestModifiedAt.get).toString(ISODateTimeFormat.dateTime()))
+        }
+      } else None
+    }
+
+    def setupEntries(vvhRoadLinks: Seq[VVHRoadlink], roadLink: RoadLink): (Option[VVHRoadlink], Option[String], LinkProperties) = {
+      (vvhRoadLinks.find(_.linkId == roadLink.linkId),
+        createUsernameForAutogenerated(roadLink.modifiedBy), // Separate auto-generated links from change info links: username should be empty for change info links
+        LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass))
+    }
+
+    val vvhRoadLinks = vvhClient.roadLinkData.fetchByLinkIds(adjustedRoadLinks.map(_.linkId).toSet)
+
+
+    val (trafficDirections, functionalClass, linkTypes) = partitionIntoTypes(adjustedRoadLinks)
+
+    val trafficDirectionEntries: Seq[LinkPropertiesEntries] = trafficDirections.map(roadLink => {
+      val (vvhRoadLink, username, linkProperty) = setupEntries(vvhRoadLinks, roadLink)
+      LinkPropertiesEntries(RoadLinkDAO.TrafficDirection, linkProperty, username, vvhRoadLink.get, None, None, None)
+    })
+
+    val functionalClassEntries: Seq[LinkPropertiesEntries] = functionalClass.map(roadLink => {
+      val (vvhRoadLink, username, linkProperty) = setupEntries(vvhRoadLinks, roadLink)
+      LinkPropertiesEntries(RoadLinkDAO.FunctionalClass, linkProperty, username, vvhRoadLink.get, roadLink.modifiedAt, roadLink.modifiedBy, None)
+    })
+
+    val linkTypeEntries: Seq[LinkPropertiesEntries] = linkTypes.map(roadLink => {
+      val (vvhRoadLink, username, linkProperty) = setupEntries(vvhRoadLinks, roadLink)
+      val parsedDate = parseDate(roadLink.modifiedAt)
+      LinkPropertiesEntries(RoadLinkDAO.LinkType, linkProperty, username, vvhRoadLink.get, parsedDate, roadLink.modifiedBy, None)
+    }
+    )
+
+    val (updateTrafficDirectionEntries, insertTrafficDirectionEntries) = separateUpdateAndInsert(trafficDirectionEntries)
+    val (updateFunctionalClass, insertFunctionalClass) = separateUpdateAndInsert(functionalClassEntries)
+    val (updateLinkTypeEntries, insertLinkTypeEntries) = separateUpdateAndInsert(linkTypeEntries)
+
+    RoadLinkDAO.insertMass(RoadLinkDAO.TrafficDirection, insertTrafficDirectionEntries)
+    RoadLinkDAO.insertMass(RoadLinkDAO.FunctionalClass, insertFunctionalClass)
+    RoadLinkDAO.insertMass(RoadLinkDAO.LinkType, insertLinkTypeEntries)
+
+    RoadLinkDAO.updateMass(RoadLinkDAO.TrafficDirection, updateTrafficDirectionEntries)
+    RoadLinkDAO.updateMass(RoadLinkDAO.FunctionalClass, updateFunctionalClass)
+    RoadLinkDAO.updateMass(RoadLinkDAO.LinkType, updateLinkTypeEntries)
+
+
+    // TODO MassInsert or update?
+    logger.info(s"ID: $actionID updateAutoGeneratedProperties number of adjustment:  ${adjustedRoadLinks.size}")
+
     adjustedRoadLinks.foreach(link =>
       if (link.functionalClass != UnknownFunctionalClass.value && link.linkType != UnknownLinkType) removeIncompleteness(link.linkId)
     )
@@ -997,7 +1203,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Updates incomplete road link list (incomplete = functional class or link type missing). Used by RoadLinkService.updateRoadLinkChanges.
     */
-  protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
+  protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink],actionID:String="") = {
     def setIncompleteness(incompleteLink: IncompleteLink) {
       sqlu"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)
              select nextval('primary_key_seq'), ${incompleteLink.linkId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value}
@@ -1090,7 +1296,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
   
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
-    val (roadLinks, _, complementaries) =  LogUtils.time(logger,"Get roadlinks with cache")(
+    val (roadLinks,_, complementaries) =  LogUtils.time(logger,"Get roadlinks with cache")(
       getCachedRoadLinks(municipality)
     )
     roadLinks ++ complementaries
@@ -1120,7 +1326,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param changes  Change information to treat
     * @param changeUsername  Username applied to this changes
     */
-  def fillRoadLinkAttributes(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], changeUsername: String = "vvh_change"): Unit = {
+  def fillRoadLinkAttributes(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], changeUsername: String = "vvh_change",actionID:String=""): Unit = {
+    
+    val IDSingleton = actionID
+    val tempMunicipality = roadLinks.headOption.getOrElse(null)
+    if(tempMunicipality != null){
+      logger.info("ID: " +IDSingleton+" "+"fillRoadLinkAttributes: "+tempMunicipality.municipalityCode)
+    }
     def resolveNewChange(change: ChangeInfo): Unit = {
       val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.newId.get)
       val roadLinkFind = roadLinks.find(_.linkId == change.newId.get)
@@ -1133,59 +1345,151 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         val roadLinksAdjLast = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, endPoint) && link != roadLink)
 
         if(roadLinksAdjFirst.nonEmpty && roadLinksAdjLast.nonEmpty){
-          val attributesFirstRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjFirst.get.linkId)
+          val attributesFirstRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjFirst.get.linkId) 
           val attributesLastRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjLast.get.linkId)
 
           val commonAttributes = returnEqualAttributes(Seq(attributesFirstRoadLink, attributesLastRoadLink))
-
-          commonAttributes.foreach { case (attribute, value) =>
-            LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+          if (commonAttributes.size>=3){
+            logger.info(s"ID: $IDSingleton fillRoadLinkAttributes resolveNewChange commonAttributes: ${commonAttributes.size}")
+          }
+          commonAttributes.foreach { case (attribute, value) => // O(N) same expensive insert one by one
+            LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) // TODO Create MassInsert
           }
         }
       }
     }
 
-    def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = {
-      oldAttributes.flatMap { mapToFilter =>
+    def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = { //O(N^2)
+      oldAttributes.flatMap { mapToFilter => // O(N)
         mapToFilter.filter { case (attr, value) =>
-          oldAttributes.forall { oldAttribute =>
+          oldAttributes.forall { oldAttribute => // O(N)
             val attribute = oldAttribute.get(attr)
             attribute.nonEmpty && attribute.get == value
           }
         }
       }.toMap
     }
+    // 631
+    def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = { // TODO Group Changes to seq(changeType, changeType2 ...) then do batch changes 
+      logger.info(s"ID: $IDSingleton resolveChanges changesToBeProcessed: ${changesToBeProcessed.size}")
+      val groupByType = changesToBeProcessed.groupBy(f=>ChangeType.apply(f.changeType))
+      groupByType.foreach(
+        f=>{
+          val typeOfchanges =f._1
+          val countOfItems =f._2.size
+          logger.info(s"ID: $IDSingleton resolveChanges $typeOfchanges and number of Items $countOfItems ")
+          
+        }
+      )
+      
+      val test2 = groupByType.filter(f => f._1 == ChangeType.New || f._1 == ChangeType.Removed).values.toSeq
+      
+     /* groupByType.foreach { f=>
+        (f._1,f._2) match {
+          case (ChangeType.New,_) => {
+            logger.info(s"ID: $IDSingleton resolveChanges loop ${f._1} and number of Items ${f._2.size} ")
+            f._2.foreach(change=>{
+              LogUtils.time(logger,"ID: " +IDSingleton+" "+"fillRoadLinkAttributes ChangeType.New "){
+                resolveNewChange(change)
+              }
+            })
+          }
+          case (ChangeType.Removed,_) =>
+            logger.info(s"ID: $IDSingleton resolveChanges loop ${f._1} and number of Items ${f._2.size} ")
+            f._2.foreach(change=>{
+              if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty) {
+                LogUtils.time(logger, "ID: " +IDSingleton+" "+"fillRoadLinkAttributes ChangeType.Removed "){
+                  LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp)) // TODO Create MassEdit ?
+                }
+              }
+            })
+            
+          case (_,_) =>
+            logger.info(s"ID: $IDSingleton resolveChanges loop ${f._1} and number of Items ${f._2.size} ")
+            f._2.foreach(change=>{
+              if (change.newId.isEmpty){
+                println("")
+              }
+              if (LinkAttributesDao.getExistingValues(change.newId.get).isEmpty){
+                val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)
+                if (newIdFromVariousOld.size > 1) {
+                  val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
+                    LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp)) // TODO Create MassQuery
+                  }
+                  if(returnEqualAttributes(oldIdsAttributes).size >=3){
+                    logger.info(s"ID: $IDSingleton resolveChanges  returnEqualAttributes greater than 3: ${returnEqualAttributes(oldIdsAttributes).size}")
+                  }
 
-    def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = {
-      changesToBeProcessed.foreach { change =>
+
+                  LogUtils.time(logger,"ID: " +IDSingleton+" "+"fillRoadLinkAttributes returnEqualAttributes"){
+                    returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
+                      LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) // TODO Create MassInsert
+                    }
+                  }
+
+                } else {
+                  LogUtils.time(logger,"ID: " +IDSingleton+" "+"fillRoadLinkAttributes roadLinkAttributesRelatedWithThisChange"){
+                    if (change.oldId.isEmpty){
+                      println("")
+                    }
+                    val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
+
+                    if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
+                      logger.info(s"ID: $IDSingleton resolveChanges roadLinkAttributesRelatedWithThisChange: ${roadLinkAttributesRelatedWithThisChange.size}")
+                      roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
+                        LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) // TODO Create MassInsert
+                      }
+                    }
+                  }
+              }
+            }})
+        }
+      } */
+      changesToBeProcessed.foreach { change => //O(N)
         ChangeType.apply(change.changeType) match {
           case ChangeType.New =>
-            resolveNewChange(change)
+            LogUtils.time(logger,"ID: " +IDSingleton+" "+"fillRoadLinkAttributes ChangeType.New "){
+              resolveNewChange(change)
+            }
           case ChangeType.Removed =>
-            if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty)
-              LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp))
-          case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty =>
+            if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty) {
+              LogUtils.time(logger, "ID: " +IDSingleton+" "+"fillRoadLinkAttributes ChangeType.Removed "){
+                LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp)) // TODO Create MassEdit ?
+              }
+            }
+          case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty => // TODO extract part to own method
             val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)
             if (newIdFromVariousOld.size > 1) {
               val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
-                LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
+                LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp)) // TODO Create MassQuery
               }
-
-              returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
-                LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+              if(returnEqualAttributes(oldIdsAttributes).size >=3){
+                logger.info(s"ID: $IDSingleton resolveChanges  returnEqualAttributes greater than 3: ${returnEqualAttributes(oldIdsAttributes).size}")
               }
+              
+              
+              LogUtils.time(logger,"ID: " +IDSingleton+" "+"fillRoadLinkAttributes returnEqualAttributes"){
+                returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
+                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) // TODO Create MassInsert
+                }
+              }
+              
             } else {
-              val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
+              LogUtils.time(logger,"ID: " +IDSingleton+" "+"fillRoadLinkAttributes roadLinkAttributesRelatedWithThisChange"){
+                val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
 
-              if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
-                roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
-                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+                if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
+                  logger.info(s"ID: $IDSingleton resolveChanges roadLinkAttributesRelatedWithThisChange: ${roadLinkAttributesRelatedWithThisChange.size}")
+                  roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
+                    LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) // TODO Create MassInsert
+                  }
                 }
               }
             }
           case _ =>
         }
       }
+      logger.info("ID: " +IDSingleton+" "+"updateRoadLinkChanges ending resolving changesToBeProcessed " +changesToBeProcessed.size)
     }
 
     val changesToBeProcessed = changes.filterNot{change =>
@@ -1196,7 +1500,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       isOldEqNew || isNotToExpire || isNotToCreate
     }
       .sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
-    resolveChanges(changesToBeProcessed)
+    LogUtils.time(logger,"ID: " +IDSingleton+" resolveChanges"){
+      resolveChanges(changesToBeProcessed)
+    }
   }
 
   /**
@@ -1209,7 +1515,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param changes
     * @return Road links
     */
-  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
+  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil,municipality:Option[Int]=None): Seq[RoadLink] = {
     val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
     def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
       val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
@@ -1239,26 +1545,71 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     }
 
-    val roadLinkDataByLinkId: Seq[RoadLink] = getRoadLinkDataByLinkIds(vvhRoadLinks)
-    val (incompleteLinks, completeLinks) = roadLinkDataByLinkId.partition(isIncomplete)
+    val roadLinkDataByLinkId: Seq[RoadLink] = getRoadLinkDataByLinkIds(vvhRoadLinks) // enrich are added here 
+    val (incompleteLinks, completeLinks) = roadLinkDataByLinkId.partition(isIncomplete) // combine
     val (linksToAutoGenerate, incompleteOtherLinks) = incompleteLinks.partition(canBeAutoGenerated)
     val autoGeneratedLinks = linksToAutoGenerate.map(autoGenerateProperties)
-    val (changedLinks, stillIncompleteLinks) = fillIncompleteLinksWithPreviousLinkData(incompleteOtherLinks, changes)
+    val (changedLinks, stillIncompleteLinks) = fillIncompleteLinksWithPreviousLinkData(incompleteOtherLinks, changes) // this is extremely slow operation
     val changedPartiallyIncompleteLinks = stillIncompleteLinks.filter(isPartiallyIncomplete)
     val stillIncompleteLinksInUse = stillIncompleteLinks.filter(_.constructionType == ConstructionType.InUse)
-
+    val roadLinkChangeSet=RoadLinkChangeSet(autoGeneratedLinks ++ changedLinks ++ changedPartiallyIncompleteLinks, stillIncompleteLinksInUse.map(toIncompleteLink), changes, roadLinkDataByLinkId,municipality = municipality.getOrElse(0) )
+    val roadLinkChangeSestring = roadLinkChangeSet.toString
+    println(roadLinkChangeSestring)
     eventbus.publish("linkProperties:changed",
-      RoadLinkChangeSet(autoGeneratedLinks ++ changedLinks ++ changedPartiallyIncompleteLinks, stillIncompleteLinksInUse.map(toIncompleteLink), changes, roadLinkDataByLinkId))
+      RoadLinkChangeSet(autoGeneratedLinks ++ changedLinks ++ changedPartiallyIncompleteLinks, stillIncompleteLinksInUse.map(toIncompleteLink), changes, roadLinkDataByLinkId,municipality = municipality.getOrElse(0) ))
 
     completeLinks ++ autoGeneratedLinks ++ changedLinks ++ stillIncompleteLinks
   }
+  def enrichRoadLinksFromVVHAndReturnChanges(allVvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil,municipality:Option[Int]=None): RoadLinkChangeSet= {
+    val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
+    def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
+      val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
+      vvhRoadLink.get.featureClass match {
+        case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.DrivePath | FeatureClass.CarRoad_IIIb => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = UnknownFunctionalClass.value, linkType = SpecialTransportWithoutGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = UnknownFunctionalClass.value, linkType = SpecialTransportWithGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.CarRoad_IIIa => vvhRoadLink.get.administrativeClass match {
+          case State => roadLink.copy(functionalClass = 4, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+          case Municipality | Private => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+          case _ => roadLink
+        }
+        case _ => roadLink //similar logic used in roadaddressbuilder
+      }
+    }
+    def toIncompleteLink(roadLink: RoadLink): IncompleteLink = {
+      val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
+      IncompleteLink(roadLink.linkId, vvhRoadLink.get.municipalityCode, roadLink.administrativeClass)
+    }
+
+    def canBeAutoGenerated(roadLink: RoadLink): Boolean = {
+      vvhRoadLinks.find(_.linkId == roadLink.linkId).get.featureClass match {
+        case FeatureClass.AllOthers => false
+        case _ => true
+      }
+    }
+
+    val roadLinkDataByLinkId: Seq[RoadLink] = getRoadLinkDataByLinkIds(vvhRoadLinks) // enrich are added here 
+    val (incompleteLinks, completeLinks) = roadLinkDataByLinkId.partition(isIncomplete) // to own batch
+    val (linksToAutoGenerate, incompleteOtherLinks) = incompleteLinks.partition(canBeAutoGenerated)
+    val autoGeneratedLinks = linksToAutoGenerate.map(autoGenerateProperties)
+    val (changedLinks, stillIncompleteLinks) = fillIncompleteLinksWithPreviousLinkData(incompleteOtherLinks, changes) // this is extremely slow operation
+    val changedPartiallyIncompleteLinks = stillIncompleteLinks.filter(isPartiallyIncomplete)
+    val stillIncompleteLinksInUse = stillIncompleteLinks.filter(_.constructionType == ConstructionType.InUse)
+    
+    /*eventbus.publish("linkProperties:changed",
+      RoadLinkChangeSet(autoGeneratedLinks ++ changedLinks ++ changedPartiallyIncompleteLinks, stillIncompleteLinksInUse.map(toIncompleteLink), changes, roadLinkDataByLinkId,municipality = municipality.getOrElse(0) ))*/
+    RoadLinkChangeSet(autoGeneratedLinks ++ changedLinks ++ changedPartiallyIncompleteLinks, stillIncompleteLinksInUse.map(toIncompleteLink), changes, roadLinkDataByLinkId,municipality = municipality.getOrElse(0) )
+  }
+  
   /**
     * Uses old road link ids from change data to fetch their OTH overridden properties from db.
     * Used by RoadLinkSErvice.fillIncompleteLinksWithPreviousLinkData.
     */
   def getOldRoadLinkPropertiesForChanges(changes: Seq[ChangeInfo]): Seq[RoadLinkProperties] = {
     val oldLinkIds = changes.flatMap(_.oldId)
-    val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet)
+    val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet) //TODO massquery is used here
 
     oldLinkIds.map { linkId =>
       val latestModification = propertyRows.latestModifications(linkId)
@@ -1591,6 +1942,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     )
   }
   
+  // TODO remove duplicate same ways as in backend API
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (roadLinks, changes, _) = getCachedRoadLinks(municipalityCode)
     (roadLinks, changes)
