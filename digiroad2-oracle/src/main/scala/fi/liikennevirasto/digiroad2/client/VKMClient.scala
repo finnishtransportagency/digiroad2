@@ -21,6 +21,8 @@ import org.json4s.{DefaultFormats, Formats, StreamInput}
 
 import java.util.ArrayList
 
+case class MassQueryParams(identifier: String, point: Point, roadNumber: Long, roadPartNumber: Long)
+
 class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -119,13 +121,13 @@ class VKMClient {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
-  def coordToAddressMassQuery(coords: Seq[(String, Point, Any, Any)]): Map[String,RoadAddress] = {
+  def coordToAddressMassQuery(coords: Seq[MassQueryParams]): Map[String,RoadAddress] = {
     val params = coords.map(coord => Map(
-      VkmQueryIdentifier -> coord._1,
-      VkmRoad -> coord._3,
-      VkmRoadPart -> coord._4,
-      "x" -> coord._2.x,
-      "y" -> coord._2.y
+      VkmQueryIdentifier -> coord.identifier,
+      VkmRoad -> coord.roadNumber,
+      VkmRoadPart -> coord.roadPartNumber,
+      "x" -> coord.point.x,
+      "y" -> coord.point.y
     ))
     val jsonValue = Serialization.write(params)
     val url = vkmBaseUrl + "muunna/"
