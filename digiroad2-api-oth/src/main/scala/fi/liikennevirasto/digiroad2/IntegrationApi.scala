@@ -29,8 +29,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-  case class VelhoRoad(roadNumber: Any, roadParts: Seq[RoadPart])
-  case class RoadPart(roadNumber: Any, roadPartNumber: Any, lanes: Seq[VelhoLane])
+  case class VelhoRoad(roadNumber: Long, roadParts: Seq[RoadPart])
+  case class RoadPart(roadNumber: Option[Long], roadPartNumber: Long, lanes: Seq[VelhoLane])
   case class VelhoLane(laneCode: Int, startAddressM: Long, endAddressM: Long)
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
@@ -162,13 +162,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def lanesToVelhoLanes(twoDigitLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[VelhoRoad] = {
-    val roadNumbers = twoDigitLanes.map(_.attributes("ROAD_NUMBER")).distinct
+    val roadNumbers = twoDigitLanes.map(_.attributes("ROAD_NUMBER")).distinct.asInstanceOf[Seq[Long]]
     val lanesGroupedByRoadNumber = twoDigitLanes.groupBy(_.attributes("ROAD_NUMBER")).values
     val lanesGroupedByRoadNumberAndPartNumber = lanesGroupedByRoadNumber.flatMap(_.groupBy(_.attributes("ROAD_PART_NUMBER")).values)
 
     val allRoadParts = lanesGroupedByRoadNumberAndPartNumber.map(lanes => {
-      val roadPartNumber = lanes.head.attributes("ROAD_PART_NUMBER")
-      val roadNumber = lanes.head.attributes("ROAD_NUMBER")
+      val roadPartNumber = lanes.head.attributes("ROAD_PART_NUMBER").asInstanceOf[Long]
+      val roadNumber = Some(lanes.head.attributes("ROAD_NUMBER").asInstanceOf[Long])
       val lanesGroupedByLaneCode = lanes.groupBy(_.laneAttributes.find(_.publicId == "lane_code")).values
 
       val lanesWithContinuing = lanesGroupedByLaneCode.map(laneGroup => {
@@ -199,7 +199,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }).toSeq
 
     roadNumbers.map(roadNumber => {
-      val roadParts = allRoadParts.filter(_.roadNumber == roadNumber)
+      val roadParts = allRoadParts.filter(_.roadNumber.get == roadNumber)
       val roadPartsWithOutRoadNumber = roadParts.map(_.copy(roadNumber = None))
       VelhoRoad(roadNumber, roadPartsWithOutRoadNumber)
     })
