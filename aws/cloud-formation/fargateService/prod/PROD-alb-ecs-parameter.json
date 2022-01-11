@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "TaskDefinitionForService",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "ContainerPort",
+    "ParameterValue": "8080"
+  },
+  {
+    "ParameterKey": "RouteRecordName",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "NamePrefix",
+    "ParameterValue": "Placeholder"
+  }
+]
