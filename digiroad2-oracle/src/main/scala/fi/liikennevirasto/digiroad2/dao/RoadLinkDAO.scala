@@ -58,17 +58,17 @@ sealed trait RoadLinkDAO{
 
   def updateValuesMass(entries:Seq[MassOperationEntry]): Unit = {
     val updateLinkPropertyPS = dynamicSession.prepareStatement(
-      s"""update #$table
-        set #$column = (?),
+      s"""update $table
+        set $column = (?),
     modified_date = current_timestamp,
     modified_by = (?)
     where link_id = (?)"""
     )
     try {
       entries.foreach { property =>
-        updateLinkPropertyPS.setLong(0, property.value)
-        updateLinkPropertyPS.setString(1, property.username.getOrElse(""))
-        updateLinkPropertyPS.setLong(2, property.linkProperty.linkId)
+        updateLinkPropertyPS.setLong(1, property.value)
+        updateLinkPropertyPS.setString(2, property.username.getOrElse(""))
+        updateLinkPropertyPS.setLong(3, property.linkProperty.linkId)
         updateLinkPropertyPS.addBatch()
       }
       updateLinkPropertyPS.executeBatch()
@@ -319,16 +319,15 @@ object RoadLinkDAO{
         s"""update $table
             set $column = (?),
             modified_date = current_timestamp,
-            modified_by = (?)
-            link_type = (?)
-        where link_id = (?)"""
+            modified_by = (?),
+            link_type = (?) where link_id = (?)"""
       )
       try {
         entries.foreach { property =>
-          updateLinkPropertyPS.setLong(0, property.value)
-          updateLinkPropertyPS.setString(1, property.username.getOrElse(""))
-          updateLinkPropertyPS.setLong(2, property.linkProperty.linkId)
+          updateLinkPropertyPS.setInt(1, property.value)
+          updateLinkPropertyPS.setString(2, property.username.getOrElse(""))
           updateLinkPropertyPS.setInt(3, property.linkProperty.linkType.value)
+          updateLinkPropertyPS.setLong(4, property.linkProperty.linkId)
           updateLinkPropertyPS.addBatch()
         }
         updateLinkPropertyPS.executeBatch()
