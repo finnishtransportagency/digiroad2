@@ -227,12 +227,25 @@
       });
     }
 
+    function getSideCodesForLinks() {
+      var selectedMainLane = _.find(self.selection, function (lane) {
+        return getLaneCodeValue(lane) == 1;
+      });
+      var mainLaneGroup = collection.getGroup(selectedMainLane);
+      var sideCodesMapped = mainLaneGroup.map(function(lane){
+        return {linkId: lane.linkId, sideCode: lane.sideCode};
+      });
+
+      return sideCodesMapped;
+    }
+
     self.save = function(isAddByRoadAddressActive) {
       eventbus.trigger(self.singleElementEvent('saving'));
       omitIrrelevantExpiredLanes();
 
       var linkIds = _.head(self.selection).linkIds;
       var sideCode = _.head(self.selection).sideCode;
+      var sideCodesForLinks = getSideCodesForLinks();
 
       var lanes = omitUnrelevantProperties(self.selection);
 
@@ -254,6 +267,7 @@
         payload = {
           linkIds: linkIds,
           sideCode: sideCode,
+          sideCodesForLinks: sideCodesForLinks,
           lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired))
         };
       }

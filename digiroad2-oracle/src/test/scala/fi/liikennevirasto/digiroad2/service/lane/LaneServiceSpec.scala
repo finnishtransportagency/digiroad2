@@ -226,7 +226,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane11 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneid))
-      ServiceWithDao.processNewLanes((currentMainLane11 ++ subLane12ToExpire).toSet, Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes((currentMainLane11 ++ subLane12ToExpire).toSet, Set(100L), 1, usernameTest, Seq())
       val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
       currentLanesAfterDelete.size should be(1)
 
@@ -280,7 +280,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and one sublane splited and stored only one part
       val currentMainLane11 = mainLane1.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane11, subLane2Splited), Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes(Set(currentMainLane11, subLane2Splited), Set(100L), 1, usernameTest, Seq())
 
       val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
       lanesAfterSplit.size should be(2)
@@ -421,7 +421,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and two sublanes splited and stored both
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2SplitA, subLane2SplitB), Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2SplitA, subLane2SplitB), Set(100L), 1, usernameTest, Seq())
 
       val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
       lanesAfterSplit.size should be(3)
@@ -516,7 +516,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and one sublane not splitted
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2), Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2), Set(100L), 1, usernameTest, Seq())
 
       val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
       lanesAfterSplit.size should be(2)
@@ -619,7 +619,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val updatedSubLane2SplitA = NewLane(newSubLane2SplitAId, 0, 250, 745, false, false, modifiedLaneProperties1)
       val updatedSubLane2SplitB = NewLane(newSubLane2SplitBId, 250, 500, 745, false, false, modifiedLaneProperties2)
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane2SplitA, updatedSubLane2SplitB), Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane2SplitA, updatedSubLane2SplitB), Set(100L), 1, usernameTest, Seq())
 
       val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
       lanesAfterSplit.size should be(3)
@@ -691,7 +691,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       // Delete the lane 12 and update 14 to new 12
       val updatedSubLane4 = NewLane(newSubLane4Id, 0, 500, 745, false, false, lanePropertiesValues4To2)
       val currentMainLane = mainLane.copy(id = mainLaneId)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(100L), 1, usernameTest, Seq())
 
 
       //Validate the delete of old lane 12 and the movement of lane 14 to 12
@@ -763,7 +763,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane1 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneId))
-      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithSameProperties).toSet, Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithSameProperties).toSet, Set(100L), 1, usernameTest, Seq())
       val currentLanesAfterProcess = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
       currentLanesAfterProcess.size should be(2)
 
@@ -819,7 +819,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane1 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneId))
-      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithDiffProperties).toSet, Set(100L), 1, usernameTest)
+      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithDiffProperties).toSet, Set(100L), 1, usernameTest, Seq())
       val currentLanesAfterProcess = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
       currentLanesAfterProcess.size should be(2)
 
@@ -890,7 +890,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane1 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneIdLink100))
-      ServiceWithDao.processNewLanes((currentMainLane1 ++ subLane2ToExpireA ++ subLane2ToExpireB).toSet, Set(100L, 101L), 1, usernameTest)
+      ServiceWithDao.processNewLanes((currentMainLane1 ++ subLane2ToExpireA ++ subLane2ToExpireB).toSet, Set(100L, 101L), 1, usernameTest, Seq())
       val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(1, 2), false)
       currentLanesAfterDelete.size should be(2)
 
@@ -949,7 +949,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       // Delete the lane 12 and update 14 to new 12
       val updatedSubLane4 = NewLane(newSubLane4IdLink100, 0, 500, 745, false, false, lanePropertiesValues4To2)
       val currentMainLane = mainLane.copy(id = mainLaneIdLink100)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(100L, 101L), 1, usernameTest)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(100L, 101L), 1, usernameTest, Seq())
 
 
       //Validate the delete of old lane 12 and the movement of lane 14 to 12
@@ -1347,8 +1347,9 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
   test("LaneCodes should be correct two digit codes") {
-    val laneTowardsDigitizing = PersistedLane(0, 100L, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
-    val laneAgainstDigitizing = PersistedLane(1, 101L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, Seq())
+    val attributes = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))))
+    val laneTowardsDigitizing = PersistedLane(0, 100L, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
+    val laneAgainstDigitizing = PersistedLane(1, 101L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
 
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L))).thenReturn(
       Seq(RoadLink(100L, Seq(Point(20.0, 20.0), Point(40, 40.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
