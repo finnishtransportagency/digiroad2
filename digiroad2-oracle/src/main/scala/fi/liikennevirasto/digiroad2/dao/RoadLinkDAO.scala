@@ -10,6 +10,8 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
 case class RoadLinkValue(linkId:Long,value:Option[Int])
+case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int,mmlId: Option[Long])
+
 sealed trait RoadLinkDAO{
 
   def table: String
@@ -156,7 +158,6 @@ sealed trait RoadLinkDAO{
   }
 }
 
-case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int,mmlId: Option[Long])
 object RoadLinkDAO{
 
   val FunctionalClass = "functional_class"
