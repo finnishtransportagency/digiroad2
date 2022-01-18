@@ -32,9 +32,7 @@ sealed trait RoadLinkDAO{
   }
   
   def getExistingValues(linkIds: Seq[Long]): Seq[RoadLinkValue]= {
-    //sql"""select link_id,#$column from #$table where link_id in ($linkIds)""".as[getRoadLinkRow].list
-    //sql"""select link_id,#$column from #$table where link_id in ($linkIds)""".as[(Long,Option[Int])].list
-    if(linkIds.size > 0){
+    if(linkIds.nonEmpty){
       Q.queryNA[RoadLinkValue](s"""select link_id,$column from $table where link_id IN (${linkIds.mkString(",")})""")(getRoadLinkRow).iterator.toSeq
     }else Seq()
  
@@ -56,10 +54,6 @@ sealed trait RoadLinkDAO{
   }
   
   def insertValuesMass(entries:Seq[MassOperationEntry]): Unit = {
-      /*sqlu""" insert into #$table (id, link_id, #$column, modified_by )
-              select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username
-              where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute*/
-
       val insertLinkPropertyPS = dynamicSession.prepareStatement(
         s"""insert into $table (id, link_id, $column, modified_by ) select nextval('primary_key_seq'),(?),(?),(?) where not exists (select * from $table where link_id =(?))""")
       try {
