@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, ElementTypes, LinearLengthLimitService, Manoeuvre, ManoeuvreElement}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.util.Track
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Mockito.{when, _}
 import org.scalatest.mockito.MockitoSugar
