@@ -22,6 +22,36 @@ class PolygonTools {
     Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
+  def createPolygonFromCoordinates(coords: Map[String, Point]): Polygon = {
+    val sortedCoords = coords.toSeq.sortBy(_._1.toInt)
+    val lines = sortedCoords.grouped(2).toSeq
+    val offsets = Seq(200, -200)
+    val parallelLines = offsets.map(offset => {
+      lines.flatMap(line => {
+        val x1 = line.head._2.x
+        val x2 = line.last._2.x
+        val y1 = line.head._2.y
+        val y2 = line.last._2.y
+        val length = scala.math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
+
+        val x1p = x1 + offset * (y2 - y1) / length
+        val x2p = x2 + offset * (y2 - y1) / length
+        val y1p = y1 + offset * (x1 - x2) / length
+        val y2p = y2 + offset * (x1 - x2) / length
+
+        val parallelPoint1 = Point(x1p, y1p)
+        val parallelPoint2 = Point(x2p, y2p)
+        Seq(parallelPoint1, parallelPoint2)
+      })
+    })
+
+    val pointsSortedForPolygon = parallelLines.head ++ parallelLines.last.reverse
+    val coordinates = pointsSortedForPolygon.map(point => {
+      new Coordinate(point.x, point.y)
+    }).toArray
+    geomFact.createPolygon(coordinates ++ Array(coordinates.head))
+  }
+
   /**
     *
     * @param geometries jts Geometries

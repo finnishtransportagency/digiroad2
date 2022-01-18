@@ -1,8 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
+import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
+import fi.liikennevirasto.digiroad2.Digiroad2Context.laneService.lanesWithConsistentRoadAddress
+import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesFromVVHWithPolygon, roadLinksWithConsistentAddress}
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getStartingLanes}
@@ -12,7 +16,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools, RoadAddress, Track}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
@@ -24,6 +28,8 @@ import org.slf4j.LoggerFactory
 import scala.util.Try
 
 class IntegrationApi(val massTransitStopService: MassTransitStopService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
+  lazy val vkmClient = new VKMClient
+  lazy val polygonTools = new PolygonTools
   val logger = LoggerFactory.getLogger(getClass)
   protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -161,6 +167,61 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
+  def lanesInRoadAddressSpaceToApi(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                   startAddrM: Long, endAddrM: Long): Seq[Map[String, Any]] = {
+    val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber).filter(_.track == track)
+    val roadPartMaxLengths = roadAddresses.groupBy(_.roadPartNumber).mapValues(_.maxBy(_.endAddrMValue)).values
+    val roadPartRange = startRoadPartNumber to endRoadPartNumber
+    val filteredMaxLengths = roadPartMaxLengths.filter(address => roadPartRange contains address.roadPartNumber)
+
+    val roadAddressesToTransform = filteredMaxLengths.flatMap(roadPart => {
+      val roadPartNumber = roadPart.roadPartNumber
+
+      val maxLength = if (roadPartNumber == endRoadPartNumber) endAddrM
+      else roadPart.endAddrMValue
+
+      val startLength = if (roadPartNumber == startRoadPartNumber) startAddrM
+      else roadPart.startAddrMValue
+
+      val transFormInterval = 50
+      val transformsForRoadPart = ((maxLength - startLength) / transFormInterval + 1).toInt
+
+      val roadAddresses = for (i <- 0 to transformsForRoadPart)
+        yield (i.toString, RoadAddress(None, roadNumber.toInt, roadPartNumber.toInt, track, (startLength + (i * transFormInterval)).toInt))
+      roadAddresses
+    }).toMap
+
+    val coordinatesAndIdentifiers = vkmClient.addressToCoordsMassQuery(roadAddressesToTransform).toMap
+    val polygon = polygonTools.createPolygonFromCoordinates(coordinatesAndIdentifiers)
+
+    val roadlinks = getRoadLinksAndChangesFromVVHWithPolygon(polygon)._1
+    val (roadLinksWithViiteAddress, noRoadAddress) = roadAddressService.roadLinkWithRoadAddress(roadlinks).partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
+    val roadLinksWithTempAddress = roadAddressService.roadLinkWithRoadAddressTemp(noRoadAddress).filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
+    val roadLinksWithRoadAddress = roadLinksWithViiteAddress ++ roadLinksWithTempAddress
+
+    val roadLinksWithConsistentRoadAddress = roadLinksWithConsistentAddress(roadLinksWithRoadAddress)
+
+    val correctLinks = roadLinksWithConsistentRoadAddress.filter(roadLink => roadLink.attributes("VIITE_ROAD_NUMBER") == roadNumber
+      && (roadPartRange contains roadLink.attributes("VIITE_ROAD_PART_NUMBER")) && roadLink.attributes("VIITE_TRACK") == track.value)
+
+    val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
+    val (lanesWithViiteAddress, lanesWithoutRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanesOnRoadLinks))
+      .flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
+    val lanesWithTempAddress = roadAddressService.experimentalLaneWithRoadAddress(Seq(lanesWithoutRoadAddress)).flatten
+      .filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
+    val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
+
+    val lanesWithNormalRoadAddress = lanesWithConsistentRoadAddress(lanesWithRoadAddress)
+    val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
+
+    val velhoLanes = lanesToVelhoLanes(twoDigitLanes, correctLinks.groupBy(_.linkId).mapValues(_.head))
+    velhoLanes.map { velhoLane =>
+      Map("roadNumber" -> velhoLane.roadNumber,
+        "roadParts" -> velhoLane.roadParts
+      )
+    }
+  }
+
   def lanesToVelhoLanes(twoDigitLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[VelhoRoad] = {
     val roadNumbers = twoDigitLanes.map(_.attributes("ROAD_NUMBER")).distinct.asInstanceOf[Seq[Long]]
     val lanesGroupedByRoadNumber = twoDigitLanes.groupBy(_.attributes("ROAD_NUMBER")).values
@@ -190,8 +251,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
       val velhoLanes = connectedGroups.map(group => {
         val laneCode = group.head.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]
-        val startAddressM = group.map(_.attributes("START_ADDR")).asInstanceOf[Seq[Long]].min
-        val endAddressM = group.map(_.attributes("END_ADDR")).asInstanceOf[Seq[Long]].max
+        val startLane = group.minBy(_.attributes("START_ADDR").asInstanceOf[Long])
+        val startAddressM = startLane.attributes("START_ADDR").asInstanceOf[Long] + startLane.startMeasure.asInstanceOf[Long]
+
+        val endLane = group.maxBy(_.attributes("END_ADDR").asInstanceOf[Long])
+        val endLaneLength = (roadLinks(endLane.linkId).length - endLane.endMeasure).asInstanceOf[Long]
+        val endAddressM = endLane.attributes("END_ADDR").asInstanceOf[Long] - endLaneLength
+
         VelhoLane(laneCode, startAddressM, endAddressM)
       })
 
@@ -212,15 +278,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     val (lanesWithViiteAddress, noRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanes)).flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
     val lanesWithTempAddress =  roadAddressService.experimentalLaneWithRoadAddress(Seq(noRoadAddress)).flatten.filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
     val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
-
-    val lanesWithNormalRoadAddress = lanesWithRoadAddress.map(lane => {
-      val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER"))
-      val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER"))
-      val startAddr = lane.attributes.getOrElse("VIITE_START_ADDR", lane.attributes.get("TEMP_START_ADDR"))
-      val endAddr = lane.attributes.getOrElse("VIITE_END_ADDR", lane.attributes.get("TEMP_END_ADDR"))
-      lane.copy(attributes = lane.attributes + ("ROAD_NUMBER" -> roadNumber, "ROAD_PART_NUMBER" -> roadPartNumber,
-        "START_ADDR" -> startAddr, "END_ADDR" -> endAddr))
-    })
+    val lanesWithNormalRoadAddress = lanesWithConsistentRoadAddress(lanesWithRoadAddress)
 
     val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
     val velhoLanes = lanesToVelhoLanes(twoDigitLanes, roadLinksInMunicipality.groupBy(_.linkId).mapValues(_.head))
@@ -987,6 +1045,38 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case _ => TrafficSignTypeGroup.Unknown
     }
   }
+
+  //Description of Api entry point to get all lanes in specific road address range
+  val getLanesInRoadAddressRange =
+    (apiOperation[Long]("getLanesInRoadAddressRange")
+      .parameters(
+        queryParam[Int]("roadNumber").description("Municipality Code where we will execute the search by specific asset type"),
+        queryParam[Int]("track").description("Municipality Code where we will execute the search by specific asset type"),
+        queryParam[Int]("startRoadPartNumber").description("Municipality Code where we will execute the search by specific asset type"),
+        queryParam[Int]("startAddrM").description("Municipality Code where we will execute the search by specific asset type"),
+        queryParam[Int]("endRoadPartNumber").description("Municipality Code where we will execute the search by specific asset type"),
+        queryParam[Int]("endAddrM").description("Municipality Code where we will execute the search by specific asset type"),
+        pathParam[String]("lanes_in_range").description("Asset type name to get all assets")
+      )
+      tags "Integration API (Kalpa API)"
+      summary "Get lanes in given road address range"
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /externalApi/integration/lanes_in_range?road_number=9?track=1?star_part=208?start_addr=8500?end_part=208?end_addr=9000"
+      )
+
+  get("/lanes_in_range", operation(getLanesInRoadAddressRange)) {
+    contentType = formats("json")+ "; charset=utf-8"
+    val roadNumber = params("road_number").toLong
+    val track = Track(params("track").toInt)
+    val startRoadPartNumber = params("star_part").toLong
+    val startAddrM = params("start_addr").toLong
+    val endRoadPartNumber = params("end_part").toLong
+    val endAddrM = params("end_addr").toLong
+
+    lanesInRoadAddressSpaceToApi(roadNumber, track, startRoadPartNumber,endRoadPartNumber ,startAddrM , endAddrM)
+
+
+}
 
   //Description of Api entry point to get all assets by asset type and municipality
   val getAssetsByTypeMunicipality =

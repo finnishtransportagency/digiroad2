@@ -166,6 +166,27 @@ class VKMClient {
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
   }
 
+  def addressToCoordsMassQuery(addresses: Map[String, RoadAddress]): Seq[(String,Point)] = {
+    val params = addresses.map(roadAddress => {
+      Map(
+        VkmQueryIdentifier -> roadAddress._1,
+        VkmRoad -> roadAddress._2.road,
+        VkmRoadPart -> roadAddress._2.roadPart,
+        VkmTrackCodes -> roadAddress._2.track.value,
+        VkmDistance -> roadAddress._2.addrM
+      )
+    })
+    val jsonValue = Serialization.write(params)
+    val url = vkmBaseUrl + "muunna/"
+    val response = postRequest(url, jsonValue)
+
+    val result = response match {
+      case Left(address) => mapCoordinatesWithIdentifier(address)
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+    result
+  }
+
   def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
     val params = Map(
       VkmRoad -> roadAddress.road,
@@ -246,6 +267,21 @@ class VKMClient {
       throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
     RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)
+  }
+
+  private def mapCoordinatesWithIdentifier(data: FeatureCollection) = {
+
+    try {
+      data.features.map {
+        addr =>
+          val queryIdentifier = addr.properties(VkmQueryIdentifier)
+          val x = addr.properties("x").toDouble
+          val y = addr.properties("y").toDouble
+          (queryIdentifier, Point(x,y))
+      }
+    } catch {
+      case ex: Exception => throw new RoadAddressException("Could not convert response from VKM: %s".format(ex.getMessage))
+    }
   }
 
   private def mapCoordinates(data: FeatureCollection) = {
