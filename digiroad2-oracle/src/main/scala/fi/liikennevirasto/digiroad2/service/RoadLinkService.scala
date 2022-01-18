@@ -1440,7 +1440,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val IDSingleton = actionID
     val tempMunicipality = roadLinks.headOption.getOrElse(null)
     if(tempMunicipality != null){
-      logger.info("ID: " +IDSingleton+" "+"fillRoadLinkAttributes: "+tempMunicipality.municipalityCode)
+//      logger.info("ID: " +IDSingleton+" "+"fillRoadLinkAttributes: "+tempMunicipality.municipalityCode)
     }
     var counter1 = 0
     var counter2 = 0
