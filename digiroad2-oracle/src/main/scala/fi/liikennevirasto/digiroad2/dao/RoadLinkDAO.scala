@@ -4,10 +4,12 @@ import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
-import fi.liikennevirasto.digiroad2.service.LinkProperties
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertiesEntries}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
+case class RoadLinkValue(linkId:Long,value:Option[Int])
 sealed trait RoadLinkDAO{
 
   def table: String
@@ -21,6 +23,24 @@ sealed trait RoadLinkDAO{
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
   }
 
+  implicit val getRoadLinkRow: GetResult[RoadLinkValue] = new GetResult[RoadLinkValue] {
+    def apply(r: PositionedResult) : RoadLinkValue = {
+      val id = r.nextLong
+      val value = r.nextIntOption()
+      RoadLinkValue(id,value)
+    }
+  }
+  
+  def getExistingValues(linkIds: Seq[Long]): Seq[RoadLinkValue]= {
+    //sql"""select link_id,#$column from #$table where link_id in ($linkIds)""".as[getRoadLinkRow].list
+    //sql"""select link_id,#$column from #$table where link_id in ($linkIds)""".as[(Long,Option[Int])].list
+    if(linkIds.size > 0){
+      Q.queryNA[RoadLinkValue](s"""select link_id,$column from $table where link_id IN (${linkIds.mkString(",")})""")(getRoadLinkRow).iterator.toSeq
+    }else Seq()
+ 
+ 
+  }
+  
   def getLinkIdByValue(value: Int, since: Option[String]): Seq[Long] = {
     val sinceDateQuery = since match {
       case Some(date) => " AND modified_date >= to_date('" + date + "', 'YYYYMMDD')"
@@ -167,6 +187,11 @@ object RoadLinkDAO{
     dao.getExistingValue(linkId)
   }
 
+  def getValues(propertyName: String, linkIds: Seq[Long]): Seq[RoadLinkValue]= {
+    val dao = getDao(propertyName)
+    dao.getExistingValues(linkIds)
+  }
+  
   def getValue(propertyName: String, linkProperty: LinkProperties): Int  = {
     val dao = getDao(propertyName)
     dao.getValue(linkProperty)
