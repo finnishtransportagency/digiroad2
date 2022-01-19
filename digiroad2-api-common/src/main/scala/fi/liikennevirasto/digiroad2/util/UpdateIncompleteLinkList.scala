@@ -7,9 +7,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-import scala.concurrent.Await
 import scala.sys.exit
-import scala.util.Random
 
 object UpdateIncompleteLinkList {
   val logger = LoggerFactory.getLogger(getClass)
@@ -29,27 +27,26 @@ object UpdateIncompleteLinkList {
   }
 
   private def runUpdate(): Unit = {
-    println("*** Delete incomplete links")
+    logger.info("*** Delete incomplete links")
     clearIncompleteLinks()
-    println("*** Get municipalities")
+    logger.info("*** Get municipalities")
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
-    
+
     var counter = 0
-    val sizeOflist = municipalities.size
     municipalities.foreach { municipality =>
       val timer1 = System.currentTimeMillis()
       logger.info("*** Processing municipality: " + municipality)
       val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
-      counter+=1
-      logger.info("*** Processed " + roadLinks.length + " road links with municipality "+municipality)
-      logger.info(s" number of succeeding municipalities $counter from all $sizeOflist")
-      logger.info("processing took: %.3f sec".format((System.currentTimeMillis()-timer1)*0.001))
-      logger.info("thread: "+Thread.currentThread().getName)
+      counter += 1
+      logger.info("*** Processed " + roadLinks.length + " road links with municipality " + municipality)
+      logger.info(s" number of succeeding municipalities $counter from all ${municipalities.size}")
+      logger.info("processing took: %.3f sec".format((System.currentTimeMillis() - timer1) * 0.001))
+      logger.info("thread: " + Thread.currentThread().getName)
     }
     // await minute to make sure akka inbox is fully processed
-  Thread.sleep(1000L*6L)
+    Thread.sleep(1000L * 6L)
   }
 
   private def clearIncompleteLinks(): Unit = {
