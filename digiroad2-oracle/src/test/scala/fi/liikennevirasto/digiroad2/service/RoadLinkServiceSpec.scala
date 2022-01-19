@@ -1,4 +1,3 @@
-
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.DateParser._
@@ -11,19 +10,18 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{LogUtils, TestTransactions, VVHSerializer}
+import fi.liikennevirasto.digiroad2.util.{TestTransactions, VVHSerializer}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite, Ignore, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 import scala.collection.immutable.Stream.Empty
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
 
