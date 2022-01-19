@@ -282,7 +282,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
                         else laneProp.values.head.value.toString
 
     sqlu"""INSERT INTO lane_attribute (id, lane_id, name, value, created_date, created_by)
-         VALUES( $laneAttributeId, $laneId, ${laneProp.publicId}, $laneAttrValue, current_timestamp, $username)
+          VALUES( $laneAttributeId, $laneId, ${laneProp.publicId}, $laneAttrValue, current_timestamp, $username)
     """.execute
 
     laneAttributeId

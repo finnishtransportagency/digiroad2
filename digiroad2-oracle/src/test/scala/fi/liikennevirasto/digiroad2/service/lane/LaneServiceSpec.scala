@@ -50,6 +50,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
                                 LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
                                 LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                               )
+
   val lanePropertiesValues4 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(4))),
                                    LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
                                    LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
