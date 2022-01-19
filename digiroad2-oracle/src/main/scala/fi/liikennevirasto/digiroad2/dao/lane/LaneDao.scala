@@ -282,7 +282,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
                         else laneProp.values.head.value.toString
 
     sqlu"""INSERT INTO lane_attribute (id, lane_id, name, value, created_date, created_by)
-          VALUES( $laneAttributeId, $laneId, ${laneProp.publicId}, $laneAttrValue, current_timestamp, $username)
+         VALUES( $laneAttributeId, $laneId, ${laneProp.publicId}, $laneAttrValue, current_timestamp, $username)
     """.execute
 
     laneAttributeId
@@ -426,4 +426,24 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     """.execute
   }
 
+  def expireLaneByLaneId(laneId: Long, username: Option[String]) = {
+    sqlu"""
+       UPDATE LANE SET
+         VALID_TO = current_timestamp,
+         EXPIRED_DATE = current_timestamp,
+         EXPIRED_BY = $username
+       WHERE ID = $laneId
+    """.execute
+  }
+
+  def reuseExpiredLane(laneId: Long) = {
+    sqlu"""
+       UPDATE LANE SET
+         VALID_FROM = current_timestamp,
+         VALID_TO = NULL,
+         EXPIRED_DATE = NULL,
+         EXPIRED_BY = NULL
+       WHERE ID = $laneId
+    """.execute
+  }
 }

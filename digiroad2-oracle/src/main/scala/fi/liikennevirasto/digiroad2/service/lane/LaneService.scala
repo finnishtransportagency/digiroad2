@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.asset.SideCode.switch
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
@@ -10,7 +12,7 @@ import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
@@ -616,6 +618,57 @@ trait LaneOperations {
       }
     }
   }
+
+  def updateTrafficDirectionChange(linkProperty: LinkProperties, username: Option[String]): Unit = {
+    val allLanes = dao.fetchAllLanesByLinkIds(Seq(linkProperty.linkId), includeExpired = true)
+    val lanesInUse = allLanes.filter(lane => lane.expired == false)
+    val sideCodeToPreserve = toSideCode(linkProperty.trafficDirection).value
+
+    if (lanesInUse.size == 2) {
+      if (linkProperty.trafficDirection.isOneWay) {
+        val lanesToExpire = lanesInUse.filter(lane => lane.sideCode != sideCodeToPreserve)
+        if (lanesToExpire.size == 2) {
+          processLaneChanges(lanesToExpire.head, sideCodeToPreserve, lanesToExpire.head.laneCode)
+          processLaneChanges(lanesToExpire.last, sideCodeToPreserve, lanesToExpire.last.laneCode)
+        } else if (lanesToExpire.size == 1) {
+          processLaneChanges(lanesToExpire.head, sideCodeToPreserve,2)
+        }
+      } else {
+        val laneToExpire = lanesInUse.find(lane => lane.laneCode != 1)
+        laneToExpire match {
+          case Some(lane) =>
+            val newSideCode = switch(SideCode.apply(lane.sideCode)).value
+            processLaneChanges(lane, newSideCode, 1)
+          case None =>
+            //do nothing
+        }
+      }
+
+    } else if (lanesInUse.size == 1) {
+      val laneToExpire = lanesInUse.head
+      if (laneToExpire.sideCode != sideCodeToPreserve) {
+        processLaneChanges(laneToExpire, sideCodeToPreserve, laneToExpire.laneCode)
+      }
+    }
+
+    def processLaneChanges(laneToExpire: PersistedLane, newSideCode: Int, newLaneCode: Int) = {
+      dao.expireLaneByLaneId(laneToExpire.id, username)
+      val laneToReuse = allLanes.find(lane => lane.sideCode == newSideCode && lane.laneCode == newLaneCode)
+      laneToReuse match {
+        case Some(lane) =>
+          dao.reuseExpiredLane(lane.id)
+        case None =>
+          val attributes = if (newLaneCode == 2) {
+            Seq(LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))))
+          } else {
+            laneToExpire.attributes
+          }
+          val newLane = laneToExpire.copy(id = 0, sideCode = newSideCode, laneCode = newLaneCode, vvhTimeStamp = vvhClient.createVVHTimeStamp(), attributes = attributes)
+          createWithoutTransaction(newLane, username.getOrElse(null))
+      }
+    }
+  }
+
 
   def createWithoutTransaction(newLane: PersistedLane, username: String): Long = {
     val laneId = dao.createLane( newLane, username )

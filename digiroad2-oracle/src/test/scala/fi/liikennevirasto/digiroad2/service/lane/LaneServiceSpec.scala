@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustme
 import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, RoadAddress, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
@@ -50,7 +50,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
                                 LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
                                 LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                               )
-
   val lanePropertiesValues4 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(4))),
                                    LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
                                    LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
@@ -1372,5 +1371,238 @@ class LaneServiceSpec extends LaneTestSupporter {
 
     laneTowardsTwoDigit.laneCode should equal(11)
     laneAgainstTwoDigit.laneCode should equal(21)
+  }
+
+  test("lane-creation: one two-direction lane changed to one-direction lane") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.TowardsDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 1, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(1)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(2)
+      val newLane = lanesAfterUpdate.find(lane => lane.expired == false)
+      newLane.getOrElse(null).sideCode should be(2)
+      val expiredLane = lanesAfterUpdate.find(lane => lane.expired == true)
+      expiredLane.getOrElse(null).sideCode should be(1)
+    }
+  }
+
+  test("lane-creation: one one-direction lane changed to two-direction lane") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.BothDirections, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(1)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(2)
+      val newLane = lanesAfterUpdate.find(lane => lane.expired == false)
+      newLane.getOrElse(null).sideCode should be(1)
+      val expiredLane = lanesAfterUpdate.find(lane => lane.expired == true)
+      expiredLane.getOrElse(null).sideCode should be(2)
+    }
+  }
+
+  test("lane-creation: one one-direction lane changed to the opposite direction") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.AgainstDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(1)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(2)
+      val newLane = lanesAfterUpdate.find(lane => lane.expired == false)
+      newLane.getOrElse(null).sideCode should be(3)
+      val expiredLane = lanesAfterUpdate.find(lane => lane.expired == true)
+      expiredLane.getOrElse(null).sideCode should be(2)
+    }
+  }
+
+  test("lane-reuse: one two-direction lane changed to one-direction lane") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.TowardsDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 1, usernameTest)
+      val laneToExpire = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      laneDao.expireLaneByLaneId(laneToExpire.head, Option(usernameTest))
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      initialLanes.size should be(2)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(2)
+      val newLane = lanesAfterUpdate.find(lane => lane.expired == false)
+      newLane.getOrElse(null).sideCode should be(2)
+      val expiredLane = lanesAfterUpdate.find(lane => lane.expired == true)
+      expiredLane.getOrElse(null).sideCode should be(1)
+    }
+  }
+
+  test("lane-creation: two lanes with different direction are changed to two lanes with same direction") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.TowardsDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 3, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(2)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(3)
+      val newLanes = lanesAfterUpdate.filter(lane => lane.expired == false)
+      newLanes.size should be(2)
+      newLanes.foreach(lane => lane.sideCode should be(2))
+      val newMainLanes = newLanes.filter(lane => lane.laneCode == 1)
+      newMainLanes.size should be(1)
+      val newAdditionalLanes = newLanes.filter(lane => lane.laneCode == 2)
+      newAdditionalLanes.size should be(1)
+      val expiredLane = lanesAfterUpdate.find(lane => lane.expired == true)
+      expiredLane.getOrElse(null).sideCode should be(3)
+    }
+  }
+
+  test("lane-creation: two lanes with same direction are changed to two lanes with different direction") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.BothDirections, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(999L), 2, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(2)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(3)
+      val newLanes = lanesAfterUpdate.filter(lane => lane.expired == false)
+      newLanes.size should be(2)
+      val lanesTowardsDigitizing = newLanes.find(lane => lane.sideCode == 2)
+      lanesTowardsDigitizing.size should be(1)
+      lanesTowardsDigitizing.getOrElse(null).laneCode should be(1)
+      val lanesAgainstDigitizing = newLanes.find(lane => lane.sideCode == 3)
+      lanesAgainstDigitizing.size should be(1)
+      lanesAgainstDigitizing.getOrElse(null).laneCode should be(1)
+      val expiredLane = lanesAfterUpdate.find(lane => lane.expired == true)
+      expiredLane.getOrElse(null).sideCode should be(2)
+      expiredLane.getOrElse(null).laneCode should be(2)
+    }
+  }
+
+  test("lane-creation: two lanes with same direction are changed to the opposite direction") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.AgainstDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(999L), 2, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(2)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(4)
+      val newLanes = lanesAfterUpdate.filter(lane => lane.expired == false)
+      newLanes.size should be(2)
+      val lanesAgainstDigitizing = newLanes.filter(lane => lane.sideCode == 3)
+      lanesAgainstDigitizing.size should be(2)
+      val newMainLanes = lanesAgainstDigitizing.filter(lane => lane.laneCode == 1)
+      newMainLanes.size should be(1)
+      val newAdditionalLanes = lanesAgainstDigitizing.filter(lane => lane.laneCode == 2)
+      newAdditionalLanes.size should be(1)
+      val expiredLanes = lanesAfterUpdate.filter(lane => lane.expired == true)
+      expiredLanes.size should be(2)
+      expiredLanes.foreach(lane => lane.sideCode should be(2))
+    }
+  }
+
+  test("lane-reuse: two lanes with different direction are changed to two lanes with same direction") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.TowardsDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 3, usernameTest)
+      val laneToExpire = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(999L), 2, usernameTest)
+      laneDao.expireLaneByLaneId(laneToExpire.head, Option(usernameTest))
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      initialLanes.size should be(3)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(3)
+      val newLanes = lanesAfterUpdate.filter(lane => lane.expired == false)
+      newLanes.size should be(2)
+      newLanes.foreach(lane => lane.sideCode should be(2))
+      val newMainLanes = newLanes.filter(lane => lane.laneCode == 1)
+      newMainLanes.size should be(1)
+      val newAdditionalLanes = newLanes.filter(lane => lane.laneCode == 2)
+      newAdditionalLanes.size should be(1)
+      val expiredLane = lanesAfterUpdate.find(lane => lane.expired == true)
+      expiredLane.getOrElse(null).sideCode should be(3)
+    }
+  }
+
+  test("no lane changes when traffic direction is not changed: one lane to one direction") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.TowardsDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(1)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(1)
+      lanesAfterUpdate.head.sideCode should be(2)
+    }
+  }
+
+  test("no lane changes when traffic direction is not changed: one lane to both directions") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.BothDirections, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 1, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(1)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(1)
+      lanesAfterUpdate.head.sideCode should be(1)
+    }
+  }
+
+  test("no lane changes when traffic direction is not changed: two lanes to one direction") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.AgainstDigitizing, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 3, usernameTest)
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(999L), 3, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(2)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(2)
+      lanesAfterUpdate.foreach(lane => lane.sideCode should be(3))
+      val unchangedMainLane = lanesAfterUpdate.filter(lane => lane.laneCode == 1)
+      unchangedMainLane.size should be(1)
+      val unchangedAdditionalLane = lanesAfterUpdate.filter(lane => lane.laneCode == 2)
+      unchangedAdditionalLane.size should be(1)
+    }
+  }
+
+  test("no lane changes when traffic direction is not changed: two lanes to both directions") {
+    val linkProperty = LinkProperties(999L, 1, SingleCarriageway, TrafficDirection.BothDirections, Municipality)
+
+    runWithRollback {
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 2, usernameTest)
+      ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(999L), 3, usernameTest)
+      val initialLanes = laneDao.fetchAllLanesByLinkIds(Seq(999L))
+      initialLanes.size should be(2)
+      ServiceWithDao.updateTrafficDirectionChange(linkProperty, Option(usernameTest))
+      val lanesAfterUpdate = laneDao.fetchAllLanesByLinkIds(Seq(999L), includeExpired = true)
+      lanesAfterUpdate.size should be(2)
+      val lanesTowardsDigitizing = lanesAfterUpdate.filter(lane => lane.sideCode == 2)
+      lanesTowardsDigitizing.size should be(1)
+      val lanesAgainstDigitizing = lanesAfterUpdate.filter(lane => lane.sideCode == 3)
+      lanesAgainstDigitizing.size should be(1)
+    }
   }
 }
