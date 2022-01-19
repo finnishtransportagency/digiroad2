@@ -1248,7 +1248,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   /**
     * Updates roadLinks attributes based on the changes received
-    *
     * @param roadLinks      UpToDate roadLinks
     * @param changes        Change information to treat
     * @param changeUsername Username applied to this changes
