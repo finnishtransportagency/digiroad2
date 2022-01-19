@@ -1271,17 +1271,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           val attributesLastRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjLast.get.linkId)
           val commonAttributes = returnEqualAttributes(Seq(attributesFirstRoadLink, attributesLastRoadLink))
 
-          commonAttributes.foreach { case (attribute, value) => // O(N) same expensive insert one by one
+          commonAttributes.foreach { case (attribute, value) =>
             LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
           }
         }
       }
     }
 
-    def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = { //O(N^2)
-      oldAttributes.flatMap { mapToFilter => // O(N)
+    def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = {
+      oldAttributes.flatMap { mapToFilter =>
         mapToFilter.filter { case (attr, value) =>
-          oldAttributes.forall { oldAttribute => // O(N)
+          oldAttributes.forall { oldAttribute =>
             val attribute = oldAttribute.get(attr)
             attribute.nonEmpty && attribute.get == value
           }
