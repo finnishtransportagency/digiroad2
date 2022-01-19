@@ -1442,42 +1442,23 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     if(tempMunicipality != null){
 //      logger.info("ID: " +IDSingleton+" "+"fillRoadLinkAttributes: "+tempMunicipality.municipalityCode)
     }
-    var counter1 = 0
-    var counter2 = 0
-    var counter3 = 0
-    var counter4 = 0
+    
     def resolveNewChange(change: ChangeInfo): Unit = {
-      counter1+=1
       val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.newId.get)
 
-      var roadLinkFind :Option[RoadLink]=null
-      LogUtils.time(logger,"ID: " +IDSingleton+" "+" roadLinks.find(_.linkId == change.newId.get) "){
-        roadLinkFind = roadLinks.find(_.linkId == change.newId.get)
-      }
+      val roadLinkFind :Option[RoadLink]=roadLinks.find(_.linkId == change.newId.get)
       
       if(roadLinkAttributesRelatedWithThisChange.isEmpty && roadLinkFind.isDefined){
         val roadLink = roadLinkFind.get
         val (startPoint, endPoint) = GeometryUtils.geometryEndpoints(roadLink.geometry)
 
-        var roadLinksAdjFirst:Option[RoadLink]= null
-        var roadLinksAdjLast:Option[RoadLink] = null
-        LogUtils.time(logger,"ID: " +IDSingleton+" "+" roadLinksAdjFirst and roadLinksAdjLast "){
-          roadLinksAdjFirst = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, startPoint) && link != roadLink)
-          roadLinksAdjLast  = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, endPoint)   && link != roadLink)
-        }
-        counter2+=1
-        if(!(roadLinksAdjFirst.nonEmpty && roadLinksAdjLast.nonEmpty)){
-          //println(s"roadLink: ${roadLink.linkId} and it adj: ${roadLinksAdjFirst.nonEmpty && roadLinksAdjLast.nonEmpty}")
-        }
+        val roadLinksAdjFirst:Option[RoadLink]= roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, startPoint) && link != roadLink)
+        val roadLinksAdjLast:Option[RoadLink] = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, endPoint)   && link != roadLink)
         if(roadLinksAdjFirst.nonEmpty && roadLinksAdjLast.nonEmpty){
           val attributesFirstRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjFirst.get.linkId)
           val attributesLastRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjLast.get.linkId)
 
           val commonAttributes = returnEqualAttributes(Seq(attributesFirstRoadLink, attributesLastRoadLink))
-          if (commonAttributes.size>=3){
-            //logger.info(s"ID: $IDSingleton fillRoadLinkAttributes resolveNewChange commonAttributes: ${commonAttributes.size}")
-          }
-          counter3+=1
           commonAttributes.foreach { case (attribute, value) =>
             LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) // TODO Create MassInsert
           }
@@ -1495,7 +1476,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         }
       }.toMap
     }
-    // 631
+    
     def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = {
       logger.info(s"ID: $IDSingleton resolveChanges changesToBeProcessed: ${changesToBeProcessed.size}")
       println(s"ID: $IDSingleton resolveChanges changesToBeProcessed: ${changesToBeProcessed.size}")
@@ -1530,10 +1511,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           case _ =>
         }
       }
-
-      println(s"resolveNewChange iteration: ${counter1}")
-      println(s"resolveNewChange second if iteration:  ${counter2}")
-      println(s"resolveNewChange third if iteration:  ${counter3}")
       logger.info("ID: " +IDSingleton+" "+"updateRoadLinkChanges ending resolving changesToBeProcessed " +changesToBeProcessed.size)
     }
 
@@ -1541,13 +1518,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val isOldEqNew = change.oldId == change.newId
       val isNotToExpire = change.oldId.isDefined && change.newId.isEmpty && change.changeType != ChangeType.Removed.value
       val isNotToCreate = change.oldId.isEmpty && change.newId.isDefined && change.changeType != ChangeType.New.value
-
       isOldEqNew || isNotToExpire || isNotToCreate
-    }
-      .sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
-    //   LogUtils.time(logger,"ID: " +IDSingleton+" resolveChanges"){
+    }.sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
     resolveChanges(changesToBeProcessed)
-    // }
   }
 
   case class RoadLinkSet(link: RoadLink, itNext: Option[RoadLink], itPrevious: Option[RoadLink])
@@ -1574,99 +1547,94 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param changes  Change information to treat
     * @param changeUsername  Username applied to this changes
     */
-  def fillRoadLinkAttributesSpeedup(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], changeUsername: String = "vvh_change",actionID:String=""): Unit = {
+  def fillRoadLinkAttributesSpeedup(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], changeUsername: String = "vvh_change", actionID: String = ""): Unit = {
     val IDSingleton = actionID
-    val roadlinkMap:mutable.HashMap[Long, RoadLinkSet] = roadLinkToMap(roadLinks,changes)
-    
-    val tempMunicipality = roadLinks.headOption.getOrElse(null)
-    if(tempMunicipality != null){
-      logger.info("ID: " +IDSingleton+" "+"fillRoadLinkAttributes: "+tempMunicipality.municipalityCode)
-    }
-    def resolveNewChange(change: ChangeInfo): Unit = {
-      
-      val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.newId.get)
-      val roadLinkFind :Option[RoadLinkSet]=roadlinkMap.get(change.newId.get)
-      
-      if(roadLinkAttributesRelatedWithThisChange.isEmpty && roadLinkFind.isDefined){
-        val roadLink = roadLinkFind.get
-        val roadLinksAdjFirst:Option[RoadLink]= roadLink.itNext
-        val roadLinksAdjLast:Option[RoadLink] = roadLink.itPrevious
-        
-        if(roadLinksAdjFirst.nonEmpty && roadLinksAdjLast.nonEmpty){
-          val attributesFirstRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjFirst.get.linkId) 
-          val attributesLastRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjLast.get.linkId)
+    val roadLinkMap: mutable.HashMap[Long, RoadLinkSet] = roadLinkToMap(roadLinks, changes)
 
+    val tempMunicipality = roadLinks.headOption.getOrElse(null)
+    if (tempMunicipality != null) {
+      //logger.info("ID: " +IDSingleton+" "+"fillRoadLinkAttributes: "+tempMunicipality.municipalityCode)
+    }
+
+    def resolveNewChange(change: ChangeInfo): Unit = {
+
+      val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.newId.get)
+      val roadLinkFind: Option[RoadLinkSet] = roadLinkMap.get(change.newId.get)
+
+      if (roadLinkAttributesRelatedWithThisChange.isEmpty && roadLinkFind.isDefined) {
+        val roadLink = roadLinkFind.get
+        val roadLinksAdjFirst: Option[RoadLink] = roadLink.itNext
+        val roadLinksAdjLast: Option[RoadLink] = roadLink.itPrevious
+
+        if (roadLinksAdjFirst.nonEmpty && roadLinksAdjLast.nonEmpty) {
+          val attributesFirstRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjFirst.get.linkId)
+          val attributesLastRoadLink = LinkAttributesDao.getExistingValues(roadLinksAdjLast.get.linkId)
           val commonAttributes = returnEqualAttributes(Seq(attributesFirstRoadLink, attributesLastRoadLink))
-          if (commonAttributes.size>=3){
-            logger.info(s"ID: $IDSingleton fillRoadLinkAttributes resolveNewChange commonAttributes: ${commonAttributes.size}")
-          }
-          //counter3+=1
+
           commonAttributes.foreach { case (attribute, value) => // O(N) same expensive insert one by one
             LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
-        }
-      }
-    }
-
-    def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = { //O(N^2)
-      oldAttributes.flatMap { mapToFilter => // O(N)
-        mapToFilter.filter { case (attr, value) =>
-          oldAttributes.forall { oldAttribute => // O(N)
-            val attribute = oldAttribute.get(attr)
-            attribute.nonEmpty && attribute.get == value
           }
         }
-      }.toMap
-    }
-    // 631
-    def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = {
-      logger.info(s"ID: $IDSingleton resolveChanges changesToBeProcessed: ${changesToBeProcessed.size}")
-      changesToBeProcessed.foreach { change => //O(N)
-        ChangeType.apply(change.changeType) match { // these are inserting only one change
-          case ChangeType.New =>
-              resolveNewChange(change)
-          case ChangeType.Removed =>
-            if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty) {
-                LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp))
+      }
+
+      def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = { //O(N^2)
+        oldAttributes.flatMap { mapToFilter => // O(N)
+          mapToFilter.filter { case (attr, value) =>
+            oldAttributes.forall { oldAttribute => // O(N)
+              val attribute = oldAttribute.get(attr)
+              attribute.nonEmpty && attribute.get == value
             }
-          case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty =>
-            val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)
-            if (newIdFromVariousOld.size > 1) {
-              val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
-                LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp)) 
+          }
+        }.toMap
+      }
+
+      // 631
+      def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = {
+        logger.info(s"ID: $IDSingleton resolveChanges changesToBeProcessed: ${changesToBeProcessed.size}")
+        changesToBeProcessed.foreach { change => //O(N)
+          ChangeType.apply(change.changeType) match { // these are inserting only one change
+            case ChangeType.New =>
+              resolveNewChange(change)
+            case ChangeType.Removed =>
+              if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty) {
+                LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp))
               }
-              if(returnEqualAttributes(oldIdsAttributes).size >=3){
-                logger.info(s"ID: $IDSingleton resolveChanges  returnEqualAttributes greater than 3: ${returnEqualAttributes(oldIdsAttributes).size}")
-              }
-                returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
-                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) 
+            case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty =>
+              val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)
+              if (newIdFromVariousOld.size > 1) {
+                val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
+                  LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
                 }
-            } else {
+                returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
+                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+                }
+              } else {
                 val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
 
                 if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
                   roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
-                    LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp) 
+                    LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
                   }
                 }
-            }
-          case _ =>
+              }
+            case _ =>
+          }
         }
+        logger.info("ID: " + IDSingleton + " " + "updateRoadLinkChanges ending resolving changesToBeProcessed " + changesToBeProcessed.size)
       }
-      logger.info("ID: " +IDSingleton+" "+"updateRoadLinkChanges ending resolving changesToBeProcessed " +changesToBeProcessed.size)
-    }
 
-    val changesToBeProcessed = changes.filterNot{change =>
-      val isOldEqNew = change.oldId == change.newId
-      val isNotToExpire = change.oldId.isDefined && change.newId.isEmpty && change.changeType != ChangeType.Removed.value
-      val isNotToCreate = change.oldId.isEmpty && change.newId.isDefined && change.changeType != ChangeType.New.value
+      val changesToBeProcessed = changes.filterNot { change =>
+        val isOldEqNew = change.oldId == change.newId
+        val isNotToExpire = change.oldId.isDefined && change.newId.isEmpty && change.changeType != ChangeType.Removed.value
+        val isNotToCreate = change.oldId.isEmpty && change.newId.isDefined && change.changeType != ChangeType.New.value
 
-      isOldEqNew || isNotToExpire || isNotToCreate
+        isOldEqNew || isNotToExpire || isNotToCreate
+      }
+        .sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
+      LogUtils.time(logger, "ID: " + IDSingleton + " resolveChanges") {
+        resolveChanges(changesToBeProcessed)
+      }
     }
-      .sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
-    LogUtils.time(logger,"ID: " +IDSingleton+" resolveChanges"){
-      resolveChanges(changesToBeProcessed)
-    }
-  }
   }
   
   /**
