@@ -22,9 +22,23 @@ class PolygonTools {
     Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
-  def createPolygonFromCoordinates(coords: Map[String, Point]): Polygon = {
-    val sortedCoords = coords.toSeq.sortBy(_._1.toInt)
-    val lines = sortedCoords.grouped(2).toSeq
+  def createPolygonFromCoordinates(pointsWithIdentifiers: Map[String, Point]): Polygon = {
+    val sortedPoints = pointsWithIdentifiers.toSeq.sortBy(identifierAndPoint => {
+      val identifier = identifierAndPoint._1
+      val split = identifier.split("/", 2)
+      val roadPartNumber = split.head
+      val orderNumber = split.last
+      (roadPartNumber.toInt, orderNumber.toInt)
+    })
+    val lines = if(sortedPoints.length % 2 == 0) {
+      sortedPoints.grouped(2).toSeq
+    }
+    else{
+      val pointsGrouped = sortedPoints.grouped(2).toSeq
+      val lastElement = Seq(pointsGrouped.init.last.last,pointsGrouped.last.head)
+      pointsGrouped.init :+ lastElement
+    }
+
     val offsets = Seq(200, -200)
     val parallelLines = offsets.map(offset => {
       lines.flatMap(line => {

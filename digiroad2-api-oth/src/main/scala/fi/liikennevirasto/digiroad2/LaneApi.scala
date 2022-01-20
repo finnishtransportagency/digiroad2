@@ -125,13 +125,13 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
       else roadPart.endAddrMValue
 
       val startLength = if (roadPartNumber == startRoadPartNumber) startAddrM
-      else roadPart.startAddrMValue
+      else 0
 
       val transFormInterval = 50
       val transformsForRoadPart = ((maxLength - startLength) / transFormInterval + 1).toInt
 
       val roadAddresses = for (i <- 0 to transformsForRoadPart)
-        yield (i.toString, RoadAddress(None, roadNumber.toInt, roadPartNumber.toInt, track, (startLength + (i * transFormInterval)).toInt))
+        yield (roadPartNumber + "/" + i, RoadAddress(None, roadNumber.toInt, roadPartNumber.toInt, track, (startLength + (i * transFormInterval)).toInt))
       roadAddresses
     }).toMap
 
