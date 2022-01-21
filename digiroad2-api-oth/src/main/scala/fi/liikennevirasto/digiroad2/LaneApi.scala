@@ -135,7 +135,8 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
       roadAddresses
     }).toMap
 
-    val coordinatesAndIdentifiers = vkmClient.addressToCoordsMassQuery(roadAddressesToTransform).toMap
+    val roadAddressesSplit = roadAddressesToTransform.grouped(1000).toSeq
+    val coordinatesAndIdentifiers = roadAddressesSplit.flatMap(roadAddressGroup => vkmClient.addressToCoordsMassQuery(roadAddressGroup)).toMap
     val polygon = polygonTools.createPolygonFromCoordinates(coordinatesAndIdentifiers)
 
     val roadLinks = getRoadLinksAndChangesFromVVHWithPolygon(polygon)._1
