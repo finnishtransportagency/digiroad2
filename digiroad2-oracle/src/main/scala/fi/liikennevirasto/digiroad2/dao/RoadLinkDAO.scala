@@ -10,7 +10,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
 case class RoadLinkValue(linkId: Long, value: Option[Int])
-case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int, mmlId: Option[Long])
+case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int, timeStamp:Option[String], mmlId: Option[Long])
 
 sealed trait RoadLinkDAO{
 
@@ -55,15 +55,16 @@ sealed trait RoadLinkDAO{
 
   def insertValuesMass(entries: Seq[MassOperationEntry]): Unit = {
     val insertLinkPropertyPS = dynamicSession.prepareStatement(
-      s"""insert into $table (id, link_id, $column, modified_by ) 
-         select nextval('primary_key_seq'),(?),(?),(?) 
+      s"""insert into $table (id, link_id, $column,modified_date, modified_by ) 
+         select nextval('primary_key_seq'),(?),(?),to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'),(?) 
          where not exists (select * from $table where link_id =(?))""".stripMargin)
     try {
       entries.foreach { property =>
         insertLinkPropertyPS.setLong(1, property.linkProperty.linkId)
         insertLinkPropertyPS.setInt(2, property.value)
-        insertLinkPropertyPS.setString(3, property.username.getOrElse(""))
-        insertLinkPropertyPS.setLong(4, property.linkProperty.linkId)
+        insertLinkPropertyPS.setString(3, property.timeStamp.get)
+        insertLinkPropertyPS.setString(4, property.username.getOrElse(""))
+        insertLinkPropertyPS.setLong(5, property.linkProperty.linkId)
         insertLinkPropertyPS.addBatch()
       }
       insertLinkPropertyPS.executeBatch()
@@ -208,18 +209,18 @@ object RoadLinkDAO{
     dao.insertValues(linkProperty, vvhRoadLink, username, value, mmlId)
   }
 
-  def insertMass(propertyName: String, entries: Seq[LinkPropertiesEntries]) = {
+  def insertMass(propertyName: String, entries: Seq[LinkPropertiesEntries]):Unit = {
     val dao = getDao(propertyName)
     dao.insertValuesMass(entries.map(e => {
       val value = dao.getValue(e.linkProperty)
-      MassOperationEntry(e.linkProperty, e.username, value, e.mmlId)
+      MassOperationEntry(e.linkProperty, e.username, value,e.latestModifiedAt, e.mmlId)
     }))
   }
-  def updateMass(propertyName: String, entries: Seq[LinkPropertiesEntries]) = {
+  def updateMass(propertyName: String, entries: Seq[LinkPropertiesEntries]):Unit = {
     val dao = getDao(propertyName)
     dao.updateValuesMass(entries.map(e => {
       val value = dao.getValue(e.linkProperty)
-      MassOperationEntry(e.linkProperty, e.username, value, e.mmlId)
+      MassOperationEntry(e.linkProperty, e.username, value,e.latestModifiedAt, e.mmlId)
     }))
   }
   
@@ -519,6 +520,13 @@ object RoadLinkDAO{
           """.execute
     }
 
+    override def insertValuesMass(entries: Seq[MassOperationEntry]): Unit = {
+      throw new UnsupportedOperationException("Not Implemented")
+    }
+
+    override def updateValuesMass(entries: Seq[MassOperationEntry]): Unit = {
+      throw new UnsupportedOperationException("Not Implemented")
+    }
 
     def getValue(linkProperty: LinkProperties): Int = {
       throw new UnsupportedOperationException("Method getValue is not supported for Link Attributes class")
