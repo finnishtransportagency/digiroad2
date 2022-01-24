@@ -3,13 +3,13 @@ package fi.liikennevirasto.digiroad2.service
 import java.io.{File, FilenameFilter, IOException}
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
-import java.util.{Date, Properties, Random}
+import java.util.{Date, Properties}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeType, VVHRoadlink, _}
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}

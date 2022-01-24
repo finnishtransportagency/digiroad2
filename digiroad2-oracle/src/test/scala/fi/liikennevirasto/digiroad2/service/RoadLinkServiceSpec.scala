@@ -40,8 +40,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
   
-  
-  val logger =LoggerFactory.getLogger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
 
   private def simulateQuery[T](f: => T): T = {
     val result = f
@@ -1423,7 +1422,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("override only if different than vvh") {
+  test("Override link properties only if different than vvh") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     
@@ -1468,7 +1467,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
   
-  test("mass save adjustedRoadLink") {
+  test("Mass save adjustedRoadLink") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
