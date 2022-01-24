@@ -1,13 +1,13 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-
 import com.vividsolutions.jts.geom._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import com.vividsolutions.jts.io.WKTReader
+import fi.liikennevirasto.digiroad2.client.PointWithIdentifier
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 
 import scala.collection.mutable.ListBuffer
@@ -20,6 +20,50 @@ class PolygonTools {
   val geomBuilder = new GeometryBuilder(geomFact)
   lazy val userProvider: UserProvider = {
     Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
+  }
+
+  def createPolygonFromCoordinates(pointsWithIdentifiers: Seq[PointWithIdentifier]): Polygon = {
+    val sortedPoints = pointsWithIdentifiers.sortBy(identifierAndPoint => {
+      val identifier = identifierAndPoint.identifier
+      val identifierSplit = identifier.split("/", 2)
+      val roadPartNumber = identifierSplit.head
+      val orderNumber = identifierSplit.last
+      (roadPartNumber.toInt, orderNumber.toInt)
+    })
+    val lines = if(sortedPoints.length % 2 == 0) {
+      sortedPoints.grouped(2).toSeq
+    }
+    else{
+      val pointsGrouped = sortedPoints.grouped(2).toSeq
+      val lastElement = Seq(pointsGrouped.init.last.last,pointsGrouped.last.head)
+      pointsGrouped.init :+ lastElement
+    }
+
+    val offsets = Seq(200, -200)
+    val parallelLines = offsets.map(offset => {
+      lines.flatMap(line => {
+        val x1 = line.head.point.x
+        val x2 = line.last.point.x
+        val y1 = line.head.point.y
+        val y2 = line.last.point.y
+        val length = scala.math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
+
+        val x1p = x1 + offset * (y2 - y1) / length
+        val x2p = x2 + offset * (y2 - y1) / length
+        val y1p = y1 + offset * (x1 - x2) / length
+        val y2p = y2 + offset * (x1 - x2) / length
+
+        val parallelPoint1 = Point(x1p, y1p)
+        val parallelPoint2 = Point(x2p, y2p)
+        Seq(parallelPoint1, parallelPoint2)
+      })
+    })
+
+    val pointsSortedForPolygon = parallelLines.head ++ parallelLines.last.reverse
+    val coordinates = pointsSortedForPolygon.map(point => {
+      new Coordinate(point.x, point.y)
+    }).toArray
+    geomFact.createPolygon(coordinates ++ Array(coordinates.head))
   }
 
   /**
