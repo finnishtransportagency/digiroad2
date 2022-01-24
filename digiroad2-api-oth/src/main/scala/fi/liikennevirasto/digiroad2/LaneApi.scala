@@ -35,7 +35,7 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
         queryParam[Int]("start_addrm").description("Starting distance on starting roadPart for search"),
         queryParam[Int]("end_part").description("Ending road part number for search"),
         queryParam[Int]("end_addrm").description("Ending distance on last road part for search"),
-        pathParam[String]("lanes_in_range").description("Get lanes in given range")
+        pathParam[String]("lanes_in_range").description("Path for getting lanes in given range")
       )
       tags "LaneApi"
       summary "Get lanes in given road address range in road address format"
@@ -43,12 +43,11 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
       description "Example URL: /externalApi/lanes/lanes_in_range?road_number=9&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000"
       )
 
-  //Description of Api entry point to get all lanes in specific road address range
   val getLanesInMunicipality =
     (apiOperation[Long]("getLanesInMunicipality")
       .parameters(
         queryParam[Int]("municipality").description("Municipality Code where we will get lanes from"),
-        pathParam[String]("lanes_in_municipality").description("Get lanes from given municipality")
+        pathParam[String]("lanes_in_municipality").description("Path for getting lanes in municipality")
       )
       tags "LaneApi"
       summary "Get lanes in given municipality"
