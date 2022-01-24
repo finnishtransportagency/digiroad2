@@ -43,12 +43,12 @@ object UpdateIncompleteLinkList {
       logger.info("*** Processed " + roadLinks.length + " road links with municipality " + municipality)
       logger.info(s" number of succeeding municipalities $counter from all ${municipalities.size}")
       logger.info("processing took: %.3f sec".format((System.currentTimeMillis() - timer1) * 0.001))
-      logger.info("thread: " + Thread.currentThread().getName)
     }
-    // await minute to make sure akka inbox is fully processed
-    Thread.sleep(1000L * 6L)
+    val awaitTime = 1000L * 60L * 6
+    logger.info("await six minute to make sure akka inbox is fully processed")
+    Thread.sleep(awaitTime)
   }
-
+//300 775
   private def clearIncompleteLinks(): Unit = {
     PostGISDatabase.withDynTransaction {
       sqlu"""truncate table incomplete_link""".execute
