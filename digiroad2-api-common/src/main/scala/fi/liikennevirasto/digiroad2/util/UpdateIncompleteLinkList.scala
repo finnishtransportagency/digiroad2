@@ -48,7 +48,7 @@ object UpdateIncompleteLinkList {
     logger.info("await six minute to make sure akka inbox is fully processed")
     Thread.sleep(awaitTime)
   }
-//300 775
+  
   private def clearIncompleteLinks(): Unit = {
     PostGISDatabase.withDynTransaction {
       sqlu"""truncate table incomplete_link""".execute
