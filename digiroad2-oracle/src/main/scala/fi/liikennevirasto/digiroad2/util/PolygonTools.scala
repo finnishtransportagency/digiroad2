@@ -1,13 +1,13 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-
 import com.vividsolutions.jts.geom._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import com.vividsolutions.jts.io.WKTReader
+import fi.liikennevirasto.digiroad2.client.PointWithIdentifier
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 
 import scala.collection.mutable.ListBuffer
@@ -22,12 +22,12 @@ class PolygonTools {
     Class.forName(Digiroad2Properties.userProvider).newInstance().asInstanceOf[UserProvider]
   }
 
-  def createPolygonFromCoordinates(pointsWithIdentifiers: Map[String, Point]): Polygon = {
-    val sortedPoints = pointsWithIdentifiers.toSeq.sortBy(identifierAndPoint => {
-      val identifier = identifierAndPoint._1
-      val split = identifier.split("/", 2)
-      val roadPartNumber = split.head
-      val orderNumber = split.last
+  def createPolygonFromCoordinates(pointsWithIdentifiers: Seq[PointWithIdentifier]): Polygon = {
+    val sortedPoints = pointsWithIdentifiers.sortBy(identifierAndPoint => {
+      val identifier = identifierAndPoint.identifier
+      val identifierSplit = identifier.split("/", 2)
+      val roadPartNumber = identifierSplit.head
+      val orderNumber = identifierSplit.last
       (roadPartNumber.toInt, orderNumber.toInt)
     })
     val lines = if(sortedPoints.length % 2 == 0) {
@@ -42,10 +42,10 @@ class PolygonTools {
     val offsets = Seq(200, -200)
     val parallelLines = offsets.map(offset => {
       lines.flatMap(line => {
-        val x1 = line.head._2.x
-        val x2 = line.last._2.x
-        val y1 = line.head._2.y
-        val y2 = line.last._2.y
+        val x1 = line.head.point.x
+        val x2 = line.last.point.x
+        val y1 = line.head.point.y
+        val y2 = line.last.point.y
         val length = scala.math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
 
         val x1p = x1 + offset * (y2 - y1) / length

@@ -101,7 +101,7 @@ case class Vector3d(x: Double, y: Double, z: Double) {
 
 case class Point(x: Double, y: Double, z: Double = 0.0) {
   def round(): Point = {
-    Point(Math.round(this.x * 100d) / 100d, Math.round(this.y * 100d) / 100d, Math.round(this.z * 100d) / 100d)
+    Point(Math.round(this.x * 100.0) / 100.0, Math.round(this.y * 100.0) / 100.0, Math.round(this.z * 100.0) / 100.0)
   }
 
   def distance2DTo(point: Point): Double =

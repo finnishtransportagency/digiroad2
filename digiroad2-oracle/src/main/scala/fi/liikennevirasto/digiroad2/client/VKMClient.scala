@@ -22,6 +22,8 @@ import org.json4s.{DefaultFormats, Formats, StreamInput}
 import java.util.ArrayList
 
 case class MassQueryParams(identifier: String, point: Point, roadNumber: Long, roadPartNumber: Long)
+case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
+case class PointWithIdentifier(identifier: String, point: Point)
 
 class VKMClient {
   case class VKMError(content: Map[String, Any], url: String)
@@ -166,14 +168,14 @@ class VKMClient {
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
   }
 
-  def addressToCoordsMassQuery(addresses: Map[String, RoadAddress]): Seq[(String,Point)] = {
+  def addressToCoordsMassQuery(addresses: Seq[AddrWithIdentifier]): Seq[PointWithIdentifier] = {
     val params = addresses.map(roadAddress => {
       Map(
-        VkmQueryIdentifier -> roadAddress._1,
-        VkmRoad -> roadAddress._2.road,
-        VkmRoadPart -> roadAddress._2.roadPart,
-        VkmTrackCodes -> roadAddress._2.track.value,
-        VkmDistance -> roadAddress._2.addrM
+        VkmQueryIdentifier -> roadAddress.identifier,
+        VkmRoad -> roadAddress.roadAddress.road,
+        VkmRoadPart -> roadAddress.roadAddress.roadPart,
+        VkmTrackCodes -> roadAddress.roadAddress.track.value,
+        VkmDistance -> roadAddress.roadAddress.addrM
       )
     })
     val jsonValue = Serialization.write(params)
@@ -269,7 +271,7 @@ class VKMClient {
     RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)
   }
 
-  private def mapCoordinatesWithIdentifier(data: FeatureCollection) = {
+  private def mapCoordinatesWithIdentifier(data: FeatureCollection): Seq[PointWithIdentifier] = {
 
     try {
       data.features.map {
@@ -277,7 +279,7 @@ class VKMClient {
           val queryIdentifier = addr.properties(VkmQueryIdentifier)
           val x = addr.properties("x").toDouble
           val y = addr.properties("y").toDouble
-          (queryIdentifier, Point(x,y))
+          PointWithIdentifier(queryIdentifier, Point(x,y))
       }
     } catch {
       case ex: Exception => throw new RoadAddressException("Could not convert response from VKM: %s".format(ex.getMessage))

@@ -54,7 +54,6 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
     apiLane21.startAddressM should equal(0)
     apiLane11.endAddressM should equal(200)
     apiLane21.endAddressM should equal(200)
-    print("jejej")
   }
 
   test("Lanes in municipality API requires municipality number") {

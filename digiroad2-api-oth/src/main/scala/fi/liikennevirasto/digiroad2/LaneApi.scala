@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context.laneService.lanesWithConsistentRoadAddress
 import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesFromVVHWithPolygon, roadLinksWithConsistentAddress}
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{laneService, roadAddressService, roadLinkService}
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{AddrWithIdentifier, VKMClient}
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getStartingLanes}
 import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -18,25 +18,23 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
   lazy val polygonTools = new PolygonTools
 
   case class ApiRoad(roadNumber: Long, roadParts: Seq[ApiRoadPart])
-
   case class ApiRoadPart(roadNumber: Option[Long], roadPartNumber: Long, apiLanes: Seq[ApiLane])
-
   case class ApiLane(laneCode: Int, track: Int, startAddressM: Long, endAddressM: Long)
+  case class RangeParameters(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                             startAddrM: Long, endAddrM: Long)
 
   override protected def applicationDescription: String = "Lanes API"
-
   override protected implicit def jsonFormats: Formats = DefaultFormats
 
-  //Description of Api entry point to get all lanes in specific road address range in road address format
   val getLanesInRoadAddressRange =
     (apiOperation[Long]("getLanesInRoadAddressRange")
       .parameters(
-        queryParam[Int]("roadNumber").description("Road Number for the range"),
+        queryParam[Int]("road_number").description("Road Number for the range"),
         queryParam[Int]("track").description("Track code for search"),
-        queryParam[Int]("startRoadPartNumber").description("Starting road part number for search"),
-        queryParam[Int]("startAddrM").description("Starting distance on starting roadPart for search"),
-        queryParam[Int]("endRoadPartNumber").description("Ending road part number for search"),
-        queryParam[Int]("endAddrM").description("Ending distance on last road part for search"),
+        queryParam[Int]("start_part").description("Starting road part number for search"),
+        queryParam[Int]("start_addrm").description("Starting distance on starting roadPart for search"),
+        queryParam[Int]("end_part").description("Ending road part number for search"),
+        queryParam[Int]("end_addrm").description("Ending distance on last road part for search"),
         pathParam[String]("lanes_in_range").description("Get lanes in given range")
       )
       tags "LaneApi"
@@ -49,8 +47,8 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
   val getLanesInMunicipality =
     (apiOperation[Long]("getLanesInMunicipality")
       .parameters(
-        queryParam[Int]("municipality").description("Municipality Code where we will execute the search by specific asset type"),
-        pathParam[String]("lanes_in_municipality").description("Asset type name to get all assets")
+        queryParam[Int]("municipality").description("Municipality Code where we will get lanes from"),
+        pathParam[String]("lanes_in_municipality").description("Get lanes from given municipality")
       )
       tags "LaneApi"
       summary "Get lanes in given municipality"
@@ -69,7 +67,8 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
       val endRoadPartNumber = params("end_part").toLong
       val endAddrM = params("end_addrm").toLong
 
-      lanesInRoadAddressRangeToApi(roadNumber, track, startRoadPartNumber, endRoadPartNumber, startAddrM, endAddrM)
+      val parameters = RangeParameters(roadNumber, track, startRoadPartNumber, endRoadPartNumber, startAddrM, endAddrM)
+      lanesInRoadAddressRangeToApi(parameters)
     }
     catch {
       case _: NumberFormatException => BadRequest("Invalid parameters")
@@ -93,8 +92,8 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
   }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
-    val roadLinksInMunicipality = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
-    val lanes = laneService.getLanesByRoadLinks(roadLinksInMunicipality)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
+    val lanes = laneService.getLanesByRoadLinks(roadLinks)
 
     val (lanesWithViiteAddress, noRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanes)).flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
     val lanesWithTempAddress = roadAddressService.experimentalLaneWithRoadAddress(Seq(noRoadAddress)).flatten.filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
@@ -102,7 +101,7 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
     val lanesWithNormalRoadAddress = lanesWithConsistentRoadAddress(lanesWithRoadAddress)
 
     val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
-    val apiLanes = lanesToApiFormat(twoDigitLanes, roadLinksInMunicipality.groupBy(_.linkId).mapValues(_.head))
+    val apiLanes = lanesToApiFormat(twoDigitLanes, roadLinks.groupBy(_.linkId).mapValues(_.head))
 
     apiLanes.map { apiLane =>
       Map("roadNumber" -> apiLane.roadNumber,
@@ -111,32 +110,31 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
     }
   }
 
-  def lanesInRoadAddressRangeToApi(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                   startAddrM: Long, endAddrM: Long): Seq[Map[String, Any]] = {
-    val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber).filter(_.track == track)
+  def lanesInRoadAddressRangeToApi(params: RangeParameters): Seq[Map[String, Any]] = {
+    val roadAddresses = roadAddressService.getAllByRoadNumber(params.roadNumber).filter(_.track == params.track)
     val roadPartMaxLengths = roadAddresses.groupBy(_.roadPartNumber).mapValues(_.maxBy(_.endAddrMValue)).values
-    val roadPartRange = startRoadPartNumber to endRoadPartNumber
+    val roadPartRange = params.startRoadPartNumber to params.endRoadPartNumber
     val filteredMaxLengths = roadPartMaxLengths.filter(address => roadPartRange contains address.roadPartNumber)
 
     val roadAddressesToTransform = filteredMaxLengths.flatMap(roadPart => {
       val roadPartNumber = roadPart.roadPartNumber
 
-      val maxLength = if (roadPartNumber == endRoadPartNumber) endAddrM
+      val maxLength = if (roadPartNumber == params.endRoadPartNumber) params.endAddrM
       else roadPart.endAddrMValue
 
-      val startLength = if (roadPartNumber == startRoadPartNumber) startAddrM
+      val startLength = if (roadPartNumber == params.startRoadPartNumber) params.startAddrM
       else 0
 
       val transFormInterval = 50
       val transformsForRoadPart = ((maxLength - startLength) / transFormInterval + 1).toInt
 
       val roadAddresses = for (i <- 0 to transformsForRoadPart)
-        yield (roadPartNumber + "/" + i, RoadAddress(None, roadNumber.toInt, roadPartNumber.toInt, track, (startLength + (i * transFormInterval)).toInt))
+        yield AddrWithIdentifier(roadPartNumber + "/" + i, RoadAddress(None, params.roadNumber.toInt, roadPartNumber.toInt, params.track, (startLength + (i * transFormInterval)).toInt))
       roadAddresses
-    }).toMap
+    }).toSeq
 
     val roadAddressesSplit = roadAddressesToTransform.grouped(1000).toSeq
-    val coordinatesAndIdentifiers = roadAddressesSplit.flatMap(roadAddressGroup => vkmClient.addressToCoordsMassQuery(roadAddressGroup)).toMap
+    val coordinatesAndIdentifiers = roadAddressesSplit.flatMap(roadAddressGroup => vkmClient.addressToCoordsMassQuery(roadAddressGroup))
     val polygon = polygonTools.createPolygonFromCoordinates(coordinatesAndIdentifiers)
 
     val roadLinks = getRoadLinksAndChangesFromVVHWithPolygon(polygon)._1
@@ -145,8 +143,8 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
     val roadLinksWithRoadAddress = roadLinksWithViiteAddress ++ roadLinksWithTempAddress
     val roadLinksWithConsistentRoadAddress = roadLinksWithConsistentAddress(roadLinksWithRoadAddress)
 
-    val correctLinks = roadLinksWithConsistentRoadAddress.filter(roadLink => roadLink.attributes("VIITE_ROAD_NUMBER") == roadNumber
-      && (roadPartRange contains roadLink.attributes("VIITE_ROAD_PART_NUMBER")) && roadLink.attributes("VIITE_TRACK") == track.value)
+    val correctLinks = roadLinksWithConsistentRoadAddress.filter(roadLink => roadLink.attributes("VIITE_ROAD_NUMBER") == params.roadNumber
+      && (roadPartRange contains roadLink.attributes("VIITE_ROAD_PART_NUMBER")) && roadLink.attributes("VIITE_TRACK") == params.track.value)
 
     val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
     val (lanesWithViiteAddress, lanesWithoutRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanesOnRoadLinks))
