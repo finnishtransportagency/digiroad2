@@ -983,6 +983,18 @@ trait LaneOperations {
     }
   }
 
+  def lanesWithConsistentRoadAddress(lanesWithRoadAddress: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
+    lanesWithRoadAddress.map(lane => {
+      val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.getOrElse("TEMP_ROAD_NUMBER", None))
+      val trackNumber = lane.attributes.getOrElse("VIITE_TRACK", lane.attributes.getOrElse("TEMP_TRACK", None))
+      val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.getOrElse("TEMP_ROAD_PART_NUMBER", None))
+      val startAddr = lane.attributes.getOrElse("VIITE_START_ADDR", lane.attributes.getOrElse("TEMP_START_ADDR", None))
+      val endAddr = lane.attributes.getOrElse("VIITE_END_ADDR", lane.attributes.getOrElse("TEMP_END_ADDR", None))
+      lane.copy(attributes = lane.attributes + ("ROAD_NUMBER" -> roadNumber, "ROAD_PART_NUMBER" -> roadPartNumber,
+        "START_ADDR" -> startAddr, "END_ADDR" -> endAddr, "TRACK" -> trackNumber))
+    })
+  }
+
   def pieceWiseLanesToTwoDigitWithMassQuery(pwLanes: Seq[PieceWiseLane]): Seq[Option[PieceWiseLane]] = {
     val vkmParameters = pwLanes.map(lane => {
       MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long], lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])

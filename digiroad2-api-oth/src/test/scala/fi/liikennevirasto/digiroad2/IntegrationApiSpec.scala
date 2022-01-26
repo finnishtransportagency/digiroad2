@@ -3,20 +3,15 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, ElementTypes, LinearLengthLimitService, Manoeuvre, ManoeuvreElement}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
-import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Mockito.{when, _}
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
-import org.scalatra.test.scalatest.ScalatraSuite
-import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
-import org.mockito.ArgumentMatchers.any
-import org.slf4j.LoggerFactory
-
-import scala.collection.immutable.Stream.Empty
+import org.json4s.{DefaultFormats, Formats}
+import org.mockito.Mockito.when
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatra.test.scalatest.ScalatraSuite
 
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{

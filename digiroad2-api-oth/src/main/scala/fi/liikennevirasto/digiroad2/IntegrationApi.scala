@@ -5,16 +5,12 @@ import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
-import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getStartingLanes}
-import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
@@ -29,9 +25,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-  case class VelhoRoad(roadNumber: Long, roadParts: Seq[RoadPart])
-  case class RoadPart(roadNumber: Option[Long], roadPartNumber: Long, lanes: Seq[VelhoLane])
-  case class VelhoLane(laneCode: Int, startAddressM: Long, endAddressM: Long)
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
@@ -160,78 +153,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[PersistedMassTransitStop] = {
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
-
-  def lanesToVelhoLanes(twoDigitLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[VelhoRoad] = {
-    val roadNumbers = twoDigitLanes.map(_.attributes("ROAD_NUMBER")).distinct.asInstanceOf[Seq[Long]]
-    val lanesGroupedByRoadNumber = twoDigitLanes.groupBy(_.attributes("ROAD_NUMBER")).values
-    val lanesGroupedByRoadNumberAndPartNumber = lanesGroupedByRoadNumber.flatMap(_.groupBy(_.attributes("ROAD_PART_NUMBER")).values)
-
-    val allRoadParts = lanesGroupedByRoadNumberAndPartNumber.map(lanes => {
-      val roadPartNumber = lanes.head.attributes("ROAD_PART_NUMBER").asInstanceOf[Long]
-      val roadNumber = Some(lanes.head.attributes("ROAD_NUMBER").asInstanceOf[Long])
-      val lanesGroupedByLaneCode = lanes.groupBy(_.laneAttributes.find(_.publicId == "lane_code")).values
-
-      val lanesWithContinuing = lanesGroupedByLaneCode.map(laneGroup => {
-        laneGroup.map(lane => {
-          val roadIdentifier = roadLinks(lane.linkId).roadIdentifier
-          val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, roadIdentifier, laneGroup, roadLinks, true)
-          LaneWithContinuingLanes(lane, continuingLanes)
-        })
-      }).toSeq
-
-
-      val connectedGroups = lanesWithContinuing.flatMap(laneGroup => {
-        val startingLanes = getStartingLanes(laneGroup)
-        val connectedLanes = startingLanes.map(startingLane => {
-          getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
-        }).distinct
-        connectedLanes.map(_.map(_.lane))
-      })
-
-      val velhoLanes = connectedGroups.map(group => {
-        val laneCode = group.head.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]
-        val startAddressM = group.map(_.attributes("START_ADDR")).asInstanceOf[Seq[Long]].min
-        val endAddressM = group.map(_.attributes("END_ADDR")).asInstanceOf[Seq[Long]].max
-        VelhoLane(laneCode, startAddressM, endAddressM)
-      })
-
-      RoadPart(roadNumber, roadPartNumber, velhoLanes)
-    }).toSeq
-
-    roadNumbers.map(roadNumber => {
-      val roadParts = allRoadParts.filter(_.roadNumber.get == roadNumber)
-      val roadPartsWithOutRoadNumber = roadParts.map(_.copy(roadNumber = None))
-      VelhoRoad(roadNumber, roadPartsWithOutRoadNumber)
-    })
-  }
-
-  def lanesToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
-    val roadLinksInMunicipality = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
-    val lanes = laneService.getLanesByRoadLinks(roadLinksInMunicipality)
-
-    val (lanesWithViiteAddress, noRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanes)).flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
-    val lanesWithTempAddress =  roadAddressService.experimentalLaneWithRoadAddress(Seq(noRoadAddress)).flatten.filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
-    val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
-
-    val lanesWithNormalRoadAddress = lanesWithRoadAddress.map(lane => {
-      val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER"))
-      val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER"))
-      val startAddr = lane.attributes.getOrElse("VIITE_START_ADDR", lane.attributes.get("TEMP_START_ADDR"))
-      val endAddr = lane.attributes.getOrElse("VIITE_END_ADDR", lane.attributes.get("TEMP_END_ADDR"))
-      lane.copy(attributes = lane.attributes + ("ROAD_NUMBER" -> roadNumber, "ROAD_PART_NUMBER" -> roadPartNumber,
-        "START_ADDR" -> startAddr, "END_ADDR" -> endAddr))
-    })
-
-    val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
-    val velhoLanes = lanesToVelhoLanes(twoDigitLanes, roadLinksInMunicipality.groupBy(_.linkId).mapValues(_.head))
-
-    velhoLanes.map { velhoLane =>
-      Map("roadNumber" -> velhoLane.roadNumber,
-          "roadParts" -> velhoLane.roadParts
-      )
-    }
-  }
-
 
   def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
@@ -1050,7 +971,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
-        case "lanes" => lanesToApi(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

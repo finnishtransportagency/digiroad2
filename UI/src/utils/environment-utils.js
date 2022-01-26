@@ -7,9 +7,9 @@
   var name = function() {
     var environmentName = {
       'extranet.vayla.fi': 'production',
-      'testiextranet.vayla.fi': 'integration',
+      'digiroadtest.testivaylapilvi.fi': 'integration',
       'apptest.vayla.fi': 'training',
-      'devtest.vayla.fi': 'staging'
+      'digiroaddev.testivaylapilvi.fi': 'staging'
     };
 
     return environmentName[urlParts()[1]] || 'unknown';
@@ -26,7 +26,7 @@
       integration: 'Integraatiotestiympäristö',
       production: '',
       training: 'Koulutusympäristö',
-      staging: 'Testiympäristö',
+      staging: 'Kehitysympäristö',
       unknown: 'Kehitysympäristö'
     };
     return localizedEnvironmentName[Environment.name()];

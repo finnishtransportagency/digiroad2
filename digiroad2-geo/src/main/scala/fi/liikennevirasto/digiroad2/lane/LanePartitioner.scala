@@ -190,7 +190,9 @@ object LanePartitioner {
     })
 
     val noRoadIdentifier = laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
-    connectedGroups ++ noRoadIdentifier
+    val laneGroups = connectedGroups ++ noRoadIdentifier
+    val lanesNotInGroup = lanes diff laneGroups.flatten
+    connectedGroups ++ noRoadIdentifier ++ lanesNotInGroup.map(lane => Seq(lane))
   }
 
   //Returns lanes grouped by corrected sideCode, laneCode, additional lanes and connection (lanes in group must
