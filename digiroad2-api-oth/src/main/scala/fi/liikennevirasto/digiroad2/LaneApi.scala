@@ -7,13 +7,15 @@ import fi.liikennevirasto.digiroad2.client.{AddrWithIdentifier, VKMClient}
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getStartingLanes}
 import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddress, Track}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
+class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService)
+  extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   lazy val vkmClient = new VKMClient
   lazy val polygonTools = new PolygonTools
 
@@ -57,36 +59,36 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
 
   get("/lanes_in_range", operation(getLanesInRoadAddressRange)) {
     contentType = formats("json") + "; charset=utf-8"
+    val roadNumber = params.getOrElse("road_number", halt(BadRequest("Missing parameters")))
+    val track = params.getOrElse("track", halt(BadRequest("Missing parameters")))
+    val startRoadPartNumber = params.getOrElse("start_part", halt(BadRequest("Missing parameters")))
+    val startAddrM = params.getOrElse("start_addrm", halt(BadRequest("Missing parameters")))
+    val endRoadPartNumber = params.getOrElse("end_part", halt(BadRequest("Missing parameters")))
+    val endAddrM = params.getOrElse("end_addrm", halt(BadRequest("Missing parameters")))
 
-    try {
-      val roadNumber = params("road_number").toLong
-      val track = Track(params("track").toInt)
-      val startRoadPartNumber = params("start_part").toLong
-      val startAddrM = params("start_addrm").toLong
-      val endRoadPartNumber = params("end_part").toLong
-      val endAddrM = params("end_addrm").toLong
-
-      val parameters = RangeParameters(roadNumber, track, startRoadPartNumber, endRoadPartNumber, startAddrM, endAddrM)
-      lanesInRoadAddressRangeToApi(parameters)
+    val parameters = try {
+      RangeParameters(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
+        endRoadPartNumber.toLong, startAddrM.toLong, endAddrM.toLong)
     }
     catch {
-      case _: NumberFormatException => BadRequest("Invalid parameters")
-      case _: NoSuchElementException => BadRequest("Missing parameters")
+      case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
     }
+
+    lanesInRoadAddressRangeToApi(parameters)
   }
 
   get("/lanes_in_municipality", operation(getLanesInMunicipality)) {
     contentType = formats("json") + "; charset=utf-8"
     try {
       val municipalityParameter = params.get("municipality")
-      if (municipalityParameter.isEmpty) BadRequest("Missing municipality parameter")
+      if (municipalityParameter.isEmpty) halt(BadRequest("Missing municipality parameter"))
       else {
         val municipalityNumber = municipalityParameter.get.toInt
         lanesInMunicipalityToApi(municipalityNumber)
       }
     }
     catch {
-      case _: NumberFormatException => BadRequest("Missing or invalid municipality parameter")
+      case _: NumberFormatException => halt(BadRequest("Missing or invalid municipality parameter"))
     }
   }
 
@@ -110,57 +112,63 @@ class LaneApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupp
   }
 
   def lanesInRoadAddressRangeToApi(params: RangeParameters): Seq[Map[String, Any]] = {
-    val roadAddresses = roadAddressService.getAllByRoadNumber(params.roadNumber).filter(_.track == params.track)
-    val roadPartMaxLengths = roadAddresses.groupBy(_.roadPartNumber).mapValues(_.maxBy(_.endAddrMValue)).values
-    val roadPartRange = params.startRoadPartNumber to params.endRoadPartNumber
-    val filteredMaxLengths = roadPartMaxLengths.filter(address => roadPartRange contains address.roadPartNumber)
+    val roadAddresses = roadAddressService.getAllByRoadNumber(params.roadNumber)
+    val roadAddressesFiltered = roadAddresses.filter(_.track == params.track)
 
-    val roadAddressesToTransform = filteredMaxLengths.flatMap(roadPart => {
-      val roadPartNumber = roadPart.roadPartNumber
+    if(roadAddressesFiltered.nonEmpty){
+      val roadPartMaxLengths = roadAddressesFiltered.groupBy(_.roadPartNumber).mapValues(_.maxBy(_.endAddrMValue)).values
+      val roadPartRange = params.startRoadPartNumber to params.endRoadPartNumber
+      val filteredMaxLengths = roadPartMaxLengths.filter(address => roadPartRange contains address.roadPartNumber)
 
-      val maxLength = if (roadPartNumber == params.endRoadPartNumber) params.endAddrM
-      else roadPart.endAddrMValue
+      val roadAddressesToTransform = filteredMaxLengths.flatMap(roadPart => {
+        val roadPartNumber = roadPart.roadPartNumber
 
-      val startLength = if (roadPartNumber == params.startRoadPartNumber) params.startAddrM
-      else 0
+        val maxLength = if (roadPartNumber == params.endRoadPartNumber) params.endAddrM
+        else roadPart.endAddrMValue
 
-      val transFormInterval = 50
-      val transformsForRoadPart = ((maxLength - startLength) / transFormInterval + 1).toInt
+        val startLength = if (roadPartNumber == params.startRoadPartNumber) params.startAddrM
+        else 0
 
-      val roadAddresses = for (i <- 0 to transformsForRoadPart)
-        yield AddrWithIdentifier(roadPartNumber + "/" + i, RoadAddress(None, params.roadNumber.toInt, roadPartNumber.toInt, params.track, (startLength + (i * transFormInterval)).toInt))
-      roadAddresses
-    }).toSeq
+        val transFormInterval = 50
+        val transformsForRoadPart = ((maxLength - startLength) / transFormInterval + 1).toInt
 
-    val roadAddressesSplit = roadAddressesToTransform.grouped(1000).toSeq
-    val coordinatesAndIdentifiers = roadAddressesSplit.flatMap(roadAddressGroup => vkmClient.addressToCoordsMassQuery(roadAddressGroup))
-    val polygon = polygonTools.createPolygonFromCoordinates(coordinatesAndIdentifiers)
+        val roadAddresses = for (i <- 0 to transformsForRoadPart)
+          yield AddrWithIdentifier(roadPartNumber + "/" + i, RoadAddress(None, params.roadNumber.toInt, roadPartNumber.toInt, params.track, (startLength + (i * transFormInterval)).toInt))
+        roadAddresses
+      }).toSeq
 
-    val roadLinks = getRoadLinksAndChangesFromVVHWithPolygon(polygon)._1
-    val (roadLinksWithViiteAddress, noRoadAddress) = roadAddressService.roadLinkWithRoadAddress(roadLinks).partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
-    val roadLinksWithTempAddress = roadAddressService.roadLinkWithRoadAddressTemp(noRoadAddress).filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
-    val roadLinksWithRoadAddress = roadLinksWithViiteAddress ++ roadLinksWithTempAddress
-    val roadLinksWithConsistentRoadAddress = roadLinksWithConsistentAddress(roadLinksWithRoadAddress)
+      val roadAddressesSplit = roadAddressesToTransform.grouped(1000).toSeq
+      val coordinatesAndIdentifiers = roadAddressesSplit.flatMap(roadAddressGroup => vkmClient.addressToCoordsMassQuery(roadAddressGroup))
+      val polygon = polygonTools.createPolygonFromCoordinates(coordinatesAndIdentifiers)
 
-    val correctLinks = roadLinksWithConsistentRoadAddress.filter(roadLink => roadLink.attributes("VIITE_ROAD_NUMBER") == params.roadNumber
-      && (roadPartRange contains roadLink.attributes("VIITE_ROAD_PART_NUMBER")) && roadLink.attributes("VIITE_TRACK") == params.track.value)
+      val roadLinks = getRoadLinksAndChangesFromVVHWithPolygon(polygon)._1
+      val (roadLinksWithViiteAddress, noRoadAddress) = roadAddressService.roadLinkWithRoadAddress(roadLinks).partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
+      val roadLinksWithTempAddress = roadAddressService.roadLinkWithRoadAddressTemp(noRoadAddress).filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
+      val roadLinksWithRoadAddress = roadLinksWithViiteAddress ++ roadLinksWithTempAddress
+      val roadLinksWithConsistentRoadAddress = roadLinksWithConsistentAddress(roadLinksWithRoadAddress)
 
-    val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
-    val (lanesWithViiteAddress, lanesWithoutRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanesOnRoadLinks))
-      .flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
-    val lanesWithTempAddress = roadAddressService.experimentalLaneWithRoadAddress(Seq(lanesWithoutRoadAddress)).flatten
-      .filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
-    val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
+      val correctLinks = roadLinksWithConsistentRoadAddress.filter(roadLink => roadLink.attributes("VIITE_ROAD_NUMBER") == params.roadNumber
+        && (roadPartRange contains roadLink.attributes("VIITE_ROAD_PART_NUMBER")) && roadLink.attributes("VIITE_TRACK") == params.track.value)
 
-    val lanesWithNormalRoadAddress = lanesWithConsistentRoadAddress(lanesWithRoadAddress)
-    val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
+      val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
+      val (lanesWithViiteAddress, lanesWithoutRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanesOnRoadLinks))
+        .flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
+      val lanesWithTempAddress = roadAddressService.experimentalLaneWithRoadAddress(Seq(lanesWithoutRoadAddress)).flatten
+        .filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
+      val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
 
-    val apiLanes = lanesToApiFormat(twoDigitLanes, correctLinks.groupBy(_.linkId).mapValues(_.head))
-    apiLanes.map { apiLane =>
-      Map("roadNumber" -> apiLane.roadNumber,
-        "roadParts" -> apiLane.roadParts
-      )
+      val lanesWithNormalRoadAddress = lanesWithConsistentRoadAddress(lanesWithRoadAddress)
+      val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
+
+      val apiLanes = lanesToApiFormat(twoDigitLanes, correctLinks.groupBy(_.linkId).mapValues(_.head))
+      apiLanes.map { apiLane =>
+        Map("roadNumber" -> apiLane.roadNumber,
+          "roadParts" -> apiLane.roadParts
+        )
+      }
     }
+    else Seq()
+
   }
 
   def lanesToApiFormat(twoDigitLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[ApiRoad] = {
