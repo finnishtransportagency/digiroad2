@@ -121,13 +121,13 @@ module.exports = function(grunt) {
           },
           {
             context: '/viitekehysmuunnin',
-            host: 'julkinen.vayla.fi',
+            host: 'avoinapi.vaylapilvi.fi',
             port: '443',
             https: true,
             changeOrigin: true,
             xforward: false,
             headers: {
-              host: 'https://julkinen.vayla.fi/viitekehysmuunnin/'
+              host: 'https://avoinapi.vaylapilvi.fi'
             }
           }
         ]
