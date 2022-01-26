@@ -800,7 +800,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       sql"""
            select id, floating, liviId, reason
                     from (
-                     select  a.id, a.floating, min(tv.value_fi) liviId , min(np.value) reason
+                     select  a.id, a.floating::int, min(tv.value_fi) liviId , min(np.value) reason
                          from asset a
                          inner join property p on a.asset_type_id = p.asset_type_id and public_id in ('kellumisen_syy',  'yllapitajan_koodi')
                          left join text_property_value tv on tv.property_id = p.id and tv.asset_id = a.id
