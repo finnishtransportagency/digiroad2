@@ -172,7 +172,7 @@
           },
           {
             "name": "rasterServiceUrl",
-            "value": "https://testioag.vayla.fi/rasteripalvelu-mml"
+            "value": "https://api.vaylapilvi.fi/rasteripalvelu-mml"
           }
         ],
         "secrets": [
@@ -195,6 +195,10 @@
           {
             "name": "vkm.apikey",
             "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viitekehysmuunnin"
+          },   
+          {
+            "name": "rasterService.apikey",
+            "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/mml_map"
           },
           {
             "name": "ses.username",
