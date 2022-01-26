@@ -3,12 +3,14 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.Digiroad2Context
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 import scala.sys.exit
 
 object UpdateIncompleteLinkList {
+  val logger = LoggerFactory.getLogger(getClass)
   def main(args:Array[String]) : Unit = {
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
@@ -25,19 +27,28 @@ object UpdateIncompleteLinkList {
   }
 
   private def runUpdate(): Unit = {
-    println("*** Delete incomplete links")
+    logger.info("*** Delete incomplete links")
     clearIncompleteLinks()
-    println("*** Get municipalities")
+    logger.info("*** Get municipalities")
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
       Queries.getMunicipalities
     }
-    municipalities.foreach { municipality =>
-      println("*** Processing municipality: " + municipality)
-      val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
-      println("*** Processed " + roadLinks.length + " road links")
-    }
-  }
 
+    var counter = 0
+    municipalities.foreach { municipality =>
+      val timer1 = System.currentTimeMillis()
+      logger.info("*** Processing municipality: " + municipality)
+      val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
+      counter += 1
+      logger.info("*** Processed " + roadLinks.length + " road links with municipality " + municipality)
+      logger.info(s" number of succeeding municipalities $counter from all ${municipalities.size}")
+      logger.info("processing took: %.3f sec".format((System.currentTimeMillis() - timer1) * 0.001))
+    }
+    val awaitTime = 1000L * 60L * 6
+    logger.info("await six minute to make sure akka inbox is fully processed")
+    Thread.sleep(awaitTime)
+  }
+  
   private def clearIncompleteLinks(): Unit = {
     PostGISDatabase.withDynTransaction {
       sqlu"""truncate table incomplete_link""".execute
