@@ -102,15 +102,12 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/digiroad/api-docs',
+            context: '/api-docs',
             host: '127.0.0.1',
             port: '8080',
             https: false,
             changeOrigin: true,
             xforward: false,
-            rewrite: {
-              '^/digiroad/api-docs': '/api-docs'
-            }
           },
           {
             context: '/maasto',

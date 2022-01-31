@@ -70,7 +70,11 @@
         if (asset.sideCode === 1) {
           reverse = reverse || (asset.trafficDirection === "AgainstDigitizing" && (!asset.marker || (asset.marker && asset.id !== 0)));
           baseOffset = _.head(laneCode.values).value % 2 === 0 ? (reverse ? -1.5 : 1.5) : (reverse ? 1.5 : -1.5);
-        }else{
+        }
+        if ((asset.sideCode === 2 && asset.trafficDirection === "TowardsDigitizing") || (asset.sideCode === 3 && asset.trafficDirection === "AgainstDigitizing")) {
+          baseOffset = _.head(laneCode.values).value % 2 === 0 ? (reverse ? -1.5 : 1.5) : (reverse ? 1.5 : -1.5);
+        }
+        else{
           baseOffset = _.head(laneCode.values).value % 2 === 0 ? (reverse ? 2 : -2) : (reverse ? 5 : -5);
         }
         return getOffsetPoint(asset, baseOffset);

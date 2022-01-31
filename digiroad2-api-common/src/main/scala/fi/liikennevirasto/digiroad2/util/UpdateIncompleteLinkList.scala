@@ -23,6 +23,7 @@ object UpdateIncompleteLinkList {
       UpdateIncompleteLinkList.runUpdate()
     } finally {
       Digiroad2Context.system.terminate()
+      exit()
     }
   }
 
