@@ -43,8 +43,15 @@ Resources:
     DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
+      Memory: '4096'
+      Family: digiroad2-Prod
+      Cpu: '2048'
       ContainerDefinitions:
         -
+          Cpu: 0
+          memory: 4096
+          Image: !Sub '${RepositoryURL}:prod'
+          Name: digiroad2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -56,7 +63,6 @@ Resources:
             - ContainerPort: 8080
               HostPort: 8080
               Protocol: tcp
-          Cpu: 0
           Environment:
             - Name: containerCPU
               Value: -XX:ActiveProcessorCount=1
@@ -85,13 +91,13 @@ Resources:
             - Name: vkmUrl
               Value: 'https://api.vaylapilvi.fi'
             - Name: tierekisteriRestApiEndPoint
-              Value: 'https://testioag.vayla.fi/trrest/devtest/'
+              Value: 'https://oag.vayla.fi/trrest/'
             - Name: tierekisteri.enabled
               Value: 'true'
             - Name: vallu.server.sending_enabled
               Value: 'true'
             - Name: vallu.server.address
-              Value: 'https://testioag.ely-keskus.fi/koontikartta/rest/stop/xml'
+              Value: 'https://oag.liikennevirasto.fi/koontikartta/rest/stop/xml'
             - Name: viite.importTimeStamp
               Value: '1510876800000'
             - Name: http.proxySet
@@ -105,9 +111,9 @@ Resources:
             - Name: feedbackAssetsEndPoint
               Value: 'https://digiroadtest.testivaylapilvi.fi/'
             - Name: bonecp.jdbcUrl
-              Value: 'jdbc:postgresql://ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com:5432/digiroad2'
+              Value: 'jdbc:postgresql://rdspg13prod.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/digiroad'
             - Name: bonecp.username
-              Value: 'digiroad2dbuser'
+              Value: 'digiroad'
             - Name: tierekisteri.username
               Value: 'trrestoth'
             - Name: tierekisteri.old.username
@@ -127,7 +133,7 @@ Resources:
             - Name: caching
               Value: 'true'
             - Name: cacheHostname
-              Value: 'roadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com'
+              Value: ''
             - Name: cacheHostPort
               Value: '11211'
             - Name: cacheTTL
@@ -155,20 +161,14 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/googlemapapi.client_id'
             - Name: googlemapapi.crypto_key
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/googlemapapi.crypto_key'
-          memory: 4096
-          Image: !Sub '${RepositoryURL}:prod'
-          Name: digiroad2
           HealthCheck:
             StartPeriod: 15
             Command:
               - CMD-SHELL
               - curl -f http://127.0.0.1:8080/api/ping/ || exit 1
-      Memory: '4096'
-      Family: digiroad2-Prod
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
-      Cpu: '2048'
       Tags:
         - Key: Name
           Value: Digiroad2

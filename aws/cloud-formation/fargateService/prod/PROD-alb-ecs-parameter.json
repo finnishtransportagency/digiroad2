@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "TaskDefinitionForService",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "digiroad2-Prod"
   },
   {
     "ParameterKey": "Environment",
@@ -29,6 +29,6 @@
   },
   {
     "ParameterKey": "RouteRecordName",
-    "ParameterValue": "digiroadalb"
+    "ParameterValue": "Placeholder"
   }
 ]

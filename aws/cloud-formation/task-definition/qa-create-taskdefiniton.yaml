@@ -43,8 +43,15 @@ Resources:
     DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
+      Memory: '4096'
+      Family: digiroad2-qa
+      Cpu: '2048'
       ContainerDefinitions:
         -
+          Cpu: 0
+          memory: 4096
+          Image: !Sub '${RepositoryURL}:qa'
+          Name: digiroad2
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -56,7 +63,6 @@ Resources:
             - ContainerPort: 8080
               HostPort: 8080
               Protocol: tcp
-          Cpu: 0
           Environment:
             - Name: containerCPU
               Value: -XX:ActiveProcessorCount=1
@@ -155,20 +161,14 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/googlemapapi.client_id'
             - Name: googlemapapi.crypto_key
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/googlemapapi.crypto_key'
-          memory: 4096
-          Image: !Sub '${RepositoryURL}:qa'
-          Name: digiroad2
           HealthCheck:
             StartPeriod: 15
             Command:
               - CMD-SHELL
               - curl -f http://127.0.0.1:8080/api/ping/ || exit 1
-      Memory: '4096'
-      Family: digiroad2-qa
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
-      Cpu: '2048'
       Tags:
         - Key: Name
           Value: Digiroad2

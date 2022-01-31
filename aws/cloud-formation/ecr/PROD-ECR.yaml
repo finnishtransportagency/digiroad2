@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: ECS Fargate service in private subnets
+Description: Elastic Container Repository scritp for PROD enviroment
 Parameters:
   DigiroadDevArn:
     Description: ARN of dev admin account
     Type: String
   CodebuildServiceRole:
-    Description: ARN of codebuild servicerole that pushes image.
+    Description: ARN of codebuild service role that pushes image.
     Type: String
 
 Resources:
