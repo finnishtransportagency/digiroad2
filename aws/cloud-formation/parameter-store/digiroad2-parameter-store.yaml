@@ -23,7 +23,7 @@ Resources:
       Type: String
       Value: PlaceHolderValue
 
-  ViitePrameter:
+  ViiteParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: /prod/apikey/viite
