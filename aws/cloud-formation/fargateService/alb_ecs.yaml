@@ -29,7 +29,9 @@ Parameters:
   NamePrefix:
     Type: String
     Description: Enviroment nameprefix
-
+  DevAccountArn:
+    Type: String
+    Description: Arn for dev account
 
 Resources:
   ECSCluster:
@@ -256,41 +258,6 @@ Resources:
       Records:
         - !GetAtt PrivateLoadBalancer.DNSName
       Comment: Application load balancer
-
-  ECRBACKEND:
-  Type: AWS::ECR::Repository
-  Properties:
-    RepositoryName: !Sub "${NamePrefix}-backend-${Environment}"
-    ImageScanningConfiguration:
-      ScanOnPush: TRUE
-    RepositoryPolicyText:
-      Version: 2012-10-17
-      Statement:
-        - Sid: AllowPushPull
-          Effect: Allow
-          Principal:
-            AWS:
-              - arn:aws:iam::475079312496:role/DigiroadOthAdmin
-              - !Sub "arn:aws:iam::475079312496:role/service-role/codebuild-${Environment}-build-app-ui-service-role"
-          Action:
-            - ecr:*
-    LifecyclePolicy:
-      LifecyclePolicyText: |
-        {
-          "rules": [{
-            "rulePriority": 1,
-            "description": "Keep 3 previous versions of image.",
-            "selection": {
-              "tagStatus": "any",
-              "countType": "imageCountMoreThan",
-              "countNumber": 3
-            },
-            "action": {
-              "type": "expire"
-            }
-          }]
-        }
-
 
 Outputs:
   ALBDNSName:

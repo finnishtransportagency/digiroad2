@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ECS Fargate service in private subnets
+Parameters:
+  NetworkStackName:
+    Description: Name of the network stack
+    Type: String
+
+Resources:
+  ECRDigiroad:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${NamePrefix}--${Environment}"
+      ImageScanningConfiguration:
+        ScanOnPush: TRUE
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowPushPull
+            Effect: Allow
+            Principal:
+              AWS:
+                - !ref DevAccountArn
+                - !Sub "arn:aws:iam::475079312496:role/service-role/codebuild-${Environment}-build-app-ui-service-role"
+            Action:
+              - ecr:*
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [{
+              "rulePriority": 1,
+              "description": "Keep 3 previous versions of image.",
+              "selection": {
+                "tagStatus": "any",
+                "countType": "imageCountMoreThan",
+                "countNumber": 3
+              },
+              "action": {
+                "type": "expire"
+              }
+            }]
+          }

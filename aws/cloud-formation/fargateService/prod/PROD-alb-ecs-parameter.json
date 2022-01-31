@@ -5,7 +5,7 @@
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "Digiroad2"
   },
   {
     "ParameterKey": "TaskDefinitionForService",
@@ -13,15 +13,15 @@
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "Prod"
   },
   {
     "ParameterKey": "Owner",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "Vayla"
   },
   {
     "ParameterKey": "Project",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "Digiroad2"
   },
   {
     "ParameterKey": "ContainerPort",
@@ -29,10 +29,14 @@
   },
   {
     "ParameterKey": "RouteRecordName",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "digiroadalb"
   },
   {
     "ParameterKey": "NamePrefix",
     "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "DevAccountArn",
+    "ParameterValue": "arn:aws:iam::475079312496:role/DigiroadOthAdmin"
   }
 ]
