@@ -155,7 +155,7 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/googlemapapi.client_id'
             - Name: googlemapapi.crypto_key
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/googlemapapi.crypto_key'
-          memory: 2048
+          memory: 4096
           Image: !Sub '${RepositoryURL}:prod'
           Name: digiroad2
           HealthCheck:

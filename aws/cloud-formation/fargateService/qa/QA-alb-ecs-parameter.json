@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "TaskDefinitionForService",
-    "ParameterValue": "digiroad2-qa-test"
+    "ParameterValue": "digiroad2-qa"
   },
   {
     "ParameterKey": "Environment",
@@ -30,13 +30,5 @@
   {
     "ParameterKey": "RouteRecordName",
     "ParameterValue": "digiroadtest"
-  },
-  {
-    "ParameterKey": "DevAccountArn",
-    "ParameterValue": "Placeholder"
-  },
-  {
-    "ParameterKey": "NamePrefix",
-    "ParameterValue": "Placeholder"
   }
 ]

@@ -155,7 +155,7 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/googlemapapi.client_id'
             - Name: googlemapapi.crypto_key
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/googlemapapi.crypto_key'
-          memory: 2048
+          memory: 4096
           Image: !Sub '${RepositoryURL}:qa'
           Name: digiroad2
           HealthCheck:
@@ -163,12 +163,12 @@ Resources:
             Command:
               - CMD-SHELL
               - curl -f http://127.0.0.1:8080/api/ping/ || exit 1
-      Memory: '2048'
+      Memory: '4096'
       Family: digiroad2-qa
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
-      Cpu: '1024'
+      Cpu: '2048'
       Tags:
         - Key: Name
           Value: Digiroad2

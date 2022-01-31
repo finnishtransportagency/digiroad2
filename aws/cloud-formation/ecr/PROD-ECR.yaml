@@ -1,8 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: ECS Fargate service in private subnets
 Parameters:
-  NetworkStackName:
-    Description: Name of the network stack
+  DigiroadDevArn:
+    Description: ARN of dev admin account
+    Type: String
+  CodebuildServiceRole:
+    Description: ARN of codebuild servicerole that pushes image.
     Type: String
 
 Resources:
@@ -10,30 +13,34 @@ Resources:
     Condition: CreateECR
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub "${NamePrefix}--${Environment}"
+      RepositoryName: digiroad2
       ImageScanningConfiguration:
         ScanOnPush: TRUE
       RepositoryPolicyText:
         Version: 2012-10-17
         Statement:
-          - Sid: AllowPushPull
+          - Sid: AllowCrossAccountPush
             Effect: Allow
             Principal:
               AWS:
-                - !ref DevAccountArn
-                - !Sub "arn:aws:iam::475079312496:role/service-role/codebuild-${Environment}-build-app-ui-service-role"
+              - !ref DigiroadDevArn
+              - !ref CodebuildServiceRole
             Action:
-              - ecr:*
+              - ecr:BatchCheckLayerAvailability
+              - ecr:CompleteLayerUpload
+              - ecr:InitiateLayerUpload
+              - ecr:PutImage
+              - ecr:UploadLayerPart
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
             "rules": [{
               "rulePriority": 1,
-              "description": "Keep 3 previous versions of image.",
+              "description": "Keep 10 previous versions of image.",
               "selection": {
                 "tagStatus": "any",
                 "countType": "imageCountMoreThan",
-                "countNumber": 3
+                "countNumber": 10
               },
               "action": {
                 "type": "expire"

@@ -2,22 +2,21 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: CloudFormation template to create parameters for digiroad.
 
 Resources:
-  bonecpParameter:
+  BonecpParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: /prod/bonecp.password
       Type: String
       Value: PlaceHolderValue
-      Description: Password for bonecp.
 
-  tierekisteriParameter:
+  TierekisteriParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: /prod/tierekisteri.password
       Type: String
       Value: PlaceHolderValue
 
-  tierekisteriOldParameter:
+  TierekisteriOldParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: /prod/tierekisteri.old.password

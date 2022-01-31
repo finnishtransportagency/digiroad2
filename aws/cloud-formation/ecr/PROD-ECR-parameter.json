@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterKey": "CodebuildServiceRole",
+        "ParameterValue": "arn:aws:iam::475079312496:role/codebuild-DigiroadProd"
+    },
+    {
+        "ParameterKey": "DevAccountArn",
+        "ParameterValue": "arn:aws:iam::475079312496:role/DigiroadOthAdmin"
+    }
+]

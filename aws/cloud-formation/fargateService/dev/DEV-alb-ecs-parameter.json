@@ -30,13 +30,5 @@
   {
     "ParameterKey": "RouteRecordName",
     "ParameterValue": "digiroadalb"
-  },
-  {
-    "ParameterKey": "DevAccountArn",
-    "ParameterValue": "Placeholder"
-  },
-  {
-    "ParameterKey": "NamePrefix",
-    "ParameterValue": "Placeholder"
   }
 ]

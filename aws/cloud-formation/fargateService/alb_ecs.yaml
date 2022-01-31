@@ -26,12 +26,6 @@ Parameters:
   RouteRecordName:
     Type: String
     Description: RouteRecordName
-  NamePrefix:
-    Type: String
-    Description: Enviroment nameprefix
-  DevAccountArn:
-    Type: String
-    Description: Arn for dev account
 
 Resources:
   ECSCluster:
