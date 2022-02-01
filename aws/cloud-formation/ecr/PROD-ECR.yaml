@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Elastic Container Repository scritp for PROD enviroment
+Parameters:
+  DigiroadDevArn:
+    Description: ARN of dev admin account
+    Type: String
+  CodebuildServiceRole:
+    Description: ARN of codebuild service role that pushes image.
+    Type: String
+
+Resources:
+  ECRDigiroad:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: digiroad2
+      ImageScanningConfiguration:
+        ScanOnPush: TRUE
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowCrossAccountPush
+            Effect: Allow
+            Principal:
+              AWS:
+              - !ref DigiroadDevArn
+              - !ref CodebuildServiceRole
+            Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:CompleteLayerUpload
+              - ecr:InitiateLayerUpload
+              - ecr:PutImage
+              - ecr:UploadLayerPart
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [{
+              "rulePriority": 1,
+              "description": "Keep 10 previous versions of image.",
+              "selection": {
+                "tagStatus": "any",
+                "countType": "imageCountMoreThan",
+                "countNumber": 10
+              },
+              "action": {
+                "type": "expire"
+              }
+            }]
+          }
