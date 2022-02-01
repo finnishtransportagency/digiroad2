@@ -36,6 +36,13 @@ Resources:
       Name: /prod/apikey/viitekehysmuunnin
       Type: String
       Value: PlaceHolderValue
+  
+  MMLParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/apikey/mml_map
+      Type: String
+      Value: PlaceHolderValue
 
   SESUserParameter:
     Type: AWS::SSM::Parameter
