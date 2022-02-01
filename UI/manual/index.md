@@ -46,6 +46,7 @@ Sovelluksen toimiessa virheellisesti tee näin:
 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
 - Tarkista, ett&auml; selaimestasi on k&auml;yt&ouml;ss&auml; ajan tasalla oleva versio ja selaimesi on Mozilla Firefox tai Chrome.
+- Poista evästeet ja välimuisti (lukon kuva osoitepalkin vasemassa laidassa, Cookies englanniksi).
 - Jos edell&auml; olevat eiv&auml;t korjaa ongelmaa, ota yhteytt&auml; Digiroad-operaattoriin sähköpostitse info@digiroad.fi tai soittamalla numeroon 040 507 2301.
 
 ### Kirjautuminen Digiroad-sovellukseen
