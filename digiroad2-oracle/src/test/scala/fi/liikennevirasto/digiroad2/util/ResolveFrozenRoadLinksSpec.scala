@@ -12,8 +12,12 @@ import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO, RoadAddress => ViiteRoadAddress}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{ArgumentCaptor, Mockito}
+import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -29,7 +33,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     override lazy val vkmClient: VKMClient = mockVKMClient
     override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao
   }
-
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
   test("start processing test") {
 
     val roadLinks = Seq(
@@ -261,5 +265,21 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     result.size should be (1)
     result.exists(x => x.track == LeftSide && x.sideCode.contains(SideCode.TowardsDigitizing))
 
+  }
+  
+  test("Postgres drop trailing millisecond zero, add it back by using to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS')") {
+    val roadLinkTempDao = new RoadLinkTempDAO()
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
+    runWithRollback{
+      sqlu"""INSERT INTO temp_road_address_info (id,link_id,municipality_code,road_number,road_part,track_code,start_address_m,end_address_m,start_m_value,end_m_value,side_code,created_date,created_by) VALUES (nextval('primary_key_seq'),123456789,1,1,1,2,1,1,0,11.1,1,'2019-12-01 12:41:21.000','test');""".execute
+      val roadAddress1 =  roadLinkTempDao.getByLinkIds(Set(123456789))
+      val roadAddress2 =  roadLinkTempDao.getByRoadNumber(1)
+      val roadAddress3 =  roadLinkTempDao.getByMunicipality(1)
+      val roadAddress4 =  roadLinkTempDao.getByRoadNumberRoadPartTrack(1,2,Set(1))
+      roadAddress1.last.createdDate.get should be("2019-12-01 12:41:21.000")
+      roadAddress2.last.createdDate.get should be("2019-12-01 12:41:21.000")
+      roadAddress3.last.createdDate.get should be("2019-12-01 12:41:21.000")
+      roadAddress4.last.createdDate.get should be("2019-12-01 12:41:21.000")
+    }
   }
 }

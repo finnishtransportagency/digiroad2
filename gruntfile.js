@@ -102,15 +102,12 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/digiroad/api-docs',
+            context: '/api-docs',
             host: '127.0.0.1',
             port: '8080',
             https: false,
             changeOrigin: true,
             xforward: false,
-            rewrite: {
-              '^/digiroad/api-docs': '/api-docs'
-            }
           },
           {
             context: '/maasto',
@@ -121,13 +118,13 @@ module.exports = function(grunt) {
           },
           {
             context: '/viitekehysmuunnin',
-            host: 'julkinen.vayla.fi',
+            host: 'avoinapi.vaylapilvi.fi',
             port: '443',
             https: true,
             changeOrigin: true,
             xforward: false,
             headers: {
-              host: 'https://julkinen.vayla.fi/viitekehysmuunnin/'
+              host: 'https://avoinapi.vaylapilvi.fi'
             }
           }
         ]
