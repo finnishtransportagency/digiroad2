@@ -26,6 +26,7 @@ Parameters:
   RouteRecordName:
     Type: String
     Description: RouteRecordName
+
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster

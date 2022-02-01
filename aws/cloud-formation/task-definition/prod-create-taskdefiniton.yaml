@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation managed taskdefinition
+Parameters:
+  RepositoryURL:
+    Type: String
+    Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
+
+Resources:
+  ECSTaskExecutionRoleForTaskDefinitionDigiroad:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: ecsTaskExecutionRole
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  # Allow the ECS Tasks to download images from ECR
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+
+                  # Allow the ECS tasks to upload logs to CloudWatch
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:CreateLogGroup'
+
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:GetParametersByPath'
+                Resource: '*'
+
+  Taskdefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
+    Properties:
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
+      Memory: '4096'
+      Family: digiroad2-Prod
+      Cpu: '2048'
+      ContainerDefinitions:
+        -
+          Cpu: 0
+          memory: 4096
+          Image: !Sub '${RepositoryURL}:prod'
+          Name: digiroad2
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: Prod-Digiroad-logs
+              awslogs-region: eu-west-1
+              awslogs-stream-prefix: ecs
+              awslogs-create-group: true
+          PortMappings:
+            - ContainerPort: 8080
+              HostPort: 8080
+              Protocol: tcp
+          Environment:
+            - Name: containerCPU
+              Value: -XX:ActiveProcessorCount=1
+            - Name: REGION
+              Value: eu-west-1
+            - Name: speedLimitProvider
+              Value: fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
+            - Name: userProvider
+              Value: fi.liikennevirasto.digiroad2.dao.PostGISUserProvider
+            - Name: municipalityProvider
+              Value: fi.liikennevirasto.digiroad2.dao.PostGISMunicipalityProvider
+            - Name: eventBus
+              Value: 'fi.liikennevirasto.digiroad2.DigiroadEventBus'
+            - Name: useVVHGeometry
+              Value: 'true'
+            - Name: vvhServiceHost
+              Value: 'haproxy.vayla.fi'
+            - Name: vvhRestApiEndPoint
+              Value: 'https://haproxy.vayla.fi:2027/vvhdata/'
+            - Name: vvhRoadlink.frozen
+              Value: 'false'
+            - Name: viiteRestApiEndPoint
+              Value: 'https://api.testivaylapilvi.fi/viite/api/viite/'
+            - Name: authenticationTestMode
+              Value: 'false'
+            - Name: vkmUrl
+              Value: 'https://api.vaylapilvi.fi'
+            - Name: tierekisteriRestApiEndPoint
+              Value: 'https://oag.vayla.fi/trrest/'
+            - Name: tierekisteri.enabled
+              Value: 'true'
+            - Name: vallu.server.sending_enabled
+              Value: 'true'
+            - Name: vallu.server.address
+              Value: 'https://oag.liikennevirasto.fi/koontikartta/rest/stop/xml'
+            - Name: viite.importTimeStamp
+              Value: '1510876800000'
+            - Name: http.proxySet
+              Value: 'true'
+            - Name: http.proxyHost
+              Value: '127.0.0.1'
+            - Name: http.proxyPort
+              Value: '3128'
+            - Name: http.nonProxyHosts
+              Value: '172.17.*|localhost|127.*'
+            - Name: feedbackAssetsEndPoint
+              Value: 'https://digiroadtest.testivaylapilvi.fi/'
+            - Name: bonecp.jdbcUrl
+              Value: 'jdbc:postgresql://rdspg13prod.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/digiroad'
+            - Name: bonecp.username
+              Value: 'digiroad'
+            - Name: tierekisteri.username
+              Value: 'trrestoth'
+            - Name: tierekisteri.old.username
+              Value: 'trrest'
+            - Name: oag.username
+              Value: 'svc_clouddr'
+            - Name: emailTo
+              Value: 'info@digiroad.fi'
+            - Name: emailHost
+              Value: 'email-smtp.eu-west-1.amazonaws.com'
+            - Name: emailPort
+              Value: '587'
+            - Name: emailFrom
+              Value: 'noreply.digiroad@vaylapilvi.fi'
+            - Name: env
+              Value: 'prod'
+            - Name: caching
+              Value: 'true'
+            - Name: cacheHostname
+              Value: ''
+            - Name: cacheHostPort
+              Value: '11211'
+            - Name: cacheTTL
+              Value: '72000'
+            - Name: rasterServiceUrl
+              Value: 'https://testioag.vayla.fi/rasteripalvelu-mml'
+          Secrets:
+            - Name: bonecp.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/bonecp.password'
+            - Name: tierekisteri.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/tierekisteri.password'
+            - Name: tierekisteri.old.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/tierekisteri.old.password'
+            - Name: viite.apikey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/apikey/viite'
+            - Name: vkm.apikey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/apikey/viitekehysmuunnin'
+            - Name: ses.username
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/ses_username'
+            - Name: ses.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/ses_password'
+            - Name: oag.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/authentication.oag.basic.password'
+            - Name: googlemapapi.client_id
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/googlemapapi.client_id'
+            - Name: googlemapapi.crypto_key
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/googlemapapi.crypto_key'
+          HealthCheck:
+            StartPeriod: 15
+            Command:
+              - CMD-SHELL
+              - curl -f http://127.0.0.1:8080/api/ping/ || exit 1
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Tags:
+        - Key: Name
+          Value: Digiroad2
+        - Key: Environment
+          Value: prod
+        - Key: Owner
+          Value: Vayla
+        - Key: Project
+          Value: Digiroad2

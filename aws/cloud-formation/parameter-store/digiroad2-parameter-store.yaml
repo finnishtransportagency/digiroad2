@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template to create parameters for digiroad.
+
+Resources:
+  BonecpParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/bonecp.password
+      Type: String
+      Value: PlaceHolderValue
+
+  TierekisteriParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/tierekisteri.password
+      Type: String
+      Value: PlaceHolderValue
+
+  TierekisteriOldParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/tierekisteri.old.password
+      Type: String
+      Value: PlaceHolderValue
+
+  ViiteParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/apikey/viite
+      Type: String
+      Value: PlaceHolderValue
+
+  VKMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/apikey/viitekehysmuunnin
+      Type: String
+      Value: PlaceHolderValue
+
+  SESUserParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/ses_username
+      Type: String
+      Value: PlaceHolderValue
+
+  SESPasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/ses_password
+      Type: String
+      Value: PlaceHolderValue
+
+  OAGPasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/authentication.oag.basic.password
+      Type: String
+      Value: PlaceHolderValue
+
+  GoogleClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/googlemapapi.client_id
+      Type: String
+      Value: PlaceHolderValue
+
+  GoogleCryptoKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/googlemapapi.crypto_key
+      Type: String
+      Value: PlaceHolderValue
