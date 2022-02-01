@@ -54,6 +54,7 @@ trait Digiroad2Properties {
   val googleMapApiClientId: String
   val googleMapApiCryptoKey: String
   val rasterServiceUrl: String
+  val rasterServiceApiKey: String
   val bonecpProperties: Properties
   val batchMode:Boolean
 }
@@ -93,6 +94,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val env: String = scala.util.Properties.envOrElse("env", "Unknown")
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
+  val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterService.apikey", null)
   val batchMode: Boolean = scala.util.Properties.envOrElse("batchMode", "false").toBoolean
 
   val cacheHostname: String = scala.util.Properties.envOrElse("cacheHostname", null)
@@ -191,6 +193,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val googleMapApiClientId: String = envProps.getProperty("googlemapapi.client_id")
   override val googleMapApiCryptoKey: String = envProps.getProperty("googlemapapi.crypto_key")
   override val rasterServiceUrl: String = envProps.getProperty("rasterServiceUrl")
+  override val rasterServiceApiKey: String = envProps.getProperty("rasterService.apikey")
   override val batchMode: Boolean =  envProps.getProperty("batchMode", "false").toBoolean
 
   override lazy val bonecpProperties: Properties = {
@@ -271,6 +274,7 @@ object Digiroad2Properties {
   lazy val googleMapApiClientId: String = properties.googleMapApiClientId
   lazy val googleMapApiCryptoKey: String = properties.googleMapApiCryptoKey
   lazy val rasterServiceUrl: String = properties.rasterServiceUrl
+  lazy val rasterServiceApiKey:String = properties.rasterServiceApiKey
   lazy val batchMode: Boolean = properties.batchMode
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties

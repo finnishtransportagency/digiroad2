@@ -139,7 +139,7 @@ Resources:
             - Name: cacheTTL
               Value: '72000'
             - Name: rasterServiceUrl
-              Value: 'https://testioag.vayla.fi/rasteripalvelu-mml'
+              Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/bonecp.password'
@@ -151,6 +151,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/apikey/viite'
             - Name: vkm.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/apikey/viitekehysmuunnin'
+            - Name: rasterService.apikey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/apikey/mml_map'
             - Name: ses.username
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/ses_username'
             - Name: ses.password
