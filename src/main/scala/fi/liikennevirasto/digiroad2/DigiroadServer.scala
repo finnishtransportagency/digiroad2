@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, OAGAuthPropertyReader}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 import java.lang.management.ManagementFactory
 import java.util.Properties
@@ -63,7 +63,6 @@ trait DigiroadServer {
 class OAGProxyServlet extends ProxyServlet {
 
   def regex = "(/(digiroad(-dev)?))?/(maasto)/(wmts)".r
-  private val oagAuth = new OAGAuthPropertyReader
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def newHttpClient(): HttpClient = {
@@ -86,7 +85,7 @@ class OAGProxyServlet extends ProxyServlet {
     proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
     proxyRequest.getHeaders.remove("X-Iam-Identity")
     
-    proxyRequest.header("Authorization","Basic " + oagAuth.getAuthInBase64)
+    proxyRequest.header("X-API-Key", Digiroad2Properties.rasterServiceApiKey)
     logger.debug("Header clean start")
     logger.debug(proxyRequest.getHeaders.toString)
     logger.debug("Header clean end")

@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "Digiroad2"
+  },
+  {
+    "ParameterKey": "TaskDefinitionForService",
+    "ParameterValue": "digiroad2-Prod"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "Prod"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "Digiroad2"
+  },
+  {
+    "ParameterKey": "ContainerPort",
+    "ParameterValue": "8080"
+  },
+  {
+    "ParameterKey": "RouteRecordName",
+    "ParameterValue": "Placeholder"
+  }
+]
