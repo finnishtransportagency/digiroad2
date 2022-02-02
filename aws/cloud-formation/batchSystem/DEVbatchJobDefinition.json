@@ -15,7 +15,7 @@
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "8192"
+        "value": "16384"
       },
       {
         "type": "VCPU",
@@ -62,7 +62,7 @@
       },
       {
         "name": "viiteRestApiEndPoint",
-        "value": "https://devapi.testivaylapilvi.fi/viite/api/viite/"
+        "value": "https://api.testivaylapilvi.fi/viite/api/viite/"
       },
       {
         "name": "vkmUrl",
@@ -162,7 +162,7 @@
       },
       {
         "name": "viite.apikey",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/qa/apikey/viite"
       },
       {
         "name": "vkm.apikey",
