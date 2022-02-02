@@ -15,11 +15,11 @@
     "resourceRequirements" : [
       {
         "type": "MEMORY",
-        "value": "16384"
+        "value": "25600"
       },
       {
         "type": "VCPU",
-        "value": "2"
+        "value": "4"
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/batchSystem-BatchTaskRole-GSUD7E3H8KV4",
