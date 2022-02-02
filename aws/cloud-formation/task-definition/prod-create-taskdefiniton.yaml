@@ -133,9 +133,9 @@ Resources:
             - Name: caching
               Value: 'true'
             - Name: cacheHostname
-              Value: ''
+              Value: !Sub [ '${URL}',URL: !ImportValue Prod-digiroad2-CacheURL ]
             - Name: cacheHostPort
-              Value: '11211'
+              Value: !Sub [ '${PORT}', PORT: !ImportValue Prod-digiroad2-CachePort ]
             - Name: cacheTTL
               Value: '72000'
             - Name: rasterServiceUrl

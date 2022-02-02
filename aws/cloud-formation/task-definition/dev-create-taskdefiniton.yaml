@@ -133,9 +133,9 @@ Resources:
             - Name: caching
               Value: 'true'
             - Name: cacheHostname
-              Value: 'roadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com'
+              Value: !Sub [ '${URL}',URL: !ImportValue dev-digiroad2-CacheURL ]
             - Name: cacheHostPort
-              Value: '11211'
+              Value: !Sub [ '${PORT}', PORT: !ImportValue dev-digiroad2-CachePort ]
             - Name: cacheTTL
               Value: '72000'
             - Name: rasterServiceUrl
