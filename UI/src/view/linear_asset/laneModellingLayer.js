@@ -311,16 +311,15 @@
       var uniqueLinkIds = [...new Set(linkIds)];
       var modifiedLinks = [];
       for (var i = 0; i < uniqueLinkIds.length; i++) {
-        try {
-          var lanesOnSameRoadLink = links.filter(link => link.values_.linkId == uniqueLinkIds[i]);
-          var laneCodes = lanesOnSameRoadLink.map(link => parseInt(link.values_.lanes[0]));
-          var uniqueLanes = [...new Set(laneCodes)];
-          var linkToUpdate = lanesOnSameRoadLink[0];
-          linkToUpdate.values_.lanes = uniqueLanes;
-          modifiedLinks = modifiedLinks.concat(linkToUpdate);
-        } catch (exception) {
+        var lanesOnSameRoadLink = links.filter(link => link.values_.linkId == uniqueLinkIds[i]);
+        if (lanesOnSameRoadLink.length === 0) {
           continue;
         }
+        var laneCodes = lanesOnSameRoadLink.map(link => parseInt(link.values_.lanes[0]));
+        var uniqueLanes = [...new Set(laneCodes)];
+        var linkToUpdate = lanesOnSameRoadLink[0];
+        linkToUpdate.values_.lanes = uniqueLanes;
+        modifiedLinks = modifiedLinks.concat(linkToUpdate);
       }
       return modifiedLinks;
     }
@@ -412,12 +411,10 @@
             });
           })), offsetByLaneNumber));
         }
-        try {
-          var oneWaySignForSelection = me.getOneWaySignsForLanes(linearAssets);
+        var oneWaySignForSelection = me.getOneWaySignsForLanes(linearAssets);
+        if (oneWaySignForSelection.length > 0) {
           oneWaySignForSelection[0].values_.isSelected = true;
           me.vectorSource.addFeatures(oneWaySignForSelection);
-        } catch (exception) {
-          //continue execution normally without one way sign
         }
       }
     };
