@@ -128,12 +128,27 @@
       new StyleRule().where('zoomLevel').isIn([14,15]).use({stroke: {width: 9}})
     ];
 
+    var trafficDirectionRulesForUnselectedLanes = [
+      new StyleRule().where('rotation').isDefined().and(function (asset) { return numberOfAdditionalLanes(asset);}).is(0).use({ icon: { src: 'images/link-properties/arrow-drop-red2.svg' }}),
+      new StyleRule().where('rotation').isDefined().and(function (asset) { return numberOfAdditionalLanes(asset);}).is(1).use({ icon: { src: 'images/link-properties/arrow-drop-cyan.svg' }}),
+      new StyleRule().where('rotation').isDefined().and(function (asset) { return numberOfAdditionalLanes(asset);}).is(2).use({ icon: { src: 'images/link-properties/arrow-drop-blue.svg' }}),
+      new StyleRule().where('rotation').isDefined().and(function (asset) { return numberOfAdditionalLanes(asset);}).is(3).use({ icon: { src: 'images/link-properties/arrow-drop-lilac.svg' }}),
+      new StyleRule().where('rotation').isDefined().and(function (asset) { return numberOfAdditionalLanes(asset);}).is(4).use({ icon: { src: 'images/link-properties/arrow-drop-pink.svg' }}),
+      new StyleRule().where('rotation').isDefined().and(function (asset) { return numberOfAdditionalLanes(asset);}).is(5).use({ icon: { src: 'images/link-properties/arrow-drop-green.svg' }}),
+      new StyleRule().where('rotation').isDefined().and(function (asset) { return numberOfAdditionalLanes(asset);}).isGreaterOrEqual(6).use({ icon: { src: 'images/link-properties/arrow-drop-black.svg' }})
+    ];
+
+    var trafficDirectionRulesForSelectedLane = [
+      new StyleRule().where('rotation').isDefined().and('isSelected').is(true).use({ icon: { src: 'images/link-properties/arrow-drop-red2.svg'}}),
+    ];
+
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.01, color: '#7f7f7c' }});
     me.browsingStyleProvider.addRules(laneModellingSizeRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
     me.browsingStyleProvider.addRules(overlayStyleRules);
     me.browsingStyleProvider.addRules(laneModellingStyleRules);
-
+    me.browsingStyleProvider.addRules(trafficDirectionRulesForUnselectedLanes);
+    me.browsingStyleProvider.addRules(trafficDirectionRulesForSelectedLane);
 
     me.browsingStyleProviderViewOnly = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProviderViewOnly.addRules(viewOnlyLaneModellingStyleRules);

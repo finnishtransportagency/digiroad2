@@ -305,6 +305,26 @@
       me.selectToolControl.addNewFeature(features);
     };
 
+    //Required for selecting the arrow color according to the number of lanes
+    this.getAllLanesToSameArray = function (links) {
+      var linkIds = links.map(lane => lane.values_.linkId);
+      var uniqueLinkIds = [...new Set(linkIds)];
+      var modifiedLinks = [];
+      for (var i = 0; i < uniqueLinkIds.length; i++) {
+        try {
+          var lanesOnSameRoadLink = links.filter(link => link.values_.linkId == uniqueLinkIds[i]);
+          var laneCodes = lanesOnSameRoadLink.map(link => parseInt(link.values_.lanes[0]));
+          var uniqueLanes = [...new Set(laneCodes)];
+          var linkToUpdate = lanesOnSameRoadLink[0];
+          linkToUpdate.values_.lanes = uniqueLanes;
+          modifiedLinks = modifiedLinks.concat(linkToUpdate);
+        } catch (exception) {
+          continue;
+        }
+      }
+      return modifiedLinks;
+    }
+
     var redrawLinearAssets = function(linearAssetChains) {
       me.vectorSource.clear();
       me.indicatorLayer.getSource().clear();
@@ -319,6 +339,9 @@
           selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
       });
       me.vectorSource.addFeatures(style.renderFeatures(allButSelected));
+      var oneWaySignsDraft = me.getOneWaySignsForLanes(allButSelected);
+      var oneWaySigns = this.getAllLanesToSameArray(oneWaySignsDraft);
+      me.vectorSource.addFeatures(oneWaySigns);
       me.readOnlyLayer.showLayer();
       me.highLightReadOnlyLayer();
     };
@@ -333,7 +356,6 @@
         return _.flatMap(_.groupBy(links, 'roadPartNumber'), function (chainByRoadPartNumber) {
           var minAddressMValue = _.minBy(chainByRoadPartNumber, 'startAddrMValue');
           var maxAddressMValue = _.maxBy(chainByRoadPartNumber, 'endAddrMValue');
-
           if(minAddressMValue && maxAddressMValue ) {
             var middleAddressMValue = (maxAddressMValue.endAddrMValue - minAddressMValue.startAddrMValue) / 2 + minAddressMValue.startAddrMValue;
             return _.filter(chainByRoadPartNumber, function (linearAsset) {
@@ -389,6 +411,13 @@
               return property.publicId === "lane_code" && _.head(property.values).value == laneNumber;
             });
           })), offsetByLaneNumber));
+        }
+        try {
+          var oneWaySignForSelection = me.getOneWaySignsForLanes(linearAssets);
+          oneWaySignForSelection[0].values_.isSelected = true;
+          me.vectorSource.addFeatures(oneWaySignForSelection);
+        } catch (exception) {
+          //continue execution normally without one way sign
         }
       }
     };

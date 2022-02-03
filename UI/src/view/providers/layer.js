@@ -65,9 +65,21 @@
         var attributes = _.merge({}, link, { rotation: rotation  });
         return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
       });
-
       layer.getSource().addFeatures(oneWaySigns);
     };
+
+    this.getOneWaySignsForLanes = function(lanes) {
+      var filteredLinks = _.filter(lanes, function(link) {
+        return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
+      });
+      var oneWaySigns = mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
+        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + Math.PI : middlePoint.angleFromNorth;
+        var attributes = _.merge({}, link, { rotation: rotation  });
+        return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
+      });
+      return oneWaySigns;
+    };
+
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
