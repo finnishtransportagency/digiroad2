@@ -273,20 +273,27 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
 
     //Lanes created from CSV-import have to be processed through fill topology to combine overlapping lanes etc.
-    val createdLanes = laneService.getPersistedLanesByIds(createdLaneIds)
-    val groupedLanes = createdLanes.groupBy(_.linkId)
-    val linkIds = createdLanes.map(_.linkId).toSet
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
-    val changeSet = laneFiller.fillTopology(roadLinks, groupedLanes)._2
+    if(createdLaneIds.nonEmpty) {
+      val createdLanes = laneService.getPersistedLanesByIds(createdLaneIds)
+      val groupedLanes = createdLanes.groupBy(_.linkId)
+      if(groupedLanes.isEmpty) result
+      else{
+        val linkIds = createdLanes.map(_.linkId).toSet
+        val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+        val changeSet = laneFiller.fillTopology(roadLinks, groupedLanes)._2
 
-    //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and
-    // tries to expire new lanes when used with lanes created by CSV-import, so we have to filter them out
-    val newLanesFilteredFromMValueAdj = changeSet.adjustedMValues.filterNot(_.laneId == 0)
-    val duplicatesFilteredFromMValueAdj = newLanesFilteredFromMValueAdj.groupBy(_.laneId).map(_._2.head).toSeq
-    val newLanesFilteredFromExpiredIds = changeSet.expiredLaneIds.filterNot(_ == 0)
-    val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj, expiredLaneIds = newLanesFilteredFromExpiredIds)
+        //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and
+        // tries to expire new lanes when used with lanes created by CSV-import, so we have to filter them out
+        val newLanesFilteredFromMValueAdj = changeSet.adjustedMValues.filterNot(_.laneId == 0)
+        val duplicatesFilteredFromMValueAdj = newLanesFilteredFromMValueAdj.groupBy(_.laneId).map(_._2.head).toSeq
+        val newLanesFilteredFromExpiredIds = changeSet.expiredLaneIds.filterNot(_ == 0)
+        val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj, expiredLaneIds = newLanesFilteredFromExpiredIds)
 
-    updateChangeSet(changeSetFixed)
-    result
+        updateChangeSet(changeSetFixed)
+        result
+      }
+
+    }
+    else result
   }
 }
