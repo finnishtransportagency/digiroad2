@@ -588,7 +588,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("Create valid lane", Tag("db")) {
     runWithRollback {
       when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewLane]], any[LaneRoadAddressInfo],
-        any[Int], any[String], any[Boolean])).thenReturn()
+        any[Int], any[String], any[Boolean])).thenReturn(Set(0L))
 
       lanesCsvImporter.laneService.expireAllAdditionalLanes(any[String])
 

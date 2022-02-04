@@ -19,7 +19,7 @@ import org.joda.time.DateTime
 case class LaneUtils(){
   // DROTH-3057: Remove after lanes csv import is disabled
   def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-                                   sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
+                                   sideCode: Int, username: String, withTransaction: Boolean = true): Set[Long] = {
     LaneUtils.processNewLanesByRoadAddress(newLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
   }
 }
@@ -33,13 +33,14 @@ object LaneUtils {
   lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
+  lazy val laneFiller: LaneFiller = new LaneFiller
 
 
   lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 
   // DROTH-3057: Remove after lanes csv import is disabled
   def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-                                   sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
+                                   sideCode: Int, username: String, withTransaction: Boolean = true): Set[Long] = {
     // Main process
     def process() = {
 
