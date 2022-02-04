@@ -281,10 +281,10 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and
     // tries to expire new lanes when used with lanes created by CSV-import, so we have to filter them out
-    val noNewLanes = changeSet.adjustedMValues.filterNot(_.laneId == 0)
-    val noDuplicateMValue = noNewLanes.groupBy(_.laneId).map(_._2.head).toSeq
-    val noNewLanesExpired = changeSet.expiredLaneIds.filterNot(_ == 0)
-    val changeSetFixed = changeSet.copy(adjustedMValues = noDuplicateMValue, expiredLaneIds = noNewLanesExpired)
+    val newLanesFilteredFromMValueAdj = changeSet.adjustedMValues.filterNot(_.laneId == 0)
+    val duplicatesFilteredFromMValueAdj = newLanesFilteredFromMValueAdj.groupBy(_.laneId).map(_._2.head).toSeq
+    val newLanesFilteredFromExpiredIds = changeSet.expiredLaneIds.filterNot(_ == 0)
+    val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj, expiredLaneIds = newLanesFilteredFromExpiredIds)
 
     updateChangeSet(changeSetFixed)
     result
