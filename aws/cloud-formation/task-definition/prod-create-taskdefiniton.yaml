@@ -4,6 +4,13 @@ Parameters:
   RepositoryURL:
     Type: String
     Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
+  CacheHost:
+    Type: String
+    Description: URL to cache , e.g. name.4xakoi.cfg.euw1.cache.amazonaws.com
+  CachePort:
+    Type: Number
+    Default: 11211
+    Description: port number
 
 Resources:
   ECSTaskExecutionRoleForTaskDefinitionDigiroad:
@@ -133,9 +140,9 @@ Resources:
             - Name: caching
               Value: 'true'
             - Name: cacheHostname
-              Value: !Sub [ '${URL}',URL: !ImportValue Prod-digiroad2-CacheURL ]
+              Value: !Sub '${CacheHost}'
             - Name: cacheHostPort
-              Value: !Sub [ '${PORT}', PORT: !ImportValue Prod-digiroad2-CachePort ]
+              Value: !Sub '${CachePort}'
             - Name: cacheTTL
               Value: '72000'
             - Name: rasterServiceUrl
