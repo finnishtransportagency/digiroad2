@@ -305,6 +305,32 @@
       me.selectToolControl.addNewFeature(features);
     };
 
+    function getAllLanesToSameArray(links) {
+      var linkIds = _.uniq(_.map(links, link => link.values_.linkId))
+      var modifiedLinks = []
+      linkIds.forEach(linkId => {
+        var lanesOnSameLink = _.filter(links, link => link.values_.linkId === linkId)
+        if (!_.isEmpty(lanesOnSameLink)) {
+          var uniqueLanes = _.uniq(_.map(lanesOnSameLink, link => parseInt(link.values_.lanes[0])))
+          lanesOnSameLink[0].values_.lanes = uniqueLanes
+          modifiedLinks.push(lanesOnSameLink[0])
+        }
+      })
+      return modifiedLinks
+    }
+
+    function getOneWaySigns(links) {
+      var filteredLinks = _.filter(links, function(link) {
+        return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
+      });
+      var oneWaySigns = me.mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
+        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + Math.PI : middlePoint.angleFromNorth;
+        var attributes = _.merge({}, link, { rotation: rotation  });
+        return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
+      });
+      return oneWaySigns;
+    };
+
     var redrawLinearAssets = function(linearAssetChains) {
       me.vectorSource.clear();
       me.indicatorLayer.getSource().clear();
@@ -319,6 +345,9 @@
           selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
       });
       me.vectorSource.addFeatures(style.renderFeatures(allButSelected));
+      var oneWaySignsDraft = getOneWaySigns(allButSelected);
+      var oneWaySigns = getAllLanesToSameArray(oneWaySignsDraft);
+      me.vectorSource.addFeatures(oneWaySigns);
       me.readOnlyLayer.showLayer();
       me.highLightReadOnlyLayer();
     };
@@ -333,7 +362,6 @@
         return _.flatMap(_.groupBy(links, 'roadPartNumber'), function (chainByRoadPartNumber) {
           var minAddressMValue = _.minBy(chainByRoadPartNumber, 'startAddrMValue');
           var maxAddressMValue = _.maxBy(chainByRoadPartNumber, 'endAddrMValue');
-
           if(minAddressMValue && maxAddressMValue ) {
             var middleAddressMValue = (maxAddressMValue.endAddrMValue - minAddressMValue.startAddrMValue) / 2 + minAddressMValue.startAddrMValue;
             return _.filter(chainByRoadPartNumber, function (linearAsset) {
@@ -389,6 +417,11 @@
               return property.publicId === "lane_code" && _.head(property.values).value == laneNumber;
             });
           })), offsetByLaneNumber));
+        }
+        var oneWaySignForSelection = getOneWaySigns(linearAssets);
+        if (oneWaySignForSelection.length > 0) {
+          oneWaySignForSelection[0].values_.isSelected = true;
+          me.vectorSource.addFeatures(oneWaySignForSelection);
         }
       }
     };
