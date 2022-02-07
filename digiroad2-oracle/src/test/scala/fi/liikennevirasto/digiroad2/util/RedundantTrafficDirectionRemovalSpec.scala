@@ -15,7 +15,7 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
   val mockedRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockedTrafficDirectionRemoval: RedundantTrafficDirectionRemoval = new RedundantTrafficDirectionRemoval(mockedRoadLinkService)
 
-  def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   val roadLinkWithRedundantTrafficDirection: VVHRoadlink = VVHRoadlink(1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
   val roadLinkWithValidTrafficDirection: VVHRoadlink = VVHRoadlink(2, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
@@ -24,21 +24,16 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
 
   test("A redundant traffic direction is removed, but a valid is not") {
     val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set(1, 2))
-    withDynTransaction {
-      RoadLinkDAO.insert("traffic_direction", linkSet.head.linkId, None, linkSet.head.trafficDirection.value)
-      RoadLinkDAO.insert("traffic_direction", linkSet.last.linkId, None, TrafficDirection.TowardsDigitizing.value)
+    runWithRollback {
+      RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, linkSet.head.linkId, None, linkSet.head.trafficDirection.value)
+      RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, linkSet.last.linkId, None, TrafficDirection.TowardsDigitizing.value)
       val linkIdsBeforeRemoval = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
       linkIdsBeforeRemoval should contain(linkSet.head.linkId)
       linkIdsBeforeRemoval should contain(linkSet.last.linkId)
-    }
-    mockedTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB()
-    withDynTransaction {
+      mockedTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB()
       val linkIdsAfterRemoval = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
       linkIdsAfterRemoval should not contain linkSet.head.linkId
       linkIdsAfterRemoval should contain(linkSet.last.linkId)
-      RoadLinkDAO.delete("traffic_direction", linkSet.last.linkId)
-      val linkIdsAfterCleanUp = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
-      linkIdsAfterCleanUp should not contain linkSet.last.linkId
     }
   }
 }
