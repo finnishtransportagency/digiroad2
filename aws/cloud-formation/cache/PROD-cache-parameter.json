@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Placeholder"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "Digiroad2"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "Prod"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "Vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "Digiroad2"
+  }
+]
