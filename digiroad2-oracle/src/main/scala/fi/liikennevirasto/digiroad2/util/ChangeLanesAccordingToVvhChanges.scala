@@ -26,7 +26,7 @@ object ChangeLanesAccordingToVvhChanges {
   // Main process, gets roadlinks from VVH which have been changed in the past 24 hours.
   // handleChanges changes lanes on these roadlinks according to VVH change info
   def process(): Unit = {
-    val since = DateTime.now().minusDays(1)
+    val since = DateTime.now().minusDays(7)
     val until = DateTime.now()
 
     logger.info("Getting changed links Since: " + since + " Until: " + until)
@@ -72,7 +72,7 @@ object ChangeLanesAccordingToVvhChanges {
     val (changedLanes, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changedSet))
 
     val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
-    val modifiedLanes = projectedLanes.filterNot(lane => generatedMappedById(lane.id).nonEmpty) ++ changeSet.generatedPersistedLanes
+    val modifiedLanes = projectedLanes.filterNot(lane => generatedMappedById.getOrElse(lane.id, Seq()).nonEmpty) ++ changeSet.generatedPersistedLanes
 
     updateChangeSet(changeSet)
     persistModifiedLinearAssets(modifiedLanes)
