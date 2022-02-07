@@ -287,7 +287,10 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val newLanesFilteredFromMValueAdj = changeSet.adjustedMValues.filterNot(_.laneId == 0)
         val duplicatesFilteredFromMValueAdj = newLanesFilteredFromMValueAdj.groupBy(_.laneId).map(_._2.head).toSeq
         val newLanesFilteredFromExpiredIds = changeSet.expiredLaneIds.filterNot(_ == 0)
-        val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj, expiredLaneIds = newLanesFilteredFromExpiredIds)
+        val newLanesFilteredFromVVHAdj = changeSet.adjustedVVHChanges.filterNot(_.laneId == 0)
+        val newLanesFilteredFromSideCodeAdj = changeSet.adjustedSideCodes.filterNot(_.laneId == 0)
+        val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj,
+          expiredLaneIds = newLanesFilteredFromExpiredIds, adjustedVVHChanges = newLanesFilteredFromVVHAdj, adjustedSideCodes = newLanesFilteredFromSideCodeAdj)
 
         updateChangeSet(changeSetFixed)
         result
