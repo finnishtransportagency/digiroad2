@@ -45,6 +45,12 @@ Resources:
                   - 'ssm:GetParametersByPath'
                 Resource: '*'
 
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/Prod-Digiroad-logs
+      RetentionInDays: 180
+
   Taskdefinition:
     Type: AWS::ECS::TaskDefinition
     DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
@@ -62,17 +68,16 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: Prod-Digiroad-logs
+              awslogs-group: /ecs/Prod-Digiroad-logs
               awslogs-region: eu-west-1
               awslogs-stream-prefix: ecs
-              awslogs-create-group: true
           PortMappings:
             - ContainerPort: 8080
               HostPort: 8080
               Protocol: tcp
           Environment:
             - Name: containerCPU
-              Value: -XX:ActiveProcessorCount=1
+              Value: -XX:ActiveProcessorCount=2
             - Name: REGION
               Value: eu-west-1
             - Name: speedLimitProvider

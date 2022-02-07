@@ -44,6 +44,13 @@ Resources:
                   - 'ssm:GetParametersByPath'
                 Resource: '*'
 
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: /dev/Digiroad-logs
+      RetentionInDays: 180
+
   Taskdefinition:
     Type: AWS::ECS::TaskDefinition
     DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad

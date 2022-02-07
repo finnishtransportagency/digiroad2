@@ -45,6 +45,14 @@ Resources:
                   - 'ssm:GetParametersByPath'
                 Resource: '*'
 
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: /qa/Digiroad-logs
+      RetentionInDays: 180
+
+
   Taskdefinition:
     Type: AWS::ECS::TaskDefinition
     DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
@@ -72,7 +80,7 @@ Resources:
               Protocol: tcp
           Environment:
             - Name: containerCPU
-              Value: -XX:ActiveProcessorCount=1
+              Value: -XX:ActiveProcessorCount=2
             - Name: REGION
               Value: eu-west-1
             - Name: speedLimitProvider
