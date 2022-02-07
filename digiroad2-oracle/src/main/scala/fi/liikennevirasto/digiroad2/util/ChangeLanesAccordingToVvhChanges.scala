@@ -26,7 +26,7 @@ object ChangeLanesAccordingToVvhChanges {
   // Main process, gets roadlinks from VVH which have been changed in the past 24 hours.
   // handleChanges changes lanes on these roadlinks according to VVH change info
   def process(): Unit = {
-    val since = DateTime.now().minusDays(7)
+    val since = DateTime.now().minusDays(1)
     val until = DateTime.now()
 
     logger.info("Getting changed links Since: " + since + " Until: " + until)
