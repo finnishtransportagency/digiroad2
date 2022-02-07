@@ -305,24 +305,31 @@
       me.selectToolControl.addNewFeature(features);
     };
 
-    //Required for selecting the arrow color according to the number of lanes
-    this.getAllLanesToSameArray = function (links) {
-      var linkIds = links.map(lane => lane.values_.linkId);
-      var uniqueLinkIds = [...new Set(linkIds)];
-      var modifiedLinks = [];
-      for (var i = 0; i < uniqueLinkIds.length; i++) {
-        var lanesOnSameRoadLink = links.filter(link => link.values_.linkId == uniqueLinkIds[i]);
-        if (lanesOnSameRoadLink.length === 0) {
-          continue;
+    function getAllLanesToSameArray(links) {
+      var linkIds = _.uniq(_.map(links, link => link.values_.linkId))
+      var modifiedLinks = []
+      linkIds.forEach(linkId => {
+        var lanesOnSameLink = _.filter(links, link => link.values_.linkId === linkId)
+        if (!_.isEmpty(lanesOnSameLink)) {
+          var uniqueLanes = _.uniq(_.map(lanesOnSameLink, link => parseInt(link.values_.lanes[0])))
+          lanesOnSameLink[0].values_.lanes = uniqueLanes
+          modifiedLinks.push(lanesOnSameLink[0])
         }
-        var laneCodes = lanesOnSameRoadLink.map(link => parseInt(link.values_.lanes[0]));
-        var uniqueLanes = [...new Set(laneCodes)];
-        var linkToUpdate = lanesOnSameRoadLink[0];
-        linkToUpdate.values_.lanes = uniqueLanes;
-        modifiedLinks = modifiedLinks.concat(linkToUpdate);
-      }
-      return modifiedLinks;
+      })
+      return modifiedLinks
     }
+
+    function getOneWaySigns(links) {
+      var filteredLinks = _.filter(links, function(link) {
+        return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
+      });
+      var oneWaySigns = me.mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
+        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + Math.PI : middlePoint.angleFromNorth;
+        var attributes = _.merge({}, link, { rotation: rotation  });
+        return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
+      });
+      return oneWaySigns;
+    };
 
     var redrawLinearAssets = function(linearAssetChains) {
       me.vectorSource.clear();
@@ -338,8 +345,8 @@
           selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
       });
       me.vectorSource.addFeatures(style.renderFeatures(allButSelected));
-      var oneWaySignsDraft = me.getOneWaySignsForLanes(allButSelected);
-      var oneWaySigns = this.getAllLanesToSameArray(oneWaySignsDraft);
+      var oneWaySignsDraft = getOneWaySigns(allButSelected);
+      var oneWaySigns = getAllLanesToSameArray(oneWaySignsDraft);
       me.vectorSource.addFeatures(oneWaySigns);
       me.readOnlyLayer.showLayer();
       me.highLightReadOnlyLayer();
@@ -411,7 +418,7 @@
             });
           })), offsetByLaneNumber));
         }
-        var oneWaySignForSelection = me.getOneWaySignsForLanes(linearAssets);
+        var oneWaySignForSelection = getOneWaySigns(linearAssets);
         if (oneWaySignForSelection.length > 0) {
           oneWaySignForSelection[0].values_.isSelected = true;
           me.vectorSource.addFeatures(oneWaySignForSelection);
