@@ -108,7 +108,7 @@ Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task
 aws ecs update-service \
 --cluster prod-digiroad2-ECS-Cluster-Private \
 --service prod-digiroad2-ECS-Service-Private \
---task-definition Prod-Viite[:VERSION] \
+--task-definition digiroad2-prod[:VERSION] \
 --force-new-deployment
 ```
 
