@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode}
@@ -8,8 +7,10 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+import java.io.{InputStream, InputStreamReader}
 import scala.util.{Success, Try}
 
 
@@ -24,7 +25,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   type ParsedCsv = (MalformedParameters, List[ParsedProperties])
   def laneUtils = LaneUtils()
   lazy val laneService: LaneService = new LaneService(roadLinkServiceImpl, eventBusImpl)
-
+  lazy val laneFiller: LaneFiller = new LaneFiller
   private val csvImportUser = "csv_importer"
 
   private val nonMandatoryFieldsMapping: Map[String, String] = Map(
@@ -176,9 +177,9 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     s"<ul> notImportedData: ${notImportedData.mkString.replaceAll("[(|)]{1}", "")}</ul>"
   }
 
-  def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
-    laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).foreach { lane =>
-      lane._2.foreach { props =>
+  def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): (ImportResultData, Set[Long]) = {
+    val createdLaneIds = laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).flatMap { lane =>
+      lane._2.flatMap { props =>
         val roadPartNumber = getPropertyValue(props, "road part").toLong
         val laneCode = getPropertyValue(props, "lane")
 
@@ -204,8 +205,9 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
         laneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username, false)
       }
-    }
-    result
+    }.toSet
+
+    (result, createdLaneIds)
   }
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
@@ -231,7 +233,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       override val delimiter: Char = ';'
     })
 
-    withDynTransaction {
+   val (result, createdLaneIds) = withDynTransaction {
       val result = csvReader.allWithHeaders().foldLeft(ImportResultLaneAsset()) {
         (result, row) =>
           val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
@@ -269,5 +271,32 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       // Create the new lanes
       createAsset(result.createdData, user, result)
     }
+
+    //Lanes created from CSV-import have to be processed through fill topology to combine overlapping lanes etc.
+    if(createdLaneIds.nonEmpty) {
+      val createdLanes = laneService.getPersistedLanesByIds(createdLaneIds)
+      val groupedLanes = createdLanes.groupBy(_.linkId)
+      if(groupedLanes.isEmpty) result
+      else{
+        val linkIds = createdLanes.map(_.linkId).toSet
+        val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+        val changeSet = laneFiller.fillTopology(roadLinks, groupedLanes)._2
+
+        //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and
+        // tries to expire new lanes when used with lanes created by CSV-import, so we have to filter them out
+        val newLanesFilteredFromMValueAdj = changeSet.adjustedMValues.filterNot(_.laneId == 0)
+        val duplicatesFilteredFromMValueAdj = newLanesFilteredFromMValueAdj.groupBy(_.laneId).map(_._2.head).toSeq
+        val newLanesFilteredFromExpiredIds = changeSet.expiredLaneIds.filterNot(_ == 0)
+        val newLanesFilteredFromVVHAdj = changeSet.adjustedVVHChanges.filterNot(_.laneId == 0)
+        val newLanesFilteredFromSideCodeAdj = changeSet.adjustedSideCodes.filterNot(_.laneId == 0)
+        val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj,
+          expiredLaneIds = newLanesFilteredFromExpiredIds, adjustedVVHChanges = newLanesFilteredFromVVHAdj, adjustedSideCodes = newLanesFilteredFromSideCodeAdj)
+
+        updateChangeSet(changeSetFixed)
+        result
+      }
+
+    }
+    else result
   }
 }
