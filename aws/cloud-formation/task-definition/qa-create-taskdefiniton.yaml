@@ -189,10 +189,10 @@ Resources:
       NetworkMode: awsvpc
       Tags:
         - Key: Name
-          Value: Digiroad2
+          Value: digiroad2
         - Key: Environment
           Value: qa
         - Key: Owner
-          Value: Vayla
+          Value: vayla
         - Key: Project
-          Value: Digiroad2
+          Value: digiroad2

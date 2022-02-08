@@ -5,23 +5,23 @@
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "Digiroad2"
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "TaskDefinitionForService",
-    "ParameterValue": "digiroad2-Prod"
+    "ParameterValue": "digiroad2-prod"
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "Prod"
+    "ParameterValue": "prod"
   },
   {
     "ParameterKey": "Owner",
-    "ParameterValue": "Vayla"
+    "ParameterValue": "vayla"
   },
   {
     "ParameterKey": "Project",
-    "ParameterValue": "Digiroad2"
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "ContainerPort",
