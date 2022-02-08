@@ -27,6 +27,8 @@ export AWS_PROFILE=centralized_service_admin
 ```
 ## AWS CLI komennot
 
+**HUOM tarkista ennen jokaista create-stack komentoa parametritiedostojen sisältö**
+
 ### Luo parametrit parameterStoreen
 Parametrit luodaan tyypillä "String" ja arvolla "placeHolderValue"
 ```
@@ -43,9 +45,17 @@ Päivitykseen käytettävät komennot löytyvät prod-update-parameter.sh tiedos
 aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-ecr-repository] \
 --template-body file://aws\cloud-formation\ecr\PROD-ECR.yaml \
---parameters file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
+--parameters file://aws/cloud-formation/ecr/PROD-ECR-parameter.json
 ```
 Repositoryn luonnin jälkeen pyydä kehitystiimiä toimittamaan sinne palvelun image
+
+### Luo Elastic Cache
+```
+aws cloudformation create-stack \
+--stack-name [esim. digiroad-prod-elastic-cache] \
+--template-body file://aws/cloud-formation/cache/cache.yaml \
+--parameters file://aws/cloud-formation/cache/PROD-cache-parameter.json
+```
 
 ### Luo task-definition
 
@@ -54,7 +64,7 @@ aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
---parameters ParameterKey=RepositoryURL,ParameterValue=[URL äsken luotuun ECR repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com/digiroad2]
+--parameters file://aws\cloud-formation\task-definition\prod-taskdefinition-paramer.json
 ```
 
 ### Luo Digiroad ALB ja ECS ympäristö
@@ -67,6 +77,8 @@ aws cloudformation create-stack \
 ```
 
 # Ympäristön päivitys
+
+**HUOM tarkista ennen jokaista update-stack komentoa parametritiedostojen sisältö**
 
 ## Aseta ympäristömuuttujat
 Huom. ympäristömuuttujat säilyvät vain shell / cmd session ajan
