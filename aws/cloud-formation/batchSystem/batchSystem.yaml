@@ -101,16 +101,13 @@ Resources:
       ServiceRole:
         Ref: BatchServiceRole
 
-
-
   QABatchSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
       GroupName: QA-BatchSecurityGroup
       VpcId: !Ref QAVpcIDOfSystem
-
-
+      
   BatchTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -176,8 +173,16 @@ Resources:
       Targets:
         - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref SNSTopicName]]
           Id: "123321"
-
-
+          InputTransformer:
+            InputTemplate: |
+                "Batch named <name> in queue <queue> failed. Reason was <reason> with exit code <code>. Log Stream is <log>"
+            InputPathsMap:
+              code: "$.detail.attempts[0].container.exitCode"
+              log: "$.detail.attempts[0].container.logStreamName"
+              name: "$.detail.jobName"
+              queue: "$.detail.jobQueue"
+              reason: "$.detail.statusReason"
+              
 Outputs:
   BatchTaskRoleARN:
     Description: BatchTaskRole
