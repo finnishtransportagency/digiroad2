@@ -19,7 +19,7 @@ import org.joda.time.DateTime
 case class LaneUtils(){
   // DROTH-3057: Remove after lanes csv import is disabled
   def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-                                   sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
+                                   sideCode: Int, username: String, withTransaction: Boolean = true): Set[Long] = {
     LaneUtils.processNewLanesByRoadAddress(newLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
   }
 }
@@ -39,7 +39,7 @@ object LaneUtils {
 
   // DROTH-3057: Remove after lanes csv import is disabled
   def processNewLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-                                   sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
+                                   sideCode: Int, username: String, withTransaction: Boolean = true): Set[Long] = {
     // Main process
     def process() = {
 

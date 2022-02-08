@@ -8,10 +8,6 @@
     "ParameterValue": "digiroad2"
   },
   {
-    "ParameterKey": "TaskDefinitionForService",
-    "ParameterValue": "digiroad2-prod"
-  },
-  {
     "ParameterKey": "Environment",
     "ParameterValue": "prod"
   },
@@ -22,13 +18,5 @@
   {
     "ParameterKey": "Project",
     "ParameterValue": "digiroad2"
-  },
-  {
-    "ParameterKey": "ContainerPort",
-    "ParameterValue": "8080"
-  },
-  {
-    "ParameterKey": "RouteRecordName",
-    "ParameterValue": "Placeholder"
   }
 ]

@@ -65,9 +65,9 @@
         var attributes = _.merge({}, link, { rotation: rotation  });
         return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
       });
-
       layer.getSource().addFeatures(oneWaySigns);
     };
+
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);

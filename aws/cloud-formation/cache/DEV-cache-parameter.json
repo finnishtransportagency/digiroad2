@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  }
+]
