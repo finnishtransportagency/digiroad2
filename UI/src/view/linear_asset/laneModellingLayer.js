@@ -306,17 +306,23 @@
     };
 
     function getAllLanesToSameArray(links) {
-      var linkIds = _.uniq(_.map(links, link => link.values_.linkId))
-      var modifiedLinks = []
-      linkIds.forEach(linkId => {
-        var lanesOnSameLink = _.filter(links, link => link.values_.linkId === linkId)
+      var linkIds = _.uniq(_.map(links, function(link) {
+        return link.values_.linkId;
+      }));
+      var modifiedLinks = [];
+      linkIds.forEach(function (linkId) {
+        var lanesOnSameLink = _.filter(links, function (link) {
+          return link.values_.linkId === linkId;
+        });
         if (!_.isEmpty(lanesOnSameLink)) {
-          var uniqueLanes = _.uniq(_.map(lanesOnSameLink, link => parseInt(link.values_.lanes[0])))
-          lanesOnSameLink[0].values_.lanes = uniqueLanes
-          modifiedLinks.push(lanesOnSameLink[0])
+          var uniqueLanes = _.uniq(_.map(lanesOnSameLink, function(link) {
+            return parseInt(link.values_.lanes[0]);
+          }));
+          lanesOnSameLink[0].values_.lanes = uniqueLanes;
+          modifiedLinks.push(lanesOnSameLink[0]);
         }
-      })
-      return modifiedLinks
+      });
+      return modifiedLinks;
     }
 
     function getOneWaySigns(links) {
@@ -329,7 +335,7 @@
         return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
       });
       return oneWaySigns;
-    };
+    }
 
     var redrawLinearAssets = function(linearAssetChains) {
       me.vectorSource.clear();
