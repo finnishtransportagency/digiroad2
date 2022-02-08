@@ -126,7 +126,7 @@
       },
       {
         "name": "cacheHostname",
-        "value": "roadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com"
+        "value": "devroadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com"
       },
       {
         "name": "cacheHostPort",

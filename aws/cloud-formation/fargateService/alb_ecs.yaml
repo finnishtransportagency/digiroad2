@@ -45,12 +45,6 @@ Resources:
         - Key: Project
           Value: !Ref Project
 
-  ECSLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Join ['', ['/ecs/',!Ref Environment,'-', !Ref ApplicationName, '-ECS-logs']]
-      RetentionInDays: 180
-
   PrivateLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -241,7 +235,7 @@ Resources:
       VpcId:
         Fn::ImportValue:
           !Join [ '-', [ !Ref NetworkStackName, 'VPC-Id' ] ]
-
+          
   # Creates CNAME record "alb.<accountName>.vaylapilvi.aws" that points to alb-1234567.eu-west-1.elb.amazonaws.com
   CnameRecordDigiroad:
     Type: Custom::VaylapilviRoute53Record

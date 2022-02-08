@@ -10,7 +10,6 @@ Parameters:
 
 Resources:
   ECRDigiroad:
-    Condition: CreateECR
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: digiroad2
@@ -23,8 +22,8 @@ Resources:
             Effect: Allow
             Principal:
               AWS:
-              - !ref DigiroadDevArn
-              - !ref CodebuildServiceRole
+              - !Ref DigiroadDevArn
+              - !Ref CodebuildServiceRole
             Action:
               - ecr:BatchCheckLayerAvailability
               - ecr:CompleteLayerUpload

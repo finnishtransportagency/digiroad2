@@ -4,6 +4,13 @@ Parameters:
   RepositoryURL:
     Type: String
     Description: URL to repository, where the container is, e.g. 012345678910.dkr.ecr.eu-west-1.amazonaws.com
+  CacheHost:
+    Type: String
+    Description: URL to cache , e.g. name.4xakoi.cfg.euw1.cache.amazonaws.com
+  CachePort:
+    Type: Number
+    Default: 11211
+    Description: port number
 
 Resources:
   ECSTaskExecutionRoleForTaskDefinitionDigiroad:
@@ -38,13 +45,21 @@ Resources:
                   - 'ssm:GetParametersByPath'
                 Resource: '*'
 
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /prod/Digiroad-logs
+      RetentionInDays: 180
+
   Taskdefinition:
     Type: AWS::ECS::TaskDefinition
-    DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
+    DependsOn: 
+     - ECSTaskExecutionRoleForTaskDefinitionDigiroad
+     - ECSLogGroup
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
       Memory: '4096'
-      Family: digiroad2-Prod
+      Family: digiroad2-prod
       Cpu: '2048'
       ContainerDefinitions:
         -
@@ -55,17 +70,16 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: Prod-Digiroad-logs
+              awslogs-group: /prod/Digiroad-logs
               awslogs-region: eu-west-1
               awslogs-stream-prefix: ecs
-              awslogs-create-group: true
           PortMappings:
             - ContainerPort: 8080
               HostPort: 8080
               Protocol: tcp
           Environment:
             - Name: containerCPU
-              Value: -XX:ActiveProcessorCount=1
+              Value: -XX:ActiveProcessorCount=2
             - Name: REGION
               Value: eu-west-1
             - Name: speedLimitProvider
@@ -133,9 +147,9 @@ Resources:
             - Name: caching
               Value: 'true'
             - Name: cacheHostname
-              Value: ''
+              Value: !Sub '${CacheHost}'
             - Name: cacheHostPort
-              Value: '11211'
+              Value: !Sub '${CachePort}'
             - Name: cacheTTL
               Value: '72000'
             - Name: rasterServiceUrl
@@ -173,10 +187,10 @@ Resources:
       NetworkMode: awsvpc
       Tags:
         - Key: Name
-          Value: Digiroad2
+          Value: digiroad2
         - Key: Environment
           Value: prod
         - Key: Owner
-          Value: Vayla
+          Value: vayla
         - Key: Project
-          Value: Digiroad2
+          Value: digiroad2
