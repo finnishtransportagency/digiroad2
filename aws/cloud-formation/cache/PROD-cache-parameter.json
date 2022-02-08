@@ -5,18 +5,18 @@
   },
   {
     "ParameterKey": "ApplicationName",
-    "ParameterValue": "Digiroad2"
+    "ParameterValue": "digiroad2"
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "Prod"
+    "ParameterValue": "prod"
   },
   {
     "ParameterKey": "Owner",
-    "ParameterValue": "Vayla"
+    "ParameterValue": "vayla"
   },
   {
     "ParameterKey": "Project",
-    "ParameterValue": "Digiroad2"
+    "ParameterValue": "digiroad2"
   }
 ]

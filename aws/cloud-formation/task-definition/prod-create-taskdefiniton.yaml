@@ -59,7 +59,7 @@ Resources:
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
       Memory: '4096'
-      Family: digiroad2-Prod
+      Family: digiroad2-prod
       Cpu: '2048'
       ContainerDefinitions:
         -
@@ -187,10 +187,10 @@ Resources:
       NetworkMode: awsvpc
       Tags:
         - Key: Name
-          Value: Digiroad2
+          Value: digiroad2
         - Key: Environment
           Value: prod
         - Key: Owner
-          Value: Vayla
+          Value: vayla
         - Key: Project
-          Value: Digiroad2
+          Value: digiroad2
