@@ -48,12 +48,14 @@ Resources:
   ECSLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/Prod-Digiroad-logs
+      LogGroupName: /prod/Digiroad-logs
       RetentionInDays: 180
 
   Taskdefinition:
     Type: AWS::ECS::TaskDefinition
-    DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
+    DependsOn: 
+     - ECSTaskExecutionRoleForTaskDefinitionDigiroad
+     - ECSLogGroup
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
       Memory: '4096'
@@ -68,7 +70,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/Prod-Digiroad-logs
+              awslogs-group: /prod/Digiroad-logs
               awslogs-region: eu-west-1
               awslogs-stream-prefix: ecs
           PortMappings:

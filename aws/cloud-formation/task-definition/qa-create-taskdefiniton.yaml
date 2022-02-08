@@ -47,7 +47,6 @@ Resources:
 
   ECSLogGroup:
     Type: AWS::Logs::LogGroup
-    DeletionPolicy: Delete
     Properties:
       LogGroupName: /qa/Digiroad-logs
       RetentionInDays: 180
@@ -55,7 +54,9 @@ Resources:
 
   Taskdefinition:
     Type: AWS::ECS::TaskDefinition
-    DependsOn: ECSTaskExecutionRoleForTaskDefinitionDigiroad
+    DependsOn:
+      - ECSTaskExecutionRoleForTaskDefinitionDigiroad
+      - ECSLogGroup
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
       Memory: '4096'
