@@ -65,7 +65,7 @@ aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
---parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-paramer.json \
+--parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-paramer.json
 ```
 
 ### Luo Digiroad ALB ja ECS ympäristö
