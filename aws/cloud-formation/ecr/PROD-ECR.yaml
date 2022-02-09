@@ -12,37 +12,39 @@ Resources:
   ECRDigiroad:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: digiroad2
+      RepositoryName: "digiroad2"
       ImageScanningConfiguration:
         ScanOnPush: TRUE
       RepositoryPolicyText:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
           - Sid: AllowCrossAccountPush
             Effect: Allow
             Principal:
               AWS:
-              - !Ref DigiroadDevArn
               - !Ref CodebuildServiceRole
+              - !Ref DigiroadDevArn
             Action:
-              - ecr:BatchCheckLayerAvailability
-              - ecr:CompleteLayerUpload
-              - ecr:InitiateLayerUpload
-              - ecr:PutImage
-              - ecr:UploadLayerPart
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:CompleteLayerUpload"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:PutImage"
+              - "ecr:UploadLayerPart"
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
-            "rules": [{
-              "rulePriority": 1,
-              "description": "Keep 10 previous versions of image.",
-              "selection": {
-                "tagStatus": "any",
-                "countType": "imageCountMoreThan",
-                "countNumber": 10
-              },
-              "action": {
-                "type": "expire"
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Retain 10 latest images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": {
+                  "type": "expire"
+                }
               }
-            }]
+            ]
           }
