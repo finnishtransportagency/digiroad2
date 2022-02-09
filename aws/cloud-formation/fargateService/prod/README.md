@@ -45,7 +45,7 @@ file://aws/cloud-formation/parameter-store/prod-update-parameter.sh
 ```
 aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-ecr-repository] \
---template-body file://aws\cloud-formation\ecr\PROD-ECR.yaml \
+--template-body file://aws/cloud-formation/ecr/PROD-ECR.yaml \
 --parameters file://aws/cloud-formation/ecr/PROD-ECR-parameter.json
 ```
 Repositoryn luonnin jälkeen pyydä kehitystiimiä toimittamaan sinne palvelun image
