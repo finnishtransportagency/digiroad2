@@ -6,7 +6,6 @@ import java.util.{Date, Properties}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.importer.{LitRoadTierekisteriImporter, RoadWidthTierekisteriImporter}
 import fi.liikennevirasto.digiroad2.util._
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
@@ -44,14 +43,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     new TierekisteriLightingAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
       Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
-  }
-
-  lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
-    new LitRoadTierekisteriImporter()
-  }
-
-  lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
-    new RoadWidthTierekisteriImporter()
   }
 
   lazy val tierekisteriTrafficSignAsset: TierekisteriTrafficSignAssetClient = {
