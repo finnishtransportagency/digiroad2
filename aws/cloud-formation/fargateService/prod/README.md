@@ -67,7 +67,7 @@ Talleta endpoint tiedostoon file://aws/cloud-formation/task-definition/prod-task
 aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
+--template-body file://aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml \
 --parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
 ```
 
@@ -103,7 +103,7 @@ Luo uusi task definition versio
 aws cloudformation update-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
+--template-body file://aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml \
 --parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
 ```
 
