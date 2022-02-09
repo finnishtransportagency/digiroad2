@@ -58,6 +58,9 @@ aws cloudformation create-stack \
 --parameters file://aws/cloud-formation/cache/PROD-cache-parameter.json
 ```
 
+Ota uuden cachen endpoint osoite ilman porttia, muodossa "clustername.placeholder.cfg.euw1.cache.amazonaws.com"
+Talleta endpoint tiedostoon file://aws/cloud-formation/task-definition/prod-taskdefinition-paramer.json
+
 ### Luo task-definition
 
 ```
