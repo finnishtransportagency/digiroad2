@@ -29,12 +29,12 @@ export AWS_PROFILE=centralized_service_admin
 
 **HUOM tarkista ennen jokaista create-stack komentoa parametritiedostojen sisältö**
 
-### Luo parametrit parameterStoreen
+### Luo parametrit Parameter Storeen
 Parametrit luodaan tyypillä "String" ja arvolla "placeHolderValue"
 ```
 aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-parameter-store-entries] \
---template-body file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
+--template-body file://aws/cloud-formation/parameter-store/digiroad2-parameter-store.yaml
 ```
 ### Päivitä parametrien arvot ja tyypit oikein
 Kunkin parametrin tyypiksi vaihdetaan "SecureString" ja arvoksi asetetaan parametrin oikea arvo
@@ -59,7 +59,7 @@ aws cloudformation create-stack \
 ```
 
 Ota uuden cachen endpoint osoite ilman porttia, muodossa "clustername.placeholder.cfg.euw1.cache.amazonaws.com"
-Talleta endpoint tiedostoon file://aws/cloud-formation/task-definition/prod-taskdefinition-paramer.json
+Talleta endpoint tiedostoon file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
 
 ### Luo task-definition
 
@@ -68,7 +68,7 @@ aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
---parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-paramer.json
+--parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
 ```
 
 ### Luo Digiroad ALB ja ECS ympäristö
@@ -104,7 +104,7 @@ aws cloudformation update-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
---parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com/digiroad2]
+--parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
 ```
 
 ### Uuden task definitionin sekä imagen deploy
