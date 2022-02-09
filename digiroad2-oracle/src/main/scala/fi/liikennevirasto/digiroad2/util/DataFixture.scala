@@ -60,7 +60,7 @@ object DataFixture {
     new ObstacleService(roadLinkService)
   }
 
-  lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
+  lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
     new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
       Digiroad2Properties.tierekisteriEnabled,
       HttpClientBuilder.create().build())
@@ -109,7 +109,7 @@ object DataFixture {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-      override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
+      override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriMassTransitStopClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
@@ -131,18 +131,6 @@ object DataFixture {
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
     new InaccurateAssetDAO()
-  }
-
-  lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {
-    new TierekisteriLightingAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
-      Digiroad2Properties.tierekisteriEnabled,
-      HttpClientBuilder.create().build())
-  }
-
-  lazy val tierekisteriRoadWidthAsset : TierekisteriRoadWidthAssetClient = {
-    new TierekisteriRoadWidthAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
-      Digiroad2Properties.tierekisteriEnabled,
-      HttpClientBuilder.create().build())
   }
 
   lazy val maintenanceService: MaintenanceService = {
@@ -549,80 +537,7 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
-  private def updateTierekisteriBusStopsWithoutOTHLiviId(dryRun: Boolean, boundsOffset: Double = 10): Unit ={
-
-    case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
-    def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
-      persistedStop.propertyData.
-        exists(property => property.publicId == "yllapitajan_koodi" && property.values.exists(value => !value.asInstanceOf[PropertyValue].propertyValue.isEmpty))
-    }
-
-    println("\nGet the list of tierekisteri bus stops that doesn't have livi id in OTH")
-    println(DateTime.now())
-
-    val existingLiviIds = dataImporter.getExistingLiviIds()
-
-    val trBusStops = tierekisteriClient.fetchActiveMassTransitStops().
-      filterNot(stop => existingLiviIds.contains(stop.liviId))
-
-    val liviIdPropertyId = PostGISDatabase.withDynSession {dataImporter.getPropertyTypeByPublicId("yllapitajan_koodi")}
-
-    println("Processing %d TR bus stops".format(trBusStops.length))
-
-    val busStops = trBusStops.flatMap{
-      trStop =>
-        try {
-          val stopPointOption = withDynSession{ vkmClient.addressToCoords(trStop.roadAddress).headOption }
-
-          stopPointOption match {
-            case Some(stopPoint) =>
-              val leftPoint = Point(stopPoint.x - boundsOffset, stopPoint.y -boundsOffset, 0)
-              val rightPoint = Point(stopPoint.x + boundsOffset, stopPoint.y + boundsOffset, 0)
-              val bounds = BoundingRectangle(leftPoint, rightPoint)
-              val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
-              val filter = s" where $boundingBoxFilter and a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > current_timestamp)"
-              val persistedStops = PostGISDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
-                filter(stop => TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(Some(stop))).
-                filterNot(hasLiviIdPropertyValue)
-
-              if(persistedStops.isEmpty){
-                println("Couldn't find any stop nearest TR bus stop without livi Id. TR Livi Id "+trStop.liviId)
-                None
-              }else{
-                val (peristedStop, distance) = persistedStops.map(stop => (stop, stopPoint.distance2DTo(Point(stop.lon, stop.lat, 0)))).minBy(_._2)
-                println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" national ID "+peristedStop.nationalId+" distance "+distance)
-                Some(NearestBusStops(trStop, peristedStop, distance))
-              }
-            case _ =>
-              println("Can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
-              None
-          }
-        }catch {
-          case e: RoadAddressException =>
-            println("RoadAddress throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
-            None
-        }
-    }
-
-    val nearestBusStops = busStops.groupBy(busStop => busStop.othBusStop.linkId).mapValues(busStop => busStop.minBy(_.distance)).values
-
-    PostGISDatabase.withDynTransaction{
-      nearestBusStops.foreach{
-        nearestBusStop =>
-          println("Persist livi Id "+nearestBusStop.trBusStop.liviId+" at OTH bus stop id "+nearestBusStop.othBusStop.id+" with national id "+nearestBusStop.othBusStop.nationalId+" and distance "+nearestBusStop.distance)
-          if(!dryRun)
-            dataImporter.createOrUpdateTextPropertyValue(nearestBusStop.othBusStop.id, liviIdPropertyId, nearestBusStop.trBusStop.liviId, "g1_busstop_fix")
-      }
-    }
-
-
-    println("\n")
-    println("Complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
+  
   private def verifyIsChanged(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
     val floatingReasonPublicId = "kellumisen_syy"
     val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
@@ -672,95 +587,7 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
-  def checkBusStopMatchingBetweenOTHandTR(dryRun: Boolean = false): Unit = {
-    def checkModifierSize(user: Modification) = {
-      user.modifier.map(_.length).getOrElse(0) > 10
-    }
-
-    def fixModifier(user: Modification) = {
-      Modification(user.modificationTime, Some("k127773"))
-    }
-
-    println("\nVerify if OTH mass transit stop exist in Tierekisteri, if not present, create them. ")
-    println(DateTime.now())
-
-    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
-    var missedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
-
-    //Get a List of All Bus Stops present in Tierekisteri
-    val busStopsTR = tierekisteriClient.fetchActiveMassTransitStops
-
-    //Save Tierekisteri LiviIDs into a List
-    val liviIdsListTR = busStopsTR.map(_.liviId)
-
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-      PostGISDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
-
-    municipalities.foreach { municipality =>
-      println("Start processing municipality %d".format(municipality))
-
-      //Get all OTH Bus Stops By Municipality
-      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
-
-      //Get all road links from VVH
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
-
-      persistedStop.foreach { stop =>
-        // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
-        val stopLiviId = stop.propertyData.
-          find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
-          flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
-
-        if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {
-
-          //Add a list of missing stops with road addresses is available
-          missedBusStopsOTH = missedBusStopsOTH ++ List(stop)
-
-          //If modified or created username is bigger than 10 of length we set with PO user
-          val adjustedStop = stop match {
-            case asset if checkModifierSize(asset.modified) && checkModifierSize(asset.created) =>
-              asset.copy(created = fixModifier(asset.created), modified = fixModifier(asset.modified))
-            case asset if checkModifierSize(asset.modified) =>
-              asset.copy(modified = fixModifier(asset.modified))
-            case asset if checkModifierSize(asset.created) =>
-              asset.copy(created = fixModifier(asset.created))
-            case _ =>
-              stop
-          }
-
-          try {
-            //Create missed Bus Stop at the Tierekisteri
-            if(!dryRun) {
-              withDynSession {
-                //TODO get it from the new variation if we need to execute this batch process again.
-                //massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
-              }
-            }
-          } catch {
-            case roadAddrError: RoadAddressException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+roadAddrError.getMessage)
-            case tre: TierekisteriClientException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+tre.getMessage)
-          }
-        }
-      }
-      println("End processing municipality %d".format(municipality))
-    }
-
-    //Print the List of missing stops with road addresses is available
-    println("List of missing stops with road addresses is available:")
-    missedBusStopsOTH.foreach { busStops =>
-      println("External Id: " + busStops.nationalId)
-    }
-
-    println("\n")
-    println("Complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
+  
   def listingBusStopsWithSideCodeConflictWithRoadLinkDirection(): Unit = {
     println("\nCreate a listing of bus stops on one-way roads in Production that have side code against traffic direction of road link")
     println(DateTime.now())
@@ -1064,113 +891,7 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
-  def updateOTHBusStopWithTRInfo(): Unit = {
-    println("\nSynchronize name (Swedish), korotettu and katos (shelter) info of bus stops according to the info saved in TR")
-    println(DateTime.now())
-
-    val username = "batch_process_sync_BS_with_TR_info"
-
-    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
-    var outdatedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
-
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-      PostGISDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
-
-    //Get a List of All Bus Stops present in Tierekisteri
-    val allBusStopsTR = tierekisteriClient.fetchActiveMassTransitStops
-
-    //Save Tierekisteri LiviIDs into a List
-    val liviIdsListTR = allBusStopsTR.map(_.liviId)
-
-    municipalities.foreach { municipality =>
-      println("Start processing municipality %d".format(municipality))
-
-      //Get all OTH Bus Stops By Municipality
-      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
-
-      persistedStop.foreach { stop =>
-        val stopLiviId = stop.propertyData.
-          find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
-          flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
-
-        // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
-        if (stopLiviId.isDefined && liviIdsListTR.contains(stopLiviId.get)) {
-          //Data From OTH
-          val stopNameSE =
-            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.nameSePublicId).
-              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
-            match {
-              case Some(roofValue) => roofValue
-              case _ => ""
-            }
-
-          val stopRoofValue =
-            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.roofPublicId).
-              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
-            match {
-              case Some(roofValue) => Existence.fromPropertyValue(roofValue)
-              case _ => ""
-            }
-
-          val stopRaisedBusStopValue =
-            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.raisePublicId).
-              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
-            match {
-              case Some(raisedValue) => Existence.fromPropertyValue(raisedValue)
-              case _ => ""
-            }
-
-          //Data From TR
-          val busStopsTR = allBusStopsTR.find(_.liviId == stopLiviId.get)
-
-          val nameSEinTR = busStopsTR.head.nameSe match {
-            case Some(name) => name
-            case _ => ""
-          }
-          val roofValueinTR = busStopsTR.head.equipments.get(Equipment.Roof) match {
-            case Some(roofValue) => roofValue
-            case _ => ""
-          }
-          val raisedValueinTR = busStopsTR.head.equipments.get(Equipment.RaisedBusStop) match {
-            case Some(raisedValue) => raisedValue
-            case _ => ""
-          }
-
-          if ((stopNameSE != nameSEinTR) || (stopRoofValue != roofValueinTR) || (stopRaisedBusStopValue != raisedValueinTR)) {
-            val propertiesToUpdate = Seq(
-              SimplePointAssetProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
-              SimplePointAssetProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString))),
-              SimplePointAssetProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString)))
-            )
-
-            massTransitStopService.updatePropertiesForAsset(stop.id, propertiesToUpdate)
-
-            //Add a list of outdated Bus Stops
-            outdatedBusStopsOTH = outdatedBusStopsOTH ++ List(stop)
-          }
-        }
-      }
-
-      println("End processing municipality %d".format(municipality))
-    }
-
-    //Print the List of Bus stops where info is not the same
-    println("List of Bus stops where info is not the same:")
-    outdatedBusStopsOTH.foreach { busStops =>
-      println("External Id: " + busStops.nationalId)
-    }
-
-    println("\n")
-    println("Complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-
+  
   private def isKIdentifier(username: Option[String]): Boolean = {
     val identifiers: Set[String] = Set("k", "lx", "a", "u")
     username.exists(user => identifiers.exists(identifier => user.toLowerCase.startsWith(identifier)))
@@ -1662,7 +1383,7 @@ object DataFixture {
       }
     }
   }
-
+  //TODO remove
   private def updateFloatingStopsOnTerminatedRoads(): Unit ={
     val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
 
@@ -1681,7 +1402,7 @@ object DataFixture {
 
     println("Starting fetch of Tierekisteri stops")
     println(DateTime.now())
-    val (terminated, active) = tierekisteriClient.fetchActiveMassTransitStops().partition(stop => convertDateToString(stop.removalDate).compareTo(LocalDate.now().toString) == -1)
+    val (terminated, active) = tierekisteriMassTransitStopClient.fetchActiveMassTransitStops().partition(stop => convertDateToString(stop.removalDate).compareTo(LocalDate.now().toString) == -1)
 
     val stopsToUpdateFloatingReason = trStops.filter(stop => terminated.map(_.liviId).contains(stop._3))
     val stopsToRemoveFloatingReason = floatingTerminated.filter(stop => active.map(_.liviId).contains(stop._3))
@@ -2563,13 +2284,6 @@ object DataFixture {
         transisStopAssetsFloatingReason()
       case Some ("verify_roadLink_administrative_class_changed") =>
         verifyRoadLinkAdministrativeClassChanged()
-      case Some("check_TR_bus_stops_without_OTH_LiviId") =>
-        updateTierekisteriBusStopsWithoutOTHLiviId(true)
-      case Some("set_TR_bus_stops_without_OTH_LiviId") =>
-        updateTierekisteriBusStopsWithoutOTHLiviId(false)
-      case Some("check_bus_stop_matching_between_OTH_TR") =>
-        val dryRun = args.length == 2 && args(1) == "dry-run"
-        checkBusStopMatchingBetweenOTHandTR(dryRun)
       case Some("listing_bus_stops_with_side_code_conflict_with_roadLink_direction") =>
         listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
       case Some("fill_lane_amounts_in_missing_road_links") =>
@@ -2578,8 +2292,6 @@ object DataFixture {
         fillRoadWidthInRoadLink()
       case Some("update_areas_on_asset") =>
         updateAreasOnAsset()
-      case Some("update_OTH_BS_with_TR_info") =>
-        updateOTHBusStopWithTRInfo()
       case Some("update_information_source_on_existing_assets") =>
         updateInformationSource()
       case Some("update_information_source_on_paved_road_assets") =>
@@ -2671,9 +2383,9 @@ object DataFixture {
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | adjust_digitization | repair | link_float_obstacle_assets |" +
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
-        " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
-        " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
+        " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed |" +
+        " listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
+        " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
@@ -2683,8 +2395,6 @@ object DataFixture {
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite | change_lanes_according_to_VVH_changes |" +
         " validate_lane_changes_according_to_VVH_changes | populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal")
-
-
     }
   }
 }
