@@ -1,6 +1,6 @@
 # Digiroad tuotanto, pystytys
 ## VPC
-Luo VPC AWS-pilveen kahdella subnetilla.
+Tarkista, että tuotantotilille on luotu VPC kahdella subnetillä.
 Tarkista yhtenevät parametrien nimet, esim. NetworkStackName VPC:n ja CloudFormation parametreistä.
 
 ## Kloona repo koneellesi
@@ -39,6 +39,7 @@ aws cloudformation create-stack \
 ### Päivitä parametrien arvot ja tyypit oikein
 Kunkin parametrin tyypiksi vaihdetaan "SecureString" ja arvoksi asetetaan parametrin oikea arvo
 Päivitykseen käytettävät komennot löytyvät prod-update-parameter.sh tiedostosta
+file://aws/cloud-formation/parameter-store/prod-update-parameter.sh
 
 ### Luo ECR repository
 ```
@@ -64,14 +65,13 @@ aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
---parameters file://aws\cloud-formation\task-definition\prod-taskdefinition-paramer.json
+--parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-paramer.json \
 ```
 
 ### Luo Digiroad ALB ja ECS ympäristö
 ```
 aws cloudformation create-stack \
 --stack-name [esim. digiroad-ALB-ECS] \
---on-failure DELETE \
 --template-body file://aws/cloud-formation/fargateService/alb_ecs.yaml \
 --parameters file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
 ```
@@ -99,16 +99,18 @@ Luo uusi task definition versio
 ```
 aws cloudformation update-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
+--capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/task-definition/prod-create-taskdefiniton.yaml \
 --parameters ParameterKey=RepositoryURL,ParameterValue=[URL repositoryyn jossa kontti sijaitsee esim. 012345678910.dkr.ecr.eu-west-1.amazonaws.com/digiroad2]
 ```
-Ota juuri luotu task definition versio käyttöön. \
-Huom.: [:VERSION] -kohdan pois jättäminen ottaa käyttöön viimeisimmän task definition version ("latest") 
+
+### Uuden task definitionin sekä imagen deploy
+
 ```
 aws ecs update-service \
 --cluster prod-digiroad2-ECS-Cluster-Private \
 --service prod-digiroad2-ECS-Service-Private \
---task-definition Prod-Viite[:VERSION] \
+--task-definition digiroad2-prod[:VERSION] \
 --force-new-deployment
 ```
 
@@ -116,7 +118,6 @@ aws ecs update-service \
 ```
 aws cloudformation update-stack \
 --stack-name [esim. digiroad-ALB-ECS] \
---capabilities CAPABILITY_NAMED_IAM \
 --template-body file://aws/cloud-formation/fargateService/alb_ecs.yaml \
 --parameters file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
 ```
