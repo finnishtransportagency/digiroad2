@@ -1,8 +1,6 @@
 #batchRunType
 #batchAction
 #assetForValidation
-#tierekisteriAction
-#tierekisteriAsset
 #trafficSignGroup
 
 # if command does not work, check aws version and update it to at least 2.1.14 or latest
@@ -22,6 +20,3 @@ aws batch submit-job --profile vaylaapp --job-definition <definition>  --job-nam
 
 # AssetValidatorProcess
 aws batch submit-job --profile vaylaapp --job-definition <definition>  --job-name <name> --job-queue <name> --container-overrides "environment=[{name=batchRunType,value=AssetValidatorProcess},{name=assetForValidation,value=<asset>}]"
-
-# TierekisteriDataImporter
-aws batch submit-job --profile vaylaapp --job-definition <definition>  --job-name <name> --job-queue <name> --container-overrides "environment=[{name=batchRunType,value=TierekisteriDataImporter},{name=tierekisteriAction,value=<action>},{name=tierekisteriAsset,value=<Asset>},{name=trafficSignGroup,value=<trafficSignGroup>}]"
