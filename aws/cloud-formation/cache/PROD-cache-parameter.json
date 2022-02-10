@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "NetworkStackName",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "Digiroad-prod"
   },
   {
     "ParameterKey": "ApplicationName",
