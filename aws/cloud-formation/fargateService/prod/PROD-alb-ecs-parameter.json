@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "NetworkStackName",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "Digiroad-prod"
   },
   {
     "ParameterKey": "ApplicationName",
@@ -29,6 +29,6 @@
   },
   {
     "ParameterKey": "RouteRecordName",
-    "ParameterValue": "Placeholder"
+    "ParameterValue": "alb-ecs"
   }
 ]
