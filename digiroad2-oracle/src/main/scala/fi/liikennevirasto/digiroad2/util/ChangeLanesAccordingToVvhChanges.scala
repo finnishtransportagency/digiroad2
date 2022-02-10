@@ -39,10 +39,7 @@ object ChangeLanesAccordingToVvhChanges {
     val roadLinks = changedVVHRoadLinks.map(_.link)
     val changes = roadLinkService.getChangeInfo(linkIds)
 
-    val changedLanes = handleChanges(roadLinks, changes)
-
-    logger.info("Lanes changed: " + changedLanes.map(_.id).mkString("\n"))
-
+    handleChanges(roadLinks, changes)
   }
 
   def handleChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
@@ -88,10 +85,13 @@ object ChangeLanesAccordingToVvhChanges {
       val toAdjustLanes = getPersistedLanesByIds(changeSetToTreat.map(_.laneId).toSet, false)
 
       changeSetToTreat.foreach { adjustment =>
-        val oldLane = toAdjustLanes.find(_.id == adjustment.laneId).get
-        val newLane = persistedToNewLaneWithNewMeasures(oldLane, adjustment.startMeasure, adjustment.endMeasure)
-        val newLaneID = create(Seq(newLane), Set(oldLane.linkId), oldLane.sideCode, VvhGenerated)
-        moveToHistory(oldLane.id, Some(newLaneID.head), true, true, VvhGenerated)
+        val oldLane = toAdjustLanes.find(_.id == adjustment.laneId)
+        if(oldLane.nonEmpty){
+          val newLane = persistedToNewLaneWithNewMeasures(oldLane.get, adjustment.startMeasure, adjustment.endMeasure)
+          val newLaneID = create(Seq(newLane), Set(oldLane.get.linkId), oldLane.get.sideCode, VvhGenerated)
+          moveToHistory(oldLane.get.id, Some(newLaneID.head), true, true, VvhGenerated)
+        }
+
       }
     }
 
