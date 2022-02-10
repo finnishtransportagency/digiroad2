@@ -2,14 +2,16 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, PrimitiveRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection, UnknownFunctionalClass, WalkingAndCyclingPath}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, LaneType, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -23,8 +25,13 @@ object MainLanePopulationProcess {
     new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
   }
 
+  lazy val roadAddressService: RoadAddressService = {
+    val viiteClient = new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
+    new RoadAddressService(viiteClient)
+  }
+
   lazy val laneService: LaneService = {
-    new LaneService(roadLinkService, new DummyEventBus)
+    new LaneService(roadLinkService, new DummyEventBus, roadAddressService)
   }
 
   lazy val username = "auto_generated_lane"
@@ -95,9 +102,10 @@ object MainLanePopulationProcess {
   def process(initialProcessing: Boolean = false): Unit = {
     logger.info(s"Start to populate main lanes from road links ${DateTime.now()}")
 
-    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+    val municipalities: Seq[Int] = Seq(92)
+//      PostGISDatabase.withDynSession {
+//      Queries.getMunicipalities
+//    }
 
     municipalities.foreach { municipality =>
       mainLanesForMunicipality(municipality, initialProcessing)
@@ -110,9 +118,10 @@ object MainLanePopulationProcess {
   def initialProcess(): Unit = {
     logger.info(s"Start to remove existing lanes ${DateTime.now()}")
 
-    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+    val municipalities: Seq[Int] = Seq(92)
+//      PostGISDatabase.withDynSession {,
+//      Queries.getMunicipalities
+//    }
 
     municipalities.foreach { municipality =>
       logger.info("Deleting lanes from municipality -> " + municipality)

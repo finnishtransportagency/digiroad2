@@ -28,7 +28,7 @@ object LaneUtils {
   val eventbus = new DummyEventBus
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
-  lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus)
+  lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus, roadAddressService)
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
