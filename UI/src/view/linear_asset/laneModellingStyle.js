@@ -21,13 +21,13 @@
       var isRoadlink = _.isEmpty(linearAssets) || _.isUndefined(_.head(linearAssets).selectedLinks);
       var relevantLinears = linearAssets;
       if(!isRoadlink){
-        relevantLinears = _.filter(linearAssets, function (linear) {
+        relevantLinears = _.cloneDeep(_.filter(linearAssets, function (linear) {
           var laneCode = _.find(linear.properties, function (property) {
             return property.publicId === "lane_code";
           });
 
           return _.head(laneCode.values).value == laneNumber || _.head(laneCode.values).value == 1;
-        });
+        }));
       }
 
       var linearAssetsWithType = _.flatten(_.map(relevantLinears, function(linearAsset) {
