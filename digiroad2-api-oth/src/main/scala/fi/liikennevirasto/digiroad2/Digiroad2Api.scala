@@ -878,7 +878,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
-    case rae: RoadAddressException => halt(RoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui"))
+    case rae: RoadAddressException => halt(RoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus OTH:ssa epäonnistui"))
     case masse: MassTransitStopException => halt(NotAcceptable("Invalid Mass Transit Stop direction"))
     case valuee: AssetValueException => halt(NotAcceptable("Invalid asset value: " + valuee.getMessage))
     case e: Exception =>

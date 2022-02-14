@@ -5,7 +5,6 @@ import java.util.Date
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MunicipalityInfo, Sequences}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
@@ -449,59 +448,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       liviIdentifierProperty.values.size should be(0)
 
       verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
-    }
-  }
-
-  test ("Convert PersistedMassTransitStop into TierekisteriMassTransitStop") {
-    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
-    runWithRollback {
-
-      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
-
-      when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
-
-      val assetId = 300006
-      val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
-      stopOption.isEmpty should be (false)
-      val stop = stopOption.get
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(0,0), 0, stop.mValue, stop.linkId, stop.validityDirection.get, Some(stop.municipalityCode))
-      val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide))
-      roadSide should be (RoadSide.Left)
-      trStop.nationalId should be (stop.nationalId)
-      trStop.stopType should be (StopType.LongDistance)
-      trStop.equipments.get(Equipment.Roof).get should be (Existence.Yes)
-      trStop.equipments.filterNot( x => x._1 == Equipment.Roof).forall(_._2 == Existence.Unknown) should be (true)
-      trStop.operatingFrom.isEmpty should be (false)
-      trStop.operatingTo.isEmpty should be (false)
-      val opFrom = stop.propertyData.find(_.publicId=="ensimmainen_voimassaolopaiva").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue))
-      val opTo = stop.propertyData.find(_.publicId=="viimeinen_voimassaolopaiva").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue))
-      opFrom shouldNot be (None)
-      opTo shouldNot be (None)
-      dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
-      dateFormatter.format(trStop.operatingTo.get) should be (opTo.get)
-    }
-  }
-
-  test ("Test date conversions in Marshaller") {
-    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
-    runWithRollback {
-
-      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
-
-      when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
-
-      val assetId = 300006
-      val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
-      stopOption.isEmpty should be (false)
-      val stop = stopOption.get
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(0,0), 0, stop.mValue, stop.linkId, stop.validityDirection.get, Some(stop.municipalityCode))
-      val expireDate = new Date(10487450L)
-      val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide), Some(expireDate))
-      trStop.operatingTo.isEmpty should be (false)
-      trStop.operatingTo.get should be (expireDate)
-      val trStopNoExpireDate = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide), None)
-      trStopNoExpireDate.operatingTo.isEmpty should be (false)
-      trStopNoExpireDate.operatingTo.get shouldNot be (expireDate)
     }
   }
 
