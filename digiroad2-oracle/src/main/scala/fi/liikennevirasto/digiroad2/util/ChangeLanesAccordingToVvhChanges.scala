@@ -91,6 +91,9 @@ object ChangeLanesAccordingToVvhChanges {
           val newLaneID = create(Seq(newLane), Set(oldLane.get.linkId), oldLane.get.sideCode, VvhGenerated)
           moveToHistory(oldLane.get.id, Some(newLaneID.head), true, true, VvhGenerated)
         }
+        else{
+          logger.error("Old lane not found with ID: " + adjustment.laneId + " Adjustment link ID: " + adjustment.linkId)
+        }
 
       }
     }
