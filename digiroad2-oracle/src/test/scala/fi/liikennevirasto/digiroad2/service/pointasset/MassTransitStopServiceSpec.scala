@@ -251,6 +251,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Get properties") {
+    when(mockGeometryTransform.resolveAddressAndLocation(Point(374675.043988335, 6677274.14596169), 69, 109.0, 1611353, 2, road = None)).thenReturn((RoadAddress(Some("1"),1,1,Track(1),1),RoadSide(1)))
     runWithRollback {
       val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(2)._1.map { stop =>
         Map("id" -> stop.id,
@@ -268,6 +269,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Fetching mass transit stop with id requires no rights") {
+    when(mockGeometryTransform.resolveAddressAndLocation(Point(374780.259160265, 6677546.84962279), 30, 113.0, 6488445, 3, road = None)).thenReturn((RoadAddress(Some("1"),1,1,Track(1),1),RoadSide(1)))
     runWithRollback {
       val stop =  RollbackMassTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(85755)
       stop._1.get.id should be (300008)
