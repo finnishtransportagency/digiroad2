@@ -107,23 +107,8 @@
       } else {
         if(optionalSave()){
           if(saveNewBusStopStrategy()) {
-            new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi, siihen liittyviä tietoja ei lähetetä Tierekisteriin. Haluatko silti tallentaa sen OTH:ssa?', {
-              successCallback: function () {
-                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
-                saveStop();
-              }});
-          } else {
-            new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
-              successCallback: function () {
-                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
-                saveStop();
-              },
-              closeCallback: function () {
-                saveStop();
-              }
-            });
+            saveStop();
           }
-
         } else {
           saveStop();
         }
