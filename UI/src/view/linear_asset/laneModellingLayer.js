@@ -295,10 +295,43 @@
         features.push(marker);
       };
 
+      var drawSplitPoints = function (links) {
+        function findSplitPoints(links) {
+          var sortedPoints = _.flatMap(links, function (link) {
+            return link.points;
+          }).sort(function (a, b) {
+            return a.x - b.x;
+          });
+          var foundSplitPoints = [];
+          for(var i = 1; i < sortedPoints.length; i++) {
+            var distance = Math.sqrt(Math.pow((sortedPoints[i].x - sortedPoints[i - 1].x), 2) + Math.pow((sortedPoints[i].y - sortedPoints[i - 1].y), 2));
+            if (distance < 0.001) {
+              foundSplitPoints.push(sortedPoints[i]);
+            }
+          }
+          return foundSplitPoints;
+        }
+        var splitPoints = findSplitPoints(links);
+
+        var style = new ol.style.Style({
+          image : new ol.style.Icon({src: 'images/center-marker-red.svg'}),
+          text : new ol.style.Text({text : "X", fill: new ol.style.Fill({color: '#ffffff'}), font : '12px sans-serif'})
+        });
+
+        splitPoints.forEach(function (point) {
+          var splitMarker = new ol.Feature({
+            geometry : new ol.geom.Point([point.x, point.y])
+          });
+          splitMarker.setStyle(style);
+          features.push(splitMarker);
+        });
+      };
+
       var indicatorsForSplit = function() {
-        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+        me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
           markerContainer(link, middlePoint);
         });
+        drawSplitPoints(links);
       };
 
       indicatorsForSplit();
