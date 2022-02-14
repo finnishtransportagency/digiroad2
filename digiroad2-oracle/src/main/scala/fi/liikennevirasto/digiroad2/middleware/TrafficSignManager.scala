@@ -63,11 +63,11 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
     new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
 
-
-  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTierekisteriGenerator: Boolean = false ): Unit = {
+  // TODO remove boolean
+  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
     trafficSignInfo match {
       case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
-        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction, fromTierekisteriGenerator)
+        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction)
 
       case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
         insertTrafficSignToProcess(trSign.id, Prohibition, newTransaction = newTransaction)

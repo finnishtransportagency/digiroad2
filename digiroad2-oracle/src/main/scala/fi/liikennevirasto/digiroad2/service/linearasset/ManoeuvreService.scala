@@ -336,9 +336,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
         }
     }
   }
-
-
-  private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo, fromTierekisteriGenerator: Boolean = false ): Seq[Long] = {
+  
+  private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo ): Seq[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = trafficSignInfo.linkId
     val tsDirection = trafficSignInfo.validityDirection
@@ -377,29 +376,20 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
     } catch {
       case mce: ManoeuvreCreationException =>
-            if (fromTierekisteriGenerator) {
-              println("ManoeuvreCreationException occurred but will be ignored since it comes from Tierekisteri")
-              Seq()
-            }
-            else throw mce
-
-      case eipe: InvalidParameterException =>
-            if (fromTierekisteriGenerator) {
-              println("InvalidParameterException occurred but will be ignored since it comes from Tierekisteri")
-              Seq()
-            }
-            else throw eipe
+         throw mce
+      case eipe: InvalidParameterException => 
+         throw eipe
     }
   }
-
-  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTierekisteriGenerator: Boolean = false): Seq[Long] = {
+  
+  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
-        createManoeuvreFromTrafficSign(trafficSignInfo, fromTierekisteriGenerator)
+        createManoeuvreFromTrafficSign(trafficSignInfo)
       }
     }
     else
-      createManoeuvreFromTrafficSign(trafficSignInfo, fromTierekisteriGenerator)
+      createManoeuvreFromTrafficSign(trafficSignInfo)
   }
 
   private def getOpositePoint(geometry: Seq[Point], point: Point) = {
