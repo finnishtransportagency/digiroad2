@@ -2,15 +2,11 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{Equipment, TierekisteriBusStopMarshaller, TierekisteriMassTransitStop}
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.DataFixture.massTransitStopService.massTransitStopEnumeratedPropertyValues
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.slf4j.LoggerFactory
-
-import scala.util.Try
 
 object TierekisteriBusStopStrategyOperations{
 
@@ -31,9 +27,7 @@ object TierekisteriBusStopStrategyOperations{
   }
 }
 
-
-
-class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
+class VelhoBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 {
   lazy val logger = LoggerFactory.getLogger(getClass)
   override def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
@@ -64,61 +58,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption)._1 }
 
     (enrichPersistedStop,true)
-  }
-  /**
-    * Override the properties values passed as parameter using override operations
-    *
-    * @param tierekisteriStop         Tierekisteri Asset
-    * @param persistedMassTransitStop Asset properties
-    * @return Sequence of overridden properties
-    */
-  private def enrichWithTierekisteriInfo(persistedMassTransitStop: PersistedMassTransitStop, tierekisteriStop: TierekisteriMassTransitStop): PersistedMassTransitStop = {
-    val overridePropertyValueOperations: Seq[(TierekisteriMassTransitStop, Property) => Property] = Seq(
-      setEquipments,
-      setTextPropertyValueIfEmpty(MassTransitStopOperations.nameFiPublicId, { ta => ta.nameFi.getOrElse("") }),
-      setTextPropertyValueIfEmpty(MassTransitStopOperations.nameSePublicId, { ta => ta.nameSe.getOrElse("") })
-      //In the future if we need to override some property just add here the operation
-    )
-
-    persistedMassTransitStop.copy(propertyData = persistedMassTransitStop.propertyData.map {
-      property =>
-        overridePropertyValueOperations.foldLeft(property) { case (prop, operation) =>
-          operation(tierekisteriStop, prop)
-        }
-    })
-  }
-
-  private def setTextPropertyValueIfEmpty(publicId: String, getValue: TierekisteriMassTransitStop => String)(tierekisteriStop: TierekisteriMassTransitStop, property: Property): Property = {
-    if (property.publicId == publicId && property.values.isEmpty) {
-      val propertyValueString = getValue(tierekisteriStop)
-      property.copy(values = Seq(new PropertyValue(propertyValueString, Some(propertyValueString))))
-    } else {
-      property
-    }
-  }
-
-  /**
-    * Override property values of all equipment properties
-    *
-    * @param tierekisteriStop Tierekisteri Asset
-    * @param property         Asset property
-    * @return Property passed as parameter if have no match with equipment property or property overriden with tierekisteri values
-    */
-  private def setEquipments(tierekisteriStop: TierekisteriMassTransitStop, property: Property) = {
-    if (tierekisteriStop.equipments.isEmpty) {
-      property
-    } else {
-      val equipment = Equipment.fromPublicId(property.publicId)
-      val existence = tierekisteriStop.equipments.get(equipment)
-      existence.isEmpty || !equipment.isMaster match {
-        case true => property
-        case false =>
-          val propertyValueString = existence.get.propertyValue.toString
-          val propertyOverrideValue = massTransitStopEnumeratedPropertyValues.
-            get(property.publicId).get.find(_.asInstanceOf[PropertyValue].propertyValue == propertyValueString).get
-          property.copy(values = Seq(propertyOverrideValue))
-      }
-    }
   }
 
 }
