@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "RepositoryURL",
+    "ParameterValue": "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2"
+  },
+  {
+    "ParameterKey": "CacheHost",
+    "ParameterValue": "prodroadlinkcache.qrjvyl.cfg.euw1.cache.amazonaws.com"
+  }
+]
