@@ -1377,42 +1377,6 @@ object DataFixture {
       }
     }
   }
-  //TODO remove
-  private def updateFloatingStopsOnTerminatedRoads(): Unit ={
-    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
-
-    def convertDateToString(dateOpt: Option[Date]): String = {
-      dateOpt match {
-        case Some(date) => dateFormatter.format(date)
-        case _ => LocalDate.now().toString
-      }
-    }
-
-    println("Starting fetch of OTH stops")
-    println(DateTime.now())
-
-    val trStops = dataImporter.getTierekisteriStops()
-    val floatingTerminated = trStops.filter(stop => stop._2 > 0 && stop._4 == FloatingReason.TerminatedRoad.value)
-
-    println("Starting fetch of Tierekisteri stops")
-    println(DateTime.now())
-    val (terminated, active) = tierekisteriMassTransitStopClient.fetchActiveMassTransitStops().partition(stop => convertDateToString(stop.removalDate).compareTo(LocalDate.now().toString) == -1)
-
-    val stopsToUpdateFloatingReason = trStops.filter(stop => terminated.map(_.liviId).contains(stop._3))
-    val stopsToRemoveFloatingReason = floatingTerminated.filter(stop => active.map(_.liviId).contains(stop._3))
-
-    PostGISDatabase.withDynTransaction {
-      stopsToUpdateFloatingReason.foreach(stop => massTransitStopService.updateFloating(stop._1, floating = true, Some(FloatingReason.TerminatedRoad)))
-
-      if(stopsToRemoveFloatingReason.nonEmpty)
-        stopsToRemoveFloatingReason.foreach(stop => massTransitStopService.updateFloating(stop._1, floating = false, None))
-    }
-
-    println("\n")
-    println("Complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
 
   def removeUnnecessaryUnknownSpeedLimits(): Unit = {
     println("\nStart delete/update unknown speedLimits")
