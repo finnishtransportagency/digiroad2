@@ -282,9 +282,7 @@
           });
         }else{
           backend.createAsset(currentAsset.payload, function (errorObject) {
-            if (errorObject.status == FAILED_DEPENDENCY_424) {
-              eventbus.trigger('asset:creationTierekisteriFailed');
-            } else if (errorObject.status == PRECONDITION_FAILED_412) {
+            if (errorObject.status == PRECONDITION_FAILED_412) {
               eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
             } else {
               eventbus.trigger('asset:creationFailed');
@@ -314,8 +312,6 @@
             open(asset);
             if(isServiceStop(payloadProperties)){
               eventbus.trigger('asset:updateFailed', asset);
-            } else if (errorObject.status == FAILED_DEPENDENCY_424) {
-              eventbus.trigger('asset:updateTierekisteriFailed', asset);
             } else if (errorObject.status == PRECONDITION_FAILED_412) {
               eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
             } else {
@@ -406,11 +402,6 @@
           if (_.isUndefined(asset.success)) { eventbus.trigger('asset:fetched', asset); }
         });
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
-          if (errorObject !== undefined) {
-            if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
-              eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
-            }
-          }
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -424,11 +415,6 @@
           eventbus.trigger('asset:fetched', asset);
         });
         backend.getMassTransitStopById(id, function (asset, statusMessage, errorObject) {
-          if (errorObject !== undefined) {
-            if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
-              eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
-            }
-          }
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -495,9 +481,6 @@
           eventbus.trigger('massTransitStopDeleted', currAsset);
         }, function (errorObject) {
           cancel();
-          if (errorObject.status == FAILED_DEPENDENCY_424) {
-            eventbus.trigger('asset:deleteTierekisteriFailed');
-          }
         });
       }
     };
