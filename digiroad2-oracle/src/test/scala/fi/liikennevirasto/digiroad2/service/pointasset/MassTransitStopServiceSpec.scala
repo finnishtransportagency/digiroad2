@@ -33,12 +33,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
-  when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
-    TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1), TRRoadSide.Unknown, StopType.Combined,
-      false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
-  )
-
+  
   val vvhRoadLinks = List(
     VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
     VVHRoadlink(1021227, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
@@ -91,36 +86,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
-
-  class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
-    override def withDynSession[T](f: => T): T = f
-    override def withDynTransaction[T](f: => T): T = f
-    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
-    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-    override val municipalityDao: MunicipalityDao = new MunicipalityDao
-    override val geometryTransform: GeometryTransform = mockGeometryTransform
-  }
-
+  
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus, mockRoadLinkService)
-
-  object RollbackMassTransitStopServiceWithTierekisteri extends TestMassTransitStopServiceWithTierekisteri(new DummyEventBus, mockRoadLinkService)
-
+  
   class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
     override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
-    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
-    override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-    override val municipalityDao: MunicipalityDao = new MunicipalityDao
-    override val geometryTransform: GeometryTransform = mockGeometryTransform
-  }
-
-  class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
-    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val municipalityDao: MunicipalityDao = new MunicipalityDao
     override val geometryTransform: GeometryTransform = mockGeometryTransform
@@ -566,7 +541,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
         SimplePointAssetProperty("nimi_suomeksi", List(PropertyValue("value is copied"))),
         SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),

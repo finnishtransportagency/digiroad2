@@ -27,7 +27,7 @@ import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset.{RoadWorkService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
@@ -59,13 +59,7 @@ object DataFixture {
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
   }
-
-  lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
-      Digiroad2Properties.tierekisteriEnabled,
-      HttpClientBuilder.create().build())
-  }
-
+  
   lazy val eventbus: DigiroadEventBus = {
     new DigiroadEventBus
   }
@@ -109,7 +103,6 @@ object DataFixture {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-      override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriMassTransitStopClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)

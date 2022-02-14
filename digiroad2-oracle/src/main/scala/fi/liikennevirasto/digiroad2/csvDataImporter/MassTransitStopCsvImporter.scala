@@ -1,11 +1,9 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
-
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -14,7 +12,9 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.util.LaneUtils.roadAddressService
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.apache.http.impl.client.HttpClientBuilder
 
 import scala.util.Try
 
@@ -71,8 +71,6 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
       override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
       override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
-      override val tierekisteriClient: TierekisteriMassTransitStopClient = tierekisteriMassTransitStopClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
