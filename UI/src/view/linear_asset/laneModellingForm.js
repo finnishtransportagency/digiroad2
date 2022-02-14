@@ -597,7 +597,7 @@
             currentFormStructure = mainLaneFormStructure;
           }
         };
-        var confirmationMessage = "Ovatko tekemäsi muutokset lopullisia? Kaistatieto lähetetään Tierekisteriin.";
+        var confirmationMessage = "Ovatko tekemäsi muutokset lopullisia?";
 
         GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
