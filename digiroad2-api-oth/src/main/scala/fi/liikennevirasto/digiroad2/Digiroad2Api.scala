@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
@@ -379,9 +378,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
 
     if (massTransitStopReturned._2) {
-      TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found")))
-    } else {
       massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
+    } else {
+      NotFound("Mass transit stop " + nationalId + " not found")
     }
   }
 
@@ -404,9 +403,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
 
     if (massTransitStopReturned._2) {
-      TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found")))
-    } else {
       massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found"))
+    } else {
+     NotFound("Mass transit stop " + id + " not found")
     }
   }
 
@@ -869,17 +868,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val lang = params("language")
     assetPropertyService.assetPropertyNames(lang)
   }
-
-  object TierekisteriInternalServerError {
-    def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(HttpStatus.SC_FAILED_DEPENDENCY, body, headers)
-  }
-
-  object TierekisteriNotFoundWarning {
-    def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
-      ActionResult(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, body, headers)
-  }
-
+  
   object RoadAddressNotFound {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
       ActionResult(HttpStatus.SC_PRECONDITION_FAILED, body, headers)
@@ -889,7 +878,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
-    case te: TierekisteriClientException => halt(TierekisteriInternalServerError("Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa"))
     case rae: RoadAddressException => halt(RoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui"))
     case masse: MassTransitStopException => halt(NotAcceptable("Invalid Mass Transit Stop direction"))
     case valuee: AssetValueException => halt(NotAcceptable("Invalid asset value: " + valuee.getMessage))
