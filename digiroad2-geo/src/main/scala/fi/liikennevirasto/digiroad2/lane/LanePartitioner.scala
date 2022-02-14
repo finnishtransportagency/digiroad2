@@ -12,7 +12,7 @@ object LanePartitioner {
   case class LaneWithContinuingLanes(lane: PieceWiseLane, continuingLanes: Seq[PieceWiseLane])
 
 
-  def getLaneRoadIdentifier(lane: PieceWiseLane, roadLink: RoadLink): String = {
+  def getLaneRoadIdentifierByUsingViiteRoadNumber(lane: PieceWiseLane, roadLink: RoadLink): String = {
     val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")).toString
     val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")).toString
     val vvhRoadIdentifier = roadLink.roadIdentifier.toString
@@ -26,7 +26,7 @@ object LanePartitioner {
                                   SideCodesCorrected: Boolean = false): Seq[PieceWiseLane] = {
     val continuingLanes = lanes.filter(potentialLane => {
       val potentialLaneLink = roadLinks(potentialLane.linkId)
-      val potentialLaneRoadIdentifier = getLaneRoadIdentifier(potentialLane, potentialLaneLink)
+      val potentialLaneRoadIdentifier = getLaneRoadIdentifierByUsingViiteRoadNumber(potentialLane, potentialLaneLink)
       val continuingEndPoints = potentialLane.endpoints.map(_.round()).exists(lane.endpoints.map(_.round()).contains)
       val sameLaneCode = potentialLane.laneAttributes.find(_.publicId == "lane_code") == lane.laneAttributes.find(_.publicId == "lane_code")
 
@@ -170,7 +170,7 @@ object LanePartitioner {
 
     val lanesGrouped = mainLanesWithFullLenghtLanes.groupBy(lane => {
       val roadLink = roadLinks(lane.linkId)
-      val roadIdentifier = getLaneRoadIdentifier(lane, roadLink)
+      val roadIdentifier = getLaneRoadIdentifierByUsingViiteRoadNumber(lane, roadLink)
       val laneCode = lane.laneAttributes.find(_.publicId == "lane_code")
       (roadIdentifier, lane.sideCode, laneCode)
     })
@@ -196,7 +196,7 @@ object LanePartitioner {
     }).values)
 
     val partitionedLanesWithContinuing = partitionedByAdditional.map(laneGroup => laneGroup.map(lane => {
-      val roadIdentifier = getLaneRoadIdentifier(lane, roadLinks(lane.linkId))
+      val roadIdentifier = getLaneRoadIdentifierByUsingViiteRoadNumber(lane, roadLinks(lane.linkId))
       val continuingLanes = getContinuingWithIdentifier(lane, roadIdentifier, laneGroup, roadLinks, true)
       LaneWithContinuingLanes(lane, continuingLanes)
     }))
