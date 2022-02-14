@@ -131,7 +131,7 @@ object InformationSource{
   }
 }
 
-//1 = FTA/ Road registry (Liikennevirasto / Tierekisteri)
+//1 = FTA/ Road registry (Liikennevirasto)
 case object RoadRegistry extends InformationSource { def value = 1 }
 //2 = Maintainer (municipality maintainer)
 case object MunicipalityMaintenainer extends InformationSource { def value = 2 }
