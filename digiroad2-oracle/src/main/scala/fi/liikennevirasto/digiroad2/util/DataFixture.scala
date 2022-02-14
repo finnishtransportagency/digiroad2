@@ -141,12 +141,6 @@ object DataFixture {
     new RoadWorkService(roadLinkService, eventbus)
   }
 
-  lazy val tierekisteriSpeedLimitAsset : TierekisteriSpeedLimitAssetClient = {
-    new TierekisteriSpeedLimitAssetClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
-      Digiroad2Properties.tierekisteriEnabled,
-      HttpClientBuilder.create().build())
-  }
-
   lazy val assetDao : PostGISAssetDao = {
     new PostGISAssetDao()
   }
@@ -2314,8 +2308,6 @@ object DataFixture {
             mergeAdditionalPanelsToTrafficSigns(trafficSignGroup(group))
           case _ => println("Please provide a traffic sign group")
         }
-      case Some("update_floating_stops_on_terminated_roads") =>
-        updateFloatingStopsOnTerminatedRoads()
       case Some("update_private_roads") =>
         updatePrivateRoads()
       case Some("add_geometry_to_linear_assets") =>
@@ -2388,7 +2380,7 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
+        " create_manoeuvres_using_traffic_signs | update_private_roads | add_geometry_to_linear_assets | " +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
         " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | " +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
