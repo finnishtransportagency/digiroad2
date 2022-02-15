@@ -402,6 +402,11 @@
           if (_.isUndefined(asset.success)) { eventbus.trigger('asset:fetched', asset); }
         });
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+            console.log(errorObject);
+            
+          }
+          
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -415,6 +420,10 @@
           eventbus.trigger('asset:fetched', asset);
         });
         backend.getMassTransitStopById(id, function (asset, statusMessage, errorObject) {
+          if (errorObject !== undefined) {
+            console.log(errorObject);
+          }
+          
           eventbus.trigger('asset:fetched', asset);
         });
       }

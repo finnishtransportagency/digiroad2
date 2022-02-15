@@ -795,7 +795,7 @@
           'palauteosoite',
           'lisatiedot',
           'suggest_box',
-          'trSave'];
+          'trSave']; // in default it is marked as TR and in strategia "is" method it is checked as with yllapija and road administrative class.  
 
         var terminalPropertyOrdering = [
           'lisatty_jarjestelmaan',
