@@ -62,8 +62,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
   lazy val linearAssetDao: PostGISLinearAssetDao = {
     new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
-
-  // TODO remove boolean
+  
   def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
     trafficSignInfo match {
       case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
