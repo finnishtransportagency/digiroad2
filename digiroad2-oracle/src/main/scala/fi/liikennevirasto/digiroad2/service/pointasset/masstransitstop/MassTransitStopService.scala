@@ -131,7 +131,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
   lazy val defaultBusStopStrategy = new BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
-  lazy val tierekisteriBusStopStrategy = new FormerTierekisteriFutureVelhoBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
+  lazy val tierekisteriBusStopStrategy = new OthLiviIdBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val terminatedBusStopStrategy = new TerminatedBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 
@@ -352,7 +352,7 @@ trait MassTransitStopService extends PointAssetOperations {
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink), newTransaction)
   }
 
-  def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
+  def getMassTransitStopByNationalId(nationalId: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
     withDynTransaction {
       val persistedStopOption = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
       persistedStopOption match {
@@ -369,7 +369,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def getMassTransitStopByIdWithTRWarnings(id: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
+  def getMassTransitStopById(id: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
     withDynTransaction {
       val persistedStopOption = fetchPointAssets(massTransitStopDao.withId(id)).headOption
       persistedStopOption match {
