@@ -131,7 +131,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
   lazy val defaultBusStopStrategy = new BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
-  lazy val tierekisteriBusStopStrategy = new OthLiviIdBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
+  lazy val othLiviIdBusStopStrategy = new OthLiviIdBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val terminatedBusStopStrategy = new TerminatedBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 
@@ -585,7 +585,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def getStrategies(): (Seq[AbstractBusStopStrategy], AbstractBusStopStrategy) ={
-    (Seq(terminalBusStopStrategy, tierekisteriBusStopStrategy, terminatedBusStopStrategy), defaultBusStopStrategy)
+    (Seq(terminalBusStopStrategy, othLiviIdBusStopStrategy, terminatedBusStopStrategy), defaultBusStopStrategy)
   }
 
   private def getStrategy(asset: PersistedMassTransitStop): AbstractBusStopStrategy ={
