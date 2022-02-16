@@ -361,7 +361,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/massTransitStops/:nationalId") {
     val nationalId = params("nationalId").toLong
-    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalId(nationalId)
     val massTransitStop = massTransitStopReturned._1.map { stop =>
 
       Map("id" -> stop.id,
@@ -376,17 +376,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "propertyData" -> stop.propertyData,
         "municipalityCode" -> massTransitStopReturned._3)
     }
-
-    if (massTransitStopReturned._2) {
       massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
-    } else {
-      NotFound("Mass transit stop " + nationalId + " not found")
-    }
   }
 
   get("/massTransitStop/:id") {
     val id = params("id").toLong
-    val massTransitStopReturned = massTransitStopService.getMassTransitStopByIdWithTRWarnings(id)
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopById(id)
 
     val massTransitStop = massTransitStopReturned._1.map { stop =>
       Map("id" -> stop.id,
@@ -401,12 +396,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "propertyData" -> stop.propertyData,
         "municipalityCode" -> massTransitStopReturned._3)
     }
-
-    if (massTransitStopReturned._2) {
       massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found"))
-    } else {
-     NotFound("Mass transit stop " + id + " not found")
-    }
   }
 
   get("/massServiceStops/:nationalId") {
@@ -431,7 +421,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   */
   get("/massTransitStopsSafe/:nationalId") {
       val nationalId = params("nationalId").toLong
-      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
+      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalId(nationalId)
       massTransitStopReturned._1 match {
         case Some(stop) =>
           Map ("id" -> stop.id,
