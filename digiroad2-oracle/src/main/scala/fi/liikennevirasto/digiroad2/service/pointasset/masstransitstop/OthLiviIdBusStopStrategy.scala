@@ -9,189 +9,15 @@ import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
-import java.util.Date
 
-
-
-
-
-
-
-
-
-
-
-
-/**
-  * Values for Existence (Olemassaolo) enumeration
-  */
-sealed trait Existence {
-  def value: String
-  def propertyValue: Int
-}
-object Existence {
-  val values = Set(Yes, No, Unknown)
-
-  def apply(value: String): Existence = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  def fromPropertyValue(value: String): Existence = {
-    value match {
-      case "1" => No
-      case "2" => Yes
-      case _ => Unknown
-    }
-  }
-
-  case object Yes extends Existence { def value = "on"; def propertyValue = 2; }
-  case object No extends Existence { def value = "ei"; def propertyValue = 1; }
-  case object Unknown extends Existence { def value = "ei_tietoa"; def propertyValue = 99; }
-}
-
-
-/**
-  * Values for Equipment (Varuste) enumeration
-  */
-sealed trait Equipment {
-  def value: String
-  def publicId: String
-  def isMaster: Boolean
-}
-object Equipment {
-  val values = Set[Equipment](Timetable, TrashBin, BikeStand, Lighting, Seat, Roof, RoofMaintainedByAdvertiser, ElectronicTimetables, CarParkForTakingPassengers, RaisedBusStop)
-
-  def apply(value: String): Equipment = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  def fromPublicId(value: String): Equipment = {
-    values.find(_.publicId == value).getOrElse(Unknown)
-  }
-
-  case object Timetable extends Equipment { def value = "aikataulu"; def publicId = "aikataulu"; def isMaster = true; }
-  case object TrashBin extends Equipment { def value = "roskis"; def publicId = "roska_astia"; def isMaster = true; }
-  case object BikeStand extends Equipment { def value = "pyorateline"; def publicId = "pyorateline"; def isMaster = true; }
-  case object Lighting extends Equipment { def value = "valaistus"; def publicId = "valaistus"; def isMaster = true; }
-  case object Seat extends Equipment { def value = "penkki"; def publicId = "penkki"; def isMaster = true; }
-  case object Roof extends Equipment { def value = "katos"; def publicId = "katos"; def isMaster = false; }
-  case object RoofMaintainedByAdvertiser extends Equipment { def value = "mainoskatos"; def publicId = "mainoskatos"; def isMaster = false; }
-  case object ElectronicTimetables extends Equipment { def value = "sahk_aikataulu"; def publicId = "sahkoinen_aikataulunaytto"; def isMaster = false; }
-  case object CarParkForTakingPassengers extends Equipment { def value = "saattomahd"; def publicId = "saattomahdollisuus_henkiloautolla"; def isMaster = false; }
-  case object RaisedBusStop extends Equipment { def value = "korotus"; def publicId = "korotettu"; def isMaster = false; }
-  case object Unknown extends Equipment { def value = "UNKNOWN"; def publicId = "tuntematon"; def isMaster = false; }
-}
-
-/**
-  * Values for Stop type (Pysäkin tyyppi) enumeration
-  */
-sealed trait StopType {
-  def value: String
-  def propertyValues: Set[Int]
-}
-object StopType {
-  val values = Set[StopType](Commuter, LongDistance, Combined, Virtual, Unknown)
-
-  def apply(value: String): StopType = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  def propertyValues() : Set[Int] = {
-    values.flatMap(_.propertyValues)
-  }
-
-  case object Commuter extends StopType { def value = "paikallis"; def propertyValues = Set(2); }
-  case object LongDistance extends StopType { def value = "kauko"; def propertyValues = Set(3); }
-  case object Combined extends StopType { def value = "molemmat"; def propertyValues = Set(2,3); }
-  case object Virtual extends StopType { def value = "virtuaali"; def propertyValues = Set(5); }
-  case object Unknown extends StopType { def value = "tuntematon"; def propertyValues = Set(99); }  // Should not be passed on interface
-}
-
-case class TierekisteriMassTransitStop(nationalId: Long,
-                                       liviId: String,
-                                       roadAddress: RoadAddress,
-                                       roadSide: TRRoadSide,
-                                       stopType: StopType,
-                                       express: Boolean,
-                                       equipments: Map[Equipment, Existence] = Map(),
-                                       stopCode: Option[String],
-                                       nameFi: Option[String],
-                                       nameSe: Option[String],
-                                       modifiedBy: String,
-                                       operatingFrom: Option[Date],
-                                       operatingTo: Option[Date],
-                                       removalDate: Option[Date],
-                                       inventoryDate: Date)
-
-
-
-/**
-  * Values for Road side (Puoli) enumeration
-  */
-sealed trait TRRoadSide {
-  def value: String
-  def propertyValues: Set[Int]
-}
-object TRRoadSide {
-  val values = Set(Right, Left, Off, Unknown)
-
-  def apply(value: String): TRRoadSide = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  def propertyValues() : Set[Int] = {
-    values.flatMap(_.propertyValues)
-  }
-
-  case object Right extends TRRoadSide { def value = "oikea"; def propertyValues = Set(1) }
-  case object Left extends TRRoadSide { def value = "vasen"; def propertyValues = Set(2) }
-  case object Off extends TRRoadSide { def value = "paassa"; def propertyValues = Set(99) } // Not supported by OTH
-  case object Unknown extends TRRoadSide { def value = "ei tietoa"; def propertyValues = Set(0) }
-}
-
-sealed trait TRLaneArrangementType {
-  def value: Int
-}
-object TRLaneArrangementType {
-  val values = Set(MassTransitLane)
-
-  def apply(value: Int): TRLaneArrangementType = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  case object MassTransitLane extends TRLaneArrangementType { def value = 5; }
-  case object Unknown extends TRLaneArrangementType { def value = 99; }
-}
-
-sealed trait TRFrostHeavingFactorType {
-  def value: Int
-  def pavedRoadType: String
-}
-object TRFrostHeavingFactorType {
-  val values = Set(VeryFrostHeaving, MiddleValue50to60, FrostHeaving, MiddleValue60to80, NoFrostHeaving)
-
-  def apply(value: Int): TRFrostHeavingFactorType = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  case object VeryFrostHeaving extends TRFrostHeavingFactorType { def value = 40; def pavedRoadType = "Very Frost Heaving";}
-  case object MiddleValue50to60 extends TRFrostHeavingFactorType { def value = 50; def pavedRoadType = "Middle value 50...60";}
-  case object FrostHeaving extends TRFrostHeavingFactorType { def value = 60; def pavedRoadType = "Frost Heaving";}
-  case object MiddleValue60to80 extends TRFrostHeavingFactorType { def value = 70; def pavedRoadType = "Middle Value 60...80";}
-  case object NoFrostHeaving extends TRFrostHeavingFactorType { def value = 80; def pavedRoadType = "No Frost Heaving";}
-  case object Unknown extends TRFrostHeavingFactorType { def value = 999;  def pavedRoadType = "No information";}
-}
-
-
-
-object TierekisteriBusStopStrategyOperations{
+object OthLiviIdBusStopStrategyOperations{
 
   /**
-    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY or HSL.
+    * Verify if the stop is relevant to OthLiviId: Must be non-virtual and must be administered by ELY or HSL.
     * Convenience method
     *
     */
-  def isStoredInTierekisteri(properties: Seq[AbstractProperty], administrativeClass: Option[AdministrativeClass]): Boolean = {
+  def isOthLiviId(properties: Seq[AbstractProperty], administrativeClass: Option[AdministrativeClass]): Boolean = {
     val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
     val stopType = properties.find(pro => pro.publicId == MassTransitStopOperations.MassTransitStopTypePublicId)
     val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
@@ -219,19 +45,10 @@ class OthLiviIdBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStop
           filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
       case _ => newProperties.toSeq
     }
-    val trSave = newProperties.
-      find(property => property.publicId == AssetPropertyConfiguration.TrSaveId).
+    val liviIdSave = newProperties.
+      find(property => property.publicId == AssetPropertyConfiguration.LiviIdSave).
       flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
-    val othLiviIdBusStopStrategy =  trSave.isEmpty && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass))
-    if(othLiviIdBusStopStrategy){
-      if(existingAssetOption.isDefined){
-        logger.info(s"Is former tierekisteri asset with id: ${existingAssetOption.get.id}")
-      }else {
-        logger.info(s"Is former tierekisteri asset")
-      }
-      
-    }
-    othLiviIdBusStopStrategy
+    liviIdSave.isEmpty && OthLiviIdBusStopStrategyOperations.isOthLiviId(properties, roadLink.map(_.administrativeClass))
   }
 
   override def was(existingAsset: PersistedMassTransitStop): Boolean = {
@@ -240,11 +57,7 @@ class OthLiviIdBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStop
       find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
       flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
-    val tierekisteriStrategia =  stopLiviId.isDefined && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
-    if(tierekisteriStrategia){
-        logger.info(s"Is former tierekisteri asset with id: ${existingAsset.id}")
-    }
-    tierekisteriStrategia
+  stopLiviId.isDefined && OthLiviIdBusStopStrategyOperations.isOthLiviId(existingAsset.propertyData, administrationClass)
   }
 
   override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {

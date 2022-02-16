@@ -419,12 +419,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
       
       // hsl can add liviID to bust stop in private road
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(hsl,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
       
       // ely can add liviID to bust stop in private road
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(ely,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
   test("liviId when in municipality road but administrator is hsl or ely"){
@@ -436,12 +436,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
 
       // hsl can add liviID to bust stop in municipality road
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(hsl,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
 
       // ely can add liviID to bust stop in municipality road
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(ely,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
   
@@ -452,10 +452,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         stopType(MassTransitStopOperations.VirtualBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
         stopType(MassTransitStopOperations.VirtualBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(hsl,roadLink.map(_.administrativeClass)) should be (false)
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(ely,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (false)
     }
   }
 
@@ -466,10 +466,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(hsl,roadLink.map(_.administrativeClass)) should be (false)
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(ely,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (false)
     }
   }
 
@@ -480,10 +480,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         stopType(MassTransitStopOperations.VirtualBusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
         stopType(MassTransitStopOperations.VirtualBusStopPropertyValue))
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(hsl,roadLink.map(_.administrativeClass)) should be (false)
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(ely,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (false)
     }
   }
   
@@ -493,8 +493,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
 
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
     }
   }
   test("no liviId when in state road, but administrator municipality"){
@@ -503,8 +503,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
 
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
     }
   }
   
@@ -519,12 +519,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
         stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
 
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(commuter,roadLink.map(_.administrativeClass)) should be (true)
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
 
@@ -539,12 +539,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
         stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
 
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(commuter,roadLink.map(_.administrativeClass)) should be (true)
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
-      TierekisteriBusStopStrategyOperations
-        .isStoredInTierekisteri(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
+      OthLiviIdBusStopStrategyOperations
+        .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
     }
   }
   

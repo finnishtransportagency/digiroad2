@@ -107,7 +107,21 @@
       } else {
         if(optionalSave()){
           if(saveNewBusStopStrategy()) {
-            saveStop();
+            new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi se ei saa LIVI-tunnusta. Haluatko silti tallentaa sen OTH:ssa?', {
+              successCallback: function () {
+                selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
+                saveStop();
+              }});
+          } else {
+            new GenericConfirmPopup('Haluatko antaa LIVI-tunnuksen?', {
+              successCallback: function () {
+                saveStop();
+              },
+              closeCallback: function () {
+                selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
+                saveStop();
+              }
+            });
           }
         } else {
           saveStop();
@@ -795,8 +809,7 @@
           'palauteosoite',
           'lisatiedot',
           'suggest_box',
-          'trSave']; // in default it is marked as TR and in strategia "is" method it is checked as with yllapija and road administrative class.  
-
+          'liviIdSave'];
         var terminalPropertyOrdering = [
           'lisatty_jarjestelmaan',
           'muokattu_viimeksi',
