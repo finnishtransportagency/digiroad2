@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustme
 import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, RoadAddress, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
@@ -29,6 +29,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockLaneDao = MockitoSugar.mock[LaneDao]
   val mockLaneHistoryDao = MockitoSugar.mock[LaneHistoryDao]
   val mockVKMClient = MockitoSugar.mock[VKMClient]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
 
   val laneDao = new LaneDao(mockVVHClient, mockRoadLinkService)
   val laneHistoryDao = new LaneHistoryDao(mockVVHClient, mockRoadLinkService)
@@ -69,6 +70,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
+    override def roadAddressService: RoadAddressService = mockRoadAddressService
 
   }
 
@@ -78,7 +80,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 class LaneServiceSpec extends LaneTestSupporter {
 
-  object ServiceWithDao extends LaneService(mockRoadLinkService, mockEventBus) {
+  object ServiceWithDao extends LaneService(mockRoadLinkService, mockEventBus, mockRoadAddressService) {
 
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService

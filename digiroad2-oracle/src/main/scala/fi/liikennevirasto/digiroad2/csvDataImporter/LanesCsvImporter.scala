@@ -24,7 +24,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   type ImportResultData = ImportResultLaneAsset
   type ParsedCsv = (MalformedParameters, List[ParsedProperties])
   def laneUtils = LaneUtils()
-  lazy val laneService: LaneService = new LaneService(roadLinkServiceImpl, eventBusImpl)
+  lazy val laneService: LaneService = new LaneService(roadLinkServiceImpl, eventBusImpl, roadAddressService)
   lazy val laneFiller: LaneFiller = new LaneFiller
   private val csvImportUser = "csv_importer"
 

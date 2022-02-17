@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context.laneService.lanesWithConsis
 import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesFromVVHWithPolygon, roadLinksWithConsistentAddress}
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{laneService, roadAddressService, roadLinkService}
 import fi.liikennevirasto.digiroad2.client.{AddrWithIdentifier, VKMClient}
-import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getStartingLanes}
+import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getLaneRoadIdentifierByUsingViiteRoadNumber, getStartingLanes}
 import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -183,7 +183,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
 
       val lanesWithContinuing = lanesGroupedByLaneCode.map(laneGroup => {
         laneGroup.map(lane => {
-          val roadIdentifier = roadLinks(lane.linkId).roadIdentifier
+          val roadIdentifier = getLaneRoadIdentifierByUsingViiteRoadNumber(lane, roadLinks(lane.linkId))
           val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, roadIdentifier, laneGroup, roadLinks, true)
           LaneWithContinuingLanes(lane, continuingLanes)
         })

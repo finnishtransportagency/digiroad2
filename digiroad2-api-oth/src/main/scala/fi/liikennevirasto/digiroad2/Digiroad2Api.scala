@@ -2296,10 +2296,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       } else {
         validateBoundingBox(boundingRectangle)
         val (assets, roadLinksWithoutLanes) = usedService.getByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
-
-        val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
-        val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
-        mapLanes(updatedInfo ++ frozenInfo) ++ roadLinksWithoutLanes.map(link => Seq(roadLinkToApi(link, false)))
+        mapLanes(assets) ++ roadLinksWithoutLanes.map(link => Seq(roadLinkToApi(link, false)))
       }
 
     } getOrElse {
