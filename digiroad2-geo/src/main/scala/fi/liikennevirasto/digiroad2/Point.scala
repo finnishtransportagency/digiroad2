@@ -100,6 +100,11 @@ case class Vector3d(x: Double, y: Double, z: Double) {
 }
 
 case class Point(x: Double, y: Double, z: Double = 0.0) {
+
+  // using match.ceil to round up because it works better for finding equal points from different roadLinks or lanes.
+  // Points in DigiRoad often have some differences in decimals.
+  // Example: ceil(6.434) == 6.44 equals ceil(6.435) == 6.44
+  // round(6.434) == 6.43 does not equal round(6.435) == 6.44
   def round(): Point = {
     Point(math.ceil(this.x * 10.0) / 10.0, math.ceil(this.y * 10.0) / 10.0, math.ceil(this.z * 10.0) / 10.0)
   }
