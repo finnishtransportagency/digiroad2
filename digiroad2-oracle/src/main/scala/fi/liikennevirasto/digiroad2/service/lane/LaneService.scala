@@ -79,11 +79,11 @@ trait LaneOperations {
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
-    val updatedInfo = roadAddressService.laneWithRoadAddress(linearAssets.map(Seq(_)))
-    val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
+    val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets.map(Seq(_))))
+    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
     val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct
 
-    val partitionedLanes = LanePartitioner.partition(lanesWithRoadAddress, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithRoadAddress, roadLinks.groupBy(_.linkId).mapValues(_.head)))
     (partitionedLanes, roadLinksWithoutLanes)
   }
 
@@ -131,9 +131,9 @@ trait LaneOperations {
   }
 
    def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
-    val lanes = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct)
+    val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
     val lanesMapped = lanes.groupBy(_.linkId)
-    val filledTopology = laneFiller.fillTopology(roadLinks, lanesMapped)._1
+    val filledTopology = LogUtils.time(logger, "TEST LOG Lanes fillTopology")(laneFiller.fillTopology(roadLinks, lanesMapped)._1)
 
     filledTopology
   }

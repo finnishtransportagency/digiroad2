@@ -446,10 +446,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links and change data
     */
   def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo]) = {
-    val (changes, links) =
+    val (changes, links) = LogUtils.time(logger, "TEST LOG VVH fetch by boundingBox")(
       Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
-    withDynTransaction {
+    )
+        withDynTransaction {
+          LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH")(
       (enrichRoadLinksFromVVH(links, changes), changes)
+          )
     }
   }
 
