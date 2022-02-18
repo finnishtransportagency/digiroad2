@@ -131,9 +131,9 @@ trait LaneOperations {
   }
 
    def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
-    val lanes = LogUtils.time(logger, "Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
+    val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
     val lanesMapped = lanes.groupBy(_.linkId)
-    val filledTopology = LogUtils.time(logger, "Lanes fillTopology")(laneFiller.fillTopology(roadLinks, lanesMapped)._1)
+    val filledTopology = LogUtils.time(logger, "TEST LOG Lanes fillTopology")(laneFiller.fillTopology(roadLinks, lanesMapped)._1)
 
     filledTopology
   }
