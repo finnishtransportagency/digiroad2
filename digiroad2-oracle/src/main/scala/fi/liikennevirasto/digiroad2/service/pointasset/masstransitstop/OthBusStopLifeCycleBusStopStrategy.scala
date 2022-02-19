@@ -10,7 +10,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
 
-object OthLiviIdBusStopStrategyOperations{
+object OthBusStopLifeCycleBusStopStrategy{
 
   /**
     * Verify if the stop is relevant to OthLiviId: Must be non-virtual and must be administered by ELY or HSL.
@@ -29,7 +29,7 @@ object OthLiviIdBusStopStrategyOperations{
   }
 }
 
-class OthLiviIdBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
+class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 {
   lazy val logger = LoggerFactory.getLogger(getClass)
 
@@ -48,7 +48,7 @@ class OthLiviIdBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStop
     val liviIdSave = newProperties.
       find(property => property.publicId == AssetPropertyConfiguration.LiviIdSave).
       flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
-    liviIdSave.isEmpty && OthLiviIdBusStopStrategyOperations.isOthLiviId(properties, roadLink.map(_.administrativeClass))
+    liviIdSave.isEmpty && OthBusStopLifeCycleBusStopStrategy.isOthLiviId(properties, roadLink.map(_.administrativeClass))
   }
 
   override def was(existingAsset: PersistedMassTransitStop): Boolean = {
@@ -57,7 +57,7 @@ class OthLiviIdBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStop
       find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
       flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
-  stopLiviId.isDefined && OthLiviIdBusStopStrategyOperations.isOthLiviId(existingAsset.propertyData, administrationClass)
+  stopLiviId.isDefined && OthBusStopLifeCycleBusStopStrategy.isOthLiviId(existingAsset.propertyData, administrationClass)
   }
 
   override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {
