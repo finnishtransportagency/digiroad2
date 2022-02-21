@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
@@ -22,7 +22,7 @@ import scala.collection.DebugUtils
 
 case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink])
 
-class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LaneOperations {
+class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, roadAddressServiceImpl: RoadAddressService) extends LaneOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def dao: LaneDao = new LaneDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
@@ -31,6 +31,7 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
   override def vkmClient: VKMClient = new VKMClient
+  override def roadAddressService: RoadAddressService = roadAddressServiceImpl
 
 }
 
@@ -47,6 +48,7 @@ trait LaneOperations {
   def polygonTools: PolygonTools
   def laneFiller: LaneFiller = new LaneFiller
   def vkmClient: VKMClient
+  def roadAddressService: RoadAddressService
 
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -77,8 +79,11 @@ trait LaneOperations {
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
+    val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets.map(Seq(_))))
+    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
+    val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct
 
-    val partitionedLanes = LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithRoadAddress, roadLinks.groupBy(_.linkId).mapValues(_.head)))
     (partitionedLanes, roadLinksWithoutLanes)
   }
 
@@ -126,9 +131,9 @@ trait LaneOperations {
   }
 
    def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
-    val lanes = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct)
+    val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
     val lanesMapped = lanes.groupBy(_.linkId)
-    val filledTopology = laneFiller.fillTopology(roadLinks, lanesMapped)._1
+    val filledTopology = LogUtils.time(logger, "TEST LOG Lanes fillTopology")(laneFiller.fillTopology(roadLinks, lanesMapped)._1)
 
     filledTopology
   }
