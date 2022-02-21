@@ -145,7 +145,7 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
           mergedProperties), username, Point(position.lon, position.lat), roadLink)
 
       }else{
-        //Updates the asset in OTH with new liviId
+        //Updates the asset in OTH
         update(asset, optionalPosition, verifiedProperties.toSeq, roadLink, liviId,
           username)
       }
