@@ -1952,6 +1952,8 @@ Tielinkille voi lis&auml;t&auml; liikennem&auml;&auml;r&auml;tiedon valitsemalla
 
 # 25. Joukkoliikenteen pysäkki
 
+\**Tierekisteri poistumasta käytöstä maaliskuussa 2022 ja sen korvaajaksi tulee Velho keväällä 2022. Käyttöohje päivitetään Velhon käyttöönoton jälkeen*
+
 Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit. Karttaikkunaan voi valita pys&auml;kkej&auml; valitsemalla tietolajivalikosta (1) "Joukkoliikenteen pysäkki". Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Lisäksi tietolajivalikosta saa näkyviin palvelupisteet-näkymän, johon kuuluu erilaisia julkisen liikenteen palvelupisteitä, kuten metroasemat ja rautatieasemat. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
 
 Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois painamalla tietolajivalikon (1) "Joukkoliikenteen pysäkki" valintaruudusta Hallinnollinen luokka -valinnan pois. Sininen väri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
@@ -2029,7 +2031,7 @@ Ensimm&auml;inen voimassaolop&auml;iv&auml; (13) tarkoittaa p&auml;iv&auml;m&aum
 P&auml;iv&auml;m&auml;&auml;ri&auml; ei voi asettaa ristiin siten, ett&auml; "Ensimm&auml;inen voimassaolop&auml;iv&auml;" olisi my&ouml;hemmin kuin "Viimeinen voimassaolop&auml;iv&auml;". Kalenterissa ei-sallitut p&auml;iv&auml;m&auml;&auml;r&auml;t eiv&auml;t ole valittavissa. Jos p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n kirjoittaa p&auml;iv&auml;m&auml;&auml;r&auml;n, joka asettaa p&auml;iv&auml;m&auml;&auml;r&auml;t ristiin, ei p&auml;iv&auml;m&auml;&auml;r&auml; tallennu.
 
 Jos "Ensimm&auml;inen voimassaolop&auml;iv&auml;" tai "Viimeinen voimassaolop&auml;iv&auml;" ei ole tiedossa, voi kalenterista valita "ei tietoa".
-Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; <span style="color:blue">tierekisterin</span> tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi sovellus siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
+Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; ~~tierekisterin~~\* tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi sovellus siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
 
 ![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](pysäkit_8.png)
 
@@ -2045,7 +2047,7 @@ _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
 ### Ominaisuustiedot:
 
-Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&auml;n sy&ouml;tt&auml;mi&auml;. Sy&ouml;tett&auml;v&auml;t ominaisuustietokent&auml;t ovat tekstikentti&auml;, joihin ominaisuustieto kirjoitetaan merkkijonona, monivalintoja, josta voi valita oikeat vaihtoehdot tai pudotusvalikkovalintoja, joista voi valita yhden vaihtoehdon. Maantien pys&auml;kin varustetiedoista ne, joita ei voi muokata sovelluksessa p&auml;ivittyv&auml;t tierekisterin kautta.
+Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&auml;n sy&ouml;tt&auml;mi&auml;. Sy&ouml;tett&auml;v&auml;t ominaisuustietokent&auml;t ovat tekstikentti&auml;, joihin ominaisuustieto kirjoitetaan merkkijonona, monivalintoja, josta voi valita oikeat vaihtoehdot tai pudotusvalikkovalintoja, joista voi valita yhden vaihtoehdon. Maantien pys&auml;kin varustetiedoista ne, joita ei voi muokata sovelluksessa p&auml;ivittyv&auml;t ~~tierekisterin~~\* kautta.
 
 
 |Ominaisuustieto|Kuvaus|Sovellus generoi|T&auml;ydennet&auml;&auml;n vain kunnan pys&auml;kille|T&auml;ydennet&auml;&auml;n vain ELYn pys&auml;kille|
@@ -2059,7 +2061,7 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Osoite ruotsiksi|Pys&auml;kin osoite ruotsin kielell&auml;.||||
 |Tietojen yll&auml;pit&auml;j&auml;|Yll&auml;pit&auml;v&auml; viranomainen: kunta, ELY-keskus tai Helsingin seudun liikenne||||
 |Yll&auml;pit&auml;j&auml;n tunnus|Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.||||
-|LIVI-tunnus|Pys&auml;kin Livi-tunniste, tallentuu automaattisesti my&ouml;s Tierekisteriin. K&auml;yt&ouml;ss&auml; vain maanteiden pys&auml;keill&auml;.|x||x|
+|LIVI-tunnus|Pys&auml;kin Livi-tunniste, tallentuu automaattisesti my&ouml;s ~~Tierekisteriin~~\*. K&auml;yt&ouml;ss&auml; vain maanteiden pys&auml;keill&auml;.|x||x|
 |Matkustajatunnus|Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.||||
 |Laiturinumero| Pysäkin mahdollinen laiturinumero, joka ilmoitettu maastossa.||||
 |Vyöhyketieto|Mahdollinen seudullisen matkustajaliikenteen ilmoittama tieto siitä, mihin liikennöintivyöhykkeeseen pysäkki kuuluu.||||
@@ -2079,11 +2081,11 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Korotettu|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Katos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Mainoskatos|Pys&auml;kkialueella sijaitseva, joukkoliikennev&auml;linett&auml; odottaville matkustajille tarkoitettu s&auml;&auml;lt&auml; suojaava katos, joka sis&auml;lt&auml;&auml; mainoksia. Pys&auml;kin kunnossapidosta vastaa t&auml;ll&ouml;in mainosten yll&auml;pit&auml;j&auml;. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
-|Roska-astia|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto Tierekisterist&auml;.||x||
-|Py&ouml;r&auml;teline|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto Tierekisterist&auml;.||x||
-|Valaistus|Pys&auml;kin valaistuksella tarkoitetaan yleisimmin pys&auml;kin kattoon upotettuja valoelementtej&auml;, jotka tuottavat valaistuksen pys&auml;kkikatoksen sis&auml;lle. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto Tierekisterist&auml;.||x||
-|Penkki|Pys&auml;kkialueella sijaitseva, joukkoliikennett&auml; odottavilla matkustajille tarkoitettu penkki, joka sijaitsee yleisimmin pys&auml;kkikatoksen alla. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto Tierekisterist&auml;.||x||
-|Aikataulu|Paperinen, pys&auml;kin sein&auml;&auml;n tai tolppaan aikataulukehikkoon kiinnitetty aikataulu, joka sis&auml;lt&auml;&auml; tiedot pys&auml;kill&auml; liikenn&ouml;ivien reittien l&auml;ht&ouml;ajoista sek&auml; mahdollisesti my&ouml;s pys&auml;kkikohtaisista ohitusajoista. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".  Maantien pys&auml;kille tieto Tierekisterist&auml;.||x||
+|Roska-astia|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
+|Py&ouml;r&auml;teline|Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
+|Valaistus|Pys&auml;kin valaistuksella tarkoitetaan yleisimmin pys&auml;kin kattoon upotettuja valoelementtej&auml;, jotka tuottavat valaistuksen pys&auml;kkikatoksen sis&auml;lle. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
+|Penkki|Pys&auml;kkialueella sijaitseva, joukkoliikennett&auml; odottavilla matkustajille tarkoitettu penkki, joka sijaitsee yleisimmin pys&auml;kkikatoksen alla. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa". Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
+|Aikataulu|Paperinen, pys&auml;kin sein&auml;&auml;n tai tolppaan aikataulukehikkoon kiinnitetty aikataulu, joka sis&auml;lt&auml;&auml; tiedot pys&auml;kill&auml; liikenn&ouml;ivien reittien l&auml;ht&ouml;ajoista sek&auml; mahdollisesti my&ouml;s pys&auml;kkikohtaisista ohitusajoista. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".  Maantien pys&auml;kille tieto ~~Tierekisterist&auml;~~\*.||x||
 |S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;|Pys&auml;kkialueelta l&ouml;ytyv&auml; s&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;, joka tuottaa reaaliaikaisen informaation pys&auml;kill&auml; kulkevasta liikenteest&auml;. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Esteett&ouml;myys liikuntarajoitteiselle|Pys&auml;kki on esteet&ouml;n, mik&auml;li se mahdollistaa itsen&auml;isen, esteett&ouml;m&auml;n matkustamisen ja odottelun my&ouml;s erityisryhmille, esim. py&ouml;r&auml;tuolilla liikkuville. Pys&auml;kin esteett&ouml;myyteen vaikuttavat pys&auml;kki- ja laiturirakenteiden, asema- ja terminaalirakenteiden sek&auml; aikatauluinformaation esteett&ouml;myys. Oletuksena on "ei tiedossa".||||
 |Saattomahdollisuus henkil&ouml;autolla|Ilmaisee, mik&auml;li (valtatien varrella olevaa) pys&auml;ki&auml; varten on rakennettu erillinen matkustajien nouto/saatto-alue. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
