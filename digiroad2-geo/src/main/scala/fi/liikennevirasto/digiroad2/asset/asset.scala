@@ -968,7 +968,7 @@ case object TrTrailerTruckWeightLimit extends  AssetTypeInfo {val typeId = 330; 
 case object TrAxleWeightLimit extends  AssetTypeInfo {val typeId = 340; def geometryType = "point"; val label = "TrAxleWeightLimit"; val layerName = "trWeightLimits"; val nameFI = "Tierekisteri Suurin sallittu akselimassa"}
 case object TrBogieWeightLimit extends  AssetTypeInfo {val typeId = 350; def geometryType = "point"; val label = "TrBogieWeightLimit"; val layerName = "trWeightLimits"; val nameFI = "Tierekisteri Suurin sallittu telimassa"}
 case object TrHeightLimit extends  AssetTypeInfo {val typeId = 360; def geometryType = "point"; val label = "TrHeightLimit"; val layerName = "trHeightLimits"; val nameFI = "Tierekisteri Suurin sallittu korkeus"}
-case object TrWidthLimit extends  AssetTypeInfo {val typeId = 370; def geometryType = "point"; val label = "TrWidthLimit"; val layerName = "trWidthLimits"; val nameFI = "Tierekisteri Suurin sallittu leveys"}
+case object TrWidthLimit extends  AssetTypeInfo {val typeId = 370; def geometryType = "point"; val label = "TrWidthLimit"; val layerName = "trWidthLimits"; val nameFI = "Tierekisteri Suurin sallittu leveys"} //TODO TR asset are hidden for now 
 case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre"; val layerName = "manoeuvre"; val nameFI = "Kääntymisrajoitus" }
 case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"; val layerName = "careClass"; val nameFI = "Hoitoluokat"}
 case object CarryingCapacity extends AssetTypeInfo { val typeId = 400; def geometryType = "linear"; val label = "CarryingCapacity" ; val layerName = "carryingCapacity"; val nameFI = "Kantavuus"}
