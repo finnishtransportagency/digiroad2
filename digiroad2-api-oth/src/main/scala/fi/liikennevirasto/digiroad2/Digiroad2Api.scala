@@ -184,7 +184,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, startupAsseId: Int)
-
+// TODO TR asset are hidden for now
   val StateRoadRestrictedAssetsForOperator = Set(TrHeightLimit.typeId, TrWidthLimit.typeId, TrTrailerTruckWeightLimit.typeId,
     TrAxleWeightLimit.typeId, TrBogieWeightLimit.typeId, TrWeightLimit.typeId)
 
@@ -1765,7 +1765,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   put("/trafficSigns/:id")(updatePointAsset(trafficSignService))
   delete("/trafficSigns/:id")(deletePointAsset(trafficSignService))
 
-  get("/trHeightLimits")(getPointAssets(heightLimitService))
+  get("/trHeightLimits")(getPointAssets(heightLimitService)) // TODO TR asset hidden for now
   get("/trHeightLimits/:id")(getPointAssetById(heightLimitService))
 
   get("/trWidthLimits")(getPointAssets(widthLimitService))
