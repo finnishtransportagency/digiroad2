@@ -2029,7 +2029,7 @@ Ensimm&auml;inen voimassaolop&auml;iv&auml; (13) tarkoittaa p&auml;iv&auml;m&aum
 P&auml;iv&auml;m&auml;&auml;ri&auml; ei voi asettaa ristiin siten, ett&auml; "Ensimm&auml;inen voimassaolop&auml;iv&auml;" olisi my&ouml;hemmin kuin "Viimeinen voimassaolop&auml;iv&auml;". Kalenterissa ei-sallitut p&auml;iv&auml;m&auml;&auml;r&auml;t eiv&auml;t ole valittavissa. Jos p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n kirjoittaa p&auml;iv&auml;m&auml;&auml;r&auml;n, joka asettaa p&auml;iv&auml;m&auml;&auml;r&auml;t ristiin, ei p&auml;iv&auml;m&auml;&auml;r&auml; tallennu.
 
 Jos "Ensimm&auml;inen voimassaolop&auml;iv&auml;" tai "Viimeinen voimassaolop&auml;iv&auml;" ei ole tiedossa, voi kalenterista valita "ei tietoa".
-Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; tierekisterin tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi sovellus siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
+Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; <span style="color:grey">tierekisterin</span> tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi sovellus siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
 
 ![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](pysäkit_8.png)
 
