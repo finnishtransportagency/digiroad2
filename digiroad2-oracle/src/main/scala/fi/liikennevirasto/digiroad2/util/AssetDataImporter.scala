@@ -795,7 +795,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     }
   }
 
-  def getTierekisteriStops(): Seq[(Long, Int, String, Int)] = {
+  def getLiviIdStops(): Seq[(Long, Int, String, Int)] = {
     withDynSession {
       sql"""
            select id, floating, liviId, reason
