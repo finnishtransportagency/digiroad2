@@ -1246,5 +1246,5 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       getLiviIdValue(livi._1.get.propertyData) should be (None)
     }
   }
-  }
+}
 
