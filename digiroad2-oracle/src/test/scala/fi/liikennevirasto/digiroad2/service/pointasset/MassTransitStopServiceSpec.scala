@@ -392,146 +392,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       liviIdentifierProperty.values.size should be(0)
     }
   }
-  def administrator(code: String) ={
-    SimplePointAssetProperty(MassTransitStopOperations.AdministratorInfoPublicId, List(PropertyValue(code)))
-  }
-  def stopType(code: String) ={
-    SimplePointAssetProperty(MassTransitStopOperations.MassTransitStopTypePublicId, List(PropertyValue(code)))
-  }
-
-  def float(code: String) ={
-    SimplePointAssetProperty(MassTransitStopOperations.FloatingReasonPublicId, List(PropertyValue(code)))
-  }
-  def roadlink(code: AdministrativeClass) ={
-    Option(RoadLink(0L, List(Point(0.0,0.0), Point(120.0, 0.0)), 0, code, 1, 
-      TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))
-    ))
-  }
-
-
-  test("liviId when in private road but administrator is hsl or ely"){
-    runWithRollback {
-      val roadLink = roadlink(Private)
-      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      
-      // hsl can not add liviID to bust stop in private road
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
-      
-      // ely can add liviID to bust stop in private road
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (true)
-    }
-  }
-  test("liviId when in municipality road but administrator is hsl or ely"){
-    runWithRollback {
-      val roadLink = roadlink(Municipality)
-      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-
-      // hsl can not add liviID to bust stop in municipality road
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
-
-      // ely can add liviID to bust stop in municipality road
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (true)
-    }
-  }
-
-  test("no liviId when on terminated road, but administrator hsl or ely"){
-    runWithRollback {
-      val roadLink = roadlink(State)
-      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
-      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (false)
-    }
-  }
-
-  test("no liviId when virtual, but administrator hsl or ely"){
-    runWithRollback {
-      val roadLink = roadlink(State)
-      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
-        stopType(MassTransitStopOperations.VirtualBusStopPropertyValue))
-      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
-        stopType(MassTransitStopOperations.VirtualBusStopPropertyValue))
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (false)
-    }
-  }
-  
-  test("no liviId when in municipality road, but administrator municipality"){
-    runWithRollback {
-      val roadLink = roadlink(Municipality)
-      val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
-    }
-  }
-  test("no liviId when in state road, but administrator municipality"){
-    runWithRollback {
-      val roadLink = roadlink(State)
-      val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
-    }
-  }
-  
-  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, HSL"){
-    runWithRollback {
-      val roadLink = roadlink(State)
-      val hsl =  MassTransitStopOperations.HSLPropertyValue
-      val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
-        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
-      val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
-        stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
-
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
-    }
-  }
-
-  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, Ely"){
-    runWithRollback {
-      val roadLink = roadlink(State)
-      val ely =  MassTransitStopOperations.CentralELYPropertyValue
-      val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
-        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
-      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
-        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
-      val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
-        stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
-
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
-      OthLiviIdBusStopStrategyOperations
-        .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
-    }
-  }
   
   test("Update last modified info") {
     runWithRollback {
@@ -888,6 +748,146 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
+  def administrator(code: String) ={
+    SimplePointAssetProperty(MassTransitStopOperations.AdministratorInfoPublicId, List(PropertyValue(code)))
+  }
+  def stopType(code: String) ={
+    SimplePointAssetProperty(MassTransitStopOperations.MassTransitStopTypePublicId, List(PropertyValue(code)))
+  }
+
+  def float(code: String) ={
+    SimplePointAssetProperty(MassTransitStopOperations.FloatingReasonPublicId, List(PropertyValue(code)))
+  }
+  def roadlink(code: AdministrativeClass) ={
+    Option(RoadLink(0L, List(Point(0.0,0.0), Point(120.0, 0.0)), 0, code, 1,
+      TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))
+    ))
+  }
+
+  test("liviId when in private road but administrator is hsl or ely"){
+    runWithRollback {
+      val roadLink = roadlink(Private)
+      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+
+      // hsl can not add liviID to bust stop in private road
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
+
+      // ely can add liviID to bust stop in private road
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (true)
+    }
+  }
+  test("liviId when in municipality road but administrator is hsl or ely"){
+    runWithRollback {
+      val roadLink = roadlink(Municipality)
+      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+
+      // hsl can not add liviID to bust stop in municipality road
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
+
+      // ely can add liviID to bust stop in municipality road
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (true)
+    }
+  }
+
+  test("no liviId when on terminated road, but administrator hsl or ely"){
+    runWithRollback {
+      val roadLink = roadlink(State)
+      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
+      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (false)
+    }
+  }
+
+  test("no liviId when virtual, but administrator hsl or ely"){
+    runWithRollback {
+      val roadLink = roadlink(State)
+      val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
+        stopType(MassTransitStopOperations.VirtualBusStopPropertyValue))
+      val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
+        stopType(MassTransitStopOperations.VirtualBusStopPropertyValue))
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(hsl,roadLink.map(_.administrativeClass)) should be (false)
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(ely,roadLink.map(_.administrativeClass)) should be (false)
+    }
+  }
+
+  test("no liviId when in municipality road, but administrator municipality"){
+    runWithRollback {
+      val roadLink = roadlink(Municipality)
+      val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
+    }
+  }
+  test("no liviId when in state road, but administrator municipality"){
+    runWithRollback {
+      val roadLink = roadlink(State)
+      val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(municipalityAdmin,roadLink.map(_.administrativeClass)) should be (false)
+    }
+  }
+
+  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, HSL"){
+    runWithRollback {
+      val roadLink = roadlink(State)
+      val hsl =  MassTransitStopOperations.HSLPropertyValue
+      val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
+        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
+      val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
+        stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
+
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
+    }
+  }
+
+  test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, Ely"){
+    runWithRollback {
+      val roadLink = roadlink(State)
+      val ely =  MassTransitStopOperations.CentralELYPropertyValue
+      val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
+        stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
+      val longDistanceBusStop:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
+        stopType(MassTransitStopOperations.LongDistanceBusStopPropertyValue))
+      val servicePoint:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
+        stopType(MassTransitStopOperations.ServicePointBusStopPropertyValue))
+
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(commuter,roadLink.map(_.administrativeClass)) should be (true)
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(longDistanceBusStop,roadLink.map(_.administrativeClass)) should be (true)
+      OthBusStopLifeCycleBusStopStrategy
+        .isOthLiviId(servicePoint,roadLink.map(_.administrativeClass)) should be (true)
+    }
+  }
+  
   test ("Get enumerated property values") {
     runWithRollback {
       val propertyValues = RollbackMassTransitStopService.massTransitStopEnumeratedPropertyValues
