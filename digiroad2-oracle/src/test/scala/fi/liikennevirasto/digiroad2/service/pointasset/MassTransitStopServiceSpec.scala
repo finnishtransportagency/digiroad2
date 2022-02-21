@@ -420,7 +420,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("When moving over 50 meter and expiring in TR strategy send vallu message "){
+  test("Persist floating on update") {
+    // This asset is actually supposed to be floating, but updateExisting shouldn't do a floating check
+    runWithRollback {
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      sql"""
+            update asset a
+            set floating = '0'
+            where a.id = 300002
+      """.asUpdate.execute
+      RollbackMassTransitStopService.updateExistingById(300002, position, Set.empty, "user", (_, _) => Unit)
+      val floating = sql"""
+            select a.floating from asset a
+            where a.id = 300002
+      """.as[Boolean].firstOption
+      floating should be(Some(false))
+    }
+  }
+
+  test("Send event to event bus in update") {
+    runWithRollback {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      service.updateExistingById(300002, position, Set.empty, "user", (_,_) => Unit)
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+    }
+  }
+  
+  test("When moving over 50 meter and expiring in OthBusStopLifeCycle strategy send vallu message "){
     runWithRollback {
       val linkId = 123l
       val municipalityCode = 91
@@ -458,34 +486,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         .head.asInstanceOf[PropertyValue].propertyValue should be("2")
 
       verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
-    }
-  }
-
-  test("Persist floating on update") {
-    // This asset is actually supposed to be floating, but updateExisting shouldn't do a floating check
-    runWithRollback {
-      val position = Some(Position(60.0, 0.0, 123l, None))
-      sql"""
-            update asset a
-            set floating = '0'
-            where a.id = 300002
-      """.asUpdate.execute
-      RollbackMassTransitStopService.updateExistingById(300002, position, Set.empty, "user", (_, _) => Unit)
-      val floating = sql"""
-            select a.floating from asset a
-            where a.id = 300002
-      """.as[Boolean].firstOption
-      floating should be(Some(false))
-    }
-  }
-
-  test("Send event to event bus in update") {
-    runWithRollback {
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
-      val position = Some(Position(60.0, 0.0, 123l, None))
-      service.updateExistingById(300002, position, Set.empty, "user", (_,_) => Unit)
-      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 
