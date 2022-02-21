@@ -137,7 +137,7 @@ class OthBusStopLifeCycleBusStopStrategy(typeId : Int, massTransitStopDao: MassT
     if (was(asset)) {
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
       if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
-        //Expires the current asset and creates a new one in OTH and expire with new liviId
+        //Expires the current asset and creates a new one in OTH with new liviId
         val position = optionalPosition.get
         massTransitStopDao.expireMassTransitStop(username, asset.id)
         super.publishExpiringEvent(PublishInfo(Option(asset)))
