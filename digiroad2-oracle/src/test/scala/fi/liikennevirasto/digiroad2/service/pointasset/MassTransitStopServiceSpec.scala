@@ -747,6 +747,93 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
     }
   }
+  
+  test("Updating the mass transit stop from others -> ELY should create a stop with liviID") {
+    runWithRollback {
+      val roadLink = RoadLink(11, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec", roadLink)
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+      val service = RollbackMassTransitStopService
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get
+      val newAdmin = admin.copy(values = List(PropertyValue("2")))
+      val types = props.find(_.publicId == "pysakin_tyyppi").get
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      val newStop = stop.copy(stopTypes = Seq(2, 3),
+        propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
+          Seq(newAdmin, newTypes))
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit })
+
+      val livi = service.getMassTransitStopById(id);
+      getLiviIdValue(livi._1.get.propertyData) should not be None
+    }
+  }
+
+  test("Updating the mass transit stop from others -> HSL should create a stop with liviID") {
+    runWithRollback {
+      val roadLink = RoadLink(11, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec", roadLink)
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+
+      val service = RollbackMassTransitStopService
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get
+      val newAdmin = admin.copy(values = List(PropertyValue("3")))
+      val types = props.find(_.publicId == "pysakin_tyyppi").get
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      val newStop = stop.copy(stopTypes = Seq(2, 3),
+        propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
+          Seq(newAdmin, newTypes))
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit })
+      val livi = service.getMassTransitStopById(id);
+      getLiviIdValue(livi._1.get.propertyData) should not be None
+    }
+  }
+  
+  test("Updating the mass transit stop from ELY -> others should remove liviID") {
+    runWithRollback {
+      val roadLink = RoadLink(11, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec", roadLink)
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+      val service = RollbackMassTransitStopService
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get.copy(values = List(PropertyValue("1")))
+      val newStop = stop.copy(stopTypes = Seq(2, 3), propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja") ++ Seq(admin))
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit })
+      val livi = service.getMassTransitStopById(id);
+      getLiviIdValue(livi._1.get.propertyData) should be (None)
+    }
+  }
 
   def administrator(code: String) ={
     SimplePointAssetProperty(MassTransitStopOperations.AdministratorInfoPublicId, List(PropertyValue(code)))
@@ -1129,5 +1216,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       result.find(_.id == ids.last).last.municipalityName should be (Some("Helsinki"))
       }
     }
+  test("Updating the mass transit stop from others -> ELY should not create a stop with liviId when flagged") {
+    runWithRollback {
+      val roadLink = RoadLink(11, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec", roadLink)
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+      val service = RollbackMassTransitStopService
+      val stop = service.getById(id).get
+      val props = stop.propertyData
+      val admin = props.find(_.publicId == "tietojen_yllapitaja").get
+      val newAdmin = admin.copy(values = List(PropertyValue("2")))
+      val types = props.find(_.publicId == "pysakin_tyyppi").get
+      val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
+      admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
+      val newStop = stop.copy(stopTypes = Seq(2, 3),
+        propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
+          Seq(newAdmin, newTypes))
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet ++ Set(SimplePointAssetProperty("liviIdSave", Seq(PropertyValue("false"))))
+      service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit})
+      val livi = service.getMassTransitStopById(id);
+      getLiviIdValue(livi._1.get.propertyData) should be (None)
+    }
+  }
   }
 
