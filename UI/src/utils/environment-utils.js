@@ -6,7 +6,7 @@
 
   var name = function() {
     var environmentName = {
-      'extranet.vayla.fi': 'production',
+      'digiroad.vaylapilvi.fi': 'production',
       'digiroadtest.testivaylapilvi.fi': 'integration',
       'apptest.vayla.fi': 'training',
       'digiroaddev.testivaylapilvi.fi': 'staging'
