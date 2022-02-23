@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.process
 
 import java.sql.SQLIntegrityConstraintViolationException
-import java.util.Properties
+import java.util.{NoSuchElementException, Properties}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
@@ -187,7 +187,12 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
               }
           }
         } catch {
-          case e => logger.error(s"Error concerning municipality ${municipality}: ${e.getMessage}")
+          case noSuchElement: NoSuchElementException =>
+            logger.error(s"Municipality ${municipality} rollback caused by: ${noSuchElement.getMessage}")
+          case runTime: RuntimeException =>
+            logger.error(s"Municipality ${municipality} rollback caused by: ${runTime.getMessage}")
+          case other =>
+            logger.error(s"Municipality ${municipality} rollback caused by: ${other.getMessage}")
         }
     }
   }
