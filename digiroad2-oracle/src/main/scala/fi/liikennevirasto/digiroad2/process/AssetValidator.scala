@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUti
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
+import org.slf4j.{Logger, LoggerFactory}
 
 case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
 case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
@@ -23,6 +24,7 @@ case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
 trait AssetServiceValidator {
 
   val eventbus = new DummyEventBus
+  val logger = LoggerFactory.getLogger(getClass)
 
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
@@ -128,10 +130,10 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     try {
       insertInaccurate(id, assetType, municipalityCode, adminClass)
     } catch {
-      case ex: SQLIntegrityConstraintViolationException =>
-        print("duplicate key inserted ")
-      case e: Exception => print("duplicate key inserted ")
-        throw new RuntimeException("SQL exception " + e.getMessage)
+      case integrityError: SQLIntegrityConstraintViolationException =>
+        logger.error("Inserted key already exists in db. " + integrityError.getMessage)
+      case other: Exception =>
+        throw new RuntimeException(other.getMessage)
     }
   }
 
@@ -149,10 +151,9 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
 
   def verifyInaccurate() : Unit = {
 
-    println(s"Start verification for asset ${assetTypeInfo.label} ")
-    println(DateTime.now())
+    logger.info(s"Start verification for asset ${assetTypeInfo.label} at ${DateTime.now()}")
 
-    println("Fetching municipalities")
+    logger.info("Fetching municipalities")
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession{
       Queries.getMunicipalities
     }
@@ -163,26 +164,30 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
 
     municipalities.foreach{
       municipality =>
-        println(s"Start process for municipality $municipality")
-        val trafficSigns = trafficSignService.getByMunicipalityExcludeByAdminClass(municipality, Private).filterNot(_.floating)
-          .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, "trafficSigns_type").get.propertyValue.toInt)))
-        splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
-          trafficSign =>
-            println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
-            PostGISDatabase.withDynTransaction {
-              assetValidator(trafficSign).foreach {
-                inaccurate =>
-                  (inaccurate.assetId, inaccurate.linkId) match {
-                    case (Some(asset), _) =>
-                      println(s"Creating inaccurate asset for assetType ${assetTypeInfo.typeId} and assetId $asset")
-                      insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, asset, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                    case (_, Some(linkId)) =>
-                      println(s"Creating inaccurate link id for assetType ${assetTypeInfo.typeId} and linkId $linkId")
-                      insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                    case (_, _) =>
-                  }
+        logger.info(s"Start process for municipality $municipality")
+        try {
+          val trafficSigns = trafficSignService.getByMunicipalityExcludeByAdminClass(municipality, Private).filterNot(_.floating)
+            .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, "trafficSigns_type").get.propertyValue.toInt)))
+          splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
+            trafficSign =>
+              logger.info(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
+              PostGISDatabase.withDynTransaction {
+                assetValidator(trafficSign).foreach {
+                  inaccurate =>
+                    (inaccurate.assetId, inaccurate.linkId) match {
+                      case (Some(asset), _) =>
+                        logger.info(s"Creating inaccurate asset for assetType ${assetTypeInfo.typeId} and assetId $asset")
+                        insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, asset, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      case (_, Some(linkId)) =>
+                        logger.info(s"Creating inaccurate link id for assetType ${assetTypeInfo.typeId} and linkId $linkId")
+                        insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      case (_, _) =>
+                    }
+                }
               }
-            }
+          }
+        } catch {
+          case e => logger.error(s"Error concerning municipality ${municipality}: ${e.getMessage}")
         }
     }
   }
