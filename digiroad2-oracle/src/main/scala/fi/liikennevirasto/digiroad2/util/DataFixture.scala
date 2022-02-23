@@ -2051,8 +2051,8 @@ object DataFixture {
     PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
-        verificationService.refreshVerificationInfo(municipality, roadLinks.map(_.linkId), Some(DateTime.now()))
+        val roadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
+        verificationService.refreshVerificationInfo(municipality, roadLinkIds, Some(DateTime.now()))
       }
     }
 
@@ -2291,8 +2291,8 @@ object DataFixture {
     municipalities.foreach { municipality =>
       PostGISDatabase.withDynTransaction {
         println("Working on municipality " + municipality)
-        val municipalityRoadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).toSet
-        val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinks.map(_.linkId))
+        val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
+        val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
 
         modifiedAssetTypes.foreach { asset =>
           verificationService.dao.insertAssetModified(municipality, asset)
