@@ -25,7 +25,6 @@ import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, TrafficDirection, Unknown}
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -122,7 +121,6 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   }
 
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
-  val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
 
   class TestMassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, massTransitStopServiceImpl: MassTransitStopService) extends
     MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -158,7 +156,6 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, VVHClient) = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     stops.foreach { case(id, administrativeClass) =>
@@ -172,7 +169,6 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynSession[T](f: => T): T = f
       override def withDynTransaction[T](f: => T): T = f
-      override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
       override val municipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
       override val geometryTransform: GeometryTransform = mockGeometryTransform
@@ -284,7 +280,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
   }
 
-  test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)") {
+  test("Should not update asset LiVi id by CSV import") {
     val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockVVHClient, mockRoadLinkService, mockEventBus, mockService)
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))

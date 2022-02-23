@@ -107,23 +107,22 @@
       } else {
         if(optionalSave()){
           if(saveNewBusStopStrategy()) {
-            new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi, siihen liittyviä tietoja ei lähetetä Tierekisteriin. Haluatko silti tallentaa sen OTH:ssa?', {
+            new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi se ei saa LIVI-tunnusta. Haluatko silti tallentaa sen OTH:ssa?', {
               successCallback: function () {
-                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
+                selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
                 saveStop();
               }});
           } else {
-            new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
+            new GenericConfirmPopup('Haluatko antaa LIVI-tunnuksen?', {
               successCallback: function () {
-                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
                 saveStop();
               },
               closeCallback: function () {
+                selectedMassTransitStopModel.setAdditionalProperty('liviIdSave', [{ propertyValue: 'false' }]);
                 saveStop();
               }
             });
           }
-
         } else {
           saveStop();
         }
@@ -810,8 +809,7 @@
           'palauteosoite',
           'lisatiedot',
           'suggest_box',
-          'trSave'];
-
+          'liviIdSave'];
         var terminalPropertyOrdering = [
           'lisatty_jarjestelmaan',
           'muokattu_viimeksi',

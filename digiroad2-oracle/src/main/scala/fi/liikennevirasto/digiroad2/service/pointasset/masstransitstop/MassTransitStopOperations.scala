@@ -41,6 +41,7 @@ object MassTransitStopOperations {
 
   val CentralELYPropertyValue = "2"
   val HSLPropertyValue = "3"
+  val MunicipalityPropertyValue = "1"
   val AdminClassStatePropertyValue = "1"
   val AdministratorInfoPublicId = "tietojen_yllapitaja"
   val LiViIdentifierPublicId = "yllapitajan_koodi"

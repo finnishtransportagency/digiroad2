@@ -4,12 +4,11 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.asset.ServicePointsClass.{Unknown => _, _}
+import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 sealed trait Status {
@@ -54,14 +53,12 @@ trait CsvDataImporterOperations {
   def vvhClient: VVHClient
   def eventBus: DigiroadEventBus
 
-  lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(viiteClient)
+  lazy val viiteClient: SearchViiteClient = {
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
-  lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
-    new TierekisteriMassTransitStopClient(Digiroad2Properties.tierekisteriRestApiEndPoint,
-      Digiroad2Properties.tierekisteriEnabled,
-      HttpClientBuilder.create().build)
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val roadAddressesService: RoadAddressService = {

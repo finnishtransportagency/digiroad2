@@ -37,11 +37,7 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new ImportDataApi(Digiroad2Context.roadLinkService), "/api/import/*")
     context.mount(new ExportDataApi(Digiroad2Context.roadLinkService), "/api/export/*")
     Digiroad2Context.massTransitStopService.massTransitStopEnumeratedPropertyValues
-
-    if (!Digiroad2Properties.tierekisteriEnabled) {
-      // Mount for manual testing purposes but do not use them
-      context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
-    }
+    
     context.mount(new ResourcesApp, "/api-docs")
     // external Api
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService, swagger), "/externalApi/integration/*")
