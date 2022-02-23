@@ -39,8 +39,7 @@ require(['chai',
          'integration-tests/groupingInCreationSpec',
          'integration-tests/singleSegmentSpeedLimitSpec',
          'integration-tests/speedLimitSplitSpec',
-         'integration-tests/multiSegmentSpeedLimitSpec',
-         'utils/environment-utils'
+         'integration-tests/multiSegmentSpeedLimitSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
