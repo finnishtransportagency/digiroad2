@@ -271,10 +271,13 @@ class VerificationDao {
     }
   }
 
-  def insertAssetModified(municipalityCode: Int, latestModificationInfo: LatestModificationInfo): Unit = {
-    sqlu"""
-      insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
-      values ($municipalityCode, ${latestModificationInfo.assetTypeCode}, ${latestModificationInfo.modifiedBy}, ${latestModificationInfo.modifiedDate})
-    """.execute
+  def insertModifiedAssetTypes(municipalityCode: Int, modificationInfo: Seq[LatestModificationInfo]): Unit = {
+    val queries = modificationInfo.map { info =>
+      s"""
+        insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+        values ($municipalityCode, ${info.assetTypeCode}, '${info.modifiedBy.get}', '${info.modifiedDate.get}')
+      """
+    }
+    MassQuery.executeBatch(queries)
   }
 }

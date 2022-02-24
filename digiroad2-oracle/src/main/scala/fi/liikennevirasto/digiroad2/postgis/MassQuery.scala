@@ -25,4 +25,12 @@ object MassQuery {
       insertLinkIdPS.close()
     }
   }
+
+  def executeBatch(queries: Seq[String]): Unit = {
+    val statement = dynamicSession.createStatement()
+    queries.foreach( statement.addBatch )
+
+    statement.executeBatch()
+    statement.close()
+  }
 }

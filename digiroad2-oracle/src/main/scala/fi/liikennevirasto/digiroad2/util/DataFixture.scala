@@ -2294,9 +2294,8 @@ object DataFixture {
         val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
         val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
 
-        modifiedAssetTypes.foreach { asset =>
-          verificationService.dao.insertAssetModified(municipality, asset)
-        }
+        verificationService.dao.insertModifiedAssetTypes(municipality, modifiedAssetTypes)
+
         println("Modified assets transferred for municipality " + municipality + " in " + DateTime.now())
         println("\n")
       }
