@@ -34,6 +34,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.sys.exit
@@ -43,6 +44,8 @@ object DataFixture {
   val TestAssetId = 300000
 
   val dataImporter = new AssetDataImporter
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   lazy val vvhClient: VVHClient = {
     new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -2292,9 +2295,13 @@ object DataFixture {
       PostGISDatabase.withDynTransaction {
         println("Working on municipality " + municipality)
         val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
-        val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
+        val modifiedAssetTypes = LogUtils.time(logger, "BATCH LOG get modified asset types")(
+          verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
+        )
 
-        verificationService.dao.insertModifiedAssetTypes(municipality, modifiedAssetTypes)
+        LogUtils.time(logger, "BATCH LOG insert modified asset types")(
+          verificationService.dao.insertModifiedAssetTypes(municipality, modifiedAssetTypes)
+        )
 
         println("Modified assets transferred for municipality " + municipality + " in " + DateTime.now())
         println("\n")
