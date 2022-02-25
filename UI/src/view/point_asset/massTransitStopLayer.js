@@ -887,8 +887,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'asset:created', handleAssetCreated);
     eventListener.listenTo(eventbus, 'asset:fetched', handleAssetFetched);
     eventListener.listenTo(eventbus, 'asset:created', removeOverlay);
-    eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed asset:creationNotFoundRoadAddressVKM', cancelCreate);
-    eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed asset:updateNotFoundRoadAddressVKM', cancelUpdate);
+    eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationFailed asset:creationNotFoundRoadAddressVKM', cancelCreate);
+    eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateFailed asset:updateNotFoundRoadAddressVKM', cancelUpdate);
     eventListener.listenTo(eventbus, 'asset:closed', closeAsset);
     eventListener.listenTo(eventbus, 'asset:modified', function(){
       terminalSource.clear();

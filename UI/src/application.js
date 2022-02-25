@@ -199,10 +199,7 @@
   var localizedStrings;
 
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
-  var tierekisteriFailedMessage = 'Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa';
-  var tierekisteriFailedMessageDelete = 'Tietojen poisto Tierekisterissä epäonnistui. Pysäkkiä ei poistettu OTH:ssa';
-  var vkmNotFoundMessage = 'Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui';
-  var notFoundInTierekisteriMessage = 'Huom! Tämän pysäkin tallennus ei onnistu, koska vastaavaa pysäkkiä ei löydy Tierekisteristä tai Tierekisteriin ei ole yhteyttä tällä hetkellä.';
+  var vkmNotFoundMessage = 'Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus OTH:ssa epäonnistui';
   var verificationFailedMessage = 'Tarkistus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
   var indicatorOverlay = function() {
@@ -235,21 +232,6 @@
     eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed municipality:verificationFailed ' + massUpdateFailedEventNames, function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
-    });
-
-    eventbus.on('asset:notFoundInTierekisteri', function() {
-      jQuery('.spinner-overlay').remove();
-      alert(notFoundInTierekisteriMessage);
-    });
-
-    eventbus.on('asset:creationTierekisteriFailed asset:updateTierekisteriFailed', function() {
-      jQuery('.spinner-overlay').remove();
-      alert(tierekisteriFailedMessage);
-    });
-
-    eventbus.on('asset:deleteTierekisteriFailed', function() {
-      jQuery('.spinner-overlay').remove();
-      alert(tierekisteriFailedMessageDelete);
     });
 
     eventbus.on('asset:creationNotFoundRoadAddressVKM asset:updateNotFoundRoadAddressVKM', function() {
@@ -487,6 +469,13 @@
     return _(groupedPointAssets).find({ layerName: layerName }).selectedPointAsset;
   }
 
+  //Used to check if we are on prod environment, for now we hide Lane Modelling Tool in prod
+  function isProduction()  {
+    var url = window.location.href.split('/');
+    var urlParts = _.filter(url, function(urlPart) { return !_.isEmpty(urlPart); });
+    return urlParts[1] === 'digiroad.vaylapilvi.fi' || urlParts[1] === 'extranet.vayla.fi';
+  }
+
   function groupLinearAssets(assetConfiguration,
                        linearAssets,
                        linkPropertiesModel,
@@ -499,13 +488,14 @@
     var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
+    //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we still have tierekisteri specific data
     var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
     var cyclingAndWalking = new CyclingAndWalkingBox(_.find(linearAssets, {typeId: assetType.cyclingAndWalking}));
-    var laneModellingBox = new LaneModellingBox(_.find(linearAssets, {typeId: assetType.laneModellingTool}));
+    var laneModellingBox = !isProduction() ? new LaneModellingBox(_.find(linearAssets, {typeId: assetType.laneModellingTool})) : [];
     return [
       [roadLinkBox]
           .concat(laneModellingBox)
@@ -539,7 +529,8 @@
           .concat([winterSpeedLimits])
           .concat(getLinearAsset(assetType.trafficVolume)),
       []
-          .concat(trSpeedLimitBox)
+      //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we still have tierekisteri specific data
+         /// .concat(trSpeedLimitBox)
     ];
 
     function getLinearAsset(typeId) {
@@ -561,10 +552,12 @@
                             isExperimental
                             ) {
     var assetType = assetConfiguration.assetTypes;
-    var assetGroups = assetConfiguration.assetGroups;
     var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}), isExperimental);
     var trafficLightBox = new TrafficLightBox(_.find(pointAssets, {typeId: assetType.trafficLights}));
+    //TODO these are commented/hidden for now, 
+    //TODO Tierekisteri is in end of life cycle but we still have tierekisteri specific data
+    var assetGroups = assetConfiguration.assetGroups;
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
@@ -578,9 +571,12 @@
         .concat(trafficLightBox)
         .concat([trafficSignBox])
         .concat(getPointAsset(assetType.servicePoints)),
-      [].concat([heightBox])
-        .concat([widthBox])
-        .concat(getGroupedPointAsset(assetGroups.trWeightGroup))
+      []
+      //TODO these are commented/hidden for now, 
+      //TODO Tierekisteri is in end of life cycle but we still have tierekisteri specific data
+          //.concat([heightBox])
+          //.concat([widthBox])
+          //.concat(getGroupedPointAsset(assetGroups.trWeightGroup))
     ];
 
     function getPointAsset(typeId) {

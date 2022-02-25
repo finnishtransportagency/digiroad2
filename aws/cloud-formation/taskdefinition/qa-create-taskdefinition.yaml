@@ -106,10 +106,6 @@ Resources:
               Value: 'false'
             - Name: vkmUrl
               Value: 'https://api.vaylapilvi.fi'
-            - Name: tierekisteriRestApiEndPoint
-              Value: 'https://testioag.vayla.fi/trrest/qa/'
-            - Name: tierekisteri.enabled
-              Value: 'true'
             - Name: vallu.server.sending_enabled
               Value: 'false'
             - Name: vallu.server.address
@@ -130,10 +126,6 @@ Resources:
               Value: 'jdbc:postgresql://rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/digiroadtest'
             - Name: bonecp.username
               Value: 'digiroadtest'
-            - Name: tierekisteri.username
-              Value: 'trrestoth'
-            - Name: tierekisteri.old.username
-              Value: 'trrest'
             - Name: oag.username
               Value: 'svc_clouddr'
             - Name: emailTo
@@ -159,10 +151,6 @@ Resources:
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/bonecp.password'
-            - Name: tierekisteri.password
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/tierekisteri.password'
-            - Name: tierekisteri.old.password
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/tierekisteri.old.password'
             - Name: viite.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/viite'
             - Name: vkm.apikey

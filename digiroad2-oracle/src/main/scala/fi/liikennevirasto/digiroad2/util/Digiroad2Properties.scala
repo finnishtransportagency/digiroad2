@@ -14,7 +14,6 @@ trait Digiroad2Properties {
   val vvhRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
   val viiteRestApiEndPoint: String
-  val tierekisteriRestApiEndPoint: String
   val vkmUrl: String
   val vkmApiKey: String
   val valluServerSengindEnabled: Boolean
@@ -24,8 +23,6 @@ trait Digiroad2Properties {
   val caching: Boolean
   val cacheTTL: String
   val feedbackAssetsEndPoint: String
-  val tierekisteriViiteRestApiEndPoint: String
-  val tierekisteriEnabled: Boolean
   val httpProxySet: Boolean
   val httpProxyHost: String
   val httpProxyPort: String
@@ -36,13 +33,9 @@ trait Digiroad2Properties {
   val bonecpPassword: String
   val revision: String
   val latestDeploy: String
-  val tierekisteriUsername: String
-  val tierekisteriPassword: String
   val viiteApiKey: String
   val sesUsername: String
   val sesPassword: String
-  val tierekisteriOldUsername: String
-  val tierekisteriOldPassword: String
   val oagUsername: String
   val oagPassword: String
   val emailTo: String
@@ -72,14 +65,11 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val viiteApiKey: String = scala.util.Properties.envOrElse("viite.apikey", null)
   val sesUsername: String = scala.util.Properties.envOrElse("ses.username", null)
   val sesPassword: String = scala.util.Properties.envOrElse("ses.password", null)
-  val tierekisteriRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriRestApiEndPoint", null)
   val vkmUrl: String = scala.util.Properties.envOrElse("vkmUrl", null)
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkm.apikey", null)
   val valluServerSengindEnabled: Boolean = scala.util.Properties.envOrElse("vallu.server.sending_enabled", "true").toBoolean
   val valluServerAddress: String = scala.util.Properties.envOrElse("vallu.server.address", null)
   val feedbackAssetsEndPoint: String = scala.util.Properties.envOrElse("feedbackAssetsEndPoint", null)
-  val tierekisteriViiteRestApiEndPoint: String = scala.util.Properties.envOrElse("tierekisteriViiteRestApiEndPoint", null)
-  val tierekisteriEnabled: Boolean = scala.util.Properties.envOrElse("tierekisteri.enabled", "true").toBoolean
   val httpProxySet: Boolean = scala.util.Properties.envOrElse("http.proxySet", "false").toBoolean
   val httpProxyHost: String = scala.util.Properties.envOrElse("http.proxyHost", null)
   val httpProxyPort: String = scala.util.Properties.envOrElse("http.proxyPort", null)
@@ -118,11 +108,6 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val bonecpPassword: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_password", null), scala.util.Properties.envOrElse("bonecp.password", null))
   val oagUsername: String = selectEnvType(scala.util.Properties.envOrElse("oag_username", null),scala.util.Properties.envOrElse("oag.username", null))
   val oagPassword: String =  selectEnvType(scala.util.Properties.envOrElse("oag_password", null),scala.util.Properties.envOrElse("oag.password", null))
-  val tierekisteriOldUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldUsername", null),scala.util.Properties.envOrElse("tierekisteri.old.username", null))
-  val tierekisteriOldPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriOldPassword", null),scala.util.Properties.envOrElse("tierekisteri.old.password", null))
-  val tierekisteriUsername: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriUsername", null),scala.util.Properties.envOrElse("tierekisteri.username", null))
-  val tierekisteriPassword: String = selectEnvType(scala.util.Properties.envOrElse("tierekisteriPassword", null),scala.util.Properties.envOrElse("tierekisteri.password", null))
-  
   lazy val bonecpProperties: Properties = {
     val props = new Properties()
     try {
@@ -153,7 +138,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val viiteRestApiEndPoint: String = envProps.getProperty("viiteRestApiEndPoint")
-  override val tierekisteriRestApiEndPoint: String = envProps.getProperty("tierekisteriRestApiEndPoint")
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
   override val vkmApiKey: String = envProps.getProperty("vkm.apikey")
   override val valluServerSengindEnabled: Boolean = envProps.getProperty("vallu.server.sending_enabled", "true").toBoolean
@@ -163,8 +147,6 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val caching: Boolean = envProps.getProperty("caching", "false").toBoolean
   override val cacheTTL: String = envProps.getProperty("cacheTTL", null)
   override val feedbackAssetsEndPoint: String = envProps.getProperty("feedbackAssetsEndPoint")
-  override val tierekisteriViiteRestApiEndPoint: String = envProps.getProperty("tierekisteriViiteRestApiEndPoint")
-  override val tierekisteriEnabled: Boolean = envProps.getProperty("tierekisteri.enabled", "true").toBoolean
   override val httpProxySet: Boolean = envProps.getProperty("http.proxySet", "false").toBoolean
   override val httpProxyHost: String = envProps.getProperty("http.proxyHost")
   override val httpProxyPort: String = envProps.getProperty("http.proxyPort")
@@ -175,13 +157,9 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val bonecpPassword: String = envProps.getProperty("bonecp.password")
   override val revision: String = envProps.getProperty("revision")
   override val latestDeploy: String = envProps.getProperty("latestDeploy")
-  override val tierekisteriUsername: String = envProps.getProperty("tierekisteri.username")
-  override val tierekisteriPassword: String = envProps.getProperty("tierekisteri.password")
   override val viiteApiKey: String = envProps.getProperty("viite.apikey")
   override val sesUsername: String = envProps.getProperty("ses.username")
   override val sesPassword: String = envProps.getProperty("ses.password")
-  override val tierekisteriOldUsername: String = envProps.getProperty("tierekisteri.old.username")
-  override val tierekisteriOldPassword: String = envProps.getProperty("tierekisteri.old.password")
   override val oagUsername: String = envProps.getProperty("oag.username")
   override val oagPassword: String = envProps.getProperty("oag.password")
   override val emailTo: String = envProps.getProperty("email.to")
@@ -234,7 +212,6 @@ object Digiroad2Properties {
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
-  lazy val tierekisteriRestApiEndPoint: String = properties.tierekisteriRestApiEndPoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val valluServerSendingEnabled: Boolean = properties.valluServerSengindEnabled
@@ -244,8 +221,6 @@ object Digiroad2Properties {
   lazy val caching: Boolean = properties.caching
   lazy val cacheTTL: String = properties.cacheTTL
   lazy val feedbackAssetsEndPoint: String = properties.feedbackAssetsEndPoint
-  lazy val tierekisteriViiteRestApiEndPoint: String = properties.tierekisteriViiteRestApiEndPoint
-  lazy val tierekisteriEnabled: Boolean = properties.tierekisteriEnabled
   lazy val httpProxySet: Boolean = properties.httpProxySet
   lazy val httpProxyHost: String = properties.httpProxyHost
   lazy val httpProxyPort: String = properties.httpProxyPort
@@ -256,13 +231,9 @@ object Digiroad2Properties {
   lazy val bonecpPassword: String = properties.bonecpPassword
   lazy val revision: String = properties.revision
   lazy val latestDeploy: String = properties.latestDeploy
-  lazy val tierekisteriUsername: String = properties.tierekisteriUsername
-  lazy val tierekisteriPassword: String = properties.tierekisteriPassword
   lazy val viiteApiKey: String = properties.viiteApiKey
   lazy val sesUsername: String = properties.sesUsername
   lazy val sesPassword: String = properties.sesPassword
-  lazy val tierekisteriOldUsername: String = properties.tierekisteriOldUsername
-  lazy val tierekisteriOldPassword: String = properties.tierekisteriOldPassword
   lazy val oagUsername: String = properties.oagUsername
   lazy val oagPassword: String = properties.oagPassword
   lazy val emailTo: String = properties.emailTo

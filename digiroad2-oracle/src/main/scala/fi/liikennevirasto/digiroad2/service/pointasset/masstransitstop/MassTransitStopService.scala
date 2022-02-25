@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -117,8 +116,6 @@ trait MassTransitStopService extends PointAssetOperations {
   val roadLinkService: RoadLinkService
   val geometryTransform: GeometryTransform
 
-  val tierekisteriClient: TierekisteriMassTransitStopClient
-
   override def typeId: Int = 10
   override val idField = "external_id"
 
@@ -134,7 +131,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
   lazy val defaultBusStopStrategy = new BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
-  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient, eventbus, geometryTransform)
+  lazy val othBusStopLifeCycleBusStopStrategy = new OthBusStopLifeCycleBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val terminatedBusStopStrategy = new TerminatedBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
 
@@ -355,7 +352,7 @@ trait MassTransitStopService extends PointAssetOperations {
     getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink), newTransaction)
   }
 
-  def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
+  def getMassTransitStopByNationalId(nationalId: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
     withDynTransaction {
       val persistedStopOption = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
       persistedStopOption match {
@@ -372,7 +369,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def getMassTransitStopByIdWithTRWarnings(id: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
+  def getMassTransitStopById(id: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {
     withDynTransaction {
       val persistedStopOption = fetchPointAssets(massTransitStopDao.withId(id)).headOption
       persistedStopOption match {
@@ -588,7 +585,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def getStrategies(): (Seq[AbstractBusStopStrategy], AbstractBusStopStrategy) ={
-    (Seq(terminalBusStopStrategy, tierekisteriBusStopStrategy, terminatedBusStopStrategy), defaultBusStopStrategy)
+    (Seq(terminalBusStopStrategy, othBusStopLifeCycleBusStopStrategy, terminatedBusStopStrategy), defaultBusStopStrategy)
   }
 
   private def getStrategy(asset: PersistedMassTransitStop): AbstractBusStopStrategy ={

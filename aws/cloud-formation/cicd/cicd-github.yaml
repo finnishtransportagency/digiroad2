@@ -261,8 +261,6 @@ Resources:
             Value: http://localhost:9080/api/viite/
           - Name: authenticationTestMode
             Value: true
-          - Name: tierekisteriRestApiEndPoint
-            Value: http://localhost:8080/api/tierekisteri/
           - Name: bonecp_password
             Value: "/test/bonecp.password"
             Type: PARAMETER_STORE
@@ -272,14 +270,6 @@ Resources:
             Value: XYZ123
           - Name: googlemapapi_crypto_key
             Value: ZYX321
-          - Name: tierekisteriUsername
-            Value: userXYZ
-          - Name: tierekisteriPassword
-            Value: passwordXYZ
-          - Name: tierekisteriOldUsername
-            Value: userXYZ
-          - Name: tierekisteriOldPassword
-            Value: passwordXYZ
           - Name: oag_username
             Value: svc_clouddigiroad
           - Name: oag_password

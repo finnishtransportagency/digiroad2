@@ -4,7 +4,6 @@ import java.io.{ByteArrayInputStream, InputStream}
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
@@ -613,7 +612,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
-  val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
 }

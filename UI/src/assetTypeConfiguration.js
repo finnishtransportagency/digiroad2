@@ -33,13 +33,13 @@
       trafficLights: 280,
       maintenanceRoad: 290,
       trafficSigns: 300,
-      trSpeedLimits: 310,
-      trWeightLimits: 320,
-      trTrailerTruckWeightLimits: 330,
-      trAxleWeightLimits: 340,
-      trBogieWeightLimits: 350,
-      trHeightLimits: 360,
-      trWidthLimits: 370,
+      trSpeedLimits: 310, //TODO hidden for now
+      trWeightLimits: 320, //TODO hidden for now
+      trTrailerTruckWeightLimits: 330, //TODO hidden for now
+      trAxleWeightLimits: 340, //TODO hidden for now
+      trBogieWeightLimits: 350, //TODO hidden for now
+      trHeightLimits: 360, //TODO hidden for now
+      trWidthLimits: 370,  //TODO hidden for now
       manoeuvre: 380,
       careClass: 390,
       carryingCapacity: 400,
@@ -48,7 +48,7 @@
       cyclingAndWalking: 440,
       laneModellingTool: 450
     };
-
+    //TODO these are hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
     var assetGroups = {
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
@@ -1117,7 +1117,7 @@
         laneReadOnlyLayer: ViewOnlyLaneModellingLayer
       }
     ];
-
+    //TODO these are hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
     var experimentalLinearAssetSpecs = [
       {
         typeId: assetType.trSpeedLimits,
@@ -1513,7 +1513,8 @@
         showRoadLinkInfo: true,
         lanePreview: true
       },
-      {
+      {     //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
+
         typeId: assetType.trHeightLimits,
         layerName: 'trHeightLimits',
         title: 'TR suurin sallittu korkeus',
@@ -1536,7 +1537,8 @@
         label: new HeightLimitLabel(Math.pow(5, 2)),
         showRoadLinkInfo: true
       },
-      {
+      {     //TODO these are commented/hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
+
         typeId: assetType.trWidthLimits,
         layerName: 'trWidthLimits',
         title: 'TR suurin sallittu leveys',
@@ -1560,9 +1562,9 @@
         showRoadLinkInfo: true
       }
     ];
-
+    //TODO these are hidden for now, Tierekisteri is in end of life cycle but we till have tierekisteri specific data
     var groupedPointAssetSpecs = [
-      {
+      { 
         typeIds: assetGroups.trWeightGroup,
         layerName: 'trWeightLimits',
         title: 'TR painorajoitukset',

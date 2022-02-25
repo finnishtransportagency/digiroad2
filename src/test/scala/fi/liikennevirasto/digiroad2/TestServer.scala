@@ -7,7 +7,6 @@ object TestServer extends App with DigiroadServer {
 
   override def setupWebContext(): WebAppContext ={
     val context = super.setupWebContext()
-    context.addServlet(classOf[TierekisteriTestApi], "/api/tierekisteri/*")
     context
   }
 

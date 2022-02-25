@@ -9,20 +9,6 @@ Resources:
       Type: String
       Value: PlaceHolderValue
 
-  TierekisteriParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /prod/tierekisteri.password
-      Type: String
-      Value: PlaceHolderValue
-
-  TierekisteriOldParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /prod/tierekisteri.old.password
-      Type: String
-      Value: PlaceHolderValue
-
   ViiteParameter:
     Type: AWS::SSM::Parameter
     Properties:

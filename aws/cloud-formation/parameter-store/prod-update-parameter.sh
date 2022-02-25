@@ -9,8 +9,6 @@
 # --type: Type of the parameter (we want to update it from String -> SecureString)
 # --value: Value to be given to the parameter (i.e. the secret)
 aws ssm put-parameter --region eu-west-1 --profile vaylaapp --overwrite --name "/prod/bonecp.password" --type "SecureString" --value ""
-aws ssm put-parameter --region eu-west-1 --profile vaylaapp --overwrite --name "/prod/tierekisteri.password" --type "SecureString" --value ""
-aws ssm put-parameter --region eu-west-1 --profile vaylaapp --overwrite --name "/prod/tierekisteri.old.password" --type "SecureString" --value ""
 aws ssm put-parameter --region eu-west-1 --profile vaylaapp --overwrite --name "/prod/apikey/viite" --type "SecureString" --value ""
 aws ssm put-parameter --region eu-west-1 --profile vaylaapp --overwrite --name "/prod/apikey/viitekehysmuunnin" --type "SecureString" --value ""
 aws ssm put-parameter --region eu-west-1 --profile vaylaapp --overwrite --name "/prod/apikey/mml_map" --type "SecureString" --value ""

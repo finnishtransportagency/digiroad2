@@ -40,15 +40,6 @@ else
          echo "assetForValidation env is not defined"
          exit 1
         fi
-      elif [ "$batchRunType" = "TierekisteriDataImporter" ]; then
-
-        echo "TierekisteriDataImporter"
-        if [[ ! -z "$tierekisteriAction" ]] && [[ ! -z "$tierekisteriAsset" ]] && [[ ! -z "$trafficSignGroup" ]]; then
-          java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter "$tierekisteriAction" "$tierekisteriAsset" "$trafficSignGroup"
-        else
-          echo "tierekisteriAction or tierekisteriAsset or trafficSignGroup env is not defined"
-          exit 1
-        fi
       else
         echo "Wrong mode"
         exit 1
