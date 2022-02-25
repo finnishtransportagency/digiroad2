@@ -194,17 +194,53 @@ class VerificationDao {
     id
   }
 
-  def updateAssetTypeVerification(municipalityId: Int, assetTypeId: Int, lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAsset: Int, refreshDate: Option[DateTime], suggestedAssets: String): Unit = {
-    sqlu"""update municipality_verification
-           set last_user_modification = $lastUserModification,
-               last_date_modification = $lastDateModification,
-               number_of_assets = $numberOfAsset,
-               refresh_date = $refreshDate,
-               suggested_assets = $suggestedAssets
-         where municipality_id = $municipalityId
-           and asset_type_id = $assetTypeId
-           and valid_to is null
-      """.execute
+  def insertAssetTypeVerificationQuery(municipalityCode: Int, assetTypeId: Int, verifiedBy: Option[String],
+                                  modifiedBy: Option[String], modifiedDate: Option[DateTime],
+                                  numberOfAssets: Int, refreshDate: Option[DateTime], suggestedAssets: String): String = {
+    val (verifiedByUser, verifiedDate) = if (verifiedBy.nonEmpty) (verifiedBy.get, "current_timestamp") else ("null", "null")
+    val lastUserModification = if (modifiedBy.nonEmpty) s"'${modifiedBy.get}'" else "null"
+    val lastDateModification = if (modifiedDate.nonEmpty) s"'${modifiedDate.get}'" else "null"
+    val refreshed = if (refreshDate.nonEmpty) s"'${refreshDate.get}'" else "null"
+
+    s"""
+        insert into municipality_verification (id, municipality_id, asset_type_id, verified_by, verified_date, last_user_modification, last_date_modification, number_of_assets, refresh_date, suggested_assets)
+        values (nextval('primary_key_seq'), $municipalityCode, $assetTypeId, $verifiedByUser, $verifiedDate, $lastUserModification, $lastDateModification, $numberOfAssets, $refreshed, '$suggestedAssets')
+    """
+  }
+
+  def updateAssetTypeVerificationQuery(municipalityCode: Int, assetTypeId: Int, modifiedBy: Option[String],
+                                  modifiedDate: Option[DateTime], numberOfAssets: Int, refreshDate: Option[DateTime],
+                                  suggestedAssets: String) : String = {
+    val lastUserModification = if (modifiedBy.nonEmpty) s"'${modifiedBy.get}'" else "null"
+    val lastDateModification = if (modifiedDate.nonEmpty) s"'${modifiedDate.get}'" else "null"
+    val refreshed = if (refreshDate.nonEmpty) s"'${refreshDate.get}'" else "null"
+
+    s"""
+      update municipality_verification
+      set last_user_modification = $lastUserModification,
+          last_date_modification = $lastDateModification,
+          number_of_assets = $numberOfAssets,
+          refresh_date = $refreshed,
+          suggested_assets = '$suggestedAssets'
+      where municipality_id = $municipalityCode
+          and asset_type_id = $assetTypeId
+          and valid_to is null
+    """
+  }
+
+  def refreshAssetTypeVerification(toUpdate: Seq[(Int, Int, Int, Option[String], Option[DateTime], String)],
+                                   toInsert: Seq[(Int, Int, Int, Option[String], Option[DateTime], String)],
+                                   refreshDate: Option[DateTime]): Unit = {
+    val updates = toUpdate.map {
+      case (municipalityCode, assetTypeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
+        updateAssetTypeVerificationQuery(municipalityCode, assetTypeId, modifiedBy, modifiedDate, counter, refreshDate, suggestedAssets)
+    }
+    val inserts = toInsert.map {
+      case (municipalityCode, assetTypeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
+        insertAssetTypeVerificationQuery(municipalityCode, assetTypeId, None, modifiedBy, modifiedDate, counter, refreshDate, suggestedAssets)
+    }
+
+    MassQuery.executeBatch(updates ++ inserts)
   }
 
   def expireAssetTypeVerification(municipalityCode: Int, assetTypeCode: Int, userName: String) = {
