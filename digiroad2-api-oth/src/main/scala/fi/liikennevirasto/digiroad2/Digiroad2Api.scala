@@ -30,6 +30,7 @@ import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
+import scala.util.Try
 
 case class ExistingLinearAsset(id: Long, linkId: Long)
 
@@ -775,7 +776,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
-    val laneInfo = params("laneInfo").toBoolean
+    val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
     params.get("bbox")
       .map(getRoadLinksFromVVH(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
@@ -793,7 +794,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-    val laneInfo = params("laneInfo").toBoolean
+    val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
     params.get("bbox")
       .map(getRoadLinksHistoryFromVVH(municipalities,withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
@@ -822,7 +823,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/roadlinks/complementaries"){
     response.setHeader("Access-Control-Allow-Headers", "*")
-    val laneInfo = params("laneInfo").toBoolean
+    val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
     params.get("bbox")
       .map(getRoadlinksWithComplementaryFromVVH(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
