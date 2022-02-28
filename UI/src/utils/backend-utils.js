@@ -916,11 +916,11 @@
     };
 
     this.withRoadLinkData = function (roadLinkData) {
-      self.getRoadLinks = function(boundingBox,laneInfo, callback) {
+      self.getRoadLinks = function(boundingBox, callback,laneInfo) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
-      self.getRoadLinksWithComplementary = function(boundingBox,laneInfo, callback) {
+      self.getRoadLinksWithComplementary = function(boundingBox, callback,laneInfo) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
