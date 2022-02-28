@@ -309,9 +309,11 @@ class VerificationDao {
 
   def insertModifiedAssetTypes(municipalityCode: Int, modificationInfo: Seq[LatestModificationInfo]): Unit = {
     val queries = modificationInfo.map { info =>
+      val modifiedBy = if (info.modifiedBy.nonEmpty) s"'${info.modifiedBy.get}'" else "null"
+      val modifiedDate = if (info.modifiedDate.nonEmpty) s"'${info.modifiedDate.get}'" else "null"
       s"""
         insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
-        values ($municipalityCode, ${info.assetTypeCode}, '${info.modifiedBy.get}', '${info.modifiedDate.get}')
+        values ($municipalityCode, ${info.assetTypeCode}, $modifiedBy, $modifiedDate)
       """
     }
     MassQuery.executeBatch(queries)
