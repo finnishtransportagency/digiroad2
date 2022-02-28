@@ -69,14 +69,6 @@
         "value": "https://api.vaylapilvi.fi"
       },
       {
-        "name": "tierekisteriRestApiEndPoint",
-        "value": "http://testioag.vayla.fi/trrest/qa/"
-      },
-      {
-        "name": "tierekisteri.enabled",
-        "value": "false"
-      },
-      {
         "name": "viite.importTimeStamp",
         "value": "1510876800000"
       },
@@ -103,14 +95,6 @@
       {
         "name": "bonecp.username",
         "value": "digiroad"
-      },
-      {
-        "name": "tierekisteri.username",
-        "value": "trrestoth"
-      },
-      {
-        "name": "tierekisteri.old.username",
-        "value": "trrest"
       },
       {
         "name": "oag.username",
@@ -147,14 +131,6 @@
       {
         "name": "bonecp.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/bonecp.password"
-      },
-      {
-        "name": "tierekisteri.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/tierekisteri.password"
-      },
-      {
-        "name": "tierekisteri.old.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/tierekisteri.old.password"
       },
       {
         "name": "oag.password",
