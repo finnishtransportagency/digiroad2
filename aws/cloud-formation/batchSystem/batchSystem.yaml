@@ -151,7 +151,7 @@ Resources:
     Properties:
       GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
       GroupName: Prod-BatchSecurityGroup
-      VpcId: !Ref QAVpcIDOfSystem
+      VpcId: !Ref DEVVpcIDOfSystem
       
   BatchTaskRole:
     Type: AWS::IAM::Role
