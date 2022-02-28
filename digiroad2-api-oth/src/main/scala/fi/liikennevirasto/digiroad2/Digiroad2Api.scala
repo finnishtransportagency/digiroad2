@@ -682,34 +682,29 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def partitionRoadLinks(roadLinks: Seq[RoadLink],withLaneInfo: Boolean = false): Seq[Seq[Map[String, Any]]] = {
-    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    val lanes = lanesWithRoadlink(roadLinks.map(_.linkId))
-    partitionedRoadLinks.map(r=>{
-      roadLinkToApiWithLaneInfo(r,withLaneInfo)
-    })
+    val linkWithLane = if(withLaneInfo) lanesWithRoadlink(roadLinks) else roadLinks
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(linkWithLane)
+    logger.info(s"partitionedRoadLinks groups ${partitionedRoadLinks.size} and links ${roadLinks.size}")
+    LogUtils.time(logger, "TEST LOG roadLinkToApiWithLaneInfo")(
+      partitionedRoadLinks.map(r=>{roadLinkToApiWithLaneInfo(r,withLaneInfo=withLaneInfo)})
+    )
+  }
+  
+  protected def lanesWithRoadlink(linkIds: Seq[RoadLink]): Seq[RoadLink]= {
+    val lanes = laneService.fetchExistingLanesByLinkIds(linkIds.map(_.linkId))
+    val lanesByLink = lanes.groupBy(_.linkId)
+    linkIds.map(r => r.copy(lanes=lanesByLink(r.linkId)))
   }
 
-  protected def lanesWithRoadlink(linkIds: Seq[Long]): mutable.HashMap[Long,Seq[PersistedLane]]= {
-    val lanes = laneService.fetchExistingLanesByLinkIds(linkIds)
-    val laneByLink = lanes.groupBy(_.linkId)
-    val linkAndLane: mutable.HashMap[Long,Seq[PersistedLane]] = new mutable.HashMap()
-    linkIds.foreach(r => {linkAndLane.put(r, laneByLink.get(r).getOrElse(Seq()))})
-    linkAndLane
+  /**
+    * Enrich roadlink with lane information before turning withLaneInfo flag true
+    */
+  protected def roadLinkToApiWithLaneInfo(roadLinks:Seq[RoadLink],withLaneInfo: Boolean = false): Seq[Map[String,Any]] = {
+      roadLinks.map(rl=>{roadLinkToApi(rl,withLaneInfo)})
   }
-  protected def roadLinkToApiWithLaneInfo(roadLinks:Seq[RoadLink], withLaneInfo: Boolean = false): Seq[Map[String,Any]] = {
-    if(withLaneInfo){
-      val lanes =  lanesWithRoadlink(roadLinks.map(_.linkId))
-      roadLinks.map(rl=>{
-        roadLinkToApi(rl,lanes(rl.linkId),withLaneInfo)
-      })
-    }else{
-      roadLinks.map(rl=>{
-        roadLinkToApi(rl,withLaneInfo=withLaneInfo)
-      })
-    }
-  }
-  def roadLinkToApi(roadLink: RoadLink,lanes: Seq[PersistedLane]=Seq(), withLaneInfo: Boolean = false): Map[String, Any] = {
-    val laneInfo = if(withLaneInfo) lanes else Seq()
+  
+  def roadLinkToApi(roadLink: RoadLink, withLaneInfo: Boolean = false): Map[String, Any] = {
+    val laneInfo = if(withLaneInfo) roadLink.lanes else Seq()
 
     Map(
       "lanes" -> laneInfo.map(_.laneCode).sorted,
@@ -777,6 +772,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
+    logger.info("laneInfo "+laneInfo.toString)
     params.get("bbox")
       .map(getRoadLinksFromVVH(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
