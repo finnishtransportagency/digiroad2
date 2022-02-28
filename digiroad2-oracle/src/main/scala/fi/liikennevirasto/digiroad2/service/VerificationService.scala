@@ -148,8 +148,11 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
 
     val (toUpdate, toInsert) =  assetsInfo.partition{ case(_, typeId, _, _, _, _) => assetOnMunicipalityVerification.map(_._2).contains(typeId)}
 
-    LogUtils.time(logger, "BATCH LOG refresh asset type verification")(
-      dao.refreshAssetTypeVerification(toUpdate, toInsert, refreshDate)
+    LogUtils.time(logger, "BATCH LOG update asset type verification")(
+      if (toUpdate.nonEmpty) dao.updateAssetTypeVerifications(toUpdate, refreshDate)
+    )
+    LogUtils.time(logger, "BATCH LOG insert asset type verification")(
+      if (toInsert.nonEmpty) dao.insertAssetTypeVerifications(toInsert, refreshDate)
     )
   }
 

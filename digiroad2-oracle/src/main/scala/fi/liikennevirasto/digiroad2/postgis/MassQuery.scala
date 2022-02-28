@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.postgis
 
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import java.sql.PreparedStatement
 
 object MassQuery {
   def withIds[T](ids: Set[Long])(f: String => T): T = {
@@ -26,11 +27,13 @@ object MassQuery {
     }
   }
 
-  def executeBatch(queries: Seq[String]): Unit = {
-    val statement = dynamicSession.createStatement()
-    queries.foreach( statement.addBatch )
-
-    statement.executeBatch()
-    statement.close()
+  def executeBatch[T](query: String)(f: PreparedStatement => T): Unit = {
+    val statement = dynamicSession.prepareStatement(query)
+    try {
+      f(statement)
+      statement.executeBatch()
+    } finally {
+      statement.close()
+    }
   }
 }
