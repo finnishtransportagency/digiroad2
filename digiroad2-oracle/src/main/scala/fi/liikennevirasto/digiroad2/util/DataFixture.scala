@@ -1722,9 +1722,11 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession { Queries.getMunicipalities  }
+    var counter = 0
     PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
-        println(s"Working on municipality : $municipality")
+        counter += 1
+        println(s"Working on municipality $municipality ($counter/${municipalities.size})")
         val roadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
         verificationService.refreshVerificationInfo(municipality, roadLinkIds, Some(DateTime.now()))
       }
@@ -1961,10 +1963,11 @@ object DataFixture {
     println("Municipalities fetched after: " + DateTime.now())
     println("\n")
 
-
+    var counter = 0
     municipalities.foreach { municipality =>
       PostGISDatabase.withDynTransaction {
-        println("Working on municipality " + municipality)
+        counter += 1
+        println(s"Working on municipality $municipality ($counter/${municipalities.size})")
         val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
         val modifiedAssetTypes = LogUtils.time(logger, "BATCH LOG get modified asset types")(
           verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
