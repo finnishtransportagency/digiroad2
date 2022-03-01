@@ -684,7 +684,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def partitionRoadLinks(roadLinks: Seq[RoadLink],withLaneInfo: Boolean = false): Seq[Seq[Map[String, Any]]] = {
     val linkWithLane = if(withLaneInfo) lanesWithRoadlink(roadLinks) else roadLinks
     val partitionedRoadLinks = RoadLinkPartitioner.partition(linkWithLane)
-    logger.info(s"partitionedRoadLinks groups ${partitionedRoadLinks.size} and links ${roadLinks.size}")
     LogUtils.time(logger, "TEST LOG roadLinkToApiWithLaneInfo")(
       partitionedRoadLinks.map(r=>{roadLinkToApiWithLaneInfo(r,withLaneInfo=withLaneInfo)})
     )
@@ -772,7 +771,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val laneInfo = Try(params("laneInfo").toBoolean).getOrElse(false)
-    logger.info("laneInfo "+laneInfo.toString)
     params.get("bbox")
       .map(getRoadLinksFromVVH(Set(),withLaneInfo = laneInfo))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
