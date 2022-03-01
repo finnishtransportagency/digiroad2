@@ -405,6 +405,19 @@ Resources:
                   },
                   {
                       "rulePriority": 3,
+                      "description": "Retain images tagged with latest",
+                      "selection": {
+                          "tagStatus": "tagged",
+                          "tagPrefixList": ["latest"],
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 999999
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  },
+                  {
+                      "rulePriority": 4,
                       "description": "Expire images not tagged with qa or prod after 90 days",
                       "selection": {
                           "tagStatus": "any",
