@@ -280,7 +280,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       
       val roadLink:RoadLink = RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, exactModifiedAtValue, Some("automatic_generation"), constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
       val adjustedRoadLinks = Seq(AdjustedRoadLinksAndVVHRoadLink(adjustedRoadLink = roadLink, vVHRoadLink = VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, linkSource = LinkGeomSource.NormalLinkInterface)))
-      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(adjustedRoadLinks, List(IncompleteLink(789,91,Municipality)), List(), service.getRoadLinkDataByLinkIds(vvhRoadLinks))
+      val overridevalues = service.fetchRoadLinkPropertyRows(vvhRoadLinks.map(_.linkId).toSet)
+      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(adjustedRoadLinks, List(IncompleteLink(789,91,Municipality)), List(), service.getRoadLinkDataByLinkIds(vvhRoadLinks,overridevalues))
 
       verify(mockEventBus).publish(
         org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
@@ -1525,4 +1526,61 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       linkTypes.size should be (3)
     }
   }
+  test("test RoadLinkPropertyRows") {
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+
+    def roadLink(id: Long) = {
+      VVHRoadlink(linkId = id,
+        municipalityCode = 0, geometry = Seq(),
+        administrativeClass = Municipality, trafficDirection = TrafficDirection.UnknownDirection,
+        featureClass = FeatureClass.WinterRoads, modifiedAt = None, attributes = Map(),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
+    }
+
+    val service = new TestService(mockVVHClient, mockEventBus)
+
+    val roadLinkAdjucted: List[AdjustedRoadLinksAndVVHRoadLink] = List(
+      AdjustedRoadLinksAndVVHRoadLink(RoadLink(1, List(), 0.0, Municipality,
+        AnotherPrivateRoad.value, TrafficDirection.TowardsDigitizing, SingleCarriageway, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(1)),
+      AdjustedRoadLinksAndVVHRoadLink(RoadLink(1, List(), 0.0, Municipality,
+        UnknownFunctionalClass.value, TrafficDirection.TowardsDigitizing, UnknownLinkType, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(1))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(1, List(), 0.0, Municipality,
+        AnotherPrivateRoad.value, TrafficDirection.BothDirections, SingleCarriageway, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(1))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(2, List(), 0.0, Municipality,
+        AnotherPrivateRoad.value, TrafficDirection.BothDirections, UnknownLinkType, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(2))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(2, List(), 0.0, Municipality,
+        PrimitiveRoad.value, TrafficDirection.TowardsDigitizing, SingleCarriageway, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(2))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(2, List(), 0.0, Municipality,
+        AnotherPrivateRoad.value, TrafficDirection.BothDirections, UnknownLinkType, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(2))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(3, List(), 0.0, Municipality,
+        PrimitiveRoad.value, TrafficDirection.TowardsDigitizing, SingleCarriageway, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(3))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(3, List(), 0.0, Municipality,
+        AnotherPrivateRoad.value, TrafficDirection.TowardsDigitizing, SingleCarriageway, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(3))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(3, List(), 0.0, Municipality,
+        PrimitiveRoad.value, TrafficDirection.BothDirections, SingleCarriageway, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(3))
+      , AdjustedRoadLinksAndVVHRoadLink(RoadLink(4, List(), 0.0, Municipality,
+        AnotherPrivateRoad.value, TrafficDirection.TowardsDigitizing, UnknownLinkType, Some("10.01.2022 14:54:15"), Some("automatic_generation"),
+        constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface), roadLink(4)))
+    val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLinkAdjucted, Seq(), Seq(), Seq())
+
+    runWithRollback {
+      service.updateAutoGeneratedProperties(changeSet.adjustedRoadLinks)
+      val propeties = service.fetchRoadLinkPropertyRows(Set(1,2,3,4))
+      
+      propeties.latestModifications(1)
+      
+    
+    }
+  }
+  
 }

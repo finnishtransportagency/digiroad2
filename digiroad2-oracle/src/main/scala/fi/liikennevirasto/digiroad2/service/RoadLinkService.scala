@@ -775,42 +775,60 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     }
   }
+  case class TrafficDirectionRoadlinkData( linkId:Option[Long], value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class FunctionalClassRoadlinkData( linkId:Option[Long],value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class LinkTypeRoadlinkData(linkId:Option[Long], value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class AdministrativeClassRoadlinkData( linkId:Option[Long], value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class RoadlinkOverrideProperties(linkId:Long,
+                                        trafficDirection:TrafficDirectionRoadlinkData,
+                                        functionalClass:FunctionalClassRoadlinkData,
+                                        linkType:LinkTypeRoadlinkData,
+                                        administrativeClass: AdministrativeClassRoadlinkData
+                                       )
+
+  implicit val getroadlinkOverrideProperties: GetResult[RoadlinkOverrideProperties] = new GetResult[RoadlinkOverrideProperties] {
+    def apply(r: PositionedResult): RoadlinkOverrideProperties = {
+      val linkId = r.nextLong
+      val traffic_direction_link_id:Option[Long] =r.nextLongOption()
+      val traffic_direction_value:Option[Int] =r.nextIntOption()
+      val traffic_direction_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val traffic_direction_modified_by:Option[String] =r.nextStringOption()
+
+      val functional_class_link_id:Option[Long] =r.nextLongOption()
+      val functional_class_value:Option[Int] =r.nextIntOption()
+      val functional_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val functional_class_modified_by:Option[String] =r.nextStringOption()
+
+      val link_type_link_id:Option[Long] =r.nextLongOption()
+      val link_type_value:Option[Int] =r.nextIntOption()
+      val link_type_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val link_type_modified_by:Option[String] =r.nextStringOption()
+
+      val administrative_class_link_id:Option[Long] =r.nextLongOption()
+      val administrative_class_value:Option[Int] =r.nextIntOption()
+      val administrative_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val administrative_class_modified_by:Option[String] =r.nextStringOption()
+
+      RoadlinkOverrideProperties(linkId, 
+        TrafficDirectionRoadlinkData(traffic_direction_link_id,traffic_direction_value,traffic_direction_modified_date,traffic_direction_modified_by),
+        FunctionalClassRoadlinkData(functional_class_link_id,functional_class_value,functional_class_modified_date,functional_class_modified_by),
+        LinkTypeRoadlinkData(link_type_link_id,link_type_value,link_type_modified_date,link_type_modified_by),
+        AdministrativeClassRoadlinkData(administrative_class_link_id,administrative_class_value,administrative_class_modified_date,administrative_class_modified_by))
+    }
+  }
   
-  private def fetchOverrides(idTableName: String): Map[Long, (Option[(Long, Int, DateTime, String)],
-    Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])] = {
-    sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
-          f.link_id, f.functional_class, f.modified_date, f.modified_by,
-          l.link_id, l.link_type, l.modified_date, l.modified_by,
-          a.link_id, a.administrative_class, a.created_date, a.created_by
+  private def fetchOverrides(idTableName: String):List[RoadlinkOverrideProperties] = {
+    sql"""select i.id, 
+            t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
+            f.link_id, f.functional_class, f.modified_date, f.modified_by,
+            l.link_id, l.link_type, l.modified_date, l.modified_by,
+            a.link_id, a.administrative_class, a.created_date, a.created_by
             from #$idTableName i
             left join traffic_direction t on i.id = t.link_id
             left join functional_class f on i.id = f.link_id
             left join link_type l on i.id = l.link_id
             left join administrative_class a on i.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
-      """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
-      Option[Long], Option[Int], Option[DateTime], Option[String],
-      Option[Long], Option[Int], Option[DateTime], Option[String],
-      Option[Long], Option[Int], Option[DateTime], Option[String])].list.map(row =>
-    {
-      val td = (row._2, row._3, row._4, row._5) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-        case _ => None
-      }
-      val fc = (row._6, row._7, row._8, row._9) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-        case _ => None
-      }
-      val lt = (row._10, row._11, row._12, row._13) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-        case _ => None
-      }
-      val ac = (row._14, row._15, row._16, row._17) match{
-        case (Some(linkId), Some(value), Some(createdDate), Some(createdBy)) => Option((linkId, value, createdDate, createdBy))
-        case _ => None
-      }
-      row._1 ->(td, fc, lt, ac)
-    }
-    ).toMap
+      """.as[RoadlinkOverrideProperties](getroadlinkOverrideProperties).list
   }
 
   protected def setLinkAttributes(propertyName: String, linkProperty: LinkProperties, username: Option[String],
@@ -1168,8 +1186,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     *  Fills incomplete road links with the previous link information.
     *  Used by ROadLinkService.enrichRoadLinksFromVVH.
     */
-  def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): (Seq[RoadLink], Seq[RoadLink]) = {
-    val oldRoadLinkProperties = getOldRoadLinkPropertiesForChanges(changes)
+  def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo],propertyRows:RoadLinkPropertyRows): (Seq[RoadLink], Seq[RoadLink]) = {
+    val oldRoadLinkProperties = getOldRoadLinkPropertiesForChanges(changes,propertyRows)
     incompleteLinks.map { incompleteLink =>
       val oldIdsForIncompleteLink = changes.filter(_.newId == Option(incompleteLink.linkId)).flatMap(_.oldId)
       val oldPropertiesForIncompleteLink = oldRoadLinkProperties.filter(oldLink => oldIdsForIncompleteLink.contains(oldLink.linkId))
@@ -1344,16 +1362,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links
     */
   def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
-    val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
+    val vvhRoadLinkFiltered = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
+    val vvhRoadLinks = vvhRoadLinkFiltered.groupBy(_.linkId)
     def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
-      val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
-      vvhRoadLink.get.featureClass match {
+      val vvhRoadLink = vvhRoadLinks(roadLink.linkId)
+      vvhRoadLink.last.featureClass match {
         case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.DrivePath | FeatureClass.CarRoad_IIIb => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = UnknownFunctionalClass.value, linkType = SpecialTransportWithoutGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = UnknownFunctionalClass.value, linkType = SpecialTransportWithGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
-        case FeatureClass.CarRoad_IIIa => vvhRoadLink.get.administrativeClass match {
+        case FeatureClass.CarRoad_IIIa => vvhRoadLink.last.administrativeClass match {
           case State => roadLink.copy(functionalClass = 4, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
           case Municipality | Private => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
           case _ => roadLink
@@ -1362,28 +1381,43 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     }
     def toIncompleteLink(roadLink: RoadLink): IncompleteLink = {
-      val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
-      IncompleteLink(roadLink.linkId, vvhRoadLink.get.municipalityCode, roadLink.administrativeClass)
+      val vvhRoadLink = vvhRoadLinks(roadLink.linkId)
+      IncompleteLink(roadLink.linkId, vvhRoadLink.last.municipalityCode, roadLink.administrativeClass)
     }
 
     def canBeAutoGenerated(roadLink: RoadLink): Boolean = {
-      vvhRoadLinks.find(_.linkId == roadLink.linkId).get.featureClass match {
+      vvhRoadLinks(roadLink.linkId).last.featureClass match {
         case FeatureClass.AllOthers => false
         case _ => true
       }
     }
-    
-    val roadLinkDataByLinkId: Seq[RoadLink] = LogUtils.time(logger,"TEST LOG roadLinkDataByLinkId"){getRoadLinkDataByLinkIds(vvhRoadLinks)}
+
+    def stillIncompleteLinksPartition(roadlinks:Seq[RoadLink]):(Seq[RoadLink],Seq[RoadLink]) ={
+      val changedPartiallyIncompleteLinks, stillIncompleteLinksInUse: ListBuffer[RoadLink] = new ListBuffer[RoadLink]
+      for (link <- roadlinks) {
+        if (isPartiallyIncomplete(link)) {
+          changedPartiallyIncompleteLinks.append(link)
+        }
+        if (link.constructionType == ConstructionType.InUse) {
+          stillIncompleteLinksInUse.append(link)
+        }
+      }
+      (changedPartiallyIncompleteLinks.toList, stillIncompleteLinksInUse.toList)
+    }
+
+    val fetchAllNeededLink = LogUtils.time(logger,"TEST LOG fetchRoadLinkPropertyRows"){fetchRoadLinkPropertyRows(changes.flatMap(_.oldId).toSet ++ vvhRoadLinkFiltered.map(_.linkId).toSet)}
+
+    val roadLinkDataByLinkId: Seq[RoadLink] = LogUtils.time(logger,"TEST LOG roadLinkDataByLinkId"){getRoadLinkDataByLinkIds(vvhRoadLinkFiltered,fetchAllNeededLink)}
     val (incompleteLinks, completeLinks) = roadLinkDataByLinkId.partition(isIncomplete)
     val (linksToAutoGenerate, incompleteOtherLinks) = incompleteLinks.partition(canBeAutoGenerated)
     val autoGeneratedLinks = linksToAutoGenerate.map(autoGenerateProperties)
-    val (changedLinks, stillIncompleteLinks) = LogUtils.time(logger,"TEST LOG fillIncompleteLinksWithPreviousLinkData"){ fillIncompleteLinksWithPreviousLinkData(incompleteOtherLinks, changes)}
-    val changedPartiallyIncompleteLinks = stillIncompleteLinks.filter(isPartiallyIncomplete)
-    val stillIncompleteLinksInUse = stillIncompleteLinks.filter(_.constructionType == ConstructionType.InUse)
+    // possible unit of work
+    val (changedLinks, stillIncompleteLinks) = LogUtils.time(logger,"TEST LOG fillIncompleteLinksWithPreviousLinkData"){ fillIncompleteLinksWithPreviousLinkData(incompleteOtherLinks, changes,fetchAllNeededLink)}
+    
+    val (changedPartiallyIncompleteLinks,stillIncompleteLinksInUse) = stillIncompleteLinksPartition(stillIncompleteLinks)
     
     val adjustedRoadLinks = autoGeneratedLinks ++ changedLinks ++ changedPartiallyIncompleteLinks
-    val vvhRoadLinksGroupBy = allVvhRoadLinks.groupBy(_.linkId)
-    val pair = adjustedRoadLinks.map(r=>AdjustedRoadLinksAndVVHRoadLink(r,vvhRoadLinksGroupBy(r.linkId).last))
+    val pair = adjustedRoadLinks.map(r=>AdjustedRoadLinksAndVVHRoadLink(r,vvhRoadLinks(r.linkId).last))
     
     eventbus.publish("linkProperties:changed", RoadLinkChangeSet(pair, stillIncompleteLinksInUse.map(toIncompleteLink), changes, roadLinkDataByLinkId))
 
@@ -1394,9 +1428,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Uses old road link ids from change data to fetch their OTH overridden properties from db.
     * Used by RoadLinkSErvice.fillIncompleteLinksWithPreviousLinkData.
     */
-  def getOldRoadLinkPropertiesForChanges(changes: Seq[ChangeInfo]): Seq[RoadLinkProperties] = {
+  def getOldRoadLinkPropertiesForChanges(changes: Seq[ChangeInfo],propertyRows:RoadLinkPropertyRows): Seq[RoadLinkProperties] = {
     val oldLinkIds = changes.flatMap(_.oldId)
-    val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet)
 
     oldLinkIds.map { linkId =>
       val latestModification = propertyRows.latestModifications(linkId)
@@ -1415,13 +1448,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   /**
     * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
-  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
-    adjustedRoadLinks(vvhRoadLinks)
+  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[VVHRoadlink],propertyRows:RoadLinkPropertyRows): Seq[RoadLink] = {
+    adjustedRoadLinks(vvhRoadLinks,propertyRows)
   }
 
-  private def adjustedRoadLinks(vvhRoadlinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
-    val propertyRows = fetchRoadLinkPropertyRows(vvhRoadlinks.map(_.linkId).toSet)
-
+  private def adjustedRoadLinks(vvhRoadlinks: Seq[VVHRoadlink],propertyRows:RoadLinkPropertyRows): Seq[RoadLink] = 
     vvhRoadlinks.map { link =>
       val latestModification = propertyRows.latestModifications(link.linkId, link.modifiedAt.map(at => (at, "vvh_modified")))
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
@@ -1435,36 +1466,60 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         modifiedAt.map(DateTimePropertyFormat.print),
         modifiedBy, link.attributes ++ propertyRows.roadLinkAttributesValues(link.linkId), link.constructionType, link.linkSource)
     }
-  }
 
-  private def fetchRoadLinkPropertyRows(linkIds: Set[Long]): RoadLinkPropertyRows = {
-    def cleanMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)])]): Map[RoadLinkId, RoadLinkPropertyRow] = {
-      parameterMap.filter(i => i._2.nonEmpty).mapValues(i => i.get)
-    }
-    def splitMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)],
-      Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)],
-      Option[(Long, Int, DateTime, String)] )]) = {
-      (cleanMap(parameterMap.map(i => i._1 -> i._2._1)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._2)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._3)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._4)))
-    }
+   def fetchRoadLinkPropertyRows(linkIds: Set[Long]): RoadLinkPropertyRows = {
 
+    def partitionAndReturnRoadLinkPropertyRows(roadlinkOverrideProperties: List[RoadlinkOverrideProperties],overridedRoadLinkAttributes:Map[RoadLinkId, RoadLinkAtributes]): RoadLinkPropertyRows= {
+      val trafficDirection, functionalClass, linkType,admin: mutable.HashMap[RoadLinkId,RoadLinkPropertyRow] = new mutable.HashMap[RoadLinkId,RoadLinkPropertyRow]
+      for (link <- roadlinkOverrideProperties) {
+        val trafficDirectionItem =  link.trafficDirection
+        val functionalClassItem =  link.functionalClass
+        val linkTypeItem =  link.linkType
+        val administrativeClass =  link.administrativeClass
+
+        if(trafficDirectionItem.value.isDefined)
+          trafficDirection.put(link.linkId,TrafficDirectionRoadLinkPropertyRow(link.linkId,trafficDirectionItem.value.get,trafficDirectionItem.modifiedDate.get,trafficDirectionItem.modifiedBy.get))
+
+        if(functionalClassItem.value.isDefined)
+          functionalClass.put(link.linkId,FunctionalPropertyRow(link.linkId,functionalClassItem.value.get,functionalClassItem.modifiedDate.get,functionalClassItem.modifiedBy.get))
+
+        if(linkTypeItem.value.isDefined)
+          linkType.put(link.linkId,LinkTypePropertyRow(link.linkId,linkTypeItem.value.get,linkTypeItem.modifiedDate.get,linkTypeItem.modifiedBy.get))
+
+        if(administrativeClass.value.isDefined)
+          admin.put(link.linkId,AdministrativeClassPropertyRow(link.linkId,administrativeClass.value.get,administrativeClass.modifiedDate.get,administrativeClass.modifiedBy.get))
+      }
+      RoadLinkPropertyRows(trafficDirection.toMap,functionalClass.toMap,linkType.toMap,admin.toMap,overridedRoadLinkAttributes)
+    }
+    
     def splitRoadLinkAttributesMap(parameterMap: List[(Long, Option[(String, String)])]) = {
       parameterMap.filter(_._2.nonEmpty).groupBy(_._1).map { case (k, v) => (k, v.map(_._2.get)) }
     }
 
-    MassQuery.withIds(linkIds) {
-      idTableName =>
-        val (td, fc, lt, ac) = splitMap(fetchOverrides(idTableName))
-        val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName))
-        RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)
+    val (linksProperties,overridedRoadLinkAttributes) =MassQuery.withIds(linkIds) { idTableName =>
+      (fetchOverrides(idTableName),splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName)))
     }
+    
+    partitionAndReturnRoadLinkPropertyRows(linksProperties,overridedRoadLinkAttributes)
   }
-
+  
+  trait RoadLinkPropertyRow{
+    val linkId:Long
+    val value: Int
+    val modifiedDate:DateTime
+    val modifiedBy:String
+  }  
+  case class RoadLinkPropertyRowBase(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
+  case class TrafficDirectionRoadLinkPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow 
+  case class FunctionalPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow 
+  case class LinkTypePropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
+  case class AdministrativeClassPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
+ 
   type RoadLinkId = Long
-  type RoadLinkPropertyRow = (Long, Int, DateTime, String)
+  //type RoadLinkPropertyRow = (Long, Int, DateTime, String)
   type RoadLinkAtributes = Seq[(String, String)]
+  
+  
 
   case class RoadLinkPropertyRows(trafficDirectionRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
                                   functionalClassRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
@@ -1481,22 +1536,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     def functionalClassValue(linkId: Long): Int = {
       val functionalClassRowOption = functionalClassRowsByLinkId.get(linkId)
-      functionalClassRowOption.map(_._2).getOrElse(UnknownFunctionalClass.value)
+      functionalClassRowOption.map(_.value).getOrElse(UnknownFunctionalClass.value)
     }
 
     def linkTypeValue(linkId: Long): LinkType = {
       val linkTypeRowOption = linkTypeRowsByLinkId.get(linkId)
-      linkTypeRowOption.map(linkTypeRow => LinkType(linkTypeRow._2)).getOrElse(UnknownLinkType)
+      linkTypeRowOption.map(linkTypeRow => LinkType(linkTypeRow.value)).getOrElse(UnknownLinkType)
     }
 
     def trafficDirectionValue(linkId: Long): Option[TrafficDirection] = {
       val trafficDirectionRowOption = trafficDirectionRowsByLinkId.get(linkId)
-      trafficDirectionRowOption.map(trafficDirectionRow => TrafficDirection(trafficDirectionRow._2))
+      trafficDirectionRowOption.map(trafficDirectionRow => TrafficDirection(trafficDirectionRow.value))
     }
 
     def administrativeClassValue(linkId: Long): Option[AdministrativeClass] = {
       val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
-      administrativeRowOption.map( ac => AdministrativeClass.apply(ac._2))
+      administrativeRowOption.map( ac => AdministrativeClass.apply(ac.value))
     }
 
     def latestModifications(linkId: Long, optionalModification: Option[(DateTime, String)] = None): Option[(DateTime, String)] = {
@@ -1506,7 +1561,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
 
       val modifications = List(functionalClassRowOption, trafficDirectionRowOption, linkTypeRowOption, administrativeRowOption).map {
-        case Some((_, _, at, by)) => Some((at, by))
+        case Some(RoadLinkPropertyRowBase(_, _, at, by)) => Some((at, by))
         case _ => None
       } :+ optionalModification
       modifications.reduce(calculateLatestModifications)
