@@ -229,7 +229,7 @@ Resources:
               reason: "$.detail.statusReason"
 
   #Prod Batch Events
-  Prod-Run-Annual-Batch:
+  ProdRunAnnualBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run annual Prod batches"
@@ -243,7 +243,7 @@ Resources:
           Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"annual"}
 
 
-  Prod-Run-Monthly-Batch:
+  ProdRunMonthlyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run monthly Prod batches"
@@ -256,7 +256,7 @@ Resources:
             - "Arn"
         Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"monthly"}
 
-  Prod-Run-Weekly-Batch:
+  ProdRunWeeklyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run weekly Prod batches"
@@ -269,7 +269,7 @@ Resources:
             - "Arn"
         Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "weekly" }
 
-  Prod-Run-Daily-Batch:
+  ProdRunDailyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily Prod batches"
@@ -283,7 +283,7 @@ Resources:
         Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "daily" }
 
   #QA Batch Events
-  QA-Run-Annual-Batch:
+  QARunAnnualBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run annual QA batches"
@@ -296,7 +296,7 @@ Resources:
             - "Arn"
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "annual" }
 
-  QA-Run-Monthly-Batch:
+  QARunMonthlyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run monthly QA batches"
@@ -309,7 +309,7 @@ Resources:
             - "Arn"
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "monthly" }
 
-  QA-Run-Weekly-Batch:
+  QARunWeeklyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run weekly Prod batches"
@@ -322,7 +322,7 @@ Resources:
             - "Arn"
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "weekly" }
 
-  QA-Run-Daily-Batch:
+  QARunDailyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily QA batches"
@@ -336,7 +336,7 @@ Resources:
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "daily" }
 
   #DEV Batch Events
-  DEV-Run-Annual-Batch:
+  DEVRunAnnualBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run annual DEV batches"
@@ -349,7 +349,7 @@ Resources:
             - "Arn"
         Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "annual" }
 
-  DEV-Run-Monthly-Batch:
+  DEVRunMonthlyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run monthly DEV batches"
@@ -362,7 +362,7 @@ Resources:
             - "Arn"
         Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "monthly" }
 
-  DEV-Run-Weekly-Batch:
+  DEVRunWeeklyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run weekly DEV batches"
@@ -375,7 +375,7 @@ Resources:
             - "Arn"
         Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "weekly" }
 
-  DEV-Run-Daily-Batch:
+  DEVRunDailyBatch:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily DEV batches"
