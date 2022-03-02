@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.VerificationDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -62,10 +63,6 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
 
   def insertAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, verifiedBy: Option[String], lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAssets: Int, refreshDate: Option[DateTime], suggestedAssets: String) : Long = {
     dao.insertAssetTypeVerification(municipalityCode, assetTypeId, verifiedBy, lastUserModification, lastDateModification, numberOfAssets, refreshDate, suggestedAssets)
-  }
-
-  def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAssets: Int,  refreshDate: Option[DateTime], suggestedAssets: String) : Unit = {
-    dao.updateAssetTypeVerification(municipalityCode, assetTypeId, lastUserModification, lastDateModification, numberOfAssets, refreshDate, suggestedAssets)
   }
 
   def getMunicipalityInfo(bounds: BoundingRectangle): Option[Int] = {
@@ -146,18 +143,17 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   def getVerifiedAssetTypes: Seq[(Int, String)] = { withDynSession { dao.getVerifiedAssetTypes }}
 
   def refreshVerificationInfo(municipality: Int, linkIds: Seq[Long], refreshDate: Option[DateTime]) : Unit = {
-    val assetsInfo = getAssetTypesByMunicipalityF(municipality, linkIds)
-    val assetOnMunicipalityVerification = getVerificationInfo(municipality)
+    val assetsInfo = LogUtils.time(logger, "BATCH LOG get asset types by municipality f")(getAssetTypesByMunicipalityF(municipality, linkIds))
+    val assetOnMunicipalityVerification = LogUtils.time(logger, "BATCH LOG get verification info")(getVerificationInfo(municipality))
 
     val (toUpdate, toInsert) =  assetsInfo.partition{ case(_, typeId, _, _, _, _) => assetOnMunicipalityVerification.map(_._2).contains(typeId)}
 
-    toUpdate.foreach { case (municipalityCode, typeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
-      updateAssetTypeVerification(municipalityCode, typeId, modifiedBy, modifiedDate, counter, refreshDate, suggestedAssets)
-    }
-
-    toInsert.foreach {case (municipalityCode, typeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
-      insertAssetTypeVerification(municipalityCode, typeId, None, modifiedBy, modifiedDate, counter, refreshDate, suggestedAssets)
-    }
+    LogUtils.time(logger, "BATCH LOG update asset type verification")(
+      if (toUpdate.nonEmpty) dao.updateAssetTypeVerifications(toUpdate, refreshDate)
+    )
+    LogUtils.time(logger, "BATCH LOG insert asset type verification")(
+      if (toInsert.nonEmpty) dao.insertAssetTypeVerifications(toInsert, refreshDate)
+    )
   }
 
   def getRefreshedAssetTypesByMunicipality(municipalityCode : Int,  getRoadLink: Int => Seq[RoadLink]): Seq[VerificationInfo] = {
