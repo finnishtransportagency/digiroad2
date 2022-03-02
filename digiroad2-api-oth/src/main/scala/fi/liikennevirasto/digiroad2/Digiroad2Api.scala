@@ -692,7 +692,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   protected def lanesWithRoadlink(linkIds: Seq[RoadLink]): Seq[RoadLink]= {
     val lanes = laneService.fetchExistingLanesByLinkIds(linkIds.map(_.linkId))
     val lanesByLink = lanes.groupBy(_.linkId)
-    linkIds.map(r => r.copy(lanes=lanesByLink(r.linkId)))
+    linkIds.map(r => r.copy(lanes=lanesByLink.getOrElse(r.linkId,Seq())))
   }
 
   /**
