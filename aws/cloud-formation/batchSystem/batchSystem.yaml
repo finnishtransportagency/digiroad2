@@ -240,7 +240,7 @@ Resources:
             Fn::GetAtt:
               - "Batch-Add-Jobs-To-Queue"
               - "Arn"
-          Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type":"annual"}
+          Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"annual"}
 
 
   Prod-Run-Monthly-Batch:
@@ -254,7 +254,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type":"monthly"}
+        Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"monthly"}
 
   Prod-Run-Weekly-Batch:
     Type: AWS::Events::Rule
@@ -267,7 +267,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type": "weekly" }
+        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "weekly" }
 
   Prod-Run-Daily-Batch:
     Type: AWS::Events::Rule
@@ -280,7 +280,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type": "daily" }
+        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "daily" }
 
   #QA Batch Events
   QA-Run-Annual-Batch:
@@ -294,7 +294,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "annual" }
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "annual" }
 
   QA-Run-Monthly-Batch:
     Type: AWS::Events::Rule
@@ -307,7 +307,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "monthly" }
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "monthly" }
 
   QA-Run-Weekly-Batch:
     Type: AWS::Events::Rule
@@ -320,7 +320,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "weekly" }
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "weekly" }
 
   QA-Run-Daily-Batch:
     Type: AWS::Events::Rule
@@ -333,7 +333,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "daily" }
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "daily" }
 
   #DEV Batch Events
   DEV-Run-Annual-Batch:
@@ -347,7 +347,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "annual" }
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "annual" }
 
   DEV-Run-Monthly-Batch:
     Type: AWS::Events::Rule
@@ -360,7 +360,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "monthly" }
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "monthly" }
 
   DEV-Run-Weekly-Batch:
     Type: AWS::Events::Rule
@@ -373,7 +373,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "weekly" }
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "weekly" }
 
   DEV-Run-Daily-Batch:
     Type: AWS::Events::Rule
@@ -386,7 +386,7 @@ Resources:
           Fn::GetAtt:
             - "Batch-Add-Jobs-To-Queue"
             - "Arn"
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "daily" }
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "daily" }
 
 
 
