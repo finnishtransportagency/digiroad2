@@ -651,15 +651,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
-    val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
-    validateBoundingBox(boundingRectangle)
-    val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH")(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
-    val roadLinks = if(withRoadAddress) {
-      val viiteInformation = LogUtils.time(logger, "TEST LOG Get Viite road address for links")(roadAddressService.roadLinkWithRoadAddress(roadLinkSeq))
-      val vkmInformation = LogUtils.time(logger, "TEST LOG Get Temp road address for links")(roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
-      viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
-    } else roadLinkSeq
-    LogUtils.time(logger, "TEST LOG Partition roadLinks")(partitionRoadLinks(roadLinks,withLaneInfo = withLaneInfo))
+    LogUtils.time(logger,"TEST LOG total TIME"){
+      val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
+      validateBoundingBox(boundingRectangle)
+      val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH")(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
+      val roadLinks = if(withRoadAddress) {
+        val viiteInformation = LogUtils.time(logger, "TEST LOG Get Viite road address for links")(roadAddressService.roadLinkWithRoadAddress(roadLinkSeq))
+        val vkmInformation = LogUtils.time(logger, "TEST LOG Get Temp road address for links")(roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
+        viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
+      } else roadLinkSeq
+      LogUtils.time(logger, "TEST LOG Partition roadLinks")(partitionRoadLinks(roadLinks,withLaneInfo = withLaneInfo))
+    }
   }
 
   private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
