@@ -227,7 +227,169 @@ Resources:
               name: "$.detail.jobName"
               queue: "$.detail.jobQueue"
               reason: "$.detail.statusReason"
-              
+
+  #Prod Batch Events
+  Prod-Run-Annual-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run annual Prod batches"
+      ScheduleExpression: "cron(30 0 1 1 ? *)"
+      State: "ENABLED"
+      Targets:
+          Arn:
+            Fn::GetAtt:
+              - "Batch-Add-Jobs-To-Queue"
+              - "Arn"
+          Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type":"annual"}
+
+
+  Prod-Run-Monthly-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run monthly Prod batches"
+      ScheduleExpression: "cron(30 0 15 * ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type":"monthly"}
+
+  Prod-Run-Weekly-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run weekly Prod batches"
+      ScheduleExpression: "cron(0 2 ? * 7 *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type": "weekly" }
+
+  Prod-Run-Daily-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run daily Prod batches"
+      ScheduleExpression: "cron(30 0 * * ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "jobQueue": "DailyQueue", "type": "daily" }
+
+  #QA Batch Events
+  QA-Run-Annual-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run annual QA batches"
+      ScheduleExpression: "cron(30 0 1 1 ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "annual" }
+
+  QA-Run-Monthly-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run monthly QA batches"
+      ScheduleExpression: "cron(30 0 15 * ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "monthly" }
+
+  QA-Run-Weekly-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run weekly Prod batches"
+      ScheduleExpression: "cron(0 2 ? * 7 *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "weekly" }
+
+  QA-Run-Daily-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run daily QA batches"
+      ScheduleExpression: "cron(30 0 * * ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "jobQueue": "DailyQueue", "type": "daily" }
+
+  #DEV Batch Events
+  DEV-Run-Annual-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run annual DEV batches"
+      ScheduleExpression: "cron(30 0 1 1 ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "annual" }
+
+  DEV-Run-Monthly-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run monthly DEV batches"
+      ScheduleExpression: "cron(30 0 15 * ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "monthly" }
+
+  DEV-Run-Weekly-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run weekly DEV batches"
+      ScheduleExpression: "cron(0 2 ? * 7 *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "weekly" }
+
+  DEV-Run-Daily-Batch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run daily DEV batches"
+      ScheduleExpression: "cron(30 0 * * ? *)"
+      State: "ENABLED"
+      Targets:
+        Arn:
+          Fn::GetAtt:
+            - "Batch-Add-Jobs-To-Queue"
+            - "Arn"
+        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "jobQueue": "DailyQueue", "type": "daily" }
+
+
+
 Outputs:
   BatchTaskRoleARN:
     Description: BatchTaskRole
