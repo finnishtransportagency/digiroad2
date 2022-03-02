@@ -36,25 +36,24 @@
             console.log("error");
           });
     };
-
+    function validatelaneInfoBoolean(laneInfo) {
+      return !_.isUndefined(laneInfo) && laneInfo !==null && !_.isNaN(laneInfo)|| _.isBoolean(laneInfo)? laneInfo : false;
+    }
     this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox,laneInfo) {
-      var laneInfoSend =!_.isUndefined(laneInfo) && laneInfo !==null && !_.isNaN(laneInfo)|| _.isBoolean(laneInfo)? laneInfo : false;
       return validateBoundingBox(boundingBox,{
-        url: 'api/roadlinks?bbox=' + boundingBox +'&laneInfo='+laneInfoSend
+        url: 'api/roadlinks?bbox=' + boundingBox +'&laneInfo='+validatelaneInfoBoolean(laneInfo)
       });
     });
 
     this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox,laneInfo) {
-      var laneInfoSend =!_.isUndefined(laneInfo) && laneInfo !==null && !_.isNaN(laneInfo)|| _.isBoolean(laneInfo)? laneInfo : false;
       return validateBoundingBox(boundingBox,{
-        url: 'api/roadlinks/history?bbox=' + boundingBox+'&laneInfo='+laneInfoSend
+        url: 'api/roadlinks/history?bbox=' + boundingBox+'&laneInfo='+validatelaneInfoBoolean(laneInfo)
       });
     });
 
     this.getRoadLinksWithComplementary = createCallbackRequestor(function (boundingBox,laneInfo) {
-      var laneInfoSend = !_.isUndefined(laneInfo) && laneInfo !==null && !_.isNaN(laneInfo)|| _.isBoolean(laneInfo)? laneInfo : false;
       return validateBoundingBox(boundingBox,{
-        url: 'api/roadlinks/complementaries?bbox=' + boundingBox+'&laneInfo='+laneInfoSend
+        url: 'api/roadlinks/complementaries?bbox=' + boundingBox+'&laneInfo='+validatelaneInfoBoolean(laneInfo)
       });
     });
 
@@ -865,15 +864,15 @@
 
     function createCallbackRequestor(getParameters) {
         var requestor = latestResponseRequestor(getParameters);
-        return function (parameter, callback, laneinfo) {
-            requestor(parameter,laneinfo).then(callback);
+        return function (parameter, callback, laneInfo) {
+            requestor(parameter,laneInfo).then(callback);
         };
     }
 
     function createCallbackRequestorWithParameters(getParameters) {
         var requestor = latestResponseRequestor(getParameters);
-        return function(parameter, callback,laneinfo) {
-            requestor(parameter,laneinfo).then(callback);
+        return function(parameter, callback,laneInfo) {
+            requestor(parameter,laneInfo).then(callback);
         };
     }
 

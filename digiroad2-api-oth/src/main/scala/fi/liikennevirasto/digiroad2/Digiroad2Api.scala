@@ -694,7 +694,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   protected def lanesWithRoadlink(linkIds: Seq[RoadLink]): Seq[RoadLink]= {
     val lanes = laneService.fetchExistingLanesByLinkIds(linkIds.map(_.linkId))
     val lanesByLink = lanes.groupBy(_.linkId)
-    linkIds.map(r => r.copy(lanes=lanesByLink(r.linkId)))
+    linkIds.map(r => r.copy(lanes=lanesByLink.getOrElse(r.linkId,Seq())))
   }
 
   /**
@@ -813,8 +813,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks/adjacents/:ids") {
     val user = userProvider.getCurrentUser()
     val ids = params("ids").split(',').map(_.toLong)
-    val link = roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).values.head
-    roadLinkToApiWithLaneInfo(link)
+    val links = roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).values.head
+    roadLinkToApiWithLaneInfo(links)
   }
 
   get("/roadlinks/complementaries"){
