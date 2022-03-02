@@ -1526,5 +1526,43 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       linkTypes.size should be (3)
     }
   }
-  
+
+  test("fetchRoadLinkPropertyRows") {
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+
+    val service = new TestService(mockVVHClient, mockEventBus)
+    runWithRollback {
+
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by,modified_Date) values (nextval('primary_key_seq'), 1, ${TrafficDirection.TowardsDigitizing.value}, 'test','2015-03-26 11:57:29.557' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by,modified_Date) values (nextval('primary_key_seq'), 2, ${TrafficDirection.TowardsDigitizing.value}, 'test','2015-03-26 11:56:29.557' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by,modified_Date) values (nextval('primary_key_seq'), 3, ${TrafficDirection.TowardsDigitizing.value}, 'test','2015-03-26 11:57:29.557' )""".execute
+      sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by,modified_Date) values (nextval('primary_key_seq'), 4, ${TrafficDirection.TowardsDigitizing.value}, 'test','2015-03-26 11:40:29.557' )""".execute
+
+      sqlu"""insert into functional_class (id, link_id, functional_class, modified_by,modified_Date) values (nextval('primary_key_seq'), 1, ${AnotherPrivateRoad.value}, 'test','2015-03-26 11:20:29.557' )""".execute
+      sqlu"""insert into functional_class (id, link_id, functional_class, modified_by,modified_Date) values (nextval('primary_key_seq'), 2, ${AnotherPrivateRoad.value}, 'test','2015-03-26 11:10:29.557' )""".execute
+      sqlu"""insert into functional_class (id, link_id, functional_class, modified_by,modified_Date) values (nextval('primary_key_seq'), 3, ${AnotherPrivateRoad.value}, 'test','2015-03-26 11:52:29.557' )""".execute
+      sqlu"""insert into functional_class (id, link_id, functional_class, modified_by,modified_Date) values (nextval('primary_key_seq'), 4, ${AnotherPrivateRoad.value}, 'test','2015-03-26 11:54:29.557' )""".execute
+
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by,modified_Date) values (nextval('primary_key_seq'), 1, ${Freeway.value}, 'test','2015-03-26 11:1:29.557' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by,modified_Date) values (nextval('primary_key_seq'), 2, ${Freeway.value}, 'test','2015-03-26 11:7:29.557' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by,modified_Date) values (nextval('primary_key_seq'), 3, ${Freeway.value}, 'test','2015-03-26 11:5:29.557' )""".execute
+      sqlu"""insert into link_type (id, link_id, link_type, modified_by,modified_Date) values (nextval('primary_key_seq'), 4, ${Freeway.value}, 'test','2015-03-26 11:3:29.557' )""".execute
+
+      sqlu"""insert into administrative_class (id, link_id, administrative_class, created_by,created_Date) values (nextval('primary_key_seq'), 1, ${Municipality.value}, 'test','2015-03-26 11:7:29.557' )""".execute
+      sqlu"""insert into administrative_class (id, link_id, administrative_class, created_by,created_Date) values (nextval('primary_key_seq'), 2, ${Municipality.value}, 'test','2015-03-26 11:6:29.557' )""".execute
+      sqlu"""insert into administrative_class (id, link_id, administrative_class, created_by,created_Date) values (nextval('primary_key_seq'), 3, ${Municipality.value}, 'test','2015-03-26 11:1:29.557' )""".execute
+      sqlu"""insert into administrative_class (id, link_id, administrative_class, created_by,created_Date) values (nextval('primary_key_seq'), 4, ${Municipality.value}, 'test','2015-03-26 11:3:29.557' )""".execute
+
+      val propeties = service.fetchRoadLinkPropertyRows(Set(1, 2, 3, 4))
+
+      propeties.trafficDirectionRowsByLinkId.size should be(4)
+      propeties.functionalClassRowsByLinkId.size should be(4)
+      propeties.linkTypeRowsByLinkId.size should be(4)
+      propeties.administrativeClassRowsByLinkId.size should be(4)
+      propeties.latestModifications(1) should be(Some(new DateTime("2015-03-26T11:57:29.557+02:00"), "test"))
+
+    }
+
+  }
 }

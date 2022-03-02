@@ -793,30 +793,29 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
                                         trafficDirection:TrafficDirectionRoadlinkData,
                                         functionalClass:FunctionalClassRoadlinkData,
                                         linkType:LinkTypeRoadlinkData,
-                                        administrativeClass: AdministrativeClassRoadlinkData
-                                       )
+                                        administrativeClass: AdministrativeClassRoadlinkData)
 
   implicit val getroadlinkOverrideProperties: GetResult[RoadlinkOverrideProperties] = new GetResult[RoadlinkOverrideProperties] {
     def apply(r: PositionedResult): RoadlinkOverrideProperties = {
       val linkId = r.nextLong
       val traffic_direction_link_id:Option[Long] =r.nextLongOption()
       val traffic_direction_value:Option[Int] =r.nextIntOption()
-      val traffic_direction_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val traffic_direction_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
       val traffic_direction_modified_by:Option[String] =r.nextStringOption()
 
       val functional_class_link_id:Option[Long] =r.nextLongOption()
       val functional_class_value:Option[Int] =r.nextIntOption()
-      val functional_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val functional_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
       val functional_class_modified_by:Option[String] =r.nextStringOption()
 
       val link_type_link_id:Option[Long] =r.nextLongOption()
       val link_type_value:Option[Int] =r.nextIntOption()
-      val link_type_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val link_type_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
       val link_type_modified_by:Option[String] =r.nextStringOption()
 
       val administrative_class_link_id:Option[Long] =r.nextLongOption()
       val administrative_class_value:Option[Int] =r.nextIntOption()
-      val administrative_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextDate()))
+      val administrative_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
       val administrative_class_modified_by:Option[String] =r.nextStringOption()
 
       RoadlinkOverrideProperties(linkId, 
@@ -1541,7 +1540,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val modifiedDate:DateTime
     val modifiedBy:String
   }  
-  case class RoadLinkPropertyRowBase(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
   case class TrafficDirectionRoadLinkPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow 
   case class FunctionalPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow 
   case class LinkTypePropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
@@ -1590,7 +1588,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
 
       val modifications = List(functionalClassRowOption, trafficDirectionRowOption, linkTypeRowOption, administrativeRowOption).map {
-        case Some(RoadLinkPropertyRowBase(_, _, at, by)) => Some((at, by))
+        case Some(TrafficDirectionRoadLinkPropertyRow(_, _, at, by)) => Some((at, by))
+        case Some(FunctionalPropertyRow(_, _, at, by)) => Some((at, by))
+        case Some(LinkTypePropertyRow(_, _, at, by)) => Some((at, by))
+        case Some(AdministrativeClassPropertyRow(_, _, at, by)) => Some((at, by))
         case _ => None
       } :+ optionalModification
       modifications.reduce(calculateLatestModifications)
