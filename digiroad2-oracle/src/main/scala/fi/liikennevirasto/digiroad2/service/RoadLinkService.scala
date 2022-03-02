@@ -180,6 +180,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * Returns the road link ids from VVH by municipality.
+   *
+    * @param municipality A integer, representative of the municipality Id.
+    */
+  def getRoadLinksIdsFromVVHByMunicipality(municipality: Int): Seq[Long] = {
+    val vvhRoadLinks = vvhClient.roadLinkData.fetchByMunicipality(municipality)
+    vvhRoadLinks.map(_.linkId)
+  }
+
+  /**
     * ATENTION Use this method always with transation not with session
     * Returns the road links and changes from VVH by municipality.
     *

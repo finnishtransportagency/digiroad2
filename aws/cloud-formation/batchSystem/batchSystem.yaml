@@ -38,6 +38,16 @@ Resources:
           ComputeEnvironment:
             Ref: QAComputeEnviroment
 
+  ProdJobQueueAdHoc:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "Prod-adhoc"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ProdComputeEnviroment
+
   DEVJobQueue:
     Type: AWS::Batch::JobQueue
     Properties:
@@ -57,6 +67,16 @@ Resources:
         - Order: 1
           ComputeEnvironment:
             Ref: QAComputeEnviroment
+
+  ProdJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: "Prod-JobQueue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment:
+            Ref: ProdComputeEnviroment
 
   DEVComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
@@ -107,6 +127,31 @@ Resources:
       GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
       GroupName: QA-BatchSecurityGroup
       VpcId: !Ref QAVpcIDOfSystem
+
+  ProdComputeEnviroment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      ComputeEnvironmentName: "Prod-BatchCompute"
+      ComputeResources:
+        Type: FARGATE
+        MaxvCpus: 32
+        Subnets:
+          - Fn::ImportValue:
+              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet1-Id' ] ]
+          - Fn::ImportValue:
+              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet2-Id' ] ]
+        SecurityGroupIds:
+          - !Ref ProdBatchSecurityGroup
+      ServiceRole:
+        Ref: BatchServiceRole
+
+  ProdBatchSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
+      GroupName: Prod-BatchSecurityGroup
+      VpcId: !Ref DEVVpcIDOfSystem
       
   BatchTaskRole:
     Type: AWS::IAM::Role

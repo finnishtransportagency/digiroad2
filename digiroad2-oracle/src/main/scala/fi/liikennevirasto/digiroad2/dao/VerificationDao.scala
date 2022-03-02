@@ -194,17 +194,56 @@ class VerificationDao {
     id
   }
 
-  def updateAssetTypeVerification(municipalityId: Int, assetTypeId: Int, lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAsset: Int, refreshDate: Option[DateTime], suggestedAssets: String): Unit = {
-    sqlu"""update municipality_verification
-           set last_user_modification = $lastUserModification,
-               last_date_modification = $lastDateModification,
-               number_of_assets = $numberOfAsset,
-               refresh_date = $refreshDate,
-               suggested_assets = $suggestedAssets
-         where municipality_id = $municipalityId
-           and asset_type_id = $assetTypeId
-           and valid_to is null
-      """.execute
+  def insertAssetTypeVerifications(toInsert: Seq[(Int, Int, Int, Option[String], Option[DateTime], String)],
+                                   refreshDate: Option[DateTime]): Unit = {
+    val query =
+      """
+        insert into municipality_verification (id, municipality_id, asset_type_id, verified_by, verified_date, last_user_modification, last_date_modification, number_of_assets, refresh_date, suggested_assets)
+        values (nextval('primary_key_seq'), (?), (?), (?), to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"+"TZH:TZM'), (?), to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"+"TZH:TZM'), (?), to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"+"TZH:TZM'), (?))"""
+
+    MassQuery.executeBatch(query) { statement =>
+      toInsert.foreach {
+        case (municipalityCode, assetTypeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
+          statement.setInt(1, municipalityCode)
+          statement.setInt(2, assetTypeId)
+          statement.setNull(3, java.sql.Types.VARCHAR)
+          statement.setNull(4, java.sql.Types.TIMESTAMP)
+          if (modifiedBy.nonEmpty) statement.setString(5, modifiedBy.get) else statement.setNull(5, java.sql.Types.VARCHAR)
+          if (modifiedDate.nonEmpty) statement.setString(6, modifiedDate.get.toString) else statement.setNull(6, java.sql.Types.TIMESTAMP)
+          statement.setInt(7, counter)
+          if (refreshDate.nonEmpty) statement.setString(8, refreshDate.get.toString) else statement.setNull(8, java.sql.Types.TIMESTAMP)
+          statement.setString(9, suggestedAssets)
+          statement.addBatch()
+      }
+    }
+  }
+
+  def updateAssetTypeVerifications(toUpdate: Seq[(Int, Int, Int, Option[String], Option[DateTime], String)],
+                                   refreshDate: Option[DateTime]): Unit = {
+    val query = """
+        update municipality_verification
+        set last_user_modification = (?),
+            last_date_modification = to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"+"TZH:TZM'),
+            number_of_assets = (?),
+            refresh_date = to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"+"TZH:TZM'),
+            suggested_assets = (?)
+        where municipality_id = (?)
+            and asset_type_id = (?)
+            and valid_to is null"""
+
+    MassQuery.executeBatch(query) { statement =>
+      toUpdate.foreach {
+        case (municipalityCode, assetTypeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
+          if (modifiedBy.nonEmpty) statement.setString(1, modifiedBy.get) else statement.setNull(1, java.sql.Types.VARCHAR)
+          if (modifiedDate.nonEmpty) statement.setString(2, modifiedDate.get.toString) else statement.setNull(2, java.sql.Types.TIMESTAMP)
+          statement.setLong(3, counter)
+          if (refreshDate.nonEmpty) statement.setString(4, refreshDate.get.toString) else statement.setNull(4, java.sql.Types.TIMESTAMP)
+          statement.setString(5, suggestedAssets)
+          statement.setInt(6, municipalityCode)
+          statement.setInt(7, assetTypeId)
+          statement.addBatch()
+      }
+    }
   }
 
   def expireAssetTypeVerification(municipalityCode: Int, assetTypeCode: Int, userName: String) = {
@@ -271,10 +310,18 @@ class VerificationDao {
     }
   }
 
-  def insertAssetModified(municipalityCode: Int, latestModificationInfo: LatestModificationInfo): Unit = {
-    sqlu"""
-      insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
-      values ($municipalityCode, ${latestModificationInfo.assetTypeCode}, ${latestModificationInfo.modifiedBy}, ${latestModificationInfo.modifiedDate})
-    """.execute
+  def insertModifiedAssetTypes(municipalityCode: Int, modificationInfo: Seq[LatestModificationInfo]): Unit = {
+    val query = s"""
+        insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+        values ($municipalityCode, (?), (?), to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.FF3"+"TZH:TZM'))"""
+
+    MassQuery.executeBatch(query) { statement =>
+      modificationInfo.foreach { info =>
+        statement.setInt(1, info.assetTypeCode)
+        if (info.modifiedBy.nonEmpty) statement.setString(2, info.modifiedBy.get) else statement.setNull(2, java.sql.Types.VARCHAR)
+        if (info.modifiedDate.nonEmpty) statement.setString(3, info.modifiedDate.get.toString) else statement.setNull(3, java.sql.Types.TIMESTAMP)
+        statement.addBatch()
+      }
+    }
   }
 }

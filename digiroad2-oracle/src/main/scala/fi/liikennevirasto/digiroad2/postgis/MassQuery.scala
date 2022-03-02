@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import java.sql.PreparedStatement
 
 object MassQuery {
   def withIds[T](ids: Set[Long])(f: String => T): T = {
@@ -40,6 +41,16 @@ object MassQuery {
           insertLinkIdPS.close()
         }
       }
+    }
+  }
+
+  def executeBatch[T](query: String)(f: PreparedStatement => T): Unit = {
+    val statement = dynamicSession.prepareStatement(query)
+    try {
+      f(statement)
+      statement.executeBatch()
+    } finally {
+      statement.close()
     }
   }
 }

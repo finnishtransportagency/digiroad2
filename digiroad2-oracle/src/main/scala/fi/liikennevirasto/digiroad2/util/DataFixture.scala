@@ -33,6 +33,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.sys.exit
@@ -42,6 +43,8 @@ object DataFixture {
   val TestAssetId = 300000
 
   val dataImporter = new AssetDataImporter
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   lazy val vvhClient: VVHClient = {
     new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -1719,11 +1722,13 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] = PostGISDatabase.withDynSession { Queries.getMunicipalities  }
+    var counter = 0
     PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
-        println(s"Working on municipality : $municipality")
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
-        verificationService.refreshVerificationInfo(municipality, roadLinks.map(_.linkId), Some(DateTime.now()))
+        counter += 1
+        println(s"Working on municipality $municipality ($counter/${municipalities.size})")
+        val roadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
+        verificationService.refreshVerificationInfo(municipality, roadLinkIds, Some(DateTime.now()))
       }
     }
 
@@ -1958,16 +1963,20 @@ object DataFixture {
     println("Municipalities fetched after: " + DateTime.now())
     println("\n")
 
-
+    var counter = 0
     municipalities.foreach { municipality =>
       PostGISDatabase.withDynTransaction {
-        println("Working on municipality " + municipality)
-        val municipalityRoadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).toSet
-        val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinks.map(_.linkId))
+        counter += 1
+        println(s"Working on municipality $municipality ($counter/${municipalities.size})")
+        val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
+        val modifiedAssetTypes = LogUtils.time(logger, "BATCH LOG get modified asset types")(
+          verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
+        )
 
-        modifiedAssetTypes.foreach { asset =>
-          verificationService.dao.insertAssetModified(municipality, asset)
-        }
+        LogUtils.time(logger, "BATCH LOG insert modified asset types")(
+          verificationService.dao.insertModifiedAssetTypes(municipality, modifiedAssetTypes)
+        )
+
         println("Modified assets transferred for municipality " + municipality + " in " + DateTime.now())
         println("\n")
       }
