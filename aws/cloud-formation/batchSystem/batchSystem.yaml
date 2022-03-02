@@ -16,6 +16,9 @@ Parameters:
   SNSTopicName:
     Type: String
     Description: Name of SNS topic
+  BatchLambdaArn:
+    Type: String
+    Description: ARN of lambda function which adds jobs to queue
 
 Resources:
   DEVJobQueueAdHoc:
@@ -236,10 +239,7 @@ Resources:
       ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
-          Arn:
-            Fn::GetAtt:
-              - "Batch-Add-Jobs-To-Queue"
-              - "Arn"
+          Arn: !Ref BatchLambdaArn
           Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"annual"}
 
 
@@ -250,10 +250,7 @@ Resources:
       ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"monthly"}
 
   ProdRunWeeklyBatch:
@@ -263,10 +260,7 @@ Resources:
       ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "weekly" }
 
   ProdRunDailyBatch:
@@ -276,10 +270,7 @@ Resources:
       ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "daily" }
 
   #QA Batch Events
@@ -290,10 +281,7 @@ Resources:
       ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "annual" }
 
   QARunMonthlyBatch:
@@ -303,10 +291,7 @@ Resources:
       ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "monthly" }
 
   QARunWeeklyBatch:
@@ -316,10 +301,7 @@ Resources:
       ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "weekly" }
 
   QARunDailyBatch:
@@ -329,10 +311,7 @@ Resources:
       ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "daily" }
 
   #DEV Batch Events
@@ -343,10 +322,7 @@ Resources:
       ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "annual" }
 
   DEVRunMonthlyBatch:
@@ -356,10 +332,7 @@ Resources:
       ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "monthly" }
 
   DEVRunWeeklyBatch:
@@ -369,10 +342,7 @@ Resources:
       ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "weekly" }
 
   DEVRunDailyBatch:
@@ -382,10 +352,7 @@ Resources:
       ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
-        Arn:
-          Fn::GetAtt:
-            - "Batch-Add-Jobs-To-Queue"
-            - "Arn"
+        Arn: !Ref BatchLambdaArn
         Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "daily" }
 
 
