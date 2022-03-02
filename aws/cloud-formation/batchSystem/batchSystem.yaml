@@ -233,7 +233,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run annual Prod batches"
-      ScheduleExpression: "cron(30 0 1 1 ? *)"
+      ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
           Arn:
@@ -247,7 +247,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run monthly Prod batches"
-      ScheduleExpression: "cron(30 0 15 * ? *)"
+      ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -260,7 +260,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run weekly Prod batches"
-      ScheduleExpression: "cron(0 2 ? * 7 *)"
+      ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -273,7 +273,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily Prod batches"
-      ScheduleExpression: "cron(30 0 * * ? *)"
+      ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -287,7 +287,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run annual QA batches"
-      ScheduleExpression: "cron(30 0 1 1 ? *)"
+      ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -300,7 +300,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run monthly QA batches"
-      ScheduleExpression: "cron(30 0 15 * ? *)"
+      ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -313,7 +313,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run weekly Prod batches"
-      ScheduleExpression: "cron(0 2 ? * 7 *)"
+      ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -326,7 +326,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily QA batches"
-      ScheduleExpression: "cron(30 0 * * ? *)"
+      ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -340,7 +340,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run annual DEV batches"
-      ScheduleExpression: "cron(30 0 1 1 ? *)"
+      ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -353,7 +353,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run monthly DEV batches"
-      ScheduleExpression: "cron(30 0 15 * ? *)"
+      ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -366,7 +366,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run weekly DEV batches"
-      ScheduleExpression: "cron(0 2 ? * 7 *)"
+      ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
         Arn:
@@ -379,7 +379,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily DEV batches"
-      ScheduleExpression: "cron(30 0 * * ? *)"
+      ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
         Arn:
