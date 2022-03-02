@@ -811,8 +811,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks/adjacents/:ids") {
     val user = userProvider.getCurrentUser()
     val ids = params("ids").split(',').map(_.toLong)
-    val link = roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).values.head
-    roadLinkToApiWithLaneInfo(link)
+    val links = roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).values.head
+    roadLinkToApiWithLaneInfo(links)
   }
 
   get("/roadlinks/complementaries"){
