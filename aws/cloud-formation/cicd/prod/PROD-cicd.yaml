@@ -24,6 +24,9 @@ Parameters:
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
+  ProdEcrUri:
+    Type: String
+    Description: URI of production ECR repository
 
 Resources:
 
@@ -193,6 +196,8 @@ Resources:
         EnvironmentVariables:
           - Name: ECR_REPOSITORY_URI
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
+          - Name: ECR_PROD_URI
+            Value: "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2"
           - Name: ECS_CONTAINER_NAME
             Value: !Ref ApplicationName
       Artifacts:
@@ -215,6 +220,7 @@ Resources:
                 - docker pull $ECR_REPOSITORY_URI:qa
                 - docker tag  $ECR_REPOSITORY_URI:qa $ECR_PROD_URI:prod
                 - docker push $ECR_PROD_URI:prod
+                - docker push $ECR_REPOSITORY_URI:prod
             post_build:
               commands:
                 - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $ECR_PROD_URI:prod > imagedefinitions.json
