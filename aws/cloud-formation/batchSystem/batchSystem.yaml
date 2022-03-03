@@ -239,8 +239,10 @@ Resources:
       ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
+        -
           Arn: !Ref BatchLambdaArn
-          Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"annual"}
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"annual\"}"
+          Id: "ProdAnnualLambda"
 
 
   ProdRunMonthlyBatch:
@@ -250,8 +252,10 @@ Resources:
       ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: {"jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type":"monthly"}
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"monthly\"}"
+          Id: "ProdMonthlyLambda"
 
   ProdRunWeeklyBatch:
     Type: AWS::Events::Rule
@@ -260,8 +264,10 @@ Resources:
       ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "weekly" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"weekly\"}"
+          Id: "ProdWeeklyLambda"
 
   ProdRunDailyBatch:
     Type: AWS::Events::Rule
@@ -270,8 +276,10 @@ Resources:
       ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "Prod", "jobDefinition": "ProdBatchJobDefinition", "type": "daily" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"daily\"}"
+          Id: "ProdDailyLambda"
 
   #QA Batch Events
   QARunAnnualBatch:
@@ -281,8 +289,10 @@ Resources:
       ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "annual" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"annual\" }"
+          Id: "QAAnnualLambda"
 
   QARunMonthlyBatch:
     Type: AWS::Events::Rule
@@ -291,8 +301,11 @@ Resources:
       ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "monthly" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"monthly\" }"
+          Id: "QAMonthlyLambda"
+
 
   QARunWeeklyBatch:
     Type: AWS::Events::Rule
@@ -301,8 +314,10 @@ Resources:
       ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "weekly" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"weekly\" }"
+          Id: "QAWeeklyLambda"
 
   QARunDailyBatch:
     Type: AWS::Events::Rule
@@ -311,8 +326,10 @@ Resources:
       ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "QA", "jobDefinition": "QABatchDefinition", "type": "daily" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"daily\" }"
+          Id: "QADailyLambda"
 
   #DEV Batch Events
   DEVRunAnnualBatch:
@@ -322,8 +339,10 @@ Resources:
       ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "annual" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"annual\" }"
+          Id: "DEVAnnualLambda"
 
   DEVRunMonthlyBatch:
     Type: AWS::Events::Rule
@@ -332,8 +351,10 @@ Resources:
       ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "monthly" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"monthly\" }"
+          Id: "DEVMonthlyLambda"
 
   DEVRunWeeklyBatch:
     Type: AWS::Events::Rule
@@ -342,8 +363,10 @@ Resources:
       ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "weekly" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"weekly\" }"
+          Id: "DEVWeeklyLambda"
 
   DEVRunDailyBatch:
     Type: AWS::Events::Rule
@@ -352,8 +375,10 @@ Resources:
       ScheduleExpression: "cron(30 22 * * ? *)"
       State: "ENABLED"
       Targets:
-        Arn: !Ref BatchLambdaArn
-        Input: { "jobName": "DEV", "jobDefinition": "DEVBatchDefinition", "type": "daily" }
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"daily\" }"
+          Id: "DEVDailyLambda"
 
 
 
