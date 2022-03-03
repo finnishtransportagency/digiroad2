@@ -24,9 +24,6 @@ Parameters:
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
-  ProdEcrUri:
-    Type: String
-    Description: URI of production ECR repository
 
 Resources:
 
