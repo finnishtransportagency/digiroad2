@@ -36,22 +36,24 @@
             console.log("error");
           });
     };
-
-    this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox) {
+    function validatelaneInfoBoolean(laneInfo) {
+      return !_.isUndefined(laneInfo) && laneInfo !==null && !_.isNaN(laneInfo)|| _.isBoolean(laneInfo)? laneInfo : false;
+    }
+    this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox,laneInfo) {
       return validateBoundingBox(boundingBox,{
-        url: 'api/roadlinks?bbox=' + boundingBox
+        url: 'api/roadlinks?bbox=' + boundingBox +'&laneInfo='+validatelaneInfoBoolean(laneInfo)
       });
     });
 
-    this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox) {
+    this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox,laneInfo) {
       return validateBoundingBox(boundingBox,{
-        url: 'api/roadlinks/history?bbox=' + boundingBox
+        url: 'api/roadlinks/history?bbox=' + boundingBox+'&laneInfo='+validatelaneInfoBoolean(laneInfo)
       });
     });
 
-    this.getRoadLinksWithComplementary = createCallbackRequestor(function (boundingBox) {
+    this.getRoadLinksWithComplementary = createCallbackRequestor(function (boundingBox,laneInfo) {
       return validateBoundingBox(boundingBox,{
-        url: 'api/roadlinks/complementaries?bbox=' + boundingBox
+        url: 'api/roadlinks/complementaries?bbox=' + boundingBox+'&laneInfo='+validatelaneInfoBoolean(laneInfo)
       });
     });
 
@@ -862,15 +864,15 @@
 
     function createCallbackRequestor(getParameters) {
         var requestor = latestResponseRequestor(getParameters);
-        return function(parameter, callback) {
-            requestor(parameter).then(callback);
+        return function (parameter, callback, laneInfo) {
+            requestor(parameter,laneInfo).then(callback);
         };
     }
 
     function createCallbackRequestorWithParameters(getParameters) {
         var requestor = latestResponseRequestor(getParameters);
-        return function(parameter, callback) {
-            requestor(parameter).then(callback);
+        return function(parameter, callback,laneInfo) {
+            requestor(parameter,laneInfo).then(callback);
         };
     }
 
@@ -913,11 +915,11 @@
     };
 
     this.withRoadLinkData = function (roadLinkData) {
-      self.getRoadLinks = function(boundingBox, callback) {
+      self.getRoadLinks = function(boundingBox, callback,laneInfo) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
-      self.getRoadLinksWithComplementary = function(boundingBox, callback) {
+      self.getRoadLinksWithComplementary = function(boundingBox, callback,laneInfo) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };

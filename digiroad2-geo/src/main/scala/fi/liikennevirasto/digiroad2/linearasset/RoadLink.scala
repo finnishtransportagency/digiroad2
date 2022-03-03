@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.lane.PersistedLane
 
 import scala.util.Try
 
@@ -34,7 +35,7 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
                     attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
-                    linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
+                    linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface,lanes:Seq[PersistedLane]=Seq()) extends RoadLinkLike {
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
   def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue

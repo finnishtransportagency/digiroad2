@@ -213,6 +213,10 @@
     }
 
     this.refreshView = function() {
+      var laneInformationToolTip=false;
+      if (layerName =="trafficSigns"){
+        laneInformationToolTip=true;
+      }
       eventbus.once('roadLinks:fetched', function () {
         var roadLinks = roadCollection.getAll();
         roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
@@ -220,13 +224,13 @@
         selectControl.activate();
       });
       if(collection.complementaryIsActive()) {
-        roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
+        roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()),laneInformationToolTip);
         if (trafficSignReadOnlyLayer)
           trafficSignReadOnlyLayer.refreshView();
       }
       else
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
-      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter()).then(function(assets) {
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()),laneInformationToolTip);
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(),laneInformationToolTip).then(function(assets) {
         if (selectedAsset.exists()) {
           var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
           assets = assetsWithoutSelectedAsset.concat([selectedAsset.get()]);
