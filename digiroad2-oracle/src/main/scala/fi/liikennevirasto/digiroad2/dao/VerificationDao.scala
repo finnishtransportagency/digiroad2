@@ -269,12 +269,12 @@ class VerificationDao {
   def getModifiedAssetTypes(linkIds : Set[Long]) : List[LatestModificationInfo] = {
     val modifiedAssetTypes =
       if (linkIds.size > 15000) {
-        println(s"BATCH LOG Using mass query (${linkIds.size} links)")
+        logger.info(s"BATCH LOG Using mass query (${linkIds.size} links)")
         MassQuery.withIds(linkIds) { idTableName =>
           queryModifiedAssetTypes(s"select id from $idTableName")
         }
       } else {
-        println(s"BATCH LOG Querying with id list (${linkIds.size} links)")
+        logger.info(s"BATCH LOG Querying with id list (${linkIds.size} links)")
         queryModifiedAssetTypes(s"${linkIds.mkString(",")}")
       }
     modifiedAssetTypes.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
