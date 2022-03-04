@@ -36,7 +36,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
         queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by vvh_generated and not modified yet on the response. The value is False by default").optional,
         queryParam[String]("withGeometry").description("With the field withGeometry, we allow or not to print the geometry values for lane_information. The value is False by default").optional,
-        pathParam[String]("assetType").description("Asset type name to get the changes")
+        pathParam[String]("assetType").description("Asset type name to get the changes"),
+        headerParam[String]("X-API-Key").description("Authentication Api key")
       )
       tags "Change API"
       summary "List all changes per assets type between two specific dates."
@@ -49,7 +50,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     (apiOperation[Long]("getMassTransitStopsPrintedAtValluXML")
       .parameters(
         queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
-        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.")
+        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
+        headerParam[String]("X-API-Key").description("Authentication Api key")
       )
       tags "Change API"
       summary "List all Mass Transit Stops printed on Vally XML file between two specific dates."

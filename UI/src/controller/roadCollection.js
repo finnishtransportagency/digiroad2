@@ -92,7 +92,7 @@
       });
     };
 
-    this.fetch = function(boundingBox) {
+    this.fetch = function(boundingBox,laneInfo) {
       backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
           var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
             return roadLink.getId();
@@ -108,10 +108,10 @@
             });
           }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
-      });
+      },laneInfo);
     };
 
-    this.fetchHistory = function (boundingBox) {
+    this.fetchHistory = function (boundingBox,laneInfo) {
       backend.getHistoryRoadLinks(boundingBox, function (fetchedHistoryRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinksHistory(), function(roadLink) {
           return roadLink.getId();
@@ -127,10 +127,10 @@
           });
         }).concat(getSelectedRoadLinksHistory());
         eventbus.trigger('roadLinks:historyFetched');
-      });
+      },laneInfo);
     };
 
-    this.fetchWithComplementary = function(boundingBox) {
+    this.fetchWithComplementary = function(boundingBox,laneInfo) {
       backend.getRoadLinksWithComplementary(boundingBox, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
@@ -146,7 +146,7 @@
           });
         }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
-      });
+      },laneInfo);
     };
 
     this.getRoadsForPointAssets = function() {
