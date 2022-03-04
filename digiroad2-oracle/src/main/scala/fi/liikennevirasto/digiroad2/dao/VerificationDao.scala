@@ -266,9 +266,9 @@ class VerificationDao {
   def getModifiedAssetTypes(linkIds : Set[Long]) : List[LatestModificationInfo] = {
     val modifiedAssetTypes = MassQuery.withIds(linkIds) { idTableName =>
       sql"""
-           select assetTypeId, modifiedBy, modifiedDate
+           select assetTypeId, modifiedBy, date(modifiedDate)
            from (
-              select a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, max(TO_DATE(TO_CHAR(a.modified_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss')) as modifiedDate
+              select a.asset_type_id as assetTypeId, a.modified_by as modifiedBy, max(a.modified_date) as modifiedDate
               from asset a
               join asset_link al on a.id = al.asset_id
               join lrm_position lrm on lrm.id = al.position_id
