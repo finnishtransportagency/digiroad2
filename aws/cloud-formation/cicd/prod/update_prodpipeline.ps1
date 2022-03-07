@@ -1,0 +1,3 @@
+aws cloudformation create-stack --stack-name prodpipeline --capabilities CAPABILITY_NAMED_IAM --profile vaylaapp --region eu-west-1 --template-body file://aws/cloud-formation/cicd\prod/PROD-cicd.yaml --parameters file://aws/cloud-formation/cicd/prod/PROD-cicd-parameter.json
+
+aws cloudformation update-stack --stack-name prodpipeline --capabilities CAPABILITY_NAMED_IAM --profile vaylaapp --region eu-west-1 --template-body file://aws/cloud-formation/cicd\prod/PROD-cicd.yaml --parameters file://aws/cloud-formation/cicd/prod/PROD-cicd-parameter.json
