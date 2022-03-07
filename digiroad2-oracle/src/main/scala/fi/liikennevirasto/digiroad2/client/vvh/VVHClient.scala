@@ -2,11 +2,11 @@ package fi.liikennevirasto.digiroad2.client.vvh
 
 import java.net.URLEncoder
 import java.util.ArrayList
-
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -379,7 +379,7 @@ trait VVHClientOperations {
     } finally {
       response.close()
       val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
-      if(fetchVVHTimeSec > 5)
+      if(fetchVVHTimeSec > LogUtils.timeLoggingThresholdInMs*0.001)
         logger.info("fetch vvh took %.3f sec with the following url %s".format(fetchVVHTimeSec, url))
     }
   }
@@ -395,7 +395,7 @@ trait VVHClientOperations {
     } finally {
       response.close()
       val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
-      if(fetchVVHTimeSec > 5)
+      if(fetchVVHTimeSec > LogUtils.timeLoggingThresholdInMs*0.001)
         logger.info("fetch vvh took %.3f sec with the following url %s".format(fetchVVHTimeSec, url))
     }
   }
