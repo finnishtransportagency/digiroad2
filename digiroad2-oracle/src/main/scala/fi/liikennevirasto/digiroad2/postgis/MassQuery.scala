@@ -9,7 +9,7 @@ import java.sql.PreparedStatement
 object MassQuery {
   val logger = LoggerFactory.getLogger(getClass)
   def withIds[T](ids: Set[Long])(f: String => T): T = {
-    LogUtils.time(logger, "TEST LOG MassQuery withIds"){
+    LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.size}"){
       LogUtils.time(logger, "TEST LOG create TEMP_ID table"){
         sqlu"""
       CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_ID (
