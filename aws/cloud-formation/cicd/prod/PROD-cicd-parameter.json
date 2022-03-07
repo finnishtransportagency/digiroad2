@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "PipelineName",
+    "ParameterValue": "prodpipeline"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "EcrRepositoryName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "CodeBuildName",
+    "ParameterValue": "prod_tagging"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
+  },
+  {
+    "ParameterKey": "ProdEcrURI",
+    "ParameterValue": "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2"
+  }
+]

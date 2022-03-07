@@ -651,7 +651,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
-    LogUtils.time(logger,"TEST LOG total TIME"){
+    LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromVVH with bbox"){
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
       val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH")(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
