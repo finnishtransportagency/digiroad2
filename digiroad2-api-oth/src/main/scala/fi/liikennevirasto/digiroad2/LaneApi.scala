@@ -37,7 +37,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         queryParam[Int]("start_addrm").description("Starting distance on starting roadPart for search"),
         queryParam[Int]("end_part").description("Ending road part number for search"),
         queryParam[Int]("end_addrm").description("Ending distance on last road part for search"),
-        pathParam[String]("lanes_in_range").description("Path for getting lanes in given range")
+        headerParam[String]("X-API-Key").description("Authentication Api key")
       )
       tags "LaneApi"
       summary "Get lanes in given road address range in road address format"
@@ -49,7 +49,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     (apiOperation[Long]("getLanesInMunicipality")
       .parameters(
         queryParam[Int]("municipality").description("Municipality Code where we will get lanes from"),
-        pathParam[String]("lanes_in_municipality").description("Path for getting lanes in municipality")
+        headerParam[String]("X-API-Key").description("Authentication Api key")
       )
       tags "LaneApi"
       summary "Get lanes in given municipality"

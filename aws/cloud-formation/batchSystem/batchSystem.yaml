@@ -16,6 +16,9 @@ Parameters:
   SNSTopicName:
     Type: String
     Description: Name of SNS topic
+  BatchLambdaArn:
+    Type: String
+    Description: ARN of lambda function which adds jobs to queue
 
 Resources:
   DEVJobQueueAdHoc:
@@ -227,7 +230,255 @@ Resources:
               name: "$.detail.jobName"
               queue: "$.detail.jobQueue"
               reason: "$.detail.statusReason"
-              
+
+  #Prod Batch Events
+  ProdRunAnnualBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run annual Prod batches"
+      ScheduleExpression: "cron(30 22 L 12 ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"annual\"}"
+          Id: "ProdAnnualLambda"
+
+
+  ProdRunMonthlyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run monthly Prod batches"
+      ScheduleExpression: "cron(30 22 14 * ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"monthly\"}"
+          Id: "ProdMonthlyLambda"
+
+  ProdRunWeeklyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run weekly Prod batches"
+      ScheduleExpression: "cron(0 22 ? * 6 *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"weekly\"}"
+          Id: "ProdWeeklyLambda"
+
+  ProdRunDailyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run daily Prod batches"
+      ScheduleExpression: "cron(30 22 * * ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"daily\"}"
+          Id: "ProdDailyLambda"
+
+  #QA Batch Events
+  QARunAnnualBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run annual QA batches"
+      ScheduleExpression: "cron(30 22 L 12 ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"annual\" }"
+          Id: "QAAnnualLambda"
+
+  QARunMonthlyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run monthly QA batches"
+      ScheduleExpression: "cron(30 22 14 * ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"monthly\" }"
+          Id: "QAMonthlyLambda"
+
+
+  QARunWeeklyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run weekly Prod batches"
+      ScheduleExpression: "cron(0 22 ? * 6 *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"weekly\" }"
+          Id: "QAWeeklyLambda"
+
+  QARunDailyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run daily QA batches"
+      ScheduleExpression: "cron(30 22 * * ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"daily\" }"
+          Id: "QADailyLambda"
+
+  #DEV Batch Events
+  DEVRunAnnualBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run annual DEV batches"
+      ScheduleExpression: "cron(30 22 L 12 ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"annual\" }"
+          Id: "DEVAnnualLambda"
+
+  DEVRunMonthlyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run monthly DEV batches"
+      ScheduleExpression: "cron(30 22 14 * ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"monthly\" }"
+          Id: "DEVMonthlyLambda"
+
+  DEVRunWeeklyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run weekly DEV batches"
+      ScheduleExpression: "cron(0 22 ? * 6 *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"weekly\" }"
+          Id: "DEVWeeklyLambda"
+
+  DEVRunDailyBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run daily DEV batches"
+      ScheduleExpression: "cron(30 22 * * ? *)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !Ref BatchLambdaArn
+          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"daily\" }"
+          Id: "DEVDailyLambda"
+
+  #Lambda permissions for prod events
+  ProdAnnualLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ProdRunAnnualBatch.Arn
+
+  ProdMonthlyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ProdRunMonthlyBatch.Arn
+
+  ProdWeeklyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ProdRunWeeklyBatch.Arn
+
+  ProdDailyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ProdRunDailyBatch.Arn
+
+  #Lambda permissions for QA events
+  QAAnnualLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt QARunAnnualBatch.Arn
+
+  QAMonthlyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt QARunMonthlyBatch.Arn
+
+  QAWeeklyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt QARunWeeklyBatch.Arn
+
+  QADailyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt QARunDailyBatch.Arn
+
+  #Lambda permissions for DEV events
+  DEVAnnualLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DEVRunAnnualBatch.Arn
+
+  DEVMonthlyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DEVRunMonthlyBatch.Arn
+
+  DEVWeeklyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DEVRunWeeklyBatch.Arn
+
+  DEVDailyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BatchLambdaArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DEVRunDailyBatch.Arn
+
 Outputs:
   BatchTaskRoleARN:
     Description: BatchTaskRole

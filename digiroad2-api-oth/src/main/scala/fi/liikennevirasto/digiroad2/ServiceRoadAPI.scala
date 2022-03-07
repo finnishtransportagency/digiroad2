@@ -47,9 +47,12 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   val getServiceRoadByBoundingBox =
     (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByBoundingBox")
+      .parameters(
+        queryParam[String]("boundingBox").description("The bounding box is used to search assets inside ít, is defined with coordinates of top left and bottom right corner."),
+        headerParam[String]("X-API-Key").description("Authentication Api key")
+      )
       tags "Service Road API (Huoltotie API)"
       summary "Returns all Service Road assets inside bounding box. Can be used to get all assets on the UI map area."
-      parameter queryParam[String]("boundingBox").description("The bounding box is used to search assets inside ít, is defined with coordinates of top left and bottom right corner.")
       description
       "Bounding box is defined with coordinates of top left and bottom right corner \n" +
         "URL: /digiroad/api/livi/huoltotiet/?boundingBox={x1},{y1},{x2},{y2} \n" +
@@ -66,9 +69,12 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   val getServiceRoadByAreaId =
     (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByAreaId")
+      .parameters(
+      pathParam[String]("areaId").description("Area id refers to the area where the search is going to be done."),
+      headerParam[String]("X-API-Key").description("Authentication Api key")
+    )
       tags "Service Road API (Huoltotie API)"
       summary "Returns all Huoltotie assets inside service area."
-      parameter pathParam[String]("areaId").description("Area id refers to the area where the search is going to be done.")
       description
       "Service areas are a polygonal area defined in OTH. \n" +
         "ServiceAreaId is an integer between 1-12. \n" +
