@@ -37,25 +37,24 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new ImportDataApi(Digiroad2Context.roadLinkService), "/api/import/*")
     context.mount(new ExportDataApi(Digiroad2Context.roadLinkService), "/api/export/*")
     Digiroad2Context.massTransitStopService.massTransitStopEnumeratedPropertyValues
-
-    val swaggerContext = "/digiroad"
-    context.mount(new ResourcesApp, s"$swaggerContext/api-docs")
+    
+    context.mount(new ResourcesApp, s"/api-docs")
     // external Api
     
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService, swagger), 
-                          s"$swaggerContext/externalApi/integration/*")
+                          s"/externalApi/integration/*")
     context.mount(new ChangeApi(swagger), 
-                        s"$swaggerContext/externalApi/changes/*")
+                        s"/externalApi/changes/*")
     context.mount(new MunicipalityApi(Digiroad2Context.vvhClient, 
                                       Digiroad2Context.roadLinkService, 
                                       Digiroad2Context.speedLimitService, 
                                       Digiroad2Context.pavedRoadService, 
                                       Digiroad2Context.obstacleService, swagger),
-                          s"$swaggerContext/externalApi/municipality/*")
+                          s"/externalApi/municipality/*")
     context.mount(new ServiceRoadAPI( Digiroad2Context.maintenanceRoadService, 
                                       Digiroad2Context.roadLinkService, swagger),
-                          s"$swaggerContext/externalApi/livi/*")
+                          s"/externalApi/livi/*")
     context.mount(new LaneApi(swagger, Digiroad2Context.roadLinkService, Digiroad2Context.roadAddressService), 
-                          s"$swaggerContext/externalApi/lanes/*")
+                          s"/externalApi/lanes/*")
   }
 }
