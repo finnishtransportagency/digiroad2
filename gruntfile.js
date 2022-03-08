@@ -94,7 +94,7 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/externalApi',
+            context: '/digiroad/externalApi',
             host: '127.0.0.1',
             port: '8080',
             https: false,
@@ -102,7 +102,7 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/api-docs',
+            context: '/digiroad/api-docs',
             host: '127.0.0.1',
             port: '8080',
             https: false,
