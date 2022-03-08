@@ -28,6 +28,12 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     contentType = formats("json")
   }
 
+  after() {
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+    response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+  }
+
   //Description of Api entry point to get assets changes by asset type and between two dates
   val getChangesOfAssetsByType =
     (apiOperation[Long]("getChangesOfAssetsByType")

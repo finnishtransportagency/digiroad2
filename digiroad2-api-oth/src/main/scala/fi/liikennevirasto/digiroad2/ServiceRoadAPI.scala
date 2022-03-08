@@ -45,6 +45,12 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   protected implicit def jsonFormats: Formats = DefaultFormats
 
+  after() {
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+    response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+  }
+  
   val getServiceRoadByBoundingBox =
     (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByBoundingBox")
       .parameters(

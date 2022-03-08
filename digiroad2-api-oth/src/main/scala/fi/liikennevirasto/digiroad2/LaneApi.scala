@@ -28,6 +28,13 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   override protected def applicationDescription: String = "Lanes API"
   override protected implicit def jsonFormats: Formats = DefaultFormats
 
+  after() {
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+    response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+  }
+  
+  
   val getLanesInRoadAddressRange =
     (apiOperation[Long]("getLanesInRoadAddressRange")
       .parameters(

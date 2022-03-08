@@ -26,6 +26,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
+  after() {
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+    response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+  }
+  
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
       timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
