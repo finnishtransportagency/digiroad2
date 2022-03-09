@@ -61,7 +61,7 @@ grunt test
 
 Kehitysserverin pystytys:
 ```
-grunt server
+grunt server --apikey=maastokarttaAPiKey
 ```
 Kehitysserveri ajaa automaattisesti testit, kääntää lessit ja toimii watch -tilassa.
 
