@@ -26,6 +26,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
+  after() {
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+    response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+  }
+  
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
       timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
@@ -867,8 +873,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
         queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.").optional,
         queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by vvh_generated and not modified yet on the response. The value is True by default.").optional,
-        pathParam[String]("assetType").description("Asset type name to get the changes"),
-        headerParam[String]("X-API-Key").description("Authentication Api key")
+        pathParam[String]("assetType").description("Asset type name to get the changes")
       )
       tags "Integration API (Kalpa API)"
       summary "List all changes per assets type between two specific dates."
@@ -915,8 +920,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     (apiOperation[Long]("getAssetsByTypeMunicipality")
       .parameters(
         queryParam[Int]("municipality").description("Municipality Code where we will execute the search by specific asset type"),
-        pathParam[String]("assetType").description("Asset type name to get all assets"),
-        headerParam[String]("X-API-Key").description("Authentication Api key")
+        pathParam[String]("assetType").description("Asset type name to get all assets")
       )
       tags "Integration API (Kalpa API)"
       summary "List all valid assets on a specific municipality."
