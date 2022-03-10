@@ -970,12 +970,13 @@ trait LaneOperations {
 
   // Used by initial main lane population process
   def expireAllMunicipalityLanes(municipality: Int, username: String): Unit = {
-    val lanes = dao.fetchLanesByMunicipality(municipality)
-    val lanesWithHistoryId = lanes.map(_.id)
-                                  .map(lane => (lane, historyDao.insertHistoryLane(lane, None, username)))
+    val laneIds = dao.fetchLanesByMunicipality(municipality).map(_.id)
+    if (laneIds.nonEmpty) {
+      val lanesWithHistoryId = historyDao.insertHistoryLanes(laneIds, username)
 
-    historyDao.expireHistoryLanes(lanesWithHistoryId.map(_._2), username)
-    dao.deleteEntryLanes(lanesWithHistoryId.map(_._1))
+      historyDao.expireHistoryLanes(lanesWithHistoryId, username)
+      dao.deleteEntryLanes(laneIds)
+    }
   }
 
   def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
