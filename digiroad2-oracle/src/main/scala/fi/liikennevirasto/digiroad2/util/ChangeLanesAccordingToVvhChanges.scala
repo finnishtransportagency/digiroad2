@@ -68,11 +68,14 @@ object ChangeLanesAccordingToVvhChanges {
     val groupedAssets = allLanes.groupBy(_.linkId)
     val (changedLanes, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changedSet))
 
+    val changeSetLanes = changeSet.expiredLaneIds ++ changeSet.adjustedMValues.map(_.laneId) ++
+      changeSet.adjustedVVHChanges.map(_.laneId) ++ changeSet.adjustedSideCodes.map(_.laneId)
     val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
+
     val modifiedLanes = projectedLanes.filterNot(lane => {
       val generatedLane = generatedMappedById.getOrElse(lane.id, Seq())
       if(generatedLane.isEmpty) logger.info("No generated lane found for key: " + lane.id)
-        generatedLane.nonEmpty
+        generatedLane.nonEmpty || changeSetLanes.contains(lane.id)
     }) ++ changeSet.generatedPersistedLanes
 
     updateChangeSet(changeSet)
