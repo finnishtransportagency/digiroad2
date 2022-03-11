@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, PrimitiveRoad, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection, UnknownFunctionalClass, WalkingAndCyclingPath}
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -84,8 +84,8 @@ object MainLanePopulationProcess {
     val roadLinksWithoutMainLanes =
       if (initialProcessing) roadLinks
       else {
-        val existingLanes = laneService.fetchExistingMainLanesByRoadLinks(roadLinks, Seq())
-        roadLinks.filterNot(roadLink => existingLanes.exists(_.linkId == roadLink.linkId))
+        val existingLanes = laneService.fetchExistingMainLanesByRoadLinks(roadLinks, Seq()).groupBy(_.linkId)
+        roadLinks.filterNot(roadLink => existingLanes.exists(_._1 == roadLink.linkId))
       }
 
     logger.info(roadLinksWithoutMainLanes.length + " road links without main lanes.")
@@ -95,7 +95,11 @@ object MainLanePopulationProcess {
         addMainLane(linkWithUpdatedDirection)
       }
     }
-    PostGISDatabase.withDynTransaction(municipalityMainLanes.foreach(laneService.createWithoutTransaction(_, username)))
+
+    if (municipalityMainLanes.nonEmpty) {
+      val lanes = laneService.createMultipleLanes(municipalityMainLanes, username, newTransaction = true)
+      logger.info(s"${lanes.size} lanes created for ${roadLinksWithoutMainLanes.size} links")
+    }
   }
 
   // Main process
