@@ -23,7 +23,7 @@ case class LaneRow(id: Long, linkId: Long, sideCode: Int, value: LanePropertyRow
                    expired: Boolean, vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
 
 case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
-
+case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
 class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
@@ -274,6 +274,75 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     laneId
   }
 
+  def createMultipleLanes(newLanes: Seq[PersistedLane], username: String): Seq[PersistedLane] = {
+    val laneIds = Sequences.nextPrimaryKeySeqValues(newLanes.size)
+    val lanePositionIds = Sequences.nextPrimaryKeySeqValues(newLanes.size)
+    val lanesToCreate = newLanes.zipWithIndex.map{ case (lane, index) =>
+      NewLaneWithIds(laneIds(index), lanePositionIds(index), lane)
+    }
+
+    val insertLane =
+      s"""insert into lane (id, lane_code, created_date, created_by, municipality_code)
+         |values ((?), (?), current_timestamp, '$username', (?))""".stripMargin
+    val createdLanes = MassQuery.executeBatch(insertLane) { statement =>
+      lanesToCreate.map { newLane =>
+        statement.setLong(1, newLane.laneId)
+        statement.setInt(2, newLane.lane.laneCode)
+        statement.setLong(3, newLane.lane.municipalityCode)
+        statement.addBatch()
+        newLane.lane.copy(id = newLane.laneId)
+      }
+    }
+
+    val insertLanePosition =
+      s"""insert into lane_position (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
+         |values ((?), (?), (?), (?), (?), (?))""".stripMargin
+    MassQuery.executeBatch(insertLanePosition) { statement =>
+      lanesToCreate.foreach { newLane =>
+        statement.setLong(1, newLane.positionId)
+        statement.setInt(2, newLane.lane.sideCode)
+        statement.setDouble(3, newLane.lane.startMeasure)
+        statement.setDouble(4, newLane.lane.endMeasure)
+        statement.setLong(5, newLane.lane.linkId)
+        statement.setLong(6, newLane.lane.vvhTimeStamp)
+        statement.addBatch()
+      }
+    }
+
+    val insertLaneLink =
+      s"""insert into lane_link (lane_id, lane_position_id)
+         |values ((?), (?))""".stripMargin
+    MassQuery.executeBatch(insertLaneLink) { statement =>
+      lanesToCreate.foreach { newLane =>
+        statement.setLong(1, newLane.laneId)
+        statement.setLong(2, newLane.positionId)
+        statement.addBatch()
+      }
+    }
+    createdLanes
+  }
+
+  def insertLaneAttributesForMultipleLanes(newLanes: Seq[PersistedLane], username: String): Unit = {
+    val insertAttribute =
+      s"""insert into lane_attribute (id, lane_id, name, value, created_date, created_by)
+         |values (nextval('primary_key_seq'), (?), (?), (?), current_timestamp, '$username')""".stripMargin
+
+    MassQuery.executeBatch(insertAttribute) { statement =>
+      newLanes.foreach( lane => {
+        lane.attributes match {
+          case props: Seq[LaneProperty] =>
+            props.filterNot(_.publicId == "lane_code")
+                 .foreach(attr => {
+                   val attrValue = if (attr.values.nonEmpty) attr.values.head.value.toString else ""
+                   statement.setLong(1, lane.id)
+                   statement.setString(2, attr.publicId)
+                   statement.setString(3, attrValue)
+                   statement.addBatch()
+                 })
+        }
+      })
+    }
+  }
 
   def insertLaneAttributes(laneId: Long, laneProp: LaneProperty, username: String): Long = {
 

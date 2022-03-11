@@ -20,6 +20,7 @@ case class LaneHistoryRow(id: Long, newId: Long, oldId: Long, linkId: Long, side
                           modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean,
                           vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime],
                           historyCreatedDate: DateTime, historyCreatedBy: String)
+case class laneToHistoryLane(oldId: Long, historyId: Long, historyPositionId: Long)
 
 class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
@@ -67,6 +68,63 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
        JOIN LANE_HISTORY_LINK ll ON l.id = ll.lane_id
        JOIN LANE_HISTORY_POSITION pos ON ll.lane_position_id = pos.id
        JOIN LANE_HISTORY_ATTRIBUTE la ON la.lane_history_id = l.id """
+  }
+
+  def insertHistoryLanes(oldLaneIds: Seq[Long], username: String): Seq[Long] = {
+    val laneHistoryIds = Sequences.nextPrimaryKeySeqValues(oldLaneIds.size)
+    val laneHistoryPositionIds = Sequences.nextPrimaryKeySeqValues(oldLaneIds.size)
+    val oldLanesWithHistory = oldLaneIds.zipWithIndex.map { case (oldId, index) =>
+      laneToHistoryLane(oldId, laneHistoryIds(index), laneHistoryPositionIds(index))
+    }
+
+    val insertLaneHistory =
+      s"""insert into lane_history
+         |  select (?), 0, l.*, current_timestamp, '$username'
+         |  from lane l where id = (?)""".stripMargin
+    MassQuery.executeBatch(insertLaneHistory) { statement =>
+      oldLanesWithHistory.foreach(lane => {
+        statement.setLong(1, lane.historyId)
+        statement.setLong(2, lane.oldId)
+        statement.addBatch()
+      })
+    }
+
+    val insertHistoryPosition =
+      s"""insert into lane_history_position
+         |  select (?), side_code, start_measure, end_measure, link_id, adjusted_timestamp, modified_date
+         |  from lane_position where id = (select lane_position_id from lane_link where lane_id = (?))""".stripMargin
+    MassQuery.executeBatch(insertHistoryPosition) { statement =>
+      oldLanesWithHistory.foreach(lane => {
+        statement.setLong(1, lane.historyPositionId)
+        statement.setLong(2, lane.oldId)
+        statement.addBatch()
+      })
+    }
+
+    val insertLaneHistoryLink =
+      s"""insert into lane_history_link (lane_id, lane_position_id)
+         |values ((?), (?))""".stripMargin
+    MassQuery.executeBatch(insertLaneHistoryLink) { statement =>
+      oldLanesWithHistory.foreach(lane => {
+        statement.setLong(1, lane.historyId)
+        statement.setLong(2, lane.historyPositionId)
+        statement.addBatch()
+      })
+    }
+
+    val insertLaneHistoryAttribute =
+      s"""insert into lane_history_attribute
+         |  select nextval('primary_key_seq'), (?), name, value, required, created_date, created_by,
+         |  modified_date, modified_by from lane_attribute where lane_id = (?)""".stripMargin
+    MassQuery.executeBatch(insertLaneHistoryAttribute) { statement =>
+      oldLanesWithHistory.foreach(lane => {
+        statement.setLong(1, lane.historyId)
+        statement.setLong(2, lane.oldId)
+        statement.addBatch()
+      })
+    }
+
+    laneHistoryIds
   }
 
   def insertHistoryLane(oldLaneId: Long, newLaneId: Option[Long], username: String): Long = {

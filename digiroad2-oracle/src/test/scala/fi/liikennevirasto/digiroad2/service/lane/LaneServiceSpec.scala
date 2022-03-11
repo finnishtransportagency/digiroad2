@@ -113,6 +113,28 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
+  test("Create multiple lanes") {
+    runWithRollback {
+      val newLane1 = PersistedLane(0, 100L, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val newLane2 = PersistedLane(0, 100L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val newLane3 = PersistedLane(0, 101L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val createdLanes = ServiceWithDao.createMultipleLanes(Seq(newLane1, newLane2, newLane3), usernameTest)
+      createdLanes.length should be(3)
+
+      val lanes = laneDao.fetchLanesByIds(createdLanes.map(_.id).toSet)
+      lanes.length should be(3)
+
+      val lane1 = lanes.head
+      lane1.expired should be (false)
+      lane1.attributes.foreach{ laneProp =>
+        val attr = lanePropertiesValues1.find(_.publicId == laneProp.publicId)
+
+        attr should not be None
+        attr.head.values.head.value should be (laneProp.values.head.value)
+      }
+    }
+  }
+
   test("Fetch existing main lanes by linkId"){
     runWithRollback {
       val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(100L), 1, usernameTest)
