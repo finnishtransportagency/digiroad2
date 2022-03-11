@@ -74,8 +74,8 @@ object ChangeLanesAccordingToVvhChanges {
 
     val modifiedLanes = projectedLanes.filterNot(lane => {
       val generatedLane = generatedMappedById.getOrElse(lane.id, Seq())
-      if(generatedLane.isEmpty) logger.info("No generated lane found for key: " + lane.id)
-        generatedLane.nonEmpty || changeSetLanes.contains(lane.id)
+      if (generatedLane.isEmpty) logger.info("No generated lane found for key: " + lane.id)
+      generatedLane.nonEmpty || changeSetLanes.contains(lane.id)
     }) ++ changeSet.generatedPersistedLanes
 
     updateChangeSet(changeSet)
