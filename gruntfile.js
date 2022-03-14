@@ -2,7 +2,7 @@ module.exports = function(grunt) {
   var serveStatic = require('serve-static');
   var serveIndex = require('serve-index');
   var path = require('path');
-  var apikey = grunt.option('apikey');
+//  var apikey = grunt.option('apikey');
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     env: {
@@ -124,7 +124,7 @@ module.exports = function(grunt) {
             changeOrigin: false,
             xforward: true,
             headers: {
-              "X-API-Key": apikey,
+              "X-API-Key": process.env.rasterService_apikey,
               host: 'api.vaylapilvi.fi'
             },
             rewrite: {
@@ -173,7 +173,7 @@ module.exports = function(grunt) {
         }
       }
     },
-/*    mocha: {
+    mocha: {
       unit: {
         options: {
           // mocha options
@@ -205,7 +205,7 @@ module.exports = function(grunt) {
       options: {
         growlOnSuccess: false
       }
-    },*/
+    },
     watch: {
       oth: {
         files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
