@@ -60,8 +60,10 @@ grunt test
 ```
 
 Kehitysserverin pystytys:
+Aseta ympäristö muuttuja rasterService_apikey=apiavain . 
+Parametri voidaan asettaa Intellij Grunt Configuration Environment
 ```
-grunt server --apikey=maastokarttaAPiKey
+grunt server
 ```
 Kehitysserveri ajaa automaattisesti testit, kääntää lessit ja toimii watch -tilassa.
 
@@ -83,15 +85,24 @@ API-palvelimen saa käyntiin kehitysmoodiin seuraavalla sbt komennolla:
 ./sbt '~;container:start; container:reload /'
 ```
 
-Esim CI-ympäristössä Oracle-tietokanta ei ole käytettävissä, jolloin buildille pitää välittää system property "digiroad2.nodatabase" arvolla "true".
-Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "digiroad2.env" (arvot "dev", "test", "prod" tai "ci"). Esim.
-
+Salasanat voidaan syöttää ympäristömuuttujina myös.
+Parametri voidaan asettaa Intellij SBT Configuration Environment Variable.
+Nämä voidaan syöttään myös ympäristömuuttujina.
 ```
-./sbt -Ddigiroad2.nodatabase=true -Ddigiroad2.env=dev test
+viiteRestApiEndPoint=url
+viite.apikey=insertapikey
+vkm.apikey=insertapikey 
+Doag.username=svc_clouddigiroad
+oag.password=svc_clouddigiroad 
+rasterService.apikey=insertapikey
+googlemapapi.client_id=XYZ123
+googlemapapi.crypto_key=ZYX321
+ses.username=sesusername
+ses.password=sespassword
+bonecp.jdbcUrl=kantaurl
+bonecp.username=kantakäyttäjä
+bonecp.password=kantasalasana
 ```
-
-"digiroad2.env":n arvo määrittää sen, minkä ympäristön konfiguraatiotiedostot otetaan käyttöön (hakemistosta conf/(env)/)
-
 Windowsissa toimii komento:
 ```
 run fi.liikennevirasto.digiroad2.ProductionServer
@@ -111,11 +122,3 @@ kuntakäyttäjä; ;105, 258, 248, 245;
 olemassaolevatunnus; ;410, 411, 412, 413;
 elykäyttäjä;0,1,2,3,4,5,6,7,8,9;
 ```
-
-Käyttäjiä voi päivittää ja lisätä käyttäen `import-users-from-csv.sh` skriptiä:
-```
-./import-users-from-csv.sh <digiroad2-palvelin:portti> <ylläpitäjän-tunnus> <polku-csv-tiedostoon>
-```
-
-[Käyttöönotto ja version päivitys](Deployment.md)
-=================================================
