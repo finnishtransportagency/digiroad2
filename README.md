@@ -60,8 +60,8 @@ grunt test
 ```
 
 Kehitysserverin pystytys:
-Aseta ympäristö muuttuja rasterService_apikey=apiavain . 
-Parametri voidaan asettaa Intellij Grunt Configuration Environment
+Aseta ympäristömuuttuja rasterService_apikey=apiavain . 
+Parametri voidaan asettaa Intellij Grunt Configuration Environment.
 ```
 grunt server
 ```
