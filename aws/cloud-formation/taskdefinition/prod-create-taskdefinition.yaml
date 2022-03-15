@@ -107,7 +107,7 @@ Resources:
             - Name: vallu.server.sending_enabled
               Value: 'true'
             - Name: vallu.server.address
-              Value: 'https://oag.liikennevirasto.fi/koontikartta/rest/stop/xml'
+              Value: 'https://oag.ely-keskus.fi/koontikartta/rest/stop/xml'
             - Name: viite.importTimeStamp
               Value: '1510876800000'
             - Name: http.proxySet
