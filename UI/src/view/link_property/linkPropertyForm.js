@@ -210,9 +210,9 @@
             '</div>' +
             staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
             staticField('Kuntanumero', 'municipalityCode') +
-            staticField('Tienimi (Suomi)', 'roadNameFi') +
-            staticField('Tienimi (Ruotsi)', 'roadNameSe') +
-            staticField('Tienimi (Saame)', 'roadNameSm') +
+            staticField('Tiennimi (Suomi)', 'roadNameFi') +
+            staticField('Tiennimi (Ruotsi)', 'roadNameSe') +
+            staticField('Tiennimi (Saame)', 'roadNameSm') +
             staticField('Tienumero', 'roadNumber') +
             staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Ajorata', 'track') +
