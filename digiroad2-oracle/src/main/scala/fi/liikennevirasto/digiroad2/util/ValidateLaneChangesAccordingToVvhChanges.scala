@@ -58,8 +58,9 @@ object ValidateLaneChangesAccordingToVvhChanges {
     roadLink.trafficDirection match {
 
       case BothDirections => roadLink.linkType match {
-        case MotorwayServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad
-          if mainLanes.size != 1 => Some(roadLink)
+        case MotorwayServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad  =>
+          if (mainLanes.size != 1)  Some(roadLink)
+          else None
         case _ => if (mainLanes.size != 2) Some(roadLink)
         else None
       }
@@ -78,10 +79,15 @@ object ValidateLaneChangesAccordingToVvhChanges {
   }
 
   def validateMainLaneAmount(roadLinks: Seq[RoadLink], mainLanesOnRoadLinks: Seq[PersistedLane]): Seq[RoadLink] = {
-    val roadLinksWithInvalidAmount = for (roadLink <- roadLinks) yield
-      checkLinksMainLanes(roadLink, mainLanesOnRoadLinks.filter(mainLane => mainLane.linkId == roadLink.linkId))
+    val lanesMapped = mainLanesOnRoadLinks.groupBy(_.linkId)
+    lanesMapped.flatMap(pair => {
+      val roadLink = roadLinks.find(_.linkId == pair._1)
+      val lanesOnLink = pair._2
+      roadLink match {
+        case Some(rl) => checkLinksMainLanes(rl, lanesOnLink)
+      }
+    }).toSeq
 
-    roadLinksWithInvalidAmount.flatten
   }
 
   def validateLaneSideCodeConsistency(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
