@@ -30,14 +30,9 @@ object ChangeLanesAccordingToVvhChanges {
     val until = DateTime.now()
 
     logger.info("Getting changed links Since: " + since + " Until: " + until)
-
-    val changedVVHRoadLinks = LogUtils.time(logger,"Get changed roadlinks")(
-      roadLinkService.getChanged(since, until)
-    )
-
-    val linkIds : Set[Long] = changedVVHRoadLinks.map(_.link.linkId).toSet
-    val roadLinks = changedVVHRoadLinks.map(_.link)
-    val changes = roadLinkService.getChangeInfo(linkIds)
+    val changes = roadLinkService.getChangeInfoByDates(since, until)
+    val linkIds = (changes.flatMap(_.oldId) ++ changes.flatMap(_.newId)).toSet
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
 
     handleChanges(roadLinks, changes)
   }
@@ -78,7 +73,15 @@ object ChangeLanesAccordingToVvhChanges {
       generatedLane.nonEmpty || changeSetLanes.contains(lane.id)
     }) ++ changeSet.generatedPersistedLanes
 
-    updateChangeSet(changeSet)
+    val filteredChangeSet = changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes.filter(adj => {
+      val originalLane = allLanes.find(_.id == adj.laneId)
+      originalLane match {
+        case Some(lane) => lane.sideCode != adj.sideCode.value
+        case _ => true
+      }
+    }))
+
+    updateChangeSet(filteredChangeSet)
     persistModifiedLinearAssets(modifiedLanes)
     changedLanes
   }

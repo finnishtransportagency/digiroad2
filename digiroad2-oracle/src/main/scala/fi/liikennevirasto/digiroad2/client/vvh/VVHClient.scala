@@ -980,6 +980,28 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
   }
 
+  def fetchByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
+    val definition = layerDefinition(withCreatedDateFilter(since, until))
+    val url = serviceUrl(definition, queryParameters())
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  protected  def withCreatedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withCreatedDateLimitFilter("CREATED_DATE", lowerDate, higherDate)
+  }
+
+  protected def withCreatedDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+  }
+
   def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[ChangeInfo] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities)
   }

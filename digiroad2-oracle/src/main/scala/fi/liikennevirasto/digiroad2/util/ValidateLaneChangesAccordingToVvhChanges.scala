@@ -13,6 +13,8 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+import scala.math.abs
+
 object ValidateLaneChangesAccordingToVvhChanges {
 
   lazy val vvhClient: VVHClient = {
@@ -89,8 +91,22 @@ object ValidateLaneChangesAccordingToVvhChanges {
   }
 
   def validateForDuplicateLanes(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
-    val DuplicateLanes = for (roadLink <- roadLinks) yield checkForDuplicateLanes(lanes.filter(_.linkId == roadLink.linkId))
-    DuplicateLanes.filterNot(_.isEmpty).flatten
+    val duplicateLanes = for (roadLink <- roadLinks) yield checkForDuplicateLanes(lanes.filter(_.linkId == roadLink.linkId))
+    duplicateLanes.filterNot(_.isEmpty).flatten
+  }
+
+  def validateMainLaneLengths(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
+    lanes.filter(lane => {
+      val roadLink = roadLinks.find(_.linkId == lane.linkId)
+      roadLink match {
+        case Some(rl) =>
+          val laneLength = lane.endMeasure - lane.startMeasure
+          val difference = abs(rl.length - laneLength)
+          difference < 1
+
+        case _ => false
+      }
+    })
   }
 
   //Process to find any errors on lanes caused by ChangeLanesAccordingToVVHChanges.
@@ -114,9 +130,11 @@ object ValidateLaneChangesAccordingToVvhChanges {
     val duplicateLanes = validateForDuplicateLanes(roadLinks, allLanesOnRoadLinks)
     val roadLinksWithInvalidAmountOfMl = validateMainLaneAmount(roadLinks, mainLanesOnRoadLinks)
     val lanesWithInconsistentSideCodes = validateLaneSideCodeConsistency(roadLinks, allLanesOnRoadLinks)
+    val mainLanesWithInvalidLength = validateMainLaneLengths(roadLinks, mainLanesOnRoadLinks)
 
     logger.info("Duplicate lanes: " + duplicateLanes.map(_.id) + "\n" +
       "Roadlinks with invalid amount of main lanes: " + roadLinksWithInvalidAmountOfMl.map(_.linkId) + "\n" +
-      "Lanes with inconsistent side codes: " + lanesWithInconsistentSideCodes.map(_.id))
+      "Lanes with inconsistent side codes: " + lanesWithInconsistentSideCodes.map(_.id)+ "\n" +
+      "Main lanes with invalid length: " + mainLanesWithInvalidLength.map(_.id))
   }
 }

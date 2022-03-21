@@ -149,8 +149,8 @@ trait LaneOperations {
         rep => addSourceRoadLinkToChangeInfo(ext, rep)))
 
     val fullChanges = extensionChanges ++ replacementChanges
-
-    val lanes = mapReplacementProjections(lanesToUpdate, currentLanes, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLane], changeSet)) {
+    val projections = mapReplacementProjections(lanesToUpdate, currentLanes, roadLinks, fullChanges).filterNot(p => p._2._1.isEmpty || p._2._2.isEmpty)
+    val lanes = projections.foldLeft((Seq.empty[PersistedLane], changeSet)) {
       case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
         val (linearAsset, changes) = laneFiller.projectLinearAsset(asset, roadLink, projection, cs)
         (persistedAsset ++ Seq(linearAsset), changes)
