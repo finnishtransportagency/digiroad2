@@ -2,6 +2,7 @@ module.exports = function(grunt) {
   var serveStatic = require('serve-static');
   var serveIndex = require('serve-index');
   var path = require('path');
+  
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     env: {
@@ -94,27 +95,41 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/externalApi',
+            context: '/digiroad/externalApi',
             host: '127.0.0.1',
             port: '8080',
             https: false,
             changeOrigin: false,
-            xforward: false
+            xforward: false,
+            rewrite:{
+              '/digiroad/externalApi':'/externalApi'
+            }
           },
           {
-            context: '/api-docs',
+            context: '/digiroad/api-docs',
             host: '127.0.0.1',
             port: '8080',
             https: false,
             changeOrigin: true,
             xforward: false,
+            rewrite:{
+              '/digiroad/api-docs':'/api-docs'
+            }
           },
           {
-            context: '/maasto',
-            host: 'oag.vayla.fi',
-            https: false,
-            changeOrigin: true,
-            xforward: false
+            context:'/maasto',
+            host: 'api.vaylapilvi.fi',
+            port: '443',
+            https: true,
+            changeOrigin: false,
+            xforward: true,
+            headers: {
+              "X-API-Key": process.env.rasterService_apikey,
+              host: 'api.vaylapilvi.fi'
+            },
+            rewrite: {
+              '/maasto/wmts':'/rasteripalvelu-mml/wmts/maasto'
+            }
           },
           {
             context: '/viitekehysmuunnin',

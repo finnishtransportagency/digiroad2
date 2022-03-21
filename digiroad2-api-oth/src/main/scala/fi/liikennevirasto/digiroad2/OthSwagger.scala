@@ -3,7 +3,11 @@ package fi.liikennevirasto.digiroad2
 import org.scalatra.ScalatraServlet
 import org.scalatra.swagger.{ApiInfo, NativeSwaggerBase, Swagger}
 
-class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase
+class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase {
+  override protected def bathPath: Option[String] = {
+    Some("/digiroad")
+  }
+}
 
 object OthApiInfo extends ApiInfo(title = "OTH API DOCUMENTATION",
   description = "Documentations for all OTH APIs",

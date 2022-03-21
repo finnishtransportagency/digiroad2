@@ -37,11 +37,12 @@ object MassQuery {
     }
   }
 
-  def executeBatch[T](query: String)(f: PreparedStatement => T): Unit = {
+  def executeBatch[T](query: String)(f: PreparedStatement => T): T = {
     val statement = dynamicSession.prepareStatement(query)
     try {
-      f(statement)
+      val ret = f(statement)
       statement.executeBatch()
+      ret
     } finally {
       statement.close()
     }

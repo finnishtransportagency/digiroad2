@@ -137,9 +137,9 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
   override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
-  override val viiteRestApiEndPoint: String = envProps.getProperty("viiteRestApiEndPoint")
+  override val viiteRestApiEndPoint: String =  envOrProperties("viiteRestApiEndPoint")
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
-  override val vkmApiKey: String = envProps.getProperty("vkm.apikey")
+  override val vkmApiKey: String = envOrProperties("vkm.apikey")
   override val valluServerSengindEnabled: Boolean = envProps.getProperty("vallu.server.sending_enabled", "true").toBoolean
   override val valluServerAddress: String = envProps.getProperty("vallu.server.address")
   override val cacheHostname: String = envProps.getProperty("cacheHostname", null)
@@ -152,26 +152,26 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val httpProxyPort: String = envProps.getProperty("http.proxyPort")
   override val httpNonProxyHosts: String = envProps.getProperty("http.nonProxyHosts", "")
   override val authenticationTestMode: Boolean = envProps.getProperty("authenticationTestMode", "true").toBoolean
-  override val bonecpJdbcUrl: String = envProps.getProperty("bonecp.jdbcUrl")
-  override val bonecpUsername: String = envProps.getProperty("bonecp.username")
-  override val bonecpPassword: String = envProps.getProperty("bonecp.password")
+  override val bonecpJdbcUrl: String = envOrProperties("bonecp.jdbcUrl")
+  override val bonecpUsername: String = envOrProperties("bonecp.username")
+  override val bonecpPassword: String = envOrProperties("bonecp.password")
   override val revision: String = envProps.getProperty("revision")
   override val latestDeploy: String = envProps.getProperty("latestDeploy")
-  override val viiteApiKey: String = envProps.getProperty("viite.apikey")
-  override val sesUsername: String = envProps.getProperty("ses.username")
-  override val sesPassword: String = envProps.getProperty("ses.password")
-  override val oagUsername: String = envProps.getProperty("oag.username")
-  override val oagPassword: String = envProps.getProperty("oag.password")
+  override val viiteApiKey: String = envOrProperties("viite.apikey")
+  override val sesUsername: String = envOrProperties("ses.username")
+  override val sesPassword: String = envOrProperties("ses.password")
+  override val oagUsername: String = envOrProperties("oag.username")
+  override val oagPassword: String = envOrProperties("oag.password")
   override val emailTo: String = envProps.getProperty("email.to")
   override val emailHost: String = envProps.getProperty("email.host")
   override val emailPort: String = envProps.getProperty("email.port")
   override val emailFrom: String = envProps.getProperty("email.from")
   override val env: String = envProps.getProperty("env")
   override val featureProvider: String = envProps.getProperty("featureProvider")
-  override val googleMapApiClientId: String = envProps.getProperty("googlemapapi.client_id")
-  override val googleMapApiCryptoKey: String = envProps.getProperty("googlemapapi.crypto_key")
+  override val googleMapApiClientId: String = envOrProperties("googlemapapi.client_id")
+  override val googleMapApiCryptoKey: String = envOrProperties("googlemapapi.crypto_key")
   override val rasterServiceUrl: String = envProps.getProperty("rasterServiceUrl")
-  override val rasterServiceApiKey: String = envProps.getProperty("rasterService.apikey")
+  override val rasterServiceApiKey: String = envOrProperties("rasterService.apikey")
   override val batchMode: Boolean =  envProps.getProperty("batchMode", "false").toBoolean
 
   override lazy val bonecpProperties: Properties = {
@@ -185,6 +185,11 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
     }
     props
   }
+  
+  def envOrProperties(parameter:String) ={
+    scala.util.Properties.envOrElse(parameter, envProps.getProperty(parameter))
+  }
+  
 }
 
 /**

@@ -9,6 +9,10 @@ object Sequences {
     nextPrimaryKeyId.as[Long].first
   }
 
+  def nextPrimaryKeySeqValues(len: Int): Seq[Long] = {
+    nextPrimaryKeyIds(len).as[Long].list
+  }
+
   def nextLrmPositionPrimaryKeySeqValue = {
     nextLrmPositionPrimaryKeyId.as[Long].first
   }

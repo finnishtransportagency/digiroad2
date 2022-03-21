@@ -28,6 +28,13 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   override protected def applicationDescription: String = "Lanes API"
   override protected implicit def jsonFormats: Formats = DefaultFormats
 
+  after() {
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+    response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+  }
+  
+  
   val getLanesInRoadAddressRange =
     (apiOperation[Long]("getLanesInRoadAddressRange")
       .parameters(
@@ -36,8 +43,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         queryParam[Int]("start_part").description("Starting road part number for search"),
         queryParam[Int]("start_addrm").description("Starting distance on starting roadPart for search"),
         queryParam[Int]("end_part").description("Ending road part number for search"),
-        queryParam[Int]("end_addrm").description("Ending distance on last road part for search"),
-        headerParam[String]("X-API-Key").description("Authentication Api key")
+        queryParam[Int]("end_addrm").description("Ending distance on last road part for search")
       )
       tags "LaneApi"
       summary "Get lanes in given road address range in road address format"
@@ -48,8 +54,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   val getLanesInMunicipality =
     (apiOperation[Long]("getLanesInMunicipality")
       .parameters(
-        queryParam[Int]("municipality").description("Municipality Code where we will get lanes from"),
-        headerParam[String]("X-API-Key").description("Authentication Api key")
+        queryParam[Int]("municipality").description("Municipality Code where we will get lanes from")
       )
       tags "LaneApi"
       summary "Get lanes in given municipality"

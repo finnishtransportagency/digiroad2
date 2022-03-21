@@ -45,11 +45,16 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   protected implicit def jsonFormats: Formats = DefaultFormats
 
+  after() {
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+    response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+  }
+  
   val getServiceRoadByBoundingBox =
     (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByBoundingBox")
       .parameters(
-        queryParam[String]("boundingBox").description("The bounding box is used to search assets inside ít, is defined with coordinates of top left and bottom right corner."),
-        headerParam[String]("X-API-Key").description("Authentication Api key")
+        queryParam[String]("boundingBox").description("The bounding box is used to search assets inside ít, is defined with coordinates of top left and bottom right corner.")
       )
       tags "Service Road API (Huoltotie API)"
       summary "Returns all Service Road assets inside bounding box. Can be used to get all assets on the UI map area."
@@ -70,8 +75,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
   val getServiceRoadByAreaId =
     (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByAreaId")
       .parameters(
-      pathParam[String]("areaId").description("Area id refers to the area where the search is going to be done."),
-      headerParam[String]("X-API-Key").description("Authentication Api key")
+      pathParam[String]("areaId").description("Area id refers to the area where the search is going to be done.")
     )
       tags "Service Road API (Huoltotie API)"
       summary "Returns all Huoltotie assets inside service area."

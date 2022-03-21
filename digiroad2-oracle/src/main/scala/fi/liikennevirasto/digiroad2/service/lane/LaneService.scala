@@ -636,6 +636,16 @@ trait LaneOperations {
     laneId
   }
 
+  def createMultipleLanes(newLanes: Seq[PersistedLane], username: String, newTransaction: Boolean = false): Seq[PersistedLane]  = {
+    def createLanes(): Seq[PersistedLane] = {
+      val createdLanes = dao.createMultipleLanes(newLanes, username)
+      dao.insertLaneAttributesForMultipleLanes(createdLanes, username)
+      createdLanes
+    }
+
+    if (newTransaction) withDynTransaction( createLanes() ) else createLanes()
+  }
+
 
   def validateMinDistance(measure1: Double, measure2: Double): Boolean = {
     val minDistanceAllow = 0.01
@@ -970,12 +980,13 @@ trait LaneOperations {
 
   // Used by initial main lane population process
   def expireAllMunicipalityLanes(municipality: Int, username: String): Unit = {
-    val lanes = dao.fetchLanesByMunicipality(municipality)
-    val lanesWithHistoryId = lanes.map(_.id)
-                                  .map(lane => (lane, historyDao.insertHistoryLane(lane, None, username)))
+    val laneIds = dao.fetchLanesByMunicipality(municipality).map(_.id)
+    if (laneIds.nonEmpty) {
+      val lanesWithHistoryId = historyDao.insertHistoryLanes(laneIds, username)
 
-    historyDao.expireHistoryLanes(lanesWithHistoryId.map(_._2), username)
-    dao.deleteEntryLanes(lanesWithHistoryId.map(_._1))
+      historyDao.expireHistoryLanes(lanesWithHistoryId, username)
+      dao.deleteEntryLanes(laneIds)
+    }
   }
 
   def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
