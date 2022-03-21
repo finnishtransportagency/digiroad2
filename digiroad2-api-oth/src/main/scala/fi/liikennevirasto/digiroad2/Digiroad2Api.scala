@@ -703,7 +703,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   protected def roadLinkToApiWithLaneInfo(roadLinks:Seq[RoadLink],withLaneInfo: Boolean = false): Seq[Map[String,Any]] = {
       roadLinks.map(rl=>{roadLinkToApi(rl,withLaneInfo)})
   }
-  
+  /**
+    * Enrich roadlink with lane information before turning withLaneInfo flag true
+    */
   def roadLinkToApi(roadLink: RoadLink, withLaneInfo: Boolean = false): Map[String, Any] = {
     val laneInfo = if(withLaneInfo) roadLink.lanes else Seq()
 
@@ -813,8 +815,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks/adjacents/:ids") {
     val user = userProvider.getCurrentUser()
     val ids = params("ids").split(',').map(_.toLong)
-    val links = roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).values.head
-    roadLinkToApiWithLaneInfo(links)
+    roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).mapValues(_.map(rl => roadLinkToApi(rl)))
   }
 
   get("/roadlinks/complementaries"){
