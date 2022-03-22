@@ -449,7 +449,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
-    * This method returns road links and change data by bounding box and municipalities.
+    * This method returns road links and change data by bounding box and municipalities. TODO split to three method
     *
     * @param bounds
     * @param municipalities
@@ -785,44 +785,101 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     }
   }
-  
-  private def fetchOverrides(idTableName: String): Map[Long, (Option[(Long, Int, DateTime, String)],
-    Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])] = {
-    sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
-          f.link_id, f.functional_class, f.modified_date, f.modified_by,
-          l.link_id, l.link_type, l.modified_date, l.modified_by,
-          a.link_id, a.administrative_class, a.created_date, a.created_by
+
+
+  implicit val getroadlinkOverrideProperties: GetResult[RoadlinkOverrideProperties] = new GetResult[RoadlinkOverrideProperties] {
+    def apply(r: PositionedResult): RoadlinkOverrideProperties = {
+      val linkId = r.nextLong
+      val traffic_direction_link_id:Option[Long] =r.nextLongOption()
+      val traffic_direction_value:Option[Int] =r.nextIntOption()
+      val traffic_direction_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
+      val traffic_direction_modified_by:Option[String] =r.nextStringOption()
+
+      val functional_class_link_id:Option[Long] =r.nextLongOption()
+      val functional_class_value:Option[Int] =r.nextIntOption()
+      val functional_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
+      val functional_class_modified_by:Option[String] =r.nextStringOption()
+
+      val link_type_link_id:Option[Long] =r.nextLongOption()
+      val link_type_value:Option[Int] =r.nextIntOption()
+      val link_type_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
+      val link_type_modified_by:Option[String] =r.nextStringOption()
+
+      val administrative_class_link_id:Option[Long] =r.nextLongOption()
+      val administrative_class_value:Option[Int] =r.nextIntOption()
+      val administrative_class_modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
+      val administrative_class_modified_by:Option[String] =r.nextStringOption()
+
+      RoadlinkOverrideProperties(linkId,
+        TrafficDirectionRoadlinkData(traffic_direction_link_id,traffic_direction_value,traffic_direction_modified_date,traffic_direction_modified_by),
+        FunctionalClassRoadlinkData(functional_class_link_id,functional_class_value,functional_class_modified_date,functional_class_modified_by),
+        LinkTypeRoadlinkData(link_type_link_id,link_type_value,link_type_modified_date,link_type_modified_by),
+        AdministrativeClassRoadlinkData(administrative_class_link_id,administrative_class_value,administrative_class_modified_date,administrative_class_modified_by))
+    }
+  }
+   def fetchOverrides(idTableName: String):List[RoadlinkOverrideProperties]= {
+     sql"""select i.id, 
+            t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
+            f.link_id, f.functional_class, f.modified_date, f.modified_by,
+            l.link_id, l.link_type, l.modified_date, l.modified_by,
+            a.link_id, a.administrative_class, a.created_date, a.created_by
             from #$idTableName i
             left join traffic_direction t on i.id = t.link_id
             left join functional_class f on i.id = f.link_id
             left join link_type l on i.id = l.link_id
             left join administrative_class a on i.id = a.link_id and (a.valid_to IS NULL OR a.valid_to > current_timestamp)
-      """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
-      Option[Long], Option[Int], Option[DateTime], Option[String],
-      Option[Long], Option[Int], Option[DateTime], Option[String],
-      Option[Long], Option[Int], Option[DateTime], Option[String])].list.map(row =>
-    {
-      val td = (row._2, row._3, row._4, row._5) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-        case _ => None
-      }
-      val fc = (row._6, row._7, row._8, row._9) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-        case _ => None
-      }
-      val lt = (row._10, row._11, row._12, row._13) match {
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
-        case _ => None
-      }
-      val ac = (row._14, row._15, row._16, row._17) match{
-        case (Some(linkId), Some(value), Some(createdDate), Some(createdBy)) => Option((linkId, value, createdDate, createdBy))
-        case _ => None
-      }
-      row._1 ->(td, fc, lt, ac)
-    }
-    ).toMap
+      """.as[RoadlinkOverrideProperties](getroadlinkOverrideProperties).list
   }
 
+  case class RoadlinkData( linkId:Option[Long], value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String] ,table:String)
+  case class TrafficDirectionRoadlinkData( linkId:Option[Long], value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class FunctionalClassRoadlinkData( linkId:Option[Long],value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class LinkTypeRoadlinkData(linkId:Option[Long], value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class AdministrativeClassRoadlinkData( linkId:Option[Long], value:Option[Int], modifiedDate:Option[DateTime], modifiedBy:Option[String])
+  case class RoadlinkOverrideProperties(linkId:Long,
+                                        trafficDirection:TrafficDirectionRoadlinkData,
+                                        functionalClass:FunctionalClassRoadlinkData,
+                                        linkType:LinkTypeRoadlinkData,
+                                        administrativeClass: AdministrativeClassRoadlinkData)
+  
+  implicit val getRoadlinkPropertiesUnion: GetResult[RoadlinkData] = new GetResult[RoadlinkData] {
+    def apply(r: PositionedResult): RoadlinkData = {
+      val link_id:Option[Long] =r.nextLongOption()
+      val value:Option[Int] =r.nextIntOption()
+      val modified_date:Option[DateTime] =Some(new DateTime(r.nextTimestamp()))
+      val modified_by:Option[String] =r.nextStringOption()
+      val table:String =r.nextString()
+      RoadlinkData(link_id,value,modified_date,modified_by,table)
+    }
+  }
+  
+  private def fetchOverrides(ids: Set[Long]): List[RoadlinkOverrideProperties] = {
+      val roadlinkData = sql"""select link.t1 as link_id ,link.t2 as value,link.t3 as modified_date ,link.t4 as modified_by, link.t5 as link_table 
+          from (
+                select t.link_id as t1, t.traffic_direction  as t2, t.modified_date  as t3, t.modified_by  as t4,  'traffic_direction'  as t5
+                    from traffic_direction t union all  	
+                select f.link_id  as f1, f.functional_class  as f2, f.modified_date  as f3, f.modified_by  as f4 ,'functional_class'  as f5
+                    from  functional_class f union all 
+                select	l.link_id  as l1, l.link_type  as l2, l.modified_date  as l3, l.modified_by  as l4, 'link_type'  as l5 
+                    from link_type l union all  	
+                select	a.link_id  as a1, a.administrative_class  as a2, a.created_date  as a3, a.created_by  as a4, 'administrative_class'  as a5 
+                    from administrative_class a where (a.valid_to IS NULL OR a.valid_to > current_timestamp)
+              ) link where link.t1 in (#${ids.mkString(",")})""".as[RoadlinkData](getRoadlinkPropertiesUnion).list
+      
+    val grouped = roadlinkData.groupBy(_.linkId);
+
+    grouped.map(r => {convertToRoadlinkOverrideProperties(r._2)}).toList
+  }
+
+  def convertToRoadlinkOverrideProperties(links: List[RoadlinkData]): RoadlinkOverrideProperties = {
+    val trafficDirection: TrafficDirectionRoadlinkData = links.filter(_.table == "traffic_direction").map(r2 => TrafficDirectionRoadlinkData(r2.linkId, r2.value, r2.modifiedDate, r2.modifiedBy)).headOption.getOrElse(TrafficDirectionRoadlinkData(None, None, None, None))
+    val functionalClass: FunctionalClassRoadlinkData = links.filter(_.table == "functional_class").map(r2 => FunctionalClassRoadlinkData(r2.linkId, r2.value, r2.modifiedDate, r2.modifiedBy)).headOption.getOrElse(FunctionalClassRoadlinkData(None, None, None, None))
+    val linkType: LinkTypeRoadlinkData = links.filter(_.table == "link_type").map(r2 => LinkTypeRoadlinkData(r2.linkId, r2.value, r2.modifiedDate, r2.modifiedBy)).headOption.getOrElse(LinkTypeRoadlinkData(None, None, None, None))
+    val administrativeClass: AdministrativeClassRoadlinkData = links.filter(_.table == "administrative_class").map(r2 => AdministrativeClassRoadlinkData(r2.linkId, r2.value, r2.modifiedDate, r2.modifiedBy)).headOption.getOrElse(AdministrativeClassRoadlinkData(None, None, None, None))
+    RoadlinkOverrideProperties(links.head.linkId.get, trafficDirection, functionalClass, linkType, administrativeClass)
+  }
+  
+  
   protected def setLinkAttributes(propertyName: String, linkProperty: LinkProperties, username: Option[String],
                                   vvhRoadLink: VVHRoadlink, latestModifiedAt: Option[String],
                                   latestModifiedBy: Option[String]) = {
@@ -875,7 +932,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
     ) ++ getPrivateRoadLastModification(fetchResult)
   }
+  private def fetchOverridedRoadLinkAttributes(links:Set[Long]): List[(Long, Option[(String, String)])] = {
+    val fetchResult =
+      sql"""select rla.link_id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
+            from road_link_attributes rla where rla.link_id in (#${links.mkString(",")}) and rla.valid_to IS NULL"""
+        .as[RoadLinkAttributeInfo].list
 
+    fetchResult.map(row => {
+      val rla = (row.name, row.value) match {
+        case (Some(name), Some(value)) => Option((name, value))
+        case _ => None
+      }
+      row.id -> rla
+    }
+    ) ++ getPrivateRoadLastModification(fetchResult)
+  }
   private def getPrivateRoadLastModification(fetchResult: Seq[RoadLinkAttributeInfo]): Seq[(Long, Option[(String, String)])] = {
     val groupedResults = fetchResult.filter(row => row.linkId.nonEmpty && Seq(privateRoadAssociationPublicId, additionalInfoPublicId).contains(row.name.get)).flatMap {roadInfo =>
         (roadInfo.createdDate, roadInfo.modifiedDate) match {
@@ -1456,35 +1527,69 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  private def fetchRoadLinkPropertyRows(linkIds: Set[Long]): RoadLinkPropertyRows = {
-    def cleanMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)])]): Map[RoadLinkId, RoadLinkPropertyRow] = {
-      parameterMap.filter(i => i._2.nonEmpty).mapValues(i => i.get)
-    }
-    def splitMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)],
-      Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)],
-      Option[(Long, Int, DateTime, String)] )]) = {
-      (cleanMap(parameterMap.map(i => i._1 -> i._2._1)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._2)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._3)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._4)))
+  def fetchRoadLinkPropertyRows(linkIds: Set[Long]): RoadLinkPropertyRows = {
+
+    def partitionAndReturnRoadLinkPropertyRows(roadlinkOverrideProperties: List[RoadlinkOverrideProperties],overridedRoadLinkAttributes:Map[RoadLinkId, RoadLinkAtributes]): RoadLinkPropertyRows= {
+      val trafficDirection, functionalClass, linkType,admin: mutable.HashMap[RoadLinkId,RoadLinkPropertyRow] =  new mutable.HashMap()
+
+      def addToMap(link:RoadlinkOverrideProperties){
+        val trafficDirectionItem =  link.trafficDirection
+        val functionalClassItem =  link.functionalClass
+        val linkTypeItem =  link.linkType
+        val administrativeClass =  link.administrativeClass
+
+        if(trafficDirectionItem.value.isDefined)
+          trafficDirection.put(link.linkId,TrafficDirectionRoadLinkPropertyRow(link.linkId,trafficDirectionItem.value.get,trafficDirectionItem.modifiedDate.get,trafficDirectionItem.modifiedBy.get))
+
+        if(functionalClassItem.value.isDefined)
+          functionalClass.put(link.linkId,FunctionalPropertyRow(link.linkId,functionalClassItem.value.get,functionalClassItem.modifiedDate.get,functionalClassItem.modifiedBy.get))
+
+        if(linkTypeItem.value.isDefined)
+          linkType.put(link.linkId,LinkTypePropertyRow(link.linkId,linkTypeItem.value.get,linkTypeItem.modifiedDate.get,linkTypeItem.modifiedBy.get))
+
+        if(administrativeClass.value.isDefined)
+          admin.put (link.linkId,AdministrativeClassPropertyRow(link.linkId,administrativeClass.value.get,administrativeClass.modifiedDate.get,administrativeClass.modifiedBy.get))
+
+      }
+
+      LogUtils.time(logger,s"TEST LOG loop roadlinkOverrideProperties with list size: ${roadlinkOverrideProperties.size.toString}"){
+        roadlinkOverrideProperties.foreach(link=>{
+          addToMap(link)
+        })
+      }
+      LogUtils.time(logger,"TEST LOG return RoadLinkPropertyRows convert to map"){ RoadLinkPropertyRows(trafficDirection.toMap,functionalClass.toMap,linkType.toMap,admin.toMap,overridedRoadLinkAttributes)}
     }
 
     def splitRoadLinkAttributesMap(parameterMap: List[(Long, Option[(String, String)])]) = {
       parameterMap.filter(_._2.nonEmpty).groupBy(_._1).map { case (k, v) => (k, v.map(_._2.get)) }
     }
 
-    MassQuery.withIds(linkIds) {
-      idTableName =>
-        val (td, fc, lt, ac) = splitMap(fetchOverrides(idTableName))
-        val overridedRoadLinkAttributes = splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName))
-        RoadLinkPropertyRows(td, fc, lt, ac, overridedRoadLinkAttributes)
+    val (linksProperties,overridedRoadLinkAttributes)= if (linkIds.size >=1000){
+        LogUtils.time(logger,"TEST LOG  fetchOverrides and fetchOverridedRoadLinkAttributes"){MassQuery.withIds(linkIds) { idTableName =>
+          (fetchOverrides(idTableName),splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName)))
+        }}
+    } else {
+        LogUtils.time(logger,"TEST LOG  fetchOverrides and fetchOverridedRoadLinkAttributes"){
+          (fetchOverrides(linkIds),
+            splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(linkIds)))
+        }
     }
+    partitionAndReturnRoadLinkPropertyRows(linksProperties,overridedRoadLinkAttributes)
   }
 
+  trait RoadLinkPropertyRow{
+    val linkId:Long
+    val value: Int
+    val modifiedDate:DateTime
+    val modifiedBy:String
+  }
+  case class TrafficDirectionRoadLinkPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
+  case class FunctionalPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
+  case class LinkTypePropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
+  case class AdministrativeClassPropertyRow(linkId:Long, value: Int, modifiedDate:DateTime, modifiedBy:String) extends RoadLinkPropertyRow
   type RoadLinkId = Long
-  type RoadLinkPropertyRow = (Long, Int, DateTime, String)
   type RoadLinkAtributes = Seq[(String, String)]
-
+  
   case class RoadLinkPropertyRows(trafficDirectionRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
                                   functionalClassRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
                                   linkTypeRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
@@ -1500,22 +1605,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     def functionalClassValue(linkId: Long): Int = {
       val functionalClassRowOption = functionalClassRowsByLinkId.get(linkId)
-      functionalClassRowOption.map(_._2).getOrElse(UnknownFunctionalClass.value)
+      functionalClassRowOption.map(_.value).getOrElse(UnknownFunctionalClass.value)
     }
 
     def linkTypeValue(linkId: Long): LinkType = {
       val linkTypeRowOption = linkTypeRowsByLinkId.get(linkId)
-      linkTypeRowOption.map(linkTypeRow => LinkType(linkTypeRow._2)).getOrElse(UnknownLinkType)
+      linkTypeRowOption.map(linkTypeRow => LinkType(linkTypeRow.value)).getOrElse(UnknownLinkType)
     }
 
     def trafficDirectionValue(linkId: Long): Option[TrafficDirection] = {
       val trafficDirectionRowOption = trafficDirectionRowsByLinkId.get(linkId)
-      trafficDirectionRowOption.map(trafficDirectionRow => TrafficDirection(trafficDirectionRow._2))
+      trafficDirectionRowOption.map(trafficDirectionRow => TrafficDirection(trafficDirectionRow.value))
     }
 
     def administrativeClassValue(linkId: Long): Option[AdministrativeClass] = {
       val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
-      administrativeRowOption.map( ac => AdministrativeClass.apply(ac._2))
+      administrativeRowOption.map( ac => AdministrativeClass.apply(ac.value))
     }
 
     def latestModifications(linkId: Long, optionalModification: Option[(DateTime, String)] = None): Option[(DateTime, String)] = {
@@ -1525,7 +1630,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
 
       val modifications = List(functionalClassRowOption, trafficDirectionRowOption, linkTypeRowOption, administrativeRowOption).map {
-        case Some((_, _, at, by)) => Some((at, by))
+        case Some(TrafficDirectionRoadLinkPropertyRow(_, _, at, by)) => Some((at, by))
+        case Some(FunctionalPropertyRow(_, _, at, by)) => Some((at, by))
+        case Some(LinkTypePropertyRow(_, _, at, by)) => Some((at, by))
+        case Some(AdministrativeClassPropertyRow(_, _, at, by)) => Some((at, by))
         case _ => None
       } :+ optionalModification
       modifications.reduce(calculateLatestModifications)
