@@ -99,7 +99,7 @@ Resources:
             - Name: vvhRoadlink.frozen
               Value: 'false'
             - Name: viiteRestApiEndPoint
-              Value: 'https://api.testivaylapilvi.fi/viite/api/viite/'
+              Value: 'https://api.vaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
               Value: 'false'
             - Name: vkmUrl
@@ -119,7 +119,7 @@ Resources:
             - Name: http.nonProxyHosts
               Value: '172.17.*|localhost|127.*'
             - Name: feedbackAssetsEndPoint
-              Value: 'https://digiroadtest.testivaylapilvi.fi/'
+              Value: 'https://digiroad.vaylapilvi.fi/'
             - Name: bonecp.jdbcUrl
               Value: 'jdbc:postgresql://rdspg13prod.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/digiroad'
             - Name: bonecp.username
