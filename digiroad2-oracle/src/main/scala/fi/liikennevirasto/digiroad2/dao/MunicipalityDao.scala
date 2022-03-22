@@ -127,7 +127,7 @@ class MunicipalityDao {
          		else e.name_sv
          	end as name
          from ely e
-         	where ST_X(m.geometry) = $lon and ST_Y(m.geometry) = $lat
+         	where ST_X(e.geometry) = $lon and ST_Y(e.geometry) = $lat
        """.as[(Int, String)].list
   }
 }
