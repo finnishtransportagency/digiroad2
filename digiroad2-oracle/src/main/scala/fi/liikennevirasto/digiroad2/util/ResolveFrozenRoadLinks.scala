@@ -238,7 +238,7 @@ trait ResolvingFrozenRoadLinks {
 
     val tempRoadAddress = roadLinkTempDao.getByMunicipality(municipality)
 
-    val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
+    val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipalityAddRoadAddress(municipality, false).filter(_.administrativeClass == State)
 
     val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
     val missingRoadLinks = roadLinks.filterNot(road => allRoadAddress.map(_.linkId).contains(road.linkId))
