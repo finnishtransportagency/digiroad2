@@ -33,6 +33,8 @@ object ApiUtils {
    */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
                            responseType: String = "json")(f: Params => T): Any = {
+    if (!Digiroad2Properties.awsConnectionEnabled) return f(params)
+
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val fullPath = request.getPathInfo + queryString
     val path = fullPath.substring(fullPath.lastIndexOf("/") + 1)

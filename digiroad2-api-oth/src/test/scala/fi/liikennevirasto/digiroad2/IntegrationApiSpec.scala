@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, Formats}
@@ -27,24 +26,20 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   addServlet(integrationApi, "/*")
 
   test("Get assets requires municipality number") {
-    if (Digiroad2Properties.awsConnectionEnabled) {
-      get("/mass_transit_stops") {
-        status should equal(400)
-      }
-      get("/mass_transit_stops?municipality=235") {
-        status should equal(200)
-      }
+    get("/mass_transit_stops") {
+      status should equal(400)
+    }
+    get("/mass_transit_stops?municipality=235") {
+      status should equal(200)
     }
   }
 
   test("Get speed_limits requires municipality number") {
-    if (Digiroad2Properties.awsConnectionEnabled) {
-      get("/speed_limits") {
-        status should equal(400)
-      }
-      get("/speed_limits?municipality=588") {
-        status should equal(200)
-      }
+    get("/speed_limits") {
+      status should equal(400)
+    }
+    get("/speed_limits?municipality=588") {
+      status should equal(200)
     }
   }
 
@@ -68,11 +63,9 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("Returns mml id of the road link that the stop refers to") {
-    if (Digiroad2Properties.awsConnectionEnabled) {
-      get("/mass_transit_stops?municipality=235") {
-        val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
-        linkIds should be(Seq(123L, 321L))
-      }
+    get("/mass_transit_stops?municipality=235") {
+      val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
+      linkIds should be(Seq(123L, 321L))
     }
   }
 

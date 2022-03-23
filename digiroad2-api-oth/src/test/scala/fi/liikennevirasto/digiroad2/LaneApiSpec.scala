@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, Track}
+import fi.liikennevirasto.digiroad2.util.Track
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite
@@ -81,30 +81,26 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Lanes in municipality API requires municipality number") {
-    if (Digiroad2Properties.awsConnectionEnabled) {
-      get("/lanes_in_municipality") {
-        status should equal(400)
-      }
-      get("/lanes_in_municipality?municipality=abcd") {
-        status should equal(400)
-      }
-      get("/lanes_in_municipality?municipality=235") {
-        status should equal(200)
-      }
+    get("/lanes_in_municipality") {
+      status should equal(400)
+    }
+    get("/lanes_in_municipality?municipality=abcd") {
+      status should equal(400)
+    }
+    get("/lanes_in_municipality?municipality=235") {
+      status should equal(200)
     }
   }
 
   test("lanes in road address range Api requires valid parameters"){
-    if (Digiroad2Properties.awsConnectionEnabled) {
-      get("/lanes_in_range") {
-        status should equal(400)
-      }
-      get("/lanes_in_range?road_number=a&track=b&start_part=c&start_addrm=d&end_part=e&end_addrm=f") {
-        status should equal(400)
-      }
-      get("/lanes_in_range?road_number=9&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000") {
-        status should equal(200)
-      }
+    get("/lanes_in_range") {
+      status should equal(400)
+    }
+    get("/lanes_in_range?road_number=a&track=b&start_part=c&start_addrm=d&end_part=e&end_addrm=f") {
+      status should equal(400)
+    }
+    get("/lanes_in_range?road_number=9&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000") {
+      status should equal(200)
     }
   }
 
