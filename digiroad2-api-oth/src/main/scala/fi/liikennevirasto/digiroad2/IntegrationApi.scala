@@ -23,6 +23,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   val logger = LoggerFactory.getLogger(getClass)
   protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
+  val apiId = "integration-api"
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
@@ -883,22 +884,24 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   get("/changes/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
-     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-     val until = params.get("until") match {
-       case Some(dateValue) => DateTime.parse(dateValue)
-       case _ => DateTime.now()
-     }
+    ApiUtils.avoidRestrictions(apiId, request, params){ params =>
+      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+      val until = params.get("until") match {
+        case Some(dateValue) => DateTime.parse(dateValue)
+        case _ => DateTime.now()
+      }
 
-    val withAdjust = params.get("withAdjust") match{
-      case Some(value)=> value.toBoolean
-      case _ => true
+      val withAdjust = params.get("withAdjust") match{
+        case Some(value)=> value.toBoolean
+        case _ => true
+      }
+
+      val assetType = params("assetType")
+      assetType match {
+        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until, withAdjust))
+        case _ => BadRequest("Invalid asset type")
+      }
     }
-
-     val assetType = params("assetType")
-     assetType match {
-       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until, withAdjust))
-       case _ => BadRequest("Invalid asset type")
-     }
   }
 
   def getTrafficSignGroup(groupName: String):TrafficSignTypeGroup = {
@@ -930,67 +933,73 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   get("/:assetType", operation(getAssetsByTypeMunicipality)) {
     contentType = formats("json")+ "; charset=utf-8"
-    params.get("municipality").map { municipality =>
-      val municipalityNumber = municipality.toInt
-      val assetType = params("assetType")
-      assetType match {
-        case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
-        case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
-        case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
-        case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
-        case "axle_weight_limits" => sevenRestrictionToApi(AxleWeightLimit.typeId, municipalityNumber)
-        case "bogie_weight_limits" => bogieWeightLimitsToApi(municipalityNumber)
-        case "height_limits" => sevenRestrictionToApi(HeightLimitInfo.typeId, municipalityNumber)
-        case "length_limits" => sevenRestrictionToApi(LengthLimit.typeId, municipalityNumber)
-        case "width_limits" => sevenRestrictionToApi(WidthLimitInfo.typeId, municipalityNumber)
-        case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
-        case "traffic_lights" => trafficLightsToApi(trafficLightService.getByMunicipality(municipalityNumber))
-        case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
-        case "directional_traffic_signs" => directionalTrafficSignsToApi(directionalTrafficSignService.getByMunicipality(municipalityNumber))
-        case "railway_crossings" => railwayCrossingsToApi(railwayCrossingService.getByMunicipality(municipalityNumber))
-        case "vehicle_prohibitions" => linearAssetsToApi(Prohibition.typeId, municipalityNumber)
-        case "hazardous_material_transport_prohibitions" => linearAssetsToApi(HazmatTransportProhibition.typeId, municipalityNumber)
-        case "number_of_lanes" => linearAssetsToApi(NumberOfLanes.typeId, municipalityNumber)
-        case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
-        case "roads_affected_by_thawing" => damagedByThawToApi(municipalityNumber)
-        case "widths" => roadWidthToApi(municipalityNumber)
-        case "paved_roads" => pavedRoadToApi(municipalityNumber)
-        case "lit_roads" => linearAssetsToApi(LitRoad.typeId, municipalityNumber)
-        case "speed_limits_during_winter" => linearAssetsToApi(WinterSpeedLimit.typeId, municipalityNumber)
-        case "traffic_volumes" => linearAssetsToApi(TrafficVolume.typeId, municipalityNumber)
-        case "european_roads" => linearAssetsToApi(EuropeanRoads.typeId, municipalityNumber)
-        case "exit_numbers" => linearAssetsToApi(ExitNumbers.typeId, municipalityNumber)
-        case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
-        case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
-        case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
-        case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
-        case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
-        case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
-        case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
-        case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
-        case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
-        case "road_works_asset" => roadWorksToApi(municipalityNumber)
-        case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
-        case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
-        case _ => BadRequest("Invalid asset type")
+    ApiUtils.avoidRestrictions(apiId, request, params){ params =>
+      params.get("municipality").map { municipality =>
+        val municipalityNumber = municipality.toInt
+        val assetType = params("assetType")
+        assetType match {
+          case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
+          case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
+          case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
+          case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
+          case "axle_weight_limits" => sevenRestrictionToApi(AxleWeightLimit.typeId, municipalityNumber)
+          case "bogie_weight_limits" => bogieWeightLimitsToApi(municipalityNumber)
+          case "height_limits" => sevenRestrictionToApi(HeightLimitInfo.typeId, municipalityNumber)
+          case "length_limits" => sevenRestrictionToApi(LengthLimit.typeId, municipalityNumber)
+          case "width_limits" => sevenRestrictionToApi(WidthLimitInfo.typeId, municipalityNumber)
+          case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
+          case "traffic_lights" => trafficLightsToApi(trafficLightService.getByMunicipality(municipalityNumber))
+          case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
+          case "directional_traffic_signs" => directionalTrafficSignsToApi(directionalTrafficSignService.getByMunicipality(municipalityNumber))
+          case "railway_crossings" => railwayCrossingsToApi(railwayCrossingService.getByMunicipality(municipalityNumber))
+          case "vehicle_prohibitions" => linearAssetsToApi(Prohibition.typeId, municipalityNumber)
+          case "hazardous_material_transport_prohibitions" => linearAssetsToApi(HazmatTransportProhibition.typeId, municipalityNumber)
+          case "number_of_lanes" => linearAssetsToApi(NumberOfLanes.typeId, municipalityNumber)
+          case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
+          case "roads_affected_by_thawing" => damagedByThawToApi(municipalityNumber)
+          case "widths" => roadWidthToApi(municipalityNumber)
+          case "paved_roads" => pavedRoadToApi(municipalityNumber)
+          case "lit_roads" => linearAssetsToApi(LitRoad.typeId, municipalityNumber)
+          case "speed_limits_during_winter" => linearAssetsToApi(WinterSpeedLimit.typeId, municipalityNumber)
+          case "traffic_volumes" => linearAssetsToApi(TrafficVolume.typeId, municipalityNumber)
+          case "european_roads" => linearAssetsToApi(EuropeanRoads.typeId, municipalityNumber)
+          case "exit_numbers" => linearAssetsToApi(ExitNumbers.typeId, municipalityNumber)
+          case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
+          case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
+          case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
+          case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
+          case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
+          case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
+          case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
+          case "tr_bogie_weight_limits" => trWeightLimitationsToApi(bogieWeightLimitService.getByMunicipality(municipalityNumber))
+          case "tr_height_limits" => trHeightLimitsToApi(heightLimitService.getByMunicipality(municipalityNumber))
+          case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
+          case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
+          case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
+          case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
+          case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
+          case "road_works_asset" => roadWorksToApi(municipalityNumber)
+          case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
+          case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
+          case _ => BadRequest("Invalid asset type")
+        }
+      } getOrElse {
+        BadRequest("Missing mandatory 'municipality' parameter")
       }
-    } getOrElse {
-      BadRequest("Missing mandatory 'municipality' parameter")
     }
   }
 
   get("/traffic_signs/:group_name"){
     contentType = formats("json")
-    params.get("municipality").map { municipality =>
-      val groupName = getTrafficSignGroup(params("group_name"))
-      groupName match {
-        case TrafficSignTypeGroup.Unknown => BadRequest("Invalid group type")
-        case _ => trafficSignsToApi(trafficSignService.getByMunicipalityAndGroup(municipality.toInt, groupName))
+    ApiUtils.avoidRestrictions(apiId + "_traffic_signs", request, params) { params =>
+      params.get("municipality").map { municipality =>
+        val groupName = getTrafficSignGroup(params("group_name"))
+        groupName match {
+          case TrafficSignTypeGroup.Unknown => BadRequest("Invalid group type")
+          case _ => trafficSignsToApi(trafficSignService.getByMunicipalityAndGroup(municipality.toInt, groupName))
+        }
+      } getOrElse {
+        BadRequest("Missing mandatory 'municipality' parameter")
       }
     }
   }

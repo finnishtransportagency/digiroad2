@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.MaintenanceService
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
@@ -26,8 +27,10 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
    addServlet(serviceRoadAPI, "/*")
 
   test("Get all existing active assets by poligon in database") {
-    get("/huoltotiet/12345") {
-      status should equal(200)
+    if (Digiroad2Properties.awsConnectionEnabled) {
+      get("/huoltotiet/12345") {
+        status should equal(200)
+      }
     }
   }
 

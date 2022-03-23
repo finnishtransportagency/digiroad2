@@ -23,6 +23,7 @@ import scala.util.Try
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
   protected implicit val jsonFormats: Formats = DefaultFormats
+  val apiId = "change-api"
 
   before() {
     contentType = formats("json")
@@ -66,46 +67,50 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
   get("/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
-    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
-    val token = params.get("token").map(_.toString)
+    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+      val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+      val token = params.get("token").map(_.toString)
 
-    val withAdjust = params.get("withAdjust") match{
-      case Some(value)=> true
-      case _ => false
-    }
+      val withAdjust = params.get("withAdjust") match {
+        case Some(value) => true
+        case _ => false
+      }
 
-    val withGeometry = params.get("withGeometry") match {
-      case Some(value) => true
-      case _ => false
-    }
+      val withGeometry = params.get("withGeometry") match {
+        case Some(value) => true
+        case _ => false
+      }
 
-    params("assetType") match {
-      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust, token))
-      case "total_weight_limits"         => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withAdjust, token))
-      case "trailer_truck_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust, token))
-      case "axle_weight_limits"          => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust, token))
-      case "bogie_weight_limits"         => bogieWeightLimitsToGeoJson(since, dynamicLinearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withAdjust, token))
-      case "height_limits"               => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust, token))
-      case "length_limits"               => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust, token))
-      case "width_limits"                => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust, token))
-      case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
-      case "vehicle_prohibitions"        => prohibitionsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust, token))
-      case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until, token), pointAssetGenericProperties)
-      case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
-      case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
-      case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
-      case "lane_information"            => laneChangesToGeoJson(laneService.getChanged(since, until, withAdjust, token).flatMap(laneChange => laneChangeLaneToTwoDigitLaneCode(laneChange)), withGeometry)
+      params("assetType") match {
+        case "speed_limits" => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust, token))
+        case "total_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TotalWeightLimit.typeId, since, until, withAdjust, token))
+        case "trailer_truck_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust, token))
+        case "axle_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust, token))
+        case "bogie_weight_limits" => bogieWeightLimitsToGeoJson(since, dynamicLinearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withAdjust, token))
+        case "height_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust, token))
+        case "length_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust, token))
+        case "width_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust, token))
+        case "road_names" => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+        case "vehicle_prohibitions" => prohibitionsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust, token))
+        case "pedestrian_crossing" => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until, token), pointAssetGenericProperties)
+        case "obstacles" => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
+        case "warning_signs_group" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
+        case "stop_sign" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
+        case "lane_information" => laneChangesToGeoJson(laneService.getChanged(since, until, withAdjust, token).flatMap(laneChange => laneChangeLaneToTwoDigitLaneCode(laneChange)), withGeometry)
+      }
     }
   }
 
   get("/mass_transit_stops", operation(getMassTransitStopsPrintedAtValluXML)) {
     contentType = formats("json")
-    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
-    val token = params.get("token").map(_.toString)
+    ApiUtils.avoidRestrictions(apiId + "_mass_transit_stops", request, params) { params =>
+      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+      val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+      val token = params.get("token").map(_.toString)
 
-    massTransitStopsToGeoJson(since, massTransitStopService.getPublishedOnXml(since, until, token))
+      massTransitStopsToGeoJson(since, massTransitStopService.getPublishedOnXml(since, until, token))
+    }
   }
 
   private def speedLimitsToGeoJson(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) =
