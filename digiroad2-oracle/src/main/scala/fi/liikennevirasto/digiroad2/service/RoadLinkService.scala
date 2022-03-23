@@ -1580,7 +1580,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       parameterMap.filter(_._2.nonEmpty).groupBy(_._1).map { case (k, v) => (k, v.map(_._2.get)) }
     }
 
-    val (linksProperties,overridedRoadLinkAttributes)= if (linkIds.size >=1000){
+    val (linksProperties,overridedRoadLinkAttributes) = if (linkIds.size >=MassQuery.limit){
         LogUtils.time(logger,"TEST LOG  fetchOverrides and fetchOverridedRoadLinkAttributes"){MassQuery.withIds(linkIds) { idTableName =>
           (fetchOverrides(idTableName),splitRoadLinkAttributesMap(fetchOverridedRoadLinkAttributes(idTableName)))
         }}

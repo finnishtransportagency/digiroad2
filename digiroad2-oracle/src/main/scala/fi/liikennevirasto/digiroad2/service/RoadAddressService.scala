@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkD
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{LogUtils, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.conn.HttpHostConnectException
 import org.slf4j.LoggerFactory
@@ -224,7 +224,9 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   def roadLinkWithRoadAddressTemp(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     try {
-      val roadAddressLinks = withDynTransaction(roadLinkTempDao.getByLinkIds(roadLinks.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
+      val roadAddressLinks =   LogUtils.time(logger,"TEST LOG query temp road address"){
+        withDynTransaction(roadLinkTempDao.getByLinkIds(roadLinks.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
+      }
       logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
 
       roadLinks.map(rl =>

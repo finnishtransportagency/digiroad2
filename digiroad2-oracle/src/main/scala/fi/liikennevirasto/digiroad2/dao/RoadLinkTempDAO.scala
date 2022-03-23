@@ -8,11 +8,18 @@ import slick.jdbc.StaticQuery.interpolation
 
 class RoadLinkTempDAO {
   def getByLinkIds(linkIds: Set[Long]): Seq[RoadAddressTEMP] = {
-    val linkTypeInfo = MassQuery.withIds(linkIds) { idTableName =>
+
+    val linkTypeInfo = if(linkIds.size<=MassQuery.limit){
       sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code,to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS') 
+              from temp_road_address_info temp where temp.link_id in (#${linkIds.mkString(",")})
+         """.as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
+    }else{
+      MassQuery.withIds(linkIds) { idTableName =>
+        sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code,to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS') 
               from temp_road_address_info temp
               join  #$idTableName i on i.id = temp.link_id
          """.as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
+      }
     }
     linkTypeInfo.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, startMValue, endMValue, sideCode, createdDate) =>
       RoadAddressTEMP(linkId, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, startMValue, endMValue, sideCode = sideCode.map(SideCode.apply), municipalityCode = municipalityCode, createdDate = createdDate)

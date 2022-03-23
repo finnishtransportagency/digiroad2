@@ -8,6 +8,7 @@ import java.sql.PreparedStatement
 
 object MassQuery {
   val logger = LoggerFactory.getLogger(getClass)
+  val limit = 100000
   def withIds[T](ids: Set[Long])(f: String => T): T = {
     LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.size}"){
       LogUtils.time(logger, "TEST LOG create TEMP_ID table"){
