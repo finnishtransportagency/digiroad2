@@ -922,6 +922,8 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE"
   }
 
+  protected def withRoadAddress(): String = ???
+
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
     val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
@@ -1010,6 +1012,8 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
   protected override def defaultOutFields(): String = {
     "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE,SUBTYPE"
   }
+
+  protected def withRoadAddress(): String = ???
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
