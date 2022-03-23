@@ -11,6 +11,15 @@ Parameters:
     Type: Number
     Default: 11211
     Description: port number
+  ECSTaskRoleName:
+    Type: String
+    Default: dev-digiroad2-ecs-task-role
+    Description: Name of ECS task definition task role
+  ApiS3BucketName:
+    Type: String
+    Default: dev-vayla-digiroad2-api-store-bucket
+    Description: Name of s3 bucket for apis
+
 Resources:
   ECSTaskExecutionRoleForTaskDefinitionDigiroad:
     Type: AWS::IAM::Role
@@ -57,6 +66,7 @@ Resources:
       - ECSLogGroup
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
+      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ECSTaskRoleName}'
       Memory: '2048'
       Family: digiroad2-dev
       Cpu: '1024'
@@ -146,6 +156,8 @@ Resources:
               Value: '72000'
             - Name: rasterServiceUrl
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
+            - Name: apiS3BucketName
+              Value: !Sub '${ApiS3BucketName}'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/bonecp.password'

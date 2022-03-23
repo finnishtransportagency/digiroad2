@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template to create S3 bucket and ECS task definition task role
+
+Parameters:
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
+  Environment:
+    Description: Environment of the application, that these resources are created for. Used when tagging and naming the resources
+    Type: String
+  Owner:
+    Description: Owner of the of application, that these resources are created for. Used when tagging and naming the resources
+    Type: String
+  Project:
+    Description: Project of the of application, that these resources are created for. Used when tagging the resources
+    Type: String
+
+Resources:
+
+  ApiBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub ${Environment}-${Owner}-${ApplicationName}-api-store-bucket
+      ObjectLockEnabled: false
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteAfterOneDay
+            Status: Enabled
+            ExpirationInDays: 1
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - "*"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ApplicationName}-${Environment}-api-store-bucket
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  ApiBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ApiBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ECSTaskRolePolicy
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt ECSTaskDefinitionTaskRole.Arn
+            Action:
+              - s3:GetObject
+              - s3:GetObjectTagging
+              - s3:PutObject
+              - s3:PutObjectTagging
+            Resource: !Sub
+              - ${BucketArn}/*
+              - BucketArn: !GetAtt ApiBucket.Arn
+
+  ECSTaskDefinitionTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Environment}-${ApplicationName}-ecs-task-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AccessApiBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectTagging
+                  - s3:PutObject
+                  - s3:PutObjectTagging
+                Resource: !Sub
+                  - ${BucketArn}/*
+                  - BucketArn: !GetAtt ApiBucket.Arn
