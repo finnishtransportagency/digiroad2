@@ -9,6 +9,9 @@ import software.amazon.awssdk.services.s3.model.{GetObjectRequest, HeadObjectReq
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
 class AwsService {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -46,22 +49,28 @@ class AwsService {
       preSignedGetRequest.url().toString
     }
 
-    def isS3ObjectAvailable(s3Bucket: String, workId: String, waitTimeSeconds: Int): Boolean = {
+    def isS3ObjectAvailable(s3Bucket: String, workId: String, waitTimeMillis: Long,
+                            modifiedWithinHours: Option[Int] = None): Boolean = {
       try {
         val waiter = s3.waiter()
         val waitRequest = HeadObjectRequest.builder()
                                            .bucket(s3Bucket)
                                            .key(workId)
-                                           .build()
+        val waitRequestBuilt =
+          if (modifiedWithinHours.nonEmpty)
+            waitRequest.ifModifiedSince(Instant.now().minus(modifiedWithinHours.get, ChronoUnit.HOURS)).build()
+          else waitRequest.build()
         val waiterOverrides = WaiterOverrideConfiguration.builder()
-                                                         .waitTimeout(java.time.Duration.ofSeconds(waitTimeSeconds))
+                                                         .waitTimeout(java.time.Duration.ofMillis(waitTimeMillis))
                                                          .build()
-        val waitResponse = waiter.waitUntilObjectExists(waitRequest, waiterOverrides)
+        val waitResponse = waiter.waitUntilObjectExists(waitRequestBuilt, waiterOverrides)
         waitResponse.matched().response().isPresent
       } catch {
         case e: SdkClientException =>
-          if (e.getCause != null) throw e
-          else false /** Return false when wait object request time outs */
+          if (e.getCause != null && e.getCause.getLocalizedMessage.contains("Unable to load credentials")) {
+            throw e
+          }
+          false //Return false when wait object request time outs
       }
     }
   }

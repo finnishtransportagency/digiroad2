@@ -22,6 +22,7 @@ object ApiUtils {
   val MAX_WAIT_TIME_SECONDS: Int = 20
   val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
+  val objectModifiedWithinHours: Int = 12
 
   /**
    * Avoid API Gateway restrictions
@@ -39,7 +40,7 @@ object ApiUtils {
     val fullPath = request.getPathInfo + queryString
     val path = fullPath.substring(fullPath.lastIndexOf("/") + 1)
     val workId = getWorkId(requestId, params, responseType)
-    val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2)
+    val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectModifiedWithinHours))
 
     (params.get("retry"), objectExists) match {
       case (_, true) =>
@@ -117,9 +118,25 @@ object ApiUtils {
     }
   }
 
+  def objectAvailableInS3(workId: String, timeToQuery: Long): Boolean = {
+    val startTime = System.currentTimeMillis()
+    val s3ObjectAvailable = s3Service.isS3ObjectAvailable(s3Bucket, workId, timeToQuery, Some(objectModifiedWithinHours))
+    if (s3ObjectAvailable) true
+    else {
+      val endTime = System.currentTimeMillis()
+      val timeLeft = timeToQuery - (endTime - startTime)
+      val millisToNextQuery = 2000
+      if (timeLeft > millisToNextQuery) {
+        Thread.sleep(millisToNextQuery)
+        objectAvailableInS3(workId, timeLeft - millisToNextQuery)
+      } else false
+    }
+  }
+
   def redirectBasedOnS3ObjectExistence(workId: String, path: String, currentRetry: Int): ActionResult = {
     // If object exists in s3, returns pre-signed url otherwise redirects to same url with incremented retry param
-    if (s3Service.isS3ObjectAvailable(s3Bucket, workId, MAX_WAIT_TIME_SECONDS)) {
+    val s3ObjectAvailable = objectAvailableInS3(workId, TimeUnit.SECONDS.toMillis(MAX_WAIT_TIME_SECONDS))
+    if (s3ObjectAvailable) {
       val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
       redirectToUrl(preSignedUrl)
     } else {
