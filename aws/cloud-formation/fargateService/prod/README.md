@@ -61,6 +61,16 @@ aws cloudformation create-stack \
 Ota uuden cachen endpoint osoite ilman porttia, muodossa "clustername.placeholder.cfg.euw1.cache.amazonaws.com"
 Talleta endpoint tiedostoon file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
 
+### Luo S3 sekä task definition task role
+
+```
+aws cloudformation create-stack \
+--stack-name [esim. digiroad-prod-api-s3] \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/s3/digiroad2-api-s3.yaml \
+--parameters file://aws/cloud-formation/s3/PROD-api-s3-parameter.json
+```
+
 ### Luo task-definition
 
 ```

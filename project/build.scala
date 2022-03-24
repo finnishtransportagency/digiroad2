@@ -13,6 +13,7 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
+  val AwsSdkVersion = "2.17.148"
 
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
@@ -106,7 +107,9 @@ object Digiroad2Build extends Build {
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0",
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
-        "net.spy" % "spymemcached" % "2.12.3"
+        "net.spy" % "spymemcached" % "2.12.3",
+        "software.amazon.awssdk" % "s3" % AwsSdkVersion,
+        "software.amazon.awssdk" % "sso" % AwsSdkVersion
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
