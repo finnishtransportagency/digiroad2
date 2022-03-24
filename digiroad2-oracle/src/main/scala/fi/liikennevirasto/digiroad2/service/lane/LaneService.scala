@@ -920,7 +920,7 @@ trait LaneOperations {
     val laneCodesToModify = updateNewLanes.map { newLane => getLaneCode(newLane).toInt }
 
     //Fetch from db the existing lanes
-    val oldLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodesToModify)
+    val oldLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodesToModify).filter(_.sideCode == sideCode)
 
     val newLanesByLaneCode = updateNewLanes.groupBy(il => getLaneCode(il).toInt)
 
