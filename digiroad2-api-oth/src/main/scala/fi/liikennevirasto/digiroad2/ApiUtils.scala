@@ -32,7 +32,7 @@ object ApiUtils {
    *  -> Save bigger responses to S3 (access with pre-signed url)
    */
   def avoidRestrictions[T](requestId: String, request: HttpServletRequest, params: Params,
-                           responseType: String = "json")(f: Params => T): T = {
+                           responseType: String = "json")(f: Params => T): Any = {
     if (!Digiroad2Properties.awsConnectionEnabled) return f(params)
 
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
@@ -41,7 +41,7 @@ object ApiUtils {
     val workId = getWorkId(requestId, params, responseType)
     val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2)
 
-    val response = (params.get("retry"), objectExists) match {
+    (params.get("retry"), objectExists) match {
       case (_, true) =>
         val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
         redirectToUrl(preSignedUrl)
@@ -56,7 +56,6 @@ object ApiUtils {
         else
           BadRequest("Maximum retries reached. Unable to get object.")
     }
-    response.asInstanceOf[T]
   }
 
   /** Work id formed of request id (i.e. "integration") and query params */
@@ -66,7 +65,7 @@ object ApiUtils {
     s"${identifiers.mkString("_")}.$contentType"
   }
 
-  def newQuery[T](workId: String, path: String, f: Params => T, params: Params, responseType: String): T = {
+  def newQuery[T](workId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     val ret = Future { f(params) }
     try {
       val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
@@ -78,7 +77,7 @@ object ApiUtils {
           if (responseSize < MAX_RESPONSE_SIZE_BYTES) response
           else {
             Future { s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType) }
-            redirectToUrl(path, Some(1)).asInstanceOf[T]
+            redirectToUrl(path, Some(1))
           }
       }
     } catch {
@@ -88,7 +87,7 @@ object ApiUtils {
           val responseBody = formatResponse(finished,  responseType)
           s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
         }
-        redirectToUrl(path, Some(1)).asInstanceOf[T]
+        redirectToUrl(path, Some(1))
     }
   }
 
