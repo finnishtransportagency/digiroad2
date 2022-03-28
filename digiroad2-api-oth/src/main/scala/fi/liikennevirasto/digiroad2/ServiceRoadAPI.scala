@@ -42,6 +42,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
   protected val applicationDescription = "Service Road API "
 
   val MAX_BOUNDING_BOX = 100000000
+  val apiId = "service-road-api"
 
   protected implicit def jsonFormats: Formats = DefaultFormats
 
@@ -67,9 +68,11 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   get("/huoltotiet", operation(getServiceRoadByBoundingBox)){
     contentType = formats("json")
-    val bbox = params.get("boundingBox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
-    validateBoundingBox(bbox)
-    createGeoJson(maintenanceService.getAllByBoundingBox(bbox))
+    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+      val bbox = params.get("boundingBox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+      validateBoundingBox(bbox)
+      createGeoJson(maintenanceService.getAllByBoundingBox(bbox))
+    }
   }
 
   val getServiceRoadByAreaId =
@@ -90,18 +93,20 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   get("/huoltotiet/:areaId", operation(getServiceRoadByAreaId)){
     contentType = formats("json")
-    var areaId = params("areaId")
-    val maintenanceAssets = maintenanceService.getActiveMaintenanceRoadByPolygon(areaId.toInt)
-    val linkIdMap = maintenanceAssets.groupBy(_.linkId).mapValues(_.map(_.id))
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(linkIdMap.keySet)
+    ApiUtils.avoidRestrictions(apiId, request, params) { params =>
+      val areaId = params("areaId")
+      val maintenanceAssets = maintenanceService.getActiveMaintenanceRoadByPolygon(areaId.toInt)
+      val linkIdMap = maintenanceAssets.groupBy(_.linkId).mapValues(_.map(_.id))
+      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(linkIdMap.keySet)
 
-    createGeoJson(maintenanceAssets.flatMap{
-       maintenanceAsset =>
-        roadLinks.find(_.linkId == maintenanceAsset.linkId).map {
-          roadLink =>
-            (maintenanceAsset, roadLink)
-        }
-    })
+      createGeoJson(maintenanceAssets.flatMap{
+        maintenanceAsset =>
+          roadLinks.find(_.linkId == maintenanceAsset.linkId).map {
+            roadLink =>
+              (maintenanceAsset, roadLink)
+          }
+      })
+    }
   }
 
   private def createGeoJson(maintenanceAsset: Seq[(PersistedLinearAsset, RoadLink)]) = {

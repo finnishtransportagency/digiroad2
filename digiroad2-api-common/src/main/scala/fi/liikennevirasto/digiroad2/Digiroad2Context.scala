@@ -658,6 +658,10 @@ object Digiroad2Context {
     new LaneService(roadLinkService, eventbus, roadAddressService)
   }
 
+  lazy val awsService: AwsService = {
+    new AwsService()
+  }
+
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
 
   lazy val dataFeedback : FeedbackDataService = new FeedbackDataService()

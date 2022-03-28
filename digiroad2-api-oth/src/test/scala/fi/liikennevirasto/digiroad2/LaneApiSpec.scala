@@ -93,13 +93,13 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("lanes in road address range Api requires valid parameters"){
-    get("/lanes_in_range"){
+    get("/lanes_in_range") {
       status should equal(400)
     }
-    get("/lanes_in_range?road_number=a&track=b&start_part=c&start_addrm=d&end_part=e&end_addrm=f"){
+    get("/lanes_in_range?road_number=a&track=b&start_part=c&start_addrm=d&end_part=e&end_addrm=f") {
       status should equal(400)
     }
-    get("/lanes_in_range?road_number=9&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000"){
+    get("/lanes_in_range?road_number=9&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000") {
       status should equal(200)
     }
   }

@@ -3,6 +3,7 @@ version: 0.2
 env:
   variables:
     batchMode: "true"
+    awsConnectionEnabled: "false"
 
 phases:
   install:
