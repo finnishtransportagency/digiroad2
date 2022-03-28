@@ -208,12 +208,14 @@ Resources:
             pre_build:
               commands:
                 - pip install --upgrade awscli
-                - $(aws ecr get-login --no-include-email --region eu-west-1)
+                - aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 475079312496.dkr.ecr.eu-west-1.amazonaws.com
+                - aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 920408837790.dkr.ecr.eu-west-1.amazonaws.com
             build:
               commands:
                 - docker pull $ECR_REPOSITORY_URI:qa
                 - docker tag  $ECR_REPOSITORY_URI:qa $ECR_PROD_URI:prod
                 - docker push $ECR_PROD_URI:prod
+                - docker tag  $ECR_REPOSITORY_URI:qa $ECR_REPOSITORY_URI:prod
                 - docker push $ECR_REPOSITORY_URI:prod
             post_build:
               commands:
