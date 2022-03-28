@@ -3,7 +3,7 @@ import sbt._
 import sbt.Keys.{unmanagedResourceDirectories, _}
 import org.scalatra.sbt._
 import sbtassembly.Plugin.AssemblyKeys._
-import sbtassembly.Plugin.MergeStrategy
+import sbtassembly.Plugin.{MergeStrategy, PathList}
 import org.scalatra.sbt.PluginKeys._
 
 object Digiroad2Build extends Build {
@@ -237,10 +237,13 @@ object Digiroad2Build extends Build {
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
     test in assembly := {},
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) { old =>
     {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x if x.endsWith("env.properties") => MergeStrategy.discard
+      case x if x.endsWith("mime.types") => MergeStrategy.last
+      case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
+      case PathList("META-INF", "maven", "com.fasterxml.jackson.core", "jackson-core", _*) => MergeStrategy.discard
       case x => old(x)
     } }
   )
