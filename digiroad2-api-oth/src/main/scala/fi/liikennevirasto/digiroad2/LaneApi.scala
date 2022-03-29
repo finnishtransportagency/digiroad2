@@ -18,6 +18,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   lazy val vkmClient = new VKMClient
   lazy val polygonTools = new PolygonTools
+  val apiId = "lane-api"
 
   case class ApiRoad(roadNumber: Long, roadParts: Seq[ApiRoadPart])
   case class ApiRoadPart(roadNumber: Option[Long], roadPartNumber: Long, apiLanes: Seq[ApiLane])
@@ -64,36 +65,40 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
 
   get("/lanes_in_range", operation(getLanesInRoadAddressRange)) {
     contentType = formats("json") + "; charset=utf-8"
-    val roadNumber = params.getOrElse("road_number", halt(BadRequest("Missing parameters")))
-    val track = params.getOrElse("track", halt(BadRequest("Missing parameters")))
-    val startRoadPartNumber = params.getOrElse("start_part", halt(BadRequest("Missing parameters")))
-    val startAddrM = params.getOrElse("start_addrm", halt(BadRequest("Missing parameters")))
-    val endRoadPartNumber = params.getOrElse("end_part", halt(BadRequest("Missing parameters")))
-    val endAddrM = params.getOrElse("end_addrm", halt(BadRequest("Missing parameters")))
+    ApiUtils.avoidRestrictions(apiId + "_range", request, params) { params =>
+      val roadNumber = params.getOrElse("road_number", halt(BadRequest("Missing parameters")))
+      val track = params.getOrElse("track", halt(BadRequest("Missing parameters")))
+      val startRoadPartNumber = params.getOrElse("start_part", halt(BadRequest("Missing parameters")))
+      val startAddrM = params.getOrElse("start_addrm", halt(BadRequest("Missing parameters")))
+      val endRoadPartNumber = params.getOrElse("end_part", halt(BadRequest("Missing parameters")))
+      val endAddrM = params.getOrElse("end_addrm", halt(BadRequest("Missing parameters")))
 
-    val parameters = try {
-      RangeParameters(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
-        endRoadPartNumber.toLong, startAddrM.toLong, endAddrM.toLong)
-    }
-    catch {
-      case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
-    }
+      val parameters = try {
+        RangeParameters(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
+          endRoadPartNumber.toLong, startAddrM.toLong, endAddrM.toLong)
+      }
+      catch {
+        case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
+      }
 
-    lanesInRoadAddressRangeToApi(parameters)
+      lanesInRoadAddressRangeToApi(parameters)
+    }
   }
 
   get("/lanes_in_municipality", operation(getLanesInMunicipality)) {
     contentType = formats("json") + "; charset=utf-8"
-    try {
-      val municipalityParameter = params.get("municipality")
-      if (municipalityParameter.isEmpty) halt(BadRequest("Missing municipality parameter"))
-      else {
-        val municipalityNumber = municipalityParameter.get.toInt
-        lanesInMunicipalityToApi(municipalityNumber)
+    ApiUtils.avoidRestrictions(apiId + "_municipality", request, params) { params =>
+      try {
+        val municipalityParameter = params.get("municipality")
+        if (municipalityParameter.isEmpty) halt(BadRequest("Missing municipality parameter"))
+        else {
+          val municipalityNumber = municipalityParameter.get.toInt
+          lanesInMunicipalityToApi(municipalityNumber)
+        }
       }
-    }
-    catch {
-      case _: NumberFormatException => halt(BadRequest("Missing or invalid municipality parameter"))
+      catch {
+        case _: NumberFormatException => halt(BadRequest("Missing or invalid municipality parameter"))
+      }
     }
   }
 

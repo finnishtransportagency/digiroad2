@@ -3,7 +3,7 @@ import sbt._
 import sbt.Keys.{unmanagedResourceDirectories, _}
 import org.scalatra.sbt._
 import sbtassembly.Plugin.AssemblyKeys._
-import sbtassembly.Plugin.MergeStrategy
+import sbtassembly.Plugin.{MergeStrategy, PathList}
 import org.scalatra.sbt.PluginKeys._
 
 object Digiroad2Build extends Build {
@@ -13,6 +13,7 @@ object Digiroad2Build extends Build {
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.7"
   val ScalatraVersion = "2.6.3"
+  val AwsSdkVersion = "2.17.148"
 
   // Get build id to check if executing in aws environment.
   val awsBuildId: String = scala.util.Properties.envOrElse("CODEBUILD_BUILD_ID", null)
@@ -106,7 +107,9 @@ object Digiroad2Build extends Build {
         "org.postgresql" % "postgresql" % "42.2.5",
         "net.postgis" % "postgis-jdbc" % "2.3.0",
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
-        "net.spy" % "spymemcached" % "2.12.3"
+        "net.spy" % "spymemcached" % "2.12.3",
+        "software.amazon.awssdk" % "s3" % AwsSdkVersion,
+        "software.amazon.awssdk" % "sso" % AwsSdkVersion
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / ".." / "conf"
     )
@@ -234,10 +237,13 @@ object Digiroad2Build extends Build {
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
     test in assembly := {},
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) { old =>
     {
       case x if x.endsWith("about.html") => MergeStrategy.discard
       case x if x.endsWith("env.properties") => MergeStrategy.discard
+      case x if x.endsWith("mime.types") => MergeStrategy.last
+      case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
+      case PathList("META-INF", "maven", "com.fasterxml.jackson.core", "jackson-core", _*) => MergeStrategy.discard
       case x => old(x)
     } }
   )

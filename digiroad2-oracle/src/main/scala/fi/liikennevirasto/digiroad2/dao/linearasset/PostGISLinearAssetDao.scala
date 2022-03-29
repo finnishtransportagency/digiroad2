@@ -642,7 +642,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   def floatLinearAssets(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
-        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute
+        sqlu"""update asset set floating = '1' where id in (select id from #$idTableName)""".execute
       }
     }
   }

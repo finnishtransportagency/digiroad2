@@ -48,6 +48,8 @@ trait Digiroad2Properties {
   val googleMapApiCryptoKey: String
   val rasterServiceUrl: String
   val rasterServiceApiKey: String
+  val apiS3BucketName: String
+  val awsConnectionEnabled: Boolean
   val bonecpProperties: Properties
   val batchMode:Boolean
 }
@@ -85,6 +87,8 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val featureProvider: String = scala.util.Properties.envOrElse("featureProvider", null)
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
   val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterService.apikey", null)
+  val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", null)
+  val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val batchMode: Boolean = scala.util.Properties.envOrElse("batchMode", "false").toBoolean
 
   val cacheHostname: String = scala.util.Properties.envOrElse("cacheHostname", null)
@@ -172,6 +176,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val googleMapApiCryptoKey: String = envOrProperties("googlemapapi.crypto_key")
   override val rasterServiceUrl: String = envProps.getProperty("rasterServiceUrl")
   override val rasterServiceApiKey: String = envOrProperties("rasterService.apikey")
+  override val apiS3BucketName: String = envOrProperties("apiS3BucketName")
+  override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val batchMode: Boolean =  envProps.getProperty("batchMode", "false").toBoolean
 
   override lazy val bonecpProperties: Properties = {
@@ -251,6 +257,8 @@ object Digiroad2Properties {
   lazy val googleMapApiCryptoKey: String = properties.googleMapApiCryptoKey
   lazy val rasterServiceUrl: String = properties.rasterServiceUrl
   lazy val rasterServiceApiKey:String = properties.rasterServiceApiKey
+  lazy val apiS3BucketName: String = properties.apiS3BucketName
+  lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val batchMode: Boolean = properties.batchMode
 
   lazy val bonecpProperties: Properties = properties.bonecpProperties

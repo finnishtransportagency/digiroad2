@@ -11,6 +11,14 @@ Parameters:
     Type: Number
     Default: 11211
     Description: port number
+  ECSTaskRoleName:
+    Type: String
+    Default: prod-digiroad2-ecs-task-role
+    Description: Name of ECS task definition task role
+  ApiS3BucketName:
+    Type: String
+    Default: prod-vayla-digiroad2-api-store-bucket
+    Description: Name of s3 bucket for apis
 
 Resources:
   ECSTaskExecutionRoleForTaskDefinitionDigiroad:
@@ -58,6 +66,7 @@ Resources:
      - ECSLogGroup
     Properties:
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRoleForTaskDefinitionDigiroad.Arn
+      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ECSTaskRoleName}'
       Memory: '4096'
       Family: digiroad2-prod
       Cpu: '2048'
@@ -99,7 +108,7 @@ Resources:
             - Name: vvhRoadlink.frozen
               Value: 'false'
             - Name: viiteRestApiEndPoint
-              Value: 'https://api.testivaylapilvi.fi/viite/api/viite/'
+              Value: 'https://api.vaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
               Value: 'false'
             - Name: vkmUrl
@@ -119,7 +128,7 @@ Resources:
             - Name: http.nonProxyHosts
               Value: '172.17.*|localhost|127.*'
             - Name: feedbackAssetsEndPoint
-              Value: 'https://digiroadtest.testivaylapilvi.fi/'
+              Value: 'https://digiroad.vaylapilvi.fi/'
             - Name: bonecp.jdbcUrl
               Value: 'jdbc:postgresql://rdspg13prod.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com:5432/digiroad'
             - Name: bonecp.username
@@ -146,6 +155,8 @@ Resources:
               Value: '72000'
             - Name: rasterServiceUrl
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
+            - Name: apiS3BucketName
+              Value: !Sub '${ApiS3BucketName}'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/bonecp.password'
