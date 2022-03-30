@@ -62,7 +62,7 @@
       },
       {
         "name": "viiteRestApiEndPoint",
-        "value": "https://viite.vaylapilvi.fi/viite/api/viite/"
+        "value": "https://api.vaylapilvi.fi/viite/api/viite/"
       },
       {
         "name": "vkmUrl",
@@ -110,7 +110,7 @@
       },
       {
         "name": "cacheHostname",
-        "value": "qaroadlinkcache.4xakoi.cfg.euw1.cache.amazonaws.com"
+        "value": "prodroadlinkcache.qrjvyl.cfg.euw1.cache.amazonaws.com"
       },
       {
         "name": "cacheHostPort",
