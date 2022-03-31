@@ -19,7 +19,9 @@ object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val s3Service: awsService.S3.type = awsService.S3
   val s3Bucket: String = Digiroad2Properties.apiS3BucketName
-  val objectTTLSeconds: Int = Digiroad2Properties.apiS3ObjectTTLSeconds.toInt
+  val objectTTLSeconds: Int =
+    if (Digiroad2Properties.apiS3ObjectTTLSeconds != null) Digiroad2Properties.apiS3ObjectTTLSeconds.toInt
+    else 300
 
   val MAX_WAIT_TIME_SECONDS: Int = 20
   val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
