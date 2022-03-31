@@ -10,6 +10,7 @@ import org.json4s.native.Json
 import org.scalatra.{ActionResult, BadRequest, Found, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,11 +19,11 @@ object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
   val s3Service: awsService.S3.type = awsService.S3
   val s3Bucket: String = Digiroad2Properties.apiS3BucketName
+  val objectTTLSeconds: Int = Digiroad2Properties.apiS3ObjectTTLSeconds.toInt
 
   val MAX_WAIT_TIME_SECONDS: Int = 20
   val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
-  val objectModifiedWithinHours: Int = 12
 
   /**
    * Avoid API Gateway restrictions
@@ -39,7 +40,7 @@ object ApiUtils {
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val path = "/digiroad" + request.getRequestURI + queryString
     val workId = getWorkId(requestId, params, responseType)
-    val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectModifiedWithinHours))
+    val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectTTLSeconds))
 
     (params.get("retry"), objectExists) match {
       case (_, true) =>
@@ -117,9 +118,10 @@ object ApiUtils {
     }
   }
 
+  @tailrec
   def objectAvailableInS3(workId: String, timeToQuery: Long): Boolean = {
     val startTime = System.currentTimeMillis()
-    val s3ObjectAvailable = s3Service.isS3ObjectAvailable(s3Bucket, workId, timeToQuery, Some(objectModifiedWithinHours))
+    val s3ObjectAvailable = s3Service.isS3ObjectAvailable(s3Bucket, workId, timeToQuery, Some(objectTTLSeconds))
     if (s3ObjectAvailable) true
     else {
       val endTime = System.currentTimeMillis()
