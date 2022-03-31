@@ -9,7 +9,7 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi näpäyttää hiirellä suuremmaksi, jo
 
 1. Digiroad-sovellukseen kirjaudutaan voimassa olevilla Väyläviraston tunnuksilla. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-operaattorilta sähköpostitse osoitteesta info@digiroad.fi.
 
-2. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
+2. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://digiroad.vaylapilvi.fi/ target="_blank">https://digiroad.vaylapilvi.fi. </a>
 
 3. Kirjautumisen j&auml;lkeen avautuu karttak&auml;ytt&ouml;&auml;ss&auml; katselutila. Käyttöoikeudet on rajattu maantieteellisesti kunnan tai ELY-alueen sekä k&auml;ytt&auml;j&auml;n roolin mukaan. Katselijan roolissa aineistoja voi ainoastaan katsella käyttöliittymässä. Muokkaajan roolissa aineistoja voi sek&auml; katsella ett&auml; muokata.
 
@@ -31,7 +31,7 @@ Yhteystiedot:
 Digiroad-operaattori:
 info@digiroad.fi
 040 507 2301
- <a href=http://www.digiroad.fi/ target="_blank">http://www.digiroad.fi/ </a>
+ <a href=http://www.vayla.fi/digiroad target="_blank">vayla.fi/digiroad </a>
 
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
@@ -51,7 +51,7 @@ Sovelluksen toimiessa virheellisesti tee näin:
 
 ### Kirjautuminen Digiroad-sovellukseen
 
-Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.vayla.fi/digiroad/  target="_blank">https://extranet.vayla.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://digiroad.vaylapilvi.fi/  target="_blank">https://digiroad.vaylapilvi.fi. </a>Kirjautumiseen tarvitaan voimassa olevat Väyläviraston tunnukset. Tunnuksia saa Digiroad-operaattorilta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
 ![Kirjautuminen Digiroadiin.](k2.PNG)
 
@@ -188,7 +188,7 @@ _Tielinkit._
 
 Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa n&auml;kyviin karttaikkunassa kaksoisnapauttamalla tielinkki&auml;, jolloin sovelluksen oikeaan laitaan avautuu tielinkin ominaisuustietoikkuna. Ominaisuustietoikkunassa linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.vayla.fi/digiroad/#linkProperty/450541 target="_blank">https://extranet.vayla.fi/digiroad/#linkProperty/450541</a>
+ <a href=https://digiroad.vaylapilvi.fi/#linkProperty/450541 target="_blank">https://digiroad.vaylapilvi.fi/#linkProperty/450541</a>
 
 jossa numerosarja 450541 on tielinkin ID. Toiminto tarkentaa karttaikkunan haetun tielinkin kohdalle. Tielinkin ominaisuustietoikkuna aukeaa sivun oikealle puolelle.
 
@@ -1966,7 +1966,7 @@ _Joukkoliikenteen pys&auml;kkien valinta._
 
 Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin valtakunnallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Sovelluksen t&auml;ytyy olla pys&auml;kkin&auml;kym&auml;ss&auml; pys&auml;kki&auml; haettaessa. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.vayla.fi/digiroad/#massTransitStop/95374  target="_blank">https://extranet.vayla.fi/digiroad/#massTransitStopNationalId/164599   </a>(2)
+ <a href=https://digiroad.vaylapilvi.fi/#massTransitStop/95374  target="_blank">https://digiroad.vaylapilvi.fi/#massTransitStopNationalId/164599   </a>(2)
 
 jossa numerosarja 164599 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustietoikkuna (3) aukeaa sivun oikealle puolelle. 
 
