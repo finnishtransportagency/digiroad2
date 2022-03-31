@@ -49,6 +49,7 @@ trait Digiroad2Properties {
   val rasterServiceUrl: String
   val rasterServiceApiKey: String
   val apiS3BucketName: String
+  val apiS3ObjectTTLSeconds: String
   val awsConnectionEnabled: Boolean
   val bonecpProperties: Properties
   val batchMode:Boolean
@@ -88,6 +89,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val rasterServiceUrl: String = scala.util.Properties.envOrElse("rasterServiceUrl", null)
   val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterService.apikey", null)
   val apiS3BucketName: String = scala.util.Properties.envOrElse("apiS3BucketName", null)
+  val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val batchMode: Boolean = scala.util.Properties.envOrElse("batchMode", "false").toBoolean
 
@@ -177,6 +179,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val rasterServiceUrl: String = envProps.getProperty("rasterServiceUrl")
   override val rasterServiceApiKey: String = envOrProperties("rasterService.apikey")
   override val apiS3BucketName: String = envOrProperties("apiS3BucketName")
+  override val apiS3ObjectTTLSeconds: String = envOrProperties("apiS3ObjectTTLSeconds")
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val batchMode: Boolean =  envProps.getProperty("batchMode", "false").toBoolean
 
@@ -258,6 +261,7 @@ object Digiroad2Properties {
   lazy val rasterServiceUrl: String = properties.rasterServiceUrl
   lazy val rasterServiceApiKey:String = properties.rasterServiceApiKey
   lazy val apiS3BucketName: String = properties.apiS3BucketName
+  lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val batchMode: Boolean = properties.batchMode
 
