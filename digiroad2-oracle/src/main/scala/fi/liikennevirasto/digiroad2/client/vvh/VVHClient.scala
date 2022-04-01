@@ -113,7 +113,7 @@ object ChangeType {
   case object New extends ChangeType { def value = 12 }
   case object ReplacedCommonPart extends ChangeType { def value = 13 }
   case object ReplacedNewPart extends ChangeType { def value = 14 }
-  case object ReplacedRemovedPart extends ChangeType { def value = 16 }
+  case object ReplacedRemovedPart extends ChangeType { def value = 15 }
 
   /**
     * Return true if this is a replacement where segment or part of it replaces another, older one
