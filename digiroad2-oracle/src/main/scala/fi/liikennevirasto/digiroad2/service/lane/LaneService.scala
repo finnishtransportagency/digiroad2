@@ -158,18 +158,22 @@ trait LaneOperations {
             val relevantChange = fullChanges.find(_.newId.contains(roadLink.linkId))
             val (linearAsset, changes) = laneFiller.projectLinearAsset(asset, roadLink, historyLink, projection, cs)
             relevantChange match {
-              case Some(change) =>
+              case Some(change) => {
+                if(ChangeType.isDivivedChange(relevantChange.get) && linearAsset.laneCode != 1){
+                  val assetDivided = calculateDividedLaneMeasures(linearAsset, change)
+                  (persistedAssets ++ Map(assetDivided -> historyLink), changes)
+                }
+                else (persistedAssets ++ Map(linearAsset -> historyLink), changes)
+              }
             }
-            if(ChangeType.isDivivedChange(relevantChange.get)){
 
-            }
-            (persistedAssets ++ Map(linearAsset -> historyLink), changes)
           case _ => (Map.empty[PersistedLane, RoadLink], changeSet)
         }
       case _ => (Map.empty[PersistedLane, RoadLink], changeSet)
     }
 
-     val projectedLanes = projectedLanesMapped.keys.toSeq
+     val invalidProjectedLanesFiltered = projectedLanesMapped.filterNot(_._1.endMeasure <= 0)
+     val projectedLanes = invalidProjectedLanesFiltered.keys.toSeq
      val projectedLanesGroupedByNewLink = projectedLanes.groupBy(_.linkId)
      val projectedLanesCombined = projectedLanesGroupedByNewLink.values.toSeq.flatMap(lanes => combineSimilarLanes(lanes))
 
@@ -177,9 +181,16 @@ trait LaneOperations {
      (projectedLanesCombined, newChangeSet)
   }
 
-//  def calculateDividedLaneMeasures(asset: PersistedLane, change: ChangeInfo, roadLink: RoadLink, ): PersistedLane ={
-//
-//  }
+  def calculateDividedLaneMeasures(asset: PersistedLane, change: ChangeInfo): PersistedLane ={
+    change.oldStartMeasure match {
+      case Some(oldStartMeasure) => {
+        val newStartMeasure = math.max(asset.startMeasure - oldStartMeasure, 0)
+        val newEndMeasure = asset.endMeasure - oldStartMeasure
+        asset.copy(startMeasure = newStartMeasure, endMeasure = newEndMeasure)
+      }
+      case _ => asset
+    }
+  }
 
   def combineSimilarLanes(lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
 //    val combinedLanes = lanes.map(laneToProcess => {

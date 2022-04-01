@@ -13,6 +13,13 @@ import org.scalatest.{FunSuite, Matchers}
 
 class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
 
+  def areEndMeasuresEqual(changeInfo: ChangeInfo, lane: PersistedLane): Boolean ={
+    val acceptableInaccuracy = 0.5
+    val difference = math.abs(lane.endMeasure - changeInfo.newEndMeasure.get)
+    if(difference < acceptableInaccuracy) true
+    else false
+  }
+
   def getChangesForTest1: Seq[ChangeInfo] = {
     val change1 = ChangeInfo(Some(1785786),Some(12626035),1340062600,1,Some(0.0),Some(24.46481088),Some(3.75475214),Some(25.72055144),1648076424000L)
     val change2a = ChangeInfo(Some(1785785),Some(12626035),1340062600,2,Some(0.0),Some(23.56318194),Some(25.72055144),Some(49.28373338),1648076424000L)
@@ -214,7 +221,39 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val historyLinks = roadLinkService.getHistoryDataLinksFromVVH(existingLanes.map(_.linkId).toSet)
     val latestHistoryLinks = historyLinks.groupBy(_.linkId).map(_._2.maxBy(_.vvhTimeStamp)).toSeq
     val (changeSet, modifiedLanes) = handleChanges(roadLinks, latestHistoryLinks, changes, existingLanes)
-    println("jee")
+
+    modifiedLanes.size should equal(3)
+    changeSet.expiredLaneIds.size should equal(2)
+    changeSet.adjustedMValues.size should equal(0)
+    changeSet.generatedPersistedLanes.size should equal(0)
+    changeSet.adjustedSideCodes.size should equal(0)
+    changeSet.adjustedVVHChanges.size should equal(0)
+
+    val adjustedMainLaneLink25 = modifiedLanes.find(lane => lane.linkId == 12628125 && lane.laneCode == 1).get
+    val adjustedAdditionalLaneLink25 = modifiedLanes.find(lane => lane.linkId == 12628125 && lane.laneCode == 2).get
+    val adjustedMainLaneLink39 = modifiedLanes.find(lane => lane.linkId == 12628139 && lane.laneCode == 1).get
+    val adjustedAdditionalLaneLink39 = modifiedLanes.find(lane => lane.linkId == 12628139 && lane.laneCode == 2)
+
+    val changeInfoLink25 = changes.find(_.newId.contains(12628125)).get
+    val changeInfoLink39 = changes.find(_.newId.contains(12628139)).get
+
+    //MainLanes should cover the whole link
+    adjustedMainLaneLink25.startMeasure should equal(0.0)
+    areEndMeasuresEqual(changeInfoLink25, adjustedMainLaneLink25) should equal(true)
+
+    adjustedMainLaneLink39.startMeasure should equal(0.0)
+    areEndMeasuresEqual(changeInfoLink39, adjustedMainLaneLink39) should equal(true)
+
+    //Additional lane should not exist on on link 12628139 because original additional lane didn't cover that segment
+    adjustedAdditionalLaneLink39.isEmpty should equal(true)
+
+    //Additional lane's startM should be same because that segment of the lane wasn't cut
+    adjustedAdditionalLaneLink25.startMeasure.round should equal(51)
+
+    //Additional lane's endM should be the same as link's new endM, because additional lane's original length
+    //exceeded the cutting point
+    areEndMeasuresEqual(changeInfoLink25, adjustedAdditionalLaneLink25) should equal(true)
+
   }
 
   test("Link shortened"){
