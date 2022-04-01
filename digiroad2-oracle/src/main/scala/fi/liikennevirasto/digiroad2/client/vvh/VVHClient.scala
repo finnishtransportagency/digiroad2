@@ -156,6 +156,14 @@ object ChangeType {
     }
   }
 
+  def isDivivedChange(changeInfo: ChangeInfo) = {
+    ChangeType.apply(changeInfo.changeType) match {
+      case DividedModifiedPart => true
+      case DividedNewPart => true
+      case _ => false
+    }
+  }
+
   /**
     * Return true if this is a removed segment or a piece of it. Only old id and m-values should be populated.
     *

@@ -138,7 +138,7 @@ trait LaneOperations {
     filledTopology
   }
 
-   def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], lanesToUpdate: Seq[PersistedLane],
+   def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], historyLinks: Seq[RoadLink], lanesToUpdate: Seq[PersistedLane],
                                                        currentLanes: Seq[PersistedLane], changes: Seq[ChangeInfo], changeSet: ChangeSet) : (Seq[PersistedLane], ChangeSet) ={
 
     val (replacementChanges, otherChanges) = changes.partition( ChangeType.isReplacementChange)
@@ -150,16 +150,46 @@ trait LaneOperations {
 
     val fullChanges = extensionChanges ++ replacementChanges
     val projections = mapReplacementProjections(lanesToUpdate, currentLanes, roadLinks, fullChanges).filterNot(p => p._2._1.isEmpty || p._2._2.isEmpty)
-    val lanes = projections.foldLeft((Seq.empty[PersistedLane], changeSet)) {
-      case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = laneFiller.projectLinearAsset(asset, roadLink, projection, cs)
-        (persistedAsset ++ Seq(linearAsset), changes)
-      case _ => (Seq.empty[PersistedLane], changeSet)
+    val (projectedLanesMapped, newChangeSet) = projections.foldLeft((Map.empty[PersistedLane, RoadLink], changeSet)) {
+      case ((persistedAssets, cs), (asset, (Some(roadLink), Some(projection)))) =>
+        val historyLink = historyLinks.find(_.linkId == asset.linkId)
+        historyLink match {
+          case Some(historyLink) =>
+            val relevantChange = fullChanges.find(_.newId.contains(roadLink.linkId))
+            val (linearAsset, changes) = laneFiller.projectLinearAsset(asset, roadLink, historyLink, projection, cs)
+            relevantChange match {
+              case Some(change) =>
+            }
+            if(ChangeType.isDivivedChange(relevantChange.get)){
+
+            }
+            (persistedAssets ++ Map(linearAsset -> historyLink), changes)
+          case _ => (Map.empty[PersistedLane, RoadLink], changeSet)
+        }
+      case _ => (Map.empty[PersistedLane, RoadLink], changeSet)
     }
 
-    lanes
+     val projectedLanes = projectedLanesMapped.keys.toSeq
+     val projectedLanesGroupedByNewLink = projectedLanes.groupBy(_.linkId)
+     val projectedLanesCombined = projectedLanesGroupedByNewLink.values.toSeq.flatMap(lanes => combineSimilarLanes(lanes))
+
+
+     (projectedLanesCombined, newChangeSet)
   }
 
+//  def calculateDividedLaneMeasures(asset: PersistedLane, change: ChangeInfo, roadLink: RoadLink, ): PersistedLane ={
+//
+//  }
+
+  def combineSimilarLanes(lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
+//    val combinedLanes = lanes.map(laneToProcess => {
+//      val continuingLanes = lanes.filter(lane => lane.startMeasure == laneToProcess.endMeasure ||
+//      lane.endMeasure == laneToProcess.startMeasure)
+//      val sameSideLanes = continuingLanes.filter()
+//      val similarAttributes = continuingLanes.filter(lane => )
+//    })
+    lanes
+  }
 
 
 

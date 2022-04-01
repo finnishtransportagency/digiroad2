@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, baseAdjustment}
-import fi.liikennevirasto.digiroad2.lane.{NewLane, PersistedLane, PieceWiseLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneFiller, NewLane, PersistedLane, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -10,6 +10,8 @@ import fi.liikennevirasto.digiroad2.util.LaneUtils.laneService._
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
+import scala.math.abs
 
 object ChangeLanesAccordingToVvhChanges {
 
@@ -33,14 +35,20 @@ object ChangeLanesAccordingToVvhChanges {
     val changes = roadLinkService.getChangeInfoByDates(since, until)
     val linkIds = (changes.flatMap(_.oldId) ++ changes.flatMap(_.newId)).toSet
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
-
-    handleChanges(roadLinks, changes)
-  }
-
-  def handleChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
+
+    val historyLinks = roadLinkService.getHistoryDataLinksFromVVH(existingAssets.map(_.linkId).toSet)
+    val latestHistoryLinks = historyLinks.groupBy(_.linkId).map(_._2.maxBy(_.vvhTimeStamp)).toSeq
+
+    val (filteredChangeSet, modifiedLanes) = handleChanges(roadLinks, latestHistoryLinks, changes, existingAssets)
+    saveChanges(filteredChangeSet, modifiedLanes)
+  }
+
+  def handleChanges(roadLinks: Seq[RoadLink], historyLinks: Seq[RoadLink], changes: Seq[ChangeInfo], existingAssets: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
+    val mappedChanges = LaneUtils.getMappedChanges(changes)
+    val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
 
     val timing = System.currentTimeMillis
     val (assetsOnChangedLinks, lanesWithoutChangedLinks) = existingAssets.partition(a => LaneUtils.newChangeInfoDetected(a, mappedChanges))
@@ -52,7 +60,7 @@ object ChangeLanesAccordingToVvhChanges {
         .filterNot( _ == 0L)                                   // Remove the new assets (ID == 0 )
     )
 
-    val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
+    val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, historyLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
     val newLanes = projectedLanes ++ lanesWithoutChangedLinks
 
     if (newLanes.nonEmpty) {
@@ -81,9 +89,37 @@ object ChangeLanesAccordingToVvhChanges {
       }
     }))
 
-    updateChangeSet(filteredChangeSet)
+//    val invalidVVHAdj = filteredChangeSet.adjustedVVHChanges.filter(_.startMeasure != 0)
+//    val invalidMValAdj = filteredChangeSet.adjustedMValues.filter(_.startMeasure != 0)
+//    val changesRelatedToInvalid = changes.filter(c => {
+//      val newId = c.newId.getOrElse(9999999)
+//      val oldId = c.oldId.getOrElse(9999999)
+//      invalidVVHAdj.map(_.linkId).contains(newId) || invalidVVHAdj.map(_.linkId).contains(oldId)
+//    })
+//    val invalidChangeTypes = changesRelatedToInvalid.map(c => (c.newId ,c.changeType))
+//    val invalidLanes = existingAssets.filter(lane => {
+//      val laneIds = invalidMValAdj.map(_.laneId) ++ invalidVVHAdj.map(_.laneId)
+//      laneIds.contains(lane.id)
+//    }).toSet
+//    val invalidCodes = invalidLanes.map(_.laneCode)
+//    val invalidLenghts = filteredChangeSet.adjustedVVHChanges.filter(lane => {
+//      val roadLink = roadLinks.find(_.linkId == lane.linkId)
+//      roadLink match {
+//        case Some(rl) =>
+//          val laneLength = lane.endMeasure - lane.startMeasure
+//          val difference = abs(rl.length - laneLength)
+//          difference > 1
+//
+//        case _ => false
+//      }
+//    })
+
+    (filteredChangeSet, modifiedLanes)
+  }
+
+  def saveChanges(changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]): Unit ={
+    updateChangeSet(changeSet)
     persistModifiedLinearAssets(modifiedLanes)
-    changedLanes
   }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {

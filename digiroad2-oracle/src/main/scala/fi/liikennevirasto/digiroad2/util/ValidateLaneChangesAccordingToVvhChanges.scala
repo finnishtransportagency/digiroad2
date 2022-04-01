@@ -108,7 +108,7 @@ object ValidateLaneChangesAccordingToVvhChanges {
         case Some(rl) =>
           val laneLength = lane.endMeasure - lane.startMeasure
           val difference = abs(rl.length - laneLength)
-          difference < 1
+          difference > 1
 
         case _ => false
       }

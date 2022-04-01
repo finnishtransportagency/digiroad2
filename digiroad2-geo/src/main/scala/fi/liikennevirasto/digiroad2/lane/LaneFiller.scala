@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.Point
 
 
 object LaneFiller {
@@ -176,13 +177,13 @@ class LaneFiller {
     (adjustedAsset, mValueAdjustments)
   }
 
-  def projectLinearAsset(lane: PersistedLane, to: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLane, ChangeSet)= {
+   def projectLinearAsset(lane: PersistedLane, to: RoadLink, historyLink: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLane, ChangeSet)= {
     val newLinkId = to.linkId
     val laneId = lane.linkId match {
       case to.linkId => lane.id
       case _ => 0
     }
-    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(lane, projection, to.length)
+    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(lane, projection, to.length, historyLink)
 
     val changeSet = laneId match {
       case 0 => changedSet
@@ -196,7 +197,12 @@ class LaneFiller {
   }
 
 
-  private def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double) = {
+  private def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double, historyLink: RoadLink) = {
+    val isCutAdditionalLane = asset.laneCode != 1 && (asset.startMeasure != 0 ||
+      Math.round(asset.endMeasure * 1000).toDouble / 1000 != Math.round(historyLink.length * 1000).toDouble / 1000)
+
+    val isLengthened = roadLinkLength > historyLink.length
+
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
 
@@ -208,21 +214,26 @@ class LaneFiller {
         case _ => asset.sideCode
       }
 
-      val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
-      val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
-
-      // Test if asset is affected by projection
-      if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd)
+      if(isCutAdditionalLane && isLengthened)
         (asset.startMeasure, asset.endMeasure, newSideCode)
-      else
-        (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), newSideCode)
+      else {
+        val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
+        val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
 
-    } else {
+        // Test if asset is affected by projection
+        if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd)
+          (asset.startMeasure, asset.endMeasure, newSideCode)
+        else
+          (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), newSideCode)
+
+      }} else {
       val newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
       val newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
 
+      if(isCutAdditionalLane && isLengthened)
+        (asset.startMeasure, asset.endMeasure, asset.sideCode)
       // Test if asset is affected by projection
-      if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
+      else if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
         (asset.startMeasure, asset.endMeasure, asset.sideCode)
       } else {
         (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), asset.sideCode)
