@@ -1,21 +1,19 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
-
-import java.lang.management.ManagementFactory
-import java.util.Properties
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Request
-import org.eclipse.jetty.client.{HttpClient, HttpProxy}
-import org.eclipse.jetty.http.{HttpField, HttpHeader}
 import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
-import org.eclipse.jetty.server.{Connector, Handler, HttpConfiguration, HttpConnectionFactory, Server, ServerConnector}
+import org.eclipse.jetty.server._
+import org.eclipse.jetty.servlet.{DefaultServlet, ServletHolder}
 import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.webapp.WebAppContext
 import org.slf4j.LoggerFactory
 
+import java.lang.management.ManagementFactory
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import scala.collection.JavaConversions._
 
 
@@ -29,6 +27,12 @@ trait DigiroadServer {
     context.setContextPath(contextPath)
     context.setParentLoaderPriority(true)
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
+    // Disable browser cache
+    val defaultServlet = new DefaultServlet
+    val holder = new ServletHolder(defaultServlet)
+    holder.setInitParameter("cacheControl", "no-store, no-cache")
+    context.addServlet(holder, "/index.html")
+    
     context.addServlet(classOf[OAGProxyServlet], "/maasto/*")
     context.addServlet(classOf[VKMProxyServlet], "/viitekehysmuunnin/*")
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
