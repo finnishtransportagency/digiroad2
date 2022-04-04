@@ -19,6 +19,10 @@ Parameters:
     Type: String
     Default: dev-vayla-digiroad2-api-store-bucket
     Description: Name of s3 bucket for apis
+  ApiS3ObjectTTLSeconds:
+    Type: Number
+    Default: 300
+    Description: Seconds, how long s3 object can be fetched after last modification
 
 Resources:
   ECSTaskExecutionRoleForTaskDefinitionDigiroad:
@@ -158,6 +162,8 @@ Resources:
               Value: 'https://api.vaylapilvi.fi/rasteripalvelu-mml'
             - Name: apiS3BucketName
               Value: !Sub '${ApiS3BucketName}'
+            - Name: apiS3ObjectTTLSeconds
+              Value: !Sub '${ApiS3ObjectTTLSeconds}'
           Secrets:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/bonecp.password'

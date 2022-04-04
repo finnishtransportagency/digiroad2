@@ -91,8 +91,11 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param linkIds The road link ids
     * @return
     */
+  //resolving_frozen_links batch keeps crashing here because of Viite API GW limits, temporary fix implemented
+  //TODO Rollback this grouping fix after Viite has implemented API GW limitation work-around
   def getAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
-    viiteClient.fetchAllByLinkIds(linkIds)
+    val linkIdsSplit = linkIds.grouped(1000).toSeq
+    linkIdsSplit.flatMap(linkIdGroup => viiteClient.fetchAllByLinkIds(linkIdGroup))
   }
 
   /**
