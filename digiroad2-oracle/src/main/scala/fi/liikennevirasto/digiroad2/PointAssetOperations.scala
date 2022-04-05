@@ -128,6 +128,7 @@ trait  PointAssetOperations{
   def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = {
+    val logger = LoggerFactory.getLogger(getClass)
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
@@ -143,12 +144,17 @@ trait  PointAssetOperations{
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
     val historicRoadLink = roadLinkService.getHistoryDataLinksFromVVH(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
-    assets.map { asset =>
-      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId) match {
-        case Some(roadLink) => roadLink
-        case _ => historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
-          .getOrElse(throw new IllegalStateException(s"Road link no longer available ${asset.linkId}"))
-      })
+    assets.flatMap { asset =>
+      val link = roadLinks.find(_.linkId == asset.linkId)
+      val roadLink =
+        if (link.nonEmpty) link
+        else historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+      roadLink match {
+        case Some(roadLink: RoadLink) => Some(ChangedPointAsset(asset, roadLink))
+        case _ =>
+          logger.info(s"Road link no longer available ${asset.linkId}. Skipping asset $asset")
+          None
+      }
     }
   }
 
