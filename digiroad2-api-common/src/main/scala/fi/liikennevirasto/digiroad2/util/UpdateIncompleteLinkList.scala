@@ -45,8 +45,8 @@ object UpdateIncompleteLinkList {
       logger.info(s" number of succeeding municipalities $counter from all ${municipalities.size}")
       logger.info("processing took: %.3f sec".format((System.currentTimeMillis() - timer1) * 0.001))
     }
-    val awaitTime = 1000L * 60L * 15
-    logger.info("await 15 minutes to make sure akka inbox is fully processed")
+    val awaitTime = 1000L * 60L * 60
+    logger.info("await 60 minutes to make sure akka inbox is fully processed")
     Thread.sleep(awaitTime)
   }
   
