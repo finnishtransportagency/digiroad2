@@ -70,51 +70,31 @@ object ChangeLanesAccordingToVvhChanges {
     val allLanes = assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks
     val groupedAssets = allLanes.groupBy(_.linkId)
     val (changedLanes, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changedSet))
+    val persistedChangedLanes = pieceWiseLanestoPersistedLane(changedLanes)
 
-    val changeSetLanes = changeSet.expiredLaneIds ++ changeSet.adjustedMValues.map(_.laneId) ++
-      changeSet.adjustedVVHChanges.map(_.laneId) ++ changeSet.adjustedSideCodes.map(_.laneId)
-    val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
-
-    val modifiedLanes = projectedLanes.filterNot(lane => {
-      val generatedLane = generatedMappedById.getOrElse(lane.id, Seq())
-      if (generatedLane.isEmpty) logger.info("No generated lane found for key: " + lane.id)
-      generatedLane.nonEmpty || changeSetLanes.contains(lane.id)
-    }) ++ changeSet.generatedPersistedLanes
-
-    val filteredChangeSet = changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes.filter(adj => {
-      val originalLane = allLanes.find(_.id == adj.laneId)
-      originalLane match {
-        case Some(lane) => lane.sideCode != adj.sideCode.value
-        case _ => true
-      }
-    }))
-
-//    val invalidVVHAdj = filteredChangeSet.adjustedVVHChanges.filter(_.startMeasure != 0)
-//    val invalidMValAdj = filteredChangeSet.adjustedMValues.filter(_.startMeasure != 0)
-//    val changesRelatedToInvalid = changes.filter(c => {
-//      val newId = c.newId.getOrElse(9999999)
-//      val oldId = c.oldId.getOrElse(9999999)
-//      invalidVVHAdj.map(_.linkId).contains(newId) || invalidVVHAdj.map(_.linkId).contains(oldId)
-//    })
-//    val invalidChangeTypes = changesRelatedToInvalid.map(c => (c.newId ,c.changeType))
-//    val invalidLanes = existingAssets.filter(lane => {
-//      val laneIds = invalidMValAdj.map(_.laneId) ++ invalidVVHAdj.map(_.laneId)
-//      laneIds.contains(lane.id)
-//    }).toSet
-//    val invalidCodes = invalidLanes.map(_.laneCode)
-//    val invalidLenghts = filteredChangeSet.adjustedVVHChanges.filter(lane => {
-//      val roadLink = roadLinks.find(_.linkId == lane.linkId)
-//      roadLink match {
-//        case Some(rl) =>
-//          val laneLength = lane.endMeasure - lane.startMeasure
-//          val difference = abs(rl.length - laneLength)
-//          difference > 1
+//    val changeSetLanes = changeSet.expiredLaneIds ++ changeSet.adjustedMValues.map(_.laneId) ++
+//      changeSet.adjustedVVHChanges.map(_.laneId) ++ changeSet.adjustedSideCodes.map(_.laneId)
+//    val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
 //
-//        case _ => false
-//      }
-//    })
+//    val modifiedLanes = projectedLanes.filterNot(lane => {
+//      val generatedLane = generatedMappedById.getOrElse(lane.id, Seq())
+//      if (generatedLane.isEmpty) logger.info("No generated lane found for key: " + lane.id)
+//      generatedLane.nonEmpty || changeSetLanes.contains(lane.id)
+//    }) ++ changeSet.generatedPersistedLanes
 
-    (filteredChangeSet, modifiedLanes)
+    val changeSetFilteredExpired = filterExpiredIds(changeSet)
+    (changeSetFilteredExpired, persistedChangedLanes)
+  }
+
+  def filterExpiredIds(set: ChangeSet): ChangeSet = {
+    val expiredIds = set.expiredLaneIds
+    val adjustedMValuesFiltered = set.adjustedMValues.filterNot(adj => expiredIds.contains(adj.laneId))
+    val adjustedVVHChangesFiltered = set.adjustedVVHChanges.filterNot(adj => expiredIds.contains(adj.laneId))
+    val adjustedSideCodesFiltered = set.adjustedSideCodes.filterNot(adj => expiredIds.contains(adj.laneId))
+    val generatedPersistedLanesFiltered = set.generatedPersistedLanes.filterNot(lane => expiredIds.contains(lane.id))
+
+    set.copy(adjustedMValues = adjustedMValuesFiltered, adjustedVVHChanges = adjustedVVHChangesFiltered,
+      adjustedSideCodes = adjustedSideCodesFiltered, generatedPersistedLanes = generatedPersistedLanesFiltered)
   }
 
   def saveChanges(changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]): Unit ={

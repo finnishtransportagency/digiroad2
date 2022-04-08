@@ -177,27 +177,10 @@ class LaneFiller {
     (adjustedAsset, mValueAdjustments)
   }
 
-   def projectLinearAsset(lane: PersistedLane, to: RoadLink, historyLink: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLane, ChangeSet)= {
-    val newLinkId = to.linkId
-    val laneId = lane.linkId match {
-      case to.linkId => lane.id
-      case _ => 0
-    }
-    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(lane, projection, to.length, historyLink)
-
-    val changeSet = laneId match {
-      case 0 => changedSet
-      case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(laneId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(laneId, SideCode.apply(newSideCode))))
-    }
-
-    (PersistedLane(laneId, newLinkId, newSideCode,lane.laneCode, lane.municipalityCode, newStart, newEnd, lane.createdBy,
-      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, lane.expiredBy, lane.expiredDateTime,
-      expired = false, projection.vvhTimeStamp, lane.geomModifiedDate, lane.attributes), changeSet)
-
-  }
 
 
-  private def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double, historyLink: RoadLink) = {
+
+   def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double, historyLink: RoadLink): (Double, Double, Int) = {
     val isCutAdditionalLane = asset.laneCode != 1 && (asset.startMeasure != 0 ||
       Math.round(asset.endMeasure * 1000).toDouble / 1000 != Math.round(historyLink.length * 1000).toDouble / 1000)
 
@@ -330,9 +313,9 @@ class LaneFiller {
 
     val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
     val segmentPieces = pieces.flatMap(p => SegmentPieceCreation(p._1, p._2, lanesZipped))
-                              .groupBy(_.laneId)
+                              .groupBy(lane => (lane.value.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int], lane.laneId))
 
-    val segmentsAndOrphanPieces = segmentPieces.map(n => extendOrDivide(n._2, lanesZipped.find(_.id == n._1).get))
+    val segmentsAndOrphanPieces = segmentPieces.map(n => extendOrDivide(n._2, lanesZipped.find(lane => lane.laneCode == n._1._1 && lane.id == n._1._2).get))
     val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
     val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
 
