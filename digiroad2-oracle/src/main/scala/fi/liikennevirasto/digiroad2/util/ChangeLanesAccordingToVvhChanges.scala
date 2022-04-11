@@ -39,14 +39,11 @@ object ChangeLanesAccordingToVvhChanges {
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
-    val historyLinks = roadLinkService.getHistoryDataLinksFromVVH(existingAssets.map(_.linkId).toSet)
-    val latestHistoryLinks = historyLinks.groupBy(_.linkId).map(_._2.maxBy(_.vvhTimeStamp)).toSeq
-
-    val (filteredChangeSet, modifiedLanes) = handleChanges(roadLinks, latestHistoryLinks, changes, existingAssets)
+    val (filteredChangeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingAssets)
     saveChanges(filteredChangeSet, modifiedLanes)
   }
 
-  def handleChanges(roadLinks: Seq[RoadLink], historyLinks: Seq[RoadLink], changes: Seq[ChangeInfo], existingAssets: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
+  def handleChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], existingAssets: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
 
@@ -60,7 +57,7 @@ object ChangeLanesAccordingToVvhChanges {
         .filterNot( _ == 0L)                                   // Remove the new assets (ID == 0 )
     )
 
-    val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, historyLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
+    val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
     val newLanes = projectedLanes ++ lanesWithoutChangedLinks
 
     if (newLanes.nonEmpty) {

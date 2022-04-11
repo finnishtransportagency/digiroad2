@@ -180,11 +180,9 @@ class LaneFiller {
 
 
 
-   def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double, historyLink: RoadLink): (Double, Double, Int) = {
-    val isCutAdditionalLane = asset.laneCode != 1 && (asset.startMeasure != 0 ||
-      Math.round(asset.endMeasure * 1000).toDouble / 1000 != Math.round(historyLink.length * 1000).toDouble / 1000)
+   def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double, isLengthened: Boolean = false): (Double, Double, Int) = {
+    val isCutAdditionalLane = asset.laneCode != 1 && (asset.startMeasure != 0 || math.abs(asset.endMeasure - projection.oldEnd) > 1)
 
-    val isLengthened = roadLinkLength > historyLink.length
 
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
