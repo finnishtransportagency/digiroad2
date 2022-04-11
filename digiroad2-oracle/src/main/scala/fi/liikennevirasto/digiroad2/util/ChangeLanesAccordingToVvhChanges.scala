@@ -39,8 +39,8 @@ object ChangeLanesAccordingToVvhChanges {
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
-    val (filteredChangeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingAssets)
-    saveChanges(filteredChangeSet, modifiedLanes)
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingAssets)
+    saveChanges(changeSet, modifiedLanes)
   }
 
   def handleChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], existingAssets: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
@@ -69,26 +69,16 @@ object ChangeLanesAccordingToVvhChanges {
     val (changedLanes, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changedSet))
     val persistedChangedLanes = pieceWiseLanestoPersistedLane(changedLanes)
 
-//    val changeSetLanes = changeSet.expiredLaneIds ++ changeSet.adjustedMValues.map(_.laneId) ++
-//      changeSet.adjustedVVHChanges.map(_.laneId) ++ changeSet.adjustedSideCodes.map(_.laneId)
-//    val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
-//
-//    val modifiedLanes = projectedLanes.filterNot(lane => {
-//      val generatedLane = generatedMappedById.getOrElse(lane.id, Seq())
-//      if (generatedLane.isEmpty) logger.info("No generated lane found for key: " + lane.id)
-//      generatedLane.nonEmpty || changeSetLanes.contains(lane.id)
-//    }) ++ changeSet.generatedPersistedLanes
-
     val changeSetFilteredExpired = filterExpiredIds(changeSet)
     (changeSetFilteredExpired, persistedChangedLanes)
   }
 
   def filterExpiredIds(set: ChangeSet): ChangeSet = {
     val expiredIds = set.expiredLaneIds
-    val adjustedMValuesFiltered = set.adjustedMValues.filterNot(adj => expiredIds.contains(adj.laneId))
-    val adjustedVVHChangesFiltered = set.adjustedVVHChanges.filterNot(adj => expiredIds.contains(adj.laneId))
-    val adjustedSideCodesFiltered = set.adjustedSideCodes.filterNot(adj => expiredIds.contains(adj.laneId))
-    val generatedPersistedLanesFiltered = set.generatedPersistedLanes.filterNot(lane => expiredIds.contains(lane.id))
+    val adjustedMValuesFiltered = set.adjustedMValues.filterNot(adj => expiredIds.contains(adj.laneId) || adj.laneId == 0)
+    val adjustedVVHChangesFiltered = set.adjustedVVHChanges.filterNot(adj => expiredIds.contains(adj.laneId) || adj.laneId == 0)
+    val adjustedSideCodesFiltered = set.adjustedSideCodes.filterNot(adj => expiredIds.contains(adj.laneId) || adj.laneId == 0)
+    val generatedPersistedLanesFiltered = set.generatedPersistedLanes.filterNot(lane => expiredIds.contains(lane.id) || lane.id == 0)
 
     set.copy(adjustedMValues = adjustedMValuesFiltered, adjustedVVHChanges = adjustedVVHChangesFiltered,
       adjustedSideCodes = adjustedSideCodesFiltered, generatedPersistedLanes = generatedPersistedLanesFiltered)
