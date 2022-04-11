@@ -30,7 +30,7 @@ Resources:
         - Order: 1
           ComputeEnvironment:
             Ref: DEVComputeEnvironment
-            
+
   QAJobQueueAdHoc:
     Type: AWS::Batch::JobQueue
     Properties:
@@ -155,7 +155,7 @@ Resources:
       GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
       GroupName: Prod-BatchSecurityGroup
       VpcId: !Ref DEVVpcIDOfSystem
-      
+
   BatchTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -203,17 +203,17 @@ Resources:
 
   BatchSNSTopic:
     Type: AWS::SNS::Topic
-    Properties: 
+    Properties:
       DisplayName: "AWS Batch Job Has Failed"
       FifoTopic: FALSE
-      Subscription: 
+      Subscription:
         - Endpoint: "kehitys@digiroad.fi"
           Protocol: "email"
       TopicName: !Ref SNSTopicName
 
   BatchEventRule:
     Type: AWS::Events::Rule
-    Properties: 
+    Properties:
       Description: "Send SNS email for failed batch jobs"
       EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
       Name: "BatchEventNotify"
@@ -273,7 +273,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily Prod batches"
-      ScheduleExpression: "cron(30 22 * * ? *)"
+      ScheduleExpression: "cron(30 22 * * 1-5 *)"
       State: "ENABLED"
       Targets:
         -
@@ -323,7 +323,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily QA batches"
-      ScheduleExpression: "cron(30 22 * * ? *)"
+      ScheduleExpression: "cron(30 22 * * 1-5 *)"
       State: "ENABLED"
       Targets:
         -
@@ -372,7 +372,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily DEV batches"
-      ScheduleExpression: "cron(30 22 * * ? *)"
+      ScheduleExpression: "cron(30 22 * * 1-5 *)"
       State: "ENABLED"
       Targets:
         -
