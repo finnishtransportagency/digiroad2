@@ -156,7 +156,7 @@ object ChangeType {
     }
   }
 
-  def isDivivedChange(changeInfo: ChangeInfo) = {
+  def isDividedChange(changeInfo: ChangeInfo) = {
     ChangeType.apply(changeInfo.changeType) match {
       case DividedModifiedPart => true
       case DividedNewPart => true

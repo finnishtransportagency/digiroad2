@@ -2,16 +2,15 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, baseAdjustment}
-import fi.liikennevirasto.digiroad2.lane.{LaneFiller, NewLane, PersistedLane, PieceWiseLane}
+import fi.liikennevirasto.digiroad2.lane.{NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.roadLinkService.getHistoryDataLinksFromVVH
 import fi.liikennevirasto.digiroad2.util.LaneUtils.laneService._
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-
-import scala.math.abs
 
 object ChangeLanesAccordingToVvhChanges {
 
@@ -39,11 +38,14 @@ object ChangeLanesAccordingToVvhChanges {
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingAssets)
+    val historyLinks = getHistoryDataLinksFromVVH(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+    val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.vvhTimeStamp)).toSeq
+
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks,latestHistoryRoadLinks, changes, existingAssets)
     saveChanges(changeSet, modifiedLanes)
   }
 
-  def handleChanges(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], existingAssets: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
+  def handleChanges(roadLinks: Seq[RoadLink], historyRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], existingAssets: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
 
@@ -57,7 +59,7 @@ object ChangeLanesAccordingToVvhChanges {
         .filterNot( _ == 0L)                                   // Remove the new assets (ID == 0 )
     )
 
-    val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
+    val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, historyRoadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
     val newLanes = projectedLanes ++ lanesWithoutChangedLinks
 
     if (newLanes.nonEmpty) {

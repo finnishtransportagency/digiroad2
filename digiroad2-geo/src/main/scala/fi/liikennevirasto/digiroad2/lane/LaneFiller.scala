@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.GeometryUtils.{Projection, areMeasuresCloseEnough}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -180,9 +180,14 @@ class LaneFiller {
 
 
 
-   def calculateNewMValuesAndSideCode(asset: PersistedLane, projection: Projection, roadLinkLength: Double, isLengthened: Boolean = false): (Double, Double, Int) = {
-    val isCutAdditionalLane = asset.laneCode != 1 && (asset.startMeasure != 0 || math.abs(asset.endMeasure - projection.oldEnd) > 1)
+   def calculateNewMValuesAndSideCode(asset: PersistedLane, historyRoadLink: Option[RoadLink], projection: Projection,
+                                      roadLinkLength: Double, isLengthened: Boolean = false): (Double, Double, Int) = {
 
+     val isCutAdditionalLane = historyRoadLink match {
+       case Some(historyLink) => asset.laneCode != 1 && (asset.startMeasure != 0 ||
+         !areMeasuresCloseEnough(asset.endMeasure, historyLink.length, 0.5))
+       case _ => false
+     }
 
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart

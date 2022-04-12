@@ -1,34 +1,34 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.GeometryUtils.areMeasuresCloseEnough
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{InUse, UnknownConstructionType}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Municipality, SingleCarriageway, State, TractorRoad, Unknown}
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, UnknownDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.{handleChanges, roadLinkService}
+import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.handleChanges
 import org.scalatest.{FunSuite, Matchers}
 
 class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
-
-  def areMeasuresCloseEnough(measure1: Double, measure2: Double): Boolean ={
-    val acceptableInaccuracy = 1
-    val difference = math.abs(measure2 - measure1)
-    if(difference < acceptableInaccuracy) true
-    else false
-  }
 
   def generateTestLane(id: Int, linkId: Int, sideCode: Int, laneCode: Int, startM: Double, endM: Double, vvhTimestamp: Long): PersistedLane = {
     val attributes = Seq(LaneProperty("lane_type", Seq(LanePropertyValue(1))), LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))))
     PersistedLane(id, linkId, sideCode, laneCode, 999, startM, endM, None, None, None, None, None, None, false, vvhTimestamp, None, attributes)
   }
 
+  def generateHistoryLink(linkId: Int, length: Double ): RoadLink = {
+    RoadLink(linkId, Seq(), length, State, 99, UnknownDirection, UnknownLinkType, None, None,
+      Map(), UnknownConstructionType, NormalLinkInterface, List())
+  }
+
   val changesForTest1: Seq[ChangeInfo] = {
-    val change1 = ChangeInfo(Some(1785786),Some(12626035),1340062600,1,Some(0.0),Some(24.46481088),Some(0.0),Some(25.72055144),1648076424000L)
-    val change2a = ChangeInfo(Some(1785785),Some(12626035),1340062600,2,Some(0.0),Some(23.56318194),Some(25.72055144),Some(49.28373338),1648076424000L)
-    val change2b = ChangeInfo(Some(1785787),Some(12626035),1340062600,2,Some(0.0),Some(26.67487965),Some(0.0),Some(25.72055144), 1648076424000L)
+    val change1 = ChangeInfo(Some(1785786),Some(12626035),1340062600, CombinedModifiedPart.value, Some(0.0),Some(24.46481088),Some(0.0),Some(25.72055144),1648076424000L)
+    val change2a = ChangeInfo(Some(1785785),Some(12626035),1340062600, CombinedRemovedPart.value, Some(0.0),Some(23.56318194),Some(25.72055144),Some(49.28373338),1648076424000L)
+    val change2b = ChangeInfo(Some(1785787),Some(12626035),1340062600, CombinedRemovedPart.value, Some(0.0),Some(26.67487965),Some(0.0),Some(25.72055144), 1648076424000L)
     Seq(change1, change2a, change2b)
   }
 
@@ -51,15 +51,19 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
 
     //MainLanes on link 1785787
     val lane5 = generateTestLane(221, 1785787, 2, 1 , 0.0, 26.675, 1636588800000L)
-    val lane6 = generateTestLane(321, 1785786, 3, 1 , 0.0, 26.675, 1636588800000L)
+    val lane6 = generateTestLane(321, 1785787, 3, 1 , 0.0, 26.675, 1636588800000L)
 
     Seq(lane1, lane2, lane3, lane4, lane5, lane6)
   }
 
+  val historyLinksForTest1: Seq[RoadLink] = {
+    Seq(generateHistoryLink(1785785, 23.563), generateHistoryLink(1785786, 24.465) , generateHistoryLink(1785787,26.675))
+  }
+
 
   val changesForTest1b: Seq[ChangeInfo] = {
-    val change1 = ChangeInfo(Some(7170899), Some(12639364), 64149003, 1, Some(0.0), Some(70.6541142), Some(21.47317639), Some(90.24410827), 1649113226000L)
-    val change2 = ChangeInfo(Some(7170904), Some(12639364), 64149003, 2, Some(0.0), Some(21.60276422), Some(0.0), Some(21.47317639), 1649113226000L)
+    val change1 = ChangeInfo(Some(7170899), Some(12639364), 64149003, CombinedModifiedPart.value, Some(0.0), Some(70.6541142), Some(21.47317639), Some(90.24410827), 1649113226000L)
+    val change2 = ChangeInfo(Some(7170904), Some(12639364), 64149003, CombinedRemovedPart.value, Some(0.0), Some(21.60276422), Some(0.0), Some(21.47317639), 1649113226000L)
     Seq(change1, change2)
   }
 
@@ -86,8 +90,8 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
   }
 
   val changesForTest2: Seq[ChangeInfo] = {
-    val change3 = ChangeInfo(Some(6170239), Some(6170239), 63590222, 3, Some(0.0), Some(203.35672628), Some(98.47743301), Some(301.83415929), 1648162836000L)
-    val change4 = ChangeInfo(None, Some(6170239), 63590222, 4, None, None, Some(0.0), Some(98.47743301), 1648162836000L)
+    val change3 = ChangeInfo(Some(6170239), Some(6170239), 63590222, LengthenedCommonPart.value, Some(0.0), Some(203.35672628), Some(98.47743301), Some(301.83415929), 1648162836000L)
+    val change4 = ChangeInfo(None, Some(6170239), 63590222, LengthenedNewPart.value, None, None, Some(0.0), Some(98.47743301), 1648162836000L)
 
     Seq(change3, change4)
   }
@@ -105,7 +109,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(523953.841,6711437.694,7.614000000001397),
       Point(523961.295,6711452.731,8.430999999996857),
       Point(523965.311,6711463.184,7.752999999996973))
-    val roadLink = RoadLink(6170239, linkGeometry, 301.834159290816, Unknown, 7, BothDirections, TractorRoad, Some("25.03.2022 01:00:36"), Some("vvh_modified"), Map(), InUse, NormalLinkInterface,
+    val roadLink = RoadLink(6170239, linkGeometry, 301.834159290816, State, 7, BothDirections, TractorRoad, Some("25.03.2022 01:00:36"), Some("vvh_modified"), Map(), InUse, NormalLinkInterface,
       Seq())
 
     Seq(roadLink)
@@ -120,8 +124,8 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
   }
 
   val changesForTest3: Seq[ChangeInfo] = {
-    val change5 = ChangeInfo(Some(5452255), Some(12628125), 517006310, 5, Some(0.0), Some(138.29966444), Some(0.0), Some(138.29966471), 1648162836000L)
-    val change6 = ChangeInfo(Some(5452255), Some(12628139), 517006310, 6, Some(381.82675568), Some(651.79968351), Some(0.0), Some(269.97292782), 1648162836000L)
+    val change5 = ChangeInfo(Some(5452255), Some(12628125), 517006310, DividedModifiedPart.value, Some(0.0), Some(138.29966444), Some(0.0), Some(138.29966471), 1648162836000L)
+    val change6 = ChangeInfo(Some(5452255), Some(12628139), 517006310, DividedNewPart.value, Some(381.82675568), Some(651.79968351), Some(0.0), Some(269.97292782), 1648162836000L)
 
     Seq(change5, change6)
   }
@@ -154,10 +158,10 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(434628.905, 6827933.16, 92.56900000000314),
       Point(434622.44, 6827938.025, 92.89299999999639))
 
-    val link1 = RoadLink(12628125,link1Geometry, 138.29966470656584, Unknown, 7, BothDirections, TractorRoad,
+    val link1 = RoadLink(12628125,link1Geometry, 138.29966470656584, State, 7, BothDirections, TractorRoad,
       Some("25.03.2022 01:00:36"), Some("vvh_modified"), Map(), InUse, NormalLinkInterface, Seq())
 
-    val link2 = RoadLink(12628139, link2Geometry, 269.9729278270251, Unknown, 7, BothDirections, TractorRoad,
+    val link2 = RoadLink(12628139, link2Geometry, 269.9729278270251, State, 7, BothDirections, TractorRoad,
       Some("25.03.2022 00:53:10"), Some("automatic_generation"), Map(), InUse, NormalLinkInterface, Seq())
 
     Seq(link1, link2)
@@ -174,10 +178,10 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
   }
 
   val changesForTest4: Seq[ChangeInfo] = {
-    val change7 = ChangeInfo(Some(56731), Some(56731), 362451385, 7, Some(7.21549736), Some(315.93394668), Some(0.0),
+    val change7 = ChangeInfo(Some(56731), Some(56731), 362451385, ShortenedCommonPart.value, Some(7.21549736), Some(315.93394668), Some(0.0),
       Some(313.48187171), 1648832434000L)
-    val change8a = ChangeInfo(Some(56731), None, 362451385, 8, Some(0.0), Some(7.21549736), None, None, 1648832434000L)
-    val change8b = ChangeInfo(Some(56731), None, 362451385, 8, Some(315.93394668), Some(317.9947522), None, None, 1648832434000L)
+    val change8a = ChangeInfo(Some(56731), None, 362451385, ShortenedRemovedPart.value, Some(0.0), Some(7.21549736), None, None, 1648832434000L)
+    val change8b = ChangeInfo(Some(56731), None, 362451385, ShortenedRemovedPart.value, Some(315.93394668), Some(317.9947522), None, None, 1648832434000L)
 
     Seq(change7, change8a, change8b)
   }
@@ -211,7 +215,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(418301.536, 6785062.14, 152.14500000000407),
       Point(418297.99, 6785076.53, 152.80299999999988))
 
-    val roadLink = RoadLink(56731, linkGeom, 313.48187170953395, Unknown, 7, BothDirections, TractorRoad, Some("01.04.2022 20:00:34"),
+    val roadLink = RoadLink(56731, linkGeom, 313.48187170953395, State, 7, BothDirections, TractorRoad, Some("01.04.2022 20:00:34"),
       None, Map(), InUse, NormalLinkInterface, List())
 
     Seq(roadLink)
@@ -228,8 +232,8 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
   }
 
   val changesForTest5a: Seq[ChangeInfo] = {
-    val change13 = ChangeInfo(Some(2776126), Some(2776126), 2110412275, 13, Some(0.0), Some(217.79702887), Some(0.0), Some(217.79702887), 1648832434000L)
-    val change14 = ChangeInfo(None, Some(2776126), 2110412275, 14, None, None, Some(217.79702887), Some(324.37921035), 1648832434000L)
+    val change13 = ChangeInfo(Some(2776126), Some(2776126), 2110412275, ReplacedCommonPart.value, Some(0.0), Some(217.79702887), Some(0.0), Some(217.79702887), 1648832434000L)
+    val change14 = ChangeInfo(None, Some(2776126), 2110412275, ReplacedNewPart.value, None, None, Some(217.79702887), Some(324.37921035), 1648832434000L)
 
     Seq(change13, change14)
   }
@@ -264,8 +268,8 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
   }
 
   val changesForTest5b: Seq[ChangeInfo] = {
-    val change13 = ChangeInfo(Some(12397071), Some(12397071), 2110376244, 13, Some(0.0), Some(34.81129942), Some(0.0), Some(34.81121228), 1648832434000L)
-    val change15 = ChangeInfo(Some(12397071), None, 2110376244, 15, Some(34.81121228), Some(36.00944863), None, None, 1648832434000L)
+    val change13 = ChangeInfo(Some(12397071), Some(12397071), 2110376244, ReplacedCommonPart.value, Some(0.0), Some(34.81129942), Some(0.0), Some(34.81121228), 1648832434000L)
+    val change15 = ChangeInfo(Some(12397071), None, 2110376244, ReplacedRemovedPart.value, Some(34.81121228), Some(36.00944863), None, None, 1648832434000L)
 
     Seq(change13, change15)
   }
@@ -296,11 +300,12 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     Seq(mainLaneTowards, mainLaneAgainst, lane2Towards, lane3Against, lane4Towards, lane5Against)
   }
 
-  test("Case 1: Three links combine into one"){
+  test("Case 1: Three links combine into one, 6 main lanes should combine into 2 main lanes"){
     val roadLinks = roadLinksForTest1
     val changes = changesForTest1
     val existingLanes = lanesForTest1
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingLanes)
+    val historyLinks = historyLinksForTest1
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     changeSet.expiredLaneIds.size should equal(6)
     modifiedLanes.size should equal(2)
@@ -310,6 +315,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
 
     val roadLink = roadLinks.head
 
+    //New combined main lanes should cover whole new link length
     combinedMainLaneTowards.startMeasure should equal(0.0)
     combinedMainLaneTowards.endMeasure.round should equal(roadLink.length.round)
 
@@ -317,11 +323,12 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     combinedMainLaneAgainst.endMeasure.round should equal(roadLink.length.round)
   }
 
-  test("Case 1: Two links combine into one"){
+  test("Case 1: Two links combine into one, main lanes and lane2s should combine, lane3s should not combine, but measures should be adjusted"){
     val roadLinks = roadLinksForTest1b
     val changes = changesForTest1b
     val existingLanes = lanesForTest1b
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingLanes)
+    val historyLinks = Seq(generateHistoryLink(7170899, 70.654), generateHistoryLink(7170904, 21.603))
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
     changeSet.expiredLaneIds.size should equal(8)
     modifiedLanes.size should equal(5)
 
@@ -344,24 +351,31 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     combinedMainLaneAgainst.startMeasure should equal(0.0)
     combinedMainLaneAgainst.endMeasure.round should equal(roadLink.length.round)
 
+    //Combined lane end measure should equal laneA.endmeasure + laneB.endmeasure
     combinedLane2Towards.startMeasure should equal(0.0)
     combinedLane2Towards.endMeasure.round should equal(75)
 
+    //Lane3s should not combine, lane3a should keep old m-values
     lane3a.startMeasure.round should equal(0.0)
-    areMeasuresCloseEnough(lane3a.endMeasure, originalLane3a.endMeasure) should equal(true)
+    areMeasuresCloseEnough(lane3a.endMeasure, originalLane3a.endMeasure, 1.0) should equal(true)
 
-    areMeasuresCloseEnough(lane3b.startMeasure, originalLane3b.startMeasure + commonPartChange.newStartMeasure.get)
-    areMeasuresCloseEnough(lane3b.endMeasure, originalLane3b.endMeasure + commonPartChange.newStartMeasure.get)
+    //Lane3B should keep have same length as before but with adjusted m-values
+    val originalLane3bLength = originalLane3b.endMeasure - originalLane3b.startMeasure
+    val newLane3bLength = lane3b.endMeasure - lane3b.startMeasure
+    areMeasuresCloseEnough(originalLane3bLength, newLane3bLength, 1.0)
+    areMeasuresCloseEnough(lane3b.startMeasure, originalLane3b.startMeasure + commonPartChange.newStartMeasure.get, 1.0)
+    areMeasuresCloseEnough(lane3b.endMeasure, originalLane3b.endMeasure + commonPartChange.newStartMeasure.get, 1.0)
   }
 
 
 
 
-  test("Case 2: Link lengthened"){
+  test("Case 2: Link lengthened, main lanes and full length additional lanes should be extended to new link length, cut additional lanes should stay the same"){
     val roadLinks = roadLinksForTest2
     val changes = changesForTest2
     val existingLanes = lanesForTest2
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingLanes)
+    val historyLinks = Seq(generateHistoryLink(6170239, 203.357))
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(4)
     changeSet.expiredLaneIds.size should equal(0)
@@ -375,28 +389,32 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val lane3CutVvhAdjustment = changeSet.adjustedVVHChanges.find(_.laneId == 103).get
     val lane4CutVvhAdjustment = changeSet.adjustedVVHChanges.find(_.laneId == 104).get
 
-    val commonPartChange = changes.find(c => c.oldId.contains(6170239) && c.newId.contains(6170239)).get
+    val roadLink = roadLinks.head
 
     mainLaneVvhAdjustment.startMeasure should equal(0.0)
-    areMeasuresCloseEnough(mainLaneVvhAdjustment.endMeasure, commonPartChange.newEndMeasure.get)
+    mainLaneVvhAdjustment.endMeasure should equal(roadLink.length)
 
+    //Full length additional should be extended to cover new lengthened link length
     lane2FullLengthVvhAdjustment.startMeasure should equal(0.0)
-    areMeasuresCloseEnough(lane2FullLengthVvhAdjustment.endMeasure, commonPartChange.newEndMeasure.get)
+    lane2FullLengthVvhAdjustment.endMeasure should equal(roadLink.length)
 
+    //Cut additional lane should keep old measures
     lane3CutVvhAdjustment.startMeasure should equal(0.0)
     lane3CutVvhAdjustment.endMeasure should equal(150.50)
 
+    //Cut additional lane should keep old measures
     lane4CutVvhAdjustment.startMeasure should equal(120.25)
     lane4CutVvhAdjustment.endMeasure should equal(203.357)
 
   }
 
 //   Roadlink is split in two, 138m -> 381m segment is removed, new link lengths: 138m and 269m
-  test("Case 3: Link divided into two"){
+  test("Case 3: Link divided into two with a segment removed in the middle, lanes measures should be adjusted and lanes on removed segment should be expired"){
     val roadLinks = roadLinksForTest3
     val changes = changesForTest3
     val existingLanes = lanesForTest3
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingLanes)
+    val historyLinks = Seq(generateHistoryLink(5452255, 651.8))
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     val originalLane3 = existingLanes.find(_.id == 103).get
 
@@ -413,19 +431,19 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
 
     modifiedLanes.size should equal(5)
     changeSet.expiredLaneIds.size should equal(3)
+
     //MainLanes should cover the whole link
     adjustedMainLaneLink25.startMeasure should equal(0.0)
-    areMeasuresCloseEnough(changeInfoLink25.newEndMeasure.get, adjustedMainLaneLink25.endMeasure) should equal(true)
-
+    areMeasuresCloseEnough(changeInfoLink25.newEndMeasure.get, adjustedMainLaneLink25.endMeasure, 1.0) should equal(true)
     adjustedMainLaneLink39.startMeasure should equal(0.0)
-    areMeasuresCloseEnough(changeInfoLink39.newEndMeasure.get, adjustedMainLaneLink39.endMeasure) should equal(true)
+    areMeasuresCloseEnough(changeInfoLink39.newEndMeasure.get, adjustedMainLaneLink39.endMeasure, 1.0) should equal(true)
 
 
     //Additional lane's startM should be same because that segment of the lane wasn't cut
     //Additional lane's endM should be the same as link's new endM, because additional lane's original length
     //exceeded the cutting point
     adjustedLane2Link25.startMeasure.round should equal(51)
-    areMeasuresCloseEnough(changeInfoLink25.newEndMeasure.get, adjustedLane2Link25.endMeasure) should equal(true)
+    areMeasuresCloseEnough(changeInfoLink25.newEndMeasure.get, adjustedLane2Link25.endMeasure, 1.0) should equal(true)
 
     //Additional lane should not exist on on link 12628139 because original additional lane didn't cover that segment
     adjustedLane2Link39.isEmpty should equal(true)
@@ -433,19 +451,21 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     //StartM should have stayed the same
     //EndM should be equal to links length because lane exceeded the cutting point
     adjustedLane3Link25.startMeasure.round should equal(51)
-    areMeasuresCloseEnough(changeInfoLink25.newEndMeasure.get, adjustedLane3Link25.endMeasure) should equal(true)
+    areMeasuresCloseEnough(changeInfoLink25.newEndMeasure.get, adjustedLane3Link25.endMeasure, 1.0) should equal(true)
 
     //EndM should have decreased equal to the difference between original endM and segments old startM
     adjustedLane3Link39.startMeasure should equal(0.0)
-    areMeasuresCloseEnough(adjustedLane3Link39.endMeasure, originalLane3.endMeasure - changeInfoLink39.oldStartMeasure.get)
+    areMeasuresCloseEnough(adjustedLane3Link39.endMeasure, originalLane3.endMeasure - changeInfoLink39.oldStartMeasure.get, 1.0)
 
   }
 
-  test("Case 4: Link shortened"){
+  test("Case 4: Link shortened from start, lanes on removed part should have endMeasures reduced equal to removed part length, " +
+    "lanes on persisted part should have both m-values reduced equal to removed part length"){
     val roadLinks = roadLinksForTest4
     val changes = changesForTest4
     val existingLanes = lanesForTest4
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingLanes)
+    val historyLinks = Seq(generateHistoryLink(56731, 317.995))
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(3)
     changeSet.expiredLaneIds.size should equal(0)
@@ -465,22 +485,24 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
 
     //Mainlane should cover the whole link
     mainLaneVvhAdjustment.startMeasure should equal(0.0)
-    areMeasuresCloseEnough(commonPartChange.newEndMeasure.get, mainLaneVvhAdjustment.endMeasure) should equal(true)
+    areMeasuresCloseEnough(commonPartChange.newEndMeasure.get, mainLaneVvhAdjustment.endMeasure, 1.0) should equal(true)
 
     //Start measure should have decreased equal to the amount that was cut from start of roadLink
-    areMeasuresCloseEnough(lane2VvhAdjustment.startMeasure, existingLane2.startMeasure - commonPartChange.oldStartMeasure.get) should equal(true)
-    areMeasuresCloseEnough(lane2VvhAdjustment.endMeasure, 287) should equal(true)
+    areMeasuresCloseEnough(lane2VvhAdjustment.startMeasure, existingLane2.startMeasure - commonPartChange.oldStartMeasure.get, 1.0) should equal(true)
+    areMeasuresCloseEnough(lane2VvhAdjustment.endMeasure, 287, 1.0) should equal(true)
 
-    areMeasuresCloseEnough(lane3VvhAdjustment.startMeasure, 45.25 - commonPartChange.oldStartMeasure.get) should equal(true)
-    areMeasuresCloseEnough(lane3VvhAdjustment.endMeasure, roadLink.length) should equal(true)
+    //End measure should have decreased equal to the shortened parts length
+    areMeasuresCloseEnough(lane3VvhAdjustment.startMeasure, 45.25 - commonPartChange.oldStartMeasure.get, 1.0) should equal(true)
+    areMeasuresCloseEnough(lane3VvhAdjustment.endMeasure, roadLink.length, 1.0) should equal(true)
 
   }
 
-  test("Case 5a: Link replaced with longer"){
+  test("Case 5a: Link replaced with longer, main lane lengths should be extended to new link length, cut additional lanes stay the same"){
     val roadLinks = roadLinksForTest5a
     val changes = changesForTest5a
     val existingLanes = lanesForTest5a
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingLanes)
+    val historyLinks = Seq(generateHistoryLink(2776126, 217.797))
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(existingLanes.size)
     changeSet.adjustedVVHChanges.size should equal(existingLanes.size)
@@ -514,11 +536,13 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
 
   }
 
-  test("Link replaced with shorter"){
+  test("Link replaced with shorter, link shortened from end, main lane lengths should equal new link length," +
+    " additional lane m-values should be adjusted, lane5 on shortened segment should be expired"){
     val roadLinks = roadLinksForTest5b
     val changes = changesForTest5b
     val existingLanes = lanesForTest5b
-    val (changeSet, modifiedLanes) = handleChanges(roadLinks, changes, existingLanes)
+    val historyLinks = Seq(generateHistoryLink(12397071, 36.009))
+    val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(5)
     changeSet.adjustedVVHChanges.size should equal(5)
@@ -536,16 +560,16 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     modifiedMainLaneAgainst.startMeasure should equal(0.0)
     modifiedMainLaneAgainst.endMeasure should equal(roadLink.length)
 
-    areMeasuresCloseEnough(modifiedLane2.startMeasure, 15.5)
+    // Lane start measure should have stayed the same, end measure should be equal to new link length
+    areMeasuresCloseEnough(modifiedLane2.startMeasure, 15.5, 1.0)
     modifiedLane2.endMeasure should equal(roadLink.length)
 
+    //Lane end measure should equal road link length because lane end was on cut segment
     modifiedLane3.startMeasure should equal(0.0)
     modifiedLane3.endMeasure should equal(roadLink.length)
 
+    //Lane end measure should stay the same because it does not reach the shortened segment
     modifiedLane4.startMeasure should equal(0.0)
-    areMeasuresCloseEnough(modifiedLane4.endMeasure, 27.5)
-
-
-
+    areMeasuresCloseEnough(modifiedLane4.endMeasure, 27.5, 1.0)
   }
 }
