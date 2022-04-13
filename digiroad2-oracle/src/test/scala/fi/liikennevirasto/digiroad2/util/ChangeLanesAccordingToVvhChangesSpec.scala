@@ -367,9 +367,6 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     areMeasuresCloseEnough(lane3b.endMeasure, originalLane3b.endMeasure + commonPartChange.newStartMeasure.get, 1.0)
   }
 
-
-
-
   test("Case 2: Link lengthened, main lanes and full length additional lanes should be extended to new link length, cut additional lanes should stay the same"){
     val roadLinks = roadLinksForTest2
     val changes = changesForTest2
@@ -530,9 +527,6 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     //Full length additional lane extended to new link length
     modifiedLane3Against.startMeasure should equal(0.0)
     modifiedLane3Against.endMeasure should equal(roadLink.length)
-
-
-
 
   }
 
