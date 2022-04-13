@@ -11,6 +11,12 @@ object GeometryUtils {
     DefaultEpsilon
   }
 
+  def areMeasuresCloseEnough(measure1: Double, measure2: Double, tolerance: Double): Boolean ={
+    val difference = math.abs(measure2 - measure1)
+    if(difference < tolerance) true
+    else false
+  }
+
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last

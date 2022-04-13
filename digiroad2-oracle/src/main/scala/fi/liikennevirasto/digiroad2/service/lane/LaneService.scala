@@ -138,7 +138,7 @@ trait LaneOperations {
     filledTopology
   }
 
-   def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], lanesToUpdate: Seq[PersistedLane],
+   def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], historyRoadLinks: Seq[RoadLink], lanesToUpdate: Seq[PersistedLane],
                                                        currentLanes: Seq[PersistedLane], changes: Seq[ChangeInfo], changeSet: ChangeSet) : (Seq[PersistedLane], ChangeSet) ={
 
     val (replacementChanges, otherChanges) = changes.partition( ChangeType.isReplacementChange)
@@ -149,19 +149,60 @@ trait LaneOperations {
         rep => addSourceRoadLinkToChangeInfo(ext, rep)))
 
     val fullChanges = extensionChanges ++ replacementChanges
+    val projections = mapReplacementProjections(lanesToUpdate, currentLanes, roadLinks, fullChanges).filterNot(p => p._2._1.isEmpty || p._2._2.isEmpty)
 
-    val lanes = mapReplacementProjections(lanesToUpdate, currentLanes, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLane], changeSet)) {
-      case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = laneFiller.projectLinearAsset(asset, roadLink, projection, cs)
-        (persistedAsset ++ Seq(linearAsset), changes)
-      case _ => (Seq.empty[PersistedLane], changeSet)
+    val (projectedLanesMapped, newChangeSet) = projections.foldLeft((Seq.empty[Option[PersistedLane]], changeSet)) {
+      case ((persistedAssets, cs), (asset, (Some(roadLink), Some(projection)))) =>
+            val historyRoadLink = historyRoadLinks.find(_.linkId == asset.linkId)
+            val relevantChange = fullChanges.find(_.newId.contains(roadLink.linkId))
+            relevantChange match {
+              case Some(change) =>
+                val (linearAsset, changes) = projectLinearAsset(asset, roadLink, historyRoadLink, projection, cs, change)
+                (persistedAssets ++ Seq(linearAsset), changes)
+              case _ => (Seq.empty[Option[PersistedLane]], changeSet)
+            }
+      case _ => (Seq.empty[Option[PersistedLane]], changeSet)
     }
 
-    lanes
+     val projectedLanes = projectedLanesMapped.flatten
+     (projectedLanes, newChangeSet)
   }
 
+  def projectLinearAsset(lane: PersistedLane, targetRoadLink: RoadLink, historyRoadLink: Option[RoadLink], projection: Projection, changedSet: ChangeSet, change: ChangeInfo) : (Option[PersistedLane], ChangeSet)= {
+    val newLinkId = targetRoadLink.linkId
+    val laneId = lane.linkId match {
+      case targetRoadLink.linkId => lane.id
+      case _ => 0
+    }
+    val typed = ChangeType.apply(change.changeType)
+
+    val (newStart, newEnd, newSideCode) = typed match {
+      case ChangeType.LengthenedCommonPart | ChangeType.LengthenedNewPart | ChangeType.ReplacedNewPart =>
+        laneFiller.calculateNewMValuesAndSideCode(lane, historyRoadLink, projection, targetRoadLink.length, true)
+      case ChangeType.DividedModifiedPart | ChangeType.DividedNewPart if (lane.endMeasure < projection.oldStart ||
+        lane.startMeasure > projection.oldEnd) =>
+        (0.0, 0.0, 99)
+      case _ =>
+        laneFiller.calculateNewMValuesAndSideCode(lane, historyRoadLink, projection, targetRoadLink.length)
+    }
+    val projectedLane = Some(PersistedLane(laneId, newLinkId, newSideCode, lane.laneCode, lane.municipalityCode, newStart, newEnd, lane.createdBy,
+      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, lane.expiredBy, lane.expiredDateTime,
+      expired = false, projection.vvhTimeStamp, lane.geomModifiedDate, lane.attributes))
 
 
+    val changeSet = laneId match {
+      case 0 => changedSet
+      case _ if(newSideCode != lane.sideCode) => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++
+        Seq(VVHChangesAdjustment(laneId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)),
+        adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(laneId, SideCode.apply(newSideCode))))
+
+      case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++
+        Seq(VVHChangesAdjustment(laneId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)))
+    }
+
+    (projectedLane, changeSet)
+
+  }
 
 
   private def mapReplacementProjections(oldLinearAssets: Seq[PersistedLane], currentLinearAssets: Seq[PersistedLane], roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(PersistedLane, (Option[RoadLink], Option[Projection]))] = {
@@ -467,6 +508,16 @@ trait LaneOperations {
     }
   }
 
+  def pieceWiseLanestoPersistedLane(pwLanes: Seq[PieceWiseLane]): Seq[PersistedLane] = {
+    pwLanes.map { pwLane =>
+      val municipalityCode = pwLane.attributes.getOrElse("municipality", 99).asInstanceOf[Long]
+      val laneCode = getLaneCode(pwLane)
+      PersistedLane(pwLane.id, pwLane.linkId, pwLane.sideCode, laneCode, municipalityCode, pwLane.startMeasure, pwLane.endMeasure,
+        pwLane.createdBy, pwLane.createdDateTime, pwLane.modifiedBy, pwLane.modifiedDateTime, None, None, false, pwLane.vvhTimeStamp,
+        pwLane.geomModifiedDate, pwLane.laneAttributes)
+    }
+  }
+
   def historyLaneToPersistedLane(historyLane: PersistedHistoryLane): PersistedLane = {
     PersistedLane(historyLane.oldId, historyLane.linkId, historyLane.sideCode, historyLane.laneCode,
                   historyLane.municipalityCode, historyLane.startMeasure, historyLane.endMeasure, historyLane.createdBy,
@@ -521,6 +572,15 @@ trait LaneOperations {
 
     if (laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty)
       laneCodeValue.toString.trim
+    else
+      throw new IllegalArgumentException("Lane code attribute not found!")
+  }
+
+  def getLaneCode (pwLane: PieceWiseLane): Int = {
+    val laneCodeValue = getPropertyValue(pwLane.laneAttributes, "lane_code")
+
+    if (laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty)
+      laneCodeValue.asInstanceOf[Int]
     else
       throw new IllegalArgumentException("Lane code attribute not found!")
   }
