@@ -17,11 +17,23 @@
   },
   {
     "ParameterKey": "EcrRepositoryName",
-    "ParameterValue": "digiroad2"
+    "ParameterValue": "digiroad2-test"
   },
   {
     "ParameterKey": "CodeBuildName",
-    "ParameterValue": "qa_tagging"
+    "ParameterValue": "test-qa build"
+  },
+  {
+    "ParameterKey": "GitBranchName",
+    "ParameterValue": "NextRease"
+  },
+  {
+    "ParameterKey": "GitRepositoryName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "GitHubOwner",
+    "ParameterValue": "finnishtransportagency"
   },
   {
     "ParameterKey": "VpcIDOfSystem",
