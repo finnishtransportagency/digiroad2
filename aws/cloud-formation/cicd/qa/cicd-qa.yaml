@@ -20,7 +20,11 @@ Parameters:
   EcrRepositoryName:
     Description: ECR image name
     Type: String
-    AllowedPattern: "^[a-z0-9]+$"
+  GitHubWebhookSecret:
+    Description: Personal access token that is needed to access the webhook of CodePipeline
+    Type: String
+    NoEcho: true
+    MinLength: 20
   GitBranchName:
     Description: GitHub branch name
     Type: String
@@ -75,22 +79,22 @@ Resources:
         Location: !Ref CodePipelineArtifactStoreBucket
       Stages:
         - Name: Source
-            Actions:
-            - Name: SourceAction
-              ActionTypeId:
-                Category: Source
-                Owner: ThirdParty
-                Version: 1
-                Provider: GitHub
-              OutputArtifacts:
-                - Name: SourceOutput
-              Configuration:
-                Owner: !Ref GitHubOwner
-                Repo: !Ref GitRepositoryName
-                Branch: !Ref GitBranchName
-                OAuthToken: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/digiroadgithubtoken'
-                PollForSourceChanges: false
-              RunOrder: 1
+          Actions:
+          - Name: SourceAction
+            ActionTypeId:
+              Category: Source
+              Owner: ThirdParty
+              Version: 1
+              Provider: GitHub
+            OutputArtifacts:
+              - Name: SourceOutput
+            Configuration:
+              Owner: !Ref GitHubOwner
+              Repo: !Ref GitRepositoryName
+              Branch: !Ref GitBranchName
+              OAuthToken: !Ref GitHubWebhookSecret
+              PollForSourceChanges: false
+            RunOrder: 1
         - Name: Build
           Actions:
             - Name: BuildAction
@@ -213,6 +217,8 @@ Resources:
         EnvironmentVariables:
           - Name: ECR_REPOSITORY_URI
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
+          - Name: ECR_REPOSITORY_NAME
+            Value: !Ref EcrRepositoryName
           - Name: ECS_CONTAINER_NAME
             Value: !Ref ApplicationName
           - Name: ECS_SERVICE_NAME
