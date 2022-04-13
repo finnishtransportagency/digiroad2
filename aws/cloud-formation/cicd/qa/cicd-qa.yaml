@@ -30,11 +30,6 @@ Parameters:
     Type: String
   GitHubOwner:
     Type: String
-  GitHubWebhookSecret:
-    Description: Personal access token that is needed to access the webhook of Codepipeline to invoke the pipeline
-    Type: String
-    NoEcho: true
-    MinLength: 20
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
