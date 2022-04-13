@@ -21,6 +21,15 @@ Parameters:
     Description: ECR image name
     Type: String
     AllowedPattern: "^[a-z0-9]+$"
+  GitBranchName:
+    Description: GitHub branch name
+    Type: String
+    Default: master
+  GitRepositoryName:
+    Description: GitHub repository name
+    Type: String
+  GitHubOwner:
+    Type: String
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
@@ -66,25 +75,22 @@ Resources:
         Location: !Ref CodePipelineArtifactStoreBucket
       Stages:
         - Name: Source
-          Actions:
+            Actions:
             - Name: SourceAction
               ActionTypeId:
                 Category: Source
-                Owner: AWS
+                Owner: ThirdParty
                 Version: 1
-                Provider: ECR
+                Provider: GitHub
               OutputArtifacts:
                 - Name: SourceOutput
               Configuration:
-                RepositoryName: !Ref EcrRepositoryName
-        - Name: Accept
-          Actions:
-            - Name: Approve_Image_For_QA
-              ActionTypeId:
-                Category: Approval
-                Owner: AWS
-                Version: 1
-                Provider: Manual
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitRepositoryName
+                Branch: !Ref GitBranchName
+                OAuthToken: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/digiroadgithubtoken'
+                PollForSourceChanges: false
+              RunOrder: 1
         - Name: Build
           Actions:
             - Name: BuildAction
@@ -191,7 +197,7 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Ref CodeBuildName
-      Description: "Tag image for QA deployment."
+      Description: "Test build"
       ServiceRole: !Ref CodeBuildRole
       VpcConfig:
         SecurityGroupIds:
@@ -201,7 +207,7 @@ Resources:
         VpcId: !Ref VpcIDOfSystem
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0 # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
+        Image: aws/codebuild/standard:5.0
         Type: LINUX_CONTAINER
         PrivilegedMode: true
         EnvironmentVariables:
@@ -209,31 +215,14 @@ Resources:
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
           - Name: ECS_CONTAINER_NAME
             Value: !Ref ApplicationName
+          - Name: ECS_SERVICE_NAME
+            Value: !Ref ApplicationName
       Artifacts:
         Name: !Ref ApplicationName
         Type: CODEPIPELINE
       Source:
         Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2 
-          phases:
-            install:
-              runtime-versions:
-                java: corretto8
-            pre_build:
-              commands:
-                - pip install --upgrade awscli
-                - $(aws ecr get-login --no-include-email --region eu-west-1)
-            build:
-              commands:
-                - docker pull $ECR_REPOSITORY_URI:latest
-                - docker tag  $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:qa
-                - docker push $ECR_REPOSITORY_URI:qa
-            post_build:
-              commands:
-                - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $ECR_REPOSITORY_URI:qa > imagedefinitions.json
-          artifacts:
-            files: imagedefinitions.json
+        BuildSpec: "aws/buildspecs/test.yaml"
 
   CodeBuildRole:
     Type: AWS::IAM::Role
@@ -300,3 +289,73 @@ Resources:
                   - "s3:GetObject"
                   - "s3:GetObjectVersion"
                   - "s3:PutObject"
+              - Effect: "Allow"
+                Resource:
+                  - arn:aws:s3:::geotools-repo/*
+                Action:
+                  - "s3:GetObject"
+  
+  ECRRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref EcrRepositoryName
+      ImageScanningConfiguration:
+        ScanOnPush: "true"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+              "rules": [
+                  {
+                      "rulePriority": 1,
+                      "description": "Retain images tagged with prod",
+                      "selection": {
+                          "tagStatus": "tagged",
+                          "tagPrefixList": ["prod"],
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 999999
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  },
+                  {
+                      "rulePriority": 2,
+                      "description": "Retain images tagged with qa",
+                      "selection": {
+                          "tagStatus": "tagged",
+                          "tagPrefixList": ["test"],
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 999999
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  },
+                  {
+                      "rulePriority": 3,
+                      "description": "Retain images tagged with latest",
+                      "selection": {
+                          "tagStatus": "tagged",
+                          "tagPrefixList": ["latest"],
+                          "countType": "imageCountMoreThan",
+                          "countNumber": 999999
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  },
+                  {
+                      "rulePriority": 4,
+                      "description": "Expire images not tagged with qa or prod after 90 days",
+                      "selection": {
+                          "tagStatus": "any",
+                          "countType": "sinceImagePushed",
+                          "countUnit": "days",
+                          "countNumber": 90
+                      },
+                      "action": {
+                          "type": "expire"
+                      }
+                  }
+              ]
+          }

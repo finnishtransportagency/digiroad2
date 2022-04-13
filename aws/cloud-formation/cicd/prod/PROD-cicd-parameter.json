@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "EcrRepositoryName",
-    "ParameterValue": "digiroad2"
+    "ParameterValue": "digiroad2-test"
   },
   {
     "ParameterKey": "CodeBuildName",
