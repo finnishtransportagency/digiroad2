@@ -80,13 +80,14 @@ object ValidateLaneChangesAccordingToVvhChanges {
 
   def validateMainLaneAmount(roadLinks: Seq[RoadLink], mainLanesOnRoadLinks: Seq[PersistedLane]): Seq[RoadLink] = {
     val lanesMapped = mainLanesOnRoadLinks.groupBy(_.linkId)
+    val roadLinksWithoutMainLanes = roadLinks.filterNot(rl => lanesMapped.keys.toSeq.contains(rl.linkId))
     lanesMapped.flatMap(pair => {
       val roadLink = roadLinks.find(_.linkId == pair._1)
       val lanesOnLink = pair._2
       roadLink match {
         case Some(rl) => checkLinksMainLanes(rl, lanesOnLink)
       }
-    }).toSeq
+    }).toSeq ++ roadLinksWithoutMainLanes
 
   }
 
