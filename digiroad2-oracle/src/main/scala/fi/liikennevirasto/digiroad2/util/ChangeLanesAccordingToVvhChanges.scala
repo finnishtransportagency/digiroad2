@@ -42,7 +42,8 @@ object ChangeLanesAccordingToVvhChanges {
     val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.vvhTimeStamp)).toSeq
 
     val (changeSet, modifiedLanes) = handleChanges(roadLinks,latestHistoryRoadLinks, changes, existingAssets)
-    saveChanges(changeSet, modifiedLanes)
+    val onlyNewModifiedLanes = modifiedLanes.filter(lane => lane.id == 0)
+    saveChanges(changeSet, onlyNewModifiedLanes)
   }
 
   def handleChanges(roadLinks: Seq[RoadLink], historyRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], existingAssets: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
