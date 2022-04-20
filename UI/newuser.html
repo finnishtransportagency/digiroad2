@@ -28,12 +28,12 @@
                      {name: "Kaakkois-Suomi", id: 8},
                      {name: "Uusimaa", id: 9}];
 
-        var userSpecs =[{ role: "municipality", enabledCheckbox: [ municipalityCheckbox ], disabledCheckbox: [ operatorCheckbox, elysCheckbox, areasCheckbox]   },
-                        { role: "ely", enabledCheckbox: [ elysCheckbox, areasCheckbox ], disabledCheckbox: [operatorCheckbox,  municipalityCheckbox]  },
-                        { role: "operator" ,  enabledCheckbox: [operatorCheckbox,laneMaintainerCheckbox], disabledCheckbox: [ elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
-                        { role: "laneMaintainer" ,  enabledCheckbox: [laneMaintainerCheckbox], disabledCheckbox: [ elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
-                        { role: "areas",  enabledCheckbox: [ areasCheckbox, elysCheckbox ], disabledCheckbox: [ municipalityCheckbox, operatorCheckbox ] },
-                        { role: "default", enabledCheckbox: [ areasCheckbox, elysCheckbox, operatorCheckbox, municipalityCheckbox], disabledCheckbox: [] }];
+        var userSpecs =[{ role: "municipality", enabledCheckbox: [ municipalityCheckbox ], disabledCheckbox: [ laneMaintainerCheckbox,operatorCheckbox, elysCheckbox, areasCheckbox]   },
+            { role: "ely", enabledCheckbox: [ elysCheckbox, areasCheckbox ], disabledCheckbox: [laneMaintainerCheckbox,operatorCheckbox,  municipalityCheckbox]  },
+            { role: "operator" ,  enabledCheckbox: [operatorCheckbox,laneMaintainerCheckbox], disabledCheckbox: [ laneMaintainerCheckbox,elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
+            { role: "laneMaintainer" ,  enabledCheckbox: [laneMaintainerCheckbox], disabledCheckbox: [operatorCheckbox, elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
+            { role: "areas",  enabledCheckbox: [ areasCheckbox, elysCheckbox ], disabledCheckbox: [laneMaintainerCheckbox, municipalityCheckbox, operatorCheckbox ] },
+            { role: "default", enabledCheckbox: [ laneMaintainerCheckbox,areasCheckbox, elysCheckbox, operatorCheckbox, municipalityCheckbox], disabledCheckbox: [] }];
 
 
         function onChangeEvent() {
