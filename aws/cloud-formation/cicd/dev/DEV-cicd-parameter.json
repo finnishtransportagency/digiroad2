@@ -29,7 +29,7 @@
   },
   {
     "ParameterKey": "GitBranchName",
-    "ParameterValue": "AwsPostGist"
+    "ParameterValue": "development"
   },
   {
     "ParameterKey": "GitRepositoryName",

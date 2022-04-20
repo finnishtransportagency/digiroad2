@@ -79,7 +79,7 @@ Resources:
         -
           Cpu: 0
           memory: 30720
-          Image: !Sub '${RepositoryURL}:qa'
+          Image: !Sub '${RepositoryURL}:test'
           Name: digiroad2
           LogConfiguration:
             LogDriver: awslogs
