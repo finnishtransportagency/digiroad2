@@ -39,15 +39,12 @@ object UpdateIncompleteLinkList {
     municipalities.foreach { municipality =>
       val timer1 = System.currentTimeMillis()
       logger.info("*** Processing municipality: " + municipality)
-      val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVVH(municipality)
+      val roadLinks = Digiroad2Context.roadLinkService.getRoadLinksFromVvhAndUpdateProperties(municipality)
       counter += 1
       logger.info("*** Processed " + roadLinks.length + " road links with municipality " + municipality)
       logger.info(s" number of succeeding municipalities $counter from all ${municipalities.size}")
       logger.info("processing took: %.3f sec".format((System.currentTimeMillis() - timer1) * 0.001))
     }
-    val awaitTime = 1000L * 60L * 60
-    logger.info("await 60 minutes to make sure akka inbox is fully processed")
-    Thread.sleep(awaitTime)
   }
   
   private def clearIncompleteLinks(): Unit = {
