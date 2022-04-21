@@ -24,7 +24,9 @@ object RefreshRoadLinkCache {
       val municipalities: Seq[Int] = Queries.getMunicipalities
 
       municipalities.foreach(municipality => {
-        Digiroad2Context.roadLinkService.fillAndRefreshRoadLinkCache(municipality)
+        LogUtils.time(logger, "fillAndRefreshRoadLinkCache for municipality: " + municipality) {
+          Digiroad2Context.roadLinkService.fillAndRefreshRoadLinkCache(municipality)
+        }
       })
     }
   }
