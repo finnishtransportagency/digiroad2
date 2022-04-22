@@ -187,12 +187,6 @@ class SpeedLimitSaveProjected[T](speedLimitProvider: SpeedLimitService) extends 
   }
 }
 
-class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
-  def receive = {
-    case w: RoadLinkChangeSet => roadLinkService.updateRoadLinkChanges(w)
-    case _                    => println("linkPropertyUpdater: Received unknown message")
-  }
-}
 
 class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) extends Actor {
   def receive = {
@@ -367,9 +361,6 @@ object Digiroad2Context {
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
-
-  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
-  eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
