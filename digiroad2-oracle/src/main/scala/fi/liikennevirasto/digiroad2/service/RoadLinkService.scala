@@ -264,12 +264,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     )
   }
 
-  def fillAndRefreshRoadLinkCache(municipality: Int): Seq[RoadLink] = {
-    LogUtils.time(logger,"Get and touch roadLinks with cache for municipality: " + municipality)(
-      getAndTouchCachedRoadLinks(municipality)._1
-    )
-  }
-
   /**
     * This method returns road links by municipality.
     *
@@ -1773,12 +1767,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   private def getCachedRoadLinks(municipalityCode: Int, updateProperties: Boolean = false): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     Caching.cache[(Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])](
-      reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode, updateProperties)
-    )("links:" + municipalityCode)
-  }
-
-  private def getAndTouchCachedRoadLinks(municipalityCode: Int, updateProperties: Boolean = false): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
-    Caching.cacheWithTouch[(Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])](
       reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode, updateProperties)
     )("links:" + municipalityCode)
   }

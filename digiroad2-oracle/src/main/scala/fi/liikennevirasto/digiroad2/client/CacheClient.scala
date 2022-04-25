@@ -84,20 +84,5 @@ object Caching extends CacheClient {
     }
   }
 
-  def cacheWithTouch[DataModel](f: => DataModel)(key: String): DataModel = {
-    if (Digiroad2Properties.caching) {
-      getAndTouch[DataModel](key) match {
-        case CachedValue(data, true) =>
-          logger.debug("Return cached value and refresh time-to-live")
-          data.asInstanceOf[DataModel]
-        case _ =>
-          logger.debug("Caching with key " + key)
-          set[DataModel](key, defaultTTL, f)
-      }
-    } else {
-      logger.debug("Caching turned off")
-      f
-    }
-  }
 }
 
