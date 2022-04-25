@@ -1397,4 +1397,206 @@ class LaneServiceSpec extends LaneTestSupporter {
     laneTowardsTwoDigit.laneCode should equal(11)
     laneAgainstTwoDigit.laneCode should equal(21)
   }
+
+  test("Create three new split lanes") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
+
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      initialLanes.size should be(1)
+
+      val createdMainLane = NewLane(mainLane1Id, 0, 500, 745, false, false, lanePropertiesValues1)
+
+      val subLane2SplitA = NewLane(0, 0, 150, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitB = NewLane(0, 150, 350, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitC = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
+
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(100L), 1, usernameTest, Seq())
+
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      currentLanes.size should be(4)
+
+      val lane1 = currentLanes.filter(_.id == mainLane1Id).head
+      lane1.id should be(mainLane1Id)
+      lane1.attributes.foreach { laneProp =>
+        lanePropertiesValues1.contains(laneProp) should be(true)
+      }
+
+      val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
+      splitLanes.size should be(3)
+
+      splitLanes(0).startMeasure should be(0)
+      splitLanes(0).endMeasure should be(150)
+      splitLanes(1).startMeasure should be(150)
+      splitLanes(1).endMeasure should be(350)
+      splitLanes(2).startMeasure should be(350)
+      splitLanes(2).endMeasure should be(500)
+
+      splitLanes.foreach { lane =>
+        lane.attributes.foreach {
+          laneProp =>
+            lanePropertiesValues2.contains(laneProp) should be(true)
+        }
+      }
+
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      expiredLanes.size should be(0)
+    }
+  }
+
+  test("Split existing lane in three pieces") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
+      ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest)
+
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      initialLanes.size should be(2)
+
+      val createdMainLane = NewLane(mainLane1Id, 0, 500, 745, false, false, lanePropertiesValues1)
+
+      val subLane2SplitA = NewLane(0, 0, 150, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitB = NewLane(0, 150, 350, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitC = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
+
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(100L), 1, usernameTest, Seq())
+
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      currentLanes.size should be(4)
+
+      val lane1 = currentLanes.filter(_.id == mainLane1Id).head
+      lane1.id should be(mainLane1Id)
+      lane1.attributes.foreach { laneProp =>
+        lanePropertiesValues1.contains(laneProp) should be(true)
+      }
+
+      val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
+      splitLanes.size should be(3)
+
+      splitLanes(0).startMeasure should be(0)
+      splitLanes(0).endMeasure should be(150)
+      splitLanes(1).startMeasure should be(150)
+      splitLanes(1).endMeasure should be(350)
+      splitLanes(2).startMeasure should be(350)
+      splitLanes(2).endMeasure should be(500)
+
+      splitLanes.foreach { lane =>
+        lane.attributes.foreach {
+          laneProp =>
+            lanePropertiesValues2.contains(laneProp) should be(true)
+        }
+      }
+
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      expiredLanes.size should be(3)
+    }
+  }
+
+  test("Change properties of several splits") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2SplitA = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitB = NewLane(0, 100, 200, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitC = NewLane(0, 200, 300, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitD = NewLane(0, 300, 400, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitE = NewLane(0, 400, 500, 745, false, false, lanePropertiesValues2)
+      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC, subLane2SplitD, subLane2SplitE), Set(100L), 1, usernameTest)
+
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      initialLanes.size should be(6)
+
+      val newPropertyValues1 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+      )
+
+      val newPropertyValues2 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("13"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+      )
+
+      val createdMainLane = NewLane(laneIds(0), 0, 500, 745, false, false, lanePropertiesValues1)
+      val createdSubLane2SplitA = NewLane(laneIds(1), 0, 100, 745, false, false, lanePropertiesValues2)
+      val createdSubLane2SplitB = NewLane(laneIds(2), 100, 200, 745, false, false, newPropertyValues1)
+      val createdSubLane2SplitC = NewLane(laneIds(3), 200, 300, 745, false, false, newPropertyValues2)
+      val createdSubLane2SplitD = NewLane(laneIds(4), 300, 400, 745, false, false, lanePropertiesValues2)
+      val createdSubLane2SplitE = NewLane(laneIds(5), 400, 500, 745, false, false, newPropertyValues2)
+
+      ServiceWithDao.processNewLanes(Set(createdMainLane, createdSubLane2SplitA, createdSubLane2SplitB, createdSubLane2SplitC, createdSubLane2SplitD, createdSubLane2SplitE), Set(100L), 1, usernameTest, Seq())
+
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      currentLanes.size should be(6)
+
+      val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
+
+      splitLanes(0).attributes.foreach {
+        laneProp =>
+          lanePropertiesValues2.contains(laneProp) should be(true)
+      }
+
+      splitLanes(1).attributes.foreach {
+        laneProp =>
+          newPropertyValues1.contains(laneProp) should be(true)
+      }
+
+      splitLanes(2).attributes.foreach {
+        laneProp =>
+          newPropertyValues2.contains(laneProp) should be(true)
+      }
+
+      splitLanes(3).attributes.foreach {
+        laneProp =>
+          lanePropertiesValues2.contains(laneProp) should be(true)
+      }
+
+      splitLanes(4).attributes.foreach {
+        laneProp =>
+          newPropertyValues2.contains(laneProp) should be(true)
+      }
+
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      expiredLanes.size should be(3)
+
+    }
+  }
+
+  test("Expire several split lanes") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2SplitA = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitB = NewLane(0, 100, 200, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitC = NewLane(0, 200, 300, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitD = NewLane(0, 300, 400, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitE = NewLane(0, 400, 500, 745, false, false, lanePropertiesValues2)
+      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC, subLane2SplitD, subLane2SplitE), Set(100L), 1, usernameTest)
+
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      initialLanes.size should be(6)
+
+      val createdMainLane = NewLane(laneIds(0), 0, 500, 745, false, false, lanePropertiesValues1)
+      val createdSubLane2SplitA = NewLane(laneIds(1), 0, 100, 745, false, false, lanePropertiesValues2)
+      val createdSubLane2SplitB = NewLane(laneIds(2), 100, 200, 745, true, false, lanePropertiesValues2)
+      val createdSubLane2SplitC = NewLane(laneIds(3), 200, 300, 745, false, false, lanePropertiesValues2)
+      val createdSubLane2SplitD = NewLane(laneIds(4), 300, 400, 745, true, false, lanePropertiesValues2)
+      val createdSubLane2SplitE = NewLane(laneIds(5), 400, 500, 745, true, false, lanePropertiesValues2)
+
+      ServiceWithDao.processNewLanes(Set(createdMainLane, createdSubLane2SplitA, createdSubLane2SplitB, createdSubLane2SplitC, createdSubLane2SplitD, createdSubLane2SplitE), Set(100L), 1, usernameTest, Seq())
+
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      currentLanes.size should be(3)
+
+      val currentSplitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
+      currentSplitLanes.size should be(2)
+
+      currentSplitLanes(0).startMeasure should be(0)
+      currentSplitLanes(0).endMeasure should be(100)
+      currentSplitLanes(1).startMeasure should be(200)
+      currentSplitLanes(1).endMeasure should be(300)
+
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      expiredLanes.size should be(3)
+    }
+  }
 }
