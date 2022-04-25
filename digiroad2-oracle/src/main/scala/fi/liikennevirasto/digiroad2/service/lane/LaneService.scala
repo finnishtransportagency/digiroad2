@@ -925,7 +925,7 @@ trait LaneOperations {
   }
 
   def createMultiLanesOnLink(updateNewLanes: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
-    if (updateNewLanes.isEmpty()) {
+    if (updateNewLanes.isEmpty) {
       return Seq()
     }
     // Get all lane codes from lanes to update
