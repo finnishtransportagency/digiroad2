@@ -579,7 +579,16 @@ trait LaneOperations {
             val oldLane = allExistingLanes.find(laneAux => laneAux.laneCode == lane.laneCode && laneAux.linkId == linkId)
               .getOrElse(throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: ${lane.laneCode} for update!"))
 
-            if (linkIds.size == 1 &&
+            if (linkIds.size == 1 && lane.startMeasure == laneToUpdate.startMeasure && lane.startMeasure == laneToUpdate.startMeasure && lane.laneCode == laneToUpdateCode) {
+              var newLaneID = lane.id
+              if (isSomePropertyDifferent(lane, laneToUpdate.properties)) {
+                val persistedLaneToUpdate = PersistedLane(lane.id, linkId, sideCode, laneToUpdateCode, lane.municipalityCode,
+                  lane.startMeasure, lane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
+                moveToHistory(lane.id, None, false, false, username)
+                newLaneID = dao.updateEntryLane(persistedLaneToUpdate, username)
+              }
+              newLaneID
+            } else if (linkIds.size == 1 &&
               (oldLane.startMeasure != laneToUpdate.startMeasure || oldLane.endMeasure != laneToUpdate.endMeasure)) {
               val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
               moveToHistory(oldLane.id, Some(newLaneID.head), true, true, username)
@@ -883,14 +892,14 @@ trait LaneOperations {
     }
 
     //Get multiple lanes in one link
-    val resultWithMultiLanesInLink = newLanes.filter(_.isExpired != true).foldLeft(resultWithDeleteActions) {
+    val resultWithMultiLanesInLink = newLanes.filter(lane => lane.isExpired != true && lane.id == 0).foldLeft(resultWithDeleteActions) {
       (result, newLane) =>
         val newLaneCode: Int = getPropertyValue(newLane.properties, "lane_code").toString.toInt
 
         val numberOfOldLanesByCode = allExistingLanes.count(_.laneCode == newLaneCode)
         val numberOfFutureLanesByCode = newLanes.filter(_.isExpired != true).count { newLane => getLaneCode(newLane).toInt == newLaneCode }
 
-        if ((numberOfFutureLanesByCode == 2 && numberOfOldLanesByCode >= 1) || (numberOfFutureLanesByCode == 1 && numberOfOldLanesByCode == 2))
+        if ((numberOfFutureLanesByCode >= 2 && numberOfOldLanesByCode >= 1) || (numberOfFutureLanesByCode < numberOfOldLanesByCode))
           result.copy(multiLanesOnLink = Set(newLane) ++ result.multiLanesOnLink)
         else
           result
@@ -916,11 +925,16 @@ trait LaneOperations {
   }
 
   def createMultiLanesOnLink(updateNewLanes: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
+    if (updateNewLanes.size == 0) {
+      return Seq()
+    }
     // Get all lane codes from lanes to update
     val laneCodesToModify = updateNewLanes.map { newLane => getLaneCode(newLane).toInt }
-
-    //Fetch from db the existing lanes
-    val oldLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodesToModify).filter(_.sideCode == sideCode)
+    val startMeasureToModify = updateNewLanes.map(newLane => newLane.startMeasure).reduce(_ min _)
+    val endMeasureToModify = updateNewLanes.map(newLane => newLane.endMeasure).reduce(_ max _)
+    //Fetch from db the existing lanes that the new lanes will replace
+    val oldLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodesToModify).filter(lane => lane.sideCode == sideCode
+      && lane.startMeasure >= startMeasureToModify && lane.endMeasure <= endMeasureToModify)
 
     val newLanesByLaneCode = updateNewLanes.groupBy(il => getLaneCode(il).toInt)
 
@@ -929,8 +943,8 @@ trait LaneOperations {
       val oldLanesByCode = oldLanes.filter(_.laneCode == laneCode)
 
 
-      if (lanesToUpdate.size == 2 && oldLanesByCode.size == 1) {
-        //When its to create two lanes in one link
+      if (lanesToUpdate.size > oldLanesByCode.size) {
+        //When one or more lanes are cut to smaller pieces
         val newLanesIDs = lanesToUpdate.map { lane =>
           create(Seq(lane), linkIds, sideCode, username).head
         }
@@ -938,7 +952,9 @@ trait LaneOperations {
         newLanesIDs.foreach { newLane =>
           moveToHistory(oldLanesByCode.head.id, Some(newLane), true, false, username)
         }
-        dao.deleteEntryLane(oldLanesByCode.head.id)
+        oldLanes.foreach {oldLane =>
+          dao.deleteEntryLane(oldLane.id)
+        }
 
         newLanesIDs
 
