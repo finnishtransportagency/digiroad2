@@ -4,12 +4,14 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode}
 import fi.liikennevirasto.digiroad2.lane._
+import fi.liikennevirasto.digiroad2.middleware.{AdditionalImportValue, UpdateOnlyStartDates}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+
 import java.io.{InputStream, InputStreamReader}
 import scala.util.{Success, Try}
 
@@ -210,7 +212,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     (result, createdLaneIds)
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, updateOnlyStartDates: AdditionalImportValue): Unit = {
     try {
       val result = processing(inputStream, user)
       result match {
