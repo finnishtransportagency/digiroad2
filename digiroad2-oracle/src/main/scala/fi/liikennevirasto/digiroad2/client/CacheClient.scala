@@ -49,22 +49,6 @@ class CacheClient {
     }
   }
 
-  def getAndTouch[DataModel](key: String): CachedValue = {
-    try {
-      val result = LogUtils.time(logger,"Retrieve value from cache and refresh time-to-live")(
-        client.getAndTouch(key, defaultTTL).asInstanceOf[DataModel]
-      )
-
-      if (result == null) {
-        CachedValue(null, success = false)
-      } else {
-        CachedValue(result, success = true)
-      }
-    } catch {
-      case e: Exception => logger.error("Retrieval of cached value failed", e); throw e
-    }
-  }
-
 }
 
 object Caching extends CacheClient {
