@@ -1494,6 +1494,34 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
+  test("Split lane in both ends, leaving the middle untouched") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2SplitA = NewLane(0, 0, 150, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitB = NewLane(0, 150, 350, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitC = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
+      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(100L), 1, usernameTest)
+
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      initialLanes.size should be(4)
+
+      val existingMainLane1 = NewLane(laneIds(0), 0, 500, 745, false, false, lanePropertiesValues1)
+      val newSubLane2SplitA1 = NewLane(0, 0, 50, 745, false, false, lanePropertiesValues2)
+      val newSubLane2SplitA2 = NewLane(0, 50, 150, 745, false, false, lanePropertiesValues2)
+      val existingSubLane2SplitB = NewLane(laneIds(2), 150, 350, 745, false, false, lanePropertiesValues2)
+      val newSubLane2SplitC1 = NewLane(0, 350, 450, 745, false, false, lanePropertiesValues2)
+      val newSubLane2SplitC2 = NewLane(0, 450, 500, 745, false, false, lanePropertiesValues2)
+
+      ServiceWithDao.processNewLanes(Set(existingMainLane1, newSubLane2SplitA1, newSubLane2SplitA2, existingSubLane2SplitB, newSubLane2SplitC1, newSubLane2SplitC2), Set(100L), 1, usernameTest, Seq())
+
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      currentLanes.size should be(6)
+
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      expiredLanes.size should be(4)
+    }
+  }
+
   test("Change properties of several splits") {
     runWithRollback {
       val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)

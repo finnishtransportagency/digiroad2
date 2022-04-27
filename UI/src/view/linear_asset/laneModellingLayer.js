@@ -81,8 +81,17 @@
               return property.publicId === "lane_code";
             }).values).value;
 
-            return !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 || (!_.isUndefined(properties) &&
-                properties.selectedLinks.length > 1 && _.isUndefined(properties.marker)) || selectedLane.isAddByRoadAddress();
+            var uniqueSelectedRoadLinkIds = _.uniq(_.map(properties.selectedLinks, function (selectedLink) {
+              return selectedLink.linkId;
+            }));
+            if(_.isUndefined(uniqueSelectedRoadLinkIds)) {
+              return true;
+            }
+
+            var SelectedLaneCannotBeCut = !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 || laneNumber != selectedLane.getCurrentLaneNumber() ||
+                uniqueSelectedRoadLinkIds.length > 1 || selectedLane.isAddByRoadAddress();
+
+            return SelectedLaneCannotBeCut;
           })
           .map(function(feature) {
             var closestP = feature.getGeometry().getClosestPoint(point);
@@ -119,7 +128,8 @@
             return property.publicId === "lane_code";
           }).values).value;
 
-          return !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 || selectedLane.isAddByRoadAddress();
+          return !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 ||
+              laneNumber != selectedLane.getCurrentLaneNumber() || selectedLane.isAddByRoadAddress();
         });
 
         selected = _.sortBy(selected, function (lane) {
