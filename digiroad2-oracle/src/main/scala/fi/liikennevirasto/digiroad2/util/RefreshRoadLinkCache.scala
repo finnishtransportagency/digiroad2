@@ -33,7 +33,7 @@ object RefreshRoadLinkCache {
         val roadLinks = municipalities.flatMap(municipality => {
           roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality)
         })
-        logger.info("Cached " + roadLinks.size + "roadlinks with updated properties")
+        logger.info("Cached " + roadLinks.size + " roadlinks with overrided properties from database")
       }
       else logger.error("Flushing cache failed")
     }

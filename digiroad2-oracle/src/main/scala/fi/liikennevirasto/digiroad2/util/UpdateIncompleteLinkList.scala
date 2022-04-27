@@ -1,18 +1,17 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.Caching
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{AdjustedRoadLinksAndVVHRoadLink, IncompleteLink, RoadLinkChangeSet, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 object UpdateIncompleteLinkList {
   val logger = LoggerFactory.getLogger(getClass)
