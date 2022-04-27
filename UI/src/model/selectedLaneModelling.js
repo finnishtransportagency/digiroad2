@@ -387,7 +387,7 @@
 
       //expiredLane could be modified by the user so we need to fetch the original
       var originalExpiredLane = _.find(lanesFetched, {'id': expiredLane.id});
-      if (linksSelected.length > 1 && marker === undefined) {
+      if (linksSelected.length > 1 && _.isUndefined(marker)) {
         var expiredGroup = collection.getGroup(originalExpiredLane);
         expiredGroup.forEach(function (lane) {
           lane.isExpired = true;

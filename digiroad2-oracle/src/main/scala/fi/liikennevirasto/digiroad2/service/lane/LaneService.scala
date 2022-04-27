@@ -895,7 +895,7 @@ trait LaneOperations {
     }
 
     //Get multiple lanes in one link
-    val resultWithMultiLanesInLink = newLanes.filter(lane => lane.isExpired != true && lane.id == 0).foldLeft(resultWithDeleteActions) {
+    val resultWithMultiLanesInLink = newLanes.filter(_.id == 0).foldLeft(resultWithDeleteActions) {
       (result, newLane) =>
         val newLaneCode: Int = getPropertyValue(newLane.properties, "lane_code").toString.toInt
 

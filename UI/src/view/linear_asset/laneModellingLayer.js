@@ -17,6 +17,7 @@
 
     var LinearAssetCutter = function(eventListener, vectorLayer) {
       var scissorFeatures = [];
+      //Max euclidean distance in geometry points allowed between mouse point and the closest linear asset point (the planned cut point).
       var CUT_THRESHOLD = 5;
       var vectorSource = vectorLayer.getSource();
 
