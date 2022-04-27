@@ -68,5 +68,10 @@ object Caching extends CacheClient {
     }
   }
 
+  def flush(): Boolean = {
+      val result = client.flush()
+      result.get()
+    }
+
 }
 

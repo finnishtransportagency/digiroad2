@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.enrichAndGenerateProperties
-import fi.liikennevirasto.digiroad2.util.{TestTransactions, UpdateIncompleteLinkList, VVHSerializer}
+import fi.liikennevirasto.digiroad2.util.{TestTransactions, VVHSerializer}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
@@ -254,37 +254,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  ignore("Changes should cause event") {
-    PostGISDatabase.withDynTransaction {
-      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-      val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-      val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
-
-      val vvhRoadLinks = List(
-        VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, linkSource = LinkGeomSource.NormalLinkInterface),
-        VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, linkSource = LinkGeomSource.NormalLinkInterface))
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(vvhRoadLinks).future)
-      when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
-
-      val service = new TestService(mockVVHClient, mockEventBus)
-      val result = service.getRoadLinksFromVVH(boundingBox)
-      val exactModifiedAtValue = result.head.modifiedAt
-      
-      val roadLink:RoadLink = RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, exactModifiedAtValue, Some("automatic_generation"), constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
-      val adjustedRoadLinks = Seq(AdjustedRoadLinksAndVVHRoadLink(adjustedRoadLink = roadLink, vVHRoadLink = VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath, linkSource = LinkGeomSource.NormalLinkInterface)))
-      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(adjustedRoadLinks, List(IncompleteLink(789,91,Municipality)), List(), service.getRoadLinkDataByLinkIds(vvhRoadLinks))
-
-      verify(mockEventBus).publish(
-        org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
-        org.mockito.ArgumentMatchers.eq(changeSet))
-
-      dynamicSession.rollback()
-    }
-  }
   //this fail at fifth consecutive test suite run
   test("Remove road link from incomplete link list once functional class and link type are specified") {
     PostGISDatabase.withDynTransaction {
