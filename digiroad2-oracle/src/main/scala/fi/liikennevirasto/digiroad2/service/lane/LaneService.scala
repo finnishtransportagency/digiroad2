@@ -579,7 +579,10 @@ trait LaneOperations {
             val oldLane = allExistingLanes.find(laneAux => laneAux.laneCode == lane.laneCode && laneAux.linkId == linkId)
               .getOrElse(throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: ${lane.laneCode} for update!"))
 
-            if (linkIds.size == 1 && lane.startMeasure == laneToUpdate.startMeasure && lane.startMeasure == laneToUpdate.startMeasure && lane.laneCode == laneToUpdateCode) {
+            val isExactlyMatchingSingleLinkLane = (lane: PersistedLane) => linkIds.size == 1 &&
+              lane.startMeasure == laneToUpdate.startMeasure && lane.startMeasure == laneToUpdate.startMeasure && lane.laneCode == laneToUpdateCode
+
+            if (isExactlyMatchingSingleLinkLane(lane)) {
               var newLaneID = lane.id
               if (isSomePropertyDifferent(lane, laneToUpdate.properties)) {
                 val persistedLaneToUpdate = PersistedLane(lane.id, linkId, sideCode, laneToUpdateCode, lane.municipalityCode,
@@ -925,35 +928,32 @@ trait LaneOperations {
   }
 
   def createMultiLanesOnLink(updateNewLanes: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
-    if (updateNewLanes.size == 0) {
-      return Seq()
-    }
-    // Get all lane codes from lanes to update
-    val laneCodesToModify = updateNewLanes.map { newLane => getLaneCode(newLane).toInt }
-    val startMeasureToModify = updateNewLanes.map(newLane => newLane.startMeasure).reduce(_ min _)
-    val endMeasureToModify = updateNewLanes.map(newLane => newLane.endMeasure).reduce(_ max _)
-    //Fetch from db the existing lanes that the new lanes will replace
-    val oldLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodesToModify).filter(lane => lane.sideCode == sideCode
-      && lane.startMeasure >= startMeasureToModify && lane.endMeasure <= endMeasureToModify)
 
+    val laneCodesToModify = updateNewLanes.map { newLane => getLaneCode(newLane).toInt }
+    val oldLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodesToModify).filter(lane => lane.sideCode == sideCode)
     val newLanesByLaneCode = updateNewLanes.groupBy(il => getLaneCode(il).toInt)
 
     //By lane check if exist something to modify
     newLanesByLaneCode.flatMap { case (laneCode, lanesToUpdate) =>
       val oldLanesByCode = oldLanes.filter(_.laneCode == laneCode)
 
-
-      if (lanesToUpdate.size > oldLanesByCode.size) {
+      if (lanesToUpdate.size >= 2) {
         //When one or more lanes are cut to smaller pieces
         val newLanesIDs = lanesToUpdate.map { lane =>
           create(Seq(lane), linkIds, sideCode, username).head
+        }
+
+        def isWithinRangeToExpire(newLanes: Seq[NewLane], oldLane: PersistedLane): Boolean = {
+          newLanes.filter(newLane => newLane.startMeasure == oldLane.startMeasure || newLane.endMeasure == oldLane.endMeasure).size == 2
         }
 
         newLanesIDs.foreach { newLane =>
           moveToHistory(oldLanesByCode.head.id, Some(newLane), true, false, username)
         }
         oldLanes.foreach {oldLane =>
-          dao.deleteEntryLane(oldLane.id)
+          if (isWithinRangeToExpire(lanesToUpdate, oldLane)) {
+            dao.deleteEntryLane(oldLane.id)
+          }
         }
 
         newLanesIDs

@@ -78,13 +78,16 @@
         return lane.endMeasure;
       });
 
-      var charCount = 0;
-      for (var i = 0; i < lanesSortedByEndMeasure.length; i++) {
-        if (_.includes(laneCodesToPutMarkers, getLaneCodeValue(lanesSortedByEndMeasure[i]).toString())) {
-          lanesSortedByEndMeasure[i].marker = String.fromCharCode(charCount + 65);
-          charCount += 1;
+      _.forEach(laneCodesToPutMarkers, function (laneCode) {
+        var characterCounterForLaneMarker = 0;
+        for (var i = 0; i < lanesSortedByEndMeasure.length; i++) {
+          if (laneCode == getLaneCodeValue(lanesSortedByEndMeasure[i]).toString()) {
+            //The integer value of 'A' is 65, so every increment in the counter gives the next letter of the alphabet.
+            lanesSortedByEndMeasure[i].marker = String.fromCharCode(characterCounterForLaneMarker + 65);
+            characterCounterForLaneMarker += 1;
+          }
         }
-      }
+      });
 
       return lanesSortedByEndMeasure;
     };
