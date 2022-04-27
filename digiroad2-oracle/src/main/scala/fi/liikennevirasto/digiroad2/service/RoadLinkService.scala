@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.Caching
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.vvhClient
-import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.enrichAndGenerateProperties
+import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
@@ -578,7 +578,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else enrichRoadLinksFromVVH(links ++ complementaryLinks)
   }
 
-  def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int, updateProperties: Boolean = false): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])= {
+  def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
+    val fut = for {
+      f1Result <- vvhClient.complementaryData.fetchWalkwaysByMunicipalitiesF(municipalities)
+      f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
+      f3Result <- vvhClient.roadLinkData.fetchByMunicipalityF(municipalities)
+    } yield (f1Result, f2Result, f3Result)
+
+    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
+
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links), changes, enrichRoadLinksFromVVH(complementaryLinks))
+    }
+  }
+
+  def getLinksWithComplementaryAndGenerateProperties(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])= {
     val fut = for{
       f1Result <- vvhClient.complementaryData.fetchWalkwaysByMunicipalitiesF(municipalities)
       f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
@@ -587,15 +601,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
 
-    if (updateProperties) {
       withDynTransaction {
-        (enrichAndGenerateProperties(links, changes), changes, enrichAndGenerateProperties(complementaryLinks, changes))
+        (generateProperties(links, changes), changes, generateProperties(complementaryLinks, changes))
       }
-    }
-    else withDynTransaction {
-      (enrichRoadLinksFromVVH(links), changes, enrichRoadLinksFromVVH(complementaryLinks))
-    }
-
   }
   
   /**
