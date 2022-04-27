@@ -17,15 +17,19 @@
   },
   {
     "ParameterKey": "EcrRepositoryName",
-    "ParameterValue": "digiroad2-test"
+    "ParameterValue": "digiroad2test"
   },
   {
     "ParameterKey": "CodeBuildName",
-    "ParameterValue": "test-qa build"
+    "ParameterValue": "digiroad2_test_build"
   },
   {
     "ParameterKey": "GitBranchName",
-    "ParameterValue": "NextRease"
+    "ParameterValue": "NextRelease"
+  },
+  {
+    "ParameterKey": "GitHubWebhookSecret",
+    "UsePreviousValue": true
   },
   {
     "ParameterKey": "GitRepositoryName",
