@@ -5,8 +5,7 @@
     var me = this;
 
     this.formEditModeAccess = function(selectedAsset) {
-      
-      return  me.isStateExclusions(selectedAsset) ||  ( !me.isState(selectedAsset) && me.isLaneMaintainer() || me.isOperator() );
+      return  me.isStateExclusions(selectedAsset) ||  ( me.isLaneMaintainer() || me.isOperator() );
     };
 
     this.editModeAccess = function() {
