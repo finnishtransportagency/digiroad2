@@ -273,7 +273,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily Prod batches"
-      ScheduleExpression: "cron(30 22 * * ? *)"
+      ScheduleExpression: "cron(30 22 ? * 1-5 *)"
       State: "ENABLED"
       Targets:
         -
@@ -323,7 +323,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily QA batches"
-      ScheduleExpression: "cron(30 22 * * ? *)"
+      ScheduleExpression: "cron(30 22 ? * 1-5 *)"
       State: "ENABLED"
       Targets:
         -
@@ -372,7 +372,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run daily DEV batches"
-      ScheduleExpression: "cron(30 22 * * ? *)"
+      ScheduleExpression: "cron(30 22 ? * 1-5 *)"
       State: "ENABLED"
       Targets:
         -

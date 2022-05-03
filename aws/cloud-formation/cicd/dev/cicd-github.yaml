@@ -114,7 +114,7 @@ Resources:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitRepositoryName
                 Branch: !Ref GitBranchName
-                OAuthToken: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/digiroadgithubtoken'
+                OAuthToken: !Ref GitHubWebhookSecret
                 PollForSourceChanges: false
               RunOrder: 1
         - Name: Build
