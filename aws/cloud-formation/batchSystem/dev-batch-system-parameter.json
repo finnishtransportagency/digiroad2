@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "BatchLambdaStackName",
-    "ParameterValue": "BatchLambdaStack"
+    "ParameterValue": "digiroad-batch-lambda-stack"
   },
   {
     "ParameterKey": "Subnet1",
