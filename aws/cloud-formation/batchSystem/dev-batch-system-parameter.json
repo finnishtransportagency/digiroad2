@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
+  },
+  {
+    "ParameterKey": "SNSTopicName",
+    "ParameterValue": "BatchFailTopic"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "DEV"
+  },
+  {
+    "ParameterKey": "JobDefinitionName",
+    "ParameterValue": "DEVBatchDefinition"
+  },
+  {
+    "ParameterKey": "BatchLambdaStackName",
+    "ParameterValue": "BatchLambdaStack"
+  },
+  {
+    "ParameterKey": "Subnet1",
+    "ParameterValue": "Digiroad-OTH-kehitys-Subnet1-Id"
+  },
+  {
+    "ParameterKey": "Subnet2",
+    "ParameterValue": "Digiroad-OTH-kehitys-Subnet2-Id"
+  }
+]

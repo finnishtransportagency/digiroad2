@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  DevBucketName:
+    Description: Name of dev account S3 bucket for lambda deployment
+    Type: String
+  ProdBucketName:
+    Description: Name of prod account S3 bucket for lambda deployment
+    Type: String
+  CodeCommitRepositoryName:
+    Description: Name of CodeCommit repo for lambda source code
+    Type: String
+  CodeCommitBranch:
+    Description: Branch to use for lambda source code
+    Type: String
+
+Resources:
+  LambdaDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DevBucketName
+
+  BatchLambdaPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: 'batch-lambda-pipeline'
+      RoleArn: !GetAtt PipelineRole.Arn
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: Source
+          Actions:
+            Name: SourceAction
+            ActionTypeID:
+              Category: Source
+              Owner: AWS
+              Provider: CodeCommit
+              Version: 1
+            OutputArtifacts:
+              - Name: SourceOutput
+            Configuration:
+              RepositoryName: !Ref CodeCommitRepositoryName
+              BranchName: !Ref CodeCommitBranch
+              PollForSourceChanges: false
+            RunOrder: 1
+        - Name: Build
+          Actions:
+            Name: BuildAction
+            InputArtifacts:
+              - Name: SourceOutput
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: 1
+              Provider: CodeBuild
+            OutputArtifacts:
+              - Name: Built
+            Configuration:
+              ProjectName: !Ref CodeBuild
+            RunOrder: 1
+
+  PipelineRole:
+    Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: 'batch-lambda-pipeline-role'
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - codepipeline.amazonaws.com
+              Action: 'sts:AssumeRole'
+        Path: /
+        Policies:
+          - PolicyName: 'batch-lambda-pipeline-policy'
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'codebuild:BatchGetBuilds'
+                    - 'codebuild:StartBuild'
+                  Resource: '*'
+                - Effect: Allow
+                  Action:
+                    - 'lambda:*'
+                    - 'codebuild:*'
+                    - 's3:*'
+                  Resource: '*'
+
+  StartPipeLineEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: cwe-batch-lambda-pipeline-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Ref BatchLambdaPipeline
+
+  StartPipelineRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - 'CodeCommit Repository State Change'
+        resources:
+          - arn:aws:codecommit:eu-west-1:475079312496:Batch-Lambda
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - master
+      Targets:
+        - Arn: !GetAtt BatchLambdaPipeline.Arn
+          RoleArn: !GetAtt StartPipeLineEventRole.Arn
+          Id: batch-lambda-pipeline
+
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: 'batch-lambda-codebuild'
+      Description: 'CodeBuild for batch-lambda'
+      ServiceRole: !Ref CodeBuildRole
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: DEV_BUCKET
+            Value: !Ref DevBucketName
+          - Name: PROD_BUCKET
+            Value: !Ref ProdBucketName
+      Artifacts:
+        Name: 'batch-lambda-build-artifact'
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: 'batchLambdaBuildSpec.yml'
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: "batch-lambda-codebuild-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "batch-lambda-codebuild-policy"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:GetRepositoryPolicy"
+                  - "ecr:DescribeRepositories"
+                  - "ecr:ListImages"
+                  - "ecr:DescribeImages"
+                  - "ecr:BatchGetImage"
+                  - "ecr:GetLifecyclePolicy"
+                  - "ecr:GetLifecyclePolicyPreview"
+                  - "ecr:ListTagsForResource"
+                  - "ecr:DescribeImageScanFindings"
+                  - "ecr:InitiateLayerUpload"
+                  - "ecr:UploadLayerPart"
+                  - "ecr:CompleteLayerUpload"
+                  - "ecr:PutImage"
+                  - "ssm:GetParameters"
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+              - Effect: "Allow"
+                Resource:
+                  - "*"
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:PutObject"

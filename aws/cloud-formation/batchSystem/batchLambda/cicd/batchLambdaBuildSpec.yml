@@ -1,0 +1,21 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      nodejs: 14.x
+    commands:
+      - mkdir -p ./lib
+      - npm install --prefix ./lib aws-sdk
+  build:
+    commands:
+      - cd lib
+      - zip -r9 ../deployment_package.zip .
+      - cd ..
+      - zip -g deployment_package.zip AddJobToQueue.js
+      - echo Pushing deployment_package.zip to Prod and Dev S3 buckets
+      - aws s3api put-object --bucket $DEV_BUCKET --key batch-lambda-deployment --body deployment_package.zip
+      - aws s3api put-object --bucket $PROD_BUCKET --key batch-lambda-deployment --body deployment_package.zip --acl bucket-owner-full-control
+  post_build:
+    commands:
+      - echo Updating Dev account lambda code
+      - aws lambda update-function-code --function-name Batch-Add-Jobs-To-Queue --zip-file fileb://deployment_package.zip

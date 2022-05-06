@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-prod-VPC"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-015f75cef3e99c5cc"
+  },
+  {
+    "ParameterKey": "SNSTopicName",
+    "ParameterValue": "BatchFailTopic"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "Prod"
+  },
+  {
+    "ParameterKey": "JobDefinitionName",
+    "ParameterValue": "ProdBatchJobDefinition"
+  },
+  {
+    "ParameterKey": "BatchLambdaStackName",
+    "ParameterValue": "BatchLambdaStack"
+  },
+  {
+    "ParameterKey": "Subnet1",
+    "ParameterValue": "Digiroad-prod-Subnet1-Id"
+  },
+  {
+    "ParameterKey": "Subnet2",
+    "ParameterValue": "Digiroad-prod-Subnet2-Id"
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "DigiroadTest-VPC"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0b4e33ad8202e91e4"
+  },
+  {
+    "ParameterKey": "SNSTopicName",
+    "ParameterValue": "BatchFailTopic"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "QA"
+  },
+  {
+    "ParameterKey": "JobDefinitionName",
+    "ParameterValue": "QABatchDefinition"
+  },
+  {
+    "ParameterKey": "BatchLambdaStackName",
+    "ParameterValue": "BatchLambdaStack"
+  },
+  {
+    "ParameterKey": "Subnet1",
+    "ParameterValue": "DigiroadTest-Subnet1-Id"
+  },
+  {
+    "ParameterKey": "Subnet2",
+    "ParameterValue": "DigiroadTest-Subnet2-Id"
+  }
+]

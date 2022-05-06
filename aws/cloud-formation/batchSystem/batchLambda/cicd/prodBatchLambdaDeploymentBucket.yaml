@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:
+  LambdaDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'prod-batch-lambda-deployment-bucket'
+      AccessControl: 'private'
+
+  DeploymentBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LambdaDeploymentBucket
+      PolicyDocument:
+        Statement:
+        Sid: "PolicyForAllowUploadWithACL"
+        Effect: Allow
+        Principal:
+          AWS: '475079312496'
+        Action: "s3:PutObject"
+        Resource: "arn:aws:s3:::prod-batch-lambda-deployment-bucket/*"
+        Condition: {
+          "StringEquals": {"s3:x-amz-acl":"bucket-owner-full-control"}
+        }
+
+Outputs:
+  BucketOutput:
+    Description: 'Name of production batch lambda S3 deployment bucket'
+    Value: 'prod-batch-lambda-deployment-bucket'
+    Export:
+      Name: 'BatchLambda-deployment-bucket'

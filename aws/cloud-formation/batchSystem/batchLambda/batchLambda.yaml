@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  BucketName:
+    Description: Name of S3 bucket for lambda code
+    Type: String
+  S3ObjectKey:
+    Description: Key of lambda deployment object
+    Type: String
+
+Resources:
+  BatchLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !ImportValue 'BatchLambda-deployment-bucket'
+        S3Key: batch-lambda-deployment
+    FunctionName: "Batch-Add-Jobs-To-Queue"
+    Handler: AddJobToQueue.handler
+          Role: !GetAtt BatchLambdaRole.Arn
+    Runtime: nodejs14.x
+
+  BatchLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'batch:DescribeJobs'
+              - 'batch:SubmitJob'
+              - 'batch:ListJobs'
+
+Outputs:
+  BatchLambdaOutput:
+    Description: Arn of lambda for adding jobs to queue
+    Value: !Ref BatchLambda
+    Export:
+      Name: !Sub "${AWS::StackName}-BatchLambdaID"

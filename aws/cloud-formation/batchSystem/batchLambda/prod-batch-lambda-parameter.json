@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "BucketName",
+    "ParameterValue": "dev-batch-lambda-deployment-bucket"
+  },
+  {
+    "ParameterKey": "S3ObjectKey",
+    "ParameterValue": "batch-lambda-deployment"
+  }
+]
