@@ -371,7 +371,7 @@ trait LaneOperations {
           if (uptoDateLastModification.nonEmpty && upToDate.laneCode != uptoDateLastModification.minBy(_.historyCreatedDate.getMillis).laneCode)
             Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification.minBy(_.historyCreatedDate.getMillis))), LaneChangeType.LaneCodeTransfer, roadLink))
 
-          else if (historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) == 2)
+          else if (historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) >= 2)
             Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink))
 
           else if (upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure)
@@ -422,7 +422,7 @@ trait LaneOperations {
             val newIdRelation = historyLanesWithRoadAddress.find(_.newId == laneAsPersistedLane.id)
 
             newIdRelation match {
-              case Some(relation) if historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) == 2 =>
+              case Some(relation) if historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) >= 2 =>
                 Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Divided, roadLink))
 
               case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
@@ -943,15 +943,19 @@ trait LaneOperations {
           create(Seq(lane), linkIds, sideCode, username).head
         }
 
-        def isWithinRangeToExpire(newLanes: Seq[NewLane], oldLane: PersistedLane): Boolean = {
-          newLanes.filter(newLane => newLane.startMeasure == oldLane.startMeasure || newLane.endMeasure == oldLane.endMeasure).size == 2
+        val createdNewLanes = dao.fetchLanesByIds(newLanesIDs.toSet)
+
+        def newLanesWithinOldLaneRange(newLanes: Seq[PersistedLane], oldLane: PersistedLane) = {
+          newLanes.filter(newLane => newLane.startMeasure >= oldLane.startMeasure && newLane.endMeasure <= oldLane.endMeasure)
         }
 
-        newLanesIDs.foreach { newLane =>
-          moveToHistory(oldLanesByCode.head.id, Some(newLane), true, false, username)
-        }
-        oldLanes.foreach {oldLane =>
-          if (isWithinRangeToExpire(lanesToUpdate, oldLane)) {
+        //Expire only those old lanes that have been replaced by new lane pieces.
+        oldLanes.foreach { oldLane =>
+          val newLanesWithinRange = newLanesWithinOldLaneRange(createdNewLanes, oldLane)
+          newLanesWithinRange.foreach { newLane =>
+            moveToHistory(oldLane.id, Some(newLane.id), true, false, username)
+          }
+          if (!newLanesWithinRange.isEmpty) {
             dao.deleteEntryLane(oldLane.id)
           }
         }
