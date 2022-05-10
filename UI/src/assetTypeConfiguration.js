@@ -1012,7 +1012,7 @@
         },
         isSeparable: false,
         allowMapViewOnly: true,
-        allowComplementaryLinks: true,
+        allowComplementaryLinks: false,
         allowWalkingCyclingLinks: true,
         isVerifiable: false,
         showValidationErrorLabel: true,
