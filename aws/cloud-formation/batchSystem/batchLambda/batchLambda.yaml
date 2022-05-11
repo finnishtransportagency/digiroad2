@@ -8,6 +8,12 @@ Parameters:
     Type: String
   AccountName:
     Description: Name of AWS account dev or prod
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
 
 Resources:
   BatchLambda:
@@ -19,8 +25,12 @@ Resources:
         Tags:
           - Key: Name
             Value: !Join [ '-', [ !Ref AccountName, 'batchLambda' ] ]
-              - Key: Environment
-                Value: !Ref AccountName
+          - Key: Environment
+            Value: !Ref AccountName
+          - Key: Owner
+            Value: !Ref Owner
+          - Key: Project
+            Value: !Ref Project
     FunctionName: "Batch-Add-Jobs-To-Queue"
     Handler: AddJobToQueue.handler
           Role: !GetAtt BatchLambdaRole.Arn
@@ -46,8 +56,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref AccountName, 'batchLambdaRole' ] ]
-            - Key: Environment
-              Value: !Ref AccountName
+        - Key: Environment
+          Value: !Ref AccountName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
 Outputs:
   BatchLambdaOutput:

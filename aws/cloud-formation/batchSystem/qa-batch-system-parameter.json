@@ -30,5 +30,13 @@
   {
     "ParameterKey": "Subnet2",
     "ParameterValue": "DigiroadTest-Subnet2-Id"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
   }
 ]

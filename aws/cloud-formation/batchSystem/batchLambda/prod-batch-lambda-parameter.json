@@ -10,5 +10,13 @@
   {
     "ParameterKey": "AccountName",
     "ParameterValue": "Prod"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
   }
 ]

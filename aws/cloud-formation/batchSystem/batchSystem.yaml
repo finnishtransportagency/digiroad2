@@ -25,6 +25,12 @@ Parameters:
   Subnet2:
     Type: String
     Description: Subnet2 Id for ImportValue
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
 
 Resources:
   JobQueueAdHoc:
@@ -41,6 +47,10 @@ Resources:
           Value: !Join [ '-', [ !Ref EnvironmentName, 'JobQueueAdhoc' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   JobQueue:
     Type: AWS::Batch::JobQueue
@@ -56,7 +66,10 @@ Resources:
           Value: !Join [ '-', [ !Ref EnvironmentName, 'JobQueue' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
-
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
   ComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
@@ -79,6 +92,10 @@ Resources:
           Value: !Join [ '-', [ !Ref EnvironmentName, 'BatchComputeEnvironment' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -91,6 +108,10 @@ Resources:
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchSecurityGroup' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchTaskRole:
     Type: AWS::IAM::Role
@@ -128,6 +149,10 @@ Resources:
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchTaskRole' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchServiceRole:
     Type: AWS::IAM::Role
@@ -146,6 +171,10 @@ Resources:
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchServiceRole' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchSNSTopic:
     Type: AWS::SNS::Topic
@@ -159,8 +188,12 @@ Resources:
       Tags:
           - Key: Name
             Value: !Join [ '-', [ !Ref EnvironmentName, 'batchFailTopic' ] ]
-              - Key: Environment
-                Value: !Ref EnvironmentName
+          - Key: Environment
+            Value: !Ref EnvironmentName
+          - Key: Owner
+            Value: !Ref Owner
+          - Key: Project
+            Value: !Ref Project
 
   BatchEventRule:
     Type: AWS::Events::Rule
@@ -184,8 +217,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchFailEventRule' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   #Batch Events
   RunAnnualBatch:
@@ -205,8 +242,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchAnnualEventRule' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   RunMonthlyBatch:
     Type: AWS::Events::Rule
@@ -225,8 +266,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchMonthlyEventRule' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   RunWeeklyBatch:
     Type: AWS::Events::Rule
@@ -245,8 +290,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyEventRule' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   RunDailyBatch:
     Type: AWS::Events::Rule
@@ -265,8 +314,32 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchDailyEventRule' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+#  Need special Event Rule for this batch because batch must be started at specific time
+  RunRefreshCacheBatch:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'batchRefreshCacheEventRule' ] ]
+      Description: "Run refresh_road_link_cache batch on Friday 16:00"
+      ScheduleExpression: "cron(0 0 14 ? * FRI *)"
+      State: "ENABLED"
+      Targets:
+        - Arn:
+            - !ImportValue
+              !Sub: '${BatchLambdaStackName}-BatchLambdaID'
+          Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"daily\" }' ] ]
+          Id: !Join [ '-' [ !Ref EnvironmentName, 'DailyLambda' ] ]
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchRefreshCacheEventRule' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   #Lambda permissions for events
   AnnualLambdaPermission:
@@ -281,8 +354,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchAnnualLambdaPermission' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   MonthlyLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -296,8 +373,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchMonthlyLambdaPermission' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   WeeklyLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -311,8 +392,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyLambdaPermission' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   DailyLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -326,8 +411,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyLambdaPermission' ] ]
-            - Key: Environment
-              Value: !Ref EnvironmentName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
 Outputs:
   BatchTaskRoleARN:
