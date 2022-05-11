@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "DevBucketName",
+    "ParameterValue": "dev-batch-lambda-deployment-bucket"
+  },
+  {
+    "ParameterKey": "ProdBucketName",
+    "ParameterValue": "prod-batch-lambda-deployment-bucket"
+  },
+  {
+    "ParameterKey": "ObjectKey",
+    "ParameterValue": "deployment_package.zip"
+  },
+  {
+    "ParameterKey": "CodeCommitRepositoryName",
+    "ParameterValue": "Batch-Lambda"
+  },
+  {
+    "ParameterKey": "CodeCommitBranch",
+    "ParameterValue": "master"
+  }
+]

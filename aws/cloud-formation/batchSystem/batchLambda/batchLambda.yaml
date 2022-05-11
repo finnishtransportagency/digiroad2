@@ -6,6 +6,8 @@ Parameters:
   S3ObjectKey:
     Description: Key of lambda deployment object
     Type: String
+  AccountName:
+    Description: Name of AWS account dev or prod
 
 Resources:
   BatchLambda:
@@ -14,6 +16,11 @@ Resources:
       Code:
         S3Bucket: !ImportValue 'BatchLambda-deployment-bucket'
         S3Key: batch-lambda-deployment
+        Tags:
+          - Key: Name
+            Value: !Join [ '-', [ !Ref AccountName, 'batchLambda' ] ]
+              - Key: Environment
+                Value: !Ref AccountName
     FunctionName: "Batch-Add-Jobs-To-Queue"
     Handler: AddJobToQueue.handler
           Role: !GetAtt BatchLambdaRole.Arn
@@ -36,6 +43,11 @@ Resources:
               - 'batch:DescribeJobs'
               - 'batch:SubmitJob'
               - 'batch:ListJobs'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref AccountName, 'batchLambdaRole' ] ]
+            - Key: Environment
+              Value: !Ref AccountName
 
 Outputs:
   BatchLambdaOutput:

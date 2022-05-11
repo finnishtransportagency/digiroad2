@@ -6,6 +6,9 @@ Parameters:
   ProdBucketName:
     Description: Name of prod account S3 bucket for lambda deployment
     Type: String
+  ObjectKey:
+    Description: Key of S3 object for lambda code
+    Type: String
   CodeCommitRepositoryName:
     Description: Name of CodeCommit repo for lambda source code
     Type: String
@@ -22,7 +25,7 @@ Resources:
   BatchLambdaPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: 'batch-lambda-pipeline'
+      Name: 'dev-batch-lambda-pipeline'
       RoleArn: !GetAtt PipelineRole.Arn
       RestartExecutionOnUpdate: true
       Stages:
@@ -60,7 +63,7 @@ Resources:
   PipelineRole:
     Type: 'AWS::IAM::Role'
       Properties:
-        RoleName: 'batch-lambda-pipeline-role'
+        RoleName: 'dev-batch-lambda-pipeline-role'
         AssumeRolePolicyDocument:
           Version: 2012-10-17
           Statement:
@@ -71,7 +74,7 @@ Resources:
               Action: 'sts:AssumeRole'
         Path: /
         Policies:
-          - PolicyName: 'batch-lambda-pipeline-policy'
+          - PolicyName: 'dev-batch-lambda-pipeline-policy'
             PolicyDocument:
               Version: 2012-10-17
               Statement:
@@ -134,7 +137,7 @@ Resources:
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: 'batch-lambda-codebuild'
+      Name: 'dev-batch-lambda-codebuild'
       Description: 'CodeBuild for batch-lambda'
       ServiceRole: !Ref CodeBuildRole
       Environment:
@@ -145,20 +148,40 @@ Resources:
         EnvironmentVariables:
           - Name: DEV_BUCKET
             Value: !Ref DevBucketName
-          - Name: PROD_BUCKET
-            Value: !Ref ProdBucketName
+          - Name: OBJECT_KEY
+            Value: !Ref ObjectKey
       Artifacts:
         Name: 'batch-lambda-build-artifact'
         Type: CODEPIPELINE
       Source:
         Type: CODEPIPELINE
-        BuildSpec: 'batchLambdaBuildSpec.yml'
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 14.x
+              commands:
+                - mkdir -p ./lib
+                - npm install --prefix ./lib aws-sdk
+            build:
+              commands:
+                - cd lib
+                - zip -r9 ../deployment_package.zip .
+                - cd ..
+                - zip -g deployment_package.zip AddJobToQueue.js
+                - echo Pushing deployment_package.zip to Dev S3 bucket
+                - aws s3api put-object --bucket $DEV_BUCKET --key $OBJECT_KEY --body deployment_package.zip
+            post_build:
+              commands:
+                - echo Updating Dev account lambda code
+                - aws lambda update-function-code --function-name Batch-Add-Jobs-To-Queue --zip-file fileb://deployment_package.zip
 
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
-      RoleName: "batch-lambda-codebuild-role"
+      RoleName: "dev-batch-lambda-codebuild-role"
       AssumeRolePolicyDocument:
         Statement:
           - Effect: "Allow"
@@ -167,7 +190,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Policies:
-        - PolicyName: "batch-lambda-codebuild-policy"
+        - PolicyName: "dev-batch-lambda-codebuild-policy"
           PolicyDocument:
             Statement:
               - Effect: "Allow"

@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  DevBucketName:
+    Decription: Name of dev bucket for lambda deployment
+    Type: String
+
+  ObjectKey:
+    Description: Key of S3 object for lambda code
+    Type: String
+
+  ProdBucketName:
+    Description: Name of prod account S3 bucket for lambda deployment
+    Type: String
+
+Resources:
+  BatchLambdaPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: 'prod-batch-lambda-pipeline'
+      RoleArn: !GetAtt PipelineRole.Arn
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: Source
+          Actions:
+            Name: SourceAction
+            ActionTypeID:
+              Category: Source
+              Owner: AWS
+              Provider: S3
+              Version: 1
+            OutputArtifacts:
+              - Name: SourceOutput
+            Configuration:
+              S3Bucket: !Ref DevBucket
+              S3ObjectKey: !Ref BucketKey
+              PollForSourceChanges: 'true'
+            RunOrder: 1
+        - Name: Accept
+          Actions:
+            - Name: Approve_Lambda_zip_For_Production
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Version: 1
+                Provider: Manual
+        - Name: Build
+          Actions:
+            Name: BuildAction
+            InputArtifacts:
+              - Name: SourceOutput
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: 1
+              Provider: CodeBuild
+            OutputArtifacts:
+              - Name: Built
+            Configuration:
+              ProjectName: !Ref CodeBuild
+            RunOrder: 1
+
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: 'prod-batch-lambda-codebuild'
+      Description: 'CodeBuild for batch-lambda'
+      ServiceRole: !Ref CodeBuildRole
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: PROD_BUCKET
+            Value: !Ref ProdBucketName
+          - Name: DEV_BUCKET
+            Value: !Ref DevBucketName
+          - Name: OBJECT_KEY
+            Value: !Ref ObjectKey
+      Artifacts:
+        Name: 'batch-lambda-build-artifact'
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - echo Get object from dev bucket
+                - aws s3api get-object --bucket $DEV_BUCKET --key $OBJECT_KEY deployment_package.zip
+            post_build:
+              commands:
+                - echo Push object to prod S3 bucket
+                - aws s3api put-object --bucket $PROD_BUCKET --key $OBJECT_KEY --body deployment_package.zip --acl bucket-owner-full-control
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: "prod-batch-lambda-codebuild-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "prod-batch-lambda-codebuild-policy"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Resource:
+                  - "*"
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:PutObject"

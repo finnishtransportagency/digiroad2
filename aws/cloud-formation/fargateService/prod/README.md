@@ -107,6 +107,13 @@ aws cloudformation create-stack \
 --parameters file://aws/cloud-formation/batchSystem/batchLambda/prod-batch-lambda-parameter.json
 ```
 
+### Luo JobDefinition tuotantoeräajoja varten
+```
+aws batch register-job-definition \
+--profile vaylaapp \
+--region eu-west-1 \
+--cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
+```
 ### Luo eräajoympäristö
 ```
 aws cloudformation create-stack \
@@ -159,4 +166,12 @@ aws cloudformation update-stack \
 --stack-name [esim. digiroad-ALB-ECS] \
 --template-body file://aws/cloud-formation/fargateService/alb_ecs.yaml \
 --parameters file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
+```
+
+### JobDefinition päivitys
+```
+aws batch register-job-definition \
+--profile vaylaapp \
+--region eu-west-1 \
+--cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
 ```

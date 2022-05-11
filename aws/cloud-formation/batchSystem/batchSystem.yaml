@@ -36,6 +36,11 @@ Resources:
         - Order: 1
           ComputeEnvironment:
             Ref: ComputeEnvironment
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'JobQueueAdhoc' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   JobQueue:
     Type: AWS::Batch::JobQueue
@@ -46,6 +51,11 @@ Resources:
         - Order: 1
           ComputeEnvironment:
             Ref: ComputeEnvironment
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'JobQueue' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   ComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
@@ -64,6 +74,11 @@ Resources:
           - !Ref BatchSecurityGroup
       ServiceRole:
         Ref: BatchServiceRole
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'BatchComputeEnvironment' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   BatchSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -71,6 +86,11 @@ Resources:
       GroupDescription: Allow inbound to port 80 and 5432, Outbound to everything
       GroupName: !Join [ '-', [ !Ref EnvironmentName, 'batchSecurityGroup']]
       VpcId: !Ref VpcIDOfSystem
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchSecurityGroup' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   BatchTaskRole:
     Type: AWS::IAM::Role
@@ -103,6 +123,11 @@ Resources:
                   - 'ssm:GetParameters'
                   - 'ssm:GetParametersByPath'
                 Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchTaskRole' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   BatchServiceRole:
     Type: AWS::IAM::Role
@@ -116,6 +141,11 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchServiceRole' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   BatchSNSTopic:
     Type: AWS::SNS::Topic
@@ -125,7 +155,12 @@ Resources:
       Subscription: 
         - Endpoint: "kehitys@digiroad.fi"
           Protocol: "email"
-      TopicName: !Ref SNSTopicName
+      TopicName: !Join [ '-', [ !Ref EnvironmentName, !Ref SNSTopicName ] ]
+      Tags:
+          - Key: Name
+            Value: !Join [ '-', [ !Ref EnvironmentName, 'batchFailTopic' ] ]
+              - Key: Environment
+                Value: !Ref EnvironmentName
 
   BatchEventRule:
     Type: AWS::Events::Rule
@@ -135,7 +170,7 @@ Resources:
       Name: "BatchEventNotify"
       State: "ENABLED"
       Targets:
-        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref SNSTopicName]]
+        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref EnvironmentName, '-', !Ref SNSTopicName]]
           Id: "123321"
           InputTransformer:
             InputTemplate: |
@@ -146,6 +181,11 @@ Resources:
               name: "$.detail.jobName"
               queue: "$.detail.jobQueue"
               reason: "$.detail.statusReason"
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchFailEventRule' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   #Batch Events
   RunAnnualBatch:
@@ -162,6 +202,11 @@ Resources:
               !Sub: '${BatchLambdaStackName}-BatchLambdaID'
           Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"annual\" }' ]]
           Id: !Join [ '-' [!Ref EnvironmentName, 'AnnualLambda']]
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchAnnualEventRule' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   RunMonthlyBatch:
     Type: AWS::Events::Rule
@@ -177,6 +222,11 @@ Resources:
               !Sub: '${BatchLambdaStackName}-BatchLambdaID'
           Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"monthly\" }' ]]
           Id: !Join [ '-' [!Ref EnvironmentName, 'MonthlyLambda']]
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchMonthlyEventRule' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   RunWeeklyBatch:
     Type: AWS::Events::Rule
@@ -192,11 +242,16 @@ Resources:
               !Sub: '${BatchLambdaStackName}-BatchLambdaID'
           Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"weekly\" }' ]]
           Id: !Join [ '-' [!Ref EnvironmentName, 'WeeklyLambda']]
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyEventRule' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   RunDailyBatch:
     Type: AWS::Events::Rule
     Properties:
-      Name: !Join [ '-', [ !Ref EnvironmentName, 'BatchDailyEventRule' ]]
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'batchDailyEventRule' ]]
       Description: "Run daily batches"
       ScheduleExpression: "cron(30 22 ? * 1-5 *)"
       State: "ENABLED"
@@ -207,6 +262,11 @@ Resources:
               !Sub: '${BatchLambdaStackName}-BatchLambdaID'
           Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"daily\" }' ]]
           Id: !Join [ '-' [!Ref EnvironmentName, 'DailyLambda']]
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchDailyEventRule' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   #Lambda permissions for events
   AnnualLambdaPermission:
@@ -218,6 +278,11 @@ Resources:
           !Sub: '${BatchLambdaStackName}-BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunAnnualBatch.Arn
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchAnnualLambdaPermission' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   MonthlyLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -228,6 +293,11 @@ Resources:
           !Sub: '${BatchLambdaStackName}-BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunMonthlyBatch.Arn
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchMonthlyLambdaPermission' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   WeeklyLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -238,6 +308,11 @@ Resources:
           !Sub: '${BatchLambdaStackName}-BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunWeeklyBatch.Arn
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyLambdaPermission' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
   DailyLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -248,6 +323,11 @@ Resources:
           !Sub: '${BatchLambdaStackName}-BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunDailyBatch.Arn
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyLambdaPermission' ] ]
+            - Key: Environment
+              Value: !Ref EnvironmentName
 
 Outputs:
   BatchTaskRoleARN:
