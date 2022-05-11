@@ -38,5 +38,9 @@
   {
     "ParameterKey": "Project",
     "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
   }
 ]

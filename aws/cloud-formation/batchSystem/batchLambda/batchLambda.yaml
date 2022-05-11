@@ -14,6 +14,9 @@ Parameters:
   Project:
     Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
     Type: String
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
 
 Resources:
   BatchLambda:
@@ -24,7 +27,7 @@ Resources:
         S3Key: batch-lambda-deployment
         Tags:
           - Key: Name
-            Value: !Join [ '-', [ !Ref AccountName, 'batchLambda' ] ]
+            Value: !Join [ '-', [ !Ref AccountName, !Ref ApplicationName, 'batchLambda' ] ]
           - Key: Environment
             Value: !Ref AccountName
           - Key: Owner
@@ -55,7 +58,7 @@ Resources:
               - 'batch:ListJobs'
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref AccountName, 'batchLambdaRole' ] ]
+          Value: !Join [ '-', [ !Ref AccountName, !Ref ApplicationName,  'batchLambdaRole' ] ]
         - Key: Environment
           Value: !Ref AccountName
         - Key: Owner

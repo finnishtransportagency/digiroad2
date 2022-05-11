@@ -31,6 +31,9 @@ Parameters:
   Project:
     Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
     Type: String
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
 
 Resources:
   JobQueueAdHoc:
@@ -44,7 +47,7 @@ Resources:
             Ref: ComputeEnvironment
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'JobQueueAdhoc' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'JobQueueAdhoc' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -63,7 +66,7 @@ Resources:
             Ref: ComputeEnvironment
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'JobQueue' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'JobQueue' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -89,7 +92,7 @@ Resources:
         Ref: BatchServiceRole
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'BatchComputeEnvironment' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'BatchComputeEnvironment' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -105,7 +108,7 @@ Resources:
       VpcId: !Ref VpcIDOfSystem
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchSecurityGroup' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchSecurityGroup' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -146,7 +149,7 @@ Resources:
                 Resource: '*'
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchTaskRole' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchTaskRole' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -168,7 +171,7 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchServiceRole' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchServiceRole' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -187,7 +190,7 @@ Resources:
       TopicName: !Join [ '-', [ !Ref EnvironmentName, !Ref SNSTopicName ] ]
       Tags:
           - Key: Name
-            Value: !Join [ '-', [ !Ref EnvironmentName, 'batchFailTopic' ] ]
+            Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchFailTopic' ] ]
           - Key: Environment
             Value: !Ref EnvironmentName
           - Key: Owner
@@ -216,7 +219,7 @@ Resources:
               reason: "$.detail.statusReason"
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchFailEventRule' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchFailEventRule' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -241,7 +244,7 @@ Resources:
           Id: !Join [ '-' [!Ref EnvironmentName, 'AnnualLambda']]
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchAnnualEventRule' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchAnnualEventRule' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -265,7 +268,7 @@ Resources:
           Id: !Join [ '-' [!Ref EnvironmentName, 'MonthlyLambda']]
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchMonthlyEventRule' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchMonthlyEventRule' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -289,7 +292,7 @@ Resources:
           Id: !Join [ '-' [!Ref EnvironmentName, 'WeeklyLambda']]
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyEventRule' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchWeeklyEventRule' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -313,7 +316,7 @@ Resources:
           Id: !Join [ '-' [!Ref EnvironmentName, 'DailyLambda']]
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchDailyEventRule' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchDailyEventRule' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
 
@@ -333,7 +336,7 @@ Resources:
           Id: !Join [ '-' [ !Ref EnvironmentName, 'DailyLambda' ] ]
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchRefreshCacheEventRule' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchRefreshCacheEventRule' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -353,7 +356,7 @@ Resources:
       SourceArn: !GetAtt RunAnnualBatch.Arn
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchAnnualLambdaPermission' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchAnnualLambdaPermission' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -372,7 +375,7 @@ Resources:
       SourceArn: !GetAtt RunMonthlyBatch.Arn
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchMonthlyLambdaPermission' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchMonthlyLambdaPermission' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -391,7 +394,7 @@ Resources:
       SourceArn: !GetAtt RunWeeklyBatch.Arn
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyLambdaPermission' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchWeeklyLambdaPermission' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
@@ -410,7 +413,7 @@ Resources:
       SourceArn: !GetAtt RunDailyBatch.Arn
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, 'batchWeeklyLambdaPermission' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchWeeklyLambdaPermission' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
