@@ -8,7 +8,7 @@
     "ParameterValue": "batch-lambda-deployment"
   },
   {
-    "ParameterKey": "AccountName",
+    "ParameterKey": "EnvironmentName",
     "ParameterValue": "DEV"
   },
   {

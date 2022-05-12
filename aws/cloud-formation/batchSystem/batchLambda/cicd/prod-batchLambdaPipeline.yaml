@@ -4,7 +4,7 @@ Parameters:
     Decription: Name of dev bucket for lambda deployment
     Type: String
 
-  ObjectKey:
+  LambdaCodeS3Key:
     Description: Key of S3 object for lambda code
     Type: String
 
@@ -32,7 +32,7 @@ Resources:
               - Name: SourceOutput
             Configuration:
               S3Bucket: !Ref DevBucket
-              S3ObjectKey: !Ref BucketKey
+              S3ObjectKey: !Ref LambdaCodeS3Key
               PollForSourceChanges: 'true'
             RunOrder: 1
         - Name: Accept
@@ -76,7 +76,7 @@ Resources:
           - Name: DEV_BUCKET
             Value: !Ref DevBucketName
           - Name: OBJECT_KEY
-            Value: !Ref ObjectKey
+            Value: !Ref LambdaCodeS3Key
       Artifacts:
         Name: 'batch-lambda-build-artifact'
         Type: CODEPIPELINE

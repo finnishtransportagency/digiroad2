@@ -6,7 +6,7 @@ Parameters:
   ProdBucketName:
     Description: Name of prod account S3 bucket for lambda deployment
     Type: String
-  ObjectKey:
+  LambdaCodeS3Key:
     Description: Key of S3 object for lambda code
     Type: String
   CodeCommitRepositoryName:
@@ -149,7 +149,7 @@ Resources:
           - Name: DEV_BUCKET
             Value: !Ref DevBucketName
           - Name: OBJECT_KEY
-            Value: !Ref ObjectKey
+            Value: !Ref LambdaCodeS3Key
       Artifacts:
         Name: 'batch-lambda-build-artifact'
         Type: CODEPIPELINE

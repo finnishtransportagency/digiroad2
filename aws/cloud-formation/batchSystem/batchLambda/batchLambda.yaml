@@ -6,7 +6,7 @@ Parameters:
   S3ObjectKey:
     Description: Key of lambda deployment object
     Type: String
-  AccountName:
+  EnvironmentName:
     Description: Name of AWS account dev or prod
   Owner:
     Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
@@ -27,9 +27,9 @@ Resources:
         S3Key: batch-lambda-deployment
         Tags:
           - Key: Name
-            Value: !Join [ '-', [ !Ref AccountName, !Ref ApplicationName, 'batchLambda' ] ]
+            Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchLambda' ] ]
           - Key: Environment
-            Value: !Ref AccountName
+            Value: !Ref EnvironmentName
           - Key: Owner
             Value: !Ref Owner
           - Key: Project
@@ -58,9 +58,9 @@ Resources:
               - 'batch:ListJobs'
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref AccountName, !Ref ApplicationName,  'batchLambdaRole' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName,  'batchLambdaRole' ] ]
         - Key: Environment
-          Value: !Ref AccountName
+          Value: !Ref EnvironmentName
         - Key: Owner
           Value: !Ref Owner
         - Key: Project

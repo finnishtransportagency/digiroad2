@@ -8,7 +8,7 @@
     "ParameterValue": "prod-batch-lambda-deployment-bucket"
   },
   {
-    "ParameterKey": "ObjectKey",
+    "ParameterKey": "LambdaCodeS3Key",
     "ParameterValue": "deployment_package.zip"
   }
 ]
