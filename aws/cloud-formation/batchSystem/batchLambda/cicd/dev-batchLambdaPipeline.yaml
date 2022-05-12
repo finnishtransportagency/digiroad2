@@ -22,73 +22,87 @@ Resources:
     Properties:
       BucketName: !Ref DevBucketName
 
+  LambdaArtifactStore:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'batch-lambda-build-artifact-store'
+
   BatchLambdaPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       Name: 'dev-batch-lambda-pipeline'
       RoleArn: !GetAtt PipelineRole.Arn
-      RestartExecutionOnUpdate: true
       Stages:
-        - Name: Source
+        -
+          Name: Source
           Actions:
-            Name: SourceAction
-            ActionTypeID:
-              Category: Source
-              Owner: AWS
-              Provider: CodeCommit
-              Version: 1
-            OutputArtifacts:
-              - Name: SourceOutput
-            Configuration:
-              RepositoryName: !Ref CodeCommitRepositoryName
-              BranchName: !Ref CodeCommitBranch
-              PollForSourceChanges: false
-            RunOrder: 1
-        - Name: Build
+            -
+              Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              OutputArtifacts:
+                -
+                  Name: SourceOutput
+              Configuration:
+                RepositoryName: !Ref CodeCommitRepositoryName
+                BranchName: !Ref CodeCommitBranch
+                PollForSourceChanges: false
+              RunOrder: 1
+        -
+          Name: Build
           Actions:
-            Name: BuildAction
-            InputArtifacts:
-              - Name: SourceOutput
-            ActionTypeId:
-              Category: Build
-              Owner: AWS
-              Version: 1
-              Provider: CodeBuild
-            OutputArtifacts:
-              - Name: Built
-            Configuration:
-              ProjectName: !Ref CodeBuild
-            RunOrder: 1
+            -
+              Name: BuildAction
+              InputArtifacts:
+                -
+                  Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts:
+                -
+                  Name: Built
+              Configuration:
+                ProjectName: !Ref CodeBuild
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref LambdaArtifactStore
 
   PipelineRole:
     Type: 'AWS::IAM::Role'
-      Properties:
-        RoleName: 'dev-batch-lambda-pipeline-role'
-        AssumeRolePolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - codepipeline.amazonaws.com
-              Action: 'sts:AssumeRole'
-        Path: /
-        Policies:
-          - PolicyName: 'dev-batch-lambda-pipeline-policy'
-            PolicyDocument:
-              Version: 2012-10-17
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - 'codebuild:BatchGetBuilds'
-                    - 'codebuild:StartBuild'
-                  Resource: '*'
-                - Effect: Allow
-                  Action:
-                    - 'lambda:*'
-                    - 'codebuild:*'
-                    - 's3:*'
-                  Resource: '*'
+    Properties:
+      RoleName: 'dev-batch-lambda-pipeline-role'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: 'dev-batch-lambda-pipeline-policy'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'codebuild:BatchGetBuilds'
+                  - 'codebuild:StartBuild'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'lambda:*'
+                  - 'codebuild:*'
+                  - 's3:*'
+                Resource: '*'
 
   StartPipeLineEventRole:
     Type: AWS::IAM::Role
@@ -109,7 +123,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: codepipeline:StartPipelineExecution
-                Resource: !Ref BatchLambdaPipeline
+                Resource: !Sub arn:aws:codepipeline:${AWS::Region}:475079312496:${BatchLambdaPipeline}
 
   StartPipelineRule:
     Type: AWS::Events::Rule
@@ -130,7 +144,7 @@ Resources:
           referenceName:
             - master
       Targets:
-        - Arn: !GetAtt BatchLambdaPipeline.Arn
+        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:475079312496:${BatchLambdaPipeline}
           RoleArn: !GetAtt StartPipeLineEventRole.Arn
           Id: batch-lambda-pipeline
 
