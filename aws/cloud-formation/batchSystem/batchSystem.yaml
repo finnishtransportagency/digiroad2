@@ -86,7 +86,7 @@ Resources:
           - Fn::ImportValue:
               !Ref Subnet2
         SecurityGroupIds:
-          - 'sg-011055fc8eac78b1d'
+          - !Ref BatchSecurityGroup
       ServiceRole:
         Ref: BatchServiceRole
       Tags: {"Name" : "Digiroad2-BatchComputeEnvironment", "Environment" : !Ref EnvironmentName, "Owner": !Ref Owner, "Project": !Ref Project}

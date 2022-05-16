@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   DevBucketName:
-    Decription: Name of dev bucket for lambda deployment
+    Description: Name of dev bucket for lambda deployment
     Type: String
 
   LambdaCodeS3Key:
@@ -13,51 +13,88 @@ Parameters:
     Type: String
 
 Resources:
+  LambdaArtifactStore:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'prod-batch-lambda-build-artifact-store'
+
   BatchLambdaPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       Name: 'prod-batch-lambda-pipeline'
       RoleArn: !GetAtt PipelineRole.Arn
-      RestartExecutionOnUpdate: true
       Stages:
-        - Name: Source
+        -
+          Name: Source
           Actions:
-            Name: SourceAction
-            ActionTypeID:
-              Category: Source
-              Owner: AWS
-              Provider: S3
-              Version: 1
-            OutputArtifacts:
-              - Name: SourceOutput
-            Configuration:
-              S3Bucket: !Ref DevBucket
-              S3ObjectKey: !Ref LambdaCodeS3Key
-              PollForSourceChanges: 'true'
-            RunOrder: 1
-        - Name: Accept
+            -
+              Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: 1
+              OutputArtifacts:
+                -
+                  Name: SourceOutput
+              Configuration:
+                S3Bucket: !Ref DevBucketName
+                S3ObjectKey: !Ref LambdaCodeS3Key
+                PollForSourceChanges: 'true'
+              RunOrder: 1
+        -
+          Name: Accept
           Actions:
-            - Name: Approve_Lambda_zip_For_Production
+            -
+              Name: Approve_Lambda_zip_For_Production
               ActionTypeId:
                 Category: Approval
                 Owner: AWS
                 Version: 1
                 Provider: Manual
-        - Name: Build
+        -
+          Name: Build
           Actions:
-            Name: BuildAction
-            InputArtifacts:
-              - Name: SourceOutput
-            ActionTypeId:
-              Category: Build
-              Owner: AWS
-              Version: 1
-              Provider: CodeBuild
-            OutputArtifacts:
-              - Name: Built
-            Configuration:
-              ProjectName: !Ref CodeBuild
-            RunOrder: 1
+            -
+              Name: BuildAction
+              InputArtifacts:
+                - Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: Built
+              Configuration:
+                ProjectName: !Ref CodeBuild
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref LambdaArtifactStore
+
+  PipelineRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'prod-batch-lambda-pipeline-role'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: 'prod-batch-lambda-pipeline-policy'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                Resource: '*'
 
   CodeBuild:
     Type: AWS::CodeBuild::Project
