@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "BucketName",
+    "ParameterValue": "prod-batch-lambda-deployment-bucket"
+  },
+  {
+    "ParameterKey": "DevAccountID",
+    "ParameterValue": "475079312496"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  }
+]
