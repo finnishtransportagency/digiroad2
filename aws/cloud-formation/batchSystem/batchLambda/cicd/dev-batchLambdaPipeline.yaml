@@ -101,6 +101,7 @@ Resources:
                 Action:
                   - 'lambda:*'
                   - 'codebuild:*'
+                  - 'codecommit:*'
                   - 's3:*'
                 Resource: '*'
 
@@ -210,23 +211,7 @@ Resources:
               - Effect: "Allow"
                 Resource: "*"
                 Action:
-                  - "ecr:GetAuthorizationToken"
-                  - "ecr:BatchCheckLayerAvailability"
-                  - "ecr:GetDownloadUrlForLayer"
-                  - "ecr:GetRepositoryPolicy"
-                  - "ecr:DescribeRepositories"
-                  - "ecr:ListImages"
-                  - "ecr:DescribeImages"
-                  - "ecr:BatchGetImage"
-                  - "ecr:GetLifecyclePolicy"
-                  - "ecr:GetLifecyclePolicyPreview"
-                  - "ecr:ListTagsForResource"
-                  - "ecr:DescribeImageScanFindings"
-                  - "ecr:InitiateLayerUpload"
-                  - "ecr:UploadLayerPart"
-                  - "ecr:CompleteLayerUpload"
-                  - "ecr:PutImage"
-                  - "ssm:GetParameters"
+                  - "lambda:UpdateFunctionCode"
               - Effect: "Allow"
                 Resource: "*"
                 Action:
