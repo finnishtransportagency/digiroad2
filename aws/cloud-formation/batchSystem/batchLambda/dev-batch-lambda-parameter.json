@@ -5,7 +5,7 @@
   },
   {
     "ParameterKey": "S3ObjectKey",
-    "ParameterValue": "batch-lambda-deployment"
+    "ParameterValue": "deployment_package.zip"
   },
   {
     "ParameterKey": "EnvironmentName",

@@ -34,50 +34,49 @@ Parameters:
   ApplicationName:
     Description: Name of the application (no whitespace or special characters)
     Type: String
+  LambdaInputAnnual:
+    Description: Input for adding annual jobs to queue
+    Type: String
+  LambdaInputMonthly:
+    Description: Input for adding monthly jobs to queue
+    Type: String
+  LambdaInputWeekly:
+    Description: Input for adding annual jobs to queue
+    Type: String
+  LambdaInputDaily:
+    Description: Input for adding annual jobs to queue
+    Type: String
+  LambdaInputRefreshCache:
+    Description: Input for adding refresh_roadlinks job to queue
+    Type: String
 
 Resources:
   JobQueueAdHoc:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: !Join [ '-', [ !Ref EnvironmentName, 'adhoc']]
+      JobQueueName: !Join [ '-', [ !Ref EnvironmentName, 'batch-adhoc']]
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
             Ref: ComputeEnvironment
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'JobQueueAdhoc' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+      Tags: {"Name" : "Digiroad2-JobQueue-Adhoc", "Environment" : !Ref EnvironmentName, "Owner": !Ref Owner, "Project": !Ref Project}
 
   JobQueue:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: !Join [ '-', [ !Ref EnvironmentName, 'jobQueue']]
+      JobQueueName: !Join [ '-', [ !Ref EnvironmentName, 'batch-jobQueue']]
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
             Ref: ComputeEnvironment
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'JobQueue' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+      Tags: {"Name" : "Digiroad2-JobQueue", "Environment" : !Ref EnvironmentName, "Owner": !Ref Owner, "Project": !Ref Project}
   ComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       Type: MANAGED
-      ComputeEnvironmentName: !Join [ '-', [ !Ref EnvironmentName, 'BatchCompute']]
+      ComputeEnvironmentName: !Join [ '-', [ !Ref EnvironmentName, 'BatchComputeEnvironment']]
       ComputeResources:
         Type: FARGATE
         MaxvCpus: 32
@@ -87,24 +86,44 @@ Resources:
           - Fn::ImportValue:
               !Ref Subnet2
         SecurityGroupIds:
-          - !Ref BatchSecurityGroup
+          - 'sg-011055fc8eac78b1d'
       ServiceRole:
         Ref: BatchServiceRole
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'BatchComputeEnvironment' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+      Tags: {"Name" : "Digiroad2-BatchComputeEnvironment", "Environment" : !Ref EnvironmentName, "Owner": !Ref Owner, "Project": !Ref Project}
 
   BatchSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow inbound to port 80 and 5432, Outbound to everything
-      GroupName: !Join [ '-', [ !Ref EnvironmentName, 'batchSecurityGroup']]
+      GroupDescription: "Allow inbound to port 80, 443 and 5432, Outbound to everything"
+      GroupName: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName,'batchSecurityGroup']]
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIpv6: ::/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
       VpcId: !Ref VpcIDOfSystem
       Tags:
         - Key: Name
@@ -127,7 +146,7 @@ Resources:
             Action: ['sts:AssumeRole']
       Path: /
       Policies:
-        - PolicyName: !Join [ '-', [ !Ref EnvironmentName, 'AmazonBatchECSTaskExecutionRolePolicy']]
+        - PolicyName: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName,'AmazonBatchECSTaskExecutionRolePolicy']]
           PolicyDocument:
             Statement:
               - Effect: Allow
@@ -189,21 +208,21 @@ Resources:
           Protocol: "email"
       TopicName: !Join [ '-', [ !Ref EnvironmentName, !Ref SNSTopicName ] ]
       Tags:
-          - Key: Name
-            Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchFailTopic' ] ]
-          - Key: Environment
-            Value: !Ref EnvironmentName
-          - Key: Owner
-            Value: !Ref Owner
-          - Key: Project
-            Value: !Ref Project
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchFailTopic' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchEventRule:
     Type: AWS::Events::Rule
     Properties: 
       Description: "Send SNS email for failed batch jobs"
       EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
-      Name: "BatchEventNotify"
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'batch-event-notify' ]]
       State: "ENABLED"
       Targets:
         - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref EnvironmentName, '-', !Ref SNSTopicName]]
@@ -217,15 +236,6 @@ Resources:
               name: "$.detail.jobName"
               queue: "$.detail.jobQueue"
               reason: "$.detail.statusReason"
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchFailEventRule' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
 
   #Batch Events
   RunAnnualBatch:
@@ -237,20 +247,9 @@ Resources:
       State: "ENABLED"
       Targets:
         -
-          Arn:
-            - !ImportValue
-              !Sub: '${BatchLambdaStackName}-BatchLambdaID'
-          Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"annual\" }' ]]
-          Id: !Join [ '-' [!Ref EnvironmentName, 'AnnualLambda']]
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchAnnualEventRule' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputAnnual
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'AnnualLambda']]
 
   RunMonthlyBatch:
     Type: AWS::Events::Rule
@@ -261,20 +260,9 @@ Resources:
       State: "ENABLED"
       Targets:
         -
-          Arn:
-            - !ImportValue
-              !Sub: '${BatchLambdaStackName}-BatchLambdaID'
-          Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"monthly\" }' ]]
-          Id: !Join [ '-' [!Ref EnvironmentName, 'MonthlyLambda']]
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchMonthlyEventRule' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputMonthly
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'MonthlyLambda']]
 
   RunWeeklyBatch:
     Type: AWS::Events::Rule
@@ -285,20 +273,9 @@ Resources:
       State: "ENABLED"
       Targets:
         -
-          Arn:
-            - !ImportValue
-              !Sub: '${BatchLambdaStackName}-BatchLambdaID'
-          Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"weekly\" }' ]]
-          Id: !Join [ '-' [!Ref EnvironmentName, 'WeeklyLambda']]
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchWeeklyEventRule' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputWeekly
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'WeeklyLambda']]
 
   RunDailyBatch:
     Type: AWS::Events::Rule
@@ -309,16 +286,9 @@ Resources:
       State: "ENABLED"
       Targets:
         -
-          Arn:
-            - !ImportValue
-              !Sub: '${BatchLambdaStackName}-BatchLambdaID'
-          Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"daily\" }' ]]
-          Id: !Join [ '-' [!Ref EnvironmentName, 'DailyLambda']]
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchDailyEventRule' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputDaily
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'DailyLambda']]
 
 #  Need special Event Rule for this batch because batch must be started at specific time
   RunRefreshCacheBatch:
@@ -326,100 +296,54 @@ Resources:
     Properties:
       Name: !Join [ '-', [ !Ref EnvironmentName, 'batchRefreshCacheEventRule' ] ]
       Description: "Run refresh_road_link_cache batch on Friday 16:00"
-      ScheduleExpression: "cron(0 0 14 ? * FRI *)"
+      ScheduleExpression: "cron(0 14 ? * FRI *)"
       State: "ENABLED"
       Targets:
-        - Arn:
-            - !ImportValue
-              !Sub: '${BatchLambdaStackName}-BatchLambdaID'
-          Input: !Join [ '', [ '{ \"jobName\": ', '\"', !Ref EnvironmentName, '\", ', '\"jobDefinition\": ', '\"', !Ref JobDefinitionName, '\", ', '\"type\": \"daily\" }' ] ]
-          Id: !Join [ '-' [ !Ref EnvironmentName, 'DailyLambda' ] ]
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchRefreshCacheEventRule' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
+        - Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputRefreshCache
+          Id: !Join [ '-' , [ !Ref EnvironmentName, 'DailyLambda' ] ]
 
   #Lambda permissions for events
+
+  RefreshCachePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !ImportValue 'BatchLambdaID'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt RunRefreshCacheBatch.Arn
+
   AnnualLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName:
-        - !ImportValue
-          !Sub: '${BatchLambdaStackName}-BatchLambdaID'
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunAnnualBatch.Arn
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchAnnualLambdaPermission' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
 
   MonthlyLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName:
-        - !ImportValue
-          !Sub: '${BatchLambdaStackName}-BatchLambdaID'
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunMonthlyBatch.Arn
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchMonthlyLambdaPermission' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
 
   WeeklyLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName:
-        - !ImportValue
-          !Sub: '${BatchLambdaStackName}-BatchLambdaID'
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunWeeklyBatch.Arn
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchWeeklyLambdaPermission' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
 
   DailyLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName:
-        - !ImportValue
-          !Sub: '${BatchLambdaStackName}-BatchLambdaID'
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RunDailyBatch.Arn
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchWeeklyLambdaPermission' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
 
 Outputs:
   BatchTaskRoleARN:

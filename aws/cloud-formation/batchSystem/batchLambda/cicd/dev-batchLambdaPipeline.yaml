@@ -240,3 +240,10 @@ Resources:
                   - "s3:GetObject"
                   - "s3:GetObjectVersion"
                   - "s3:PutObject"
+
+Outputs:
+  LambdaDeploymentBucketOutput:
+    Description: Deployment bucket for batch lambda dev account
+    Value: !Ref LambdaDeploymentBucket
+    Export:
+      Name: 'batch-lambda-deployment-bucket'

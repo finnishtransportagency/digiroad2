@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "BatchLambdaStackName",
-    "ParameterValue": "digiroad-batch-lambda-stack"
+    "ParameterValue": "batch-lambda-stack"
   },
   {
     "ParameterKey": "Subnet1",
@@ -42,5 +42,25 @@
   {
     "ParameterKey": "ApplicationName",
     "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "LambdaInputAnnual",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"annual\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputMonthly",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"monthly\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputWeekly",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"weekly\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputDaily",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"daily\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputRefreshCache",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"refresh_cache\" }"
   }
 ]
