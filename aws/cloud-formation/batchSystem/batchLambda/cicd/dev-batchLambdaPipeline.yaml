@@ -190,7 +190,7 @@ Resources:
             post_build:
               commands:
                 - echo Updating Dev account lambda code
-                - aws lambda update-function-code --function-name Batch-Add-Jobs-To-Queue --zip-file fileb://deployment_package.zip
+                - aws lambda update-function-code --function-name Batch-Add-Jobs-To-Queue-New --zip-file fileb://deployment_package.zip
 
   CodeBuildRole:
     Type: AWS::IAM::Role

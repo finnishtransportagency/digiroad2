@@ -35,7 +35,7 @@ Resources:
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-      FunctionName: "Dev-Batch-Add-Jobs-To-Queue"
+      FunctionName: "Batch-Add-Jobs-To-Queue-New"
       Handler: AddJobToQueue.handler
       Role: !GetAtt BatchLambdaRole.Arn
       Runtime: nodejs14.x
