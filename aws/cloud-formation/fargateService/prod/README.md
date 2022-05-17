@@ -95,7 +95,8 @@ aws cloudformation create-stack \
 ```
 aws cloudformation create-stack \
 --stack-name [esim. digiroad-batch-lambda-bucket] \
---template-body file://aws/cloud-formation/batchSystem/batchLambda/cicd/prodBatchLambdaDeploymentBucket.yaml
+--template-body file://aws/cloud-formation/batchSystem/batchLambda/cicd/prodBatchLambdaDeploymentBucket.yaml \
+--parameters file://aws/cloud-formation/batchSystem/batchLambda/cicd/prod-deployment-bucket-parameter.json
 ```
 S3-Bucketin luonnin jälkeen pyydä kehitystiimiä toimittamaan lambdan koodi .zip tiedostona sinne
 
