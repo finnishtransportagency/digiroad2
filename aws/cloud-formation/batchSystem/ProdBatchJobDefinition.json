@@ -106,7 +106,7 @@
       },
       {
         "name": "caching",
-        "value": "false"
+        "value": "true"
       },
       {
         "name": "cacheHostname",
