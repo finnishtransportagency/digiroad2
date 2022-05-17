@@ -30,10 +30,10 @@ object RefreshRoadLinkCache {
       }
 
       if (flushSuccess) {
-        val roadLinks = municipalities.flatMap(municipality => {
+        municipalities.foreach(municipality => {
           roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality)
         })
-        logger.info("Cached " + roadLinks.size + " roadlinks with overrided properties from database")
+        logger.info("Cached roadlinks with overrided properties from database")
       }
       else logger.error("Flushing cache failed")
     }
