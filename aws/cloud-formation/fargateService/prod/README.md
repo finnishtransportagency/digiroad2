@@ -89,6 +89,39 @@ aws cloudformation create-stack \
 --parameters file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
 ```
 
+##Eräajoja varten tuotantotilille luotavat resurssit
+
+### Luo S3 Bucket lambdan koodia varten
+```
+aws cloudformation create-stack \
+--stack-name [esim. digiroad-batch-lambda-bucket] \
+--template-body file://aws/cloud-formation/batchSystem/batchLambda/cicd/prodBatchLambdaDeploymentBucket.yaml
+```
+S3-Bucketin luonnin jälkeen pyydä kehitystiimiä toimittamaan lambdan koodi .zip tiedostona sinne
+
+### Luo Lambda 
+```
+aws cloudformation create-stack \
+--stack-name digiroad-batch-lambda-stack \
+--template-body file://aws/cloud-formation/batchSystem/batchLambda/batchLambda.yaml \
+--parameters file://aws/cloud-formation/batchSystem/batchLambda/prod-batch-lambda-parameter.json
+```
+
+### Luo JobDefinition tuotantoeräajoja varten
+```
+aws batch register-job-definition \
+--profile vaylaapp \
+--region eu-west-1 \
+--cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
+```
+### Luo eräajoympäristö
+```
+aws cloudformation create-stack \
+--stack-name [esim. digiroad-batch-system] \
+--template-body file://aws/cloud-formation/batchSystem/batchSystem.yaml \
+--parameters file://aws/cloud-formation/batchSystem/prod-batch-system-parameter.json
+```
+
 # Ympäristön päivitys
 
 **HUOM tarkista ennen jokaista update-stack komentoa parametritiedostojen sisältö**
@@ -133,4 +166,12 @@ aws cloudformation update-stack \
 --stack-name [esim. digiroad-ALB-ECS] \
 --template-body file://aws/cloud-formation/fargateService/alb_ecs.yaml \
 --parameters file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
+```
+
+### JobDefinition päivitys
+```
+aws batch register-job-definition \
+--profile vaylaapp \
+--region eu-west-1 \
+--cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
 ```

@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  BucketName:
+    Description: Name of S3 bucket for lambda code
+    Type: String
+  S3ObjectKey:
+    Description: Key of lambda deployment object
+    Type: String
+  EnvironmentName:
+    Description: Name of AWS account dev or prod
+    Type: String
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
+
+Resources:
+  BatchLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !ImportValue 'batch-lambda-deployment-bucket'
+        S3Key: !Ref S3ObjectKey
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchLambda' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+      FunctionName: "Batch-Add-Jobs-To-Queue-New"
+      Handler: AddJobToQueue.handler
+      Role: !GetAtt BatchLambdaRole.Arn
+      Runtime: nodejs14.x
+
+  BatchLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: "dev-batch-lambda-policy"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'batch:DescribeJobs'
+                  - 'batch:SubmitJob'
+                  - 'batch:ListJobs'
+
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName,  'batchLambdaRole' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+Outputs:
+  BatchLambdaOutput:
+    Description: Arn of lambda for adding jobs to queue
+    Value: !GetAtt BatchLambda.Arn
+    Export:
+      Name: !Sub "BatchLambdaID"

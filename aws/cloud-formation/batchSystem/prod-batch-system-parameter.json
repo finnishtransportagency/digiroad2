@@ -1,0 +1,66 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-prod-VPC"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-015f75cef3e99c5cc"
+  },
+  {
+    "ParameterKey": "SNSTopicName",
+    "ParameterValue": "BatchFailTopic"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "Prod"
+  },
+  {
+    "ParameterKey": "JobDefinitionName",
+    "ParameterValue": "ProdBatchJobDefinition"
+  },
+  {
+    "ParameterKey": "BatchLambdaStackName",
+    "ParameterValue": "batch-lambda-stack"
+  },
+  {
+    "ParameterKey": "Subnet1",
+    "ParameterValue": "Digiroad-prod-Subnet1-Id"
+  },
+  {
+    "ParameterKey": "Subnet2",
+    "ParameterValue": "Digiroad-prod-Subnet2-Id"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "LambdaInputAnnual",
+    "ParameterValue": "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"annual\"}"
+  },
+  {
+    "ParameterKey": "LambdaInputMonthly",
+    "ParameterValue": "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"monthly\"}"
+  },
+  {
+    "ParameterKey": "LambdaInputWeekly",
+    "ParameterValue": "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"weekly\"}"
+  },
+  {
+    "ParameterKey": "LambdaInputDaily",
+    "ParameterValue": "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"daily\"}"
+  },
+  {
+    "ParameterKey": "LambdaInputRefreshCache",
+    "ParameterValue": "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"refresh_cache\"}"
+  }
+]

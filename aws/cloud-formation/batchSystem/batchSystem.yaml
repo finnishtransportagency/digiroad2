@@ -1,161 +1,140 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  DEVNetworkStackName:
-    Description: Name of DEV network stack
+  NetworkStackName:
+    Description: Name of network stack
     Type: String
-  QANetworkStackName:
-    Description: Name of QA network stack
-    Type: String
-  DEVVpcIDOfSystem:
+  VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
-    Description: DEV VPC of your system
-  QAVpcIDOfSystem:
-    Type: AWS::EC2::VPC::Id
-    Description: QA VPC of your system
+    Description: VPC of your system
   SNSTopicName:
     Type: String
     Description: Name of SNS topic
-  BatchLambdaArn:
+  EnvironmentName:
     Type: String
-    Description: ARN of lambda function which adds jobs to queue
+    Description: Name of used environment
+  JobDefinitionName:
+    Type: String
+    Description: Name of Job Definition that Lambda uses to submit job
+  BatchLambdaStackName:
+    Type: String
+    Description: Stack name of batch lambda, used for ImportValue
+  Subnet1:
+    Type: String
+    Description: Subnet1 Id for ImportValue
+  Subnet2:
+    Type: String
+    Description: Subnet2 Id for ImportValue
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
+  LambdaInputAnnual:
+    Description: Input for adding annual jobs to queue
+    Type: String
+  LambdaInputMonthly:
+    Description: Input for adding monthly jobs to queue
+    Type: String
+  LambdaInputWeekly:
+    Description: Input for adding annual jobs to queue
+    Type: String
+  LambdaInputDaily:
+    Description: Input for adding annual jobs to queue
+    Type: String
+  LambdaInputRefreshCache:
+    Description: Input for adding refresh_roadlinks job to queue
+    Type: String
 
 Resources:
-  DEVJobQueueAdHoc:
+  JobQueueAdHoc:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: "DEV-adhoc"
+      JobQueueName: !Join [ '-', [ !Ref EnvironmentName, 'batch-adhoc']]
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
-            Ref: DEVComputeEnvironment
-            
-  QAJobQueueAdHoc:
-    Type: AWS::Batch::JobQueue
-    Properties:
-      JobQueueName: "QA-adhoc"
-      Priority: 1
-      ComputeEnvironmentOrder:
-        - Order: 1
-          ComputeEnvironment:
-            Ref: QAComputeEnviroment
+            Ref: ComputeEnvironment
+      Tags: {"Name" : "Digiroad2-JobQueue-Adhoc", "Environment" : !Ref EnvironmentName, "Owner": !Ref Owner, "Project": !Ref Project}
 
-  ProdJobQueueAdHoc:
+  JobQueue:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: "Prod-adhoc"
+      JobQueueName: !Join [ '-', [ !Ref EnvironmentName, 'batch-jobQueue']]
       Priority: 1
       ComputeEnvironmentOrder:
         - Order: 1
           ComputeEnvironment:
-            Ref: ProdComputeEnviroment
-
-  DEVJobQueue:
-    Type: AWS::Batch::JobQueue
-    Properties:
-      JobQueueName: "DEV-JobQueue"
-      Priority: 1
-      ComputeEnvironmentOrder:
-        - Order: 1
-          ComputeEnvironment:
-            Ref: DEVComputeEnvironment
-
-  QAJobQueue:
-    Type: AWS::Batch::JobQueue
-    Properties:
-      JobQueueName: "QA-JobQueue"
-      Priority: 1
-      ComputeEnvironmentOrder:
-        - Order: 1
-          ComputeEnvironment:
-            Ref: QAComputeEnviroment
-
-  ProdJobQueue:
-    Type: AWS::Batch::JobQueue
-    Properties:
-      JobQueueName: "Prod-JobQueue"
-      Priority: 1
-      ComputeEnvironmentOrder:
-        - Order: 1
-          ComputeEnvironment:
-            Ref: ProdComputeEnviroment
-
-  DEVComputeEnvironment:
+            Ref: ComputeEnvironment
+      Tags: {"Name" : "Digiroad2-JobQueue", "Environment" : !Ref EnvironmentName, "Owner": !Ref Owner, "Project": !Ref Project}
+  ComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       Type: MANAGED
-      ComputeEnvironmentName: "DEV-BatchCompute"
+      ComputeEnvironmentName: !Join [ '-', [ !Ref EnvironmentName, 'BatchComputeEnvironment']]
       ComputeResources:
         Type: FARGATE
         MaxvCpus: 32
         Subnets:
           - Fn::ImportValue:
-              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet1-Id' ] ]
+              !Ref Subnet1
           - Fn::ImportValue:
-              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet2-Id' ] ]
+              !Ref Subnet2
         SecurityGroupIds:
-          - !Ref DEVBatchSecurityGroup
+          - !Ref BatchSecurityGroup
       ServiceRole:
         Ref: BatchServiceRole
+      Tags: {"Name" : "Digiroad2-BatchComputeEnvironment", "Environment" : !Ref EnvironmentName, "Owner": !Ref Owner, "Project": !Ref Project}
 
-  DEVBatchSecurityGroup:
+  BatchSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
-      GroupName: DEV-BatchSecurityGroup
-      VpcId: !Ref DEVVpcIDOfSystem
+      GroupDescription: "Allow inbound to port 80, 443 and 5432, Outbound to everything"
+      GroupName: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName,'batchSecurityGroup']]
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIpv6: ::/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIpv6: ::/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcIDOfSystem
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchSecurityGroup' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
-  QAComputeEnviroment:
-    Type: AWS::Batch::ComputeEnvironment
-    Properties:
-      Type: MANAGED
-      ComputeEnvironmentName: "QA-BatchCompute"
-      ComputeResources:
-        Type: FARGATE
-        MaxvCpus: 32
-        Subnets:
-          - Fn::ImportValue:
-              !Join [ '-', [ !Ref QANetworkStackName, 'Subnet1-Id' ] ]
-          - Fn::ImportValue:
-              !Join [ '-', [ !Ref QANetworkStackName, 'Subnet2-Id' ] ]
-        SecurityGroupIds:
-          - !Ref QABatchSecurityGroup
-      ServiceRole:
-        Ref: BatchServiceRole
-
-  QABatchSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
-      GroupName: QA-BatchSecurityGroup
-      VpcId: !Ref QAVpcIDOfSystem
-
-  ProdComputeEnviroment:
-    Type: AWS::Batch::ComputeEnvironment
-    Properties:
-      Type: MANAGED
-      ComputeEnvironmentName: "Prod-BatchCompute"
-      ComputeResources:
-        Type: FARGATE
-        MaxvCpus: 32
-        Subnets:
-          - Fn::ImportValue:
-              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet1-Id' ] ]
-          - Fn::ImportValue:
-              !Join [ '-', [ !Ref DEVNetworkStackName, 'Subnet2-Id' ] ]
-        SecurityGroupIds:
-          - !Ref ProdBatchSecurityGroup
-      ServiceRole:
-        Ref: BatchServiceRole
-
-  ProdBatchSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allaw inbound to port 80 and 5432, Outbound to everything
-      GroupName: Prod-BatchSecurityGroup
-      VpcId: !Ref DEVVpcIDOfSystem
-      
   BatchTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -167,7 +146,7 @@ Resources:
             Action: ['sts:AssumeRole']
       Path: /
       Policies:
-        - PolicyName: AmazonBatchECSTaskExecutionRolePolicy
+        - PolicyName: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName,'AmazonBatchECSTaskExecutionRolePolicy']]
           PolicyDocument:
             Statement:
               - Effect: Allow
@@ -187,6 +166,15 @@ Resources:
                   - 'ssm:GetParameters'
                   - 'ssm:GetParametersByPath'
                 Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchTaskRole' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchServiceRole:
     Type: AWS::IAM::Role
@@ -200,6 +188,15 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchServiceRole' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchSNSTopic:
     Type: AWS::SNS::Topic
@@ -209,17 +206,26 @@ Resources:
       Subscription: 
         - Endpoint: "kehitys@digiroad.fi"
           Protocol: "email"
-      TopicName: !Ref SNSTopicName
+      TopicName: !Join [ '-', [ !Ref EnvironmentName, !Ref SNSTopicName ] ]
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchFailTopic' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
 
   BatchEventRule:
     Type: AWS::Events::Rule
     Properties: 
       Description: "Send SNS email for failed batch jobs"
       EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
-      Name: "BatchEventNotify"
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'batch-event-notify' ]]
       State: "ENABLED"
       Targets:
-        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref SNSTopicName]]
+        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref EnvironmentName, '-', !Ref SNSTopicName]]
           Id: "123321"
           InputTransformer:
             InputTemplate: |
@@ -231,253 +237,113 @@ Resources:
               queue: "$.detail.jobQueue"
               reason: "$.detail.statusReason"
 
-  #Prod Batch Events
-  ProdRunAnnualBatch:
+  #Batch Events
+  RunAnnualBatch:
     Type: AWS::Events::Rule
     Properties:
-      Description: "Run annual Prod batches"
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'BatchAnnualEventRule' ]]
+      Description: "Run annual batches"
       ScheduleExpression: "cron(30 22 L 12 ? *)"
       State: "ENABLED"
       Targets:
         -
-          Arn: !Ref BatchLambdaArn
-          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"annual\"}"
-          Id: "ProdAnnualLambda"
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputAnnual
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'AnnualLambda']]
 
-
-  ProdRunMonthlyBatch:
+  RunMonthlyBatch:
     Type: AWS::Events::Rule
     Properties:
-      Description: "Run monthly Prod batches"
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'BatchMonthlyEventRule' ]]
+      Description: "Run monthly batches"
       ScheduleExpression: "cron(30 22 14 * ? *)"
       State: "ENABLED"
       Targets:
         -
-          Arn: !Ref BatchLambdaArn
-          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"monthly\"}"
-          Id: "ProdMonthlyLambda"
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputMonthly
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'MonthlyLambda']]
 
-  ProdRunWeeklyBatch:
+  RunWeeklyBatch:
     Type: AWS::Events::Rule
     Properties:
-      Description: "Run weekly Prod batches"
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'BatchWeeklyEventRule' ]]
+      Description: "Run weekly batches"
       ScheduleExpression: "cron(0 22 ? * 6 *)"
       State: "ENABLED"
       Targets:
         -
-          Arn: !Ref BatchLambdaArn
-          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"weekly\"}"
-          Id: "ProdWeeklyLambda"
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputWeekly
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'WeeklyLambda']]
 
-  ProdRunDailyBatch:
+  RunDailyBatch:
     Type: AWS::Events::Rule
     Properties:
-      Description: "Run daily Prod batches"
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'batchDailyEventRule' ]]
+      Description: "Run daily batches"
       ScheduleExpression: "cron(30 22 ? * 1-5 *)"
       State: "ENABLED"
       Targets:
         -
-          Arn: !Ref BatchLambdaArn
-          Input: "{\"jobName\": \"Prod\", \"jobDefinition\": \"ProdBatchJobDefinition\", \"type\":\"daily\"}"
-          Id: "ProdDailyLambda"
+          Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputDaily
+          Id: !Join [ '-' , [!Ref EnvironmentName, 'DailyLambda']]
 
-  #QA Batch Events
-  QARunAnnualBatch:
+#  Need special Event Rule for this batch because batch must be started at specific time
+  RunRefreshCacheBatch:
     Type: AWS::Events::Rule
     Properties:
-      Description: "Run annual QA batches"
-      ScheduleExpression: "cron(30 22 L 12 ? *)"
+      Name: !Join [ '-', [ !Ref EnvironmentName, 'batchRefreshCacheEventRule' ] ]
+      Description: "Run refresh_road_link_cache batch on Friday 16:00"
+      ScheduleExpression: "cron(0 14 ? * FRI *)"
       State: "ENABLED"
       Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"annual\" }"
-          Id: "QAAnnualLambda"
+        - Arn: !ImportValue 'BatchLambdaID'
+          Input: !Ref LambdaInputRefreshCache
+          Id: !Join [ '-' , [ !Ref EnvironmentName, 'DailyLambda' ] ]
 
-  QARunMonthlyBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: "Run monthly QA batches"
-      ScheduleExpression: "cron(30 22 14 * ? *)"
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"monthly\" }"
-          Id: "QAMonthlyLambda"
+  #Lambda permissions for events
 
-
-  QARunWeeklyBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: "Run weekly Prod batches"
-      ScheduleExpression: "cron(0 22 ? * 6 *)"
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"weekly\" }"
-          Id: "QAWeeklyLambda"
-
-  QARunDailyBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: "Run daily QA batches"
-      ScheduleExpression: "cron(30 22 ? * 1-5 *)"
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"daily\" }"
-          Id: "QADailyLambda"
-
-  #DEV Batch Events
-  DEVRunAnnualBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: "Run annual DEV batches"
-      ScheduleExpression: "cron(30 22 L 12 ? *)"
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"annual\" }"
-          Id: "DEVAnnualLambda"
-
-  DEVRunMonthlyBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: "Run monthly DEV batches"
-      ScheduleExpression: "cron(30 22 14 * ? *)"
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"monthly\" }"
-          Id: "DEVMonthlyLambda"
-
-  DEVRunWeeklyBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: "Run weekly DEV batches"
-      ScheduleExpression: "cron(0 22 ? * 6 *)"
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"weekly\" }"
-          Id: "DEVWeeklyLambda"
-
-  DEVRunDailyBatch:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: "Run daily DEV batches"
-      ScheduleExpression: "cron(30 22 ? * 1-5 *)"
-      State: "ENABLED"
-      Targets:
-        -
-          Arn: !Ref BatchLambdaArn
-          Input: "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"daily\" }"
-          Id: "DEVDailyLambda"
-
-  #Lambda permissions for prod events
-  ProdAnnualLambdaPermission:
+  RefreshCachePermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt ProdRunAnnualBatch.Arn
+      SourceArn: !GetAtt RunRefreshCacheBatch.Arn
 
-  ProdMonthlyLambdaPermission:
+  AnnualLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt ProdRunMonthlyBatch.Arn
+      SourceArn: !GetAtt RunAnnualBatch.Arn
 
-  ProdWeeklyLambdaPermission:
+  MonthlyLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt ProdRunWeeklyBatch.Arn
+      SourceArn: !GetAtt RunMonthlyBatch.Arn
 
-  ProdDailyLambdaPermission:
+  WeeklyLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt ProdRunDailyBatch.Arn
+      SourceArn: !GetAtt RunWeeklyBatch.Arn
 
-  #Lambda permissions for QA events
-  QAAnnualLambdaPermission:
+  DailyLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
+      FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt QARunAnnualBatch.Arn
-
-  QAMonthlyLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt QARunMonthlyBatch.Arn
-
-  QAWeeklyLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt QARunWeeklyBatch.Arn
-
-  QADailyLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt QARunDailyBatch.Arn
-
-  #Lambda permissions for DEV events
-  DEVAnnualLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt DEVRunAnnualBatch.Arn
-
-  DEVMonthlyLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt DEVRunMonthlyBatch.Arn
-
-  DEVWeeklyLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt DEVRunWeeklyBatch.Arn
-
-  DEVDailyLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BatchLambdaArn
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt DEVRunDailyBatch.Arn
+      SourceArn: !GetAtt RunDailyBatch.Arn
 
 Outputs:
   BatchTaskRoleARN:

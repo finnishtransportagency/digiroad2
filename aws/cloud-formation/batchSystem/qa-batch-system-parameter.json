@@ -1,0 +1,66 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "DigiroadTest-VPC"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0b4e33ad8202e91e4"
+  },
+  {
+    "ParameterKey": "SNSTopicName",
+    "ParameterValue": "BatchFailTopic"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "QA"
+  },
+  {
+    "ParameterKey": "JobDefinitionName",
+    "ParameterValue": "QABatchDefinition"
+  },
+  {
+    "ParameterKey": "BatchLambdaStackName",
+    "ParameterValue": "batch-lambda-stack"
+  },
+  {
+    "ParameterKey": "Subnet1",
+    "ParameterValue": "DigiroadTest-Subnet1-Id"
+  },
+  {
+    "ParameterKey": "Subnet2",
+    "ParameterValue": "DigiroadTest-Subnet2-Id"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "LambdaInputAnnual",
+    "ParameterValue": "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"annual\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputMonthly",
+    "ParameterValue": "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"monthly\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputWeekly",
+    "ParameterValue": "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"weekly\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputDaily",
+    "ParameterValue": "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"daily\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputRefreshCache",
+    "ParameterValue": "{ \"jobName\": \"QA\", \"jobDefinition\": \"QABatchDefinition\", \"type\": \"refresh_cache\" }"
+  }
+]
