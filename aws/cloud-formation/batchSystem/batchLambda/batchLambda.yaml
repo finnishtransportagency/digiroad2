@@ -24,7 +24,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        S3Bucket: !ImportValue 'batch-lambda-deployment-bucket'
+        S3Bucket: !Ref BucketName
         S3Key: !Ref S3ObjectKey
       Tags:
         - Key: Name
