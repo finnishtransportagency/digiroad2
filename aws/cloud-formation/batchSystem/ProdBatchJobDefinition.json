@@ -50,11 +50,15 @@
       },
       {
         "name": "vvhServiceHost",
-        "value": "haproxy.vayla.fi"
+        "value": "api.vayla.fi"
       },
       {
         "name": "vvhRestApiEndPoint",
-        "value": "https://haproxy.vayla.fi:2027/vvhdata/"
+        "value": "https://api.vayla.fi/vvhdata/"
+      },
+      {
+        "name": "vvhRest.username",
+        "value": "svc_vvh_digiroad"
       },
       {
         "name": "vvhRoadlink.frozen",
@@ -133,9 +137,14 @@
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/bonecp.password"
       },
       {
+        "name": "vvhRest.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/vvhRest.password"
+      },
+      {
         "name": "oag.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/authentication.oag.basic.password"
       },
+      
       {
         "name": "viite.apikey",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/apikey/viite"

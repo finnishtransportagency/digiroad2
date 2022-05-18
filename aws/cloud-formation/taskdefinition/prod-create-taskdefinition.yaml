@@ -106,9 +106,11 @@ Resources:
             - Name: useVVHGeometry
               Value: 'true'
             - Name: vvhServiceHost
-              Value: 'haproxy.vayla.fi'
+              Value: 'api.vayla.fi'
             - Name: vvhRestApiEndPoint
-              Value: 'https://haproxy.vayla.fi:2027/vvhdata/'
+              Value: 'https://api.vayla.fi/vvhdata/'
+            - Name: vvhRest.username
+              Value: 'svc_vvh_digiroad'
             - Name: vvhRoadlink.frozen
               Value: 'false'
             - Name: viiteRestApiEndPoint
@@ -174,6 +176,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/apikey/mml_map'
             - Name: ses.username
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/ses_username'
+            - Name: vvhRest.password
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/vvhRest.password'
             - Name: ses.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/ses_password'
             - Name: oag.password
