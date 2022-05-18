@@ -85,9 +85,8 @@ API-palvelimen saa käyntiin kehitysmoodiin seuraavalla sbt komennolla:
 ./sbt '~;container:start; container:reload /'
 ```
 
-Salasanat voidaan syöttää ympäristömuuttujina myös.
-Parametri voidaan asettaa Intellij SBT Configuration Environment Variable.
-Nämä voidaan syöttään myös ympäristömuuttujina.
+Ympäristömuuttuja parametri voidaan asettaa Intellij SBT Configuration Environment Variable avulla.
+Nämä voidaan syöttään myös ympäristömuuttujina:
 ```
 viiteRestApiEndPoint=url
 viite.apikey=insertapikey
