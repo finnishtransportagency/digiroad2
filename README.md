@@ -102,6 +102,7 @@ ses.password=sespassword
 bonecp.jdbcUrl=kantaurl
 bonecp.username=kantakäyttäjä
 bonecp.password=kantasalasana
+vvhRest.password=insertpassword
 ```
 Windowsissa toimii komento:
 ```
