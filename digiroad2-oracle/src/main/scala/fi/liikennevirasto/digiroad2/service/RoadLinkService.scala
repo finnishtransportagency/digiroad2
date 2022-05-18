@@ -1744,6 +1744,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.roadLinkChangeInfo.fetchByLinkIds(linkIds)
   }
 
+  def getChangeInfoByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
+    vvhClient.roadLinkChangeInfo.fetchByDates(since, until)
+  }
+
   def roadLinksWithConsistentAddress(roadLinksWithRoadAddress: Seq[RoadLink]): Seq[RoadLink] = {
     roadLinksWithRoadAddress.map(roadLink => {
       val roadNumber = roadLink.attributes.getOrElse("VIITE_ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER"))
