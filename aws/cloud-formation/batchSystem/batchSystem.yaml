@@ -225,7 +225,7 @@ Resources:
       Name: !Join [ '-', [ !Ref EnvironmentName, 'batch-event-notify' ]]
       State: "ENABLED"
       Targets:
-        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:475079312496:", !Ref EnvironmentName, '-', !Ref SNSTopicName]]
+        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:", !Ref AWS::AccountId, ":", !Ref EnvironmentName, '-', !Ref SNSTopicName]]
           Id: "123321"
           InputTransformer:
             InputTemplate: |
