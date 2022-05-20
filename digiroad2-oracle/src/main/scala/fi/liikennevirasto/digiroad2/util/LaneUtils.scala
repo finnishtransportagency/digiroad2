@@ -109,11 +109,14 @@ object LaneUtils {
     // Remove from Viite the information we have updated in our DB and add ou information
     val allRoadAddress = (roadAddresses.filterNot( ra => vkmLinkIds.contains( ra.linkId)) ++ vkmRoadAddress).toSet
 
+    // Group road addresses that exist on same link and exist on same road and road part
+    val groupedAddresses = roadAddressService.groupRoadAddressTEMP(allRoadAddress)
+
     // Get all updated information from VVH
     val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId))
       .groupBy(_.linkId)
 
-    val finalRoads = allRoadAddress.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
+    val finalRoads = groupedAddresses.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
       val existsInVVH = mappedRoadLinks.contains(elem.linkId)
       val roadPartNumber = elem.roadPart
       val inInitialAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.initialRoadPartNumber && roadPartNumber <= laneRoadAddressInfo.endRoadPartNumber
