@@ -136,59 +136,39 @@ object LaneUtils {
     val endDifferenceAddr = road.endAddressM - laneRoadAddressInfo.endDistance
     val endPoint = if (endDifferenceAddr <= 0) road.endMValue else road.endMValue - endDifferenceAddr
 
-    val endPoints = if (road.roadPart > laneRoadAddressInfo.initialRoadPartNumber && road.roadPart < laneRoadAddressInfo.endRoadPartNumber) {
-      Some( road.startMValue, road.endMValue)
+    val endPoints = road.roadPart match {
+      case part if part > laneRoadAddressInfo.initialRoadPartNumber && part < laneRoadAddressInfo.endRoadPartNumber =>
+        Some( road.startMValue, road.endMValue)
 
-    }
-    else if (road.roadPart == laneRoadAddressInfo.initialRoadPartNumber && road.roadPart == laneRoadAddressInfo.endRoadPartNumber) {
+      case part if part == laneRoadAddressInfo.initialRoadPartNumber && part == laneRoadAddressInfo.endRoadPartNumber =>
+        if (!(road.endAddressM > laneRoadAddressInfo.initialDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
+          None
+        else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance)
+          Some( startPoint, endPoint )
+        else if (road.startAddressM <= laneRoadAddressInfo.initialDistance)
+          Some( startPoint, road.endMValue )
+        else if (road.endAddressM >= laneRoadAddressInfo.endDistance)
+          Some( road.startMValue, endPoint )
+        else
+          Some( road.startMValue, road.endMValue )
 
-      if (!(road.endAddressM > laneRoadAddressInfo.initialDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
-        None
+      case part if part == laneRoadAddressInfo.initialRoadPartNumber =>
+        if (road.endAddressM <= laneRoadAddressInfo.initialDistance)
+          None
+        else if (road.startAddressM < laneRoadAddressInfo.initialDistance)
+          Some( startPoint, road.endMValue )
+        else
+          Some( road.startMValue, road.endMValue )
 
-      else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance) {
-        Some( startPoint, endPoint )
+      case part if part == laneRoadAddressInfo.endRoadPartNumber =>
+        if (road.startAddressM >= laneRoadAddressInfo.endDistance)
+          None
+        else if (road.endAddressM > laneRoadAddressInfo.endDistance)
+          Some( road.startMValue, endPoint )
+        else
+          Some( road.startMValue, road.endMValue )
 
-      }
-      else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM < laneRoadAddressInfo.endDistance) {
-        Some( startPoint, road.endMValue )
-
-      }
-      else if (road.startAddressM > laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance) {
-        Some( road.startMValue, endPoint )
-
-      }
-      else {
-        Some( road.startMValue, road.endMValue )
-
-      }
-
-    }
-    else if (road.roadPart == laneRoadAddressInfo.initialRoadPartNumber) {
-      if (road.endAddressM <= laneRoadAddressInfo.initialDistance) {
-        None
-
-      } else if (road.startAddressM < laneRoadAddressInfo.initialDistance) {
-        Some( startPoint, road.endMValue )
-
-      } else {
-        Some( road.startMValue, road.endMValue )
-      }
-
-    }
-    else if (road.roadPart == laneRoadAddressInfo.endRoadPartNumber) {
-      if (road.startAddressM >= laneRoadAddressInfo.endDistance) {
-        None
-
-      } else if (road.endAddressM > laneRoadAddressInfo.endDistance) {
-        Some( road.startMValue, endPoint )
-
-      } else {
-        Some( road.startMValue, road.endMValue )
-
-      }
-    }
-    else {
-      None
+      case _ => None
     }
 
     //Fix the start and end point when the roadAddress SideCode is AgainstDigitizing
