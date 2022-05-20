@@ -844,10 +844,10 @@ trait LaneOperations {
           val laneCode = getLaneCode(lane).toInt
           validateStartDate(lane, laneCode)
           val fixedSideCode = linksWithSideCodes.get(road.linkId)
-          val (start, end) = LaneUtils.calculateStartAndEndPoint(road, laneRoadAddressInfo)
+          val endPoints = LaneUtils.calculateStartAndEndPoint(road, laneRoadAddressInfo)
 
-          (start, end, fixedSideCode) match {
-            case (start: Double, end: Double, Some(sideCode: SideCode)) =>
+          (endPoints, fixedSideCode) match {
+            case (Some((start: Double, end: Double)), Some(sideCode: SideCode)) =>
               val lanesExists = existingLanes.filter(pLane =>
                 pLane.linkId == road.linkId && pLane.sideCode == sideCode.value && pLane.laneCode == laneCode &&
                 ((start >= pLane.startMeasure && start < pLane.endMeasure) ||

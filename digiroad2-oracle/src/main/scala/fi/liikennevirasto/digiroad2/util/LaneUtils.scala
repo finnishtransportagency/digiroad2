@@ -62,7 +62,7 @@ object LaneUtils {
                                  else laneCode
 
           calculateStartAndEndPoint(road, laneRoadAddressInfo) match {
-            case (start: Double, end: Double) =>
+            case Some((start: Double, end: Double)) =>
               Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCodeOneDigit, road.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
@@ -130,74 +130,74 @@ object LaneUtils {
     finalRoads
   }
 
-  def calculateStartAndEndPoint(road: RoadAddressTEMP, laneRoadAddressInfo: LaneRoadAddressInfo): (Any, Any) = {
+  def calculateStartAndEndPoint(road: RoadAddressTEMP, laneRoadAddressInfo: LaneRoadAddressInfo): Option[(Double, Double)] = {
     val startDifferenceAddr = laneRoadAddressInfo.initialDistance - road.startAddressM
     val startPoint = if (startDifferenceAddr <= 0) road.startMValue else startDifferenceAddr
     val endDifferenceAddr = road.endAddressM - laneRoadAddressInfo.endDistance
     val endPoint = if (endDifferenceAddr <= 0) road.endMValue else road.endMValue - endDifferenceAddr
 
-    val (start, end) = if (road.roadPart > laneRoadAddressInfo.initialRoadPartNumber && road.roadPart < laneRoadAddressInfo.endRoadPartNumber) {
-      ( road.startMValue, road.endMValue)
+    val endPoints = if (road.roadPart > laneRoadAddressInfo.initialRoadPartNumber && road.roadPart < laneRoadAddressInfo.endRoadPartNumber) {
+      Some( road.startMValue, road.endMValue)
 
     }
     else if (road.roadPart == laneRoadAddressInfo.initialRoadPartNumber && road.roadPart == laneRoadAddressInfo.endRoadPartNumber) {
 
       if (!(road.endAddressM > laneRoadAddressInfo.initialDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
-        (None, None)
+        None
 
       else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance) {
-        ( startPoint, endPoint )
+        Some( startPoint, endPoint )
 
       }
       else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM < laneRoadAddressInfo.endDistance) {
-        ( startPoint, road.endMValue )
+        Some( startPoint, road.endMValue )
 
       }
       else if (road.startAddressM > laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance) {
-        ( road.startMValue, endPoint )
+        Some( road.startMValue, endPoint )
 
       }
       else {
-        ( road.startMValue, road.endMValue )
+        Some( road.startMValue, road.endMValue )
 
       }
 
     }
     else if (road.roadPart == laneRoadAddressInfo.initialRoadPartNumber) {
       if (road.endAddressM <= laneRoadAddressInfo.initialDistance) {
-        (None, None)
+        None
 
       } else if (road.startAddressM < laneRoadAddressInfo.initialDistance) {
-        ( startPoint, road.endMValue )
+        Some( startPoint, road.endMValue )
 
       } else {
-        ( road.startMValue, road.endMValue )
+        Some( road.startMValue, road.endMValue )
       }
 
     }
     else if (road.roadPart == laneRoadAddressInfo.endRoadPartNumber) {
       if (road.startAddressM >= laneRoadAddressInfo.endDistance) {
-        (None, None)
+        None
 
       } else if (road.endAddressM > laneRoadAddressInfo.endDistance) {
-        ( road.startMValue, endPoint )
+        Some( road.startMValue, endPoint )
 
       } else {
-        ( road.startMValue, road.endMValue )
+        Some( road.startMValue, road.endMValue )
 
       }
     }
     else {
-      (None, None)
+      None
     }
 
     //Fix the start and end point when the roadAddress SideCode is AgainstDigitizing
-    (start, end) match {
-      case (s: Double , e: Double) =>  if (road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.AgainstDigitizing)
-        (road.endMValue - e, road.endMValue - s)
+    endPoints match {
+      case Some((s: Double , e: Double)) =>  if (road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.AgainstDigitizing)
+        Some(road.endMValue - e, road.endMValue - s)
       else
-        (start, end)
-      case _  => (None, None)
+        endPoints
+      case _  => None
     }
   }
 
