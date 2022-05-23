@@ -46,8 +46,8 @@ Resources:
             InputTemplate: |
               "Batch named <name> in queue <queue> failed. Reason was <reason> with exit code <code>. Log Stream is <log>"
             InputPathsMap:
-              code: "$.detail.attempts[0].container.exitCode"
-              log: "$.detail.attempts[0].container.logStreamName"
+              code: "$.detail.container.exitCode"
+              log: "$.detail.container.logStreamName"
               name: "$.detail.jobName"
               queue: "$.detail.jobQueue"
               reason: "$.detail.statusReason"
