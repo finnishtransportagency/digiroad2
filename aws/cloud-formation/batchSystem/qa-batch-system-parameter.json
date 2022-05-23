@@ -8,10 +8,6 @@
     "ParameterValue": "vpc-0b4e33ad8202e91e4"
   },
   {
-    "ParameterKey": "SNSTopicName",
-    "ParameterValue": "BatchFailTopic"
-  },
-  {
     "ParameterKey": "EnvironmentName",
     "ParameterValue": "QA"
   },

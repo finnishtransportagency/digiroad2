@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  BatchSNSTopicName:
+    Type: String
+    Description: Name of SNS topic
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  ApplicationName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
+
+Resources:
+  BatchSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: "AWS Batch Job Has Failed"
+      FifoTopic: FALSE
+      Subscription:
+        - Endpoint: "kehitys@digiroad.fi"
+          Protocol: "email"
+      TopicName: !Ref BatchSNSTopicName
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref ApplicationName, 'batchFailTopic' ] ]
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  BatchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Send SNS email for failed batch jobs"
+      EventPattern: { "detail-type": [ "Batch Job State Change" ], "source": [ "aws.batch" ], "detail": { "status": [ "FAILED" ] } }
+      Name: 'batch-event-notify'
+      State: "ENABLED"
+      Targets:
+        - Arn: !Join [ '', [ "arn:aws:sns:eu-west-1:", !Ref AWS::AccountId, ":", !Ref BatchSNSTopicName ] ]
+          Id: "batch-fail-topic"
+          InputTransformer:
+            InputTemplate: |
+              "Batch named <name> in queue <queue> failed. Reason was <reason> with exit code <code>. Log Stream is <log>"
+            InputPathsMap:
+              code: "$.detail.container.exitCode"
+              log: "$.detail.container.logStreamName"
+              name: "$.detail.jobName"
+              queue: "$.detail.jobQueue"
+              reason: "$.detail.statusReason"

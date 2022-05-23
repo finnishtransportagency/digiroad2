@@ -7,9 +7,6 @@ Parameters:
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
-  SNSTopicName:
-    Type: String
-    Description: Name of SNS topic
   EnvironmentName:
     Type: String
     Description: Name of used environment
@@ -197,45 +194,6 @@ Resources:
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
-
-  BatchSNSTopic:
-    Type: AWS::SNS::Topic
-    Properties: 
-      DisplayName: "AWS Batch Job Has Failed"
-      FifoTopic: FALSE
-      Subscription: 
-        - Endpoint: "kehitys@digiroad.fi"
-          Protocol: "email"
-      TopicName: !Join [ '-', [ !Ref EnvironmentName, !Ref SNSTopicName ] ]
-      Tags:
-        - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchFailTopic' ] ]
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Project
-          Value: !Ref Project
-
-  BatchEventRule:
-    Type: AWS::Events::Rule
-    Properties: 
-      Description: "Send SNS email for failed batch jobs"
-      EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
-      Name: !Join [ '-', [ !Ref EnvironmentName, 'batch-event-notify' ]]
-      State: "ENABLED"
-      Targets:
-        - Arn: !Join ['', ["arn:aws:sns:eu-west-1:", !Ref AWS::AccountId, ":", !Ref EnvironmentName, '-', !Ref SNSTopicName]]
-          Id: "123321"
-          InputTransformer:
-            InputTemplate: |
-                "Batch named <name> in queue <queue> failed. Reason was <reason> with exit code <code>. Log Stream is <log>"
-            InputPathsMap:
-              code: "$.detail.attempts[0].container.exitCode"
-              log: "$.detail.attempts[0].container.logStreamName"
-              name: "$.detail.jobName"
-              queue: "$.detail.jobQueue"
-              reason: "$.detail.statusReason"
 
   #Batch Events
   RunAnnualBatch:
