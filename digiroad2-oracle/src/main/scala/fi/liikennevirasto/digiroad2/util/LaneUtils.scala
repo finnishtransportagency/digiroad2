@@ -4,7 +4,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane.{LaneFiller, LaneRoadAddressInfo, NewLane, PersistedLane}
@@ -43,34 +43,39 @@ object LaneUtils {
     // Main process
     def process() = {
 
-      val filteredRoadAddresses = getRoadAddressToProcess(laneRoadAddressInfo)
+      val (filteredRoadAddresses, vvhRoadLinks) = getRoadAddressToProcess(laneRoadAddressInfo)
+      val addressesByLinks = filteredRoadAddresses.groupBy(_.linkId)
 
       //Get only the lanes to create
       val lanesToInsert = newLanes.filter(_.id == 0)
 
 
-      val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
+      val allLanesToCreate = addressesByLinks.flatMap { case (linkId, addressesOnLink) =>
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+        val linkLength = vvhRoadLinks.find(_.linkId == linkId) match {
+          case Some(roadLink) => roadLink.length
+          case _ => addressesOnLink.head.endMValue
+        }
 
         lanesToInsert.flatMap { lane =>
           val laneCode = laneService.getLaneCode(lane).toInt
           laneService.validateStartDate(lane, laneCode)
 
           val isTwoDigitLaneCode = laneCode.toString.length > 1
-          val finalSideCode = laneService.fixSideCode( road, laneCode.toString )
+          val finalSideCode = laneService.fixSideCode( addressesOnLink.head, laneCode.toString )
           val laneCodeOneDigit = if (isTwoDigitLaneCode) laneCode.toString.substring(1).toInt
                                  else laneCode
 
-          calculateStartAndEndPoint(road, laneRoadAddressInfo) match {
+          calculateStartAndEndPoint(laneRoadAddressInfo, addressesOnLink, linkLength) match {
             case Some((start: Double, end: Double)) =>
-              Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCodeOneDigit, road.municipalityCode.getOrElse(0).toLong,
+              Some(PersistedLane(0, linkId, finalSideCode.value, laneCodeOneDigit, addressesOnLink.head.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
 
             case _ => None
             }
         }
-      }
+      }.toSet
 
       //Create lanes
       allLanesToCreate.map(laneService.createWithoutTransaction(_, username))
@@ -87,7 +92,7 @@ object LaneUtils {
 
   }
 
-  def getRoadAddressToProcess(laneRoadAddressInfo: LaneRoadAddressInfo): Set[RoadAddressTEMP] = {
+  def getRoadAddressToProcess(laneRoadAddressInfo: LaneRoadAddressInfo): (Set[RoadAddressTEMP], Seq[VVHRoadlink]) = {
 
     // Generate a sequence from initialRoadPartNumber to endRoadPartNumber
     // If initialRoadPartNumber = 1 and endRoadPartNumber = 4
@@ -113,8 +118,8 @@ object LaneUtils {
     val groupedAddresses = roadAddressService.groupRoadAddressTEMP(allRoadAddress)
 
     // Get all updated information from VVH
-    val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId))
-      .groupBy(_.linkId)
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId))
+    val mappedRoadLinks = roadLinks.groupBy(_.linkId)
 
     val finalRoads = groupedAddresses.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
       val existsInVVH = mappedRoadLinks.contains(elem.linkId)
@@ -130,58 +135,92 @@ object LaneUtils {
           elem
       }
 
-    finalRoads
+    (finalRoads, roadLinks)
   }
 
-  def calculateStartAndEndPoint(road: RoadAddressTEMP, laneRoadAddressInfo: LaneRoadAddressInfo): Option[(Double, Double)] = {
-    val startDifferenceAddr = laneRoadAddressInfo.initialDistance - road.startAddressM
-    val startPoint = if (startDifferenceAddr <= 0) road.startMValue else startDifferenceAddr
-    val endDifferenceAddr = road.endAddressM - laneRoadAddressInfo.endDistance
-    val endPoint = if (endDifferenceAddr <= 0) road.endMValue else road.endMValue - endDifferenceAddr
+  /**
+   * Calculate lane start and end values from all road addresses on a link.
+   * Returns one start and end value per link or None.
+   */
+  def calculateStartAndEndPoint(laneRoadAddressInfo: LaneRoadAddressInfo, addressesOnLink: Set[RoadAddressTEMP],
+                                linkLength: Double): Option[(Double, Double)] = {
+    val (linkAddressM, linkMValue) = // Determine total address length and m value within link
+      addressesOnLink.foldLeft(0L, 0.0){ (result, address) =>
+        (result._1 + address.endAddressM - address.startAddressM, result._2 + address.endMValue - address.startMValue)
+      }
 
-    val endPoints = road.roadPart match {
-      case part if part > laneRoadAddressInfo.initialRoadPartNumber && part < laneRoadAddressInfo.endRoadPartNumber =>
-        Some( road.startMValue, road.endMValue)
+    // Viite uses frozen links, so determine new measure that matches current link length
+    val viiteMeasure = linkMValue / linkAddressM
+    val adjustedMeasure = linkLength / linkAddressM
 
-      case part if part == laneRoadAddressInfo.initialRoadPartNumber && part == laneRoadAddressInfo.endRoadPartNumber =>
-        if (!(road.endAddressM > laneRoadAddressInfo.initialDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
-          None
-        else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance)
-          Some( startPoint, endPoint )
-        else if (road.startAddressM <= laneRoadAddressInfo.initialDistance)
-          Some( startPoint, road.endMValue )
-        else if (road.endAddressM >= laneRoadAddressInfo.endDistance)
-          Some( road.startMValue, endPoint )
-        else
-          Some( road.startMValue, road.endMValue )
+    val startAndEndValues = addressesOnLink.flatMap { road =>
+      val startMValue = road.startMValue / viiteMeasure * adjustedMeasure
+      val endMValue = road.endMValue / viiteMeasure * adjustedMeasure
+      val startDifferenceM = (laneRoadAddressInfo.initialDistance - road.startAddressM) * adjustedMeasure
+      val endDifferenceM = (road.endAddressM - laneRoadAddressInfo.endDistance) * adjustedMeasure
+      val towardsDigitizing = road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.TowardsDigitizing
 
-      case part if part == laneRoadAddressInfo.initialRoadPartNumber =>
-        if (road.endAddressM <= laneRoadAddressInfo.initialDistance)
-          None
-        else if (road.startAddressM < laneRoadAddressInfo.initialDistance)
-          Some( startPoint, road.endMValue )
-        else
-          Some( road.startMValue, road.endMValue )
+      val startPoint = // Calculated start point for cases when lane does not start from the start of road address
+        if (towardsDigitizing && startDifferenceM > 0) startMValue + startDifferenceM
+        else if (!towardsDigitizing && endDifferenceM > 0) startMValue + endDifferenceM
+        else startMValue
+      val endPoint = // Calculated end point for cases when lane ends before the end of road address
+        if (towardsDigitizing && endDifferenceM > 0) endMValue - endDifferenceM
+        else if (!towardsDigitizing && startDifferenceM > 0) endMValue - startDifferenceM
+        else endMValue
 
-      case part if part == laneRoadAddressInfo.endRoadPartNumber =>
-        if (road.startAddressM >= laneRoadAddressInfo.endDistance)
-          None
-        else if (road.endAddressM > laneRoadAddressInfo.endDistance)
-          Some( road.startMValue, endPoint )
-        else
-          Some( road.startMValue, road.endMValue )
+      // Determine if what endpoint values to use or if road address should be skipped
+      // If adjusted start or end point is used and road side code is againstDigitising, the opposite value is adjusted
+      road.roadPart match {
+        case part if part > laneRoadAddressInfo.initialRoadPartNumber && part < laneRoadAddressInfo.endRoadPartNumber =>
+          Some(road.startMValue, road.endMValue)
 
-      case _ => None
+        case part if part == laneRoadAddressInfo.initialRoadPartNumber && part == laneRoadAddressInfo.endRoadPartNumber =>
+          if (!(road.endAddressM > laneRoadAddressInfo.initialDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
+            None
+          else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance)
+            Some( startPoint, endPoint )
+          else if (road.startAddressM <= laneRoadAddressInfo.initialDistance)
+            if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint )
+          else if (road.endAddressM >= laneRoadAddressInfo.endDistance)
+            if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
+          else
+            Some( startMValue, endMValue)
+
+        case part if part == laneRoadAddressInfo.initialRoadPartNumber =>
+          if (road.endAddressM <= laneRoadAddressInfo.initialDistance)
+            None
+          else if (road.startAddressM < laneRoadAddressInfo.initialDistance)
+            if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint)
+          else
+            Some(startMValue, endMValue)
+
+        case part if part == laneRoadAddressInfo.endRoadPartNumber =>
+          if (road.startAddressM >= laneRoadAddressInfo.endDistance)
+            None
+          else if (road.endAddressM > laneRoadAddressInfo.endDistance)
+            if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
+          else
+            Some(startMValue, endMValue)
+
+        case _ => None
+      }
     }
 
-    //Fix the start and end point when the roadAddress SideCode is AgainstDigitizing
-    endPoints match {
-      case Some((s: Double , e: Double)) =>  if (road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.AgainstDigitizing)
-        Some(road.endMValue - e, road.endMValue - s)
-      else
-        endPoints
-      case _  => None
+    startAndEndValues.size match {// Returns one start and end point per link or None
+      case size if size == 1 =>
+        Some(roundMeasure(startAndEndValues.head._1), roundMeasure(startAndEndValues.head._2))
+      case size if size > 1 => // If link has multiple endpoints return smallest start value and biggest end value
+        Some(roundMeasure(startAndEndValues.minBy(_._1)._1), roundMeasure(startAndEndValues.maxBy(_._2)._2))
+      case _ =>
+        None
     }
+  }
+
+  // Rounds double value to given number of decimals. Used with lane start and end measures
+  def roundMeasure(measure: Double, numberOfDecimals: Int = 3): Double = {
+    val exponentOfTen = Math.pow(10, numberOfDecimals)
+    Math.round(measure * exponentOfTen).toDouble / exponentOfTen
   }
 
   def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {
