@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  SNSTopicName:
+  BatchSNSTopicName:
     Type: String
     Description: Name of SNS topic
   Owner:
@@ -23,7 +23,7 @@ Resources:
       Subscription:
         - Endpoint: "kehitys@digiroad.fi"
           Protocol: "email"
-      TopicName: !Ref SNSTopicName
+      TopicName: !Ref BatchSNSTopicName
       Tags:
         - Key: Name
           Value: !Join [ '-', [ !Ref ApplicationName, 'batchFailTopic' ] ]
@@ -40,7 +40,7 @@ Resources:
       Name: 'batch-event-notify'
       State: "ENABLED"
       Targets:
-        - Arn: !Join [ '', [ "arn:aws:sns:eu-west-1:", !Ref AWS::AccountId, ":", !Ref SNSTopicName ] ]
+        - Arn: !Join [ '', [ "arn:aws:sns:eu-west-1:", !Ref AWS::AccountId, ":", !Ref BatchSNSTopicName ] ]
           Id: "batch-fail-topic"
           InputTransformer:
             InputTemplate: |

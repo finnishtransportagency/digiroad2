@@ -1,6 +1,6 @@
 [
   {
-    "ParameterKey": "SNSTopicName",
+    "ParameterKey": "BatchSNSTopicName",
     "ParameterValue": "BatchFailTopic"
   },
   {
