@@ -200,10 +200,10 @@ Resources:
 
   BatchSNSTopic:
     Type: AWS::SNS::Topic
-    Properties: 
+    Properties:
       DisplayName: "AWS Batch Job Has Failed"
       FifoTopic: FALSE
-      Subscription: 
+      Subscription:
         - Endpoint: "kehitys@digiroad.fi"
           Protocol: "email"
       TopicName: !Join [ '-', [ !Ref EnvironmentName, !Ref SNSTopicName ] ]
@@ -219,7 +219,7 @@ Resources:
 
   BatchEventRule:
     Type: AWS::Events::Rule
-    Properties: 
+    Properties:
       Description: "Send SNS email for failed batch jobs"
       EventPattern: {"detail-type": ["Batch Job State Change"], "source": ["aws.batch"], "detail": {"status": ["FAILED"]}}
       Name: !Join [ '-', [ !Ref EnvironmentName, 'batch-event-notify' ]]
