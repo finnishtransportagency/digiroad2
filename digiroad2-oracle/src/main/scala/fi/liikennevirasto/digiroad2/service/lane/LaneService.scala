@@ -762,7 +762,12 @@ trait LaneOperations {
       LanePartitioner.LaneWithContinuingLanes(lane, continuingFromLane)
     })
 
-    val lanesWithAdjustedSideCode = LanePartitioner.handleLanes(lanesWithContinuing, pieceWiseLanes)
+    val connectedGroups = LanePartitioner.getConnectedGroups(lanesWithContinuing)
+    val connectedLanes = connectedGroups.find(lanes => lanes.exists(_.id == selectedLane.id)).getOrElse(Seq())
+    val selectedContinuingLanes = lanesWithContinuing.filter(laneWithContinuing =>
+      connectedLanes.exists(pieceWise => pieceWise.id == laneWithContinuing.lane.id))
+
+    val lanesWithAdjustedSideCode = LanePartitioner.handleLanes(selectedContinuingLanes, pieceWiseLanes)
     val selectedWithinAdjusted = lanesWithAdjustedSideCode.find(_.linkId == selectedLane.linkId)
     val changeSideCode = selectedWithinAdjusted.isDefined && selectedWithinAdjusted.get.sideCode != selectedLane.sideCode
 
@@ -831,11 +836,6 @@ trait LaneOperations {
       val addressesByLinks = filteredRoadAddresses.groupBy(_.linkId)
       val roadLinkIds = addressesByLinks.keys.toSet
       val linksWithSideCodes = getLinksWithCorrectSideCodes(selectedLane, roadLinkIds, newTransaction = false)
-
-      // Throw error if links are not consecutive
-      if (linksWithSideCodes.size != roadLinkIds.size)
-        throw new InvalidParameterException(s"All links in selection do not have road address")
-
       val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
 
       val allLanesToCreate = addressesByLinks.flatMap { case (linkId, addressesOnLink) =>
@@ -865,6 +865,9 @@ trait LaneOperations {
               Some(PersistedLane(0, linkId, sideCode.value, laneCode, addressesOnLink.head.municipalityCode.getOrElse(0).toLong,
                 start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
+            case (Some(_), None) =>
+              // Throw error if sideCode is not determined due to missing road addresses
+              throw new InvalidParameterException(s"All links in selection do not have road address")
             case _ => None
           }
         }
