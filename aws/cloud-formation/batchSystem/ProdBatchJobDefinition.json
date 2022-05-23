@@ -11,7 +11,7 @@
     "FARGATE"
   ],
   "containerProperties": {
-    "image": "475079312496.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod",
+    "image": "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod",
     "resourceRequirements" : [
       {
         "type": "MEMORY",
@@ -22,7 +22,7 @@
         "value": "4"
       }
     ],
-    "executionRoleArn": "arn:aws:iam::475079312496:role/batchSystem-BatchTaskRole-GSUD7E3H8KV4",
+    "executionRoleArn": "arn:aws:iam::920408837790:role/digiroad-batch-system-BatchTaskRole-NTGCBVRU7CCR",
     "environment": [
       {
         "name": "containerCPU",
@@ -106,7 +106,7 @@
       },
       {
         "name": "caching",
-        "value": "false"
+        "value": "true"
       },
       {
         "name": "cacheHostname",
@@ -130,19 +130,19 @@
     "secrets": [
       {
         "name": "bonecp.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/bonecp.password"
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/bonecp.password"
       },
       {
         "name": "oag.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/authentication.oag.basic.password"
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/authentication.oag.basic.password"
       },
       {
         "name": "viite.apikey",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/apikey/viite"
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/viite"
       },
       {
         "name": "vkm.apikey",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/apikey/viitekehysmuunnin"
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/viitekehysmuunnin"
       }
     ]
   }
