@@ -138,7 +138,7 @@
       },
       {
         "name": "vvhRest.password",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/prod/vvhRest.password"
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/vvhRest.password"
       },
       {
         "name": "oag.password",
