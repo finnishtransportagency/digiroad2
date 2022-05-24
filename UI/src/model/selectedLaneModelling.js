@@ -255,9 +255,9 @@
           sideCode: sideCode,
           laneRoadAddressInfo:{
             roadNumber: roadNumber,
-            initialRoadPartNumber: parseInt(startRoadPartNumber),
-            initialDistance: parseInt(startDistance),
-            endRoadPartNumber: parseInt(endRoadPartNumber),
+            startRoadPart: parseInt(startRoadPartNumber),
+            startDistance: parseInt(startDistance),
+            endRoadPart: parseInt(endRoadPartNumber),
             endDistance: parseInt(endDistance),
             track: track
           },
