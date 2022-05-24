@@ -142,7 +142,7 @@ object LaneUtils {
    * Calculate lane start and end values from all road addresses on a link.
    * Returns one start and end value per link or None.
    */
-  def calculateStartAndEndPoint(laneRoadAddressInfo: LaneRoadAddressInfo, addressesOnLink: Set[RoadAddressTEMP],
+  def calculateStartAndEndPoint(selection: LaneRoadAddressInfo, addressesOnLink: Set[RoadAddressTEMP],
                                 linkLength: Double): Option[(Double, Double)] = {
     val (linkAddressM, linkMValue) = // Determine total address length and m value within link
       addressesOnLink.foldLeft(0L, 0.0){ (result, address) =>
@@ -156,8 +156,8 @@ object LaneUtils {
     val startAndEndValues = addressesOnLink.flatMap { road =>
       val startMValue = road.startMValue / viiteMeasure * adjustedMeasure
       val endMValue = road.endMValue / viiteMeasure * adjustedMeasure
-      val startDifferenceM = (laneRoadAddressInfo.startDistance - road.startAddressM) * adjustedMeasure
-      val endDifferenceM = (road.endAddressM - laneRoadAddressInfo.endDistance) * adjustedMeasure
+      val startDifferenceM = (selection.startDistance - road.startAddressM) * adjustedMeasure
+      val endDifferenceM = (road.endAddressM - selection.endDistance) * adjustedMeasure
       val towardsDigitizing = road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.TowardsDigitizing
 
       val startPoint = // Calculated start point for cases when lane does not start from the start of road address
@@ -172,33 +172,33 @@ object LaneUtils {
       // Determine if what endpoint values to use or if road address should be skipped
       // If adjusted start or end point is used and road side code is againstDigitising, the opposite value is adjusted
       road.roadPart match {
-        case part if part > laneRoadAddressInfo.startRoadPart && part < laneRoadAddressInfo.endRoadPart =>
+        case part if part > selection.startRoadPart && part < selection.endRoadPart =>
           Some(road.startMValue, road.endMValue)
 
-        case part if part == laneRoadAddressInfo.startRoadPart && part == laneRoadAddressInfo.endRoadPart =>
-          if (!(road.endAddressM > laneRoadAddressInfo.startDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
+        case part if part == selection.startRoadPart && part == selection.endRoadPart =>
+          if (!(road.endAddressM > selection.startDistance && road.startAddressM < selection.endDistance))
             None
-          else if (road.startAddressM <= laneRoadAddressInfo.startDistance && road.endAddressM >= laneRoadAddressInfo.endDistance)
+          else if (road.startAddressM <= selection.startDistance && road.endAddressM >= selection.endDistance)
             Some( startPoint, endPoint )
-          else if (road.startAddressM <= laneRoadAddressInfo.startDistance)
+          else if (road.startAddressM <= selection.startDistance)
             if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint )
-          else if (road.endAddressM >= laneRoadAddressInfo.endDistance)
+          else if (road.endAddressM >= selection.endDistance)
             if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
           else
             Some( startMValue, endMValue)
 
-        case part if part == laneRoadAddressInfo.startRoadPart =>
-          if (road.endAddressM <= laneRoadAddressInfo.startDistance)
+        case part if part == selection.startRoadPart =>
+          if (road.endAddressM <= selection.startDistance)
             None
-          else if (road.startAddressM < laneRoadAddressInfo.startDistance)
+          else if (road.startAddressM < selection.startDistance)
             if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint)
           else
             Some(startMValue, endMValue)
 
-        case part if part == laneRoadAddressInfo.endRoadPart =>
-          if (road.startAddressM >= laneRoadAddressInfo.endDistance)
+        case part if part == selection.endRoadPart =>
+          if (road.startAddressM >= selection.endDistance)
             None
-          else if (road.endAddressM > laneRoadAddressInfo.endDistance)
+          else if (road.endAddressM > selection.endDistance)
             if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
           else
             Some(startMValue, endMValue)
