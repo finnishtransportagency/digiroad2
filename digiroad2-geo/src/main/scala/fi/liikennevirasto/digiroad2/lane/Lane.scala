@@ -51,8 +51,8 @@ sealed trait LaneValue {
 case class LanePropertyValue(value: Any)
 case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue])
 
-case class LaneRoadAddressInfo ( roadNumber: Long, initialRoadPartNumber: Long, initialDistance: Long,
-                                 endRoadPartNumber: Long, endDistance: Long, track: Int )
+case class LaneRoadAddressInfo ( roadNumber: Long, startRoadPart: Long, startDistance: Long,
+                                 endRoadPart: Long, endDistance: Long, track: Int )
 
 /**
   * Values for lane numbers

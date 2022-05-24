@@ -94,18 +94,18 @@ object LaneUtils {
 
   def getRoadAddressToProcess(laneRoadAddressInfo: LaneRoadAddressInfo): (Set[RoadAddressTEMP], Seq[VVHRoadlink]) = {
 
-    // Generate a sequence from initialRoadPartNumber to endRoadPartNumber
-    // If initialRoadPartNumber = 1 and endRoadPartNumber = 4
+    // Generate a sequence from startRoadPart to endRoadPart
+    // If startRoadPart = 1 and endRoadPart = 4
     // Result will be Seq(1,2,3,4)
-    val roadParts = laneRoadAddressInfo.initialRoadPartNumber to laneRoadAddressInfo.endRoadPartNumber
+    val roadParts = laneRoadAddressInfo.startRoadPart to laneRoadAddressInfo.endRoadPart
 
-    // Get the road address information from Viite and convert the data to RoadAddressesAux
+    // Get the road address information from Viite and convert the data to RoadAddressesTEMP
     val roadAddresses = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))
       .map (elem => RoadAddressTEMP (elem.linkId, elem.roadNumber, elem.roadPartNumber, elem.track,
         elem.startAddrMValue, elem.endAddrMValue, elem.startMValue, elem.endMValue,elem.geom, Some(elem.sideCode), Some(0) )
       )
 
-    // Get the road address information from our DB and convert the data to RoadAddressesAux
+    // Get the road address information from our DB and convert the data to RoadAddressesTEMP
     val vkmRoadAddress = roadLinkTempDAO.getByRoadNumberRoadPartTrack(laneRoadAddressInfo.roadNumber.toInt, laneRoadAddressInfo.track, roadParts.toSet)
 
 
@@ -124,7 +124,7 @@ object LaneUtils {
     val finalRoads = groupedAddresses.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
       val existsInVVH = mappedRoadLinks.contains(elem.linkId)
       val roadPartNumber = elem.roadPart
-      val inInitialAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.initialRoadPartNumber && roadPartNumber <= laneRoadAddressInfo.endRoadPartNumber
+      val inInitialAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.startRoadPart && roadPartNumber <= laneRoadAddressInfo.endRoadPart
 
       existsInVVH && inInitialAndEndRoadPart
     }
@@ -156,7 +156,7 @@ object LaneUtils {
     val startAndEndValues = addressesOnLink.flatMap { road =>
       val startMValue = road.startMValue / viiteMeasure * adjustedMeasure
       val endMValue = road.endMValue / viiteMeasure * adjustedMeasure
-      val startDifferenceM = (laneRoadAddressInfo.initialDistance - road.startAddressM) * adjustedMeasure
+      val startDifferenceM = (laneRoadAddressInfo.startDistance - road.startAddressM) * adjustedMeasure
       val endDifferenceM = (road.endAddressM - laneRoadAddressInfo.endDistance) * adjustedMeasure
       val towardsDigitizing = road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.TowardsDigitizing
 
@@ -172,30 +172,30 @@ object LaneUtils {
       // Determine if what endpoint values to use or if road address should be skipped
       // If adjusted start or end point is used and road side code is againstDigitising, the opposite value is adjusted
       road.roadPart match {
-        case part if part > laneRoadAddressInfo.initialRoadPartNumber && part < laneRoadAddressInfo.endRoadPartNumber =>
+        case part if part > laneRoadAddressInfo.startRoadPart && part < laneRoadAddressInfo.endRoadPart =>
           Some(road.startMValue, road.endMValue)
 
-        case part if part == laneRoadAddressInfo.initialRoadPartNumber && part == laneRoadAddressInfo.endRoadPartNumber =>
-          if (!(road.endAddressM > laneRoadAddressInfo.initialDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
+        case part if part == laneRoadAddressInfo.startRoadPart && part == laneRoadAddressInfo.endRoadPart =>
+          if (!(road.endAddressM > laneRoadAddressInfo.startDistance && road.startAddressM < laneRoadAddressInfo.endDistance))
             None
-          else if (road.startAddressM <= laneRoadAddressInfo.initialDistance && road.endAddressM >= laneRoadAddressInfo.endDistance)
+          else if (road.startAddressM <= laneRoadAddressInfo.startDistance && road.endAddressM >= laneRoadAddressInfo.endDistance)
             Some( startPoint, endPoint )
-          else if (road.startAddressM <= laneRoadAddressInfo.initialDistance)
+          else if (road.startAddressM <= laneRoadAddressInfo.startDistance)
             if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint )
           else if (road.endAddressM >= laneRoadAddressInfo.endDistance)
             if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
           else
             Some( startMValue, endMValue)
 
-        case part if part == laneRoadAddressInfo.initialRoadPartNumber =>
-          if (road.endAddressM <= laneRoadAddressInfo.initialDistance)
+        case part if part == laneRoadAddressInfo.startRoadPart =>
+          if (road.endAddressM <= laneRoadAddressInfo.startDistance)
             None
-          else if (road.startAddressM < laneRoadAddressInfo.initialDistance)
+          else if (road.startAddressM < laneRoadAddressInfo.startDistance)
             if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint)
           else
             Some(startMValue, endMValue)
 
-        case part if part == laneRoadAddressInfo.endRoadPartNumber =>
+        case part if part == laneRoadAddressInfo.endRoadPart =>
           if (road.startAddressM >= laneRoadAddressInfo.endDistance)
             None
           else if (road.endAddressM > laneRoadAddressInfo.endDistance)
