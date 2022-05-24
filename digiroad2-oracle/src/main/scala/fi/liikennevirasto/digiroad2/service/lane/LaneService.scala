@@ -853,17 +853,17 @@ trait LaneOperations {
           val startAndEndPoints = LaneUtils.calculateStartAndEndPoint(laneRoadAddressInfo, addressesOnLink, linkLength)
 
           (startAndEndPoints, fixedSideCode) match {
-            case (Some((start: Double, end: Double)), Some(sideCode: SideCode)) =>
+            case (Some(endPoints), Some(sideCode: SideCode)) =>
               val lanesExists = existingLanes.filter(pLane =>
                 pLane.linkId == linkId && pLane.sideCode == sideCode.value && pLane.laneCode == laneCode &&
-                ((start >= pLane.startMeasure && start < pLane.endMeasure) ||
-                  (end > pLane.startMeasure && end <= pLane.endMeasure))
+                ((endPoints.start >= pLane.startMeasure && endPoints.start < pLane.endMeasure) ||
+                  (endPoints.end > pLane.startMeasure && endPoints.end <= pLane.endMeasure))
               )
               if (lanesExists.nonEmpty)
                 throw new InvalidParameterException(s"Lane with given lane code already exists in the selection")
 
               Some(PersistedLane(0, linkId, sideCode.value, laneCode, addressesOnLink.head.municipalityCode.getOrElse(0).toLong,
-                start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
+                endPoints.start, endPoints.end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
             case (Some(_), None) =>
               // Throw error if sideCode is not determined due to missing road addresses

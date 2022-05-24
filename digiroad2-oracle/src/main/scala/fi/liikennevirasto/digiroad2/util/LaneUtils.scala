@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneFiller, LaneRoadAddressInfo, NewLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneRoadAddressInfo, NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -67,9 +67,9 @@ object LaneUtils {
                                  else laneCode
 
           calculateStartAndEndPoint(laneRoadAddressInfo, addressesOnLink, linkLength) match {
-            case Some((start: Double, end: Double)) =>
+            case Some(endPoints) =>
               Some(PersistedLane(0, linkId, finalSideCode.value, laneCodeOneDigit, addressesOnLink.head.municipalityCode.getOrElse(0).toLong,
-                start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
+                endPoints.start, endPoints.end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
 
             case _ => None
@@ -143,7 +143,7 @@ object LaneUtils {
    * Returns one start and end value per link or None.
    */
   def calculateStartAndEndPoint(selection: LaneRoadAddressInfo, addressesOnLink: Set[RoadAddressTEMP],
-                                linkLength: Double): Option[(Double, Double)] = {
+                                linkLength: Double): Option[LaneEndPoints] = {
     val (linkAddressM, linkMValue) = // Determine total address length and m value within link
       addressesOnLink.foldLeft(0L, 0.0){ (result, address) =>
         (result._1 + address.endAddressM - address.startAddressM, result._2 + address.endMValue - address.startMValue)
@@ -216,9 +216,9 @@ object LaneUtils {
 
     startAndEndValues.size match {// Returns one start and end point per link or None
       case size if size == 1 =>
-        Some(roundMeasure(startAndEndValues.head._1), roundMeasure(startAndEndValues.head._2))
+        Some(LaneEndPoints(roundMeasure(startAndEndValues.head._1), roundMeasure(startAndEndValues.head._2)))
       case size if size > 1 => // If link has multiple endpoints return smallest start value and biggest end value
-        Some(roundMeasure(startAndEndValues.minBy(_._1)._1), roundMeasure(startAndEndValues.maxBy(_._2)._2))
+        Some(LaneEndPoints(roundMeasure(startAndEndValues.minBy(_._1)._1), roundMeasure(startAndEndValues.maxBy(_._2)._2)))
       case _ =>
         None
     }

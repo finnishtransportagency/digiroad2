@@ -53,6 +53,7 @@ case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue])
 
 case class LaneRoadAddressInfo ( roadNumber: Long, startRoadPart: Long, startDistance: Long,
                                  endRoadPart: Long, endDistance: Long, track: Int )
+case class LaneEndPoints ( start: Double, end: Double )
 
 /**
   * Values for lane numbers
