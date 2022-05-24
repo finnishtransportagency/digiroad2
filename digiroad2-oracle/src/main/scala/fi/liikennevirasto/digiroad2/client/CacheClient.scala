@@ -48,6 +48,7 @@ class CacheClient {
       case e: Exception => logger.error("Retrieval of cached value failed", e); throw e
     }
   }
+
 }
 
 object Caching extends CacheClient {
@@ -66,5 +67,11 @@ object Caching extends CacheClient {
       f
     }
   }
+
+  def flush(): Boolean = {
+      val result = client.flush()
+      result.get()
+    }
+
 }
 
