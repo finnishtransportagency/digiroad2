@@ -158,16 +158,23 @@ object LaneUtils {
       val endMValue = road.endMValue / viiteMeasure * adjustedMeasure
       val startDifferenceM = (selection.startDistance - road.startAddressM) * adjustedMeasure
       val endDifferenceM = (road.endAddressM - selection.endDistance) * adjustedMeasure
+      val positiveStartDiff = startDifferenceM > 0
+      val positiveEndDiff = endDifferenceM > 0
       val towardsDigitizing = road.sideCode.getOrElse(SideCode.TowardsDigitizing) == SideCode.TowardsDigitizing
 
       val startPoint = // Calculated start point for cases when lane does not start from the start of road address
-        if (towardsDigitizing && startDifferenceM > 0) startMValue + startDifferenceM
-        else if (!towardsDigitizing && endDifferenceM > 0) startMValue + endDifferenceM
+        if (towardsDigitizing && positiveStartDiff) startMValue + startDifferenceM
+        else if (!towardsDigitizing && positiveEndDiff) startMValue + endDifferenceM
         else startMValue
       val endPoint = // Calculated end point for cases when lane ends before the end of road address
-        if (towardsDigitizing && endDifferenceM > 0) endMValue - endDifferenceM
-        else if (!towardsDigitizing && startDifferenceM > 0) endMValue - startDifferenceM
+        if (towardsDigitizing && positiveEndDiff) endMValue - endDifferenceM
+        else if (!towardsDigitizing && positiveStartDiff) endMValue - startDifferenceM
         else endMValue
+
+      val roadStartsAfterSelectionEnd =     road.startAddressM >= selection.endDistance
+      val roadEndsBeforeSelectionStart =    road.endAddressM <= selection.startDistance
+      val roadStartsBeforeSelectionStart =  road.startAddressM < selection.startDistance
+      val roadEndsAfterSelectionEnd =       road.endAddressM > selection.endDistance
 
       // Determine if what endpoint values to use or if road address should be skipped
       // If adjusted start or end point is used and road side code is againstDigitising, the opposite value is adjusted
@@ -176,29 +183,29 @@ object LaneUtils {
           Some(road.startMValue, road.endMValue)
 
         case part if part == selection.startRoadPart && part == selection.endRoadPart =>
-          if (road.endAddressM <= selection.startDistance || road.startAddressM >= selection.endDistance)
+          if (roadEndsBeforeSelectionStart || roadStartsAfterSelectionEnd)
             None
-          else if (road.startAddressM < selection.startDistance && road.endAddressM > selection.endDistance)
+          else if (roadStartsBeforeSelectionStart && roadEndsAfterSelectionEnd)
             Some( startPoint, endPoint )
-          else if (road.startAddressM < selection.startDistance)
+          else if (roadStartsBeforeSelectionStart)
             if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint )
-          else if (road.endAddressM > selection.endDistance)
+          else if (roadEndsAfterSelectionEnd)
             if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
           else
             Some( startMValue, endMValue)
 
         case part if part == selection.startRoadPart =>
-          if (road.endAddressM <= selection.startDistance)
+          if (roadEndsBeforeSelectionStart)
             None
-          else if (road.startAddressM < selection.startDistance)
+          else if (roadStartsBeforeSelectionStart)
             if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint)
           else
             Some(startMValue, endMValue)
 
         case part if part == selection.endRoadPart =>
-          if (road.startAddressM >= selection.endDistance)
+          if (roadStartsAfterSelectionEnd)
             None
-          else if (road.endAddressM > selection.endDistance)
+          else if (roadEndsAfterSelectionEnd)
             if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
           else
             Some(startMValue, endMValue)
