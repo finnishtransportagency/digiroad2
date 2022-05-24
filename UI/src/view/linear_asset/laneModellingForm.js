@@ -92,6 +92,12 @@
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
+      },
+      {
+        label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13, required: true
+      },
+      {
+        label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 14
       }
     ]
   };
