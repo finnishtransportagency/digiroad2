@@ -176,13 +176,13 @@ object LaneUtils {
           Some(road.startMValue, road.endMValue)
 
         case part if part == selection.startRoadPart && part == selection.endRoadPart =>
-          if (!(road.endAddressM > selection.startDistance && road.startAddressM < selection.endDistance))
+          if (road.endAddressM <= selection.startDistance || road.startAddressM >= selection.endDistance)
             None
-          else if (road.startAddressM <= selection.startDistance && road.endAddressM >= selection.endDistance)
+          else if (road.startAddressM < selection.startDistance && road.endAddressM > selection.endDistance)
             Some( startPoint, endPoint )
-          else if (road.startAddressM <= selection.startDistance)
+          else if (road.startAddressM < selection.startDistance)
             if (towardsDigitizing) Some( startPoint, endMValue ) else Some( startMValue, endPoint )
-          else if (road.endAddressM >= selection.endDistance)
+          else if (road.endAddressM > selection.endDistance)
             if (towardsDigitizing) Some( startMValue, endPoint ) else Some( startPoint, endMValue )
           else
             Some( startMValue, endMValue)
