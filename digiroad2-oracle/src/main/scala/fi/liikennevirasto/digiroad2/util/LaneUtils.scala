@@ -180,7 +180,7 @@ object LaneUtils {
       // If adjusted start or end point is used and road side code is againstDigitising, the opposite value is adjusted
       road.roadPart match {
         case part if part > selection.startRoadPart && part < selection.endRoadPart =>
-          Some(road.startMValue, road.endMValue)
+          Some(startMValue, endMValue)
 
         case part if part == selection.startRoadPart && part == selection.endRoadPart =>
           if (roadEndsBeforeSelectionStart || roadStartsAfterSelectionEnd)
