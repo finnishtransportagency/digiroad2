@@ -1642,8 +1642,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def missingStartDates(lanes: Set[NewLane]): Boolean = {
     lanes.exists { lane =>
-      if (LaneNumberOneDigit.isMainLane(laneService.getLaneCode(lane).toInt)) false
-      else {
         val property = lane.properties.find(_.publicId == "start_date")
         if (property.isEmpty) true
         else {
@@ -1652,7 +1650,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             case _ => false
           }
         }
-      }
     }
   }
 
