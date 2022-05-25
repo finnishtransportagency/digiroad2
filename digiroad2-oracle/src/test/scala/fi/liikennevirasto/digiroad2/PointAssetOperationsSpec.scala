@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.PointAssetOperations._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.PointAssetFiller._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 
@@ -81,7 +81,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       Point(453585.919,6845972.216,113.33699999999953), Point(453610.303,6845984.065,113.6530000000057),
       Point(453638.671,6845997.516,114.12300000000687), Point(453650.524,6846003.514,114.4030000000057))
 
-    val roadLink = Some(VVHRoadlink(100,172, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath))
+    val roadLink = Some(RoadlinkFetched(100,172, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath))
 
     PointAssetOperations.isFloating(persistedAsset, roadLink)._1 should be (true)
 

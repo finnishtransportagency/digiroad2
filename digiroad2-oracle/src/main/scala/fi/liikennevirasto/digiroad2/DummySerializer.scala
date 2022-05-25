@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.io.File
 
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHRoadNodes}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadNodesFetched}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 
@@ -26,7 +26,7 @@ class DummySerializer extends VVHSerializer{
     Seq()
   }
 
-  override def readCachedNodes(file: File): Seq[VVHRoadNodes] = {
+  override def readCachedNodes(file: File): Seq[RoadNodesFetched] = {
     Seq()
   }
 }
