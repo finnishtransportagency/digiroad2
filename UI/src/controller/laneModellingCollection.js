@@ -42,7 +42,7 @@
       right.points = split.secondSplitVertices;
       right.startMeasure = split.splitMeasure;
 
-      if (self.calculateMeasure(left) < self.calculateMeasure(right)) {
+      if (left.startMeasure < right.startMeasure) {
         self.splitLinearAssets.created = left;
         self.splitLinearAssets.existing = right;
       } else {
@@ -52,9 +52,6 @@
 
       self.splitLinearAssets.created.id = 0;
       self.splitLinearAssets.existing.id = 0;
-
-      self.splitLinearAssets.created.marker = 'A';
-      self.splitLinearAssets.existing.marker = 'B';
 
       self.dirty = true;
       callback(self.splitLinearAssets);
