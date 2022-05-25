@@ -25,7 +25,7 @@ import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, TrafficDirection, Unknown}
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -44,11 +44,11 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   val mockVVHClient = MockitoSugar.mock[VVHClient]
 
   val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockVVHClient, mockRoadLinkService, mockEventBus, mockService)
-  val vvHRoadlink = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+  val vvHRoadlink = Seq(RoadlinkFetched(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
 
   when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
-  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]])).thenReturn(roadLink)
+  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[RoadlinkFetched]])).thenReturn(roadLink)
 
   def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
 
@@ -159,7 +159,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     stops.foreach { case(id, administrativeClass) =>
-      when(mockVVHRoadLinkClient.fetchByLinkId(ArgumentMatchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      when(mockVVHRoadLinkClient.fetchByLinkId(ArgumentMatchers.eq(id))).thenReturn(Some(RoadlinkFetched(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
@@ -186,10 +186,10 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       })
     }
 
-    when(mockMassTransitStopService.isFloating(any[PersistedPointAsset], any[Option[VVHRoadlink]])).thenAnswer(new Answer[Object] {
+    when(mockMassTransitStopService.isFloating(any[PersistedPointAsset], any[Option[RoadlinkFetched]])).thenAnswer(new Answer[Object] {
       override def answer(invocation: InvocationOnMock): Object = {
         val persistedPointAsset: PersistedPointAsset  = invocation.getArguments()(0).asInstanceOf[PersistedPointAsset]
-        val vvhRoadlink: Option[VVHRoadlink]  = invocation.getArguments()(1).asInstanceOf[Option[VVHRoadlink]]
+        val vvhRoadlink: Option[RoadlinkFetched]  = invocation.getArguments()(1).asInstanceOf[Option[RoadlinkFetched]]
 
         val testMassTransitStopService = new TestMassTransitStopService(new DummyEventBus, MockitoSugar.mock[RoadLinkService])
         testMassTransitStopService.isFloating(persistedPointAsset, vvhRoadlink)

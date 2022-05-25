@@ -11,7 +11,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -22,7 +22,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 class ObstacleServiceSpec extends FunSuite with Matchers {
 
-  def toRoadLink(l: VVHRoadlink) = {
+  def toRoadLink(l: RoadlinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
@@ -33,14 +33,14 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    RoadlinkFetched(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1611317)).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    RoadlinkFetched(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1191950690)).thenReturn(Seq(
-    VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
+    RoadlinkFetched(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
   when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
@@ -67,7 +67,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
-      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+      RoadlinkFetched(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get

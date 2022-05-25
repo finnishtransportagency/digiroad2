@@ -378,7 +378,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val roadWidthIns2 = DynamicValue(DynamicAssetValue(propIns2))
     val roadWidthUpd = DynamicValue(DynamicAssetValue(propUpd))
 
-    when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(5000, 235, Seq(Point(0, 0), Point(100, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadlinkFetched(5000, 235, Seq(Point(0, 0), Point(100, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     val service = createService()
     val toInsert = Seq(NewLinearAsset(5000, 0, 50, roadWidthIns1, BothDirections.value, 0, None), NewLinearAsset(5001, 0, 50, roadWidthIns2, BothDirections.value, 0, None))

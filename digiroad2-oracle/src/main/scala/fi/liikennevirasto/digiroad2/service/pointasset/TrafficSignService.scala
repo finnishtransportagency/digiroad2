@@ -148,7 +148,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         roadLinks.find(_.linkId == asset.linkId) match {
           case Some(roadLink) => roadLink
           case _ =>
-            historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+            historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.timeStamp)(Ordering.Long.reverse).headOption
             .getOrElse(throw new IllegalStateException(s"Road link no longer available ${asset.linkId}"))
         })
     }

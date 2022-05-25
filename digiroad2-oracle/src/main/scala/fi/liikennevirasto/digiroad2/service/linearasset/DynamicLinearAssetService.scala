@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
@@ -150,7 +150,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
       val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
       
-      var roadLink:VVHRoadlink=null
+      var roadLink:RoadlinkFetched=null
       try{
         roadLink= vvhClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).get
       }

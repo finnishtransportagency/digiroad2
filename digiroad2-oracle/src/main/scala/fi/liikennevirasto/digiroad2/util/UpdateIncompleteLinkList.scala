@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, VVHClient, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -66,7 +66,7 @@ object UpdateIncompleteLinkList {
     * @param changes
     * @return Road links
     */
-  def generateProperties(allVvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
+  def generateProperties(allVvhRoadLinks: Seq[RoadlinkFetched], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
     val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
 
     def autoGenerateProperties(roadLink: RoadLink): RoadLink = {

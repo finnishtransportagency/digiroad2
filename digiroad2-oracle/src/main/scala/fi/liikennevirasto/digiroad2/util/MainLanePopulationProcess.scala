@@ -110,7 +110,7 @@ object MainLanePopulationProcess {
       Queries.getMunicipalities
     }
 
-    municipalities.foreach { municipality =>
+    Seq(35,43,60,62,65,76,170,295,318,417,438,478,736,766,771,941).foreach { municipality =>
       mainLanesForMunicipality(municipality, initialProcessing)
     }
 
@@ -125,7 +125,7 @@ object MainLanePopulationProcess {
       Queries.getMunicipalities
     }
 
-    municipalities.foreach { municipality =>
+    Seq(35,43,60,62,65,76,170,295,318,417,438,478,736,766,771,941).foreach { municipality =>
       logger.info("Deleting lanes from municipality -> " + municipality)
       PostGISDatabase.withDynTransaction(laneService.expireAllMunicipalityLanes(municipality, username))
     }

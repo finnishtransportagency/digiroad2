@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, ManoeuvreElement, NewManoeuvre}
@@ -14,7 +14,7 @@ import org.scalatest.{FunSuite, Matchers}
   */
 class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
-  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): ManoeuvreDao = {
+  private def daoWithRoadLinks(roadLinks: Seq[RoadlinkFetched]): ManoeuvreDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 

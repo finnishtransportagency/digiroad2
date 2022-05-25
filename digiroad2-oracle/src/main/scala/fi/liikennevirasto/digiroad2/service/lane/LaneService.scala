@@ -319,7 +319,7 @@ trait LaneOperations {
     PieceWiseLane(lane.id, lane.linkId, lane.sideCode, lane.expired, geometry,
       lane.startMeasure, lane.endMeasure,
       Set(endPoints._1, endPoints._2), lane.modifiedBy, lane.modifiedDateTime,
-      lane.createdBy, lane.createdDateTime,  roadLink.vvhTimeStamp,
+      lane.createdBy, lane.createdDateTime,  roadLink.timeStamp,
       lane.geomModifiedDate, roadLink.administrativeClass, lane.attributes, attributes = Map("municipality" -> lane.municipalityCode, "trafficDirection" -> roadLink.trafficDirection))
     }
   }
