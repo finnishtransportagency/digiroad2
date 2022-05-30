@@ -118,9 +118,9 @@ object LaneUtils {
 
     val finalRoads = groupedAddresses.filter { elem =>  // Remove addresses which roadPart is not between our start and end
       val roadPartNumber = elem.roadPart
-      val inInitialAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.startRoadPart && roadPartNumber <= laneRoadAddressInfo.endRoadPart
+      val inStartAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.startRoadPart && roadPartNumber <= laneRoadAddressInfo.endRoadPart
 
-      inInitialAndEndRoadPart
+      inStartAndEndRoadPart
     }
 
     finalRoads.flatMap { road =>
