@@ -320,4 +320,18 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }.toSeq
   }
 
+  def groupRoadAddressTEMP(roadAddresses: Set[RoadAddressTEMP]): Set[RoadAddressTEMP] = {
+    roadAddresses
+      .groupBy(address => (address.linkId, address.road, address.roadPart))
+      .mapValues(addresses => (addresses.minBy(_.startAddressM),addresses.maxBy(_.endAddressM)))
+      .map {
+        case (_, (startRoadAddress, endRoadAddress)) =>
+          val (adjustedStart, adjustedEnd) =
+            if (startRoadAddress.startMValue > endRoadAddress.startMValue)
+              (endRoadAddress.startMValue, startRoadAddress.endMValue)
+            else
+              (startRoadAddress.startMValue, endRoadAddress.endMValue)
+          startRoadAddress.copy(endAddressM = endRoadAddress.endAddressM, startMValue = adjustedStart, endMValue = adjustedEnd)
+    }.toSet
+  }
 }
