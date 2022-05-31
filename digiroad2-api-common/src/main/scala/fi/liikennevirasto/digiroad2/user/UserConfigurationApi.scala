@@ -123,7 +123,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
     val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
 
-    val availableRoles = Set(Role.ElyMaintainer, Role.Operator, Role.ServiceRoadMaintainer)
+    val availableRoles = Set(Role.ElyMaintainer, Role.Operator, Role.ServiceRoadMaintainer,Role.LaneMaintainer)
     val roles: Set[String] = roleName.filter(availableRoles.contains).toSet
 
     val authorizedAreas = splitToInts(authorizationArea) match {

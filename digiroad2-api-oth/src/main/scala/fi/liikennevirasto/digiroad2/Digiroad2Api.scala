@@ -1612,6 +1612,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateUserRightsForLanes(linkIds: Set[Long], user: User) : Unit = {
+    if (!user.isOperator() && !user.isLaneMaintainer()) {
+      halt(Unauthorized("User not authorized"))
+    }
 
     val roadLinks = roadLinkService.fetchVVHRoadlinksAndComplementary(linkIds)
     roadLinks.foreach(a => validateUserAccess(user)(a.municipalityCode, a.administrativeClass))
@@ -1619,7 +1622,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def validateUserRightsForRoadAddress(laneRoadAddressInfo: LaneRoadAddressInfo, user: User) : Unit = {
 
-    val roadParts = laneRoadAddressInfo.initialRoadPartNumber to laneRoadAddressInfo.endRoadPartNumber
+    val roadParts = laneRoadAddressInfo.startRoadPart to laneRoadAddressInfo.endRoadPart
 
     // Get the LinkIds from road address information from Viite
     val linkIds = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))

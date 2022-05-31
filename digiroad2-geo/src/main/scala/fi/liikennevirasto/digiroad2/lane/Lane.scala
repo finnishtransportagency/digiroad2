@@ -51,8 +51,9 @@ sealed trait LaneValue {
 case class LanePropertyValue(value: Any)
 case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue])
 
-case class LaneRoadAddressInfo ( roadNumber: Long, initialRoadPartNumber: Long, initialDistance: Long,
-                                 endRoadPartNumber: Long, endDistance: Long, track: Int )
+case class LaneRoadAddressInfo ( roadNumber: Long, startRoadPart: Long, startDistance: Long,
+                                 endRoadPart: Long, endDistance: Long, track: Int )
+case class LaneEndPoints ( start: Double, end: Double )
 
 /**
   * Values for lane numbers
@@ -277,12 +278,12 @@ object LaneChangeType {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object Add extends LaneChangeType { def value = 1; def description = "Lane is added normally";}
-  case object Lengthened extends LaneChangeType {def value = 2; def description = "Old lane is deleted and then a new lane is created with more length";}
-  case object Shortened extends LaneChangeType {def value = 3; def description = "Old lane is deleted and then a new lane is created with less length";}
-  case object Expired extends LaneChangeType {def value = 4; def description = "Lane is expired normally";}
-  case object LaneCodeTransfer extends LaneChangeType {def value = 5; def description = "Lane with some code was changed to another code";}
-  case object AttributesChanged extends LaneChangeType {def value = 6; def description = "Lane attributes were changed";}
-  case object Divided extends LaneChangeType {def value = 7; def description = "Old lane is deleted and then two more appear in same lane code";}
-  case object Unknown extends LaneChangeType {def value = 99; def description = "Unknown change to lane";}
+  case object Add extends LaneChangeType { def value = 1; def description = "A new lane is added from scratch";}
+  case object Lengthened extends LaneChangeType {def value = 2; def description = "The old lane is replaced with a longer new lane";}
+  case object Shortened extends LaneChangeType {def value = 3; def description = "The old lane is replaced with a shorter new lane";}
+  case object Expired extends LaneChangeType {def value = 4; def description = "A lane is expired with no replacements";}
+  case object LaneCodeTransfer extends LaneChangeType {def value = 5; def description = "The lane code is changed";}
+  case object AttributesChanged extends LaneChangeType {def value = 6; def description = "Some of the lane attributes are changed";}
+  case object Divided extends LaneChangeType {def value = 7; def description = "The old lane is replaced with two or more lane pieces";}
+  case object Unknown extends LaneChangeType {def value = 99; def description = "Unknown lane change";}
 }
