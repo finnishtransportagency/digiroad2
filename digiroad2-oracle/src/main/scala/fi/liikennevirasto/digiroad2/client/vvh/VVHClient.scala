@@ -192,6 +192,179 @@ object ChangeType {
   }
 }
 
+trait Filter {
+  // TODO can we do filtering in ogc api and doest it work
+  def withFilter[T](attributeName: String, ids: Set[T]): String = ???
+
+  def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = ???
+
+  def withMunicipalityFilter(municipalities: Set[Int]): String = ???
+  def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = ???
+
+  def combineFiltersWithAnd(filter1: String, filter2: String): String = ???
+
+  def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = ???
+
+  /**
+    *
+    * @param polygon to be converted to string
+    * @return string compatible with VVH polygon query
+    */
+  def stringifyPolygonGeometry(polygon: Polygon): String = ???
+
+  // Query filters methods
+  def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = ???
+
+  def withLinkIdFilter(linkIds: Set[Long]): String = ???
+
+  def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = ???
+
+  def withMmlIdFilter(mmlIds: Set[Long]): String = ???
+
+  def withMtkClassFilter(ids: Set[Long]): String = ???
+
+  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = ???
+
+  def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = ???
+  
+  def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = ???
+}
+
+
+object Filter extends Filter {
+
+  def anyToDouble(number: Any): Option[Double] = number match {
+    case bi: BigInt => Some(bi.toDouble)
+    case i: Int => Some(i.toDouble)
+    case l: Long => Some(l.toDouble)
+    case d: Double => Some(d)
+    case _ => None
+  }
+  
+  // TODO can we do filetering in ogc api and doest it work
+   override def withFilter[T](attributeName: String, ids: Set[T]): String = {
+    val filter =
+      if (ids.isEmpty) {
+        ""
+      } else {
+        val query = ids.mkString(",")
+        s""""where":"$attributeName IN ($query)","""
+      }
+    filter
+  }
+
+   override def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
+    val filter =
+      if (low < 0 || high < 0 || low > high) {
+        ""
+      } else {
+        if (includeAllPublicRoads) {
+          //TODO check if we can remove the adminclass in the future
+          s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
+        } else {
+          s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
+        }
+      }
+    filter
+  }
+
+   override def withMunicipalityFilter(municipalities: Set[Int]): String = {
+    withFilter("MUNICIPALITYCODE", municipalities)
+  }
+
+   override def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
+    val filter =
+      if (names.isEmpty) {
+        ""
+      } else {
+        val query = names.mkString("','")
+        s""""where":"$attributeName IN ('$query')","""
+      }
+    filter
+  }
+
+  override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
+
+    (filter1.isEmpty, filter2.isEmpty) match {
+      case (true,true) => ""
+      case (true,false) => filter2
+      case (false,true) => filter1
+      case (false,false) => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
+    }
+  }
+
+  override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
+    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
+  }
+
+  /**
+    *
+    * @param polygon to be converted to string
+    * @return string compatible with VVH polygon query
+    */
+  override def stringifyPolygonGeometry(polygon: Polygon): String = {
+    var stringPolygonList: String = ""
+    var polygonString: String = "{rings:[["
+    polygon.getCoordinates
+    if (polygon.getCoordinates.length > 0) {
+      for (point <- polygon.getCoordinates.dropRight(1)) {
+        // drop removes duplicates
+        polygonString += "[" + point.x + "," + point.y + "],"
+      }
+      polygonString = polygonString.dropRight(1) + "]]}"
+      stringPolygonList += polygonString
+    }
+    stringPolygonList
+  }
+  
+  // Query filters methods
+   override def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
+    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
+  }
+
+   override def withLinkIdFilter(linkIds: Set[Long]): String = {
+    withFilter("LINKID", linkIds)
+  }
+
+   override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
+    withRoadNameFilter(roadNameSource, roadNames)
+  }
+
+   override def withMmlIdFilter(mmlIds: Set[Long]): String = {
+    withFilter("MTKID", mmlIds)
+  }
+
+   override def withMtkClassFilter(ids: Set[Long]): String = {
+    withFilter("MTKCLASS", ids)
+  }
+
+  override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
+  }
+
+  override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+  }
+
+
+  override def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
+    if (roadNumbers.isEmpty)
+      return s""""where":"($filter)","""
+    if (includeAllPublicRoads)
+      return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
+    val limit = roadNumbers.head
+    val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
+  }
+}
+
 object VVHClient {
   /**
     * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
@@ -247,9 +420,6 @@ trait LinkOperationsAbstract {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
-
-
-  
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                                municipalities: Set[Int] = Set(),
                                                includeAllPublicRoads: Boolean = false): Seq[RoadlinkFetched] = ???
@@ -295,8 +465,6 @@ class VVHAuthPropertyReader {
   }
 }
 
-
-
 trait VVHClientOperations extends LinkOperationsAbstract {
   override type IdType = Long
 
@@ -313,89 +481,6 @@ trait VVHClientOperations extends LinkOperationsAbstract {
 
   override lazy val logger = LoggerFactory.getLogger(getClass)
 
-  protected def anyToDouble(number: Any): Option[Double] = number match {
-    case bi: BigInt => Some(bi.toDouble)
-    case i: Int => Some(i.toDouble)
-    case l: Long => Some(l.toDouble)
-    case d: Double => Some(d)
-    case _ => None
-  }
-
-  protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
-    val filter =
-      if (ids.isEmpty) {
-        ""
-      } else {
-        val query = ids.mkString(",")
-        s""""where":"$attributeName IN ($query)","""
-      }
-    filter
-  }
-
-  protected def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
-    val filter =
-      if (low < 0 || high < 0 || low > high) {
-        ""
-      } else {
-        if (includeAllPublicRoads) {
-          //TODO check if we can remove the adminclass in the future
-          s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
-        } else {
-          s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
-        }
-      }
-    filter
-  }
-
-  protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
-    withFilter("MUNICIPALITYCODE", municipalities)
-  }
-
-  protected def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
-    val filter =
-      if (names.isEmpty) {
-        ""
-      } else {
-        val query = names.mkString("','")
-        s""""where":"$attributeName IN ('$query')","""
-      }
-    filter
-  }
-
-  protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
-
-    (filter1.isEmpty, filter2.isEmpty) match {
-      case (true,true) => ""
-      case (true,false) => filter2
-      case (false,true) => filter1
-      case (false,false) => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
-    }
-  }
-
-  protected def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
-    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
-  }
-
-  /**
-    *
-    * @param polygon to be converted to string
-    * @return string compatible with VVH polygon query
-    */
-  def stringifyPolygonGeometry(polygon: Polygon): String = {
-    var stringPolygonList: String = ""
-    var polygonString: String = "{rings:[["
-    polygon.getCoordinates
-    if (polygon.getCoordinates.length > 0) {
-      for (point <- polygon.getCoordinates.dropRight(1)) {
-        // drop removes duplicates
-        polygonString += "[" + point.x + "," + point.y + "],"
-      }
-      polygonString = polygonString.dropRight(1) + "]]}"
-      stringPolygonList += polygonString
-    }
-    stringPolygonList
-  }
-
   protected def queryParameters(fetchGeometry: Boolean = true): String = {
     if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
     else "returnGeometry=false&f=pjson"
@@ -411,7 +496,7 @@ trait VVHClientOperations extends LinkOperationsAbstract {
   }
 
   protected def serviceUrl(polygon: Polygon, definition: String, parameters: String) : String = {
-    val polygonString = stringifyPolygonGeometry(polygon)
+    val polygonString = Filter.stringifyPolygonGeometry(polygon)
     serviceUrl +
       s"?layerDefs=$definition&geometry=" + URLEncoder.encode(polygonString) +
       s"&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&$parameters"
@@ -538,7 +623,7 @@ trait VVHClientOperations extends LinkOperationsAbstract {
     * Returns VVH road links by municipality.
     */
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), filter))
+    val definition = layerDefinition(Filter.combineFiltersWithAnd(Filter.withMunicipalityFilter(Set(municipality)), filter))
     val url = serviceUrl(definition, queryParameters())
 
     fetchVVHFeatures(url) match {
@@ -552,7 +637,7 @@ trait VVHClientOperations extends LinkOperationsAbstract {
     * Returns VVH road links in bounding box area. Municipalities are optional.
     */
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[LinkType] = {
-    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))
+    val definition = layerDefinition(Filter.combineFiltersWithAnd(Filter.withMunicipalityFilter(municipalities), filter))
     val url = serviceUrl(bounds, definition, queryParameters())
 
     fetchVVHFeatures(url) match {
@@ -572,7 +657,7 @@ trait VVHClientOperations extends LinkOperationsAbstract {
     if(polygon.getCoordinates.size == 0)
       return Seq[LinkType]()
 
-    val definition = layerDefinition(combineFiltersWithAnd("",""))
+    val definition = layerDefinition(Filter.combineFiltersWithAnd("",""))
     val url = serviceUrl(polygon, definition, queryParameters())
 
     fetchVVHFeatures(url) match {
@@ -581,13 +666,6 @@ trait VVHClientOperations extends LinkOperationsAbstract {
     }
   }
 
-}
-
-class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
-  override type Content = Map[String, Any]
-  protected override val serviceName = "Roadlink_temp"
-  protected override val disableGeometry = false
-  protected override def mapFields(content: Content, url: String): Either[List[Map[String, Any]], LinkOperationError] = ???
 }
 
 class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
@@ -623,20 +701,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
 
-  /**
-    * Returns VVH road links in bounding box area. Municipalities are optional.
-    * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
-    */
-  override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[RoadlinkFetched] = {
-    val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)
-      Some(withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
-    else
-      None
-    queryByMunicipalitiesAndBounds(bounds, municipalities, roadNumberFilters)
-  }
-
   override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
-    val polygonString = stringifyPolygonGeometry(polygon)
+    val polygonString = Filter.stringifyPolygonGeometry(polygon)
     if (!polygonString.contains("{rings:["))
     {
       return  Seq.empty[Long]
@@ -724,7 +790,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val mtkClass = attributes("MTKCLASS")
-    val geometryLength = anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(0.0)
+    val geometryLength = Filter.anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(0.0)
 
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
       attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
@@ -808,53 +874,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     }
   }
 
-  // Query filters methods
-  protected def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
-    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
-  }
-
-  protected def withLinkIdFilter(linkIds: Set[Long]): String = {
-    withFilter("LINKID", linkIds)
-  }
-
-  protected def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
-    withRoadNameFilter(roadNameSource, roadNames)
-  }
-
-  protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
-    withFilter("MTKID", mmlIds)
-  }
-
-  protected def withMtkClassFilter(ids: Set[Long]): String = {
-    withFilter("MTKCLASS", ids)
-  }
-
-  protected  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
-    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
-  }
-
-  protected def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
-    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
-    val since = formatter.print(lowerDate)
-    val until = formatter.print(higherDate)
-
-    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
-  }
-
-
-  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
-    if (roadNumbers.isEmpty)
-      return s""""where":"($filter)","""
-    if (includeAllPublicRoads)
-      return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
-    val limit = roadNumbers.head
-    val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
-    if (filter == "")
-      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
-    else
-      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
-  }
-
   protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
@@ -866,7 +885,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     12132 -> FeatureClass.CarRoad_IIIb
   )
 
-  protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+  protected val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
@@ -875,7 +894,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
     */
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[RoadlinkFetched] = {
-    val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
+    val definition = layerDefinition(Filter.withLastEditedDateFilter(lowerDate, higherDate))
     val url = serviceUrl(definition, queryParameters())
 
     fetchVVHFeatures(url) match {
@@ -899,13 +918,13 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * PostGISLinearAssetDao.getLinksWithLengthFromVVH, PostGISLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
     */
   def fetchByLinkIds(linkIds: Set[Long]): Seq[RoadlinkFetched] = {
-    queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, withLinkIdFilter)
+    queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, Filter.withLinkIdFilter)
   }
 
   def fetchByLinkIdsF(linkIds: Set[Long]) = {
     Future(fetchByLinkIds(linkIds))
   }
-  
+  //TODO only one used
   def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = {
     Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
   }
@@ -921,7 +940,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
     */
   def fetchByMmlIds(mmlIds: Set[Long]): Seq[RoadlinkFetched] = {
-    queryByLinkIds(mmlIds, None, true, extractRoadLinkFeature, withMmlIdFilter)
+    queryByLinkIds(mmlIds, None, true, extractRoadLinkFeature,Filter.withMmlIdFilter)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[RoadlinkFetched] = {
@@ -967,21 +986,11 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   }
 
   /**
-    * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
-    * TODO no used
-    */
-  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
-                                                 includeAllPublicRoads: Boolean = false): Future[Seq[RoadlinkFetched]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads))
-  }
-
-  /**
     * Returns VVH road links by finnish names.
     * Used by VVHClient.fetchByLinkId, TODO only two used, redo without roadname
     */
   def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[RoadlinkFetched] = {
-    queryByNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
+    queryByNames(roadNames, None, true, extractRoadLinkFeature, Filter.withFinNameFilter(roadNamePublicId))
   }
 
   /**
@@ -992,7 +1001,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
                            fieldSelection: Option[String], //TODO can we filter resort
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
-    queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, withLinkIdFilter)
+    queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, Filter.FilterwithLinkIdFilter)
 }
 
 class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
@@ -1072,7 +1081,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(withFilter("OLD_ID", ids))
+      val definition = layerDefinition(Filter.withFilter("OLD_ID", ids))
       val url = serviceUrl(definition, queryParameters(false))
 
       fetchVVHFeatures(url) match {
@@ -1157,11 +1166,11 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   }
 
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadlinkFetched]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
+    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(Filter.withMtkClassFilter(Set(12314)))))
   }
 
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[RoadlinkFetched]] =
-    Future(queryByMunicipality(municipality, Some(withMtkClassFilter(Set(12314)))))
+    Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
 
   def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], LinkOperationError] = {
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/0/updateFeatures"
@@ -1254,7 +1263,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
       val batchSize = 1000
       val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
       idGroups.par.flatMap { ids =>
-        val definition = layerDefinition(withLinkIdFilter(ids))
+        val definition = layerDefinition(Filter.withLinkIdFilter(ids))
         val url = serviceUrl(definition, queryParameters())
 
         fetchVVHFeatures(url) match {
@@ -1268,4 +1277,11 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
   def fetchVVHRoadLinkByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[HistoryRoadLink]] = {
     Future(fetchVVHRoadLinkByLinkIds(linkIds))
   }
+}
+// TODO delete?
+class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
+  override type Content = Map[String, Any]
+  protected override val serviceName = "Roadlink_temp"
+  protected override val disableGeometry = false
+  protected override def mapFields(content: Content, url: String): Either[List[Map[String, Any]], LinkOperationError] = ???
 }
