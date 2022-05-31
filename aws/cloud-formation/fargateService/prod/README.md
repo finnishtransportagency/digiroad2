@@ -89,6 +89,14 @@ aws cloudformation create-stack \
 --parameters file://aws/cloud-formation/fargateService/prod/PROD-alb-ecs-parameter.json
 ```
 
+### Luo SNS-ilmoitukset
+```
+aws cloudformation create-stack \
+--stack-name SNS-notifications \
+--template-body file://aws/cloud-formation/sns/snsNotifications.yaml \
+--parameters file://aws/cloud-formation/sns/sns-parameter.json
+```
+
 ##Eräajoja varten tuotantotilille luotavat resurssit
 
 ### Luo S3 Bucket lambdan koodia varten

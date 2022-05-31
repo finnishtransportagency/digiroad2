@@ -7,9 +7,6 @@ Parameters:
   VpcIDOfSystem:
     Type: AWS::EC2::VPC::Id
     Description: VPC of your system
-  SNSTopicName:
-    Type: String
-    Description: Name of SNS topic
   EnvironmentName:
     Type: String
     Description: Name of used environment

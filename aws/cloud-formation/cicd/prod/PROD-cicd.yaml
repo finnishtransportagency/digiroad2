@@ -73,6 +73,7 @@ Resources:
               OutputArtifacts:
                 - Name: SourceOutput
               Configuration:
+                ImageTag: test
                 RepositoryName: !Ref EcrRepositoryName
         - Name: Accept
           Actions:
