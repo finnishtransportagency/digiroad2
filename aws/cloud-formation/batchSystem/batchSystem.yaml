@@ -195,6 +195,7 @@ Resources:
         - Key: Project
           Value: !Ref Project
 
+
   #Batch Events
   RunAnnualBatch:
     Type: AWS::Events::Rule
