@@ -16,7 +16,9 @@ import org.json4s.jackson.JsonMethods.parse
 import java.net.URLEncoder
 import scala.util.Try
 
-sealed case class FeatureCollection(`type`: String, features: List[Feature], crs: Option[Map[String, Any]] = None)
+sealed case class FeatureCollection(`type`: String, features: List[Feature], crs: Option[Map[String, Any]] = None,
+                                    numberReturned:Int=0,
+                                    nextPageLink:String="")
 sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
 
@@ -304,10 +306,13 @@ private  def extractMeasure(value: Any): Option[Double] = {
               crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)
             ))
             case "FeatureCollection" =>
+            val test=  feature("links").asInstanceOf[List[Map[String, Map[String, Any]]]]
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
                 features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature), 
-                crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)
+                crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
+                numberReturned = Try(feature("numberReturned").asInstanceOf[String].toInt).getOrElse(0) 
+                //nextPageLink = Try().getOrElse("")
               ))
             case _ => None
           }
@@ -320,29 +325,35 @@ private  def extractMeasure(value: Any): Option[Double] = {
       } 
     }
   }
-  
-  override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
-                                                        municipalities: Set[Int] = Set(),
-                                                        includeAllPublicRoads: Boolean = false): Seq[LinkType] = {
-    val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}")
-    match {
-      case Left(features) => features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
-    }
-  }
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}") 
+    var filterString  = "filter="
+    if (municipalities.nonEmpty || filter.isDefined){
+      filterString+FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(municipalities),filter)
+    }else {
+      filterString =""
+    }
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}&${filterString}") 
     match {
       case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
 //pagination
-  override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = ???
+  // https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/keskilinjavarasto:frozenlinks/items?filter=municipalitycode%3D91%20OR%20municipalitycode%3D297&limit=2&startIndex=2
+  override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
+    val filterString  = s"filter=${FilterOgc.combineFiltersWithAnd( FilterOgc.withMunicipalityFilter(Set(municipality)), filter)}"
+    val startIndex = 0
+    val limit = 1000
+    val format = "f=application%2Fjson"
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&limit=${limit}&startIndex=${startIndex}&crs=${crs}")
+    match {
+      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Right(error) => throw new ClientException(error.toString)
+    }
+  }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = ???
 
@@ -366,7 +377,8 @@ private  def extractMeasure(value: Any): Option[Double] = {
     if (linkIds.size == 1) {
       queryByLinkId[T](linkIds.head)
     }else {
-      Seq()
+      // how are we going to fetch large set of id, map loop is too inefficient
+      linkIds.flatMap(t=>queryByLinkId[T](t)).toSeq
     }
   }
 
