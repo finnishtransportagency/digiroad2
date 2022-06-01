@@ -1612,6 +1612,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateUserRightsForLanes(linkIds: Set[Long], user: User) : Unit = {
+    if (!user.isOperator() && !user.isLaneMaintainer()) {
+      halt(Unauthorized("User not authorized"))
+    }
 
     val roadLinks = roadLinkService.fetchVVHRoadlinksAndComplementary(linkIds)
     roadLinks.foreach(a => validateUserAccess(user)(a.municipalityCode, a.administrativeClass))
