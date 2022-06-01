@@ -22,7 +22,7 @@
         "value": "4"
       }
     ],
-    "executionRoleArn": "arn:aws:iam::475079312496:role/batchSystem-BatchTaskRole-GSUD7E3H8KV4",
+    "executionRoleArn": "arn:aws:iam::475079312496:role/DEV-batchSystem-BatchTaskRole-VGL42N9TANTI",
     "environment": [
       {
         "name": "containerCPU",
@@ -50,11 +50,15 @@
       },
       {
         "name": "vvhServiceHost",
-        "value": "haproxy.vayla.fi"
+        "value": "api.vayla.fi"
       },
       {
         "name": "vvhRestApiEndPoint",
-        "value": "https://haproxy.vayla.fi:2027/vvhdata/"
+        "value": "https://api.vayla.fi/vvhdata/"
+      },
+      {
+        "name": "vvhRest.username",
+        "value": "svc_vvh_digiroad"
       },
       {
         "name": "vvhRoadlink.frozen",
@@ -131,6 +135,10 @@
       {
         "name": "bonecp.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/bonecp.password"
+      },
+      {
+        "name": "vvhRest.password",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/vvhRest.password"
       },
       {
         "name": "oag.password",
