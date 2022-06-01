@@ -506,6 +506,13 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
   def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[IdType]] = {
     Future(queryLinksIdByPolygons(polygon))
   }
+  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[LinkType]] = {
+    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(Filter.withMtkClassFilter(Set(12314)))))
+  }
+  // only one used
+  def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[LinkType]] =
+    Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
+  
 }
 
 trait VVHClientOperations extends LinkOperationsAbstract {
@@ -1206,11 +1213,11 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
 
     nvps
   }
-
+// only one used
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadlinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(Filter.withMtkClassFilter(Set(12314)))))
   }
-
+  // only one used
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[RoadlinkFetched]] =
     Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
 
