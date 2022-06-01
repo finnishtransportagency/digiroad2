@@ -69,6 +69,21 @@ Resources:
               Bool:
                 'aws:SecureTransport': false
 
+  AppPipelineWebhookQA:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: !Ref GitHubWebhookSecret
+      Filters:
+        - JsonPath: $.ref
+          MatchEquals: 'refs/heads/{Branch}'
+      TargetPipeline: !Ref AppPipeline
+      TargetAction: SourceAction
+      Name: AppPipelineWebhookQA
+      TargetPipelineVersion: !GetAtt AppPipeline.Version
+      RegisterWithThirdParty: true
+
   AppPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:

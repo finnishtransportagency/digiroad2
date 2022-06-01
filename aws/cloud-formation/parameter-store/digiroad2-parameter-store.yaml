@@ -64,3 +64,10 @@ Resources:
       Name: /prod/googlemapapi.crypto_key
       Type: String
       Value: PlaceHolderValue
+  
+  VvhRestPassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/vvhRest.password
+      Type: String
+      Value: PlaceHolderValue
