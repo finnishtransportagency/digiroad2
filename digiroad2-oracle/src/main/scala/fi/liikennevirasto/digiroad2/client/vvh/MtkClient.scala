@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.TypeOfDamage.Paint
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection, Unknown}
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.anyToDouble
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
@@ -84,7 +85,6 @@ trait MtkOperation extends LinkOperationsAbstract{
   type Content = FeatureCollection
   type IdType = String
   protected val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
-  protected def restApiEndPoint: String = Digiroad2Properties.kmtkEndpoint
   protected def serviceName: String
   protected val disableGeometry: Boolean
   protected def mapFields(content:Content, url: String): Either[List[Map[String, Any]], LinkOperationError]  = ???
@@ -131,32 +131,38 @@ private  def extractMeasure(value: Any): Option[Double] = {
         }
       }
 
-      val validFromDate = Option(attributes("VALIDFROM").asInstanceOf[BigInt]).map(_.toLong)
+      val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
       var lastEditedDate : Option[Long] = Option(0)
-      if(attributes.contains("LAST_EDITED_DATE")){
-        lastEditedDate = Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+      if(attributes.contains("versionstarttime")){
+        lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
       }
       var geometryEditedDate : Option[Long] = Option(0)
       if(attributes.contains("GEOMETRY_EDITED_DATE")){
-        geometryEditedDate =  Option(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[BigInt]).map(_.toLong)
+        geometryEditedDate =  Option(new DateTime(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[String]).getMillis)
       }
 
       val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
       latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
     }
     val linkGeometry: Seq[Point] = path.map(point => {
-      Point(point(0), point(1), extractMeasure(point(2)).get)
+      try {
+        Point(point.head.toString.toDouble, point(1).toString.toDouble, extractMeasure(point(2).toString.toDouble).get)
+      }catch {
+        case e:ClassCastException => {
+          println(s"error ${point.toString()}"); 
+          Point(0,0,0)}
+      }
     })
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
     val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ")})"))
     
     val linkId = attributes("id").asInstanceOf[String]
-    val municipalityCode = attributes("municipalitycode").asInstanceOf[Int]
-    val mtkClass = attributes("MTKCLASS")
-    val geometryLength = anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(0.0)
+    val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
+    val mtkClass = attributes("roadclass")
+    //val geometryLength :Double = Try(anyToDouble(attributes("GEOMETRYLENGTH"))).getOrElse(0.0)// ?
 
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
-      attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
+      attributes("roadclass").asInstanceOf[String].toInt
     else
       0
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
@@ -167,36 +173,43 @@ private  def extractMeasure(value: Any): Option[Double] = {
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
       extractAttributes(attributes)
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
-      , extractConstructionType(attributes), linkGeomSource, geometryLength)
+      , extractConstructionType(attributes), linkGeomSource, 0.0)
   }
   
 
   protected def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
-    Option(attributes("adminclass").asInstanceOf[Int])
-      .map(AdministrativeClass.apply)
-      .getOrElse(Unknown)
+    if (attributes("adminclass").asInstanceOf[String] != null)
+      Option(attributes("adminclass").asInstanceOf[String].toInt)
+        .map(AdministrativeClass.apply)
+        .getOrElse(Unknown)
+    else Unknown
   }
 
   protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
-    Option(attributes("lifecyclestatus").asInstanceOf[Int])
+    if (attributes("lifecyclestatus").asInstanceOf[String] != null)
+    Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
       .map(ConstructionType.apply)
       .getOrElse(ConstructionType.InUse)
+    else ConstructionType.InUse
   }
-
-  protected def extractLinkGeomSource(attributes: Map[String, Any]): LinkGeomSource = {
-    Option(attributes("LINK_SOURCE").asInstanceOf[Int]) //?
-      .map(LinkGeomSource.apply)
-      .getOrElse(LinkGeomSource.Unknown)
-  }
-
+  
   protected def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
-    Option(attributes("directiontype").asInstanceOf[Int])
+    if (attributes("directiontype").asInstanceOf[String] != null)
+    Option(attributes("directiontype").asInstanceOf[String].toInt)
       .map(trafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
       .getOrElse(TrafficDirection.UnknownDirection)
+    else TrafficDirection.UnknownDirection
   }
 
+  // "ROADNAME_SM"           -> attributesMap(""),// delete find used in code remove if possible
+  //    "GEOMETRY_EDITED_DATE"  -> attributesMap(""), // ?
+  //"SUBTYPE"               -> attributesMap(""), // ? delete
+  //"OBJECTID"              -> attributesMap(""), // delete
+  //"STARTNODE"             -> attributesMap(""), //? delete
+  //"ENDNODE"               -> attributesMap(""), // delete
+  
   protected def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
-    Map(
+    Map( // in end rename these everywhere in code
       "MTKID"                 -> attributesMap("sourceid"),
       "MTKCLASS"              -> attributesMap("roadclass"),
       "HORIZONTALACCURACY"    -> attributesMap("xyaccuracy"),
@@ -204,7 +217,6 @@ private  def extractMeasure(value: Any): Option[Double] = {
       "VERTICALLEVEL"         -> attributesMap("surfacerelation"),
       "CONSTRUCTIONTYPE"      -> attributesMap("lifecyclestatus"), 
       "ROADNAME_FI"           -> attributesMap("roadnamefin"),
-      "ROADNAME_SM"           -> attributesMap(""),// delete
       "ROADNAME_SE"           -> attributesMap("roadnameswe"),
       "ROADNUMBER"            -> attributesMap("roadnumber"),
       "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
@@ -217,15 +229,11 @@ private  def extractMeasure(value: Any): Option[Double] = {
       "CREATED_DATE"          -> attributesMap("starttime"),
       "LAST_EDITED_DATE"      -> attributesMap("versionstarttime"),
       "SURFACETYPE"           -> attributesMap("surfacetype"),
-      "VALIDFROM"             -> attributesMap("sourcemodificationtime"),// ?
-      "GEOMETRY_EDITED_DATE"  -> attributesMap(""), // ?
-      "LINKID_NEW"            -> attributesMap(""), //?
-      "SUBTYPE"               -> attributesMap(""), // ?
-      "END_DATE"              -> attributesMap(""), //?
-      "OBJECTID"              -> attributesMap(""), // delete
-      "STARTNODE"             -> attributesMap(""), //?
-      "ENDNODE"               -> attributesMap(""), // ?
-      "CUST_OWNER"            -> attributesMap("")) //?
+      "VALIDFROM"             -> attributesMap("sourcemodificationtime"))
+    
+    //  "LINKID_NEW"            -> attributesMap(""), //?
+       //"END_DATE"              -> attributesMap(""), //?
+      //"CUST_OWNER"            -> attributesMap("")) //?
   }
   
   protected def encode(url: String): String = {
@@ -253,6 +261,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
     val request = new HttpGet(url)
     addAuthorizationHeader(request)
     val client = HttpClientBuilder.create().build()
+    println(url)
     val response = client.execute(request)
     LogUtils.time(logger,"fetch roadlinks client"){
       try {
@@ -289,7 +298,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}")
     match {
-      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Left(features) => features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -297,7 +306,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    fetchFeatures(s"{restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}") 
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}") 
     match {
       case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
@@ -311,22 +320,25 @@ private  def extractMeasure(value: Any): Option[Double] = {
   override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = ???
 
   protected def queryByLinkId[T](linkId: String,
-                                           fieldSelection: Option[String],
-                                           fetchGeometry: Boolean,
-                                           resultTransition: (Map[String, Any], List[List[Double]]) => T,
-                                           filter: Set[Long] => String): Seq[T] = {
-    fetchFeatures(s"{restApiEndPoint}/${MtkCollection.Frozen.value}/items/${linkId}?&crs=${crs}") match {
+                                           fieldSelection: Option[String] =None,
+                                           fetchGeometry: Boolean =false
+                                ): Seq[T] = {
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${linkId}") match {
       case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[T])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
- 
+
   override protected def queryByLinkIds[T](linkIds: Set[String],
                                            fieldSelection: Option[String],
                                            fetchGeometry: Boolean,
                                            resultTransition: (Map[String, Any], List[List[Double]]) => T,
                                            filter: Set[Long] => String): Seq[T] = {
-Seq()
+    if (linkIds.size == 1) {
+      queryByLinkId[T](linkIds.head)
+    }else {
+      Seq()
+    }
   }
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {

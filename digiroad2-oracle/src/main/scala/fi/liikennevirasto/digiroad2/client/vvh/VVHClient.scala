@@ -74,7 +74,8 @@ case class RoadlinkFetchedMtk(linkId: String, municipalityCode: Int, geometry: S
                            constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def verticalLevel: Option[String] = attributes.get("VERTICALLEVEL").map(_.toString)
-  val timeStamp = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp = 0l
+    //attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[String]
 }
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
@@ -463,7 +464,7 @@ trait LinkOperationsAbstract {
 class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
 
   override type LinkType = RoadlinkFetchedMtk
-  
+  override def restApiEndPoint: String = roadlinkEndpoint
   protected override val serviceName = "Roadlink_data"
   protected override val disableGeometry = false
 
