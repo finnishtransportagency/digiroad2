@@ -221,9 +221,7 @@ trait Filter {
   def stringifyPolygonGeometry(polygon: Polygon): String = ???
 
   // Query filters methods
-  def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = ???
-
-  def withLinkIdFilter(linkIds: Set[Long]): String = ???
+  def withLinkIdFilter[T](linkIds: Set[T]): String = ???
 
   def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = ???
 
@@ -235,7 +233,6 @@ trait Filter {
 
   def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = ???
   
-  def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = ???
 }
 
 
@@ -326,11 +323,7 @@ object Filter extends Filter {
   }
   
   // Query filters methods
-   override def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
-    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
-  }
-
-   override def withLinkIdFilter(linkIds: Set[Long]): String = {
+   override def withLinkIdFilter[T](linkIds: Set[T]): String = {
     withFilter("LINKID", linkIds)
   }
 
@@ -345,31 +338,17 @@ object Filter extends Filter {
    override def withMtkClassFilter(ids: Set[Long]): String = {
     withFilter("MTKCLASS", ids)
   }
-
+// only one used
   override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
     withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
   }
-
+  // only one used
   override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
     val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
     val since = formatter.print(lowerDate)
     val until = formatter.print(higherDate)
 
     s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
-  }
-
-
-  override def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
-    if (roadNumbers.isEmpty)
-      return s""""where":"($filter)","""
-    if (includeAllPublicRoads)
-      return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
-    val limit = roadNumbers.head
-    val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
-    if (filter == "")
-      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
-    else
-      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
   }
 }
 
@@ -436,10 +415,6 @@ trait LinkOperationsAbstract {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
-                                               municipalities: Set[Int] = Set(),
-                                               includeAllPublicRoads: Boolean = false): Seq[LinkType] = ???
-
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                filter: Option[String]): Seq[LinkType] = ???
 
@@ -480,7 +455,6 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
   /**
     * Returns road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
-    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
     */
   def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities)
@@ -1023,8 +997,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
-    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     */
   def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[RoadlinkFetched] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities)
@@ -1036,8 +1009,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
-    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     */
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadlinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
