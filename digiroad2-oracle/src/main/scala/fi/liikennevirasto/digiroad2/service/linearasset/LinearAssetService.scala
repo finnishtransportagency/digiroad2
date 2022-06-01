@@ -280,13 +280,7 @@ trait LinearAssetOperations {
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
-    publish(eventBus, changeSet, projectedAssets)
     filledTopology
-  }
-
-  def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, projectedAssets: Seq[PersistedLinearAsset]) {
-    eventBus.publish("linearAssets:update", changeSet)
-    eventBus.publish("linearAssets:saveProjectedLinearAssets", projectedAssets.filter(_.id == 0L))
   }
 
   /**
@@ -766,7 +760,6 @@ trait LinearAssetOperations {
       changeSet.adjustedVVHChanges.foreach { adjustment =>
         dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
       }
-
       val ids = changeSet.expiredAssetIds.toSeq
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))

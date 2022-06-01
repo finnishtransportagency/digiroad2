@@ -182,9 +182,6 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roads, groupedAssets, MaintenanceRoadAsset.typeId, Some(changedSet))
 
-    eventBus.publish("linearAssets:update", changeSet)
-    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets.filter(_.id == 0L))
-
     filledTopology
   }
 

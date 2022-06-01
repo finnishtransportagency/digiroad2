@@ -205,7 +205,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[Long, RoadLink]): Seq[UnknownSpeedLimit] = {
+  protected def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[Long, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByLinkId(limit.linkId)
@@ -250,21 +250,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, Some(projectedChangeSet))
 
-    // Expire all assets that are dropped or expired. No more floating speed limits.
-    eventbus.publish("speedLimits:update", changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ changeSet.droppedAssetIds, droppedAssetIds = Set()))
-    eventbus.publish("speedLimits:saveProjectedSpeedLimits", filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty))
-
-    eventbus.publish("speedLimits:purgeUnknownLimits", (changeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds))
-    val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
-    eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
-
     (filledTopology, roadLinksByLinkId)
   }
 
   /**
     * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
     */
-  private def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo],
+  protected def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo],
                                                          changeSet: ChangeSet, existingSpeedLimit: Seq[SpeedLimit]) : (Seq[SpeedLimit], ChangeSet) = {
 
     val speedLimitsAndChanges = mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes).flatMap {
@@ -422,8 +414,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
           limit.modifiedDateTime, limit.linkSource)
       }
     }
-    // Add them to checks to remove unknown limits
-    eventbus.publish("speedLimits:purgeUnknownLimits", (limits.map(_.linkId).toSet, Seq()))
   }
 
   /**

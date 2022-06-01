@@ -65,13 +65,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val groupedAssets = (existingAssets.filterNot(a => expiredIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
-    publish(eventBus, changeSet, newAssets)
     filledTopology
-  }
-
-  override def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, assets: Seq[PersistedLinearAsset]) {
-    eventBus.publish("dynamicAsset:update", changeSet)
-    eventBus.publish("pavedRoad:saveProjectedPavedRoad", assets.filter(_.id == 0L))
   }
 
   def getPavedRoadAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],

@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.util.{Date, NoSuchElementException, Properties}
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit, WidthLimit, CyclingAndWalking, _}
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
@@ -179,6 +179,20 @@ object DataFixture {
   lazy val municipalityService: MunicipalityService = new MunicipalityService
 
   lazy val redundantTrafficDirectionRemoval = new RedundantTrafficDirectionRemoval(roadLinkService)
+
+  lazy val dynamicLinearAssetUpdateProcess = new DynamicLinearAssetUpdateProcess(roadLinkService, eventbus)
+
+  lazy val linearAssetUpdateProcess = new LinearAssetUpdateProcess(roadLinkService, eventbus)
+
+  lazy val maintenanceRoadUpdateProcess = new MaintenanceRoadUpdateProcess(roadLinkService, eventbus)
+
+  lazy val pavedRoadUpdateProcess = new PavedRoadUpdateProcess(roadLinkService, eventbus)
+
+  lazy val prohibitionUpdateProcess = new ProhibitionUpdateProcess(roadLinkService, eventbus)
+
+  lazy val roadWidthUpdateProcess = new RoadWidthUpdateProcess(roadLinkService, eventbus)
+
+  lazy val speedLimitUpdateProcess = new SpeedLimitUpdateProcess(eventbus, vvhClient, roadLinkService)
 
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
@@ -2339,6 +2353,60 @@ object DataFixture {
         UpdateIncompleteLinkList.runUpdate()
       case Some("refresh_road_link_cache") =>
         RefreshRoadLinkCache.refreshCache()
+      case Some("update_animal_warnings") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(AnimalWarnings.typeId)
+      case Some("update_care_class") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(CareClass.typeId)
+      case Some("update_carrying_capacity") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(CarryingCapacity.typeId)
+      case Some("update_damaged_by_thaw") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(DamagedByThaw.typeId)
+      case Some("update_height_limit") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(HeightLimit.typeId)
+      case Some("update_length_limit") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(LengthLimit.typeId)
+      case Some("update_width_limit") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(WidthLimit.typeId)
+      case Some("update_total_weight_limit") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(TotalWeightLimit.typeId)
+      case Some("update_trailer_truck_weight_limit") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(TrailerTruckWeightLimit.typeId)
+      case Some("update_axle_weight_limit") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(AxleWeightLimit.typeId)
+      case Some("update_bogie_weight_limit") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(BogieWeightLimit.typeId)
+      case Some("update_mass_transit_lane") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(MassTransitLane.typeId)
+      case Some("update_parking_prohibition") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(ParkingProhibition.typeId)
+      case Some("update_cycling_and_walking") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(CyclingAndWalking.typeId)
+      case Some("update_lit_road") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(LitRoad.typeId)
+      case Some("update_road_work_asset") =>
+        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(RoadWorksAsset.typeId)
+      case Some("update_number_of_lanes") =>
+        linearAssetUpdateProcess.updateLinearAssets(NumberOfLanes.typeId)
+      case Some("update_traffic_volume") =>
+        linearAssetUpdateProcess.updateLinearAssets(TrafficVolume.typeId)
+      case Some("update_winter_speed_limit") =>
+        linearAssetUpdateProcess.updateLinearAssets(WinterSpeedLimit.typeId)
+      case Some("update_european_road_numbers") =>
+        linearAssetUpdateProcess.updateLinearAssets(EuropeanRoads.typeId)
+      case Some("update_exit_numbers") =>
+        linearAssetUpdateProcess.updateLinearAssets(ExitNumbers.typeId)
+      case Some("update_maintenance_roads") =>
+        maintenanceRoadUpdateProcess.updateMaintenanceRoads()
+      case Some("update_paved_roads") =>
+        pavedRoadUpdateProcess.updatePavedRoads()
+      case Some("update_prohibitions") =>
+        prohibitionUpdateProcess.updateProhibitions(Prohibition.typeId)
+      case Some("update_hazmat_prohibitions") =>
+        prohibitionUpdateProcess.updateProhibitions(HazmatTransportProhibition.typeId)
+      case Some("update_road_width") =>
+        roadWidthUpdateProcess.updateRoadWidth()
+      case Some("update_speed_limits") =>
+        speedLimitUpdateProcess.updateSpeedLimits()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2356,7 +2424,12 @@ object DataFixture {
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite | change_lanes_according_to_VVH_changes |" +
         " validate_lane_changes_according_to_VVH_changes | populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal | update_incomplete_link_list |" +
-        " refresh_road_link_cache |")
+        " refresh_road_link_cache | update_animal_warnings | update_care_class | update_carrying_capacity | update_damaged_by_thaw |" +
+        " update_height_limit | update_length_limit | update_width_limit | update_total_weight_limit | update_trailer_truck_weight_limit |" +
+        " update_axle_weight_limit | update_bogie_weight_limit | update_mass_transit_lane | update_parking_prohibition |" +
+        " update_cycling_and_walking | update_lit_road | update_road_work_asset | update_number_of_lanes | update_traffic_volume |" +
+        " update_winter_speed_limit | update_european_road_numbers | update_exit_numbers | update_maintenance_roads | update_paved_roads |" +
+        " update_prohibitions | update_hazmat_prohibitions | update_road_width | update_speed_limits")
     }
   }
 }
