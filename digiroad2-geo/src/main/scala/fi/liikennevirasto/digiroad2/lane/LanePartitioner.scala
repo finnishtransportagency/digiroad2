@@ -158,6 +158,15 @@ object LanePartitioner {
     })
   }
 
+  // Finds starting lanes from sequence and forms groups from continuing lanes
+  def getConnectedGroups(lanesWithContinuing: Seq[LaneWithContinuingLanes]): Seq[Seq[PieceWiseLane]] = {
+    val startingLanes = getStartingLanes(lanesWithContinuing)
+    val connectedLanes = startingLanes.map(startingLane => {
+      getConnectedLanes(Seq(startingLane), lanesWithContinuing).sortBy(_.lane.id)
+    }).distinct
+    connectedLanes.map(_.map(_.lane))
+  }
+
   //Groups lanes by roadIdentifier, sideCode, LaneCode, and other lanes on link.
   //Makes sure that all the lanes in group are connected and there are no gaps in lane selection
   def groupMainLanes(lanes: Seq[PieceWiseLane], allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
@@ -201,13 +210,7 @@ object LanePartitioner {
       LaneWithContinuingLanes(lane, continuingLanes)
     }))
 
-    val connectedGroups = partitionedLanesWithContinuing.flatMap(laneGroup => {
-      val startingLanes = getStartingLanes(laneGroup)
-      val connectedLanes = startingLanes.map(startingLane => {
-        getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
-      }).distinct
-      connectedLanes.map(_.map(_.lane))
-    })
+    val connectedGroups = partitionedLanesWithContinuing.flatMap(getConnectedGroups)
 
     val noRoadIdentifier = laneGroupsWithNoIdentifier.values.flatten.map(lane => Seq(lane))
     val laneGroups = connectedGroups ++ noRoadIdentifier
