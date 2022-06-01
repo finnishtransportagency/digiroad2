@@ -33,6 +33,8 @@ object MtkCollection {
 }
 
 object FilterOgc extends Filter {
+
+  val singleFilter= (field:String,value:String) => s"${field}=${value}"
   
   // TODO can we do filtering in ogc api and doest it work
   override def withFilter[T](attributeName: String, ids: Set[T]): String = ???
@@ -44,10 +46,18 @@ object FilterOgc extends Filter {
     if (municipalities.size ==1) {
       singleFilter(municipalities.head)
     }else {
-      municipalities.map(m=>singleFilter(m)+"OR").toString()
+      municipalities.map(m=>singleFilter(m)).mkString(" OR ")
     }
   }
-  override def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = ???
+  override def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
+    val filter =
+      if (names.isEmpty) {
+        ""
+      } else {
+        names.map(n =>singleFilter(attributeName,n.toString)).mkString(" OR ")
+      }
+    filter
+  }
 
   override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
     filter1 +" AND " + filter2
@@ -63,21 +73,40 @@ object FilterOgc extends Filter {
   override def stringifyPolygonGeometry(polygon: Polygon): String = ???
 
   // Query filters methods
-  override def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = ???
+  override def withLinkIdFilter[T](linkIds: Set[T]): String = {
+    val filter =
+      if (linkIds.isEmpty) {
+        ""
+      } else {
+        linkIds.map(n =>singleFilter("ID",n.toString)).mkString(" OR ")
+      }
+    filter
+  }
 
-  override def withLinkIdFilter(linkIds: Set[Long]): String = ???
+  override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
+    val filter =
+      if (roadNames.isEmpty) {
+        ""
+      } else {
+        roadNames.map(n =>singleFilter(roadNameSource,n)).mkString(" OR ")
+      }
+    filter
+  }
 
-  override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = ???
-
-  override def withMmlIdFilter(mmlIds: Set[Long]): String = ???
-
-  override def withMtkClassFilter(ids: Set[Long]): String = ???
+  override def withMtkClassFilter(ids: Set[Long]): String = {
+    val filter =
+      if (ids.isEmpty) {
+        ""
+      } else {
+        ids.map(n =>singleFilter("roadclass",n.toString)).mkString(" OR ")
+      }
+    filter
+  }
 
   override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = ???
 
   override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = ???
-
-  override def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = ???
+  
 }
 
 trait MtkOperation extends LinkOperationsAbstract{
