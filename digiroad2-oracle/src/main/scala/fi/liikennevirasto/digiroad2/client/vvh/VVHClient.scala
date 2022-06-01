@@ -422,7 +422,7 @@ trait LinkOperationsAbstract {
 
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                                municipalities: Set[Int] = Set(),
-                                               includeAllPublicRoads: Boolean = false): Seq[RoadlinkFetched] = ???
+                                               includeAllPublicRoads: Boolean = false): Seq[LinkType] = ???
 
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                filter: Option[String]): Seq[LinkType] = ???
@@ -431,13 +431,13 @@ trait LinkOperationsAbstract {
 
   protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = ???
 
-  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = ???
+  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = ???
 
-  protected def queryByLinkIds[VVHType](linkIds: Set[IdType],
+  protected def queryByLinkIds[LinkType](linkIds: Set[IdType],
                                         fieldSelection: Option[String],
                                         fetchGeometry: Boolean,
-                                        resultTransition: (Map[String, Any], List[List[Double]]) => VVHType,
-                                        filter: Set[Long] => String): Seq[VVHType] = ???
+                                        resultTransition: (Map[String, Any], List[List[Double]]) => LinkType,
+                                        filter: Set[Long] => String): Seq[LinkType] = ???
 
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
@@ -668,6 +668,8 @@ trait VVHClientOperations extends LinkOperationsAbstract {
 
 }
 
+
+
 class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   override type LinkType = RoadlinkFetched
@@ -828,6 +830,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
       .map(LinkGeomSource.apply)
       .getOrElse(LinkGeomSource.Unknown)
   }
+  protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+    0 -> TrafficDirection.BothDirections,
+    1 -> TrafficDirection.TowardsDigitizing,
+    2 -> TrafficDirection.AgainstDigitizing)
 
   protected def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
     Option(attributes("DIRECTIONTYPE").asInstanceOf[BigInt])
@@ -1001,7 +1007,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
                            fieldSelection: Option[String], //TODO can we filter resort
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
-    queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, Filter.FilterwithLinkIdFilter)
+    queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, Filter.withLinkIdFilter)
 }
 
 class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
@@ -1091,7 +1097,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     }.toList
   }
 }
-
+// TODO for in seeable future we are not going't to fetch roadnode, detele? 
 class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
 
   override type LinkType = RoadNodesFetched
