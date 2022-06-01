@@ -147,7 +147,7 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
   override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
-  override val kmtkEndpoint: String = scala.util.Properties.envOrElse("kmtk.endpoint", null)
+  override val kmtkEndpoint: String = envProps.getProperty("kmtk.endpoint", null)
   override val kmtkApiKey: String = envOrProperties("kmtk.apikey")
   override val viiteRestApiEndPoint: String =  envOrProperties("viiteRestApiEndPoint")
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
