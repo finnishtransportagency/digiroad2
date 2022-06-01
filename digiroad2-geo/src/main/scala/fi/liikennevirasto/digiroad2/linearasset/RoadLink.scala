@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.PersistedLane
 import scala.util.Try
 
 trait RoadLinkLike extends PolyLine{
-  def linkId: Long
+  def linkId: Any
   def municipalityCode: Int
   def length: Double
   def administrativeClass: AdministrativeClass
