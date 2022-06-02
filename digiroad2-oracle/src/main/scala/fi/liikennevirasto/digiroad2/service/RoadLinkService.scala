@@ -474,20 +474,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(links), changes)
     }
   }
-  // TODO no used
-  def getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val futures = for{
-      roadLinkResult <- vvhClient.roadLinkData.fetchByPolygonF(polygon)
-      changesResult <- vvhClient.roadLinkChangeInfo.fetchByPolygonF(polygon)
-      complementaryResult <- vvhClient.complementaryData.fetchByPolygonF(polygon)
-    } yield (roadLinkResult, changesResult, complementaryResult)
 
-    val (complementaryLinks, changes, links) = Await.result(futures, Duration.Inf)
-
-    withDynTransaction {
-      (enrichRoadLinksFromVVH(links ++ complementaryLinks), changes)
-    }
-  }
 
   /**
     * This method returns "real" and "complementary" link id by polygons.
@@ -504,7 +491,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * This method returns "real" and "complementary" link id by polygon.
     *
     * @param polygon
-    * @return seq(LinksId) , seq(LinksId)
+    * @return seq(LinksId) , seq(LinksId) only one used
     */
   def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :Polygon): Seq[Long] = {
 

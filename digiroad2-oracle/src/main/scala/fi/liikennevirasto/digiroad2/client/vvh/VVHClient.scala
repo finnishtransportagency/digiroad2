@@ -333,7 +333,7 @@ object Filter extends Filter {
   override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
     withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
   }
-
+  
   override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
     val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
     val since = formatter.print(lowerDate)
@@ -950,10 +950,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadlinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
   }
-  // TODO only used in test
-  def fetchByPolygon(polygon : Polygon): Seq[RoadlinkFetched] = {
-    queryByPolygons(polygon)
-  }
 
   def fetchByPolygonF(polygon : Polygon): Future[Seq[RoadlinkFetched]] = {
     Future(queryByPolygons(polygon))
@@ -1033,16 +1029,8 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     Future(queryByMunicipality(municipality))
   }
 
-  def fetchByPolygon(polygon: Polygon): Seq[ChangeInfo] = {
-    queryByPolygons(polygon)
-  }
-
   def fetchByPolygonF(polygon: Polygon): Future[Seq[ChangeInfo]] = {
     Future(queryByPolygons(polygon))
-  }
-
-  def fetchByLinkIdsF(linkIds: Set[Long]): Future[Seq[ChangeInfo]] = {
-    Future(fetchByLinkIds(linkIds))
   }
 
   /**
@@ -1142,11 +1130,11 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
 
     nvps
   }
-
+// only one used
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadlinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(Filter.withMtkClassFilter(Set(12314)))))
   }
-
+  // only one used
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[RoadlinkFetched]] =
     Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
 
