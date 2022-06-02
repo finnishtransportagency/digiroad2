@@ -183,8 +183,8 @@ private  def extractMeasure(value: Any): Option[Double] = {
           Point(0,0,0)}
       }
     })
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ")})"))
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0).toString.toDouble, "y" -> point(1).toString.toDouble, "z" -> point(2).toString.toDouble, "m" -> point(3).toString.toDouble)))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => point(0).toString.toDouble + " " + point(1).toString.toDouble + " " + point(2).toString.toDouble + " " + point(3).toString.toDouble.toString.toDouble).mkString(", ")})"))
     
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
@@ -309,7 +309,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
                 `type` = "FeatureCollection",
                 features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature), 
                 crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
-                numberReturned = Try(feature("numberReturned").asInstanceOf[String].toInt).getOrElse(0)
+                numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt
               ))
             case _ => None
           }
@@ -324,34 +324,39 @@ private  def extractMeasure(value: Any): Option[Double] = {
   }
 
   
-  def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): String = {
+  def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
     if (firstRequest)
-    s"${base}&limit=${limit}&startIndex=${startIndex}"
-    else s"${base}&limit=${limit}&startIndex=${startIndex+limit}" 
+      (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
+    else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
   }
 
-  def paginate(finalResponse: Seq[FeatureCollection] = Seq(), baseUrl: String = ""): Seq[FeatureCollection] = { // recursive loop or while loop, first try recurse 
-    val limit = 1000
-    val firstRequest = true
+  def paginate(finalResponse: Seq[FeatureCollection] = Seq(), baseUrl: String = "", firstRequest: Boolean = true, limit: Int = 4599, position: Int = 0): Seq[FeatureCollection] = { // recursive loop or while loop, first try recurse
+    var newPositionOuteer: Int = 0
     val resort = if (firstRequest) {
-      fetchFeatures(paginationRequest(baseUrl, limit))
+      val (url, newPosition) = paginationRequest(baseUrl, limit)
+      newPositionOuteer = newPosition
+      fetchFeatures(url)
       match {
         case Left(features) => features
         case Right(error) => throw new ClientException(error.toString)
       }
-    } else fetchFeatures(paginationRequest(baseUrl, limit, firstRequest = false))
-    match {
-      case Left(features) => features
-      case Right(error) => throw new ClientException(error.toString)
+    } else {
+      val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
+      newPositionOuteer = newPosition
+      fetchFeatures(url) match {
+        case Left(features) => features
+        case Right(error) => throw new ClientException(error.toString)
+      }
     }
+
     if (resort.isDefined) {
-      finalResponse ++ Seq(resort.get)
-      if (resort.get.numberReturned == limit) {
-        paginate(finalResponse, baseUrl)
+      if (resort.get.numberReturned != 0) {
+        paginate(finalResponse ++ Seq(resort.get), baseUrl, firstRequest = false, position = newPositionOuteer)
       } else {
-        Seq()
+        finalResponse
       }
     } else {
+      logger.warn("possible end ?")
       finalResponse
     }
   }
@@ -378,10 +383,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
 //pagination
   // https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/keskilinjavarasto:frozenlinks/items?filter=municipalitycode%3D91%20OR%20municipalitycode%3D297&limit=2&startIndex=2
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
-    val filterString  = s"filter=${FilterOgc.combineFiltersWithAnd( FilterOgc.withMunicipalityFilter(Set(municipality)), filter)}"
-    val startIndex = 0
-    val limit = 1000
-    val format = "f=application%2Fjson"
+    val filterString  = s"filter=${FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter)}"
     queryWithPagination(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
