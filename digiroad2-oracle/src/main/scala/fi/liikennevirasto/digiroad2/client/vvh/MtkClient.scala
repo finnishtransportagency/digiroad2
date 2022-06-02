@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.anyToDouble
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.http.HttpStatus
-import org.apache.http.client.methods.{HttpGet, HttpRequestBase}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods.parse
@@ -65,14 +65,7 @@ object FilterOgc extends Filter {
   }
 
   override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String =   if (filter2.isDefined) filter1 +" AND " + filter2.get else filter1
-
-  /**
-    *
-    * @param polygon to be converted to string
-    * @return string compatible with VVH polygon query
-    */
-  override def stringifyPolygonGeometry(polygon: Polygon): String = ???
-
+  
   // Query filters methods
   override def withLinkIdFilter[T](linkIds: Set[T]): String = {
     val filter =
@@ -266,14 +259,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
       //"CUST_OWNER"            -> attributesMap("")) //?
   }
   
-  protected def encode(url: String): String = {
-    URLEncoder.encode(url , "UTF-8")
-  }
 
-  override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
-  def addAuthorizationHeader(request: HttpRequestBase): Unit = {
-    request.addHeader("X-API-Key", Digiroad2Properties.kmtkApiKey)
-  }
 
   def convertToFeature(content: Map[String, Any]): Feature = {
     val geometry = Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
@@ -285,16 +271,28 @@ private  def extractMeasure(value: Any): Option[Double] = {
       properties = content("properties").asInstanceOf[Map[String, Any]]
     )
   }
+
+  protected def encode(url: String): String = {
+    URLEncoder.encode(url, "UTF-8")
+  }
+
+  override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
+  def addAuthorizationHeader(request: HttpRequestBase): Unit = {
+    request.addHeader("X-API-Key", Digiroad2Properties.kmtkApiKey)
+  }
   
   // https://github.com/json4s/json4s
   protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError2] = {
-    val request = new HttpGet(url)
+    val request = new HttpGet(encode(url))
+    request.addHeader("accept","application/geo+json")
     addAuthorizationHeader(request)
     val client = HttpClientBuilder.create().build()
     println(url)
-    val response = client.execute(request)
-    LogUtils.time(logger,"fetch roadlinks client"){
+    var response: CloseableHttpResponse = null
+    
+    LogUtils.time(logger, "fetch roadlinks client") {
       try {
+        response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
         if (statusCode == HttpStatus.SC_OK) {
           val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
@@ -307,7 +305,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
             case "FeatureCollection" =>
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
-                features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature), 
+                features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature),
                 crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
                 numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt
               ))
@@ -315,11 +313,17 @@ private  def extractMeasure(value: Any): Option[Double] = {
           }
           Left(resort)
         } else {
-          Right(LinkOperationError2(response.getEntity.getContent.toString,response.getStatusLine.getStatusCode.toString))
+          Right(LinkOperationError2(response.getEntity.getContent.toString, response.getStatusLine.getStatusCode.toString))
         }
-      } finally {
-        response.close()
-      } 
+      }
+      catch {
+        case e: Exception => println(e.toString); Right(LinkOperationError2(e.toString, ""))
+      }
+      finally {
+        if (response != null) {
+          response.close()
+        }
+      }
     }
   }
 
@@ -387,7 +391,14 @@ private  def extractMeasure(value: Any): Option[Double] = {
     queryWithPagination(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
-  override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = ???
+  override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
+    val filterString  = s"filter=INTERSECTS(geometry,${encode(polygon.toString)})"
+    val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${queryString}") match {
+      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Right(error) => throw new ClientException(error.toString)
+    }
+  }
 
   override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = ???
 
