@@ -190,7 +190,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     val mtkClass = attributes("roadclass")
-    //val geometryLength :Double = Try(anyToDouble(attributes("GEOMETRYLENGTH"))).getOrElse(0.0)// ?
+    val geometryLength :Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)// ?
 
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
       attributes("roadclass").asInstanceOf[String].toInt
@@ -204,7 +204,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
       extractAttributes(attributes)
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
-      , extractConstructionType(attributes), linkGeomSource, 0.0)
+      ,extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
   
 
