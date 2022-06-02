@@ -1,17 +1,16 @@
 package fi.liikennevirasto.digiroad2.client.vvh
+
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.TypeOfDamage.Paint
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.anyToDouble
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
-import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.json4s.jackson.JsonMethods.parse
+import org.json4s.{DefaultFormats, StreamInput}
 
 import java.net.URLEncoder
 import scala.util.Try
@@ -306,13 +305,11 @@ private  def extractMeasure(value: Any): Option[Double] = {
               crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)
             ))
             case "FeatureCollection" =>
-            val test=  feature("links").asInstanceOf[List[Map[String, Map[String, Any]]]]
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
                 features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature), 
                 crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
-                numberReturned = Try(feature("numberReturned").asInstanceOf[String].toInt).getOrElse(0) 
-                //nextPageLink = Try().getOrElse("")
+                numberReturned = Try(feature("numberReturned").asInstanceOf[String].toInt).getOrElse(0)
               ))
             case _ => None
           }
@@ -326,6 +323,43 @@ private  def extractMeasure(value: Any): Option[Double] = {
     }
   }
 
+  
+  def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): String = {
+    if (firstRequest)
+    s"${base}&limit=${limit}&startIndex=${startIndex}"
+    else s"${base}&limit=${limit}&startIndex=${startIndex+limit}" 
+  }
+
+  def paginate(finalResponse: Seq[FeatureCollection] = Seq(), baseUrl: String = ""): Seq[FeatureCollection] = { // recursive loop or while loop, first try recurse 
+    val limit = 1000
+    val firstRequest = true
+    val resort = if (firstRequest) {
+      fetchFeatures(paginationRequest(baseUrl, limit))
+      match {
+        case Left(features) => features
+        case Right(error) => throw new ClientException(error.toString)
+      }
+    } else fetchFeatures(paginationRequest(baseUrl, limit, firstRequest = false))
+    match {
+      case Left(features) => features
+      case Right(error) => throw new ClientException(error.toString)
+    }
+    if (resort.isDefined) {
+      finalResponse ++ Seq(resort.get)
+      if (resort.get.numberReturned == limit) {
+        paginate(finalResponse, baseUrl)
+      } else {
+        Seq()
+      }
+    } else {
+      finalResponse
+    }
+  }
+  
+  def queryWithPagination(baseUrl: String = ""):Seq[LinkType]={
+    paginate(baseUrl = baseUrl).flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
+  }
+  
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
@@ -348,11 +382,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
     val startIndex = 0
     val limit = 1000
     val format = "f=application%2Fjson"
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&limit=${limit}&startIndex=${startIndex}&crs=${crs}")
-    match {
-      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
-    }
+    queryWithPagination(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = ???
