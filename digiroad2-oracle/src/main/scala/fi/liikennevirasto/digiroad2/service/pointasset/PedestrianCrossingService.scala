@@ -12,8 +12,8 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
-case class IncomingPedestrianCrossingAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
+case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingPedestrianCrossingAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
 class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) extends PointAssetOperations {
   type IncomingAsset = IncomingPedestrianCrossing

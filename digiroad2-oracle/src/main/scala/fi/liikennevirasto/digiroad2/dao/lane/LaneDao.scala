@@ -17,7 +17,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import scala.language.implicitConversions
 
 
-case class LaneRow(id: Long, linkId: Long, sideCode: Int, value: LanePropertyRow,
+case class LaneRow(id: Long, linkId: String, sideCode: Int, value: LanePropertyRow,
                    startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                    modifiedBy: Option[String], modifiedDate: Option[DateTime], expiredBy: Option[String], expiredDate: Option[DateTime],
                    expired: Boolean, vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
@@ -41,7 +41,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   implicit val getLaneAsset: GetResult[LaneRow] = new GetResult[LaneRow] {
     def apply(r: PositionedResult) : LaneRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -303,7 +303,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
         statement.setInt(2, newLane.lane.sideCode)
         statement.setDouble(3, newLane.lane.startMeasure)
         statement.setDouble(4, newLane.lane.endMeasure)
-        statement.setLong(5, newLane.lane.linkId)
+        statement.setString(5, newLane.lane.linkId)
         statement.setLong(6, newLane.lane.vvhTimeStamp)
         statement.addBatch()
       }

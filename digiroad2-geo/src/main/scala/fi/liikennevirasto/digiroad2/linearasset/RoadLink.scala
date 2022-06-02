@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.PersistedLane
 import scala.util.Try
 
 trait RoadLinkLike extends PolyLine{
-  def linkId: Long
+  def linkId: String
   def municipalityCode: Int
   def length: Double
   def administrativeClass: AdministrativeClass
@@ -20,7 +20,7 @@ trait RoadLinkLike extends PolyLine{
   def vvhTimeStamp: Long
 }
 
-case class RoadLinkProperties(linkId: Long,
+case class RoadLinkProperties(linkId: String,
                               functionalClass: Int,
                               linkType: LinkType,
                               trafficDirection: TrafficDirection,
@@ -28,9 +28,9 @@ case class RoadLinkProperties(linkId: Long,
                               modifiedAt: Option[String],
                               modifiedBy: Option[String])
 
-case class TinyRoadLink(linkId: Long)
+case class TinyRoadLink(linkId: String)
 
-case class RoadLink(linkId: Long, geometry: Seq[Point],
+case class RoadLink(linkId: String, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],

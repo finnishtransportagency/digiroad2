@@ -32,15 +32,15 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable
 import scala.util.Try
 
-case class ExistingLinearAsset(id: Long, linkId: Long)
+case class ExistingLinearAsset(id: Long, linkId: String)
 
-case class NewNumericValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+case class NewNumericValueAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
 
-case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
+case class NewTextualValueAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
 
-case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Prohibitions, sideCode: Int)
+case class NewProhibition(linkId: String, startMeasure: Double, endMeasure: Double, value: Prohibitions, sideCode: Int)
 
-case class NewDynamicLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
+case class NewDynamicLinearAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val roadAddressService: RoadAddressService,

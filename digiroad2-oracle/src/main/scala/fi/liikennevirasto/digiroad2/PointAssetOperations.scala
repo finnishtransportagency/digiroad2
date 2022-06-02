@@ -43,12 +43,12 @@ object FloatingReason{
 trait IncomingPointAsset {
   val lon: Double
   val lat: Double
-  val linkId: Long
+  val linkId: String
 }
 
 trait IncomePointAsset {
   val mValue: Long
-  val linkId: Long
+  val linkId: String
 }
 
 trait PointAsset extends FloatingAsset {
@@ -60,7 +60,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val lon: Double
   val lat: Double
   val municipalityCode: Int
-  val linkId: Long
+  val linkId: String
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long
@@ -73,7 +73,7 @@ trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
   val lon: Double
   val lat: Double
   val municipalityCode: Int
-  val linkId: Long
+  val linkId: String
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long

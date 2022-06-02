@@ -15,7 +15,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.language.implicitConversions
 
-case class LaneHistoryRow(id: Long, newId: Long, oldId: Long, linkId: Long, sideCode: Int, value: LanePropertyRow,
+case class LaneHistoryRow(id: Long, newId: Long, oldId: Long, linkId: String, sideCode: Int, value: LanePropertyRow,
                           startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                           modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean,
                           vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime],
@@ -29,7 +29,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
       val id = r.nextLong()
       val newId = r.nextLong()
       val oldId = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()

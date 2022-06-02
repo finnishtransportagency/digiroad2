@@ -35,7 +35,7 @@ AssetDataImporter {
                            validFrom: LocalDate = LocalDate.now,
                            validTo: Option[LocalDate] = None,
                            point: Point,
-                           roadLinkId: Long,
+                           roadLinkId: String,
                            municipalityCode: Int,
                            bearing: Double)
 

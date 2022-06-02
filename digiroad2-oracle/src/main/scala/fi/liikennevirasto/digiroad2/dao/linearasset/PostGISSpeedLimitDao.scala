@@ -20,7 +20,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
   def MassQueryThreshold = 500
-  case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
+  case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -33,7 +33,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   implicit val getSpeedLimit = new GetResult[SpeedLimitRow] {
     def apply(r: PositionedResult) : SpeedLimitRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val value = r.nextIntOption()
       val startMeasure = r.nextDouble()
@@ -54,7 +54,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
   implicit val getUnknown = new GetResult[UnknownLimit] {
     def apply(r: PositionedResult) = {
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val municipality = r.nextString()
       val administrativeClass = AdministrativeClass(r.nextInt()).toString
       UnknownLimit (linkId, municipality, administrativeClass)

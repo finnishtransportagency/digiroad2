@@ -14,7 +14,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
 
-case class DirectionalTrafficSignRow(id: Long, linkId: Long,
+case class DirectionalTrafficSignRow(id: Long, linkId: String,
                                     lon: Double, lat: Double,
                                     mValue: Double, floating: Boolean,
                                     vvhTimeStamp: Long,
@@ -29,7 +29,7 @@ case class DirectionalTrafficSignRow(id: Long, linkId: Long,
                                     geometry: Seq[Point] = Nil,
                                     linkSource: LinkGeomSource)
 
-case class DirectionalTrafficSign(id: Long, linkId: Long,
+case class DirectionalTrafficSign(id: Long, linkId: String,
                                   lon: Double, lat: Double,
                                   mValue: Double, floating: Boolean,
                                   vvhTimeStamp: Long,
@@ -112,7 +112,7 @@ object PostGISDirectionalTrafficSignDao {
   implicit val getPointAsset = new GetResult[DirectionalTrafficSignRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

@@ -9,9 +9,9 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 
-case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingObstacle(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
 
-case class IncomingObstacleAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
+case class IncomingObstacleAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
 
 class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {

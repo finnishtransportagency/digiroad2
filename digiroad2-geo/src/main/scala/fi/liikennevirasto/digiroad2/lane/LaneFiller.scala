@@ -12,13 +12,13 @@ object LaneFiller {
 
   trait baseAdjustment {
     val laneId: Long
-    val linkId: Long
+    val linkId: String
     val startMeasure: Double
     val endMeasure: Double
   }
 
-  case class MValueAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double) extends baseAdjustment
-  case class VVHChangesAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, vvhTimestamp: Long) extends baseAdjustment
+  case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double) extends baseAdjustment
+  case class VVHChangesAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, vvhTimestamp: Long) extends baseAdjustment
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
 
   case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],

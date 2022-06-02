@@ -7,7 +7,7 @@ import slick.jdbc.{GetResult, PositionedResult}
 import java.text.NumberFormat
 import java.util.Locale
 
-case class CyclingAndWalking(linkId: Long, value: Int)
+case class CyclingAndWalking(linkId: String, value: Int)
 case class ObstacleShapefile(lon: Double, lat: Double, obstacleType: Int = 1)
 
 object ImportShapeFileDAO {
@@ -16,7 +16,7 @@ object ImportShapeFileDAO {
     val numberFormat = NumberFormat.getNumberInstance(Locale.FRANCE)
 
     def apply(r: PositionedResult) = {
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val value = numberFormat.parse(r.nextString()).intValue()
 
       CyclingAndWalking(linkId, value)

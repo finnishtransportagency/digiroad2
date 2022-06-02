@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime],
                      modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String, isSuggested: Boolean)
-case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
+case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: String, destLinkId: String, elementType: Int)
 case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long], isSuggested: Boolean)
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String],  isSuggested: Option[Boolean])
 

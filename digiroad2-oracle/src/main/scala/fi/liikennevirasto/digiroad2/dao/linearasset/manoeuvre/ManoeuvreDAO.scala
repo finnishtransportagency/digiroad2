@@ -13,7 +13,7 @@ import slick.jdbc.{StaticQuery => Q}
 /**
   * Created by venholat on 3.5.2016.
   */
-case class PersistedManoeuvreRow(id: Long, linkId: Long, destLinkId: Long, elementType: Int, modifiedDate: Option[DateTime],
+case class PersistedManoeuvreRow(id: Long, linkId: String, destLinkId: String, elementType: Int, modifiedDate: Option[DateTime],
                                  modifiedBy: Option[String], additionalInfo: String, createdDate: DateTime, createdBy: String, isSuggested: Boolean)
 
 class ManoeuvreDao(val vvhClient: VVHClient) {

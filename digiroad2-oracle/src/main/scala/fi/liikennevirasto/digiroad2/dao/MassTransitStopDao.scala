@@ -177,7 +177,7 @@ class MassTransitStopDao {
       val lrmId = r.nextLong
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
-      val linkId = r.nextLong
+      val linkId = r.nextString()
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextObjectOption().map(objectToPoint)

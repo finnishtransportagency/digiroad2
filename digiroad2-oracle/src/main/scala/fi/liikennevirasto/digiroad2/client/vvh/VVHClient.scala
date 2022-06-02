@@ -58,7 +58,7 @@ object NodeType {
   case object LightTrafficJunction extends NodeType { def value = 9 }
   case object UnknownNodeType extends NodeType { def value = 99 }
 }
-case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
+case class VVHRoadlink(linkId: String, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
                        constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {

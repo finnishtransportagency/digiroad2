@@ -9,7 +9,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
-case class RoadLinkValue(linkId: Long, value: Option[Int])
+case class RoadLinkValue(linkId: String, value: Option[Int])
 case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int, timeStamp:Option[String], mmlId: Option[Long])
 
 sealed trait RoadLinkDAO{
@@ -27,7 +27,7 @@ sealed trait RoadLinkDAO{
 
   implicit val getRoadLinkRow: GetResult[RoadLinkValue] = new GetResult[RoadLinkValue] {
     def apply(r: PositionedResult): RoadLinkValue = {
-      val id = r.nextLong
+      val id = r.nextString()
       val value = r.nextIntOption()
       RoadLinkValue(id, value)
     }
@@ -60,11 +60,11 @@ sealed trait RoadLinkDAO{
          where not exists (select * from $table where link_id =(?))""".stripMargin)
     try {
       entries.foreach { property =>
-        insertLinkPropertyPS.setLong(1, property.linkProperty.linkId)
+        insertLinkPropertyPS.setString(1, property.linkProperty.linkId)
         insertLinkPropertyPS.setInt(2, property.value)
         insertLinkPropertyPS.setString(3, property.timeStamp.get)
         insertLinkPropertyPS.setString(4, property.username.getOrElse(""))
-        insertLinkPropertyPS.setLong(5, property.linkProperty.linkId)
+        insertLinkPropertyPS.setString(5, property.linkProperty.linkId)
         insertLinkPropertyPS.addBatch()
       }
       insertLinkPropertyPS.executeBatch()
@@ -84,7 +84,7 @@ sealed trait RoadLinkDAO{
       entries.foreach { property =>
         updateLinkPropertyPS.setLong(1, property.value)
         updateLinkPropertyPS.setString(2, property.username.getOrElse(""))
-        updateLinkPropertyPS.setLong(3, property.linkProperty.linkId)
+        updateLinkPropertyPS.setString(3, property.linkProperty.linkId)
         updateLinkPropertyPS.addBatch()
       }
       updateLinkPropertyPS.executeBatch()
@@ -313,11 +313,11 @@ object RoadLinkDAO{
            where not exists (select * from $table where link_id =(?))""".stripMargin)
       try {
         entries.foreach { property =>
-          insertLinkPropertyPS.setLong(1, property.linkProperty.linkId)
+          insertLinkPropertyPS.setString(1, property.linkProperty.linkId)
           insertLinkPropertyPS.setInt(2, property.value)
           insertLinkPropertyPS.setString(3, property.username.getOrElse(""))
           insertLinkPropertyPS.setInt(4, property.linkProperty.linkType.value)
-          insertLinkPropertyPS.setLong(5, property.linkProperty.linkId)
+          insertLinkPropertyPS.setString(5, property.linkProperty.linkId)
           insertLinkPropertyPS.addBatch()
         }
         insertLinkPropertyPS.executeBatch()
@@ -352,7 +352,7 @@ object RoadLinkDAO{
           updateLinkPropertyPS.setInt(1, property.value)
           updateLinkPropertyPS.setString(2, property.username.getOrElse(""))
           updateLinkPropertyPS.setInt(3, property.linkProperty.linkType.value)
-          updateLinkPropertyPS.setLong(4, property.linkProperty.linkId)
+          updateLinkPropertyPS.setString(4, property.linkProperty.linkId)
           updateLinkPropertyPS.addBatch()
         }
         updateLinkPropertyPS.executeBatch()

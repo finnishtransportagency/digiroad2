@@ -18,7 +18,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 
 
-case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: DynamicPropertyRow,
+case class DynamicAssetRow(id: Long, linkId: String, sideCode: Int, value: DynamicPropertyRow,
                            startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                            modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, typeId: Int,
                            vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
@@ -121,7 +121,7 @@ class DynamicLinearAssetDao {
   implicit val getDynamicAssetRow: GetResult[DynamicAssetRow] = new GetResult[DynamicAssetRow] {
     def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -481,7 +481,7 @@ class DynamicLinearAssetDao {
           and a.floating = '0'
           #$withAutoAdjustFilter
         ) derivedAsset #$recordLimit"""
-      .as[(Long, Long, Int, Option[String], Double, Double, String, String, Boolean, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
+      .as[(Long, String, Int, Option[String], Double, Double, String, String, Boolean, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
       val groupedAssets = assets.groupBy(_._1)
 

@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 
-case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
+case class Inaccurate(assetId: Option[Long], linkId: Option[String], municipalityCode: Int,  administrativeClass: AdministrativeClass)
 case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
 
 trait AssetServiceValidator {

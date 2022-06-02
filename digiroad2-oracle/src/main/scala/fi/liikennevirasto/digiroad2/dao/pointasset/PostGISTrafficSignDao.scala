@@ -15,7 +15,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import scala.util.Try
 
-case class PersistedTrafficSign(id: Long, linkId: Long,
+case class PersistedTrafficSign(id: Long, linkId: String,
                                 lon: Double, lat: Double,
                                 mValue: Double, floating: Boolean,
                                 vvhTimeStamp: Long,
@@ -31,7 +31,7 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 expired: Boolean = false) extends PersistedPoint
 
 
-case class TrafficSignRow(id: Long, linkId: Long,
+case class TrafficSignRow(id: Long, linkId: String,
                           lon: Double, lat: Double,
                           mValue: Double, floating: Boolean,
                           vvhTimeStamp: Long,
@@ -197,7 +197,7 @@ object PostGISTrafficSignDao {
   implicit val getTrafficSignRow = new GetResult[TrafficSignRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

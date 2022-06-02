@@ -9,14 +9,14 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-case class AssetLink(id: Long, linkId: Long, startMeasure: Double, endMeasure: Double)
+case class AssetLink(id: Long, linkId: String, startMeasure: Double, endMeasure: Double)
 
 class PostGISAssetDao {
 
   implicit val getAssetLink = new GetResult[AssetLink] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
 

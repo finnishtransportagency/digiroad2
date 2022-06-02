@@ -14,7 +14,7 @@ import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import scala.language.reflectiveCalls
 
-case class PedestrianCrossingRow(id: Long, linkId: Long,
+case class PedestrianCrossingRow(id: Long, linkId: String,
                                  lon: Double, lat: Double,
                                  mValue: Double, floating: Boolean,
                                  vvhTimeStamp: Long,
@@ -27,7 +27,7 @@ case class PedestrianCrossingRow(id: Long, linkId: Long,
                                  expired: Boolean = false,
                                  linkSource: LinkGeomSource)
 
-case class PedestrianCrossing(id: Long, linkId: Long,
+case class PedestrianCrossing(id: Long, linkId: String,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
                               vvhTimeStamp: Long,
@@ -196,7 +196,7 @@ class PostGISPedestrianCrossingDao() {
   implicit val getPointAssetRow = new GetResult[PedestrianCrossingRow] {
     def apply(r: PositionedResult) : PedestrianCrossingRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

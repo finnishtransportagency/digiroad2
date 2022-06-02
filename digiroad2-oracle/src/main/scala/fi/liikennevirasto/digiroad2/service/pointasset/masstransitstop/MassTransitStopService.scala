@@ -19,7 +19,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
-case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimplePointAssetProperty]) extends IncomingPointAsset
+case class NewMassTransitStop(lon: Double, lat: Double, linkId: String, bearing: Int, properties: Seq[SimplePointAssetProperty]) extends IncomingPointAsset
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
@@ -30,14 +30,14 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
                                          validityPeriod: Option[String], floating: Boolean,
                                          propertyData: Seq[Property], municipalityName: Option[String] = None) extends FloatingAsset
 
-case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, stopTypes: Seq[Int],
+case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: String, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
                                     validityDirection: Option[Int], bearing: Option[Int],
                                     validityPeriod: Option[String], floating: Boolean, vvhTimeStamp: Long,
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property], linkSource: LinkGeomSource, terminalId: Option[Long] = None) extends PersistedPointAsset with TimeStamps
 
-case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], linkId: Long, bearing: Option[Int],
+case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], linkId: String, bearing: Option[Int],
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                               created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                               roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean, terminalId: Option[Long])

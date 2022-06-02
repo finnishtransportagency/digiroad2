@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 
 trait Lane extends PolyLine{
   val id: Long
-  val linkId: Long
+  val linkId: String
   val sideCode: Int
   val vvhTimeStamp: Long
   val geomModifiedDate: Option[DateTime]
@@ -16,21 +16,21 @@ trait Lane extends PolyLine{
 
 case class LightLane ( value: Int, expired: Boolean,  sideCode: Int )
 
-case class PieceWiseLane ( id: Long, linkId: Long, sideCode: Int, expired: Boolean, geometry: Seq[Point],
+case class PieceWiseLane ( id: Long, linkId: String, sideCode: Int, expired: Boolean, geometry: Seq[Point],
                                 startMeasure: Double, endMeasure: Double,
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime],
                                 vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], administrativeClass: AdministrativeClass,
                            laneAttributes: Seq[LaneProperty],  attributes: Map[String, Any] = Map() ) extends Lane
 
-case class PersistedLane ( id: Long, linkId: Long, sideCode: Int, laneCode: Int, municipalityCode: Long,
+case class PersistedLane ( id: Long, linkId: String, sideCode: Int, laneCode: Int, municipalityCode: Long,
                            startMeasure: Double, endMeasure: Double,
                            createdBy: Option[String], createdDateTime: Option[DateTime],
                            modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                            expiredBy: Option[String], expiredDateTime: Option[DateTime], expired: Boolean,
                            vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty] )
 
-case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Long, sideCode: Int, laneCode: Int, municipalityCode: Long,
+case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: String, sideCode: Int, laneCode: Int, municipalityCode: Long,
                                 startMeasure: Double, endMeasure: Double,
                                 createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
@@ -40,9 +40,9 @@ case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Long
 case class NewLane(id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
                    isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None )
 
-case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, trafficDirection: TrafficDirection, geometry: Seq[Point], lanes: Seq[Int])
+case class ViewOnlyLane(linkId: String, startMeasure: Double, endMeasure: Double, sideCode: Int, trafficDirection: TrafficDirection, geometry: Seq[Point], lanes: Seq[Int])
 
-case class SideCodesForLinkIds(linkId: Long, sideCode: Int)
+case class SideCodesForLinkIds(linkId: String, sideCode: Int)
 
 sealed trait LaneValue {
   def toJson: Any

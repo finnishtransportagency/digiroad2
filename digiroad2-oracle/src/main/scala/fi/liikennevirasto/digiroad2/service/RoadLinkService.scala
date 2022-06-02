@@ -34,16 +34,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
+case class IncompleteLink(linkId: String, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class AdjustedRoadLinksAndVVHRoadLink(adjustedRoadLink:RoadLink, vVHRoadLink:VVHRoadlink)
 case class RoadLinkSet(link: RoadLink, itNext: Option[RoadLink], itPrevious: Option[RoadLink])
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[AdjustedRoadLinksAndVVHRoadLink], incompleteLinks: Seq[IncompleteLink], changes: Seq[ChangeInfo] = Nil, roadLinks: Seq[RoadLink] = Nil)
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
-case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection,
+case class LinkProperties(linkId: String, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection,
                           administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[AdditionalInformation] = None,
                           accessRightID: Option[String] = None)
-case class PrivateRoadAssociation(name: String, roadName: String, municipality: String, linkId: Long)
-case class RoadLinkAttributeInfo(id: Long, linkId: Option[Long], name: Option[String], value: Option[String], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
+case class PrivateRoadAssociation(name: String, roadName: String, municipality: String, linkId: String)
+case class RoadLinkAttributeInfo(id: Long, linkId: Option[String], name: Option[String], value: Option[String], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
 case class LinkPropertiesEntries(propertyName: String, linkProperty: LinkProperties, username: Option[String],
                                  vvhRoadLink: VVHRoadlink, latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String],mmlId: Option[Long])
@@ -120,7 +120,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   implicit val getRoadAttributeInfo = new GetResult[RoadLinkAttributeInfo] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLongOption()
+      val linkId = r.nextStringOption()
       val name = r.nextStringOption()
       val value = r.nextStringOption()
       val createdDate = r.nextTimestampOption().map(new DateTime(_))

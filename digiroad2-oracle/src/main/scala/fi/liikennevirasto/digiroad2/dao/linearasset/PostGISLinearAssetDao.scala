@@ -19,14 +19,14 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 import scala.language.implicitConversions
 
-case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
+case class ProhibitionsRow(id: Long, linkId: String, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
                            endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedDate: Option[DateTime],
                            expired: Boolean, vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], startMinute: Option[Int], endMinute: Option[Int],
                            additionalInfo: String, linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int], isSuggested: Boolean = false)
 
-case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[String], modifiedDate: Option[DateTime])
-case class AssetLink(id: Long, linkId: Long)
+case class AssetLastModification(id: Long, linkId: String, modifiedBy: Option[String], modifiedDate: Option[DateTime])
+case class AssetLink(id: Long, linkId: String)
 
 
 class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
@@ -37,7 +37,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     def apply(r: PositionedResult) : ProhibitionsRow = {
 
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val prohibitionId = r.nextLong()
       val prohibitionType = r.nextInt()
@@ -74,7 +74,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getLinearAsset: GetResult[PersistedLinearAsset] = new GetResult[PersistedLinearAsset] {
     def apply(r: PositionedResult) : PersistedLinearAsset = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val value = r.nextIntOption().map(NumericValue)
       val startMeasure = r.nextDouble()
@@ -101,7 +101,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getPiecewise = new GetResult[PieceWiseLinearAsset] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val value = r.nextIntOption().map(NumericValue)
       val startMeasure = r.nextDouble()
@@ -234,7 +234,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getAssetLink = new GetResult[AssetLink] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
 
       AssetLink(id, linkId)
     }
