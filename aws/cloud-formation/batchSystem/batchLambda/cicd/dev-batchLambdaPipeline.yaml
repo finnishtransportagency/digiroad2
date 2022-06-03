@@ -1,0 +1,234 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  DevBucketName:
+    Description: Name of dev account S3 bucket for lambda deployment
+    Type: String
+  ProdBucketName:
+    Description: Name of prod account S3 bucket for lambda deployment
+    Type: String
+  LambdaCodeS3Key:
+    Description: Key of S3 object for lambda code
+    Type: String
+  CodeCommitRepositoryName:
+    Description: Name of CodeCommit repo for lambda source code
+    Type: String
+  CodeCommitBranch:
+    Description: Branch to use for lambda source code
+    Type: String
+
+Resources:
+  LambdaDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DevBucketName
+
+  LambdaArtifactStore:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'batch-lambda-build-artifact-store'
+
+  BatchLambdaPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: 'dev-batch-lambda-pipeline'
+      RoleArn: !GetAtt PipelineRole.Arn
+      Stages:
+        -
+          Name: Source
+          Actions:
+            -
+              Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              OutputArtifacts:
+                -
+                  Name: SourceOutput
+              Configuration:
+                RepositoryName: !Ref CodeCommitRepositoryName
+                BranchName: !Ref CodeCommitBranch
+                PollForSourceChanges: false
+              RunOrder: 1
+        -
+          Name: Build
+          Actions:
+            -
+              Name: BuildAction
+              InputArtifacts:
+                -
+                  Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts:
+                -
+                  Name: Built
+              Configuration:
+                ProjectName: !Ref CodeBuild
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref LambdaArtifactStore
+
+  PipelineRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'dev-batch-lambda-pipeline-role'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: 'dev-batch-lambda-pipeline-policy'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'codebuild:BatchGetBuilds'
+                  - 'codebuild:StartBuild'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'lambda:*'
+                  - 'codebuild:*'
+                  - 'codecommit:*'
+                  - 's3:*'
+                Resource: '*'
+
+  StartPipeLineEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: cwe-batch-lambda-pipeline-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Sub arn:aws:codepipeline:${AWS::Region}:475079312496:${BatchLambdaPipeline}
+
+  StartPipelineRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - 'CodeCommit Repository State Change'
+        resources:
+          - arn:aws:codecommit:eu-west-1:475079312496:Batch-Lambda
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - master
+      Targets:
+        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:475079312496:${BatchLambdaPipeline}
+          RoleArn: !GetAtt StartPipeLineEventRole.Arn
+          Id: batch-lambda-pipeline
+
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: 'dev-batch-lambda-codebuild'
+      Description: 'CodeBuild for batch-lambda'
+      ServiceRole: !Ref CodeBuildRole
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: DEV_BUCKET
+            Value: !Ref DevBucketName
+          - Name: OBJECT_KEY
+            Value: !Ref LambdaCodeS3Key
+      Artifacts:
+        Name: 'batch-lambda-build-artifact'
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 14.x
+              commands:
+                - mkdir -p ./lib
+                - npm install --prefix ./lib aws-sdk
+            build:
+              commands:
+                - cd lib
+                - zip -r9 ../deployment_package.zip .
+                - cd ..
+                - zip -g deployment_package.zip AddJobToQueue.js
+                - echo Pushing deployment_package.zip to Dev S3 bucket
+                - aws s3api put-object --bucket $DEV_BUCKET --key $OBJECT_KEY --body deployment_package.zip
+            post_build:
+              commands:
+                - echo Updating Dev account lambda code
+                - aws lambda update-function-code --function-name Batch-Add-Jobs-To-Queue-New --zip-file fileb://deployment_package.zip
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: "dev-batch-lambda-codebuild-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "dev-batch-lambda-codebuild-policy"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "lambda:UpdateFunctionCode"
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+              - Effect: "Allow"
+                Resource:
+                  - "*"
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:PutObject"
+
+Outputs:
+  LambdaDeploymentBucketOutput:
+    Description: Deployment bucket for batch lambda dev account
+    Value: !Ref LambdaDeploymentBucket
+    Export:
+      Name: 'batch-lambda-deployment-bucket'
