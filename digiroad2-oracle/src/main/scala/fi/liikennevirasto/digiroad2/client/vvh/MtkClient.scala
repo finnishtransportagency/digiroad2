@@ -13,6 +13,10 @@ import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, StreamInput}
 
 import java.net.URLEncoder
+import scala.collection.mutable
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 sealed case class FeatureCollection(`type`: String, features: List[Feature], crs: Option[Map[String, Any]] = None,
@@ -287,9 +291,8 @@ private  def extractMeasure(value: Any): Option[Double] = {
     request.addHeader("accept","application/geo+json")
     addAuthorizationHeader(request)
     val client = HttpClientBuilder.create().build()
-    println(url)
     var response: CloseableHttpResponse = null
-    
+    println("new thread: "+Thread.currentThread().getName +" URL :\n "+url)
     LogUtils.time(logger, "fetch roadlinks client") {
       try {
         response = client.execute(request)
@@ -326,7 +329,6 @@ private  def extractMeasure(value: Any): Option[Double] = {
       }
     }
   }
-
   
   def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
     if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
@@ -363,9 +365,40 @@ private  def extractMeasure(value: Any): Option[Double] = {
       finalResponse
     }
   }
+ private val pageAllReadyFetched:mutable.HashSet[String] = new mutable.HashSet()
+  def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit:Int, position: Int): Set[FeatureCollection] = { // recursive loop or while loop, first try recurse
+    val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
+    if(!pageAllReadyFetched.contains(url)){
+      pageAllReadyFetched.add(url)
+      val resort =  fetchFeatures(url) match {
+        case Left(features) => features
+        case Right(error) => throw new ClientException(error.toString)
+      }
+      if (resort.isDefined) {
+        if (resort.get.numberReturned != 0) {
+          paginateAtomic(finalResponse ++ Set(resort.get), baseUrl,limit,newPosition)
+        } else {
+          finalResponse
+        }
+      } else {
+        logger.warn("possible end ?")
+        finalResponse
+      }
+    }else {
+      paginateAtomic(finalResponse, baseUrl,limit,newPosition)
+    }
+  }
   
   def queryWithPagination(baseUrl: String = ""):Seq[LinkType]={
-    paginate(baseUrl = baseUrl).flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
+    val limit = 4599
+    
+   val fut1=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = 0))
+    val fut2=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = 4599*2))
+   
+    val (items1)=Await.result(fut1,atMost = Duration.Inf)
+    val (items2)=Await.result(fut2,atMost = Duration.Inf)
+    (items1 ++ items2).toSeq.flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
+  //  paginate(baseUrl = baseUrl).flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
