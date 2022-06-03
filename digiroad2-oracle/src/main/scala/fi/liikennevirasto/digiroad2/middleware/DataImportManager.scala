@@ -12,6 +12,10 @@ sealed trait AdditionalImportValue {
   def toJson: Any
 }
 
+case class UpdateOnlyStartDates(onlyStartDates: Boolean) extends AdditionalImportValue {
+  override def toJson: Any = onlyStartDates
+}
+
 case class AdministrativeValues(administrativeClasses: AdministrativeClass) extends AdditionalImportValue {
   override def toJson: Any = administrativeClasses
 }
@@ -56,7 +60,7 @@ class DataImportManager(vvhClient: VVHClient, roadLinkService: RoadLinkService, 
       case ServicePoints.layerName =>
         servicePointCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
       case Lanes.layerName =>
-        lanesCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
+        lanesCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId, importedInfo.additionalImportInfo.head)
       case _ =>
     }
   }

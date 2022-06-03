@@ -619,7 +619,7 @@ trait LaneOperations {
     * @param username Username of the user is doing the changes
     * @return
     */
-  def update(updateNewLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
+  def update(updateNewLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
     if (updateNewLane.isEmpty || linkIds.isEmpty)
       return Seq()
 
@@ -636,7 +636,10 @@ trait LaneOperations {
         originalLane match {
           case Some(lane) =>
             //oldLane is the lane related with the laneToUpdate by Id, when various links we need to find this lane Id and lane code
-            val oldLane = allExistingLanes.find(laneAux => laneAux.laneCode == lane.laneCode && laneAux.linkId == linkId)
+            val sideCodeForLink = sideCodesForLinks.find(_.linkId == linkId)
+              .getOrElse(throw new InvalidParameterException("Side Code not found for link ID: " + linkId))
+              .sideCode
+            val oldLane = allExistingLanes.find(laneAux => laneAux.laneCode == lane.laneCode && laneAux.linkId == linkId && laneAux.sideCode == sideCodeForLink)
               .getOrElse(throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: ${lane.laneCode} for update!"))
 
             val isExactlyMatchingSingleLinkLane = (lane: PersistedLane) => linkIds.size == 1 &&
@@ -716,6 +719,13 @@ trait LaneOperations {
     }
 
     if (newTransaction) withDynTransaction( createLanes() ) else createLanes()
+  }
+
+  def updateMultipleLaneAttributes(lanes: Seq[PersistedLane], username: String, newTransaction: Boolean = false): Unit = {
+    if (newTransaction){
+      withDynTransaction(dao.updateLaneAttributesForMultipleLanes(lanes, username))
+    }
+    else dao.updateLaneAttributesForMultipleLanes(lanes, username)
   }
 
 
@@ -890,7 +900,7 @@ trait LaneOperations {
       val laneIdsToBeDeleted = actionsLanes.lanesToDelete.map(_.id)
 
       create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
-      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
+      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
       deleteMultipleLanes(laneIdsToBeDeleted, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
     }
@@ -1072,8 +1082,8 @@ trait LaneOperations {
     }
   }
 
-  def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
-    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId)).head
+  def persistedLaneToTwoDigitLaneCode(lane: PersistedLane, newTransaction: Boolean = true): Option[PersistedLane] = {
+    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId), newTransaction).head
     val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
     val newLaneCode = getTwoDigitLaneCode(roadLink, pwLane)
     newLaneCode match {
