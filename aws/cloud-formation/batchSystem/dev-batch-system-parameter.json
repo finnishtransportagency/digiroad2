@@ -1,0 +1,62 @@
+[
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "VpcIDOfSystem",
+    "ParameterValue": "vpc-0f430b7fedef04ba3"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "DEV"
+  },
+  {
+    "ParameterKey": "JobDefinitionName",
+    "ParameterValue": "DEVBatchDefinition"
+  },
+  {
+    "ParameterKey": "BatchLambdaStackName",
+    "ParameterValue": "batch-lambda-stack"
+  },
+  {
+    "ParameterKey": "Subnet1",
+    "ParameterValue": "Digiroad-OTH-kehitys-Subnet1-Id"
+  },
+  {
+    "ParameterKey": "Subnet2",
+    "ParameterValue": "Digiroad-OTH-kehitys-Subnet2-Id"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "LambdaInputAnnual",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"annual\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputMonthly",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"monthly\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputWeekly",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"weekly\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputDaily",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"daily\" }"
+  },
+  {
+    "ParameterKey": "LambdaInputRefreshCache",
+    "ParameterValue": "{ \"jobName\": \"DEV\", \"jobDefinition\": \"DEVBatchDefinition\", \"type\": \"refresh_cache\" }"
+  }
+]

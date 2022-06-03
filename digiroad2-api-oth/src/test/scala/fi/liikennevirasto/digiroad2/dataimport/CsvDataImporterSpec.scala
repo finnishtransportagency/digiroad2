@@ -58,7 +58,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val updateOnlyStartDatesFalse: UpdateOnlyStartDates = UpdateOnlyStartDates(false)
 
   when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
-  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(roadLink)
+  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]])).thenReturn(roadLink)
 
   def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
 

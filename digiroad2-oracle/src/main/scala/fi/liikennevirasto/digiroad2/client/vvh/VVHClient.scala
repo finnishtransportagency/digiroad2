@@ -6,7 +6,8 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.util.LogUtils
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, OAGAuthPropertyReader}
+import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -113,7 +114,7 @@ object ChangeType {
   case object New extends ChangeType { def value = 12 }
   case object ReplacedCommonPart extends ChangeType { def value = 13 }
   case object ReplacedNewPart extends ChangeType { def value = 14 }
-  case object ReplacedRemovedPart extends ChangeType { def value = 16 }
+  case object ReplacedRemovedPart extends ChangeType { def value = 15 }
 
   /**
     * Return true if this is a replacement where segment or part of it replaces another, older one
@@ -152,6 +153,14 @@ object ChangeType {
     ChangeType.apply(changeInfo.changeType) match {
       case LengthenedNewPart => true
       case ReplacedNewPart => true
+      case _ => false
+    }
+  }
+
+  def isDividedChange(changeInfo: ChangeInfo) = {
+    ChangeType.apply(changeInfo.changeType) match {
+      case DividedModifiedPart => true
+      case DividedNewPart => true
       case _ => false
     }
   }
@@ -245,6 +254,27 @@ trait VVHClientOperations {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
+
+  class VVHAuthPropertyReader {
+    private def getUsername: String = {
+      val loadedKeyString = Digiroad2Properties.vvhRestUsername
+      if (loadedKeyString == null)
+        throw new IllegalArgumentException("Missing OAG username")
+      loadedKeyString
+    }
+
+    private def getPassword: String = {
+      val loadedKeyString = Digiroad2Properties.vvhRestPassword
+      if (loadedKeyString == null)
+        throw new IllegalArgumentException("Missing OAG Password")
+      loadedKeyString
+    }
+
+    def getAuthInBase64: String = {
+      Base64.encodeBase64String((getUsername + ":" + getPassword).getBytes)
+    }
+  }
+  
   protected def anyToDouble(number: Any): Option[Double] = number match {
     case bi: BigInt => Some(bi.toDouble)
     case i: Int => Some(i.toDouble)
@@ -373,6 +403,9 @@ trait VVHClientOperations {
     val fetchVVHStartTime = System.currentTimeMillis()
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
+    val vVHAuthPropertyReader = new VVHAuthPropertyReader
+    request.addHeader("Authorization", "Basic " + vVHAuthPropertyReader.getAuthInBase64)
+    
     val response = client.execute(request)
     try {
       mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
@@ -389,6 +422,10 @@ trait VVHClientOperations {
     val request = new HttpPost(url)
     request.setEntity(new UrlEncodedFormEntity(formparams, "utf-8"))
     val client = HttpClientBuilder.create().build()
+   
+    val vVHAuthPropertyReader = new VVHAuthPropertyReader
+    request.addHeader("Authorization", "Basic " + vVHAuthPropertyReader.getAuthInBase64)
+   
     val response = client.execute(request)
     try {
       mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
@@ -980,6 +1017,28 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
   }
 
+  def fetchByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
+    val definition = layerDefinition(withCreatedDateFilter(since, until))
+    val url = serviceUrl(definition, queryParameters())
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  protected  def withCreatedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withCreatedDateLimitFilter("CREATED_DATE", lowerDate, higherDate)
+  }
+
+  protected def withCreatedDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+  }
+
   def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[ChangeInfo] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities)
   }
@@ -1118,6 +1177,9 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
     val request = new HttpPost(url)
     request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
     val client = HttpClientBuilder.create().build()
+    val vVHAuthPropertyReader = new VVHAuthPropertyReader
+    request.addHeader("Authorization", "Basic " + vVHAuthPropertyReader.getAuthInBase64)
+
     val response = client.execute(request)
     try {
       val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]

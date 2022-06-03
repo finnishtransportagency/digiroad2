@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "BucketName",
+    "ParameterValue": "dev-batch-lambda-deployment-bucket"
+  },
+  {
+    "ParameterKey": "S3ObjectKey",
+    "ParameterValue": "deployment_package.zip"
+  },
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "DEV"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  }
+]
