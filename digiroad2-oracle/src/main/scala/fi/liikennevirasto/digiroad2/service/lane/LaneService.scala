@@ -1021,8 +1021,8 @@ trait LaneOperations {
     }
   }
 
-  def persistedLaneToTwoDigitLaneCode(lane: PersistedLane): Option[PersistedLane] = {
-    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId)).head
+  def persistedLaneToTwoDigitLaneCode(lane: PersistedLane, newTransaction: Boolean = true): Option[PersistedLane] = {
+    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId), newTransaction).head
     val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
     val newLaneCode = getTwoDigitLaneCode(roadLink, pwLane)
     newLaneCode match {
