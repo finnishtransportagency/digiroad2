@@ -181,7 +181,9 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
-    laneAssetProperties.map(props => {
+    val mappedByRoadNumber = laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).values
+    val lanesToUpdateForRoad = mappedByRoadNumber.flatMap(propsByRoad => {
+      propsByRoad.map(props => {
         val roadNumber = getPropertyValue(props, "road number").toLong
         val roadPartNumber = getPropertyValue(props, "road part").toLong
         val laneCode = getPropertyValue(props, "lane")
@@ -195,16 +197,22 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
         val laneRoadAddressInfo = LaneRoadAddressInfo(roadNumber, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
         val roadAddresses = getRoadAddressToProcess(laneRoadAddressInfo)._1
-        val filteredRoadAddresses = roadAddresses.filter(address =>
+
+        val roadLinksFullyInsideRoadAddressRange = roadAddresses.filter(address =>
           address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance)
+        val roadLinksPartiallyInsideRoadAddressRange = roadAddresses.filter(address =>
+          (address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance) ||
+           address.endAddressM <= laneRoadAddressInfo.endDistance && address.endAddressM >= laneRoadAddressInfo.startDistance)
+        val filteredRoadAddresses = (roadLinksFullyInsideRoadAddressRange ++ roadLinksPartiallyInsideRoadAddressRange)
 
         val lanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
         val twoDigitLanes = lanes.flatMap(lane => laneService.persistedLaneToTwoDigitLaneCode(lane, false))
         val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
-        correctLanes.foreach(lane => laneService.updatePersistedLaneAttributes(lane.id, laneProps, user.username))
 
-        correctLanes.map(_.id)
+        correctLanes.map(_.copy(attributes = laneProps))
+      })
     })
+    lanesToUpdateForRoad.foreach(lanes => laneService.updateMultipleLaneAttributes(lanes, user.username))
     result
   }
 

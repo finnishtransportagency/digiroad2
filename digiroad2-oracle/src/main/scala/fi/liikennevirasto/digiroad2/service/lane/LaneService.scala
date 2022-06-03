@@ -661,6 +661,13 @@ trait LaneOperations {
     if (newTransaction) withDynTransaction( createLanes() ) else createLanes()
   }
 
+  def updateMultipleLaneAttributes(lanes: Seq[PersistedLane], username: String, newTransaction: Boolean = false): Unit = {
+    if (newTransaction){
+      withDynTransaction(dao.updateLaneAttributesForMultipleLanes(lanes, username))
+    }
+    else dao.updateLaneAttributesForMultipleLanes(lanes, username)
+  }
+
 
   def validateMinDistance(measure1: Double, measure2: Double): Boolean = {
     val minDistanceAllow = 0.01
