@@ -849,42 +849,36 @@ trait LaneOperations {
   def processLanesByRoadAddress(newLanes: Set[NewLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                 username: String): Set[Long] = {
     withDynTransaction {
-      val (filteredRoadAddresses, roadLinks) = LaneUtils.getRoadAddressToProcess(laneRoadAddressInfo)
+      val linksWithAddresses = LaneUtils.getRoadAddressToProcess(laneRoadAddressInfo)
       //Get only the lanes to create
       val lanesToInsert = newLanes.filter(_.id == 0)
       val clickedMainLane = newLanes.filter(_.id != 0).head
       val selectedLane = getPersistedLanesByIds(Set(clickedMainLane.id), newTransaction = false).head
 
-      val addressesByLinks = filteredRoadAddresses.groupBy(_.linkId)
-      val roadLinkIds = addressesByLinks.keys.toSet
+      val roadLinkIds = linksWithAddresses.map(_.linkId)
       val linksWithSideCodes = getLinksWithCorrectSideCodes(selectedLane, roadLinkIds, newTransaction = false)
       val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
 
-      val allLanesToCreate = addressesByLinks.flatMap { case (linkId, addressesOnLink) =>
+      val allLanesToCreate = linksWithAddresses.flatMap { link =>
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
-
-        val linkLength = roadLinks.find(_.linkId == linkId) match {
-          case Some(roadLink) => roadLink.length
-          case _ => addressesOnLink.head.endMValue
-        }
 
         lanesToInsert.flatMap { lane =>
           val laneCode = getLaneCode(lane).toInt
           validateStartDate(lane, laneCode)
-          val fixedSideCode = linksWithSideCodes.get(linkId)
-          val startAndEndPoints = LaneUtils.calculateStartAndEndPoint(laneRoadAddressInfo, addressesOnLink, linkLength)
+          val fixedSideCode = linksWithSideCodes.get(link.linkId)
+          val startAndEndPoints = LaneUtils.calculateStartAndEndPoint(laneRoadAddressInfo, link.addresses, link.link.length)
 
           (startAndEndPoints, fixedSideCode) match {
             case (Some(endPoints), Some(sideCode: SideCode)) =>
               val lanesExists = existingLanes.filter(pLane =>
-                pLane.linkId == linkId && pLane.sideCode == sideCode.value && pLane.laneCode == laneCode &&
+                pLane.linkId == link.linkId && pLane.sideCode == sideCode.value && pLane.laneCode == laneCode &&
                 ((endPoints.start >= pLane.startMeasure && endPoints.start < pLane.endMeasure) ||
                   (endPoints.end > pLane.startMeasure && endPoints.end <= pLane.endMeasure))
               )
               if (lanesExists.nonEmpty)
                 throw new InvalidParameterException(s"Lane with given lane code already exists in the selection")
 
-              Some(PersistedLane(0, linkId, sideCode.value, laneCode, addressesOnLink.head.municipalityCode.getOrElse(0).toLong,
+              Some(PersistedLane(0, link.linkId, sideCode.value, laneCode, link.link.municipalityCode,
                 endPoints.start, endPoints.end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
             case (Some(_), None) =>
@@ -893,7 +887,7 @@ trait LaneOperations {
             case _ => None
           }
         }
-      }.toSet
+      }
 
       // Create lanes
       allLanesToCreate.map(createWithoutTransaction(_, username))

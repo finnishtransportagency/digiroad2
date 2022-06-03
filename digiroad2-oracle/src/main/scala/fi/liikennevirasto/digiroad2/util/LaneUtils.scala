@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
+case class RoadLinkWithAddresses(linkId: Long, link: VVHRoadlink, addresses: Set[RoadAddressTEMP])
 
 case class LaneUtils(){
   // DROTH-3057: Remove after lanes csv import is disabled
@@ -43,39 +44,34 @@ object LaneUtils {
     // Main process
     def process() = {
 
-      val (filteredRoadAddresses, vvhRoadLinks) = getRoadAddressToProcess(laneRoadAddressInfo)
-      val addressesByLinks = filteredRoadAddresses.groupBy(_.linkId)
+      val linksWithAddresses = getRoadAddressToProcess(laneRoadAddressInfo)
 
       //Get only the lanes to create
       val lanesToInsert = newLanes.filter(_.id == 0)
 
 
-      val allLanesToCreate = addressesByLinks.flatMap { case (linkId, addressesOnLink) =>
+      val allLanesToCreate = linksWithAddresses.flatMap { link =>
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
-        val linkLength = vvhRoadLinks.find(_.linkId == linkId) match {
-          case Some(roadLink) => roadLink.length
-          case _ => addressesOnLink.head.endMValue
-        }
 
         lanesToInsert.flatMap { lane =>
           val laneCode = laneService.getLaneCode(lane).toInt
           laneService.validateStartDate(lane, laneCode)
 
           val isTwoDigitLaneCode = laneCode.toString.length > 1
-          val finalSideCode = laneService.fixSideCode( addressesOnLink.head, laneCode.toString )
+          val finalSideCode = laneService.fixSideCode( link.addresses.head, laneCode.toString )
           val laneCodeOneDigit = if (isTwoDigitLaneCode) laneCode.toString.substring(1).toInt
                                  else laneCode
 
-          calculateStartAndEndPoint(laneRoadAddressInfo, addressesOnLink, linkLength) match {
+          calculateStartAndEndPoint(laneRoadAddressInfo, link.addresses, link.link.length) match {
             case Some(endPoints) =>
-              Some(PersistedLane(0, linkId, finalSideCode.value, laneCodeOneDigit, addressesOnLink.head.municipalityCode.getOrElse(0).toLong,
+              Some(PersistedLane(0, link.linkId, finalSideCode.value, laneCodeOneDigit, link.link.municipalityCode,
                 endPoints.start, endPoints.end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
                 vvhTimeStamp, None, lane.properties))
 
             case _ => None
             }
         }
-      }.toSet
+      }
 
       //Create lanes
       allLanesToCreate.map(laneService.createWithoutTransaction(_, username))
@@ -92,7 +88,7 @@ object LaneUtils {
 
   }
 
-  def getRoadAddressToProcess(laneRoadAddressInfo: LaneRoadAddressInfo): (Set[RoadAddressTEMP], Seq[VVHRoadlink]) = {
+  def getRoadAddressToProcess(laneRoadAddressInfo: LaneRoadAddressInfo): Set[RoadLinkWithAddresses] = {
 
     // Generate a sequence from startRoadPart to endRoadPart
     // If startRoadPart = 1 and endRoadPart = 4
@@ -119,23 +115,22 @@ object LaneUtils {
 
     // Get all updated information from VVH
     val roadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId))
-    val mappedRoadLinks = roadLinks.groupBy(_.linkId)
 
-    val finalRoads = groupedAddresses.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
-      val existsInVVH = mappedRoadLinks.contains(elem.linkId)
+    val finalRoads = groupedAddresses.filter { elem =>  // Remove addresses which roadPart is not between our start and end
       val roadPartNumber = elem.roadPart
-      val inInitialAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.startRoadPart && roadPartNumber <= laneRoadAddressInfo.endRoadPart
+      val inStartAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.startRoadPart && roadPartNumber <= laneRoadAddressInfo.endRoadPart
 
-      existsInVVH && inInitialAndEndRoadPart
+      inStartAndEndRoadPart
     }
-      .map{ elem =>             //In case we don't have municipalityCode we will get it from VVH info
-        if (elem.municipalityCode.getOrElse(0) == 0)
-          elem.copy( municipalityCode = Some( mappedRoadLinks(elem.linkId).head.municipalityCode) )
-        else
-          elem
-      }
 
-    (finalRoads, roadLinks)
+    finalRoads.flatMap { road =>
+      roadLinks.find(_.linkId == road.linkId) match {
+        case Some(link) =>
+          val allAddressesOnLink = allRoadAddress.filter(_.linkId == road.linkId)
+          Some(RoadLinkWithAddresses(road.linkId, link, allAddressesOnLink))
+        case _ => None // Remove links (and addresses) that are not in VVH
+      }
+    }
   }
 
   /**
@@ -180,7 +175,7 @@ object LaneUtils {
       // If adjusted start or end point is used and road side code is againstDigitising, the opposite value is adjusted
       road.roadPart match {
         case part if part > selection.startRoadPart && part < selection.endRoadPart =>
-          Some(road.startMValue, road.endMValue)
+          Some(startMValue, endMValue)
 
         case part if part == selection.startRoadPart && part == selection.endRoadPart =>
           if (roadEndsBeforeSelectionStart || roadStartsAfterSelectionEnd)
