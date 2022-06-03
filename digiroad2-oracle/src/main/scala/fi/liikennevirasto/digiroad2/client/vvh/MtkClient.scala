@@ -283,7 +283,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
   
   // https://github.com/json4s/json4s
   protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError2] = {
-    val request = new HttpGet(encode(url))
+    val request = new HttpGet(url)
     request.addHeader("accept","application/geo+json")
     addAuthorizationHeader(request)
     val client = HttpClientBuilder.create().build()
@@ -313,7 +313,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
           }
           Left(resort)
         } else {
-          Right(LinkOperationError2(response.getEntity.getContent.toString, response.getStatusLine.getStatusCode.toString))
+          Right(LinkOperationError2(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString))
         }
       }
       catch {
@@ -329,8 +329,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
 
   
   def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
-    if (firstRequest)
-      (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
+    if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
     else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
   }
 
@@ -392,7 +391,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
   }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
-    val filterString  = s"filter=INTERSECTS(geometry,${encode(polygon.toString)})"
+    val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${queryString}") match {
       case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
@@ -421,6 +420,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
       queryByLinkId[T](linkIds.head)
     }else {
       // how are we going to fetch large set of id, map loop is too inefficient
+      // fork join pool request in 10 item set ?
       linkIds.flatMap(t=>queryByLinkId[T](t)).toSeq
     }
   }
