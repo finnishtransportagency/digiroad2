@@ -297,7 +297,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
         .setCookieSpec(CookieSpecs.STANDARD).build())
       .build();
     var response: CloseableHttpResponse = null
-    //println("new thread: "+Thread.currentThread().getName +" URL :\n "+url)
+    println("new thread: "+Thread.currentThread().getName +" URL :\n "+url)
     LogUtils.time(logger, "fetch roadlinks client") {
       try {
         response = client.execute(request)
@@ -423,11 +423,10 @@ private  def extractMeasure(value: Any): Option[Double] = {
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    var filterString  = "filter="
-    if (municipalities.nonEmpty || filter.isDefined){
-      filterString+FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(municipalities),filter)
+    val filterString  = if (municipalities.nonEmpty || filter.isDefined){
+      "filter="+encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(municipalities),filter))
     }else {
-      filterString =""
+      ""
     }
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}&${filterString}") 
     match {
@@ -484,12 +483,11 @@ private  def extractMeasure(value: Any): Option[Double] = {
     }
   }
 
-  protected def queryByFilter[LinkType](filter:String): Seq[LinkType] = {
-    var filterString  = "filter="
-    if (filter.nonEmpty){
-      filterString+filter
+  protected def queryByFilter[LinkType](filter:Option[String]): Seq[LinkType] = {
+    val filterString  = if (filter.nonEmpty){
+      "filter="+encode(filter.get)
     }else {
-      filterString =""
+      ""
     }
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}&${filterString}")
     match {
