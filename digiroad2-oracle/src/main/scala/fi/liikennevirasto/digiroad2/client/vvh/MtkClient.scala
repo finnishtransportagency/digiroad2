@@ -148,7 +148,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
   }
   protected def extractFeature(feature:Feature , path: List[List[Double]]): RoadlinkFetchedMtk = {
     val attributes =feature.properties
-    
+   // println("new extractFeature thread: "+Thread.currentThread().getName+" attributes:" +attributes.size)
     def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
       def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
         (a, b) match {
@@ -265,8 +265,6 @@ private  def extractMeasure(value: Any): Option[Double] = {
       //"CUST_OWNER"            -> attributesMap("")) //?
   }
   
-
-
   def convertToFeature(content: Map[String, Any]): Feature = {
     val geometry = Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
       coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]]
@@ -370,54 +368,44 @@ private  def extractMeasure(value: Any): Option[Double] = {
       finalResponse
     }
   }
- 
-
-
-  def queryWithPaginationThreaded(baseUrl: String = ""):Seq[LinkType]={
-    val pageAllReadyFetched:mutable.HashSet[String] = new mutable.HashSet()
+  
+  def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
+    val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
 
     @tailrec
-    def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit:Int, position: Int): Set[FeatureCollection] = { // recursive loop or while loop, first try recurse
+    def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int): Set[FeatureCollection] = { // recursive loop or while loop, first try recurse
       val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
-      if(!pageAllReadyFetched.contains(url)){
+      if (!pageAllReadyFetched.contains(url)) {
         pageAllReadyFetched.add(url)
-        val resort =  fetchFeatures(url) match {
+        val resort = fetchFeatures(url) match {
           case Left(features) => features
           case Right(error) => throw new ClientException(error.toString)
         }
         if (resort.isDefined) {
           if (resort.get.numberReturned != 0) {
-            paginateAtomic(finalResponse ++ Set(resort.get), baseUrl,limit,newPosition)
+            paginateAtomic(finalResponse ++ Set(resort.get), baseUrl, limit, newPosition)
           } else {
             finalResponse
           }
         } else {
-          logger.warn("possible end ?")
           finalResponse
         }
-      }else {
-        paginateAtomic(finalResponse, baseUrl,limit,newPosition)
+      } else {
+        paginateAtomic(finalResponse, baseUrl, limit, newPosition)
       }
     }
-    
+
     val limit = 4599
 
-    val fut1=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = 0))
-    val fut2=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = limit*2))
-    val fut3=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = limit*3))
-    val fut4=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = limit*4))
-
-    val (items1)=Await.result(fut1,atMost = Duration.Inf)
-    val (items2)=Await.result(fut2,atMost = Duration.Inf)
-    val (items3)=Await.result(fut3,atMost = Duration.Inf)
-    val (items4)=Await.result(fut4,atMost = Duration.Inf)
-    val begin = System.currentTimeMillis()
-    // create regular for loop with mutable list
-   val t= (items1 ++ items2 ++items3 ++ items4).toSeq.flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
-    val duration = System.currentTimeMillis() - begin
-    println(s"roadlink merging completed in ${duration} ms and in second ${duration / 1000}")
-    //  paginate(baseUrl = baseUrl).flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
-  t
+    val fut1 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = 0))
+    val fut2 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 2))
+    val fut3 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 3))
+    val items1 = Await.result(fut1, atMost = Duration.Inf)
+    val items2 = Await.result(fut2, atMost = Duration.Inf)
+    val items3 = Await.result(fut3, atMost = Duration.Inf)
+    (items1 ++ items2 ++ items3).flatMap(t => {
+      t.features.par.map(t => extractFeature(t, t.geometry.coordinates).asInstanceOf[LinkType])
+    }).toList
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
