@@ -17,7 +17,6 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import java.security.InvalidParameterException
-import scala.collection.DebugUtils
 
 
 case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink])
@@ -1022,13 +1021,40 @@ trait LaneOperations {
           newLanes.filter(newLane => newLane.startMeasure >= oldLane.startMeasure && newLane.endMeasure <= oldLane.endMeasure)
         }
 
+        /*Creates an explicit expired lane piece for those parts of the split line that have been deleted before saving.
+        Needed for change messages, so that the expiration change will be mapped to the expired lane part in ChangeAPI.*/
+        def createExpiredPartsOfOldLane(newLanes: Seq[PersistedLane], oldLane: PersistedLane): Unit = {
+          val sortedNewLanes = newLanes.sortBy(_.startMeasure)
+          var start = oldLane.startMeasure
+          sortedNewLanes.foreach { newLane =>
+            if (start < newLane.startMeasure) {
+              val replacementLaneId = create(Seq(NewLane(0, start, newLane.startMeasure, oldLane.municipalityCode, true, true,
+                oldLane.attributes, Some(sideCode))), linkIds, sideCode, username).head
+              moveToHistory(oldLane.id, Some(replacementLaneId), true, false, username)
+              moveToHistory(replacementLaneId, None, true, true, username)
+              start = newLane.startMeasure
+            } else {
+              start = newLane.endMeasure
+            }
+
+          }
+          val lastNewLane = sortedNewLanes.last
+          if (lastNewLane.endMeasure < oldLane.endMeasure) {
+            val replacementLaneId = create(Seq(NewLane(0, lastNewLane.endMeasure, oldLane.endMeasure, oldLane.municipalityCode, true, true,
+              oldLane.attributes, Some(sideCode))), linkIds, sideCode, username).head
+            moveToHistory(oldLane.id, Some(replacementLaneId), true, false, username)
+            moveToHistory(replacementLaneId, None, true, true, username)
+          }
+        }
+
         //Expire only those old lanes that have been replaced by new lane pieces.
         oldLanes.foreach { oldLane =>
           val newLanesWithinRange = newLanesWithinOldLaneRange(createdNewLanes, oldLane)
-          newLanesWithinRange.foreach { newLane =>
-            moveToHistory(oldLane.id, Some(newLane.id), true, false, username)
-          }
           if (!newLanesWithinRange.isEmpty) {
+            createExpiredPartsOfOldLane(newLanesWithinRange, oldLane)
+            newLanesWithinRange.foreach { newLane =>
+              moveToHistory(oldLane.id, Some(newLane.id), true, false, username)
+            }
             dao.deleteEntryLane(oldLane.id)
           }
         }
