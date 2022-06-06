@@ -6,13 +6,15 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.anyToDouble
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.http.HttpStatus
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.{HttpClientBuilder, HttpClients}
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, StreamInput}
 
 import java.net.URLEncoder
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -290,9 +292,12 @@ private  def extractMeasure(value: Any): Option[Double] = {
     val request = new HttpGet(url)
     request.addHeader("accept","application/geo+json")
     addAuthorizationHeader(request)
-    val client = HttpClientBuilder.create().build()
+    val client =  HttpClients.custom()
+      .setDefaultRequestConfig(RequestConfig.custom()
+        .setCookieSpec(CookieSpecs.STANDARD).build())
+      .build();
     var response: CloseableHttpResponse = null
-    println("new thread: "+Thread.currentThread().getName +" URL :\n "+url)
+    //println("new thread: "+Thread.currentThread().getName +" URL :\n "+url)
     LogUtils.time(logger, "fetch roadlinks client") {
       try {
         response = client.execute(request)
@@ -302,13 +307,13 @@ private  def extractMeasure(value: Any): Option[Double] = {
           val resort = feature("type").toString match {
             case "Feature" => Some(FeatureCollection(
               `type` = "FeatureCollection",
-              features = List(convertToFeature(feature)),
+              features = List(LogUtils.time(logger, "convertToFeature",true)(convertToFeature(feature))),
               crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)
             ))
             case "FeatureCollection" =>
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
-                features = feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature),
+                features = LogUtils.time(logger, "convertToFeature",true)(feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)),
                 crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
                 numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt
               ))
@@ -365,40 +370,54 @@ private  def extractMeasure(value: Any): Option[Double] = {
       finalResponse
     }
   }
- private val pageAllReadyFetched:mutable.HashSet[String] = new mutable.HashSet()
-  def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit:Int, position: Int): Set[FeatureCollection] = { // recursive loop or while loop, first try recurse
-    val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
-    if(!pageAllReadyFetched.contains(url)){
-      pageAllReadyFetched.add(url)
-      val resort =  fetchFeatures(url) match {
-        case Left(features) => features
-        case Right(error) => throw new ClientException(error.toString)
-      }
-      if (resort.isDefined) {
-        if (resort.get.numberReturned != 0) {
-          paginateAtomic(finalResponse ++ Set(resort.get), baseUrl,limit,newPosition)
+ 
+
+
+  def queryWithPaginationThreaded(baseUrl: String = ""):Seq[LinkType]={
+    val pageAllReadyFetched:mutable.HashSet[String] = new mutable.HashSet()
+
+    @tailrec
+    def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit:Int, position: Int): Set[FeatureCollection] = { // recursive loop or while loop, first try recurse
+      val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
+      if(!pageAllReadyFetched.contains(url)){
+        pageAllReadyFetched.add(url)
+        val resort =  fetchFeatures(url) match {
+          case Left(features) => features
+          case Right(error) => throw new ClientException(error.toString)
+        }
+        if (resort.isDefined) {
+          if (resort.get.numberReturned != 0) {
+            paginateAtomic(finalResponse ++ Set(resort.get), baseUrl,limit,newPosition)
+          } else {
+            finalResponse
+          }
         } else {
+          logger.warn("possible end ?")
           finalResponse
         }
-      } else {
-        logger.warn("possible end ?")
-        finalResponse
+      }else {
+        paginateAtomic(finalResponse, baseUrl,limit,newPosition)
       }
-    }else {
-      paginateAtomic(finalResponse, baseUrl,limit,newPosition)
     }
-  }
-  
-  def queryWithPagination(baseUrl: String = ""):Seq[LinkType]={
-    val limit = 4599
     
-   val fut1=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = 0))
-    val fut2=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = 4599*2))
-   
+    val limit = 4599
+
+    val fut1=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = 0))
+    val fut2=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = limit*2))
+    val fut3=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = limit*3))
+    val fut4=  Future(paginateAtomic(baseUrl = baseUrl,limit=limit,position = limit*4))
+
     val (items1)=Await.result(fut1,atMost = Duration.Inf)
     val (items2)=Await.result(fut2,atMost = Duration.Inf)
-    (items1 ++ items2).toSeq.flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
-  //  paginate(baseUrl = baseUrl).flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
+    val (items3)=Await.result(fut3,atMost = Duration.Inf)
+    val (items4)=Await.result(fut4,atMost = Duration.Inf)
+    val begin = System.currentTimeMillis()
+    // create regular for loop with mutable list
+   val t= (items1 ++ items2 ++items3 ++ items4).toSeq.flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
+    val duration = System.currentTimeMillis() - begin
+    println(s"roadlink merging completed in ${duration} ms and in second ${duration / 1000}")
+    //  paginate(baseUrl = baseUrl).flatMap(t=>t.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType]))
+  t
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
@@ -420,7 +439,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
   // https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/keskilinjavarasto:frozenlinks/items?filter=municipalitycode%3D91%20OR%20municipalitycode%3D297&limit=2&startIndex=2
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
     val filterString  = s"filter=${FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter)}"
-    queryWithPagination(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
