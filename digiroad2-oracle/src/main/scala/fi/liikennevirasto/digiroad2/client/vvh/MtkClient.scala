@@ -337,37 +337,6 @@ private  def extractMeasure(value: Any): Option[Double] = {
     if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
     else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
   }
-
-  def paginate(finalResponse: Seq[FeatureCollection] = Seq(), baseUrl: String = "", firstRequest: Boolean = true, limit: Int = 4599, position: Int = 0): Seq[FeatureCollection] = { // recursive loop or while loop, first try recurse
-    var newPositionOuteer: Int = 0
-    val resort = if (firstRequest) {
-      val (url, newPosition) = paginationRequest(baseUrl, limit)
-      newPositionOuteer = newPosition
-      fetchFeatures(url)
-      match {
-        case Left(features) => features
-        case Right(error) => throw new ClientException(error.toString)
-      }
-    } else {
-      val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
-      newPositionOuteer = newPosition
-      fetchFeatures(url) match {
-        case Left(features) => features
-        case Right(error) => throw new ClientException(error.toString)
-      }
-    }
-
-    if (resort.isDefined) {
-      if (resort.get.numberReturned != 0) {
-        paginate(finalResponse ++ Seq(resort.get), baseUrl, firstRequest = false, position = newPositionOuteer)
-      } else {
-        finalResponse
-      }
-    } else {
-      logger.warn("possible end ?")
-      finalResponse
-    }
-  }
   
   def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
     val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
