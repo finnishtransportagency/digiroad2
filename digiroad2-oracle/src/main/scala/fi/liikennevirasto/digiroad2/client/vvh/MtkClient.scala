@@ -501,12 +501,5 @@ private  def extractMeasure(value: Any): Option[Double] = {
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
   }
-
-  protected def queryByNames[LinkType](names: Set[String],
-                                fieldSelection: Option[String],
-                                fetchGeometry: Boolean,
-                                resultTransition: (Map[String, Any], List[List[Double]]) => LinkType,
-                                filter: Set[String] => String): Seq[LinkType] = ???
-
-
+  
 }
