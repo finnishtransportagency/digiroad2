@@ -437,7 +437,7 @@ private  def extractMeasure(value: Any): Option[Double] = {
 //pagination
   // https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/keskilinjavarasto:frozenlinks/items?filter=municipalitycode%3D91%20OR%20municipalitycode%3D297&limit=2&startIndex=2
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
-    val filterString  = s"filter=${FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter)}"
+    val filterString  = s"filter=${encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter))}"
     queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
@@ -481,6 +481,10 @@ private  def extractMeasure(value: Any): Option[Double] = {
       // fork join pool request in 10 item set ?
       linkIds.flatMap(t=>queryByLinkId[T](t)).toSeq
     }
+  }
+
+  protected def queryByLinkIdsUsingFilter[T](linkIds: Set[String]): Seq[T] = {
+    queryByFilter(Some(FilterOgc.withLinkIdFilter(linkIds)))
   }
 
   protected def queryByFilter[LinkType](filter:Option[String]): Seq[LinkType] = {
