@@ -533,9 +533,9 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
 
   def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
   
-  def fetchByRoadNames(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[LinkType] = queryByNames(roadNameSource, None, true, extractRoadLinkFeature, Filter.withFinNameFilter(roadNamePublicIds))
+  def fetchByRoadNames(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[LinkType] = queryByFilter(filter.withFinNameFilter(roadNamePublicIds)(roadNameSource))
   
-  def fetchByMmlIds(toSet: Set[Long]) = queryByLinkIds(Set(""), None, true, extractRoadLinkFeature,Filter.withMmlIdFilter)
+  def fetchByMmlIds(toSet: Set[Long]) = queryByFilter(filter.withMmlIdFilter(toSet))
 
   def fetchByMmlId(mmlId: Long) = fetchByMmlIds(Set(mmlId)).headOption
   

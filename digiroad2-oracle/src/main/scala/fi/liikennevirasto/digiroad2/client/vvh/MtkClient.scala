@@ -484,6 +484,20 @@ private  def extractMeasure(value: Any): Option[Double] = {
     }
   }
 
+  protected def queryByFilter[LinkType](filter:String): Seq[LinkType] = {
+    var filterString  = "filter="
+    if (filter.nonEmpty){
+      filterString+filter
+    }else {
+      filterString =""
+    }
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}&${filterString}")
+    match {
+      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Right(error) => throw new ClientException(error.toString)
+    }
+  }
+
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
   }
