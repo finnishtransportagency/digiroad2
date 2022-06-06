@@ -369,7 +369,7 @@ object VVHClient {
 
 class VVHClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData2: MtkRoadLinkClient = new MtkRoadLinkClient(vvhRestApiEndPoint)
-  lazy val roadLinkData: MtkRoadLinkClient = new MtkRoadLinkClient(vvhRestApiEndPoint)
+  lazy val roadLinkData: VVHRoadLinkClient = new VVHRoadLinkClient(vvhRestApiEndPoint)
   // TODO no real used boolean is always false
   lazy val frozenTimeRoadLinkData: VVHRoadLinkClient = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   // TODO remove/ turn off REDO
@@ -502,11 +502,15 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
     queryByLinkIds[LinkType](linkIds, None, true,extractRoadLinkFeature,withLinkIdFilter)
   }
 
+  def fetchByLinkIdsUsingFilter(linkIds: Set[IdType]): Seq[LinkType] = {
+    queryByLinkIdsUsingFilter(linkIds)
+  }
+
   def fetchByLinkIdsF(linkIds: Set[IdType]) = Future(fetchByLinkIds(linkIds))
   
   /**
     * Returns VVH road links.
-    * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator) Rename
+    * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator) Rename // only one used in very old batch
     */
   def fetchVVHRoadlinks[LinkType](linkIds: Set[IdType],
                            fieldSelection: Option[String], //TODO can we filter resort
@@ -533,11 +537,11 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
 
   def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
   
-  def fetchByRoadNames(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[LinkType] = queryByFilter(filter.withFinNameFilter(roadNamePublicIds)(roadNameSource))
+  def fetchByRoadNames(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[LinkType] = queryByFilter(Some(filter.withFinNameFilter(roadNamePublicIds)(roadNameSource)))
   
-  def fetchByMmlIds(toSet: Set[Long]) = queryByFilter(filter.withMmlIdFilter(toSet))
+  def fetchByMmlIds(toSet: Set[Long]): Seq[LinkType] = queryByFilter(Some(filter.withMmlIdFilter(toSet)))
 
-  def fetchByMmlId(mmlId: Long) = fetchByMmlIds(Set(mmlId)).headOption
+  def fetchByMmlId(mmlId: Long) : Option[LinkType]= fetchByMmlIds(Set(mmlId)).headOption
   
 }
 
@@ -1063,7 +1067,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[RoadlinkFetched] = {
     queryByNames(roadNames, None, true, extractRoadLinkFeature, Filter.withFinNameFilter(roadNamePublicId))
   }
-
+  
   /**
     * Returns VVH road links.
     * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator)
