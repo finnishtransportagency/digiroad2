@@ -451,7 +451,15 @@ private  def extractMeasure(value: Any): Option[Double] = {
     }
   }
 
-  override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = ???
+  override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = {
+    val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
+    val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
+    val response = fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${queryString}") match {
+      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Right(error) => throw new ClientException(error.toString)
+    }
+    response.flatMap(t=>t.asInstanceOf[FeatureCollection].features.map(_.properties.get("id").asInstanceOf[IdType]))
+  }
 
   protected def queryByLinkId[T](linkId: String,
                                            fieldSelection: Option[String] =None,
