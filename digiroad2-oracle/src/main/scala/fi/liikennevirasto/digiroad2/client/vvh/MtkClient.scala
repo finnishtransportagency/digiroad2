@@ -104,6 +104,15 @@ object FilterOgc extends Filter {
       }
     filter
   }
+  def withContructionFilter(values: Set[Int]): String = {
+    val filter =
+      if (values.isEmpty) {
+        ""
+      } else {
+        values.map(n =>singleFilter("lifecyclestatus",n.toString)).mkString(" OR ")
+      }
+    filter
+  }
 
   override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = ???
 
@@ -138,7 +147,7 @@ object Extractor {
     else Unknown
   }
 
-  private  def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+  def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
     if (attributes("lifecyclestatus").asInstanceOf[String] != null)
       Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
         .map(ConstructionType.apply)
@@ -198,41 +207,43 @@ object Extractor {
       case _ => Some(value.toString.toDouble)
     }
   }
-  def extractFeature(feature:Feature, path: List[List[Double]],linkGeomSource: LinkGeomSource): RoadlinkFetchedMtk = {
-    
-    val attributes =feature.properties
-    // println("new extractFeature thread: "+Thread.currentThread().getName+" attributes:" +attributes.size)
-    def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
-      def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
-        (a, b) match {
-          case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
-            Some(Math.max(firstModifiedAt, secondModifiedAt))
-          case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
-          case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
-          case (None, None) => None
-        }
-      }
 
-      val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
-      var lastEditedDate : Option[Long] = Option(0)
-      if(attributes.contains("versionstarttime")){
-        lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
+ private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
+    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
+      (a, b) match {
+        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
+          Some(Math.max(firstModifiedAt, secondModifiedAt))
+        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
+        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
+        case (None, None) => None
       }
-      var geometryEditedDate : Option[Long] = Option(0)
-      if(attributes.contains("GEOMETRY_EDITED_DATE")){
-        geometryEditedDate =  Option(new DateTime(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[String]).getMillis)
-      }
-
-      val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
-      latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
     }
+
+    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
+    var lastEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("versionstarttime")){
+      lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
+    }
+    var geometryEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("GEOMETRY_EDITED_DATE")){
+      geometryEditedDate =  Option(new DateTime(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[String]).getMillis)
+    }
+
+    val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
+    latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
+  }
+
+  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadlinkFetchedMtk = {
+    val attributes = feature.properties
+
     val linkGeometry: Seq[Point] = path.map(point => {
       try {
         Point(point.head.toString.toDouble, point(1).toString.toDouble, extractMeasure(point(2).toString.toDouble).get)
-      }catch {
-        case e:ClassCastException => {
+      } catch {
+        case e: ClassCastException => {
           println(s"error ${point.toString()}");
-          Point(0,0,0)}
+          Point(0, 0, 0)
+        }
       }
     })
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0).toString.toDouble, "y" -> point(1).toString.toDouble, "z" -> point(2).toString.toDouble, "m" -> point(3).toString.toDouble)))
@@ -241,7 +252,7 @@ object Extractor {
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     val mtkClass = attributes("roadclass")
-    val geometryLength :Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)// ?
+    val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0) // ?
 
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
       attributes("roadclass").asInstanceOf[String].toInt
@@ -255,7 +266,7 @@ object Extractor {
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
       extractAttributes(attributes)
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
-      ,extractConstructionType(attributes), linkGeomSource, geometryLength)
+      , extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
 }
 
@@ -296,6 +307,18 @@ trait MtkOperation extends LinkOperationsAbstract{
   protected def addAuthorizationHeader(request: HttpRequestBase): Unit = {
     request.addHeader("X-API-Key", Digiroad2Properties.kmtkApiKey)
   }
+
+  /**
+    * Constructions Types Allows to return
+    * In Use - 0
+    * Under Construction - 1
+    * Planned - 3
+    */
+  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
+    val attributes = feature("properties").asInstanceOf[Map[String, Any]]
+    val linkStatus = Extractor.extractConstructionType(attributes)
+    linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
+  }
   
   protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError2] = {
     val request = new HttpGet(url)
@@ -313,15 +336,18 @@ trait MtkOperation extends LinkOperationsAbstract{
         if (statusCode == HttpStatus.SC_OK) {
           val feature = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
           val resort = feature("type").toString match {
-            case "Feature" => Some(FeatureCollection(
-              `type` = "FeatureCollection",
-              features = List(LogUtils.time(logger, "convertToFeature",true)(convertToFeature(feature))),
-              crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)
-            ))
+            case "Feature" => 
+              if (roadLinkStatusFilter(feature)){
+                Some(FeatureCollection(
+                  `type` = "FeatureCollection",
+                  features = List(LogUtils.time(logger, "convertToFeature",true)(convertToFeature(feature))),
+                  crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)))
+              } else None
             case "FeatureCollection" =>
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
-                features = LogUtils.time(logger, "convertToFeature",true)(feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)),
+                features = LogUtils.time(logger, "convertToFeature",true)(
+                  feature("features").asInstanceOf[List[Map[String, Any]]].filter(roadLinkStatusFilter).map(convertToFeature)),
                 crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
                 numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt
               ))
