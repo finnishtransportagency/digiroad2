@@ -111,9 +111,6 @@ object FilterOgc extends Filter {
   
 }
 
-
-
-
 object Extractor {
 
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
@@ -280,9 +277,8 @@ trait MtkOperation extends LinkOperationsAbstract{
   private val crs="EPSG%3A3067"
 
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
-  
 
-  def convertToFeature(content: Map[String, Any]): Feature = {
+  protected def convertToFeature(content: Map[String, Any]): Feature = {
     val geometry = Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
       coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]]
     )
@@ -296,20 +292,18 @@ trait MtkOperation extends LinkOperationsAbstract{
   protected def encode(url: String): String = {
     URLEncoder.encode(url, "UTF-8")
   }
-  
-  def addAuthorizationHeader(request: HttpRequestBase): Unit = {
+
+  protected def addAuthorizationHeader(request: HttpRequestBase): Unit = {
     request.addHeader("X-API-Key", Digiroad2Properties.kmtkApiKey)
   }
   
-  // https://github.com/json4s/json4s
   protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError2] = {
     val request = new HttpGet(url)
     request.addHeader("accept","application/geo+json")
     addAuthorizationHeader(request)
-    val client =  HttpClients.custom()
-      .setDefaultRequestConfig(RequestConfig.custom()
-        .setCookieSpec(CookieSpecs.STANDARD).build())
-      .build();
+    val client =  HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
+      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+    
     var response: CloseableHttpResponse = null
     println("new thread: "+Thread.currentThread().getName +" URL :\n "+url)
     LogUtils.time(logger, "fetch roadlinks client") {
@@ -405,9 +399,8 @@ trait MtkOperation extends LinkOperationsAbstract{
       case Right(error) => throw new ClientException(error.toString)
     }
   }
-//pagination
-  // https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/keskilinjavarasto:frozenlinks/items?filter=municipalitycode%3D91%20OR%20municipalitycode%3D297&limit=2&startIndex=2
-  override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
+
+ override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
     val filterString  = s"filter=${encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter))}"
     queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
