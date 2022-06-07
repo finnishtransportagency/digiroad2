@@ -502,10 +502,6 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
     queryByLinkIds[LinkType](linkIds, None, true,extractRoadLinkFeature,withLinkIdFilter)
   }
 
-  def fetchByLinkIdsUsingFilter(linkIds: Set[IdType]): Seq[LinkType] = {
-    queryByLinkIdsUsingFilter(linkIds)
-  }
-
   def fetchByLinkIdsF(linkIds: Set[IdType]) = Future(fetchByLinkIds(linkIds))
   
   /**
@@ -532,12 +528,14 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(filter.withMtkClassFilter(Set(12314)))))
   }
   // only one used
-  def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[LinkType]] =
+  def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[LinkType]] = 
     Future(queryByMunicipality(municipality, Some(filter.withMtkClassFilter(Set(12314)))))
 
-  def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
+  def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = 
+    Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
   
-  def fetchByRoadNames(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[LinkType] = queryByFilter(Some(filter.withFinNameFilter(roadNamePublicIds)(roadNameSource)))
+  def fetchByRoadNames(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[LinkType] = 
+    queryByFilter(Some(filter.withFinNameFilter(roadNamePublicIds)(roadNameSource)))
   
   def fetchByMmlIds(toSet: Set[Long]): Seq[LinkType] = queryByFilter(Some(filter.withMmlIdFilter(toSet)))
 
