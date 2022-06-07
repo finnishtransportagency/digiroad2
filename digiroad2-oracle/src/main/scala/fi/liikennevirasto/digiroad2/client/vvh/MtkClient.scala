@@ -41,7 +41,8 @@ object MtkCollection {
 
 object FilterOgc extends Filter {
 
-  val singleFilter= (field:String,value:String) => s"${field}=${value}"
+  val singleFilter= (field:String,value:String) => s"${field}='${value}'"
+  val singleAddQuatation= (value:String) => s"'${value}'"
   
   // TODO can we do filtering in ogc api and doest it work
   override def withFilter[T](attributeName: String, ids: Set[T]): String = ???
@@ -78,8 +79,9 @@ object FilterOgc extends Filter {
       if (linkIds.isEmpty) {
         ""
       } else {
-        linkIds.map(n =>singleFilter("ID",n.toString)).mkString(" OR ")
+        s"id in (${linkIds.map(n=>singleAddQuatation(n.asInstanceOf[String])).mkString(",")})"
       }
+    println(filter)
     filter
   }
 
@@ -140,13 +142,13 @@ trait MtkOperation extends LinkOperationsAbstract{
   /**
     * Extract double value from VVH data. Used for change info start and end measures.
     */
-private  def extractMeasure(value: Any): Option[Double] = {
+  private  def extractMeasure(value: Any): Option[Double] = {
     value match {
       case null => None
       case _ => Some(value.toString.toDouble)
     }
   }
-  protected def extractFeature(feature:Feature , path: List[List[Double]]): RoadlinkFetchedMtk = {
+  protected def extractFeature(feature:Feature, path: List[List[Double]]): RoadlinkFetchedMtk = {
     val attributes =feature.properties
    // println("new extractFeature thread: "+Thread.currentThread().getName+" attributes:" +attributes.size)
     def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
@@ -372,16 +374,14 @@ private  def extractMeasure(value: Any): Option[Double] = {
     val items1 = Await.result(fut1, atMost = Duration.Inf)
     val items2 = Await.result(fut2, atMost = Duration.Inf)
     val items3 = Await.result(fut3, atMost = Duration.Inf)
-    (items1 ++ items2 ++ items3).flatMap(t => {
-      t.features.par.map(t => extractFeature(t, t.geometry.coordinates).asInstanceOf[LinkType])
-    }).toList
+    (items1 ++ items2 ++ items3).flatMap(_.features.par.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])).toList
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
     val filterString  = if (municipalities.nonEmpty || filter.isDefined){
-      "filter="+encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(municipalities),filter))
+      s"filter=${encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(municipalities), filter))}"
     }else {
       ""
     }
@@ -431,16 +431,15 @@ private  def extractMeasure(value: Any): Option[Double] = {
                                            fetchGeometry: Boolean,
                                            resultTransition: (Map[String, Any], List[List[Double]]) => T,
                                            filter: Set[Long] => String): Seq[T] = {
+    val batchSize = 4999
     if (linkIds.size == 1) {
       queryByLinkId[T](linkIds.head)
     }else {
-      // how are we going to fetch large set of id, map loop is too inefficient
-      // fork join pool request in 10 item set ?
-      linkIds.flatMap(t=>queryByLinkId[T](t)).toSeq
+      linkIds.grouped(batchSize).toList.par.flatMap(queryByLinkIdsUsingFilter).toList
     }
   }
 
-  protected def queryByLinkIdsUsingFilter[T](linkIds: Set[String]): Seq[T] = {
+  protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String]): Seq[LinkType] = {
     queryByFilter(Some(FilterOgc.withLinkIdFilter(linkIds)))
   }
 
