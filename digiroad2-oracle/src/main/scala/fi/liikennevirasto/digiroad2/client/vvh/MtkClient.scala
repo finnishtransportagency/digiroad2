@@ -111,20 +111,12 @@ object FilterOgc extends Filter {
   
 }
 
-trait MtkOperation extends LinkOperationsAbstract{
-  type LinkType
-  type Content = FeatureCollection
-  type IdType = String
-  protected val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
-  protected def serviceName: String
-  protected val disableGeometry: Boolean
-  protected def mapFields(content:Content, url: String): Either[List[Map[String, Any]], LinkOperationError]  = ???
-  protected def defaultOutFields(): String = ???
-  protected def extractFeature(feature: Map[String, Any]): LinkType = ???
-  private val cqlLang ="cql-text"
-  private val bboxCrsType="EPSG%3A3067"
-  private val crs="EPSG%3A3067"
-  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+
+
+
+object Extractor {
+
+  private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath,
@@ -135,22 +127,84 @@ trait MtkOperation extends LinkOperationsAbstract{
     12132 -> FeatureClass.CarRoad_IIIb
   )
 
-  protected val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+  private val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
+
+
+  private  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
+    if (attributes("adminclass").asInstanceOf[String] != null)
+      Option(attributes("adminclass").asInstanceOf[String].toInt)
+        .map(AdministrativeClass.apply)
+        .getOrElse(Unknown)
+    else Unknown
+  }
+
+  private  def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+    if (attributes("lifecyclestatus").asInstanceOf[String] != null)
+      Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
+        .map(ConstructionType.apply)
+        .getOrElse(ConstructionType.InUse)
+    else ConstructionType.InUse
+  }
+
+  private  def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
+    if (attributes("directiontype").asInstanceOf[String] != null)
+      Option(attributes("directiontype").asInstanceOf[String].toInt)
+        .map(trafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
+        .getOrElse(TrafficDirection.UnknownDirection)
+    else TrafficDirection.UnknownDirection
+  }
+
+  // "ROADNAME_SM"           -> attributesMap(""),// delete find used in code remove if possible
+  //    "GEOMETRY_EDITED_DATE"  -> attributesMap(""), // ?
+  //"SUBTYPE"               -> attributesMap(""), // ? delete
+  //"OBJECTID"              -> attributesMap(""), // delete
+  //"STARTNODE"             -> attributesMap(""), //? delete
+  //"ENDNODE"               -> attributesMap(""), // delete
+
+  private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
+    Map( // in end rename these everywhere in code
+      "MTKID"                 -> attributesMap("sourceid"),
+      "MTKCLASS"              -> attributesMap("roadclass"),
+      "HORIZONTALACCURACY"    -> attributesMap("xyaccuracy"),
+      "VERTICALACCURACY"      -> attributesMap("zaccuracy"),
+      "VERTICALLEVEL"         -> attributesMap("surfacerelation"),
+      "CONSTRUCTIONTYPE"      -> attributesMap("lifecyclestatus"),
+      "ROADNAME_FI"           -> attributesMap("roadnamefin"),
+      "ROADNAME_SE"           -> attributesMap("roadnameswe"),
+      "ROADNUMBER"            -> attributesMap("roadnumber"),
+      "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
+      "FROM_LEFT"             -> attributesMap("addressfromleft"),
+      "TO_LEFT"               -> attributesMap("addresstoleft"),
+      "FROM_RIGHT"            -> attributesMap("addressfromright"),
+      "TO_RIGHT"              -> attributesMap("addresstoright"),
+      "MUNICIPALITYCODE"      -> attributesMap("municipalitycode"),
+      "MTKHEREFLIP"           -> attributesMap("geometryflip"),
+      "CREATED_DATE"          -> attributesMap("starttime"),
+      "LAST_EDITED_DATE"      -> attributesMap("versionstarttime"),
+      "SURFACETYPE"           -> attributesMap("surfacetype"),
+      "VALIDFROM"             -> attributesMap("sourcemodificationtime"))
+
+    //  "LINKID_NEW"            -> attributesMap(""), //?
+    //"END_DATE"              -> attributesMap(""), //?
+    //"CUST_OWNER"            -> attributesMap("")) //?
+  }
+
   /**
     * Extract double value from VVH data. Used for change info start and end measures.
     */
-  private  def extractMeasure(value: Any): Option[Double] = {
+  private def extractMeasure(value: Any): Option[Double] = {
     value match {
       case null => None
       case _ => Some(value.toString.toDouble)
     }
   }
-  protected def extractFeature(feature:Feature, path: List[List[Double]]): RoadlinkFetchedMtk = {
+  def extractFeature(feature:Feature, path: List[List[Double]],linkGeomSource: LinkGeomSource): RoadlinkFetchedMtk = {
+    
     val attributes =feature.properties
-   // println("new extractFeature thread: "+Thread.currentThread().getName+" attributes:" +attributes.size)
+    // println("new extractFeature thread: "+Thread.currentThread().getName+" attributes:" +attributes.size)
     def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
       def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
         (a, b) match {
@@ -180,13 +234,13 @@ trait MtkOperation extends LinkOperationsAbstract{
         Point(point.head.toString.toDouble, point(1).toString.toDouble, extractMeasure(point(2).toString.toDouble).get)
       }catch {
         case e:ClassCastException => {
-          println(s"error ${point.toString()}"); 
+          println(s"error ${point.toString()}");
           Point(0,0,0)}
       }
     })
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0).toString.toDouble, "y" -> point(1).toString.toDouble, "z" -> point(2).toString.toDouble, "m" -> point(3).toString.toDouble)))
     val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => point(0).toString.toDouble + " " + point(1).toString.toDouble + " " + point(2).toString.toDouble + " " + point(3).toString.toDouble.toString.toDouble).mkString(", ")})"))
-    
+
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     val mtkClass = attributes("roadclass")
@@ -206,67 +260,28 @@ trait MtkOperation extends LinkOperationsAbstract{
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
       ,extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
+}
+
+trait MtkOperation extends LinkOperationsAbstract{
+  type LinkType
+  type Content = FeatureCollection
+  type IdType = String
+  
+  protected val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
+  
+  protected def serviceName: String
+  protected val disableGeometry: Boolean
+  protected def mapFields(content:Content, url: String): Either[List[Map[String, Any]], LinkOperationError]  = ???
+  protected def defaultOutFields(): String = ???
+  protected def extractFeature(feature: Map[String, Any]): LinkType = ???
+  
+  private val cqlLang ="cql-text"
+  private val bboxCrsType="EPSG%3A3067"
+  private val crs="EPSG%3A3067"
+
+  override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
   
 
-  protected def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
-    if (attributes("adminclass").asInstanceOf[String] != null)
-      Option(attributes("adminclass").asInstanceOf[String].toInt)
-        .map(AdministrativeClass.apply)
-        .getOrElse(Unknown)
-    else Unknown
-  }
-
-  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
-    if (attributes("lifecyclestatus").asInstanceOf[String] != null)
-    Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
-      .map(ConstructionType.apply)
-      .getOrElse(ConstructionType.InUse)
-    else ConstructionType.InUse
-  }
-  
-  protected def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
-    if (attributes("directiontype").asInstanceOf[String] != null)
-    Option(attributes("directiontype").asInstanceOf[String].toInt)
-      .map(trafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
-      .getOrElse(TrafficDirection.UnknownDirection)
-    else TrafficDirection.UnknownDirection
-  }
-
-  // "ROADNAME_SM"           -> attributesMap(""),// delete find used in code remove if possible
-  //    "GEOMETRY_EDITED_DATE"  -> attributesMap(""), // ?
-  //"SUBTYPE"               -> attributesMap(""), // ? delete
-  //"OBJECTID"              -> attributesMap(""), // delete
-  //"STARTNODE"             -> attributesMap(""), //? delete
-  //"ENDNODE"               -> attributesMap(""), // delete
-  
-  protected def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
-    Map( // in end rename these everywhere in code
-      "MTKID"                 -> attributesMap("sourceid"),
-      "MTKCLASS"              -> attributesMap("roadclass"),
-      "HORIZONTALACCURACY"    -> attributesMap("xyaccuracy"),
-      "VERTICALACCURACY"      -> attributesMap("zaccuracy"),
-      "VERTICALLEVEL"         -> attributesMap("surfacerelation"),
-      "CONSTRUCTIONTYPE"      -> attributesMap("lifecyclestatus"), 
-      "ROADNAME_FI"           -> attributesMap("roadnamefin"),
-      "ROADNAME_SE"           -> attributesMap("roadnameswe"),
-      "ROADNUMBER"            -> attributesMap("roadnumber"),
-      "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
-      "FROM_LEFT"             -> attributesMap("addressfromleft"),
-      "TO_LEFT"               -> attributesMap("addresstoleft"),
-      "FROM_RIGHT"            -> attributesMap("addressfromright"),
-      "TO_RIGHT"              -> attributesMap("addresstoright"),
-      "MUNICIPALITYCODE"      -> attributesMap("municipalitycode"),
-      "MTKHEREFLIP"           -> attributesMap("geometryflip"),
-      "CREATED_DATE"          -> attributesMap("starttime"),
-      "LAST_EDITED_DATE"      -> attributesMap("versionstarttime"),
-      "SURFACETYPE"           -> attributesMap("surfacetype"),
-      "VALIDFROM"             -> attributesMap("sourcemodificationtime"))
-    
-    //  "LINKID_NEW"            -> attributesMap(""), //?
-       //"END_DATE"              -> attributesMap(""), //?
-      //"CUST_OWNER"            -> attributesMap("")) //?
-  }
-  
   def convertToFeature(content: Map[String, Any]): Feature = {
     val geometry = Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
       coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]]
@@ -281,8 +296,7 @@ trait MtkOperation extends LinkOperationsAbstract{
   protected def encode(url: String): String = {
     URLEncoder.encode(url, "UTF-8")
   }
-
-  override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
+  
   def addAuthorizationHeader(request: HttpRequestBase): Unit = {
     request.addHeader("X-API-Key", Digiroad2Properties.kmtkApiKey)
   }
@@ -374,7 +388,7 @@ trait MtkOperation extends LinkOperationsAbstract{
     val items1 = Await.result(fut1, atMost = Duration.Inf)
     val items2 = Await.result(fut2, atMost = Duration.Inf)
     val items3 = Await.result(fut3, atMost = Duration.Inf)
-    (items1 ++ items2 ++ items3).flatMap(_.features.par.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])).toList
+    (items1 ++ items2 ++ items3).flatMap(_.features.par.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
@@ -387,7 +401,7 @@ trait MtkOperation extends LinkOperationsAbstract{
     }
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}&${filterString}") 
     match {
-      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -402,7 +416,7 @@ trait MtkOperation extends LinkOperationsAbstract{
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -421,7 +435,7 @@ trait MtkOperation extends LinkOperationsAbstract{
                                            fetchGeometry: Boolean =false
                                 ): Seq[T] = {
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${linkId}") match {
-      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[T])
+      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[T])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -444,14 +458,10 @@ trait MtkOperation extends LinkOperationsAbstract{
   }
 
   protected def queryByFilter[LinkType](filter:Option[String]): Seq[LinkType] = {
-    val filterString  = if (filter.nonEmpty){
-      "filter="+encode(filter.get)
-    }else {
-      ""
-    }
+    val filterString  = if (filter.nonEmpty) s"filter=${encode(filter.get)}" else ""
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}&${filterString}")
     match {
-      case Left(features) =>features.get.features.map(t=>extractFeature(t,t.geometry.coordinates).asInstanceOf[LinkType])
+      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
