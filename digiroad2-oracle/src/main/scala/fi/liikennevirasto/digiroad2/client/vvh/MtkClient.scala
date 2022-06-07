@@ -3,13 +3,14 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.Filter.anyToDouble
+import fi.liikennevirasto.digiroad2.client.vvh.Filter.{anyToDouble, withDateLimitFilter}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
 import org.apache.http.impl.client.{HttpClientBuilder, HttpClients}
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, StreamInput}
 
@@ -114,9 +115,13 @@ object FilterOgc extends Filter {
     filter
   }
 
-  override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = ???
+  override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withDateLimitFilter("versionstarttime",lowerDate, higherDate)
+  }
 
-  override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = ???
+  override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    s"$attributeName >= $lowerDate and $attributeName <= $higherDate"
+  }
   
 }
 
@@ -477,8 +482,26 @@ trait MtkOperation extends LinkOperationsAbstract{
   }
 
   protected def queryByFilter[LinkType](filter:Option[String]): Seq[LinkType] = {
-    val filterString  = if (filter.nonEmpty) s"filter=${encode(filter.get)}" else ""
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}&${filterString}")
+    val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}")
+    match {
+      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Right(error) => throw new ClientException(error.toString)
+    }
+  }
+
+  protected def queryByDatetimeAndFilter[LinkType](lowerDate: DateTime, higherDate: DateTime,filter:Option[String]=None): Seq[LinkType] = {
+    val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}")
+    match {
+      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Right(error) => throw new ClientException(error.toString)
+    }
+  }
+
+  protected def queryByLastEditedDate[LinkType](lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
+    val filterString  = s"&filter=${encode(FilterOgc.withLastEditedDateFilter(lowerDate,higherDate))}"
+    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}")
     match {
       case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
