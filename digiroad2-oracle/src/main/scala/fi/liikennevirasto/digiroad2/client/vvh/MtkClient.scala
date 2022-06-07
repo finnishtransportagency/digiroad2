@@ -22,9 +22,11 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
+sealed case class Link(title:String,`type`: String,rel:String,href:String)
+
 sealed case class FeatureCollection(`type`: String, features: List[Feature], crs: Option[Map[String, Any]] = None,
                                     numberReturned:Int=0,
-                                    nextPageLink:String="")
+                                    nextPageLink:String="",previousPageLink:String="")
 sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
 
@@ -349,12 +351,20 @@ trait MtkOperation extends LinkOperationsAbstract{
                   crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)))
               } else None
             case "FeatureCollection" =>
+              val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(p=>
+                Link(p("title").asInstanceOf[String], p("type").asInstanceOf[String],
+                  p("rel").asInstanceOf[String], p("href").asInstanceOf[String])
+              )
+              
+              val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
+              val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
                 features = LogUtils.time(logger, "convertToFeature",true)(
                   feature("features").asInstanceOf[List[Map[String, Any]]].filter(roadLinkStatusFilter).map(convertToFeature)),
                 crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
-                numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt
+                numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
+                nextLink,previousLink
               ))
             case _ => None
           }
