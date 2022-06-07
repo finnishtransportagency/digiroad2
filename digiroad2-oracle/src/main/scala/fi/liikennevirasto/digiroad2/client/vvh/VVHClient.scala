@@ -514,8 +514,13 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
                            resultTransition: (Map[String, Any], List[List[Double]]) => LinkType): Seq[LinkType] =
   // only one used in very old batch
     queryByLinkIds[LinkType](linkIds, fieldSelection, fetchGeometry, resultTransition, filter.withLinkIdFilter)
-  
-  def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = ???
+
+  /**
+    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    */
+  def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
+    queryByFilter(Some(filter.withLastEditedDateFilter(lowerDate, higherDate)))
+  }
 
   def fetchByPolygonF(polygon : Polygon): Future[Seq[LinkType]] = {
     Future(queryByPolygons(polygon))
