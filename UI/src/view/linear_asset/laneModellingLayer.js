@@ -17,7 +17,8 @@
 
     var LinearAssetCutter = function(eventListener, vectorLayer) {
       var scissorFeatures = [];
-      var CUT_THRESHOLD = 20;
+      //Max euclidean distance in geometry points allowed between mouse point and the closest linear asset point (the planned cut point).
+      var CUT_THRESHOLD = 5;
       var vectorSource = vectorLayer.getSource();
 
       var moveTo = function(x, y) {
@@ -81,8 +82,17 @@
               return property.publicId === "lane_code";
             }).values).value;
 
-            return !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 ||
-              !_.isUndefined(properties.marker) || properties.selectedLinks.length > 1 || selectedLane.isAddByRoadAddress();
+            var uniqueSelectedRoadLinkIds = _.uniq(_.map(properties.selectedLinks, function (selectedLink) {
+              return selectedLink.linkId;
+            }));
+            if(_.isUndefined(uniqueSelectedRoadLinkIds)) {
+              return true;
+            }
+
+            var SelectedLaneCannotBeCut = !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 || laneNumber != selectedLane.getCurrentLaneNumber() ||
+                uniqueSelectedRoadLinkIds.length > 1 || selectedLane.isAddByRoadAddress();
+
+            return SelectedLaneCannotBeCut;
           })
           .map(function(feature) {
             var closestP = feature.getGeometry().getClosestPoint(point);
@@ -98,6 +108,44 @@
           })
           .head()
           .value();
+      };
+
+      var getLanePieceToCut = function (point) {
+
+        var minSquaredDistanceBetweenPointAndLane = function (lane, point) {
+          var min_x_dist = Math.abs(lane.points[0].x - point[0]);
+          var min_y_dist = Math.abs(lane.points[0].y - point[1]);
+          for(var i=1; i < lane.points.length; i++) {
+            min_x_dist = Math.min(min_x_dist, Math.abs(lane.points[i].x - point[0]));
+            min_y_dist = Math.min(min_y_dist, Math.abs(lane.points[i].y - point[1]));
+          }
+          return Math.pow(min_x_dist, 2) + Math.pow(min_y_dist, 2);
+        };
+
+        var selected = selectedLane.get();
+
+        selected = _.reject(selected, function (lane) {
+          var laneNumber = _.head(_.find(lane.properties, function(property){
+            return property.publicId === "lane_code";
+          }).values).value;
+
+          return !selectedLane.isOuterLane(laneNumber) || laneNumber == 1 ||
+              laneNumber != selectedLane.getCurrentLaneNumber() || selectedLane.isAddByRoadAddress();
+        });
+
+        selected = _.sortBy(selected, function (lane) {
+          return minSquaredDistanceBetweenPointAndLane(lane, point);
+        });
+
+        var cutLanes = _.reject(selected, function (lane) {
+          return _.isUndefined(lane.marker);
+        });
+
+        if (_.isEmpty(cutLanes)) {
+          return _.head(selected);
+        }
+
+        return _.head(cutLanes);
       };
 
       this.updateByPosition = function(mousePoint) {
@@ -128,18 +176,14 @@
           return _.merge({ splitMeasure: splitMeasure }, splitVertices);
         };
 
-        var nearest = findNearestLinearAssetLink([mousePoint.x, mousePoint.y]);
+        var nearestLinearAsset = getLanePieceToCut([mousePoint.x, mousePoint.y]);
+        if (_.isUndefined(nearestLinearAsset)) return;
 
-        if (_.isUndefined(nearest) || !isWithinCutThreshold(nearest.distance)) {
-          return;
-        }
-
-        var nearestLinearAsset = nearest.feature.getProperties();
         if(authorizationPolicy.formEditModeAccess(nearestLinearAsset)) {
-          var splitProperties = calculateSplitProperties(laneUtils.offsetByLaneNumber(nearestLinearAsset, false, true), mousePoint);
+          var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
           selectedLane.splitLinearAsset(_.head(_.find(nearestLinearAsset.properties, function(property){
             return property.publicId === "lane_code";
-          }).values).value, splitProperties);
+          }).values).value, splitProperties, nearestLinearAsset.marker);
 
           remove();
         }
@@ -296,6 +340,7 @@
       };
 
       var drawSplitPoints = function (links) {
+
         function findSplitPoints(links) {
           var sortedPoints = _.flatMap(links, function (link) {
             return link.points;
@@ -381,7 +426,7 @@
       var linearAssets = _.flatten(linearAssetChains);
       var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLane.get(), function(selectedAsset){
         return selectedAsset.linkId === asset.linkId && selectedAsset.sideCode == asset.sideCode &&
-          selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
+            selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
       });
       me.vectorSource.addFeatures(style.renderFeatures(allButSelected));
       var oneWaySignsDraft = getOneWaySigns(allButSelected);
@@ -430,17 +475,17 @@
         var selectedFeatures = style.renderFeatures(linearAssets, laneNumber);
 
         if (assetLabel) {
-            var currentFeatures = _.filter(me.vectorSource.getFeatures(), function (layerFeature) {
-              return _.some(selectedFeatures, function (selectedFeature) {
-                return me.geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
-              });
+          var currentFeatures = _.filter(me.vectorSource.getFeatures(), function (layerFeature) {
+            return _.some(selectedFeatures, function (selectedFeature) {
+              return me.geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
             });
+          });
 
-            _.each(currentFeatures, me.removeFeature);
+          _.each(currentFeatures, me.removeFeature);
 
-            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(extractMiddleLinksOfChains([_.map(selectedFeatures, function (feature) {
-              return feature.getProperties();
-            })]), me.uiState.zoomLevel));
+          selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(extractMiddleLinksOfChains([_.map(selectedFeatures, function (feature) {
+            return feature.getProperties();
+          })]), me.uiState.zoomLevel));
         }
 
         removeOldAssetFeatures();
