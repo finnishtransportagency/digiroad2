@@ -3,14 +3,12 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.Filter.{anyToDouble, withDateLimitFilter}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
-import org.apache.http.impl.client.{HttpClientBuilder, HttpClients}
+import org.apache.http.impl.client.HttpClients
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, StreamInput}
 
@@ -18,8 +16,8 @@ import java.net.URLEncoder
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.Try
 
 sealed case class Link(title:String,`type`: String,rel:String,href:String)
@@ -144,7 +142,13 @@ object Extractor {
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
-
+ private def anyToDouble(number: Any): Option[Double] = number match {
+    case bi: BigInt => Some(bi.toDouble)
+    case i: Int => Some(i.toDouble)
+    case l: Long => Some(l.toDouble)
+    case d: Double => Some(d)
+    case _ => None
+  }
 
   private  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     if (attributes("adminclass").asInstanceOf[String] != null)
@@ -178,33 +182,33 @@ object Extractor {
   //"ENDNODE"               -> attributesMap(""), // delete
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
-    Map( // in end rename these everywhere in code
-      "MTKID"                 -> attributesMap("sourceid"),
-      "MTKCLASS"              -> attributesMap("roadclass"),
-      "HORIZONTALACCURACY"    -> attributesMap("xyaccuracy"),
-      "VERTICALACCURACY"      -> attributesMap("zaccuracy"),
-      "VERTICALLEVEL"         -> attributesMap("surfacerelation"),
-      "CONSTRUCTIONTYPE"      -> attributesMap("lifecyclestatus"),
-      "ROADNAME_FI"           -> attributesMap("roadnamefin"),
-      "ROADNAME_SE"           -> attributesMap("roadnameswe"),
-      "ROADNUMBER"            -> attributesMap("roadnumber"),
-      "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
-      "FROM_LEFT"             -> attributesMap("addressfromleft"),
-      "TO_LEFT"               -> attributesMap("addresstoleft"),
-      "FROM_RIGHT"            -> attributesMap("addressfromright"),
-      "TO_RIGHT"              -> attributesMap("addresstoright"),
-      "MUNICIPALITYCODE"      -> attributesMap("municipalitycode"),
-      "MTKHEREFLIP"           -> attributesMap("geometryflip"),
-      "CREATED_DATE"          -> attributesMap("starttime"),
-      "LAST_EDITED_DATE"      -> attributesMap("versionstarttime"),
-      "SURFACETYPE"           -> attributesMap("surfacetype"),
-      "VALIDFROM"             -> attributesMap("sourcemodificationtime"))
-
-    //  "LINKID_NEW"            -> attributesMap(""), //?
-    //"END_DATE"              -> attributesMap(""), //?
-    //"CUST_OWNER"            -> attributesMap("")) //?
+    attributesMap.filterKeys{ x => Set(
+      "roadnumber",
+      "roadpartnumber",
+      "municipalitycode",
+      "surfacetype",
+      "sourceid",
+      "roadclass",
+      "xyaccuracy",
+      "zaccuracy",
+      "surfacerelation",
+      "lifecyclestatus",
+      "roadnamefin",
+      "roadnameswe",
+      "addressfromright",
+      "addresstoright",
+      "addressfromleft",
+      "addresstoleft",
+      "geometryflip",
+      "starttime",
+      "versionstarttime",
+      "sourcemodificationtime"
+    ).contains(x)
+    }.filter { case (_, value) =>
+      value != null
+    }
   }
-
+  
   /**
     * Extract double value from VVH data. Used for change info start and end measures.
     */
@@ -216,28 +220,13 @@ object Extractor {
   }
 
  private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
-    def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
-      (a, b) match {
-        case (Some(firstModifiedAt), Some(secondModifiedAt)) =>
-          Some(Math.max(firstModifiedAt, secondModifiedAt))
-        case (Some(firstModifiedAt), None) => Some(firstModifiedAt)
-        case (None, Some(secondModifiedAt)) => Some(secondModifiedAt)
-        case (None, None) => None
-      }
-    }
-
     val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
     var lastEditedDate : Option[Long] = Option(0)
     if(attributes.contains("versionstarttime")){
       lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
     }
-    var geometryEditedDate : Option[Long] = Option(0)
-    if(attributes.contains("GEOMETRY_EDITED_DATE")){
-      geometryEditedDate =  Option(new DateTime(attributes("GEOMETRY_EDITED_DATE").asInstanceOf[String]).getMillis)
-    }
-
-    val latestDate = compareDateMillisOptions(lastEditedDate, geometryEditedDate)
-    latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
+   
+   lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
   def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadlinkFetchedMtk = {
@@ -258,13 +247,11 @@ object Extractor {
 
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
-    val mtkClass = attributes("roadclass")
-    val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0) // ?
+    
+    val geometryLength: Double = Extractor.anyToDouble(attributes("horizontallength")).getOrElse(0.0)
 
-    val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
-      attributes("roadclass").asInstanceOf[String].toInt
-    else
-      0
+    val featureClassCode = attributes("roadclass").asInstanceOf[String].toInt
+   
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
 
     RoadlinkFetchedMtk(linkId, municipalityCode,
