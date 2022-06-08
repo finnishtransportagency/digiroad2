@@ -29,7 +29,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = f
   }
 
-  private val CommonAttributes = Seq("MUNICIPALITYCODE" -> BigInt(853), "VERTICALLEVEL" -> 0.0).toMap;
+  private val CommonAttributes = Seq("MUNICIPALITYCODE" -> BigInt(853), "surfacerelation" -> 0.0).toMap;
 
   test("Batch drivers chunck size") {
     assetDataImporter.getBatchDrivers(1, 10000, 1000)

@@ -127,7 +127,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     Map (
       "id" -> asset.id,
       "linkId" -> asset.linkId,
-      "mmlId" -> roadLink.attributes.get("MTKID"),
+      "mmlId" -> roadLink.attributes.get("sourceid"),
       "verticalLevel" -> roadLink.verticalLevel,
       "startMeasure" -> asset.startMeasure,
       "endMeasure" -> asset.endMeasure,

@@ -711,8 +711,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def checkMMLId(vvhRoadLink: RoadlinkFetched) : Option[Long] = {
-    vvhRoadLink.attributes.contains("MTKID") match {
-      case true => Some(vvhRoadLink.attributes("MTKID").asInstanceOf[BigInt].longValue())
+    vvhRoadLink.attributes.contains("sourceid") match {
+      case true => Some(vvhRoadLink.attributes("sourceid").asInstanceOf[BigInt].longValue())
       case false => None
     }
   }
@@ -1714,11 +1714,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         link = roadLink,
         value =
           if (municipalitiesCodeToValidate.contains(roadLink.municipalityCode)) {
-            roadLink.attributes.getOrElse("ROADNAME_SE", "").toString
+            roadLink.attributes.getOrElse("roadnameswe", "").toString
           } else {
-            roadLink.attributes.getOrElse("ROADNAME_FI", "").toString
+            roadLink.attributes.getOrElse("roadnamefin", "").toString
           },
-        createdAt = roadLink.attributes.get("CREATED_DATE") match {
+        createdAt = roadLink.attributes.get("starttime") match {
           case Some(date) => Some(new DateTime(date.asInstanceOf[BigInt].toLong, timezone))
           case _ => None
         },

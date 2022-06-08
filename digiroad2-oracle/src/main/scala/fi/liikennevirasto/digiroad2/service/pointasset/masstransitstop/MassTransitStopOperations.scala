@@ -193,8 +193,8 @@ object MassTransitStopOperations {
     defaultproperties.map { parameter =>
       if (parameter.values.isEmpty || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "")) {
         parameter.publicId match {
-          case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
-          case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
+          case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("roadnamefin", "").toString)))
+          case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("roadnameswe", "").toString)))
           case MassTransitStopOperations.InventoryDateId => parameter.copy(values = Seq(PropertyValue(toIso8601.print(DateTime.now()))))
           case _ => parameter
         }

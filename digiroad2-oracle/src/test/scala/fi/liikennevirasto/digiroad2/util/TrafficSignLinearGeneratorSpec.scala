@@ -69,18 +69,18 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     def getDeletedInfo: Seq[Long] = deleteAssetObject
   }
 
-  val roadLinkNameB1 = RoadLink(1005, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
-  val roadLinkNameB2 = RoadLink(1010, Seq(Point(10.0, 0.0), Point(20.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
-  val roadLinkNameB3 = RoadLink(1015, Seq(Point(20.0, 0.0), Point(40.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
-  val roadLinkNameA = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("ROADNAME_FI" -> "Name A"))
-  val roadLinkNameC = RoadLink(1020, Seq(Point(40.0, 0.0), Point(0.0, 20.0)), 0,  Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("ROADNAME_FI" -> "Name C"))
+  val roadLinkNameB1 = RoadLink(1005, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "roadnamefin" -> "Name B"))
+  val roadLinkNameB2 = RoadLink(1010, Seq(Point(10.0, 0.0), Point(20.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "roadnamefin" -> "Name B"))
+  val roadLinkNameB3 = RoadLink(1015, Seq(Point(20.0, 0.0), Point(40.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "roadnamefin" -> "Name B"))
+  val roadLinkNameA = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("roadnamefin" -> "Name A"))
+  val roadLinkNameC = RoadLink(1020, Seq(Point(40.0, 0.0), Point(0.0, 20.0)), 0,  Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("roadnamefin" -> "Name C"))
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("generate segments pieces pair sign"){
     val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
-    val roadLinkNameB1 = RoadLink(1005, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
-    val roadLinkNameB2 = RoadLink(1010, Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+    val roadLinkNameB1 = RoadLink(1005, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "roadnamefin" -> "Name B"))
+    val roadLinkNameB2 = RoadLink(1010, Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "roadnamefin" -> "Name B"))
 
     val propertiesA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val trafficSign = PersistedTrafficSign(1, 1005, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -490,7 +490,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("parking generate segments until next intersection link") {
-    val roadLinkNameB31 = RoadLink(1055, Seq(Point(20.0, 0.0), Point(40.0, 20.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+    val roadLinkNameB31 = RoadLink(1055, Seq(Point(20.0, 0.0), Point(40.0, 20.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "roadnamefin" -> "Name B"))
 
     val parkingProhibitionGenerator = new TestTrafficSignParkingProhibitionGenerator()
     val signProperty = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(StandingAndParkingProhibited.OTHvalue.toString))))

@@ -206,10 +206,10 @@ class CsvGenerator(vvhServiceHost: String) {
     logMemoryStatistics(runtime)
 
     def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
-      attributes("MTKID").asInstanceOf[BigInt].longValue()
+      attributes("sourceid").asInstanceOf[BigInt].longValue()
     }
     val assetLinkIds = limits.map(_._1)
-    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
+    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("sourceid"), false, linkIdFromFeature).toSet
     println(s"*** fetched associated road links from VVH in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
@@ -242,10 +242,10 @@ class CsvGenerator(vvhServiceHost: String) {
     logMemoryStatistics(runtime)
 
     def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
-      attributes("MTKID").asInstanceOf[BigInt].longValue()
+      attributes("sourceid").asInstanceOf[BigInt].longValue()
     }
     val assetLinkIds = limits.map(_._1).toSet
-    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
+    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("sourceid"), false, linkIdFromFeature).toSet
     println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 

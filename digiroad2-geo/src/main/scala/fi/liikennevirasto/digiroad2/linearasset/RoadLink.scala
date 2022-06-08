@@ -38,11 +38,11 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
                     linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface,lanes:Seq[PersistedLane]=Seq()) extends RoadLinkLike {
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
-  def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue
+  def verticalLevel : Int = attributes("surfacerelation").asInstanceOf[BigInt].intValue
   def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def roadPartNumber: Option[String] = attributes.get("ROADPARTNUMBER").map(_.toString)
-  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", BigInt(0))).asInstanceOf[BigInt].longValue()
   def accessRightId: Option[String] = attributes.get("ACCESS_RIGHT_ID").map(_.toString)
   def privateRoadAssociation: Option[String] = attributes.get("PRIVATE_ROAD_ASSOCIATION").map(_.toString)
   def additionalInfo: Option[String] = attributes.get("ADDITIONAL_INFO").map(_.toString)
@@ -52,17 +52,17 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
   def extractMTKClass(attributes: Map[String, Any]): MTKClassWidth = {
-    Try(attributes("MTKCLASS").asInstanceOf[BigInt])
+    Try(attributes("roadclass").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(MTKClassWidth.apply)
       .getOrElse(MTKClassWidth.Unknown)
   }
 
   def roadIdentifier: Option[Either[Int, String]] = {
-    Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
-      .orElse(Try(Right(getStringAttribute("ROADNAME_FI"))))
-      .orElse(Try(Right(getStringAttribute("ROADNAME_SE"))))
-      .orElse(Try(Right(getStringAttribute("ROADNAME_SM"))))
+    Try(Left(attributes("roadnumber").asInstanceOf[BigInt].intValue()))
+      .orElse(Try(Right(getStringAttribute("roadnamefin"))))
+      .orElse(Try(Right(getStringAttribute("roadnameswe"))))
+      .orElse(Try(Right(getStringAttribute("ROADNAME_SM")))) //delete
       .toOption
   }
 
@@ -85,9 +85,10 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   }
 
   def roadNameIdentifier: Option[String] = {
-    Try(getStringAttribute("ROADNAME_FI"))
-      .orElse(Try(getStringAttribute("ROADNAME_SE")))
-      .orElse(Try(getStringAttribute("ROADNAME_SM"))).toOption
+    Try(getStringAttribute("roadnamefin"))
+      .orElse(Try(getStringAttribute("roadnameswe")))
+      .orElse(Try(getStringAttribute("ROADNAME_SM"))) //delete
+      .toOption
   }
 
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]
@@ -108,7 +109,7 @@ object SurfaceType {
   case object None extends SurfaceType { def value = 1 }
   case object Paved extends SurfaceType { def value = 2}
 }
-
+// rename ?
 sealed trait MTKClassWidth {
   def value: Int
   def width: Int

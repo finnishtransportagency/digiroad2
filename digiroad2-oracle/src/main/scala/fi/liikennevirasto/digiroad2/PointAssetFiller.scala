@@ -99,8 +99,8 @@ object PointAssetFiller {
       case Some(road) if(point.distance2DTo(road) >= 0.005) =>
         val roadLength = GeometryUtils.geometryLength(roadLink.geometry)
         val mValue = if(asset.mValue > roadLength) roadLength else asset.mValue
-        correctGeometry(asset.id, roadLink, mValue, roadLink.attributes.getOrElse("LAST_EDITED_DATE",
-          roadLink.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue())
+        correctGeometry(asset.id, roadLink, mValue, roadLink.attributes.getOrElse("versionstarttime",
+          roadLink.attributes.getOrElse("starttime", BigInt(0))).asInstanceOf[BigInt].longValue())
       case _ =>
         None
     }

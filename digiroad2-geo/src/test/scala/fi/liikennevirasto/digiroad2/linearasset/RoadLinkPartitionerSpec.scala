@@ -75,7 +75,7 @@ class RoadLinkPartitionerSpec extends FunSuite with Matchers {
   test("separate road link group with road name") {
     val roadLinks = Seq(
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
-      roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(attributes = Map("ROADNAME_FI" -> "Opastinsilta")))
+      roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(attributes = Map("roadnamefin" -> "Opastinsilta")))
 
     val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 2

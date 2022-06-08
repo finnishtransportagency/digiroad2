@@ -45,8 +45,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
     RoadlinkFetched(1611601L, 235, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
     RoadlinkFetched(1237l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers),
-    RoadlinkFetched(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("ROADNAME_SE" -> "roadname_se",
-      "ROADNAME_FI" -> "roadname_fi")))
+    RoadlinkFetched(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("roadnameswe" -> "roadnameswe",
+      "roadnamefin" -> "roadnamefin")))
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -1139,8 +1139,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
     test("create and update roadNames properties") {
       val attributes: Map[String, Any] =
-        Map("ROADNAME_SE" -> "roadname_se",
-          "ROADNAME_FI" -> "roadname_fi")
+        Map("roadnameswe" -> "roadnameswe",
+          "roadnamefin" -> "roadnamefin")
 
       val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
       val roadLink = RoadlinkFetched(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
@@ -1149,14 +1149,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       after should have size (3)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
-      after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_fi")
-      after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_se")
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadnamefin")
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadnameswe")
     }
 
   test("Update roadNames properties when exist and not filled") {
     val attributes: Map[String, Any] =
-      Map("ROADNAME_SE" -> "roadname_se",
-        "ROADNAME_FI" -> "roadname_fi")
+      Map("roadnameswe" -> "roadnameswe",
+        "roadnamefin" -> "roadnamefin")
 
     val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq.empty[PropertyValue]), SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq.empty[PropertyValue]))
     val roadLink = RoadlinkFetched(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
@@ -1165,14 +1165,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
-    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_fi")
-    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_se")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadnamefin")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadnameswe")
   }
 
   test("Not update when roadNames properties are filled") {
     val attributes: Map[String, Any] =
-      Map("ROADNAME_SE" -> "roadname_se",
-        "ROADNAME_FI" -> "roadname_fi")
+      Map("roadnameswe" -> "roadnameswe",
+        "roadnamefin" -> "roadnamefin")
 
     val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq(PropertyValue("user_road_name_se"))),
                     SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue("user_road_name_fi"))))

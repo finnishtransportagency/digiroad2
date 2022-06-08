@@ -17,7 +17,7 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
     val ri = roadIdentifier match {
       case Left(number) => "ROADNUMBER" -> BigInt(number)
-      case Right(name) => "ROADNAME_FI" -> name
+      case Right(name) => "roadnamefin" -> name
     }
     RoadLink(
       2, Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, administrativeClass,

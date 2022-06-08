@@ -198,29 +198,30 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map { roadLink =>
       Map("linkId" -> roadLink.linkId,
-        "mmlId" -> roadLink.attributes.get("MTKID"),
+        "mmlId" -> roadLink.attributes.get("sourceid"),
         "administrativeClass" -> roadLink.administrativeClass.value,
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.value,
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
         lastModifiedBy(None, roadLink.modifiedBy),
-        "startNode" -> roadLink.attributes.get("STARTNODE"),
-        "endNode" -> roadLink.attributes.get("ENDNODE"),
-        "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
+        "startNode" -> roadLink.attributes.get("STARTNODE"), //delete
+        "endNode" -> roadLink.attributes.get("ENDNODE"),//delete
+        "cust_owner" -> roadLink.attributes.get("CUST_OWNER"), //complementary
         "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
         "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
-                                                                                              .filterNot(_._1 == "ROADNUMBER")
-                                                                                              .filterNot(_._1 == "ROADPARTNUMBER")
-                                                                                              .filterNot(_._1 == "STARTNODE")
-                                                                                              .filterNot(_._1 == "ENDNODE")
-                                                                                              .filterNot(_._1 == "CUST_OWNER")
-                                                                                              .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
-                                                                                              .filterNot(_._1 == "ACCESS_RIGHT_ID")
-                                                                                              .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
-                                                                                              .filterNot(_._1 == "ADDITIONAL_INFO")
+        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes
+        .filterNot(_._1 == "sourceid")
+        .filterNot(_._1 == "ROADNUMBER")
+        .filterNot(_._1 == "ROADPARTNUMBER")
+        .filterNot(_._1 == "STARTNODE") //delete
+        .filterNot(_._1 == "ENDNODE")  //delete
+        .filterNot(_._1 == "CUST_OWNER")
+        .filterNot(_._1 == "roadclass" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+        .filterNot(_._1 == "ACCESS_RIGHT_ID")
+        .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
+        .filterNot(_._1 == "ADDITIONAL_INFO")
     }
   }
 
@@ -748,7 +749,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       Map("nodeId" -> roadNode.nodeId,
           "nodeType" -> roadNode.formOfNode.value,
           "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
-          "subtype" -> roadNode.subtype,
+          "subtype" -> roadNode.subtype, 
           geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
       )
     }

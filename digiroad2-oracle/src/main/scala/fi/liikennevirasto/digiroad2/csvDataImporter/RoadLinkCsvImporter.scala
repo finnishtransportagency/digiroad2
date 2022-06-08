@@ -38,23 +38,23 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     "liikennevirran suunta" -> "DIRECTIONTYPE",
     "tielinkin tyyppi" -> "link_Type",
     "kuntanumero" -> "MUNICIPALITYCODE",
-    "osoitenumerot oikealla alku" -> "FROM_RIGHT",
-    "osoitenumerot oikealla loppu" -> "TO_RIGHT",
-    "osoitenumerot vasemmalla alku" -> "FROM_LEFT",
-    "osoitenumerot vasemmalla loppu" -> "TO_LEFT",
+    "osoitenumerot oikealla alku" -> "addressfromright",
+    "osoitenumerot oikealla loppu" -> "addresstoright",
+    "osoitenumerot vasemmalla alku" -> "addressfromleft",
+    "osoitenumerot vasemmalla loppu" -> "addresstoleft",
     "linkin tila" -> "CONSTRUCTIONTYPE"
   )
 
   private val codeValueFieldMappings = Map(
-    "tasosijainti" -> "VERTICALLEVEL"
+    "tasosijainti" -> "surfacerelation"
   )
 
   private val fieldInOTH = List("link_Type", "functional_Class")
 
   private val textFieldMappings = Map(
-    "tien nimi (suomi)" -> "ROADNAME_FI",
-    "tien nimi (ruotsi)" -> "ROADNAME_SE",
-    "tien nimi (saame)" -> "ROADNAME_SM"
+    "tien nimi (suomi)" -> "roadnamefin",
+    "tien nimi (ruotsi)" -> "roadnameswe",
+    "tien nimi (saame)" -> "ROADNAME_SM" //delete
   )
 
   private val mandatoryFields = "linkin id"
@@ -92,8 +92,9 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   }
 
   def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[Long] = {
-    val timeStamps = new java.util.Date().getTime
-    val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap ++ Map("LAST_EDITED_DATE" -> timeStamps) ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)
+    val timeStamps = new java.util.Date().getTime 
+    // check objec id used and delete or change code
+    val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap ++ Map("versionstarttime" -> timeStamps) ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)
     vvhClient.complementaryData.updateVVHFeatures(mapProperties) match {
       case Right(error) => Some(roadLinkVVHAttribute.linkId)
       case _ => None
@@ -172,6 +173,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
+    // check objec id used and delete or change code
     def getCompletaryVVHInfo(linkId: Long) = {
       vvhClient.complementaryData.fetchByLinkId(linkId) match {
         case Some(vvhRoadLink) => (vvhRoadLink.attributes.get("OBJECTID"), vvhRoadLink.administrativeClass.value)
