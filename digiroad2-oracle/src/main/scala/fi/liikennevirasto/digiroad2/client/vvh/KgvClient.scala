@@ -281,7 +281,7 @@ trait MtkOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
   type IdType = String
-  
+
   protected val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
   
   protected def serviceName: String
@@ -289,11 +289,14 @@ trait MtkOperation extends LinkOperationsAbstract{
   protected def mapFields(content:Content, url: String): Either[List[Map[String, Any]], LinkOperationError]  = ???
   protected def defaultOutFields(): String = ???
   protected def extractFeature(feature: Map[String, Any]): LinkType = ???
-  
-  private val cqlLang ="cql-text"
-  private val bboxCrsType="EPSG%3A3067"
-  private val crs="EPSG%3A3067"
 
+  private val cqlLang = "cql-text"
+  private val bboxCrsType = "EPSG%3A3067"
+  private val crs = "EPSG%3A3067"
+  private val WARNING_LEVEL: Int = 10
+  // This is way to bypass AWS API gateway 10MB limitation, tune it if item size increase or degrease 
+  private val BATCH_SIZE: Int = 4999
+  
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
   protected def convertToFeature(content: Map[String, Any]): Feature = {
@@ -403,6 +406,11 @@ trait MtkOperation extends LinkOperationsAbstract{
         }
         if (resort.isDefined) {
           if (resort.get.numberReturned != 0) {
+            println(resort.get.numberReturned)
+            if(finalResponse.size== WARNING_LEVEL){
+              logger.warn(s"Getting the resort is taking very long time, URL was : $url")
+            }
+            println(finalResponse.size)
             paginateAtomic(finalResponse ++ Set(resort.get), baseUrl, limit, newPosition)
           } else {
             finalResponse
@@ -415,7 +423,7 @@ trait MtkOperation extends LinkOperationsAbstract{
       }
     }
 
-    val limit = 4599
+    val limit = BATCH_SIZE
 
     val fut1 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = 0))
     val fut2 = Future(paginateAtomic(baseUrl = baseUrl, limit = limit, position = limit * 2))
@@ -479,11 +487,10 @@ trait MtkOperation extends LinkOperationsAbstract{
                                            fetchGeometry: Boolean,
                                            resultTransition: (Map[String, Any], List[List[Double]]) => T,
                                            filter: Set[Long] => String): Seq[T] = {
-    val batchSize = 4999
     if (linkIds.size == 1) {
       queryByLinkId[T](linkIds.head)
     }else {
-      linkIds.grouped(batchSize).toList.par.flatMap(queryByLinkIdsUsingFilter).toList
+      linkIds.grouped(BATCH_SIZE).toList.par.flatMap(queryByLinkIdsUsingFilter).toList
     }
   }
 
@@ -491,31 +498,28 @@ trait MtkOperation extends LinkOperationsAbstract{
     queryByFilter(Some(FilterOgc.withLinkIdFilter(linkIds)))
   }
 
-  protected def queryByFilter[LinkType](filter:Option[String]): Seq[LinkType] = {
+  protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}")
-    match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+    val url = s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
+    if(!pagination){
+      fetchFeatures(url)
+      match {
+        case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        case Right(error) => throw new ClientException(error.toString)
+      }
+    }else {
+      queryWithPaginationThreaded(url).asInstanceOf[Seq[LinkType]]
     }
   }
 
   protected def queryByDatetimeAndFilter[LinkType](lowerDate: DateTime, higherDate: DateTime,filter:Option[String]=None): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}")
-    match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
-    }
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 
   protected def queryByLastEditedDate[LinkType](lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     val filterString  = s"&filter=${encode(FilterOgc.withLastEditedDateFilter(lowerDate,higherDate))}"
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}")
-    match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
-    }
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
