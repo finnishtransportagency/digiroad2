@@ -15,6 +15,8 @@ trait Digiroad2Properties {
   val vvhRoadlinkFrozen: Boolean
   val kmtkEndpoint:String
   val kmtkApiKey:String
+  val vvhRestUsername: String
+  val vvhRestPassword: String
   val viiteRestApiEndPoint: String
   val vkmUrl: String
   val vkmApiKey: String
@@ -66,6 +68,7 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val vvhServiceHost: String = scala.util.Properties.envOrElse("vvhServiceHost", null)
   val vvhRestApiEndPoint: String = scala.util.Properties.envOrElse("vvhRestApiEndPoint", null)
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
+ 
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
   val kmtkEndpoint: String = scala.util.Properties.envOrElse("kmtk.endpoint", null)
   val kmtkApiKey: String = scala.util.Properties.envOrElse("kmtk.apikey", null)
@@ -111,6 +114,9 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
         codebuildVersion
     }
   }
+
+  val vvhRestUsername: String = selectEnvType(scala.util.Properties.envOrElse("vvhRest_username", null), scala.util.Properties.envOrElse("vvhRest.username", null))
+  val vvhRestPassword: String = selectEnvType(scala.util.Properties.envOrElse("vvhRest_password", null), scala.util.Properties.envOrElse("vvhRest.password", null))
   val googleMapApiClientId: String = selectEnvType(scala.util.Properties.envOrElse("googlemapapi_client_id", null), scala.util.Properties.envOrElse("googlemapapi.client_id", null))
   val googleMapApiCryptoKey: String = selectEnvType(scala.util.Properties.envOrElse("googlemapapi_crypto_key", null), scala.util.Properties.envOrElse("googlemapapi.crypto_key", null))
   val bonecpJdbcUrl: String = selectEnvType(scala.util.Properties.envOrElse("bonecp_jdbcUrl", null), scala.util.Properties.envOrElse("bonecp.jdbcUrl", null))
@@ -146,6 +152,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val useVVHGeometry: String = envProps.getProperty("useVVHGeometry")
   override val vvhServiceHost: String = envProps.getProperty("vvhServiceHost")
   override val vvhRestApiEndPoint: String = envProps.getProperty("vvhRestApiEndPoint")
+  override val vvhRestUsername: String = envOrProperties("vvhRest.username")
+  override val vvhRestPassword: String = envOrProperties("vvhRest.password")
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
   override val kmtkEndpoint: String = envProps.getProperty("kmtk.endpoint", null)
   override val kmtkApiKey: String = envOrProperties("kmtk.apikey")
@@ -231,6 +239,8 @@ object Digiroad2Properties {
   lazy val vvhServiceHost: String = properties.vvhServiceHost
   lazy val vvhRestApiEndPoint: String = properties.vvhRestApiEndPoint
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
+  lazy val vvhRestUsername: String = properties.vvhRestUsername
+  lazy val vvhRestPassword: String = properties.vvhRestPassword
   lazy val kmtkEndpoint: String = properties.kmtkEndpoint
   lazy val kmtkApiKey: String = properties.kmtkApiKey
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint

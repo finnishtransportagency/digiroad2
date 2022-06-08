@@ -587,9 +587,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     } yield (f1Result, f2Result, f3Result)
 
     val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
+    val complementaryLinkIds = complementaryLinks.map(complementaryLink => Some(complementaryLink.linkId))
+    val (complementaryChanges, roadLinkChanges) = changes.partition(change => complementaryLinkIds.contains(change.oldId) || complementaryLinkIds.contains(change.newId))
 
       withDynTransaction {
-        (generateProperties(links, changes), changes, generateProperties(complementaryLinks, changes))
+        (generateProperties(links, roadLinkChanges), changes, generateProperties(complementaryLinks, complementaryChanges))
       }
   }
   
