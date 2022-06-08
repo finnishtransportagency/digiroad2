@@ -212,7 +212,6 @@
             staticField('Kuntanumero', 'municipalityCode') +
             staticField('Tiennimi (Suomi)', 'roadNameFi') +
             staticField('Tiennimi (Ruotsi)', 'roadNameSe') +
-            staticField('Tiennimi (Saame)', 'roadNameSm') +
             staticField('Tienumero', 'roadNumber') +
             staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Ajorata', 'track') +
@@ -297,7 +296,6 @@
         modifiedAt : linkProperty.modifiedAt || '' ,
         roadNameFi : linkProperty.roadNameFi || '',
         roadNameSe : linkProperty.roadNameSe || '',
-        roadNameSm : linkProperty.roadNameSm || '',
         roadNumber : linkProperty.roadNumber || '',
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
