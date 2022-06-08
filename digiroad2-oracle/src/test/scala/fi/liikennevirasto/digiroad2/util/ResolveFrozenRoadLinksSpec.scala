@@ -69,7 +69,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin" -> "Sininentie", "roadnameswe" -> null, "ROADNUMBER" -> "77", "ROADPARTNUMBER" -> "7")),
       RoadLink(1490369, Seq(Point(415512.94000000041, 6989434.0329999998), Point(415707.37399999984, 6989417.0780000016), Point(415976.35800000001, 6989464.9849999994)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
-        Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin"-> "Sininentie", "roadnameswe"-> null, "ROADNAME_SM"-> null, "ROADNUMBER"-> "77", "ROADPARTNUMBER" -> "8")),
+        Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin"-> "Sininentie", "roadnameswe"-> null, "ROADNUMBER"-> "77", "ROADPARTNUMBER" -> "8")),
       RoadLink(1490371, Seq(Point(415512.94000000041, 6989434.0329999998), Point(415530.69299999997, 6989518.8949999996)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin" -> "Kämärintie", "roadnameswe" -> null, "ROADNUMBER" -> "16934", "ROADPARTNUMBER" -> "1")),

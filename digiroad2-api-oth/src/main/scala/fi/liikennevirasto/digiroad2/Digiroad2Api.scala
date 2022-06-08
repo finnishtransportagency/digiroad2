@@ -724,7 +724,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "verticalLevel" -> roadLink.attributes.get("surfacerelation"),
       "roadNameFi" -> roadLink.attributes.get("roadnamefin"),
       "roadNameSe" -> roadLink.attributes.get("roadnameswe"),
-      "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"), //delete
       "minAddressNumberRight" -> roadLink.attributes.get("addressfromright"),
       "maxAddressNumberRight" -> roadLink.attributes.get("addresstoright"),
       "minAddressNumberLeft" -> roadLink.attributes.get("addressfromleft"),
