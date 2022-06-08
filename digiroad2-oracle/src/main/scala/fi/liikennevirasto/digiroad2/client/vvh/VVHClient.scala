@@ -257,7 +257,7 @@ class VVHAuthPropertyReader {
   }
 }
 object Filter extends Filter {
-  protected def anyToDouble(number: Any): Option[Double] = number match {
+  def anyToDouble(number: Any): Option[Double] = number match {
     case bi: BigInt => Some(bi.toDouble)
     case i: Int => Some(i.toDouble)
     case l: Long => Some(l.toDouble)
