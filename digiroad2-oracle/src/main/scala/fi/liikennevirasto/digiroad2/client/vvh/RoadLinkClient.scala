@@ -22,6 +22,7 @@ import java.net.URLEncoder
 import java.util.ArrayList
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Try
 
 sealed trait FeatureClass
 object FeatureClass {
@@ -74,8 +75,8 @@ case class RoadlinkFetchedMtk(linkId: String, municipalityCode: Int, geometry: S
                            constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def verticalLevel: Option[String] = attributes.get("surfacerelation").map(_.toString)
-  val timeStamp = 0L /// ? why this is needed
-    //attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", DateTime(""))) ? 
+  val dateValue =attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", "")) 
+  val timeStamp = Try(new DateTime(dateValue).getMillis).getOrElse(BigInt(0))
 }
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
