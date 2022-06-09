@@ -104,7 +104,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4)
   }
 
-  test("Should be created only 1 new road width asset when get 3 roadlink change information from vvh and only 1 roadlink have MTKClass valid") {
+  test("Should be created only 1 new road width asset when get 3 roadlink change information from vvh and only 1 roadlink have RoadClass valid") {
 
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -166,7 +166,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should not create any new asset (MTKClass not valid)") {
+  test("Should not create any new asset (RoadClass not valid)") {
 
     val municipalityCode = 235
     val newLinkId1 = 5000
@@ -193,7 +193,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should not create new road width if the road doesn't have MTKClass attribute") {
+  test("Should not create new road width if the road doesn't have RoadClass attribute") {
 
     val newLinkId2 = 5001
     val newLinkId1 = 5000
@@ -396,7 +396,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("actor should update roadWidth measures even if MTKClass is not valid "){
+  test("actor should update roadWidth measures even if RoadClass is not valid "){
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -435,7 +435,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("actor should not update roadWidth measures if MTKClass is valid ") {
+  test("actor should not update roadWidth measures if RoadClass is valid ") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f

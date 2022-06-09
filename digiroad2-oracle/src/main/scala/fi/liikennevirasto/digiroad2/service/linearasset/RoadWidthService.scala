@@ -77,7 +77,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val mappedLinearAssets = linearAssets.groupBy(_.linkId)
     val mappedRoadLinks = roadLinks.
       filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private).
-      filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes))).
+      filter(road => RoadClassWidth.values.toSeq.contains(road.extractRoadClass(road.attributes))).
       groupBy(_.linkId).mapValues(_.head)
 
     //Map all existing assets by roadlink and changeinfo
@@ -106,7 +106,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case Some(_) =>
             None
           case _ =>
-            Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+            Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractRoadClass(roadLink.attributes).width)),
               0, GeometryUtils.geometryLength(roadLink.geometry), Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId,
               changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls)))
         }
@@ -118,7 +118,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             case _ => (asset.startMeasure, asset.endMeasure)
           }
 
-        PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+        PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractRoadClass(roadLink.attributes).width)),
           startMeasure, endMeasure, asset.createdBy, asset.createdDateTime, Some("vvh_mtkclass_default"), None, false, LinearAssetTypes.RoadWidthAssetTypeId,
           changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls))}
       case _ =>

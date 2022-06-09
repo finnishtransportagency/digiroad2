@@ -759,13 +759,13 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
       val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
-      //filter roadLink by administrative class and roadLink with MTKClass valid
+      //filter roadLink by administrative class and roadLink with RoadClass valid
       val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
-      val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
-      println("Road links with MTKClass valid -> " + roadWithMTKClass.size)
+      val roadWithRoadClass = roadLinkAdminClass.filter(road => RoadClassWidth.values.toSeq.contains(road.extractRoadClass(road.attributes)))
+      println("Road links with RoadClass valid -> " + roadWithRoadClass.size)
 
       PostGISDatabase.withDynTransaction {
-        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadWithMTKClass.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadWithRoadClass.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
         println("Existing assets -> " + existingAssets.size)
 
         val lastChanges = changes.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
@@ -774,7 +774,7 @@ object DataFixture {
         //Map all existing assets by roadLink and changeInfo
         val changedAssets = lastChanges.flatMap{
           case (linkId, changeInfo) =>
-            roadWithMTKClass.find(road => road.linkId == linkId ).map {
+            roadWithRoadClass.find(road => road.linkId == linkId ).map {
               roadLink =>
                 (roadLink, changeInfo, existingAssets.filter(_.linkId == linkId))
             }
@@ -806,7 +806,7 @@ object DataFixture {
             //Not create asset with the length less MinAllowedLength
             val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < minAllowedLength}
             pieces.flatMap { measures =>
-              Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+              Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractRoadClass(roadLink.attributes).width)),
                 measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, Some("vvh_mtkclass_default"), None, None))
             }.filterNot(a =>
               assets.
@@ -906,7 +906,7 @@ object DataFixture {
 
       PostGISDatabase.withDynTransaction {
 
-        val roadWithMTKClass = roadLinks.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
+        val roadWithMTKClass = roadLinks.filter(road => RoadClassWidth.values.toSeq.contains(road.extractRoadClass(road.attributes)))
         println("Fetching assets")
         val existingAssets = postGISLinearAssetDao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
 

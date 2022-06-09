@@ -51,11 +51,11 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def isPaved : Boolean = surfaceType == SurfaceType.Paved.value
   def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
-  def extractMTKClass(attributes: Map[String, Any]): MTKClassWidth = {
+  def extractRoadClass(attributes: Map[String, Any]): RoadClassWidth = {
     Try(attributes("roadclass").asInstanceOf[BigInt])
       .map(_.toInt)
-      .map(MTKClassWidth.apply)
-      .getOrElse(MTKClassWidth.Unknown)
+      .map(RoadClassWidth.apply)
+      .getOrElse(RoadClassWidth.Unknown)
   }
 
   def roadIdentifier: Option[Either[Int, String]] = {
@@ -108,24 +108,24 @@ object SurfaceType {
   case object Paved extends SurfaceType { def value = 2}
 }
 // rename ?
-sealed trait MTKClassWidth {
+sealed trait RoadClassWidth {
   def value: Int
   def width: Int
 }
 
-object MTKClassWidth {
+object RoadClassWidth {
   val values = Set(CarRoad_Ia, CarRoad_Ib, CarRoad_IIa, CarRoad_IIb, CarRoad_IIIa, CarRoad_IIIb, DriveWay)
 
-  def apply(intValue: Int): MTKClassWidth = {
+  def apply(intValue: Int): RoadClassWidth = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  case object CarRoad_Ia extends MTKClassWidth { def value = 12111; def  width = 1100}
-  case object CarRoad_Ib extends MTKClassWidth { def value = 12112; def  width	= 1100}
-  case object CarRoad_IIa extends MTKClassWidth { def value = 12121; def width = 650 }
-  case object CarRoad_IIb extends MTKClassWidth { def value = 12122; def  width = 650 }
-  case object CarRoad_IIIa extends MTKClassWidth { def value = 12131; def width = 400 }
-  case object CarRoad_IIIb extends MTKClassWidth { def value = 12132; def width = 400 }
-  case object DriveWay	extends MTKClassWidth { def value = 12141; def width = 250}
-  case object Unknown extends MTKClassWidth {def value=0; def width = 0}
+  case object CarRoad_Ia extends RoadClassWidth { def value = 12111; def  width = 1100}
+  case object CarRoad_Ib extends RoadClassWidth { def value = 12112; def  width	= 1100}
+  case object CarRoad_IIa extends RoadClassWidth { def value = 12121; def width = 650 }
+  case object CarRoad_IIb extends RoadClassWidth { def value = 12122; def  width = 650 }
+  case object CarRoad_IIIa extends RoadClassWidth { def value = 12131; def width = 400 }
+  case object CarRoad_IIIb extends RoadClassWidth { def value = 12132; def width = 400 }
+  case object DriveWay	extends RoadClassWidth { def value = 12141; def width = 250}
+  case object Unknown extends RoadClassWidth {def value=0; def width = 0}
 }
