@@ -23,10 +23,10 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadlinkFetched]): PostGISSpeedLimitDao = {
-    val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
@@ -37,7 +37,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
+    new PostGISSpeedLimitDao(mockRoadlinkClient, mockRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)

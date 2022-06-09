@@ -22,10 +22,10 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadlinkFetched]): PostGISLinearAssetDao = {
-    val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
@@ -36,7 +36,7 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+    new PostGISLinearAssetDao(mockRoadlinkClient, mockRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)

@@ -15,7 +15,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockDynamicDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val TotalWeightLimits = 30

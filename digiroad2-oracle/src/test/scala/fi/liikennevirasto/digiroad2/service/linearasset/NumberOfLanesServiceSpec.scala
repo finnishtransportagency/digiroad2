@@ -21,8 +21,8 @@ import slick.jdbc.{StaticQuery => Q}
 class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
 
   val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
-  when(mockRoadLinkService.roadLinkClient).thenReturn(mockVVHClient)
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadlinkClient)
+  when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
   val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
