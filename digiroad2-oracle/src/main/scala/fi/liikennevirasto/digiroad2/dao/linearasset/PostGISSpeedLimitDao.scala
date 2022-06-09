@@ -11,14 +11,14 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+class PostGISSpeedLimitDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService) {
   def MassQueryThreshold = 500
   case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
 
@@ -398,7 +398,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val remainders = existingLrmPositions.map {speedLimit =>
       (speedLimit.startMeasure, speedLimit.endMeasure) }.foldLeft(Seq((linkMeasures.startMeasure, linkMeasures.endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01 }
     if (remainders.length == 1) {
-      Some(forceCreateSpeedLimit(creator, SpeedLimitAsset.typeId, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertProperties(id, value), Some(vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp())), createdDate, modifiedBy, modifiedAt, linkSource))
+      Some(forceCreateSpeedLimit(creator, SpeedLimitAsset.typeId, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertProperties(id, value), Some(vvhTimeStamp.getOrElse(roadLinkClient.roadLinkData.createVVHTimeStamp())), createdDate, modifiedBy, modifiedAt, linkSource))
     } else {
       None
     }
@@ -506,7 +506,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     val adjusted_timestamp =  vvhTimeStamp match {
       case Some(timeStamp) => timeStamp
-      case _ => vvhClient.roadLinkData.createVVHTimeStamp()
+      case _ => roadLinkClient.roadLinkData.createVVHTimeStamp()
     }
 
     sqlu"""

@@ -22,7 +22,7 @@ import slick.jdbc.StaticQuery.interpolation
 class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
@@ -69,7 +69,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
@@ -82,11 +82,11 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val assetLock = "Used to prevent deadlocks"
 
   private def createService() = {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def vvhClient: VVHClient = mockVVHClient
+      override def roadLinkClient: RoadLinkClient = mockVVHClient
     }
     service
   }
@@ -120,7 +120,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Should not create new paved road assets and return the existing paved road assets when VVH doesn't have change information") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    when(mockRoadLinkService.roadLinkClient).thenReturn(mockVVHClient)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -392,7 +392,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Should apply pavement on whole segment") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
@@ -470,12 +470,12 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire OTH Assets and create new assets based on VVH RoadLink data") {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def vvhClient: VVHClient = mockVVHClient
+      override def roadLinkClient: RoadLinkClient = mockVVHClient
     }
     val assetTypeId = 110
     val municipalityCode = 564
@@ -599,10 +599,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   test("Adjust projected asset with creation"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
-    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    when(mockRoadLinkService.roadLinkClient).thenReturn(mockVVHClient)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -20,7 +20,7 @@ import org.joda.time.DateTime
 
 class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockPedestrianCrossingDao: PostGISPedestrianCrossingDao = MockitoSugar.mock[PostGISPedestrianCrossingDao]
 
@@ -28,7 +28,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   class TestPedestrianCrossingValidator extends PedestrianCrossingValidator {
     override lazy val dao: PostGISPedestrianCrossingDao = mockPedestrianCrossingDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val roadLinkClient: RoadLinkClient = mockVVHClient
   }
 
   val pedestrianValidator = new TestPedestrianCrossingValidator

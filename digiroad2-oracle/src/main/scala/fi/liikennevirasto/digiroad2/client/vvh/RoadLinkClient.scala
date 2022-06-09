@@ -234,7 +234,6 @@ object Filter extends Filter {
     case _ => None
   }
   
-  // TODO can we do filetering in ogc api and doest it work
    override def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
@@ -325,7 +324,7 @@ object Filter extends Filter {
   }
 }
 
-object VVHClient {
+object RoadLinkClient {
   /**
     * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
     * This prevents change info from being applied to the recently created asset. Resolution is one day.
@@ -340,7 +339,7 @@ object VVHClient {
   }
 }
 
-class VVHClient(vvhRestApiEndPoint: String) {
+class RoadLinkClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData: VVHRoadLinkClient = new VVHRoadLinkClient(vvhRestApiEndPoint)
   lazy val frozenTimeRoadLinkData: VVHRoadLinkClient = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
@@ -356,7 +355,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    VVHClient.createVVHTimeStamp(offsetHours)
+    RoadLinkClient.createVVHTimeStamp(offsetHours)
   }
 }
 
@@ -572,7 +571,7 @@ trait VVHClientOperations extends LinkOperationsAbstract {
     * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
     */
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    VVHClient.createVVHTimeStamp(offsetHours)
+    RoadLinkClient.createVVHTimeStamp(offsetHours)
   }
 
   /**
@@ -957,6 +956,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
                            fieldSelection: Option[String], //TODO can we filter resort
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
+  // only one used in very old batch
     queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, Filter.withLinkIdFilter)
 }
 

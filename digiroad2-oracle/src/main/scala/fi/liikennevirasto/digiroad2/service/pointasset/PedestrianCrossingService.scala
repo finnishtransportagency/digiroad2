@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -68,7 +68,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
 
   def createFloatingWithoutTransaction(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
   }
 
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
@@ -76,10 +76,10 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     val pedestrianId =
       if(newTransaction) {
         withDynTransaction {
-          dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+          dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
         }
       } else {
-        dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
       }
     pedestrianCrossingValidatorActor(Set(pedestrianId))
     pedestrianId
@@ -99,9 +99,9 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        dao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        dao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        dao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        dao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp())), roadLink.linkSource)
     }
   }
 
