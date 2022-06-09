@@ -1,13 +1,10 @@
 package fi.liikennevirasto.digiroad2.client.vvh
 
-import java.net.URLEncoder
-import java.util.ArrayList
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, OAGAuthPropertyReader}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -21,6 +18,8 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
+import java.net.URLEncoder
+import java.util.ArrayList
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -192,14 +191,12 @@ object ChangeType {
 }
 
 trait Filter {
-  // TODO can we do filtering in ogc api and doest it work
   def withFilter[T](attributeName: String, ids: Set[T]): String = ???
-
-  def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = ???
-
+  
   def withMunicipalityFilter(municipalities: Set[Int]): String = ???
+  
   def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = ???
-
+  
   def combineFiltersWithAnd(filter1: String, filter2: String): String = ???
 
   def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = ???
@@ -248,22 +245,7 @@ object Filter extends Filter {
       }
     filter
   }
-
-   override def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
-    val filter =
-      if (low < 0 || high < 0 || low > high) {
-        ""
-      } else {
-        if (includeAllPublicRoads) {
-          //TODO check if we can remove the adminclass in the future
-          s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
-        } else {
-          s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
-        }
-      }
-    filter
-  }
-
+  
    override def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
