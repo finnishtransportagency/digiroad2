@@ -60,6 +60,7 @@ class VVHClientSpec extends FunSuite with Matchers{
     result.nonEmpty should be (true)
   }
 
+  // Run these test manually by changing ignore -> test
   
   ignore("Fetch roadlinks with polygon string 2") {
     val polygonTest2 =geomBuilder.polygon(
