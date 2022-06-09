@@ -44,7 +44,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
 
   val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadlinkClient, mockRoadLinkService, mockEventBus, mockService)
-  val vvHRoadlink = Seq(RoadlinkFetched(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+  val roadlinkFetcheds = Seq(RoadlinkFetched(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
 
   when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
@@ -122,31 +122,31 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
 
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
-  class TestMassTransitStopCsvOperation(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, massTransitStopServiceImpl: MassTransitStopService) extends
-    MassTransitStopCsvOperation(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-    override lazy val propertyUpdater = new Updater(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+  class TestMassTransitStopCsvOperation(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, massTransitStopServiceImpl: MassTransitStopService) extends
+    MassTransitStopCsvOperation(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+    override lazy val propertyUpdater = new Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
       override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-      override def roadLinkClient: RoadLinkClient = vvhClientImpl
+      override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
       override def eventBus: DigiroadEventBus = eventBusImpl
 
       override val massTransitStopService: MassTransitStopService = massTransitStopServiceImpl
     }
-    override lazy val positionUpdater = new PositionUpdater(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+    override lazy val positionUpdater = new PositionUpdater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
       override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-      override def roadLinkClient: RoadLinkClient = vvhClientImpl
+      override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
       override def eventBus: DigiroadEventBus = eventBusImpl
 
       override val massTransitStopService: MassTransitStopService = massTransitStopServiceImpl
     }
-    override lazy val creator = new Creator(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+    override lazy val creator = new Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
       override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-      override def roadLinkClient: RoadLinkClient = vvhClientImpl
+      override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
       override def eventBus: DigiroadEventBus = eventBusImpl
 
       override val massTransitStopService: MassTransitStopService = massTransitStopServiceImpl
@@ -189,10 +189,10 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     when(mockMassTransitStopService.isFloating(any[PersistedPointAsset], any[Option[RoadlinkFetched]])).thenAnswer(new Answer[Object] {
       override def answer(invocation: InvocationOnMock): Object = {
         val persistedPointAsset: PersistedPointAsset  = invocation.getArguments()(0).asInstanceOf[PersistedPointAsset]
-        val vvhRoadlink: Option[RoadlinkFetched]  = invocation.getArguments()(1).asInstanceOf[Option[RoadlinkFetched]]
+        val roadlinkFetched: Option[RoadlinkFetched]  = invocation.getArguments()(1).asInstanceOf[Option[RoadlinkFetched]]
 
         val testMassTransitStopService = new TestMassTransitStopService(new DummyEventBus, MockitoSugar.mock[RoadLinkService])
-        testMassTransitStopService.isFloating(persistedPointAsset, vvhRoadlink)
+        testMassTransitStopService.isFloating(persistedPointAsset, roadlinkFetched)
       }
     })
 
@@ -201,19 +201,19 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
 
   test("check mass TransitStop process") {
     var process : String = ""
-    class TestMassTransitStopCsvOperation(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends
-      MassTransitStopCsvOperation(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-      override lazy val propertyUpdater = new Updater(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+    class TestMassTransitStopCsvOperation(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends
+      MassTransitStopCsvOperation(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+      override lazy val propertyUpdater = new Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
         override def importAssets(csvReader: List[Map[String, String]], fileName: String,  user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
           process = "Updater"
         }
       }
-      override lazy val positionUpdater = new PositionUpdater(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+      override lazy val positionUpdater = new PositionUpdater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
         override def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
           process = "PositionUpdater"
         }
       }
-      override lazy val creator = new Creator(vvhClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+      override lazy val creator = new Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
         override def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
           process = "Creator"
         }
