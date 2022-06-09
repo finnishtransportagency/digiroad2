@@ -12,7 +12,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
   override def assetTypeInfo: AssetTypeInfo =  HazmatTransportProhibition
   override val radiusDistance: Int = 50
 
-  lazy val dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(vvhClient, roadLinkService)
+  lazy val dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 

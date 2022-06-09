@@ -9,7 +9,7 @@ import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.Point
 import com.vividsolutions.jts.io.WKTReader
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 
 
@@ -18,7 +18,7 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   val geomFact= new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
   val wKTParser = new WKTReader()
-  val vvhClient = new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   
   
   test("Polygon & BoundingBox intersection test") {

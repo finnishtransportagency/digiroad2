@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.process
 import java.sql.SQLIntegrityConstraintViolationException
 import java.util.{NoSuchElementException, Properties}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -26,10 +26,10 @@ trait AssetServiceValidator {
   val eventbus = new DummyEventBus
   val logger = LoggerFactory.getLogger(getClass)
 
-  lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val roadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
   lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
-  lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
+  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 

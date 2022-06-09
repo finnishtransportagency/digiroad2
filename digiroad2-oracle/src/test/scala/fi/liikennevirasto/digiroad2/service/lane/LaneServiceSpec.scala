@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
@@ -21,7 +21,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -66,7 +66,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def dao: LaneDao = mockLaneDao
     override def historyDao: LaneHistoryDao = mockLaneHistoryDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
@@ -84,7 +84,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockVVHClient
     override def dao: LaneDao = laneDao
     override def historyDao: LaneHistoryDao = laneHistoryDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao

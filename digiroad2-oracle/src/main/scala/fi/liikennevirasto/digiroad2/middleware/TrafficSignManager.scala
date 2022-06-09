@@ -60,7 +60,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
   protected implicit val jsonFormats: Formats = DefaultFormats + LinkGeomSourceSerializer + DateTimeSerializer
 
   lazy val linearAssetDao: PostGISLinearAssetDao = {
-    new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+    new PostGISLinearAssetDao(roadLinkService.roadLinkClient, roadLinkService)
   }
   
   def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
@@ -22,13 +22,13 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
   val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadLinkTempDao = MockitoSugar.mock[RoadLinkTempDAO]
 
   object ResolvingFrozenRoadLinksTest extends ResolvingFrozenRoadLinks {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val roadLinkClient: RoadLinkClient = mockVVHClient
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val vkmClient: VKMClient = mockVKMClient
     override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao

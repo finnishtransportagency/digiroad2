@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, Geometry
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode, State}
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -37,12 +37,12 @@ trait ResolvingFrozenRoadLinks {
     new DigiroadEventBus
   }
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
   }
 
   lazy val roadLinkTempDao: RoadLinkTempDAO = {

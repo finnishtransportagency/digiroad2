@@ -351,7 +351,7 @@ object Filter extends Filter {
   }
 }
 
-object VVHClient {
+object RoadLinkClient {
   /**
     * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
     * This prevents change info from being applied to the recently created asset. Resolution is one day.
@@ -366,7 +366,7 @@ object VVHClient {
   }
 }
 
-class VVHClient(vvhRestApiEndPoint: String) {
+class RoadLinkClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData2: MtkRoadLinkClient = new MtkRoadLinkClient(vvhRestApiEndPoint)
   lazy val roadLinkData: VVHRoadLinkClient = new VVHRoadLinkClient(vvhRestApiEndPoint)
   // TODO no real used boolean is always false
@@ -389,7 +389,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    VVHClient.createVVHTimeStamp(offsetHours)
+    RoadLinkClient.createVVHTimeStamp(offsetHours)
   }
 }
 
@@ -446,7 +446,7 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
   
   val filter:Filter =FilterOgc
   
-  def createVVHTimeStamp(): Long =  VVHClient.createVVHTimeStamp() 
+  def createVVHTimeStamp(): Long =  RoadLinkClient.createVVHTimeStamp() 
 
   def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
     queryByMunicipality(municipality)
@@ -703,7 +703,7 @@ trait VVHClientOperations extends LinkOperationsAbstract {
     * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
     */
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    VVHClient.createVVHTimeStamp(offsetHours)
+    RoadLinkClient.createVVHTimeStamp(offsetHours)
   }
 
   /**

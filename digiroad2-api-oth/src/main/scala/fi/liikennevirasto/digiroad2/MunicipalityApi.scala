@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -56,7 +56,7 @@ object FeatureStatus{
   case object WrongRoadlinks extends FeatureStatus{ def value = 6; def description = "Wrong roadlinks";}
 }
 
-class MunicipalityApi(val vvhClient: VVHClient,
+class MunicipalityApi(val roadLinkClient: RoadLinkClient,
                       val roadLinkService: RoadLinkService,
                       val speedLimitService: SpeedLimitService,
                       val pavedRoadService: PavedRoadService,
@@ -191,7 +191,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   private def updateLinearAssets(properties: Map[String, String], links: Seq[RoadLink]) = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
-    val timeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+    val timeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
 
     links.foreach { link =>
       speedLimit match {

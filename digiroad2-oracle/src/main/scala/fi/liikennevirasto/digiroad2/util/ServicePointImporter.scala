@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 
@@ -24,7 +24,7 @@ object ServicePointImporter {
     val groupSize = 3000
     val groupedServicePoints = servicePoints.grouped(groupSize).toList
     val totalGroupCount = groupedServicePoints.length
-    val vvhClient = new VVHClient(vvhServiceHost)
+    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
 
     PostGISDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
@@ -43,7 +43,7 @@ object ServicePointImporter {
           val assetId = Sequences.nextPrimaryKeySeqValue
           val point = rows.head._6.head
           val diagonal = Vector3d(150, 150, 0)
-          val municipalities = vvhClient.roadLinkData.fetchByBounds(BoundingRectangle(point - diagonal, point + diagonal))
+          val municipalities = roadLinkClient.roadLinkData.fetchByBounds(BoundingRectangle(point - diagonal, point + diagonal))
           val municipalityCode = municipalities.groupBy(roadlink => roadlink.municipalityCode).size match {
             case 0 =>
               println("No municipality found for asset id " + assetId)

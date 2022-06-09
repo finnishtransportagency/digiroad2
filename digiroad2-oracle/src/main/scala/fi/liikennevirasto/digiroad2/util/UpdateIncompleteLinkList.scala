@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, VVHClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, RoadLinkClient, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -18,12 +18,12 @@ import java.sql.SQLException
 object UpdateIncompleteLinkList {
   val logger = LoggerFactory.getLogger(getClass)
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   }
 
   def runUpdate(): Unit = {

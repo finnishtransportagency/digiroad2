@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadlinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, ManoeuvreElement, NewManoeuvre}
@@ -15,7 +15,7 @@ import org.scalatest.{FunSuite, Matchers}
 class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadlinkFetched]): ManoeuvreDao = {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -33,7 +33,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test setManoeuvreExceptions") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
+      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(), None, Seq(1, 2, 3), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -49,7 +49,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test create Manoeuvre For Update") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
+      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
       val exceptions = List(4,5)
       val mano = NewManoeuvre(validityPeriod, exceptions, None, Seq(4, 7), None, false)
@@ -69,7 +69,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test getByRoadLinks") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
+      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(), None, Seq(4, 7), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -88,7 +88,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test addManoeuvreValidityPeriods") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
+      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(), None, Seq(1, 2, 3), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -108,7 +108,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test addManoeuvreExceptions") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
+      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(1, 2), None, Seq(4, 7), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -124,7 +124,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test deleteManoeuvre") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
+      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(1, 2), Option("added"), Seq(4, 7), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -136,7 +136,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
   }
 
   test("test createManoeuvre") {
-    val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
+    val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
     val elements = Seq(ManoeuvreElement(1, 123, 124, ElementTypes.FirstElement),
       ManoeuvreElement(1, 124, 125, ElementTypes.IntermediateElement),
       ManoeuvreElement(1, 125, 0, ElementTypes.LastElement))

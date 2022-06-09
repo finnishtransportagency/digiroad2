@@ -4,7 +4,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane.{LaneFiller, LaneRoadAddressInfo, NewLane, PersistedLane}
@@ -29,8 +29,8 @@ object LaneUtils {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus, roadAddressService)
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
-  lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
 
@@ -50,7 +50,7 @@ object LaneUtils {
 
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
-        val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+        val vvhTimeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
 
         lanesToInsert.flatMap { lane =>
           val laneCode = laneService.getLaneCode(lane).toInt
