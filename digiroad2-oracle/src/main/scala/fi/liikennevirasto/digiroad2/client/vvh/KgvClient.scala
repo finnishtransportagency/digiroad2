@@ -45,17 +45,23 @@ object FilterOgc extends Filter {
   val singleFilter= (field:String,value:String) => s"${field}='${value}'"
   val singleAddQuatation= (value:String) => s"'${value}'"
   
-  // TODO can we do filtering in ogc api and doest it work
-  override def withFilter[T](attributeName: String, ids: Set[T]): String = ???
-
-  override def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = ???
-
+  override def withFilter[T](attributeName: String, ids: Set[T]): String = {
+    val filter =
+      if (ids.isEmpty) {
+        ""
+      } else {
+        val query = ids.map(t=>singleAddQuatation(t.toString)).mkString(",")
+        s"$attributeName IN ($query)"
+      }
+    filter
+  }
+  
   override def withMunicipalityFilter(municipalities: Set[Int]): String = {
     val singleFilter= (municipalities:Int) => s"municipalitycode=${municipalities}"
     if (municipalities.size ==1) {
       singleFilter(municipalities.head)
     }else {
-      municipalities.map(m=>singleFilter(m)).mkString(" OR ")
+      withFilter("municipalitycode",municipalities)
     }
   }
   override def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
@@ -63,16 +69,16 @@ object FilterOgc extends Filter {
       if (names.isEmpty) {
         ""
       } else {
-        names.map(n =>singleFilter(attributeName,n.toString)).mkString(" OR ")
+        withFilter(attributeName,names)
       }
     filter
   }
 
   override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
-    filter1 +" AND " + filter2
+    s"$filter1 AND $filter2"
   }
 
-  override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String =   if (filter2.isDefined) filter1 +" AND " + filter2.get else filter1
+  override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String =   if (filter2.isDefined) s"$filter1 AND ${filter2.get}" else filter1
   
   // Query filters methods
   override def withLinkIdFilter[T](linkIds: Set[T]): String = {
@@ -80,7 +86,7 @@ object FilterOgc extends Filter {
       if (linkIds.isEmpty) {
         ""
       } else {
-        s"id in (${linkIds.map(n=>singleAddQuatation(n.asInstanceOf[String])).mkString(",")})"
+        withFilter("id",linkIds)
       }
     println(filter)
     filter
@@ -91,7 +97,7 @@ object FilterOgc extends Filter {
       if (roadNames.isEmpty) {
         ""
       } else {
-        roadNames.map(n =>singleFilter(roadNameSource,n)).mkString(" OR ")
+        withFilter(roadNameSource,roadNames)
       }
     filter
   }
@@ -101,7 +107,7 @@ object FilterOgc extends Filter {
       if (ids.isEmpty) {
         ""
       } else {
-        ids.map(n =>singleFilter("roadclass",n.toString)).mkString(" OR ")
+        withFilter("roadclass",ids)
       }
     filter
   }
@@ -110,7 +116,7 @@ object FilterOgc extends Filter {
       if (values.isEmpty) {
         ""
       } else {
-        values.map(n =>singleFilter("lifecyclestatus",n.toString)).mkString(" OR ")
+        withFilter("lifecyclestatus",values)
       }
     filter
   }
@@ -173,14 +179,7 @@ object Extractor {
         .getOrElse(TrafficDirection.UnknownDirection)
     else TrafficDirection.UnknownDirection
   }
-
-  // "ROADNAME_SM"           -> attributesMap(""),// delete find used in code remove if possible
-  //    "GEOMETRY_EDITED_DATE"  -> attributesMap(""), // ?
-  //"SUBTYPE"               -> attributesMap(""), // ? delete
-  //"OBJECTID"              -> attributesMap(""), // delete
-  //"STARTNODE"             -> attributesMap(""), //? delete
-  //"ENDNODE"               -> attributesMap(""), // delete
-
+  
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
     attributesMap.filterKeys{ x => Set(
       "roadnumber",
@@ -233,11 +232,10 @@ object Extractor {
     val attributes = feature.properties
 
     val linkGeometry: Seq[Point] = path.map(point => {
-      try {
-        Point(point.head.toString.toDouble, point(1).toString.toDouble, extractMeasure(point(2).toString.toDouble).get)
+      try { // find some cleaner solution for this random BigInt
+        Point(point(0).toString.toDouble, point(1).toString.toDouble, extractMeasure(point(2).toString.toDouble).get)
       } catch {
         case e: ClassCastException => {
-          println(s"error ${point.toString()}");
           Point(0, 0, 0)
         }
       }
@@ -301,8 +299,9 @@ trait MtkOperation extends LinkOperationsAbstract{
     URLEncoder.encode(url, "UTF-8")
   }
 
-  protected def addAuthorizationHeader(request: HttpRequestBase): Unit = {
+  protected def addHeaders(request: HttpRequestBase): Unit = {
     request.addHeader("X-API-Key", Digiroad2Properties.kmtkApiKey)
+    request.addHeader("accept","application/geo+json")
   }
 
   /**
@@ -319,14 +318,16 @@ trait MtkOperation extends LinkOperationsAbstract{
   
   protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError2] = {
     val request = new HttpGet(url)
-    request.addHeader("accept","application/geo+json")
-    addAuthorizationHeader(request)
-    val client =  HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
-      .setCookieSpec(CookieSpecs.STANDARD).build()).build()
+    addHeaders(request)
+    
+    val client =  HttpClients.custom()
+                  .setDefaultRequestConfig( RequestConfig.custom()
+                                  .setCookieSpec(CookieSpecs.STANDARD)
+                                  .build())
+                  .build()
     
     var response: CloseableHttpResponse = null
-    println("new thread: "+Thread.currentThread().getName +" URL :\n "+url)
-    LogUtils.time(logger, "fetch roadlinks client") {
+    LogUtils.time(logger, s"fetch roadlink features with URL: ${url}") {
       try {
         response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -337,21 +338,22 @@ trait MtkOperation extends LinkOperationsAbstract{
               if (roadLinkStatusFilter(feature)){
                 Some(FeatureCollection(
                   `type` = "FeatureCollection",
-                  features = List(LogUtils.time(logger, "convertToFeature",true)(convertToFeature(feature))),
+                  features = List(convertToFeature(feature)),
                   crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None)))
               } else None
             case "FeatureCollection" =>
-              val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(p=>
-                Link(p("title").asInstanceOf[String], p("type").asInstanceOf[String],
-                  p("rel").asInstanceOf[String], p("href").asInstanceOf[String])
+              val links = feature("links").asInstanceOf[List[Map[String, Any]]].map(link=>
+                Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
+                  link("rel").asInstanceOf[String], link("href").asInstanceOf[String])
               )
               
               val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
               val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
+              val features = feature("features").asInstanceOf[List[Map[String, Any]]] .filter(roadLinkStatusFilter)
+                                                                                      .map(convertToFeature)
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
-                features = LogUtils.time(logger, "convertToFeature",true)(
-                  feature("features").asInstanceOf[List[Map[String, Any]]].filter(roadLinkStatusFilter).map(convertToFeature)),
+                features = features,
                 crs = Try(Some(feature("crs").asInstanceOf[Map[String, Any]])).getOrElse(None),
                 numberReturned = feature("numberReturned").asInstanceOf[BigInt].toInt,
                 nextLink,previousLink
@@ -364,7 +366,7 @@ trait MtkOperation extends LinkOperationsAbstract{
         }
       }
       catch {
-        case e: Exception => println(e.toString); Right(LinkOperationError2(e.toString, ""))
+        case e: Exception => Right(LinkOperationError2(e.toString, ""))
       }
       finally {
         if (response != null) {
@@ -383,27 +385,24 @@ trait MtkOperation extends LinkOperationsAbstract{
     val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
 
     @tailrec
-    def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int): Set[FeatureCollection] = { // recursive loop or while loop, first try recurse
+    def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int): Set[FeatureCollection] = {
       val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
       if (!pageAllReadyFetched.contains(url)) {
-        pageAllReadyFetched.add(url)
         val resort = fetchFeatures(url) match {
           case Left(features) => features
           case Right(error) => throw new ClientException(error.toString)
         }
-        if (resort.isDefined) {
-          if (resort.get.numberReturned != 0) {
-            println(resort.get.numberReturned)
-            if(finalResponse.size== WARNING_LEVEL){
-              logger.warn(s"Getting the resort is taking very long time, URL was : $url")
+        pageAllReadyFetched.add(url)
+        resort match {
+          case Some(feature) if feature.numberReturned == 0 => finalResponse
+          case Some(feature) if feature.numberReturned != 0 =>
+              if ( finalResponse.size == WARNING_LEVEL) logger.warn(s"Getting the resort is taking very long time, URL was : $url")
+            if(feature.nextPageLink.nonEmpty) {
+              paginateAtomic(finalResponse ++ Set(feature), baseUrl, limit, newPosition)
+            }else {
+              finalResponse ++ Set(feature)
             }
-            println(finalResponse.size)
-            paginateAtomic(finalResponse ++ Set(resort.get), baseUrl, limit, newPosition)
-          } else {
-            finalResponse
-          }
-        } else {
-          finalResponse
+          case None => finalResponse
         }
       } else {
         paginateAtomic(finalResponse, baseUrl, limit, newPosition)
@@ -418,7 +417,8 @@ trait MtkOperation extends LinkOperationsAbstract{
     val items1 = Await.result(fut1, atMost = Duration.Inf)
     val items2 = Await.result(fut2, atMost = Duration.Inf)
     val items3 = Await.result(fut3, atMost = Duration.Inf)
-    (items1 ++ items2 ++ items3).flatMap(_.features.par.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
+    (items1 ++ items2 ++ items3).flatMap(_.features.par.map(feature=>
+      Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
@@ -429,9 +429,10 @@ trait MtkOperation extends LinkOperationsAbstract{
     }else {
       ""
     }
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?bbox=${bbox}&filter-lang=${cqlLang}&bbox-crs=${bboxCrsType}&crs=${crs}&${filterString}") 
+    fetchFeatures(s"$restApiEndPoint/${MtkCollection.Frozen.value}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
     match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Left(features) =>features.get.features.map(feature=>
+        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -459,23 +460,24 @@ trait MtkOperation extends LinkOperationsAbstract{
     }
   }
 
-  protected def queryByLinkId[T](linkId: String,
+  protected def queryByLinkId[LinkType](linkId: String,
                                            fieldSelection: Option[String] =None,
                                            fetchGeometry: Boolean =false
-                                ): Seq[T] = {
+                                ): Seq[LinkType] = {
     fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${linkId}") match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[T])
+      case Left(features) =>features.get.features.map(feature=>
+        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
 
-  override protected def queryByLinkIds[T](linkIds: Set[String],
+  override protected def queryByLinkIds[LinkType](linkIds: Set[String],
                                            fieldSelection: Option[String],
                                            fetchGeometry: Boolean,
-                                           resultTransition: (Map[String, Any], List[List[Double]]) => T,
-                                           filter: Set[Long] => String): Seq[T] = {
+                                           resultTransition: (Map[String, Any], List[List[Double]]) => LinkType,
+                                           filter: Set[Long] => String): Seq[LinkType] = {
     if (linkIds.size == 1) {
-      queryByLinkId[T](linkIds.head)
+      queryByLinkId[LinkType](linkIds.head)
     }else {
       linkIds.grouped(BATCH_SIZE).toList.par.flatMap(queryByLinkIdsUsingFilter).toList
     }
@@ -491,7 +493,8 @@ trait MtkOperation extends LinkOperationsAbstract{
     if(!pagination){
       fetchFeatures(url)
       match {
-        case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        case Left(features) =>features.get.features.map(feature=> 
+          Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
         case Right(error) => throw new ClientException(error.toString)
       }
     }else {
@@ -501,12 +504,14 @@ trait MtkOperation extends LinkOperationsAbstract{
 
   protected def queryByDatetimeAndFilter[LinkType](lowerDate: DateTime, higherDate: DateTime,filter:Option[String]=None): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}" +
+      s"/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 
   protected def queryByLastEditedDate[LinkType](lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     val filterString  = s"&filter=${encode(FilterOgc.withLastEditedDateFilter(lowerDate,higherDate))}"
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}" +
+      s"/items?filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
