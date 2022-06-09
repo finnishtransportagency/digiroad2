@@ -35,7 +35,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
-case class AdjustedRoadLinksAndVVHRoadLink(adjustedRoadLink:RoadLink, vVHRoadLink:RoadlinkFetched)
+case class AdjustedRoadLinksAndVVHRoadLink(adjustedRoadLink:RoadLink, roadlinkFetched:RoadlinkFetched)
 case class RoadLinkSet(link: RoadLink, itNext: Option[RoadLink], itPrevious: Option[RoadLink])
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[AdjustedRoadLinksAndVVHRoadLink], incompleteLinks: Seq[IncompleteLink], changes: Seq[ChangeInfo] = Nil, roadLinks: Seq[RoadLink] = Nil)
 case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
@@ -45,7 +45,7 @@ case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType
 case class PrivateRoadAssociation(name: String, roadName: String, municipality: String, linkId: Long)
 case class RoadLinkAttributeInfo(id: Long, linkId: Option[Long], name: Option[String], value: Option[String], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
 case class LinkPropertiesEntries(propertyName: String, linkProperty: LinkProperties, username: Option[String],
-                                 vvhRoadLink: RoadlinkFetched, latestModifiedAt: Option[String],
+                                 roadlinkFetched: RoadlinkFetched, latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String], mmlId: Option[Long])
 
 
@@ -712,8 +712,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def checkMMLId(vvhRoadLink: RoadlinkFetched) : Option[Long] = {
-    vvhRoadLink.attributes.contains("MTKID") match {
+  def checkMMLId(roadlinkFetched: RoadlinkFetched) : Option[Long] = {
+    roadlinkFetched.attributes.contains("MTKID") match {
       case true => Some(vvhRoadLink.attributes("MTKID").asInstanceOf[BigInt].longValue())
       case false => None
     }
@@ -753,26 +753,26 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   protected def setLinkProperty(propertyName: String, linkProperty: LinkProperties, username: Option[String],
-                                vvhRoadLink: RoadlinkFetched, latestModifiedAt: Option[String],
+                                roadlinkFetched: RoadlinkFetched, latestModifiedAt: Option[String],
                                 latestModifiedBy: Option[String]) = {
     val optionalExistingValue: Option[Int] = RoadLinkDAO.get(propertyName, linkProperty.linkId)
-    (optionalExistingValue, RoadLinkDAO.getVVHValue(propertyName, vvhRoadLink)) match {
+    (optionalExistingValue, RoadLinkDAO.getVVHValue(propertyName, roadlinkFetched)) match {
       case (Some(existingValue), _) =>
-        RoadLinkDAO.update(propertyName, linkProperty, vvhRoadLink, username, existingValue, checkMMLId(vvhRoadLink))
+        RoadLinkDAO.update(propertyName, linkProperty, roadlinkFetched, username, existingValue, checkMMLId(roadlinkFetched))
       case (None, None) =>
-        insertLinkProperty(propertyName, linkProperty, vvhRoadLink, username, latestModifiedAt, latestModifiedBy)
+        insertLinkProperty(propertyName, linkProperty, roadlinkFetched, username, latestModifiedAt, latestModifiedBy)
 
       case (None, Some(vvhValue)) =>
         if (vvhValue != RoadLinkDAO.getValue(propertyName, linkProperty)) // only save if it overrides VVH provided value
-          insertLinkProperty(propertyName, linkProperty, vvhRoadLink, username, latestModifiedAt, latestModifiedBy)
+          insertLinkProperty(propertyName, linkProperty, roadlinkFetched, username, latestModifiedAt, latestModifiedBy)
     }
   }
   
-  private def insertLinkProperty(propertyName: String, linkProperty: LinkProperties, vvhRoadLink: RoadlinkFetched,
+  private def insertLinkProperty(propertyName: String, linkProperty: LinkProperties, roadlinkFetched: RoadlinkFetched,
                                  username: Option[String], latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String]) = {
     if (latestModifiedAt.isEmpty) {
-      RoadLinkDAO.insert(propertyName, linkProperty, vvhRoadLink, username, checkMMLId(vvhRoadLink))
+      RoadLinkDAO.insert(propertyName, linkProperty, roadlinkFetched, username, checkMMLId(roadlinkFetched))
     } else{
       try {
         var parsedDate = ""
@@ -829,7 +829,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   protected def setLinkAttributes(propertyName: String, linkProperty: LinkProperties, username: Option[String],
-                                  vvhRoadLink: RoadlinkFetched, latestModifiedAt: Option[String],
+                                  roadlinkFetched: RoadlinkFetched, latestModifiedAt: Option[String],
                                   latestModifiedBy: Option[String]) = {
 
     val linkAttributesInfo = LinkAttributesDao.getExistingValues(linkProperty.linkId)
@@ -1046,7 +1046,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       val optionalExistingValues = RoadLinkDAO.getValues(propertyName, entries.map(_.linkProperty.linkId))
       for (entry <- entries) {
         val optionalExistingValue = optionalExistingValues.find(_.linkId == entry.linkProperty.linkId)
-        (optionalExistingValue, RoadLinkDAO.getVVHValue(entry.propertyName, entry.vvhRoadLink)) match {
+        (optionalExistingValue, RoadLinkDAO.getVVHValue(entry.propertyName, entry.roadlinkFetched)) match {
           case (Some(_), _) =>
             updateValues.append(entry)
           case (None, None) =>
@@ -1064,19 +1064,19 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
     val trafficDirectionEntries: Seq[LinkPropertiesEntries] = trafficDirections.map(link => {
       val (username, linkProperty) = setupEntries(link.adjustedRoadLink)
-      LinkPropertiesEntries(RoadLinkDAO.TrafficDirection, linkProperty, username, link.vVHRoadLink, None, None, None)
+      LinkPropertiesEntries(RoadLinkDAO.TrafficDirection, linkProperty, username, link.roadlinkFetched, None, None, None)
     })
 
     val functionalClassEntries: Seq[LinkPropertiesEntries] = functionalClass.map(link => {
       val (username, linkProperty) = setupEntries(link.adjustedRoadLink)
       val parsedDate = parseDate(link.adjustedRoadLink.modifiedAt)
-      LinkPropertiesEntries(RoadLinkDAO.FunctionalClass, linkProperty, username, link.vVHRoadLink, parsedDate, link.adjustedRoadLink.modifiedBy, None)
+      LinkPropertiesEntries(RoadLinkDAO.FunctionalClass, linkProperty, username, link.roadlinkFetched, parsedDate, link.adjustedRoadLink.modifiedBy, None)
     })
 
     val linkTypeEntries: Seq[LinkPropertiesEntries] = linkTypes.map(link => {
       val (username, linkProperty) = setupEntries(link.adjustedRoadLink)
       val parsedDate = parseDate(link.adjustedRoadLink.modifiedAt)
-      LinkPropertiesEntries(RoadLinkDAO.LinkType, linkProperty, username, link.vVHRoadLink, parsedDate, link.adjustedRoadLink.modifiedBy, None)
+      LinkPropertiesEntries(RoadLinkDAO.LinkType, linkProperty, username, link.roadlinkFetched, parsedDate, link.adjustedRoadLink.modifiedBy, None)
     })
 
     val (updateTrafficDirectionEntries, insertTrafficDirectionEntries) = separateUpdateAndInsert(trafficDirectionEntries,RoadLinkDAO.TrafficDirection)
