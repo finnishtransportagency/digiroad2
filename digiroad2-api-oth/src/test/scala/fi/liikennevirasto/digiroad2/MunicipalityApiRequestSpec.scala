@@ -10,7 +10,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 class MunicipalityApiRequestSpec extends FunSuite with Matchers with BeforeAndAfter with AuthenticatedApiSpec {
 
-  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockPavedRoadService = MockitoSugar.mock[PavedRoadService]
@@ -18,7 +18,7 @@ class MunicipalityApiRequestSpec extends FunSuite with Matchers with BeforeAndAf
   val mockSpeedLimitService = MockitoSugar.mock[SpeedLimitService]
   val mockAwsDao = MockitoSugar.mock[AwsDao]
 
-  private val municipalityApi = new MunicipalityApi(mockVVHClient, mockRoadLinkService, mockSpeedLimitService, mockPavedRoadService, mockObstacleService, new OthSwagger) {
+  private val municipalityApi = new MunicipalityApi(mockRoadlinkClient, mockRoadLinkService, mockSpeedLimitService, mockPavedRoadService, mockObstacleService, new OthSwagger) {
     override def awsDao: AwsDao = mockAwsDao
   }
 

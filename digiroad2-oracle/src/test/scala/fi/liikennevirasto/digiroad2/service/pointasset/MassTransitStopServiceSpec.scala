@@ -48,7 +48,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     RoadlinkFetched(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("roadnameswe" -> "roadnameswe",
       "roadnamefin" -> "roadnamefin")))
 
-  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -59,7 +59,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
   before {
     // Reset the mocks here so individual tests don't have to
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
     vvhRoadLinks.foreach(rl =>
       when(mockVVHRoadLinkClient.fetchByLinkId(rl.linkId))

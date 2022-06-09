@@ -17,7 +17,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]

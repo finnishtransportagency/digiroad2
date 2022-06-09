@@ -20,9 +20,9 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockLinearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val mockLinearAssetDao = new PostGISLinearAssetDao(mockRoadlinkClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
@@ -34,7 +34,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadlinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
   }
@@ -43,7 +43,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should create one asset"){
     runWithRollback {
-      when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadlinkFetched(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockRoadlinkClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadlinkFetched(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
       val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(388562360l, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
@@ -64,7 +64,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should create two assets"){
     runWithRollback {
-      when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadlinkFetched(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockRoadlinkClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadlinkFetched(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
       val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(388562360l, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
@@ -87,7 +87,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should not create assets"){
     runWithRollback {
-      when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadlinkFetched(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockRoadlinkClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadlinkFetched(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
       val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(388562360l, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)

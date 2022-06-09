@@ -21,7 +21,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -31,15 +31,15 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
 
-  val laneDao = new LaneDao(mockVVHClient, mockRoadLinkService)
-  val laneHistoryDao = new LaneHistoryDao(mockVVHClient, mockRoadLinkService)
+  val laneDao = new LaneDao(mockRoadlinkClient, mockRoadLinkService)
+  val laneHistoryDao = new LaneHistoryDao(mockRoadlinkClient, mockRoadLinkService)
   val roadLinkWithLinkSource = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
 
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 
 
   val lanePropertiesValues1 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),
@@ -66,7 +66,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def dao: LaneDao = mockLaneDao
     override def historyDao: LaneHistoryDao = mockLaneHistoryDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadlinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
@@ -84,7 +84,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def roadLinkClient: RoadLinkClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadlinkClient
     override def dao: LaneDao = laneDao
     override def historyDao: LaneHistoryDao = laneHistoryDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao

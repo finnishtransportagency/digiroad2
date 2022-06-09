@@ -20,7 +20,7 @@ import org.joda.time.DateTime
 
 class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockPedestrianCrossingDao: PostGISPedestrianCrossingDao = MockitoSugar.mock[PostGISPedestrianCrossingDao]
 
@@ -28,7 +28,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   class TestPedestrianCrossingValidator extends PedestrianCrossingValidator {
     override lazy val dao: PostGISPedestrianCrossingDao = mockPedestrianCrossingDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockVVHClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
   }
 
   val pedestrianValidator = new TestPedestrianCrossingValidator
