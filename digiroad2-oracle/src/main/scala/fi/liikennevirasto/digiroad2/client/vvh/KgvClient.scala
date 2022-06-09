@@ -75,10 +75,17 @@ object FilterOgc extends Filter {
   }
 
   override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
-    s"$filter1 AND $filter2"
+    (filter1.isEmpty, filter2.isEmpty) match {
+      case (true,true) => ""
+      case (true,false) => filter2
+      case (false,true) => filter1
+      case (false,false) => s"$filter1 AND $filter2"
+    }
   }
 
-  override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String =   if (filter2.isDefined) s"$filter1 AND ${filter2.get}" else filter1
+  override def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String =   {
+    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
+  }
   
   // Query filters methods
   override def withLinkIdFilter[T](linkIds: Set[T]): String = {
