@@ -93,6 +93,14 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]
 }
 
+sealed trait LinkId {
+  def value: String
+}
+
+object LinkId {
+  case object Unknown extends LinkId { def value = "99" }
+}
+
 sealed trait SurfaceType {
   def value: Int
 }
