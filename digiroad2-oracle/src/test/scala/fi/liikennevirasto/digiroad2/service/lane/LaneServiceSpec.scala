@@ -1871,28 +1871,119 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
+      /*The change type for the main lane and the original additional lane is add. When the additional lane is split, there
+      will be three divided messages, two for remaining pieces and one for the removed part, and an explicit
+      expire message for the removed part. Moreover, there will be two divided and one expire for the second split*/
+      laneChanges.size should be(9)
 
-      /*The change type for the main lane and the original additional lane is add. When the additional lane is split into
-      two, the change type is divided even though the total length of the split lanes is less than the length of the original
-      lane. The change type for the shortened lane piece is shortened.*/
-      laneChanges.size should be(5)
       laneChanges.count(_.changeType == LaneChangeType.Add) should be(2)
-      laneChanges.count(_.changeType == LaneChangeType.Divided) should be(2)
-      laneChanges.count(_.changeType == LaneChangeType.Shortened) should be(1)
+      laneChanges.count(_.changeType == LaneChangeType.Divided) should be(5)
+      laneChanges.count(_.changeType == LaneChangeType.Expired) should be(2)
 
       //Check that measures and old lane ids are correct.
+      val divided = laneChanges.filter(_.changeType == LaneChangeType.Divided).sortBy(c => (c.lane.startMeasure, c.lane.endMeasure))
+      divided(0).lane.startMeasure should be(0)
+      divided(0).lane.endMeasure should be(150)
+      divided(1).lane.startMeasure should be(150)
+      divided(1).lane.endMeasure should be(300)
+      divided(2).lane.startMeasure should be(150)
+      divided(2).lane.endMeasure should be(350)
+      divided(3).lane.startMeasure should be(300)
+      divided(3).lane.endMeasure should be(350)
+      divided(4).lane.startMeasure should be(350)
+      divided(4).lane.endMeasure should be(500)
+
+      val expired = laneChanges.filter(_.changeType == LaneChangeType.Expired).sortBy(_.lane.startMeasure)
+      expired(0).lane.startMeasure should be(300)
+      expired(0).lane.endMeasure should be(350)
+      expired(1).lane.startMeasure should be(350)
+      expired(1).lane.endMeasure should be(500)
+    }
+  }
+
+  test("Split existing lane in three pieces and remove the middle part") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
+      val sublane2Id = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest)
+
+      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodesForLinkIds = Seq(sideCodeForLink100)
+
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      initialLanes.size should be(2)
+
+      val createdMainLane = NewLane(mainLane1Id, 0, 500, 745, false, false, lanePropertiesValues1)
+
+      val subLane2SplitA = NewLane(0, 0, 150, 745, false, false, lanePropertiesValues2)
+      val subLane2SplitB = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
+
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      currentLanes.size should be(3)
+
+      val lane1 = currentLanes.filter(_.id == mainLane1Id).head
+      lane1.id should be(mainLane1Id)
+      lane1.attributes.foreach { laneProp =>
+        lanePropertiesValues1.contains(laneProp) should be(true)
+      }
+
+      val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
+      splitLanes.size should be(2)
+
+      splitLanes(0).startMeasure should be(0)
+      splitLanes(0).endMeasure should be(150)
+      splitLanes(1).startMeasure should be(350)
+      splitLanes(1).endMeasure should be(500)
+
+      splitLanes.foreach { lane =>
+        lane.attributes.foreach {
+          laneProp =>
+            lanePropertiesValues2.contains(laneProp) should be(true)
+        }
+      }
+
+      // Three expired parts for the division of the big lane and one that is linked to the expired piece.
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      expiredLanes.size should be(4)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+          "MUNICIPALITYCODE" -> BigInt(745),
+          "ROADNUMBER" -> 100,
+          "ROADNAME_FI" -> "Testitie",
+          "VIITE_ROAD_PART_NUMBER" -> 7,
+          "VIITE_ROAD_NUMBER" -> 100,
+          "VIITE_END_ADDR" -> 2000
+        )))
+      )
+
+      val dateAtThisMoment = DateTime.now()
+      val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
+
+      /*The change type for the main lane and the additional lane saved before split is add and the type for split lanes is divided.
+      In addition, there is an explicit expire message for the removed part*/
+      laneChanges.size should be(6)
+      laneChanges.count(_.changeType == LaneChangeType.Add) should be(2)
+      laneChanges.count(_.changeType == LaneChangeType.Divided) should be(3)
+      laneChanges.count(_.changeType == LaneChangeType.Expired) should be(1)
+
       val divided = laneChanges.filter(_.changeType == LaneChangeType.Divided).sortBy(_.lane.startMeasure)
       divided(0).lane.startMeasure should be(0)
       divided(0).lane.endMeasure should be(150)
-      divided(0).oldLane.get.id should be(subLane2Id.head)
       divided(1).lane.startMeasure should be(150)
       divided(1).lane.endMeasure should be(350)
-      divided(1).oldLane.get.id should be(subLane2Id.head)
+      divided(2).lane.startMeasure should be(350)
+      divided(2).lane.endMeasure should be(500)
 
-      val shortened = laneChanges.filter(_.changeType == LaneChangeType.Shortened).sortBy(_.lane.startMeasure)
-      shortened.head.lane.startMeasure should be(150)
-      shortened.head.lane.endMeasure should be(300)
-      shortened.head.oldLane.get.id should be(divided(1).lane.id)
+      divided.foreach(laneChange => laneChange.oldLane.get.id should be(sublane2Id.head))
+
+      val expired = laneChanges.filter(_.changeType == LaneChangeType.Expired).head
+
+      expired.lane.startMeasure should be(150)
+      expired.lane.endMeasure should be(350)
     }
   }
 }
