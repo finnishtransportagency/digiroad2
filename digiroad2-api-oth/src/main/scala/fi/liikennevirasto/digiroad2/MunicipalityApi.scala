@@ -14,7 +14,7 @@ import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-case class Dataset(datasetId: String, featuresCollection: FeatureCollection, roadlinks: List[List[Long]])
+case class Dataset(datasetId: String, featuresCollection: FeatureCollection, roadlinks: List[List[String]])
 sealed trait DatasetStatus{
   def value: Int
   def description: String
@@ -106,7 +106,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     ({
       case jsonObj: JObject =>
         val id = (jsonObj \ "datasetId").extract[String]
-        val roadlinks = (jsonObj \ "matchedRoadlinks").extract[List[List[Long]]]
+        val roadlinks = (jsonObj \ "matchedRoadlinks").extract[List[List[String]]]
         val features = (jsonObj \ "geojson").extract[FeatureCollection]
 
         Dataset(id, features, roadlinks)

@@ -33,7 +33,7 @@ object Status {
 
 case class ImportStatusInfo(id: Long, status: Int, statusDescription: String, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], jobName: String, content: Option[String])
 
-class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
+class RoadLinkNotFoundException(linkId: String) extends RuntimeException
 
 case class IncompleteRow(missingParameters: List[String], csvRow: String)
 case class MalformedRow(malformedParameters: List[String], csvRow: String)

@@ -19,13 +19,13 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  case class NonUpdatedLink(linkId: Long, csvRow: String)
+  case class NonUpdatedLink(linkId: String, csvRow: String)
   case class ImportResultRoadLink(nonUpdatedLinks: List[NonUpdatedLink] = Nil,
                                   incompleteRows: List[IncompleteRow] = Nil,
                                   malformedRows: List[MalformedRow] = Nil,
                                   excludedRows: List[ExcludedRow] = Nil) extends ImportResult
 
-  case class CsvRoadLinkRow(linkId: Int, objectID: Int = 0, properties: Seq[AssetProperty])
+  case class CsvRoadLinkRow(linkId: String, objectID: Int = 0, properties: Seq[AssetProperty])
 
   type ImportResultData = ImportResultRoadLink
 

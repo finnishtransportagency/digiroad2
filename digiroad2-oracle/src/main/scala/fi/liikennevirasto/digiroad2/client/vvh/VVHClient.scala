@@ -67,18 +67,18 @@ case class VVHRoadlink(linkId: String, municipalityCode: Int, geometry: Seq[Poin
   val vvhTimeStamp = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
-case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
+case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long, changeType: Int,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
                       newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
-  def isOldId(id: Long): Boolean = {
+  def isOldId(id: String): Boolean = {
     oldId.nonEmpty && oldId.get == id
   }
-  def affects(id: Long, assetVvhTimeStamp: Long): Boolean = {
+  def affects(id: String, assetVvhTimeStamp: Long): Boolean = {
     isOldId(id) && assetVvhTimeStamp < vvhTimeStamp
   }
 }
 
-case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
+case class VVHHistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
                               trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map(),
                               constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
