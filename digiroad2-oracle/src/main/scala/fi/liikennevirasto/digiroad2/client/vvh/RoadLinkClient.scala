@@ -509,7 +509,7 @@ class MtkRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
     * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator) Rename // only one used in very old batch
     */
   def fetchVVHRoadlinks[LinkType](linkIds: Set[IdType],
-                           fieldSelection: Option[String], //TODO can we filter resort
+                           fieldSelection: Option[String],
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => LinkType): Seq[LinkType] =
   // only one used in very old batch
@@ -840,7 +840,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   }
 
   /**
-    * Returns VVH road links related with finnish names. TODO only one used
+    * Returns VVH road links related with finnish names.
     */
   protected def queryByNames[T](names: Set[String],
                                 fieldSelection: Option[String],
@@ -1018,7 +1018,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   def fetchByLinkIdsF(linkIds: Set[Long]) = {
     Future(fetchByLinkIds(linkIds))
   }
-  //TODO only one used
   def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = {
     Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
   }
@@ -1032,7 +1031,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   /**
     * Returns VVH road links by mml ids.
     * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
-    * TODO only one used,  can be some what recreated,  used only in very old batch
     */
   def fetchByMmlIds(mmlIds: Set[Long]): Seq[RoadlinkFetched] = {
     queryByLinkIds(mmlIds, None, true, extractRoadLinkFeature,Filter.withMmlIdFilter)
@@ -1076,7 +1074,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   /**
     * Returns VVH road links by finnish names.
-    * Used by VVHClient.fetchByLinkId, TODO only two used, redo without roadname
+    * Used by VVHClient.fetchByLinkId,
     */
   def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[RoadlinkFetched] = {
     queryByNames(roadNames, None, true, extractRoadLinkFeature, Filter.withFinNameFilter(roadNamePublicId))
@@ -1087,7 +1085,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator)
     */
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
-                           fieldSelection: Option[String], //TODO can we filter resort
+                           fieldSelection: Option[String],
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
   // only one used in very old batch
@@ -1173,7 +1171,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     }.toList
   }
 }
-// TODO for in seeable future we are not going't to fetch roadnode, detele? 
+// TODO for in seeable future we are not going to fetch roadnode, DROTH-3255 detele? 
 class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
 
   override type LinkType = RoadNodesFetched
@@ -1221,7 +1219,7 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
     Future(queryByMunicipality(municipality))
   }
 }
-
+// TODO DROTH-3250 Redo this? Can we just extend MtkOperation, if we can generify to be something like OgcOperation
 class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
@@ -1246,11 +1244,11 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
 
     nvps
   }
-// only one used
+
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadlinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(Filter.withMtkClassFilter(Set(12314)))))
   }
-  // only one used
+  
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[RoadlinkFetched]] =
     Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
 
@@ -1286,7 +1284,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
     }
   }
 }
-// TODO no used in future
+// TODO DROTH-3246 no used in future Delete ?
 class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
