@@ -932,6 +932,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
   }
 
+  def fetchByPolygon(polygon : Polygon): Seq[RoadlinkFetched] = {
+    queryByPolygons(polygon)
+  }
+  
   def fetchByPolygonF(polygon : Polygon): Future[Seq[RoadlinkFetched]] = {
     Future(queryByPolygons(polygon))
   }
@@ -1011,6 +1015,10 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     Future(queryByMunicipality(municipality))
   }
 
+  def fetchByPolygon(polygon: Polygon): Seq[ChangeInfo] = {
+    queryByPolygons(polygon)
+  }
+  
   def fetchByPolygonF(polygon: Polygon): Future[Seq[ChangeInfo]] = {
     Future(queryByPolygons(polygon))
   }

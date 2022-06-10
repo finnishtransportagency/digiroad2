@@ -4,7 +4,7 @@ import java.util.Properties
 import com.vividsolutions.jts.geom.GeometryFactory
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadlinkFetchedMtk, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient}
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.geotools.geometry.jts.GeometryBuilder
 import org.scalatest.{FunSuite, Matchers}
@@ -27,14 +27,14 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
   }
 
   test("Fetch roadlinks with polygon string ") {
-    val vvhClient= new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result= vvhClient.roadLinkData.fetchByPolygon(geomBuilder.polygon(564000,6930000,566000,6931000,567000,6933000))
+    val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    val result= roadLinkClient.roadLinkData.fetchByPolygon(geomBuilder.polygon(564000,6930000,566000,6931000,567000,6933000))
     result.size should be >1
   }
 
   test("Fetch roadlinks with empty polygon string") {
-    val vvhClient= new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result= vvhClient.roadLinkData.fetchByPolygon(geomBuilder.polygon())
+    val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    val result= roadLinkClient.roadLinkData.fetchByPolygon(geomBuilder.polygon())
     result.size should be (0)
   }
   /**
