@@ -357,7 +357,7 @@ object RoadLinkClient {
     * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
     * This prevents change info from being applied to the recently created asset. Resolution is one day.
     * @param offsetHours Offset to the timestamp. Defaults to 5 which reflects to VVH offset for batch runs.
-    * @return VVH timestamp for current date
+    * @return VVH timestamp for current date //TODO generify this if still need it  DROTH-3271
     */
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     val oneHourInMs = 60 * 60 * 1000L
