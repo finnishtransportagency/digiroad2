@@ -223,7 +223,6 @@ trait Filter {
   
 }
 
-
 object Filter extends Filter {
 
   def anyToDouble(number: Any): Option[Double] = number match {
@@ -623,8 +622,6 @@ trait VVHClientOperations extends LinkOperationsAbstract {
 
 }
 
-
-
 class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   override type LinkType = RoadlinkFetched
@@ -885,7 +882,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   def fetchByLinkIdsF(linkIds: Set[Long]) = {
     Future(fetchByLinkIds(linkIds))
   }
-  //TODO only one used
+
   def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = {
     Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
   }
@@ -946,7 +943,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   /**
     * Returns VVH road links by finnish names.
-    * Used by VVHClient.fetchByLinkId, TODO only two used, redo without roadname
+    * Used by VVHClient.fetchByLinkId,
     */
   def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[RoadlinkFetched] = {
     queryByNames(roadNames, None, true, extractRoadLinkFeature, Filter.withFinNameFilter(roadNamePublicId))
@@ -957,7 +954,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator)
     */
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
-                           fieldSelection: Option[String], //TODO can we filter resort
+                           fieldSelection: Option[String],
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
   // only one used in very old batch
@@ -1047,7 +1044,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     }.toList
   }
 }
-// TODO for in seeable future we are not going't to fetch roadnode, detele? 
+
 class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
 
   override type LinkType = RoadNodesFetched
@@ -1120,11 +1117,11 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
 
     nvps
   }
-// only one used
+
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadlinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(Filter.withMtkClassFilter(Set(12314)))))
   }
-  // only one used
+
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[RoadlinkFetched]] =
     Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
 
@@ -1163,7 +1160,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
     }
   }
 }
-// TODO no used in future
+
 class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
@@ -1234,7 +1231,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     Future(fetchVVHRoadLinkByLinkIds(linkIds))
   }
 }
-// TODO delete?
+
 class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
   override type Content = Map[String, Any]
   protected override val serviceName = "Roadlink_temp"
