@@ -339,18 +339,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){roadLinkClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else roadLinkClient.roadLinkData.fetchByLinkIds(linkIds) }
     else Seq.empty[RoadlinkFetched]
   }
-
-  /**
-    * This method returns VVH road links by Finnish or Swedish name. No used
-    *
-    * @param roadNamePublicIds
-    * @param roadNameSource
-    * @return VVHRoadLinks
-    */
-  def fetchVVHRoadlinks(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[RoadlinkFetched] = {
-      roadLinkClient.roadLinkData.fetchByRoadNames(roadNamePublicIds, roadNameSource)
-  }
-
+  
   def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
     RoadLinkDAO.LinkTypeDao.getAllLinkType(linkIds).groupBy(_._1)
   }
