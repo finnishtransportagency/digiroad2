@@ -27,6 +27,7 @@ $(function() {
     $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
     $('#deleteCheckbox').prop('disabled', !$(this).val());
     $('#csvImportPoistaCheckbox').toggle($(this).val() === 'trafficSigns');
+    $('#csvImportLanesStartDates').toggle($(this).val() === 'lanes');
     $('.mass-transit-stop-limit').toggle($(this).val() === 'massTransitStop');
   }).trigger('change');
 
@@ -75,13 +76,21 @@ $(function() {
       });
 
     } else if (assetType === "lanes") {
+      if(($('#startDateCheckbox').is(':checked'))) {
+        formData.append('updateStartDates', 'true');
+        uploadFile();
+        spinnerOn();
+      }
+      else {
         new GenericConfirmPopup('Huom: Kaikki vanha lisäkaistadata poistetaan, ja korvataan uudella', {
-        container: '.csv-content',
-        successCallback: function () {
-          uploadFile();
-          spinnerOn();
-        }
-      });
+          container: '.csv-content',
+          successCallback: function () {
+            uploadFile();
+            spinnerOn();
+          }
+        });
+      }
+
 
     }else {
       uploadFile();
