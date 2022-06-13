@@ -22,13 +22,13 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
-  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadLinkTempDao = MockitoSugar.mock[RoadLinkTempDAO]
 
   object ResolvingFrozenRoadLinksTest extends ResolvingFrozenRoadLinks {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val vkmClient: VKMClient = mockVKMClient
     override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao

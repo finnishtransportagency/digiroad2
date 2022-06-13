@@ -22,14 +22,14 @@ import org.scalatest.{FunSuite, Matchers}
 
 class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockAssetDao: ManoeuvreDao = MockitoSugar.mock[ManoeuvreDao]
 
   class TestManoeuvreValidator extends ManoeuvreValidator {
     override lazy val manoeuvreDao: ManoeuvreDao = mockAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
   val manoeuvreValidator = new TestManoeuvreValidator

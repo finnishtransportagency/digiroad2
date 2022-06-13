@@ -25,9 +25,9 @@ import scala.language.implicitConversions
 
 class SpeedLimitServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val provider = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+  val provider = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
   }
 
@@ -35,7 +35,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     1l, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
     TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-  when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(roadLink), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLink), Nil))
 
@@ -58,11 +58,11 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   val roadLinkFetched = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
-    val mockRoadlinkClient
+    val mockRoadLinkClient
     = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
@@ -73,7 +73,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new PostGISSpeedLimitDao(mockRoadlinkClient, mockRoadLinkService)
+    new PostGISSpeedLimitDao(mockRoadLinkClient, mockRoadLinkService)
   }
 
 
@@ -172,7 +172,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("request unknown speed limit persist in bounding box fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
-      val provider = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+      val provider = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
       }
 
@@ -185,7 +185,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("request unknown speed limit persist in municipality fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
-      val provider = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+      val provider = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
       }
 
@@ -273,8 +273,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 1
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -331,9 +331,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 2
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -415,9 +414,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 3
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -499,9 +497,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 1
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -569,9 +566,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 1
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -623,9 +619,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 1
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -677,9 +672,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 1
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -730,9 +724,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     // Speed limit case 1
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -800,12 +793,11 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
 
     runWithRollback {
-      val mockRoadlinkClient
-      = MockitoSugar.mock[RoadLinkClient]
+      val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-      val provider = new SpeedLimitService(mockEventBus, mockRoadlinkClient, mockRoadLinkService) {
+      val provider = new SpeedLimitService(mockEventBus, mockRoadLinkClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
       }
 
@@ -852,9 +844,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     */
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -906,9 +897,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   // Works locally, won't work on CI because of number format.
   ignore("should return sensible repaired geometry after projection on overlapping data") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val municipalityCode = 235
@@ -1034,10 +1024,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
   test("Must not expire assets that are outside of the current search even if mentioned in VVH change info") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val service = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val municipalityCode = 235
@@ -1080,11 +1069,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("Must be able to split one sided speedlimits and keep new speed limit") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val service = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val municipalityCode = 235
@@ -1115,7 +1103,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) values ('18050499',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 100 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.YYYY HH24:MI:SS'),null)""".execute
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) values ('18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.YYYY HH24:MI:SS'),null)""".execute
 
-      when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(newRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(any[Long])).thenReturn(Some(roadLinkFetched))
@@ -1151,11 +1139,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   ignore("Projecting and filling should return proper geometry on Integration API calls, too") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val service = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val municipalityCode = 286
@@ -1258,7 +1245,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
           sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ($assetId,$id)""".execute
       }
 
-      when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
 
@@ -1318,11 +1305,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   ignore ("Should stabilize on overlapping speed limits") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val service = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val municipalityCode = 286
@@ -1387,7 +1373,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
           sqlu"""Insert into ASSET_LINK (ASSET_ID,POSITION_ID) values ($assetId,$id)""".execute
       }
 
-      when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
 
@@ -1442,9 +1428,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("Should filter out speed limits on walkways from TN-ITS message") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
-    val service = new SpeedLimitService(new DummyEventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+    val service = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
     val roadLink1 = RoadLink(100, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
@@ -1480,10 +1465,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("Ensure that when applying changes from change info doesn't create unknown speed limit"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val service = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -1529,10 +1513,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("Adjusts created speed limit, and goes through the saveProjectedLinearAssets actor, and not through the save unknowns"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val service = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
@@ -1589,15 +1572,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("Delete link id from unknown speed limit list when that link does not exist anymore"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadlinkClient
-    = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockRoadlinkClient, mockRoadLinkService) {
+    val service = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
 
     val oldLinkId = 5000

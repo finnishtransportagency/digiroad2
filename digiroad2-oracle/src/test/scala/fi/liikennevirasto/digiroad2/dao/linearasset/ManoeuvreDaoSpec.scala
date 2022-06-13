@@ -15,10 +15,10 @@ import org.scalatest.{FunSuite, Matchers}
 class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): ManoeuvreDao = {
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
@@ -26,7 +26,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new ManoeuvreDao(mockRoadlinkClient)
+    new ManoeuvreDao(mockRoadLinkClient)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
