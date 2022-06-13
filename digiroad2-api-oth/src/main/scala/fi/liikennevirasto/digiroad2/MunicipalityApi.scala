@@ -134,7 +134,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     }
   }
 
-  private def linkIdValidation(linkIds: Set[Long],  roadLinks: Seq[Long]): FeatureStatus = {
+  private def linkIdValidation(linkIds: Set[String],  roadLinks: Seq[String]): FeatureStatus = {
     if(!(linkIds.nonEmpty && linkIds.forall(roadLinks.contains(_))))
     {
       FeatureStatus.WrongRoadlinks

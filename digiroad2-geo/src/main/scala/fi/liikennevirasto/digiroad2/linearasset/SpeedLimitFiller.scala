@@ -452,7 +452,7 @@ object SpeedLimitFiller {
 
   }
 
-  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None): (Seq[SpeedLimit], ChangeSet) = {
+  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None): (Seq[SpeedLimit], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
       dropSegmentsOutsideGeometry,
       combine,

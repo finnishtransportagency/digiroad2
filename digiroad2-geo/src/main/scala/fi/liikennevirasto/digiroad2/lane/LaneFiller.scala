@@ -36,7 +36,7 @@ class LaneFiller {
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
 
-  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[Long, Seq[PersistedLane]], changedSet: Option[ChangeSet] = None ): (Seq[PieceWiseLane], ChangeSet) = {
+  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[String, Seq[PersistedLane]], changedSet: Option[ChangeSet] = None ): (Seq[PieceWiseLane], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
