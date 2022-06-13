@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "BatchSNSTopicName",
+    "ParameterValue": "BatchFailTopic"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  }
+]
