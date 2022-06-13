@@ -39,10 +39,10 @@ object ImportShapeFileDAO {
     """.as[CyclingAndWalking].list
   }
 
-  def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, Option[String], Option[String])] = {
+  def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(String, Long, Int, Option[String], Option[String])] = {
     sql"""
       select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode
-    """.as[(Long, Long, Int, Option[String], Option[String])].list
+    """.as[(String, Long, Int, Option[String], Option[String])].list
   }
 
   def getObstaclesFromShapefileTable: Seq[ObstacleShapefile] = {

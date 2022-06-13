@@ -133,7 +133,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   /**
     * Iterates a set of link ids  and returns lanes. Used by LaneService.getByRoadLinks.
     */
-  def fetchLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
+  def fetchLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
     val lanesCodeToFilter =
       if (mainLanes)
         Seq(MainLane.laneCode)
@@ -149,11 +149,11 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     convertLaneRowToPersistedLane(lanes)
   }
 
-  def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int] = Seq(), includeExpired: Boolean = false): Seq[PersistedLane] = {
+  def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[String], laneCode: Seq[Int] = Seq(), includeExpired: Boolean = false): Seq[PersistedLane] = {
     fetchAllLanesByLinkIds(linkIds, includeExpired, laneCode)
   }
 
-  def fetchAllLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
+  def fetchAllLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
     val filterExpired = s" (l.valid_to > current_timestamp OR l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
 
@@ -164,7 +164,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
       case _ => " ORDER BY l.lane_code ASC"
     }
 
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
 
       getLanesFilterQuery(withFilter(filter))
@@ -172,9 +172,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
 
-  def fetchLanesByLinkIdAndSideCode( linkId: Long, sideCode: Int): Seq[PersistedLane] = {
+  def fetchLanesByLinkIdAndSideCode( linkId: String, sideCode: Int): Seq[PersistedLane] = {
 
-    MassQuery.withIds(Set(linkId)) { idTableName =>
+    MassQuery.withStringIds(Set(linkId)) { idTableName =>
       val filter = s""" JOIN $idTableName i ON i.id = pos.link_id
                     WHERE (l.valid_to > current_timestamp OR l.valid_to IS NULL)
                     AND pos.side_code = $sideCode """
@@ -463,13 +463,13 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     updateLaneModifiedFields(id, username)
   }
 
-  def getAllLinkIdsInLanePosition(): List[Long] = {
-    sql"""SELECT DISTINCT LINK_ID FROM LANE_POSITION""".as[Long].list
+  def getAllLinkIdsInLanePosition(): List[String] = {
+    sql"""SELECT DISTINCT LINK_ID FROM LANE_POSITION""".as[String].list
   }
 
 
-  def expireLanesByLinkId(linkIds: Set[Long], username: String) = {
-    MassQuery.withIds(linkIds) { idTableName =>
+  def expireLanesByLinkId(linkIds: Set[String], username: String) = {
+    MassQuery.withStringIds(linkIds) { idTableName =>
       sqlu"""
          UPDATE LANE SET
            VALID_TO = current_timestamp,

@@ -136,8 +136,8 @@ object PostGISTrafficSignDao {
                 where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in (#${values.mkString(",")}) """.as[Long].list
   }
 
-  def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
-    val rows = MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def fetchByLinkId(linkIds : Seq[String]): Seq[PersistedTrafficSign] = {
+    val rows = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
                p.id, p.public_id, p.property_type, p.required, ev.value,
@@ -479,8 +479,8 @@ object PostGISTrafficSignDao {
     }
   }
 
-  def expire(linkIds: Set[Long], username: String): Unit = {
-    MassQuery.withIds(linkIds) { idTableName =>
+  def expire(linkIds: Set[String], username: String): Unit = {
+    MassQuery.withStringIds(linkIds) { idTableName =>
       sqlu"""
          update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where id in (
           select a.id
@@ -506,10 +506,10 @@ object PostGISTrafficSignDao {
     StaticQuery.updateNA(queryFilter(query) + " and (valid_to IS NULL OR valid_to > current_timestamp)").execute
   }
 
-  def expireAssetByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String]) : Unit = {
+  def expireAssetByLinkId(linkIds: Seq[String], signsType: Set[Int] = Set(), username: Option[String]) : Unit = {
     val trafficSignType = if(signsType.isEmpty) "" else s"and ev.value in (${signsType.mkString(",")})"
     val filterByUsername = if(username.isEmpty) "" else s"and created_by = $username"
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sqlu"""
          update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
          where id in (

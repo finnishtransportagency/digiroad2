@@ -53,7 +53,7 @@ object PostGISWeightLimitDao {
   implicit val getPointAsset: GetResult[WeightLimit] = new GetResult[WeightLimit] {
     def apply(r: PositionedResult) : WeightLimit  = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

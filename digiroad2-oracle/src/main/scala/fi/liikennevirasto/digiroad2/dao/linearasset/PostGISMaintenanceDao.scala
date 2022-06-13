@@ -63,7 +63,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getDynamicAssetRow = new GetResult[DynamicAssetRow] {
     def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -115,7 +115,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     sqlu"update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where asset_type_id = $typeId".execute
   }
 
-  def expireMaintenanceAssetsByLinkids(linkIds: Seq[Long], typeId: Int): Unit = {
+  def expireMaintenanceAssetsByLinkids(linkIds: Seq[String], typeId: Int): Unit = {
     linkIds.foreach { linkId =>
       sqlu"""
           update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
@@ -134,7 +134,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   /**
     * Creates new Maintenance asset. Return id of new asset. Used by MaintenanceService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
+  def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), area: Int): Long = {

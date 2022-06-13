@@ -55,8 +55,8 @@ class PostGISAssetDao {
     * @param typeId Represets the id of the asset
     * @param linkIds Represets the link id of the road
     */
-  def expireAssetByTypeAndLinkId(typeId: Long, linkIds: Seq[Long]): Unit = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def expireAssetByTypeAndLinkId(typeId: Long, linkIds: Seq[String]): Unit = {
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sqlu"""
          update asset set valid_to =current_timestamp - INTERVAL'1 SECOND' where id in (
           select a.id
@@ -90,8 +90,8 @@ class PostGISAssetDao {
     assetTypes
   }
 
-  def getAssetIdByLinks(typeId: Long, linkIds: Seq[Long]) = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def getAssetIdByLinks(typeId: Long, linkIds: Seq[String]) = {
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""select A.ID from ASSET A
          join ASSET_LINK AL on AL.ASSET_ID = A.ID
          join LRM_POSITION lrm on lrm.ID = AL.POSITION_ID
@@ -100,8 +100,8 @@ class PostGISAssetDao {
     }
   }
 
-  def getAssetsByTypesAndLinkId(assetTypeId: Set[Int], linkIds: Seq[Long]): Seq[AssetLink]  = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def getAssetsByTypesAndLinkId(assetTypeId: Set[Int], linkIds: Seq[String]): Seq[AssetLink]  = {
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""select a.id, lp.link_id, lp.start_measure, lp.end_measure
             from asset a
             join asset_link al on al.asset_id = a.id
@@ -124,8 +124,8 @@ class PostGISAssetDao {
     sqlu"update asset set valid_to = current_timestamp where id = $id".first
   }
 
-  def getExpiredAssetsByRoadLinkAndTypeIdAndBetweenDates(roadLinksFromMunicipalities: Set[Long], assetTypeIdsToRestore: Seq[Int], startDate: String, endDate: String) = {
-    MassQuery.withIds(roadLinksFromMunicipalities) { idTableName =>
+  def getExpiredAssetsByRoadLinkAndTypeIdAndBetweenDates(roadLinksFromMunicipalities: Set[String], assetTypeIdsToRestore: Seq[Int], startDate: String, endDate: String) = {
+    MassQuery.withStringIds(roadLinksFromMunicipalities) { idTableName =>
       sql"""
             select a.id
             from asset a

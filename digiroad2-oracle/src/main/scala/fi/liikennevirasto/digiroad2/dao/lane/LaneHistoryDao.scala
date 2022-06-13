@@ -217,11 +217,11 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
     props ++ laneCodeAttribute
   }
 
-  def fetchHistoryLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int], includeExpired: Boolean = false): Seq[PersistedHistoryLane] = {
+  def fetchHistoryLanesByLinkIdsAndLaneCode(linkIds: Seq[String], laneCode: Seq[Int], includeExpired: Boolean = false): Seq[PersistedHistoryLane] = {
     fetchAllHistoryLanesByLinkIds(linkIds, includeExpired, laneCode)
   }
 
-  def fetchAllHistoryLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedHistoryLane] = {
+  def fetchAllHistoryLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedHistoryLane] = {
     val filterExpired = s" (l.valid_to > current_timestamp OR l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
 
@@ -232,7 +232,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
       case _ => " ORDER BY l.lane_code ASC"
     }
 
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
 
       getHistoryLanesFilterQuery(withFilter(filter))

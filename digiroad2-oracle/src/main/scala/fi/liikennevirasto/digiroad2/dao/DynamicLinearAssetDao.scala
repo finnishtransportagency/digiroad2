@@ -26,11 +26,11 @@ case class DynamicAssetRow(id: Long, linkId: String, sideCode: Int, value: Dynam
 class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
-    val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
+    val assets = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case

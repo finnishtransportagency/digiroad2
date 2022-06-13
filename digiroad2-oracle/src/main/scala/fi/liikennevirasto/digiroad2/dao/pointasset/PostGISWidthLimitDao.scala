@@ -58,10 +58,10 @@ object PostGISWidthLimitDao {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("suurin_sallittu_leveys").first
   }
 
-  implicit val getPointAsset = new GetResult[WidthLimit] {
+  implicit val getPointAsset: GetResult[WidthLimit] = new GetResult[WidthLimit] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

@@ -170,7 +170,7 @@ class PostGISPedestrianCrossingDao() {
     """
   }
 
-  def fetchPedestrianCrossingByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
+  def fetchPedestrianCrossingByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val query =
       """
@@ -189,7 +189,7 @@ class PostGISPedestrianCrossingDao() {
           left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
       """
     val queryWithFilter =
-      query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.mkString(",")})" + filterExpired
+      query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.map(id => s"'$id'").mkString(",")})" + filterExpired
     queryToPedestrian(queryWithFilter)
   }
 
