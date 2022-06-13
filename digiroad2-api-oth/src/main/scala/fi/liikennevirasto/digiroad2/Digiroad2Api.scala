@@ -1990,7 +1990,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
     roadLinkService.getRoadLinkAndComplementaryFromVVH(updatedAsset.linkId) match {
-      case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
+      case None => halt(NotFound(s"RoadLink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) =>
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
         service match {

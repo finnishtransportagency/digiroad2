@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 
@@ -51,8 +51,8 @@ object ServicePointImporter {
             case 1 => municipalities.head.municipalityCode
             case default =>
               val groups = municipalities.groupBy(roadlink => roadlink.municipalityCode)
-              val distance = groups.mapValues(links => links.map((roadlink:RoadlinkFetched) => minimumDistance(point, roadlink.geometry)).min)
-              val retval = municipalities.min(Ordering.by((roadlink:RoadlinkFetched) => minimumDistance(point, roadlink.geometry))).municipalityCode
+              val distance = groups.mapValues(links => links.map((roadlink:RoadLinkFetched) => minimumDistance(point, roadlink.geometry)).min)
+              val retval = municipalities.min(Ordering.by((roadlink:RoadLinkFetched) => minimumDistance(point, roadlink.geometry))).municipalityCode
               print("multiple choice for asset id " + assetId + ": municipality distances " + distance)
               println(" - picking closest one: " + retval)
               retval

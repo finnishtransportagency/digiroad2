@@ -12,17 +12,17 @@ import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation
 
 class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
-  val roadLink = RoadlinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+  val roadLink = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-  private def daoWithRoadLinks(roadLinks: Seq[RoadlinkFetched]): PostGISSpeedLimitDao = {
+  private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
     val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
@@ -90,7 +90,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit creation fails if speed limit is already defined on link segment") {
     runWithRollback {
-      val roadLink = RoadlinkFetched(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLinkFetched(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
@@ -106,7 +106,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit creation succeeds when speed limit is already defined on segment iff speed limits have opposing sidecodes") {
     runWithRollback {
-      val roadLink = RoadlinkFetched(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLinkFetched(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
@@ -140,7 +140,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
       val linkId = 1611397
       sqlu"""delete from unknown_speed_limit""".execute
       sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId, 235, 1)""".execute
-      val roadLink = RoadlinkFetched(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLinkFetched(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
 
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
@@ -162,8 +162,8 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
       sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId, 235, 1)""".execute
       sqlu"""insert into unknown_speed_limit (link_id, municipality_code, administrative_class) values ($linkId2, 49, 1)""".execute
 
-      val roadLink = RoadlinkFetched(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      val roadLink2 = RoadlinkFetched(linkId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLinkFetched(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink2 = RoadLinkFetched(linkId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink, roadLink2))
 
       val allSpeedLimits = dao.getUnknownSpeedLimits(Set(), None)

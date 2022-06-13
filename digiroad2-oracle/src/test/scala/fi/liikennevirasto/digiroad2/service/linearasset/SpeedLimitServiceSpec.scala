@@ -40,9 +40,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLink), Nil))
 
   when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(362964704l, 362955345l, 362955339l)))
-    .thenReturn(Seq(RoadlinkFetched(362964704l, 91, List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      RoadlinkFetched(362955345l, 91, List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      RoadlinkFetched(362955339l, 91, List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    .thenReturn(Seq(RoadLinkFetched(362964704l, 91, List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      RoadLinkFetched(362955345l, 91, List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      RoadLinkFetched(362955339l, 91, List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -55,9 +55,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l, true)).thenReturn(Some(roadLinkForSeparation))
-  val vvhRoadLink = RoadlinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+  val vvhRoadLink = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
-  private def daoWithRoadLinks(roadLinks: Seq[RoadlinkFetched]): PostGISSpeedLimitDao = {
+  private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
     val mockRoadlinkClient
     = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -91,7 +91,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("create new speed limit") {
     runWithRollback {
-      val roadLink = RoadlinkFetched(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLinkFetched(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1l))).thenReturn(Seq(roadLink))
 
@@ -106,7 +106,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("Split should fail when user is not authorized for municipality") {
     runWithRollback {
       intercept[IllegalArgumentException] {
-        val roadLink = RoadlinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+        val roadLink = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
         when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
 
         val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
@@ -156,7 +156,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("split existing speed limit") {
     runWithRollback {
-      val roadLink = RoadlinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(388562360l)).thenReturn(Some(roadLink))
       val speedLimits = provider.split(200097, 100, 50, 60, "test", (_, _) => Unit).sortBy(_.id)
 
@@ -199,7 +199,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val municipalityCode = 235
     val linkId = 388562360
     val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
-    val vvhRoadLink = RoadlinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+    val vvhRoadLink = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
 
     runWithRollback {
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
@@ -222,7 +222,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val municipalityCode = 235
     val linkId = 388562360
     val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
-    val vvhRoadLink = RoadlinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+    val vvhRoadLink = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
 
     when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
 
@@ -1096,7 +1096,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val speedLimitAssetTypeId = 20
     val linkId = 2934660L
     val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
-    val vvhRoadLink = RoadlinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+    val vvhRoadLink = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
     val changeInfo = Seq()
@@ -1183,7 +1183,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
 
     val vvhRoadLinks = roadLinks.map(rl =>
-      RoadlinkFetched(rl.linkId, municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection, FeatureClass.DrivePath, None, Map()))
+      RoadLinkFetched(rl.linkId, municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection, FeatureClass.DrivePath, None, Map()))
 
     val changeInfo =
       Seq(ChangeInfo(Option(5469033), Option(6798918), 6798918, 1, Option(0.0), Option(92.949498199999994), Option(2.35612749), Option(95.297583340000003), 1471647624000L),
@@ -1344,7 +1344,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
 
     val vvhRoadLinks = roadLinks.map(rl =>
-      RoadlinkFetched(rl.linkId, municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection, FeatureClass.DrivePath, None, Map()))
+      RoadLinkFetched(rl.linkId, municipalityCode, rl.geometry, rl.administrativeClass, rl.trafficDirection, FeatureClass.DrivePath, None, Map()))
     val changeInfo =
       Seq(ChangeInfo(Option(602156), Option(602156), 6798918, 7, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), 1459452603000L))
 

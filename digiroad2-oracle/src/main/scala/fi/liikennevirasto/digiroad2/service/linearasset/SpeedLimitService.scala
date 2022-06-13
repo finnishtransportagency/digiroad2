@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -492,7 +492,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
       case Some(speedLimit) =>
         val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(speedLimit.linkId, false)
           .find(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
-          .getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
+          .getOrElse(throw new NoSuchElementException("RoadLink Not Found"))
 
         val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(roadLink.linkId)
 
@@ -539,7 +539,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     * Splits speed limit by given split measure.
     * Used by SpeedLimitService.split.
     */
-  def split(speedLimit: PersistedSpeedLimit, roadlinkFetched: RoadlinkFetched, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String): (Long, Long) = {
+  def split(speedLimit: PersistedSpeedLimit, roadlinkFetched: RoadLinkFetched, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String): (Long, Long) = {
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (speedLimit.startMeasure, speedLimit.endMeasure))
 
     dao.updateExpiration(speedLimit.id)

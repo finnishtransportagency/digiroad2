@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.RoadlinkFetched
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 
@@ -11,7 +11,7 @@ class RedundantTrafficDirectionRemoval(roadLinkService: RoadLinkService) {
     val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(linkIds)
     vvhRoadlinks.foreach(vvhRoadLink => findAndDeleteRedundant(vvhRoadLink))
 
-    def findAndDeleteRedundant(vvhRoadlink: RoadlinkFetched): Unit = {
+    def findAndDeleteRedundant(vvhRoadlink: RoadLinkFetched): Unit = {
       val optionalExistingValue: Option[Int] = RoadLinkDAO.get(RoadLinkDAO.TrafficDirection, vvhRoadlink.linkId)
       val optionalVVHValue: Option[Int] = RoadLinkDAO.getVVHValue(RoadLinkDAO.TrafficDirection, vvhRoadlink)
       (optionalExistingValue, optionalVVHValue) match {
