@@ -99,6 +99,10 @@ sealed trait LinkId {
 
 object LinkId {
   case object Unknown extends LinkId { def value = "99" }
+
+  def isUnknown(id: String): Boolean = {
+    id == null || id == Unknown.value
+  }
 }
 
 sealed trait SurfaceType {
