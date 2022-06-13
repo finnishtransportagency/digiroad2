@@ -845,7 +845,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   def float(code: String) ={
     SimplePointAssetProperty(MassTransitStopOperations.FloatingReasonPublicId, List(PropertyValue(code)))
   }
-  def roadlink(code: AdministrativeClass) ={
+  def roadLinkFactory(code: AdministrativeClass) ={
     Option(RoadLink(0L, List(Point(0.0,0.0), Point(120.0, 0.0)), 0, code, 1,
       TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91))
     ))
@@ -853,7 +853,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("liviId when in private road but administrator is hsl or ely"){
     runWithRollback {
-      val roadLink = roadlink(Private)
+      val roadLink = roadLinkFactory(Private)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
@@ -870,7 +870,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
   test("liviId when in municipality road but administrator is hsl or ely"){
     runWithRollback {
-      val roadLink = roadlink(Municipality)
+      val roadLink = roadLinkFactory(Municipality)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
@@ -888,7 +888,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("no liviId when on terminated road, but administrator hsl or ely"){
     runWithRollback {
-      val roadLink = roadlink(State)
+      val roadLink = roadLinkFactory(State)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue),float(FloatingReason.TerminatedRoad.value.toString))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
@@ -902,7 +902,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("no liviId when virtual, but administrator hsl or ely"){
     runWithRollback {
-      val roadLink = roadlink(State)
+      val roadLink = roadLinkFactory(State)
       val hsl:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.HSLPropertyValue),
         stopType(MassTransitStopOperations.VirtualBusStopPropertyValue))
       val ely:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.CentralELYPropertyValue),
@@ -916,7 +916,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("no liviId when in municipality road, but administrator municipality"){
     runWithRollback {
-      val roadLink = roadlink(Municipality)
+      val roadLink = roadLinkFactory(Municipality)
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
 
@@ -926,7 +926,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
   test("no liviId when in state road, but administrator municipality"){
     runWithRollback {
-      val roadLink = roadlink(State)
+      val roadLink = roadLinkFactory(State)
       val municipalityAdmin:Seq[SimplePointAssetProperty] = Seq(administrator(MassTransitStopOperations.MunicipalityPropertyValue),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
 
@@ -937,7 +937,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, HSL"){
     runWithRollback {
-      val roadLink = roadlink(State)
+      val roadLink = roadLinkFactory(State)
       val hsl =  MassTransitStopOperations.HSLPropertyValue
       val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(hsl),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))
@@ -957,7 +957,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("liviId when not terminated and Commuter or longDistanceBusStop or servicePoint, Ely"){
     runWithRollback {
-      val roadLink = roadlink(State)
+      val roadLink = roadLinkFactory(State)
       val ely =  MassTransitStopOperations.CentralELYPropertyValue
       val commuter:Seq[SimplePointAssetProperty] = Seq(administrator(ely),
         stopType(MassTransitStopOperations.CommuterBusStopPropertyValue))

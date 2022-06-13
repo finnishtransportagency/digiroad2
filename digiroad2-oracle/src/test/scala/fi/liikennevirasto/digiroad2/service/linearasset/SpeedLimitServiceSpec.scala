@@ -55,7 +55,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l, true)).thenReturn(Some(roadLinkForSeparation))
-  val vvhRoadLink = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+  val roadLinkFetched = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
     val mockRoadlinkClient
@@ -121,12 +121,12 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     "and creates new speed limit for second split") {
     runWithRollback {
       val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (createdId1, createdId2) = provider.split(asset, vvhRoadLink, 100, 120, 60, "test")
+      val (createdId1, createdId2) = provider.split(asset, roadLinkFetched, 100, 120, 60, "test")
       val created1 = provider.getPersistedSpeedLimitById(createdId1).get
       val created2 = provider.getPersistedSpeedLimitById(createdId2).get
 
-      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, daoWithRoadLinks(List(vvhRoadLink)))
-      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 0, 100, daoWithRoadLinks(List(roadLinkFetched)))
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 100, 136.788, daoWithRoadLinks(List(roadLinkFetched)))
       provider.getPersistedSpeedLimitByIds(Set(asset.id)).head.expired should be (true)
 
       created1.modifiedBy shouldBe Some("test")
@@ -140,12 +140,12 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split") {
     runWithRollback {
       val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
-      val (createdId1, createdId2) = provider.split(asset, vvhRoadLink, 50, 120, 60, "test")
+      val (createdId1, createdId2) = provider.split(asset, roadLinkFetched, 50, 120, 60, "test")
       val created1 = provider.getPersistedSpeedLimitById(createdId1).get
       val created2 = provider.getPersistedSpeedLimitById(createdId2).get
 
-      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, daoWithRoadLinks(List(vvhRoadLink)))
-      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, daoWithRoadLinks(List(vvhRoadLink)))
+      assertSpeedLimitEndPointsOnLink(createdId1, 388562360, 50, 136.788, daoWithRoadLinks(List(roadLinkFetched)))
+      assertSpeedLimitEndPointsOnLink(createdId2, 388562360, 0, 50, daoWithRoadLinks(List(roadLinkFetched)))
 
       provider.getPersistedSpeedLimitByIds(Set(asset.id)).head.expired should be (true)
 
@@ -199,10 +199,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val municipalityCode = 235
     val linkId = 388562360
     val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
-    val vvhRoadLink = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+    val roadLinkFetched = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
 
     runWithRollback {
-      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(roadLinkFetched))
 
       val Seq(updatedLimit, createdLimit) = provider.separate(200097, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
 
@@ -222,9 +222,9 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val municipalityCode = 235
     val linkId = 388562360
     val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
-    val vvhRoadLink = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+    val roadLinkFetched = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
 
-    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(roadLinkFetched))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
@@ -1096,7 +1096,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val speedLimitAssetTypeId = 20
     val linkId = 2934660L
     val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
-    val vvhRoadLink = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+    val roadLinkFetched = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
     val changeInfo = Seq()
@@ -1118,7 +1118,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(newRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(any[Long])).thenReturn(Some(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(any[Long])).thenReturn(Some(roadLinkFetched))
 
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 

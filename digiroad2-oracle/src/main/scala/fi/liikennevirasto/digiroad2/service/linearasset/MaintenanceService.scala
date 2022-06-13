@@ -99,10 +99,10 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
   override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
-    val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
+    val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, roadLinkClient.roadLinkData.createVVHTimeStamp(), roadlink.find(_.linkId == newAsset.linkId))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, roadLinkClient.roadLinkData.createVVHTimeStamp(), roadLink.find(_.linkId == newAsset.linkId))
       }
     }
   }

@@ -454,9 +454,9 @@ object DataFixture {
       assets.foreach {
         _ match {
           case (assetId, linkId, point, mValue, None) =>
-            val roadlink = roadLinks.find(_.linkId == linkId)
+            val roadLink = roadLinks.find(_.linkId == linkId)
             PointAssetOperations.isFloating(municipalityCode = municipality, lon = point.x, lat = point.y,
-              mValue = mValue, roadLink = roadlink) match {
+              mValue = mValue, roadLink = roadLink) match {
               case (isFloating, Some(reason)) =>
                 dataImporter.insertNumberPropertyData(propertyId, assetId, reason.value)
               case _ =>
@@ -484,8 +484,8 @@ object DataFixture {
         _ match {
           case (assetId, linkId, None) =>
             roadLinks.find(_.linkId == linkId) match {
-              case Some(roadlink) =>
-                dataImporter.insertNumberPropertyData(propertyId, assetId, roadlink.administrativeClass.value)
+              case Some(roadLink) =>
+                dataImporter.insertNumberPropertyData(propertyId, assetId, roadLink.administrativeClass.value)
               case _ =>
                 println("The roadlink with id %d was not found".format(linkId))
             }
@@ -546,8 +546,8 @@ object DataFixture {
           case (assetId, linkId, None) =>
             println("Asset with asset-id: %d doesn't have Administration Class value.".format(assetId))
           case (assetId, linkId, adminClass) =>
-            val roadlink = roadLinks.find(_.linkId == linkId)
-            MassTransitStopOperations.isFloating(AdministrativeClass.apply(adminClass.get), roadlink) match {
+            val roadLink = roadLinks.find(_.linkId == linkId)
+            MassTransitStopOperations.isFloating(AdministrativeClass.apply(adminClass.get), roadLink) match {
               case (_, Some(reason)) =>
                 dataImporter.updateFloating(assetId, true)
                 dataImporter.updateNumberPropertyData(floatingReasonPropertyId, assetId, reason.value)
@@ -1627,10 +1627,10 @@ object DataFixture {
           val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
 
           cyclingAndWalkingInfo.foreach { asset =>
-            val roadlink = roadLinks.find(_.linkId == asset.linkId)
+            val roadLink = roadLinks.find(_.linkId == asset.linkId)
             val value = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("cyclingAndWalking_type", "single_choice", true, Seq(DynamicPropertyValue(asset.value))))))
 
-            roadlink match {
+            roadLink match {
               case Some(link) =>
                 val id = dynamicLinearAssetService.createWithoutTransaction(typeId = assetType,
                   linkId = asset.linkId,
@@ -1638,7 +1638,7 @@ object DataFixture {
                   sideCode = SideCode.BothDirections.value,
                   measures = Measures(0, GeometryUtils.geometryLength(link.geometry)),
                   username = username,
-                  roadLink = roadlink)
+                  roadLink = roadLink)
                 println(s"Asset created with id $id in the roadlink ${asset.linkId}")
               case _ => println(s"Error: Can't create asset in the roadlink ${asset.linkId}")
             }
@@ -1861,14 +1861,14 @@ object DataFixture {
       allAdjacentsRoadLinks.filter(r => GeometryUtils.areAdjacent(r.geometry, point))
     }
 
-    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadlink: RoadLink): Unit = {
+    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadLink: RoadLink): Unit = {
       //Create new SpeedLimits on gaps
       newSpeedLimits.foreach { speedLimit =>
-        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(roadLinkClient.roadLinkData.createVVHTimeStamp()), linkSource = roadlink.linkSource)
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(roadLinkClient.roadLinkData.createVVHTimeStamp()), linkSource = roadLink.linkSource)
         println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value + " and sidecode: " + speedLimit.sideCode)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(roadlink.geometry))
+        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(roadLink.geometry))
         println("\nRemoved linkId " + speedLimit.linkId + " from UnknownSpeedLimits working list")
         println("")
       }

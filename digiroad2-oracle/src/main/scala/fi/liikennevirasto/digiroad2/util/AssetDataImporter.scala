@@ -850,11 +850,11 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     * @return
     */
   def updateObstacleToRoadLink(obstacle : Obstacle, roadLinkService: RoadLinkService) : Obstacle = {
-    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: RoadLink) = {
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
-      val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
-      obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
-        municipalityCode = roadlink.municipalityCode, modifiedBy = Some("automatic_correction"),
+    def recalculateObstaclePosition(obstacle: Obstacle, roadLink: RoadLink) = {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadLink.geometry)
+      val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).get
+      obstacle.copy(mValue = mValue, linkId = roadLink.linkId, lon = point.x, lat = point.y,
+        municipalityCode = roadLink.municipalityCode, modifiedBy = Some("automatic_correction"),
         modifiedAt = Some(DateTime.now()), floating = false)
     }
     //FunctionalClass 7 equal to FeatureClass TractorRoad

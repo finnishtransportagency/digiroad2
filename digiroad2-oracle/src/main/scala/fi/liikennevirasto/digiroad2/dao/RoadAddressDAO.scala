@@ -46,14 +46,14 @@ case class RoadAddressTEMP(linkId: Long, road: Long, roadPart: Long, track: Trac
   private val addressLength: Long = endAddressM - startAddressM
   private val lrmLength: Double = Math.abs(endAddressM - startAddressM)
 
-  def addressMValueToLRM(addrMValue: Long, vvhRoadLink: RoadLinkFetched): Option[Double] = {
+  def addressMValueToLRM(addrMValue: Long, roadLinkFetched: RoadLinkFetched): Option[Double] = {
     if (addrMValue < startAddressM || addrMValue > endAddressM)
       None
     else
     // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
       sideCode.getOrElse(SideCode.Unknown) match {
         case TowardsDigitizing => Some((addrMValue - startAddressM) * lrmLength / addressLength + 0)
-        case AgainstDigitizing => Some(vvhRoadLink.length - (addrMValue - startAddressM) * lrmLength / addressLength)
+        case AgainstDigitizing => Some(roadLinkFetched.length - (addrMValue - startAddressM) * lrmLength / addressLength)
         case _ => None
       }
   }

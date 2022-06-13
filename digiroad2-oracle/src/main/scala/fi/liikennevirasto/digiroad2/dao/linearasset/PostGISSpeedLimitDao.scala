@@ -147,8 +147,8 @@ class PostGISSpeedLimitDao(val roadLinkClient: RoadLinkClient, val roadLinkServi
     val roadLinksWithComplementaryByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(speedLimits.map(_.linkId).toSet)
 
     speedLimits.map {speedLimit =>
-      val vvhRoadLink = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, vvhRoadLink.trafficDirection, speedLimit.value, GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.vvhTimeStamp, speedLimit.geomModifiedDate, linkSource = vvhRoadLink.linkSource)
+      val roadLinkFetched = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
+      SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, roadLinkFetched.trafficDirection, speedLimit.value, GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.vvhTimeStamp, speedLimit.geomModifiedDate, linkSource = roadLinkFetched.linkSource)
     }
   }
 
@@ -277,9 +277,9 @@ class PostGISSpeedLimitDao(val roadLinkClient: RoadLinkClient, val roadLinkServi
     val roadLinksByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
-      val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
-      val truncatedGeometry = GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, startMeasure, endMeasure)
-      (linkId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode, vvhRoadLink.linkSource, vvhRoadLink.administrativeClass)
+      val roadLinkFetched = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
+      val truncatedGeometry = GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, startMeasure, endMeasure)
+      (linkId, endMeasure - startMeasure, truncatedGeometry, roadLinkFetched.municipalityCode, roadLinkFetched.linkSource, roadLinkFetched.administrativeClass)
     }
   }
 
@@ -381,9 +381,9 @@ class PostGISSpeedLimitDao(val roadLinkClient: RoadLinkClient, val roadLinkServi
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue,
                        vvhTimeStamp: Long, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
-    val roadlink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId)
-    municipalityValidation(roadlink.get.municipalityCode, roadlink.get.administrativeClass)
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadlink.get.linkSource)
+    val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId)
+    municipalityValidation(roadLink.get.municipalityCode, roadLink.get.administrativeClass)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadLink.get.linkSource)
   }
 
   /**
