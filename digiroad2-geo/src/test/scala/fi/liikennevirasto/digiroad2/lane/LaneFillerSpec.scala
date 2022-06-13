@@ -10,16 +10,16 @@ class LaneFillerSpec extends FunSuite with Matchers {
 
   object laneFiller extends LaneFiller
 
-  val roadLinkTowards1 = RoadLink(1L, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+  val roadLinkTowards1 = RoadLink("1L", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
                                 1, TrafficDirection.TowardsDigitizing, Motorway, None, None)
 
-  val roadLinkTowards2 = RoadLink(2L, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, Municipality,
+  val roadLinkTowards2 = RoadLink("2L", Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, Municipality,
                                 1, TrafficDirection.BothDirections, Motorway, None, None)
 
-  val roadLinkTowards3 = RoadLink(3L, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+  val roadLinkTowards3 = RoadLink("3L", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
                                 1, TrafficDirection.BothDirections, Motorway, None, None)
 
-  val roadLinkTowards4 = RoadLink(4L, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, Municipality,
+  val roadLinkTowards4 = RoadLink("4L", Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, Municipality,
                                 1, TrafficDirection.AgainstDigitizing, Motorway, None, None)
 
   test("Expire lane that is outside topology and create a new lane similar and with % reduction") {
@@ -40,7 +40,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
     filledTopology.map(_.id) should be (Seq(0L))
-    filledTopology.map(_.linkId) should be (Seq(1L))
+    filledTopology.map(_.linkId) should be (Seq("1L"))
     filledTopology.map(_.geometry) should be (Seq(Seq(Point(5.0, 0.0), Point(7.5, 0.0))))
 
     changeSet.expiredLaneIds should be (Set(1L))
@@ -96,7 +96,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
     filledTopology.map(_.id) should be (Seq(1L))
-    filledTopology.map(_.linkId) should be (Seq(1L))
+    filledTopology.map(_.linkId) should be (Seq("1L"))
     filledTopology.map(_.geometry) should be (Seq(Seq(Point(0, 0.0), Point(10.0, 0.0))))
 
     changeSet.expiredLaneIds should be (Set())
@@ -131,7 +131,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 3
     filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value, SideCode.BothDirections.value))
     filledTopology.map(_.id) should be (Seq(1L, 2L, 20L))
-    filledTopology.map(_.linkId) should be (Seq(3L, 3L, 1L))
+    filledTopology.map(_.linkId) should be (Seq("3L", "3L", "1L"))
     filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.expiredLaneIds should be (Set())
@@ -164,7 +164,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value,  SideCode.BothDirections.value))
     filledTopology.map(_.id) should be (Seq(20L, 21L))
-    filledTopology.map(_.linkId) should be (Seq( 1L, 1L))
+    filledTopology.map(_.linkId) should be (Seq( "1L", "1L"))
     filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(4.0, 0.0), Point(10.0, 0.0)) ))
 
     changeSet.expiredLaneIds should be (Set(22L))
@@ -194,7 +194,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value ))
     filledTopology.map(_.id) should be (Seq(21L))
-    filledTopology.map(_.linkId) should be (Seq( 1L))
+    filledTopology.map(_.linkId) should be (Seq( "1L"))
     filledTopology.map(_.geometry) should be (Seq(Seq(Point(8.0, 0.0), Point(10.0, 0.0)) ))
 
     changeSet.expiredLaneIds should be (Set(20L))
@@ -223,7 +223,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value))
     filledTopology.map(_.id).sorted should be (Seq(20L, 21L))
-    filledTopology.map(_.linkId) should be (Seq( 4L, 4L))
+    filledTopology.map(_.linkId) should be (Seq( "4L", "4L"))
 
     changeSet.expiredLaneIds should be (Set())
   }

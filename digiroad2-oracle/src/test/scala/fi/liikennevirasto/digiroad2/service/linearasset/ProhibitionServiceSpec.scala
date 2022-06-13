@@ -30,24 +30,26 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
+  val linkId = "388562360"
+
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(VVHRoadlink(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(VVHRoadlink(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(VVHRoadlink(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(
-    1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    "1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
-  when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq("1"), "mittarajoitus", false))
+    .thenReturn(Seq(PersistedLinearAsset(1, "1", 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
@@ -83,9 +85,9 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val newLinkId = 6000
+    val oldLinkId1 = "5001"
+    val oldLinkId2 = "5002"
+    val newLinkId = "6000"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -160,15 +162,16 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update prohibition") {
-    when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    val linkId = "1610349"
+    when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(VVHRoadlink(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
     runWithRollback {
       val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
-      val asset = ServiceWithDao.create(Seq(NewLinearAsset(1610349, 0, 20, prohibition, 1, 0, None)), 190, "testUser")
+      val asset = ServiceWithDao.create(Seq(NewLinearAsset(linkId, 0, 20, prohibition, 1, 0, None)), 190, "testUser")
 
       when(mockAssetDao.getAssetTypeId(Seq(asset.head))).thenReturn(Seq((asset.head, LinearAssetTypes.ProhibitionAssetTypeId)))
       ServiceWithDao.update(Seq(asset.head), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
 
-      val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(1610349)).filter(_.createdBy.get == "testUser").head
+      val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(linkId)).filter(_.createdBy.get == "testUser").head
 
       limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))))
       limit.expired should be (false)
@@ -178,9 +181,9 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   test("Create new prohibition") {
     val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1, 0, None)), 190, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId, 0, 20, prohibition, 1, 0, None)), 190, "testuser")
       newAssets.length should be(1)
-      val asset = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(388562360l)).head
+      val asset = linearAssetDao.fetchProhibitionsByLinkIds(190, Seq(linkId)).head
       asset.value should be (Some(prohibition))
       asset.expired should be (false)
     }
@@ -188,7 +191,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Separate prohibition asset") {
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), LinearAssetTypes.ProhibitionAssetTypeId, "test").head
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), "")))
@@ -199,14 +202,14 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId(1))).head
       val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId.head)).head
 
-      val limits = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(388562360))
+      val limits = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(linkId))
 
-      oldProhibition.linkId should be (388562360)
+      oldProhibition.linkId should be (linkId)
       oldProhibition.sideCode should be (SideCode.TowardsDigitizing.value)
       oldProhibition.value should be (Some(prohibitionA))
       oldProhibition.modifiedBy should be (None)
 
-      createdProhibition.linkId should be (388562360)
+      createdProhibition.linkId should be (linkId)
       createdProhibition.sideCode should be (SideCode.AgainstDigitizing.value)
       createdProhibition.value should be (Some(prohibitionB))
       createdProhibition.createdBy should be (Some("unittest"))
@@ -215,7 +218,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Split prohibition") {
     runWithRollback {
-      val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
+      val newProhibition = NewLinearAsset(linkId, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newProhibition), LinearAssetTypes.ProhibitionAssetTypeId, "test").head
       val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
       val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), "")))
@@ -226,14 +229,14 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val createdProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(createdId)).head
       val oldProhibition = ServiceWithDao.getPersistedAssetsByIds(LinearAssetTypes.ProhibitionAssetTypeId, Set(ids.head)).head
 
-      oldProhibition.linkId should be (388562360)
+      oldProhibition.linkId should be (linkId)
       oldProhibition.sideCode should be (SideCode.BothDirections.value)
       oldProhibition.value should be (Some(prohibitionA))
       oldProhibition.modifiedBy should be (None)
       oldProhibition.startMeasure should be (0.0)
       oldProhibition.endMeasure should be (6.0)
 
-      createdProhibition.linkId should be (388562360)
+      createdProhibition.linkId should be (linkId)
       createdProhibition.sideCode should be (SideCode.BothDirections.value)
       createdProhibition.value should be (Some(prohibitionB))
       createdProhibition.createdBy should be (Some("unittest"))
@@ -252,9 +255,9 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val newLinkId = 6000
+    val oldLinkId1 = "5001"
+    val oldLinkId2 = "5002"
+    val newLinkId = "6000"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -346,8 +349,8 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 1234
-    val oldLinkId2 = 1235
+    val oldLinkId1 = "1234"
+    val oldLinkId2 = "1235"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -360,7 +363,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val roadLinkWithLinkSource = RoadLink(
       oldLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
     PostGISDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
@@ -419,8 +422,8 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 6000
-    val newLinkId = 6000
+    val oldLinkId1 = "6000"
+    val newLinkId = "6000"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -520,8 +523,8 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId = 5000
-    val newLinkId = 6000
+    val oldLinkId = "5000"
+    val newLinkId = "6000"
     val municipalityCode = 444
     val functionalClass = 1
     val assetTypeId = 190
@@ -556,7 +559,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>
         proj.id should be (0)
-        proj.linkId should be (6000)
+        proj.linkId should be (newLinkId)
       }
       dynamicSession.rollback()
     }
@@ -566,8 +569,8 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(Set(235))).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
     runWithRollback {
       val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 20, prohibition, 1, 0, None)), 190, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 20, 60, prohibition, 1, 0, None)), 190, "testuser")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset("1", 0, 20, prohibition, 1, 0, None)), 190, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset("1", 20, 60, prohibition, 1, 0, None)), 190, "testuser")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(190, Set())
       unVerifiedAssets.keys.head should be ("Kauniainen")
@@ -578,13 +581,14 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Update prohibition and verify asset") {
     runWithRollback {
+      val linkId = "1610349"
       val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
-      val asset = ServiceWithDao.create(Seq(NewLinearAsset(1610349, 0, 20, prohibition, 1, 0, None)), 190, "testUser")
+      val asset = ServiceWithDao.create(Seq(NewLinearAsset(linkId, 0, 20, prohibition, 1, 0, None)), 190, "testUser")
 
       when(mockAssetDao.getAssetTypeId(Seq(asset.head))).thenReturn(Seq((asset.head, LinearAssetTypes.ProhibitionAssetTypeId)))
       ServiceWithDao.update(Seq(asset.head), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "testUser")
 
-      val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(1610349)).filter(_.createdBy.get == "testUser").head
+      val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(linkId)).filter(_.createdBy.get == "testUser").head
 
       limit.verifiedBy should be (Some("testUser"))
       limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))

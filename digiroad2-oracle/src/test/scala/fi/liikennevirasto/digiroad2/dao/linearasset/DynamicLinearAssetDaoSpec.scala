@@ -15,7 +15,7 @@ class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch asset containing several properties") {
     val dao = new DynamicLinearAssetDao
-    val linkId = 1l
+    val linkId = "1l"
 
     runWithRollback {
       val assetTypeId = 999

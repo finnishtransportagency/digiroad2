@@ -29,8 +29,8 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val oldLinkId = 5000
-  val newLinkId = 6000
+  val oldLinkId = "5000"
+  val newLinkId = "6000"
   val municipalityCode = 444
   val functionalClass = 1
   val assetTypeId = 170
@@ -67,11 +67,11 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
-      val projectedAssets = captor.getValue
+      val projectedAssets = captor.getValue.asInstanceOf[Seq[PersistedLinearAsset]]
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>
         proj.id should be (0)
-        proj.linkId should be (6000)
+        proj.linkId should be (newLinkId)
         proj.sideCode should be (TrafficDirection.BothDirections.value)
       }
       dynamicSession.rollback()
@@ -108,11 +108,11 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
-      val projectedAssets = captor.getValue
+      val projectedAssets = captor.getValue.asInstanceOf[Seq[PersistedLinearAsset]]
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>
         proj.id should be (0)
-        proj.linkId should be (6000)
+        proj.linkId should be (newLinkId)
         proj.sideCode should be (SideCode.AgainstDigitizing.value)
       }
       dynamicSession.rollback()

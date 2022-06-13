@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.Persisted
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
-  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: Long, mValue: Double, floating: Boolean, vvhTimeStamp: Long, linkSource: LinkGeomSource, propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
+  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String, mValue: Double, floating: Boolean, vvhTimeStamp: Long, linkSource: LinkGeomSource, propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
 
   test ("Calculate bearing for point: horizontal") {
     val bearing = calculateBearing(Point(0,0,0), Seq(Point(1,-1,0), Point(1,1,0)))
@@ -69,7 +69,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Check floating status when using three-dimensional road data") {
-    val persistedAsset = PersistedMassTransitStop(22668828, 1234, 1234, Seq(2), 172, 453487.304243636, 6845919.0252246,
+    val persistedAsset = PersistedMassTransitStop(22668828, 1234, "1234", Seq(2), 172, 453487.304243636, 6845919.0252246,
       17.292, Option(2), Option(78), None, true, 0, Modification(None, None),
       Modification(None, None), Seq(), NormalLinkInterface)
 
@@ -81,7 +81,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       Point(453585.919,6845972.216,113.33699999999953), Point(453610.303,6845984.065,113.6530000000057),
       Point(453638.671,6845997.516,114.12300000000687), Point(453650.524,6846003.514,114.4030000000057))
 
-    val roadLink = Some(VVHRoadlink(100,172, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath))
+    val roadLink = Some(VVHRoadlink("100",172, geometry, State, TrafficDirection.BothDirections, FeatureClass.DrivePath))
 
     PointAssetOperations.isFloating(persistedAsset, roadLink)._1 should be (true)
 
@@ -92,8 +92,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been combined and the Asset its in Modified Part") {
-    val modifiedLinkId = 6001
-    val removedLinkId = 6002
+    val modifiedLinkId = "6001"
+    val removedLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -120,8 +120,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Divided and with more than one ChangeInfo") {
-    val cmpLinkId = 6001
-    val crpLinkId = 6002
+    val cmpLinkId = "6001"
+    val crpLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -159,8 +159,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Divided and with Asset filtering by vvhTimeStamp") {
-    val cmpLinkId = 6001
-    val crpLinkId = 6002
+    val cmpLinkId = "6001"
+    val crpLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -197,8 +197,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and considering max distance allowed") {
-    val cmpLinkId = 6001
-    val crpLinkId = 6002
+    val cmpLinkId = "6001"
+    val crpLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -238,8 +238,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and filtered by vvhTimeStamp") {
-    val cmpLinkId = 6001
-    val crpLinkId = 6002
+    val cmpLinkId = "6001"
+    val crpLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -278,8 +278,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been combined and the Asset its in Removed Part") {
-    val modifiedLinkId = 6001
-    val removedLinkId = 6002
+    val modifiedLinkId = "6001"
+    val removedLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -314,8 +314,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been divided and the Asset its in Modified Part") {
-    val modifiedLinkId = 6001
-    val newLinkId = 6002
+    val modifiedLinkId = "6001"
+    val newLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -350,9 +350,9 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been divided and the Asset its in New Part") {
-    val newLinkId = 6002
-    val newLinkId2 = 6001
-    val oldLinkId = 106
+    val newLinkId = "6002"
+    val newLinkId2 = "6001"
+    val oldLinkId = "106"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -387,8 +387,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been Lengthened and the Asset its in Common Part") {
-    val CommonLinkId = 6001
-    val newLinkId = 6002
+    val CommonLinkId = "6001"
+    val newLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -415,8 +415,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been Lengthened and the Asset its in New Part") {
-    val CommonLinkId = 6001
-    val newLinkId = 6002
+    val CommonLinkId = "6001"
+    val newLinkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -451,7 +451,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been Replaced and the Asset its in Common Part") {
-    val linkId = 6002
+    val linkId = "6002"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -484,19 +484,21 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to first roadlink geometry point") {
-    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
-    val persistedAsset =  testPersistedPointAsset(11, 0, 8, 24, 1611552, 8, false, 0, NormalLinkInterface)
+    val linkId1 = "1611552"
+    val linkId2 = "1611558"
+    val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 8, 24, linkId1, 8, false, 0, NormalLinkInterface)
 
     val roadLinks = Seq(
-      RoadLink(1611552, List(Point(0,10), Point(0,200)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-      RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      RoadLink(linkId1, List(Point(0,10), Point(0,200)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
     val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
 
     updPersistedAsset.isEmpty should be (false)
     updPersistedAsset.map{ s =>
-      s.linkId should equal(1611552)
+      s.linkId should equal(linkId1)
       s.lon should equal(0)
       s.lat should equal(10)
       s.mValue should equal(0)
@@ -505,19 +507,21 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to last roadlink geometry point") {
-    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
-    val persistedAsset =  testPersistedPointAsset(11, 0, 82, 24, 1611552, 82, false, 0, NormalLinkInterface)
+    val linkId1 = "1611552"
+    val linkId2 = "1611558"
+    val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 82, 24, linkId1, 82, false, 0, NormalLinkInterface)
 
     val roadLinks = Seq(
-      RoadLink(1611552, List(Point(0,0), Point(0,70)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-      RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      RoadLink(linkId1, List(Point(0,0), Point(0,70)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
     val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
 
     updPersistedAsset.isEmpty should be (false)
     updPersistedAsset.map{ s =>
-      s.linkId should equal(1611552)
+      s.linkId should equal(linkId1)
       s.lon should equal(0)
       s.lat should equal(70)
       s.mValue should equal(70)
@@ -526,12 +530,14 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to last roadlink geometry point (3 < startPoint)") {
-    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
-    val persistedAsset =  testPersistedPointAsset(11, 0, 5, 24, 1611552, 5, false, 0, NormalLinkInterface)
+    val linkId1 = "1611552"
+    val linkId2 = "1611558"
+    val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 5, 24, linkId1, 5, false, 0, NormalLinkInterface)
 
     val roadLinks = Seq(
-      RoadLink(1611552, List(Point(0,10), Point(0,200)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-      RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      RoadLink(linkId1, List(Point(0,10), Point(0,200)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
     val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
@@ -540,12 +546,14 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to last roadlink geometry point (endPoint > 3) ") {
-    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
-    val persistedAsset =  testPersistedPointAsset(11, 0, 85, 24, 1611552, 85, false, 0, NormalLinkInterface)
+    val linkId1 = "1611552"
+    val linkId2 = "1611558"
+    val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 85, 24, linkId1, 85, false, 0, NormalLinkInterface)
 
     val roadLinks = Seq(
-      RoadLink(1611552, List(Point(0,0), Point(0,70)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-      RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      RoadLink(linkId1, List(Point(0,0), Point(0,70)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(linkId2, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
     val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
