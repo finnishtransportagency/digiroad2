@@ -467,7 +467,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
           )
     }
   }
-  // TODO only one real used
+  
   def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(roadLinkClient.roadLinkChangeInfo.fetchByPolygonF(polygon).zip(roadLinkClient.roadLinkData.fetchByPolygonF(polygon)), atMost = Duration.Inf)
     withDynTransaction {
@@ -491,7 +491,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * This method returns "real" and "complementary" link id by polygon.
     *
     * @param polygon
-    * @return seq(LinksId) , seq(LinksId) only one used
+    * @return seq(LinksId) , seq(LinksId)
     */
   def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :Polygon): Seq[Long] = {
 
@@ -712,9 +712,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def checkMMLId(roadlinkFetched: RoadLinkFetched) : Option[Long] = {
-    roadlinkFetched.attributes.contains("MTKID") match {
-      case true => Some(roadlinkFetched.attributes("MTKID").asInstanceOf[BigInt].longValue())
+  def checkMMLId(roadLinkFetched: RoadLinkFetched) : Option[Long] = {
+    roadLinkFetched.attributes.contains("MTKID") match {
+      case true => Some(roadLinkFetched.attributes("MTKID").asInstanceOf[BigInt].longValue())
       case false => None
     }
   }
@@ -753,26 +753,26 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   protected def setLinkProperty(propertyName: String, linkProperty: LinkProperties, username: Option[String],
-                                roadlinkFetched: RoadLinkFetched, latestModifiedAt: Option[String],
+                                roadLinkFetched: RoadLinkFetched, latestModifiedAt: Option[String],
                                 latestModifiedBy: Option[String]) = {
     val optionalExistingValue: Option[Int] = RoadLinkDAO.get(propertyName, linkProperty.linkId)
-    (optionalExistingValue, RoadLinkDAO.getVVHValue(propertyName, roadlinkFetched)) match {
+    (optionalExistingValue, RoadLinkDAO.getVVHValue(propertyName, roadLinkFetched)) match {
       case (Some(existingValue), _) =>
-        RoadLinkDAO.update(propertyName, linkProperty, roadlinkFetched, username, existingValue, checkMMLId(roadlinkFetched))
+        RoadLinkDAO.update(propertyName, linkProperty, roadLinkFetched, username, existingValue, checkMMLId(roadLinkFetched))
       case (None, None) =>
-        insertLinkProperty(propertyName, linkProperty, roadlinkFetched, username, latestModifiedAt, latestModifiedBy)
+        insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
 
       case (None, Some(vvhValue)) =>
         if (vvhValue != RoadLinkDAO.getValue(propertyName, linkProperty)) // only save if it overrides VVH provided value
-          insertLinkProperty(propertyName, linkProperty, roadlinkFetched, username, latestModifiedAt, latestModifiedBy)
+          insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
     }
   }
   
-  private def insertLinkProperty(propertyName: String, linkProperty: LinkProperties, roadlinkFetched: RoadLinkFetched,
+  private def insertLinkProperty(propertyName: String, linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched,
                                  username: Option[String], latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String]) = {
     if (latestModifiedAt.isEmpty) {
-      RoadLinkDAO.insert(propertyName, linkProperty, roadlinkFetched, username, checkMMLId(roadlinkFetched))
+      RoadLinkDAO.insert(propertyName, linkProperty, roadLinkFetched, username, checkMMLId(roadLinkFetched))
     } else{
       try {
         var parsedDate = ""
@@ -829,7 +829,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   protected def setLinkAttributes(propertyName: String, linkProperty: LinkProperties, username: Option[String],
-                                  roadlinkFetched: RoadLinkFetched, latestModifiedAt: Option[String],
+                                  roadLinkFetched: RoadLinkFetched, latestModifiedAt: Option[String],
                                   latestModifiedBy: Option[String]) = {
 
     val linkAttributesInfo = LinkAttributesDao.getExistingValues(linkProperty.linkId)

@@ -44,7 +44,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
 
   val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkClient, mockRoadLinkService, mockEventBus, mockService)
-  val roadlinkFetcheds = Seq(RoadLinkFetched(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+  val roadLinkFetcheds = Seq(RoadLinkFetched(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
 
   when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
@@ -189,10 +189,10 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     when(mockMassTransitStopService.isFloating(any[PersistedPointAsset], any[Option[RoadLinkFetched]])).thenAnswer(new Answer[Object] {
       override def answer(invocation: InvocationOnMock): Object = {
         val persistedPointAsset: PersistedPointAsset  = invocation.getArguments()(0).asInstanceOf[PersistedPointAsset]
-        val roadlinkFetched: Option[RoadLinkFetched]  = invocation.getArguments()(1).asInstanceOf[Option[RoadLinkFetched]]
+        val roadLinkFetched: Option[RoadLinkFetched]  = invocation.getArguments()(1).asInstanceOf[Option[RoadLinkFetched]]
 
         val testMassTransitStopService = new TestMassTransitStopService(new DummyEventBus, MockitoSugar.mock[RoadLinkService])
-        testMassTransitStopService.isFloating(persistedPointAsset, roadlinkFetched)
+        testMassTransitStopService.isFloating(persistedPointAsset, roadLinkFetched)
       }
     })
 
