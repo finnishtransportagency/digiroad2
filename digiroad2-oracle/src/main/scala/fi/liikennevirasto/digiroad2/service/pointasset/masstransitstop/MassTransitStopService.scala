@@ -224,7 +224,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[RoadLinkLike] = Some(roadLink)
 
-    def findRoadlink(linkId: Long): Option[RoadLinkLike] =
+    def findRoadlink(linkId: String): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)
 
     withDynSession {
@@ -265,7 +265,7 @@ trait MassTransitStopService extends PointAssetOperations {
     super.floatingReason(persistedAsset, roadLinkOption)
   }
 
-  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
+  protected override def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, String, Option[Long])] ={
     val query = s"""
           select a.$idField, m.name_fi, lrm.link_id, np.value
           from asset a
@@ -285,7 +285,7 @@ trait MassTransitStopService extends PointAssetOperations {
         addQueryFilter
     }
 
-    StaticQuery.queryNA[(Long, String, Long, Option[Long])](queryFilter(query)).list
+    StaticQuery.queryNA[(Long, String, String, Option[Long])](queryFilter(query)).list
   }
 
   def createWithUpdateFloating(asset: NewMassTransitStop, username: String, roadLink: RoadLink) = {
@@ -560,7 +560,7 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedAsset.id
   }
 
-  private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[RoadLinkLike], getMunicipalityName: Int => Option[String] = _ => None)
+  private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: String => Option[RoadLinkLike], getMunicipalityName: Int => Option[String] = _ => None)
                                                           (persistedStop: PersistedMassTransitStop): (MassTransitStopWithProperties, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
     (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
@@ -580,7 +580,7 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.deleteNumberPropertyValue(assetId, "kellumisen_syy")
   }
 
-  private def fetchRoadLink(linkId: Long): Option[RoadLinkLike] = {
+  private def fetchRoadLink(linkId: String): Option[RoadLinkLike] = {
     roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
   }
 

@@ -110,7 +110,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def getLastModificationLinearAssets(linkIds: Seq[Long]): Seq[LatestModificationInfo] = {
+  def getLastModificationLinearAssets(linkIds: Seq[String]): Seq[LatestModificationInfo] = {
     withDynTransaction {
       dao.getLastModificationLinearAssets(linkIds.toSet)
     }
@@ -122,7 +122,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def getSuggestedLinearAssets(linkIds: Seq[Long]): Seq[(Long, Int)] = {
+  def getSuggestedLinearAssets(linkIds: Seq[String]): Seq[(Long, Int)] = {
     withDynTransaction {
       dao.getSuggestedLinearAssets(linkIds.toSet)
     }
@@ -142,7 +142,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
 
   def getVerifiedAssetTypes: Seq[(Int, String)] = { withDynSession { dao.getVerifiedAssetTypes }}
 
-  def refreshVerificationInfo(municipality: Int, linkIds: Seq[Long], refreshDate: Option[DateTime]) : Unit = {
+  def refreshVerificationInfo(municipality: Int, linkIds: Seq[String], refreshDate: Option[DateTime]) : Unit = {
     val assetsInfo = LogUtils.time(logger, "BATCH LOG get asset types by municipality f")(getAssetTypesByMunicipalityF(municipality, linkIds))
     val assetOnMunicipalityVerification = LogUtils.time(logger, "BATCH LOG get verification info")(getVerificationInfo(municipality))
 
@@ -171,7 +171,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def getAssetTypesByMunicipalityF(municipality: Int, linkIds: Seq[Long]): Seq[(Int, Int, Int, Option[String], Option[DateTime], String)] = {
+  def getAssetTypesByMunicipalityF(municipality: Int, linkIds: Seq[String]): Seq[(Int, Int, Int, Option[String], Option[DateTime], String)] = {
     val fut = for {
       linearLastModification <- Future(getLastModificationLinearAssets(linkIds))
       pointLastModification <- Future(getLastModificationPointAssets(municipality))

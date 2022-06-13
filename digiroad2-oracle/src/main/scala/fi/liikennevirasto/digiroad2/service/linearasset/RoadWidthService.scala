@@ -71,7 +71,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
 
   def getRoadWidthAssetChanges(linearAssets: Seq[PersistedLinearAsset], projectedAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo],
-                               fetchModifications: Seq[Long] => Seq[AssetLastModification], changedSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+                               fetchModifications: Seq[String] => Seq[AssetLastModification], changedSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
     val mappedLastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
     val mappedLinearAssets = linearAssets.groupBy(_.linkId)
@@ -97,7 +97,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }.toSet
 
     val newAssetIds = changedAssets.filter(_._3.isEmpty).map(_._2.newId.get)
-    val assetsLastModification = if(newAssetIds.isEmpty) Map[Long, AssetLastModification]() else {
+    val assetsLastModification = if(newAssetIds.isEmpty) Map[String, AssetLastModification]() else {
       fetchModifications(newAssetIds.toSeq).groupBy(_.linkId)
     }
     val newAssets = changedAssets.flatMap{

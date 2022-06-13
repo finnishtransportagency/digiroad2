@@ -242,7 +242,7 @@ trait LinearAssetOperations {
     if (!notVerifiedUser.contains(userName) && verifiableAssetType.contains(assetType)) Some(userName) else None
   }
 
-  protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[String]): Seq[PersistedLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
@@ -299,7 +299,7 @@ trait LinearAssetOperations {
     val reverseLookupMap = replacementChanges.filterNot(c=>c.oldId.isEmpty || c.newId.isEmpty).map(c => c.newId.get -> c).groupBy(_._1).mapValues(_.map(_._2))
 
     val extensionChanges = otherChanges.filter(isExtensionChange).flatMap(
-      ext => reverseLookupMap.getOrElse(ext.newId.getOrElse(0L), Seq()).flatMap(
+      ext => reverseLookupMap.getOrElse(ext.newId.getOrElse(LinkId.Unknown.value), Seq()).flatMap(
         rep => addSourceRoadLinkToChangeInfo(ext, rep)))
 
     val fullChanges = extensionChanges ++ replacementChanges
@@ -420,16 +420,16 @@ trait LinearAssetOperations {
       None
   }
 
-  private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: Long, newId: Long,
-                                       linearAssetsToUpdate: Map[Long, Seq[PersistedLinearAsset]],
-                                       currentLinearAssets: Map[Long, Seq[PersistedLinearAsset]]): (Option[RoadLink], Option[Projection]) = {
+  private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: String, newId: String,
+                                       linearAssetsToUpdate: Map[String, Seq[PersistedLinearAsset]],
+                                       currentLinearAssets: Map[String, Seq[PersistedLinearAsset]]): (Option[RoadLink], Option[Projection]) = {
     val roadLink = roadLinks.find(rl => newId == rl.linkId)
     val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
     val projection = changeInfo match {
       case Some(changedPart) =>
         // ChangeInfo object related assets; either mentioned in oldId or in newId
-        val linearAssets = (linearAssetsToUpdate.getOrElse(changedPart.oldId.getOrElse(0L), Seq()) ++
-          currentLinearAssets.getOrElse(changedPart.newId.getOrElse(0L), Seq())).distinct
+        val linearAssets = (linearAssetsToUpdate.getOrElse(changedPart.oldId.getOrElse(""), Seq()) ++
+          currentLinearAssets.getOrElse(changedPart.newId.getOrElse(LinkId.Unknown.value), Seq())).distinct
         mapChangeToProjection(changedPart, linearAssets)
       case _ => None
     }
@@ -454,19 +454,19 @@ trait LinearAssetOperations {
     }
   }
 
-  private def testNoAssetExistsOnTarget(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
+  private def testNoAssetExistsOnTarget(assets: Seq[PersistedLinearAsset], linkId: String, mStart: Double, mEnd: Double,
                                         vvhTimeStamp: Long): Boolean = {
     !assets.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
   }
 
-  private def testAssetOutdated(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
+  private def testAssetOutdated(assets: Seq[PersistedLinearAsset], linkId: String, mStart: Double, mEnd: Double,
                                 vvhTimeStamp: Long): Boolean = {
     val targetAssets = assets.filter(a => a.linkId == linkId)
     targetAssets.nonEmpty && !targetAssets.exists(a => a.vvhTimeStamp >= vvhTimeStamp)
   }
 
   private def projectAssetsConditionally(change: ChangeInfo, assets: Seq[PersistedLinearAsset],
-                                         condition: (Seq[PersistedLinearAsset], Long, Double, Double, Long) => Boolean,
+                                         condition: (Seq[PersistedLinearAsset], String, Double, Double, Long) => Boolean,
                                          useOldId: Boolean): Option[Projection] = {
     val id = useOldId match {
       case true => change.oldId
@@ -485,7 +485,7 @@ trait LinearAssetOperations {
     }
   }
 
-  private def testAssetsContainSegment(assets: Seq[PersistedLinearAsset], linkId: Long, mStart: Double, mEnd: Double,
+  private def testAssetsContainSegment(assets: Seq[PersistedLinearAsset], linkId: String, mStart: Double, mEnd: Double,
                                        vvhTimeStamp: Long): Boolean = {
     val targetAssets = assets.filter(a => a.linkId == linkId)
     targetAssets.nonEmpty && !targetAssets.exists(a => a.vvhTimeStamp >= vvhTimeStamp) && targetAssets.exists(
@@ -504,7 +504,7 @@ trait LinearAssetOperations {
       dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
   }
 
-  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     if (newTransaction)
       withDynTransaction {
         dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
@@ -839,7 +839,7 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+  protected def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,

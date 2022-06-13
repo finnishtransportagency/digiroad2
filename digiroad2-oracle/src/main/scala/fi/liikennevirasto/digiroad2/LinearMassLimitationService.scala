@@ -39,7 +39,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dynamicDao: 
     }.toSeq
   }
 
-  private def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  private def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[String]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       MassLimitationAssetTypes.flatMap(dynamicDao.fetchDynamicLinearAssetsByLinkIds(_ , linkIds))
     }.filterNot(_.expired)

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.lane.LaneType
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
@@ -269,7 +269,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def createFromCoordinates(trafficSign: IncomingTrafficSign, roadLink: RoadLink, username: String, isFloating: Boolean = false): Long = {
     if (isFloating)
-      createFloatingWithoutTransaction(trafficSign.copy(linkId = 0), username, roadLink.municipalityCode)
+      createFloatingWithoutTransaction(trafficSign.copy(linkId = LinkId.Unknown.value), username, roadLink.municipalityCode)
     else {
       checkDuplicates(trafficSign) match {
         case Some(existingAsset) =>
@@ -319,7 +319,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def getTrafficSign(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+  def getTrafficSign(linkIds : Seq[String]): Seq[PersistedTrafficSign] = {
     PostGISTrafficSignDao.fetchByLinkId(linkIds)
   }
 
@@ -360,7 +360,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     query + s" and created_by != 'batch_process_trafficSigns' and municipality_code in (${municipalities.mkString(",")})"
   }
 
-  def expire(linkIds: Set[Long], username: String, newTransaction: Boolean = true) : Unit = {
+  def expire(linkIds: Set[String], username: String, newTransaction: Boolean = true) : Unit = {
     if(newTransaction)
     withDynSession {
       PostGISTrafficSignDao.expire(linkIds, username)
@@ -406,7 +406,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     TrafficSignType.values.filter(_.group == trafficSignGroup).map(_.OTHvalue)
   }
 
-  def getTrafficSignsByDistance(sign: PersistedAsset, groupedAssets: Map[Long, Seq[PersistedAsset]], distance: Int): Seq[PersistedTrafficSign]={
+  def getTrafficSignsByDistance(sign: PersistedAsset, groupedAssets: Map[String, Seq[PersistedAsset]], distance: Int): Seq[PersistedTrafficSign]={
     val sameLinkAssets = groupedAssets.getOrElse(sign.linkId, Seq())
 
     sameLinkAssets.filter{ ts =>
@@ -475,7 +475,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       Set()
   }
 
-  def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
+  def getAdditionalPanels(linkId: String, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
                           additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[RoadLinkLike] = Seq()) : Set[AdditionalPanelInfo] = {
 
     val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
@@ -529,7 +529,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }.toSet
   }
 
-  def getAdjacent(point: Point, linkId: Long, roadLinks : Seq[RoadLinkLike]): Seq[(Point, Point, Long, Seq[Point])] = {
+  def getAdjacent(point: Point, linkId: String, roadLinks : Seq[RoadLinkLike]): Seq[(Point, Point, String, Seq[Point])] = {
     if (roadLinks.isEmpty) {
       roadLinkService.getAdjacent(linkId, Seq(point), false).map { adjacentRoadLink =>
         val (start, end) = GeometryUtils.geometryEndpoints(adjacentRoadLink.geometry)
@@ -546,7 +546,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def expireAssetsByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String] = None) : Unit = {
+  def expireAssetsByLinkId(linkIds: Seq[String], signsType: Set[Int] = Set(), username: Option[String] = None) : Unit = {
     PostGISTrafficSignDao.expireAssetByLinkId(linkIds, signsType, username)
   }
 

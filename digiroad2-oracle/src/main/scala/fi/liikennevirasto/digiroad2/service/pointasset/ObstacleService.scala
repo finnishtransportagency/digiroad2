@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, PostGISDirectionalTrafficSignDao, PostGISObstacleDao}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 
@@ -51,7 +51,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   def createFromCoordinates(incomingObstacle: IncomingObstacle, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
     if(isFloating)
-      createFloatingWithoutTransaction(incomingObstacle.copy(linkId = 0), username, roadLink)
+      createFloatingWithoutTransaction(incomingObstacle.copy(linkId = LinkId.Unknown.value), username, roadLink)
     else {
       checkDuplicates(incomingObstacle) match {
         case Some(existingAsset) =>
