@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.vvh
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
@@ -95,7 +96,6 @@ object FilterOgc extends Filter {
       } else {
         withFilter("id",linkIds)
       }
-    println(filter)
     filter
   }
 
@@ -139,7 +139,7 @@ object FilterOgc extends Filter {
 }
 
 object Extractor {
-
+  //TODO rename ?
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
@@ -150,18 +150,11 @@ object Extractor {
     12131 -> FeatureClass.CarRoad_IIIa,
     12132 -> FeatureClass.CarRoad_IIIb
   )
-
+  //TODO rename ?
   private val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
- private def anyToDouble(number: Any): Option[Double] = number match {
-    case bi: BigInt => Some(bi.toDouble)
-    case i: Int => Some(i.toDouble)
-    case l: Long => Some(l.toDouble)
-    case d: Double => Some(d)
-    case _ => None
-  }
 
   private  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     if (attributes("adminclass").asInstanceOf[String] != null)
@@ -170,7 +163,7 @@ object Extractor {
         .getOrElse(Unknown)
     else Unknown
   }
-
+  //TODO rename ?
   def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
     if (attributes("lifecyclestatus").asInstanceOf[String] != null)
       Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
@@ -178,7 +171,7 @@ object Extractor {
         .getOrElse(ConstructionType.InUse)
     else ConstructionType.InUse
   }
-
+  //TODO rename ?
   private  def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
     if (attributes("directiontype").asInstanceOf[String] != null)
       Option(attributes("directiontype").asInstanceOf[String].toInt)
@@ -216,9 +209,9 @@ object Extractor {
   }
   
   /**
-    * Extract double value from VVH data. Used for change info start and end measures.
+    * Extract double value from data. Used for change info start and end measures.
     */
-  private def extractMeasure(value: Any): Option[Double] = {
+  private def anyToDouble(value: Any): Option[Double] = {
     value match {
       case null => None
       case _ => Some(value.toString.toDouble)
@@ -239,30 +232,24 @@ object Extractor {
     val attributes = feature.properties
 
     val linkGeometry: Seq[Point] = path.map(point => {
-      try { // find some cleaner solution for this random BigInt
-        Point(point(0).toString.toDouble, point(1).toString.toDouble, extractMeasure(point(2).toString.toDouble).get)
-      } catch {
-        case e: ClassCastException => {
-          Point(0, 0, 0)
-        }
-      }
+      Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0).toString.toDouble, "y" -> point(1).toString.toDouble, "z" -> point(2).toString.toDouble, "m" -> point(3).toString.toDouble)))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => point(0).toString.toDouble + " " + point(1).toString.toDouble + " " + point(2).toString.toDouble + " " + point(3).toString.toDouble.toString.toDouble).mkString(", ")})"))
+    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> anyToDouble(point(0)).get, "y" -> anyToDouble(point(1)).get, "z" -> anyToDouble(point(2)).get, "m" -> anyToDouble(point(3)).get)))
+    val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => anyToDouble(point(0)).get + " " + anyToDouble(point(1)).get + " " + anyToDouble(point(2)).get + " " + anyToDouble(point(3)).get).mkString(", ")})"))
 
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     
-    val geometryLength: Double = Extractor.anyToDouble(attributes("horizontallength")).getOrElse(0.0)
+    val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
 
-    val featureClassCode = attributes("roadclass").asInstanceOf[String].toInt
+    val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
    
-    val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
+    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
     RoadlinkFetchedMtk(linkId, municipalityCode,
       linkGeometry,
       extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
+      extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
       extractAttributes(attributes)
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
       , extractConstructionType(attributes), linkGeomSource, geometryLength)
