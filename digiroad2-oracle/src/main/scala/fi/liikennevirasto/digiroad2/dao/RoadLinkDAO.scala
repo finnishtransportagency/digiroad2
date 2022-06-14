@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertiesEntries}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -19,7 +19,7 @@ sealed trait RoadLinkDAO{
 
   def getValue(linkProperty: LinkProperties) : Int
 
-  def getVVHValue(vvhRoadLink: VVHRoadlink): Option[Int]
+  def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int]
 
   def getExistingValue(linkId: String): Option[Int]= {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
@@ -49,7 +49,7 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def insertValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
+  def insertValues(linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
     insertValues(linkProperty, username, value)
   }
 
@@ -112,7 +112,7 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def updateValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long]): Unit = {
+  def updateValues(linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], value: Int, mml_id: Option[Long]): Unit = {
       sqlu"""update #$table
                set #$column = $value,
                    modified_date = current_timestamp,
@@ -192,9 +192,9 @@ object RoadLinkDAO{
     dao.getValue(linkProperty)
   }
 
-  def getVVHValue(propertyName: String, vvhRoadLink: VVHRoadlink): Option[Int] = {
+  def getVVHValue(propertyName: String, roadLinkFetched: RoadLinkFetched): Option[Int] = {
     val dao = getDao(propertyName)
-    dao.getVVHValue(vvhRoadLink)
+    dao.getVVHValue(roadLinkFetched)
   }
 
   def getLinkIdByValue(propertyName: String, value: Int, since: Option[String]): Seq[String] = {
@@ -203,10 +203,10 @@ object RoadLinkDAO{
   }
 
 
-  def insert(propertyName: String, linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], mmlId: Option[Long]) = {
+  def insert(propertyName: String, linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], mmlId: Option[Long]) = {
     val dao = getDao(propertyName)
     val value = dao.getValue(linkProperty)
-    dao.insertValues(linkProperty, vvhRoadLink, username, value, mmlId)
+    dao.insertValues(linkProperty, roadLinkFetched, username, value, mmlId)
   }
 
   def insertMass(propertyName: String, entries: Seq[LinkPropertiesEntries]):Unit = {
@@ -249,12 +249,12 @@ object RoadLinkDAO{
       dao.updateValues(linkId, username, value)
   }
 
-  def update(propertyName: String, linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], existingValue: Int, mmlId: Option[Long]) = {
+  def update(propertyName: String, linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], existingValue: Int, mmlId: Option[Long]) = {
     val dao = getDao(propertyName)
     val value = dao.getValue(linkProperty)
 
     if(existingValue != value)
-      dao.updateValues(linkProperty, vvhRoadLink, username, value, mmlId)
+      dao.updateValues(linkProperty, roadLinkFetched, username, value, mmlId)
   }
 
   def update(propertyName: String, linkProperty: LinkProperties, username: Option[String], existingValue: Int, mmlId: Option[Long] = None) = {
@@ -281,7 +281,7 @@ object RoadLinkDAO{
       linkProperty.functionalClass
     }
 
-    def getVVHValue(vvhRoadLink: VVHRoadlink): Option[Int] = {
+    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
        None
     }
   }
@@ -295,8 +295,8 @@ object RoadLinkDAO{
       linkProperty.trafficDirection.value
     }
 
-    def getVVHValue(vvhRoadLink: VVHRoadlink): Option[Int] = {
-      Some(vvhRoadLink.trafficDirection.value)
+    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
+      Some(roadLinkFetched.trafficDirection.value)
     }
 
     override def insertValues(linkProperty: LinkProperties, username: Option[String], value: Int): Unit = {
@@ -372,7 +372,7 @@ object RoadLinkDAO{
       linkProperty.linkType.value
     }
 
-    def getVVHValue(vvhRoadLink: VVHRoadlink): Option[Int] = {
+    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
       None
     }
 
@@ -404,12 +404,12 @@ object RoadLinkDAO{
       linkProperty.administrativeClass.value
     }
 
-    def getVVHValue(vvhRoadLink: VVHRoadlink): Option[Int] = {
-      Some(vvhRoadLink.administrativeClass.value)
+    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
+      Some(roadLinkFetched.administrativeClass.value)
     }
 
-    override def insertValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
-      val vvhValue = getVVHValue(vvhRoadLink)
+    override def insertValues(linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
+      val vvhValue = getVVHValue(roadLinkFetched)
       sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
              select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
@@ -422,9 +422,9 @@ object RoadLinkDAO{
                  where link_id = $linkId""".execute
     }
 
-    override def updateValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long] = None): Unit = {
+    override def updateValues(linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], value: Int, mml_id: Option[Long] = None): Unit = {
       expireValues(linkProperty.linkId, username)
-      val vvhValue = getVVHValue(vvhRoadLink)
+      val vvhValue = getVVHValue(roadLinkFetched)
 
       sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
              select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
@@ -532,7 +532,7 @@ object RoadLinkDAO{
       throw new UnsupportedOperationException("Method getValue is not supported for Link Attributes class")
     }
 
-    def getVVHValue(vvhRoadLink: VVHRoadlink) = {
+    def getVVHValue(roadLinkFetched: RoadLinkFetched) = {
       throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
     }
   }

@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, Moto
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, LaneType, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -17,12 +17,12 @@ import org.slf4j.LoggerFactory
 
 object MainLanePopulationProcess {
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   }
 
   lazy val roadAddressService: RoadAddressService = {
@@ -43,7 +43,7 @@ object MainLanePopulationProcess {
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def addMainLane(roadLink: RoadLink): PersistedLane = {
-    val createdVVHTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+    val createdVVHTimeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
     val sideCode = toSideCode(roadLink.trafficDirection).value
     val laneCode = 1
     val startMeasure = 0.0

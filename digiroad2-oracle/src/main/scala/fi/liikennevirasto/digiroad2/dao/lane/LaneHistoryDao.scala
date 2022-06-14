@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.lane
 
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -22,7 +22,7 @@ case class LaneHistoryRow(id: Long, newId: Long, oldId: Long, linkId: String, si
                           historyCreatedDate: DateTime, historyCreatedBy: String)
 case class laneToHistoryLane(oldId: Long, historyId: Long, historyPositionId: Long)
 
-class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+class LaneHistoryDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService) {
 
   implicit val getLaneHistoryAsset: GetResult[LaneHistoryRow] = new GetResult[LaneHistoryRow] {
     def apply(r: PositionedResult): LaneHistoryRow = {

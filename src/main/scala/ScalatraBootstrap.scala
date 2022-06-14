@@ -21,7 +21,7 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.railwayCrossingService,
       Digiroad2Context.directionalTrafficSignService,
       Digiroad2Context.servicePointService,
-      Digiroad2Context.vvhClient,
+      Digiroad2Context.roadLinkClient,
       Digiroad2Context.massTransitStopService,
       Digiroad2Context.linearAssetService,
       Digiroad2Context.linearMassLimitationService,
@@ -45,7 +45,7 @@ ScalatraBootstrap extends LifeCycle {
                           s"/externalApi/integration/*")
     context.mount(new ChangeApi(swagger), 
                         s"/externalApi/changes/*")
-    context.mount(new MunicipalityApi(Digiroad2Context.vvhClient, 
+    context.mount(new MunicipalityApi(Digiroad2Context.roadLinkClient, 
                                       Digiroad2Context.roadLinkService, 
                                       Digiroad2Context.speedLimitService, 
                                       Digiroad2Context.pavedRoadService, 
