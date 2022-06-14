@@ -485,8 +485,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(newRoadLinks).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
-      println(newRoadLinks)
-      println(changeInfo)
       val after = generateProperties(newRoadLinks, changeInfo)
       after.length should be(2)
       after.foreach { link =>
@@ -653,7 +651,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   //Ignored because "linkProperties:changed" event not in use currently
-  ignore("Should not save links to incomplete_link when the road source is not norma") {
+  ignore("Should not save links to incomplete_link when the road source is not normal") {
     PostGISDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
