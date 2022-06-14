@@ -374,7 +374,7 @@ class RoadLinkClient(vvhRestApiEndPoint: String) {
   // TODO only one used
   lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
 
-  def fetchRoadLinkByLinkId(linkId: Long): Option[RoadlinkFetched] = {
+  def fetchRoadLinkByLinkId(linkId: Long): Option[RoadLinkFetched] = {
     /*roadLinkData.fetchByLinkId(linkId) match {
       case Some(vvhRoadLink) => Some(vvhRoadLink)
       case None => complementaryData.fetchByLinkId(linkId) // this is unneeded piece of code, complementary links are in used only in masstransit 
