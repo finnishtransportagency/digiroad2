@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.viite.{ChangeInformation, IntegrationViiteClient, SearchViiteClient}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -16,12 +16,12 @@ object AutomaticLaneCreationModificationProcess {
     new IntegrationViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
   }
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   }
 
   lazy val roadAddressService: RoadAddressService = {

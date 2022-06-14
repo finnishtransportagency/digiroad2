@@ -148,7 +148,7 @@ trait  PointAssetOperations{
       val link = roadLinks.find(_.linkId == asset.linkId)
       val roadLink =
         if (link.nonEmpty) link
-        else historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+        else historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.timeStamp)(Ordering.Long.reverse).headOption
       roadLink match {
         case Some(roadLink: RoadLink) => Some(ChangedPointAsset(asset, roadLink))
         case _ =>

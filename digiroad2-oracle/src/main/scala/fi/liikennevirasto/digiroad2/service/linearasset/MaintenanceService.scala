@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -14,13 +14,13 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl, eventBusImpl) {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkServiceImpl.roadLinkClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: PostGISAssetDao = new PostGISAssetDao
-  def maintenanceDAO: PostGISMaintenanceDao = new PostGISMaintenanceDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  def maintenanceDAO: PostGISMaintenanceDao = new PostGISMaintenanceDao(roadLinkServiceImpl.roadLinkClient, roadLinkServiceImpl)
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
   override def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
@@ -98,11 +98,11 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
-    val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+    val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlink.find(_.linkId == newAsset.linkId))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, roadLinkClient.roadLinkData.createVVHTimeStamp(), roadLink.find(_.linkId == newAsset.linkId))
       }
     }
   }
@@ -130,7 +130,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   def createWithHistory(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, roadLink: Option[RoadLinkLike]): Long = {
     withDynTransaction {
       maintenanceDAO.expireMaintenanceAssetsByLinkids(Seq(linkId), typeId)
-      createWithoutTransaction(typeId, linkId, value, sideCode, measures, username, vvhClient.roadLinkData.createVVHTimeStamp(), roadLink)
+      createWithoutTransaction(typeId, linkId, value, sideCode, measures, username, roadLinkClient.roadLinkData.createVVHTimeStamp(), roadLink)
     }
   }
 

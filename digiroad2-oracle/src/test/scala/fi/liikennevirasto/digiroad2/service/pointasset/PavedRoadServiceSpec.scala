@@ -22,13 +22,13 @@ import slick.jdbc.StaticQuery.interpolation
 class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val dynamicLinearAssetDao = new DynamicLinearAssetDao()
 
   val multiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("suggest_box","checkbox",required = false,List()),DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("50")))))
@@ -43,10 +43,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val propertyData3 = DynamicValue(multiTypePropSeq3)
   val propertyData4 = DynamicValue(multiTypePropSeq4)
 
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(RoadLinkFetched(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(RoadLinkFetched(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadLinkFetched(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
@@ -69,7 +69,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
@@ -82,11 +82,11 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val assetLock = "Used to prevent deadlocks"
 
   private def createService() = {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def vvhClient: VVHClient = mockVVHClient
+      override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     }
     service
   }
@@ -120,7 +120,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Should not create new paved road assets and return the existing paved road assets when VVH doesn't have change information") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -392,11 +392,11 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Should apply pavement on whole segment") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -470,12 +470,12 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire OTH Assets and create new assets based on VVH RoadLink data") {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def vvhClient: VVHClient = mockVVHClient
+      override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     }
     val assetTypeId = 110
     val municipalityCode = 564
@@ -493,10 +493,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
 
 
     //RoadLinks from VVH to compare at the end
-    val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-    val newRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes2)
-    val newRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes3)
-    val newRoadLink4 = VVHRoadlink(newLinkId4, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes3)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink2 = RoadLinkFetched(newLinkId2, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes2)
+    val newRoadLink3 = RoadLinkFetched(newLinkId3, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes3)
+    val newRoadLink4 = RoadLinkFetched(newLinkId4, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes3)
 
 
     runWithRollback {
@@ -508,7 +508,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAsset3 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId3.toSet)
       val newAssetList = List(newAsset1.head, newAsset2.head,newAsset3.head)
 
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getVVHRoadLinksF(municipalityCode)).thenReturn(List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4))
       when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
 
@@ -599,11 +599,11 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   test("Adjust projected asset with creation"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
-    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]

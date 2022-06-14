@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 
@@ -46,14 +46,14 @@ case class RoadAddressTEMP(linkId: Long, road: Long, roadPart: Long, track: Trac
   private val addressLength: Long = endAddressM - startAddressM
   private val lrmLength: Double = Math.abs(endAddressM - startAddressM)
 
-  def addressMValueToLRM(addrMValue: Long, vvhRoadLink: VVHRoadlink): Option[Double] = {
+  def addressMValueToLRM(addrMValue: Long, roadLinkFetched: RoadLinkFetched): Option[Double] = {
     if (addrMValue < startAddressM || addrMValue > endAddressM)
       None
     else
     // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
       sideCode.getOrElse(SideCode.Unknown) match {
         case TowardsDigitizing => Some((addrMValue - startAddressM) * lrmLength / addressLength + 0)
-        case AgainstDigitizing => Some(vvhRoadLink.length - (addrMValue - startAddressM) * lrmLength / addressLength)
+        case AgainstDigitizing => Some(roadLinkFetched.length - (addrMValue - startAddressM) * lrmLength / addressLength)
         case _ => None
       }
   }

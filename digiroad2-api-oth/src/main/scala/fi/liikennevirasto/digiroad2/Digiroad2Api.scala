@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.lane._
@@ -49,7 +49,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
                    val directionalTrafficSignService: DirectionalTrafficSignService = Digiroad2Context.directionalTrafficSignService,
                    val servicePointService: ServicePointService = Digiroad2Context.servicePointService,
-                   val vvhClient: VVHClient,
+                   val roadLinkClient: RoadLinkClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
                    val linearMassLimitationService: LinearMassLimitationService = Digiroad2Context.linearMassLimitationService,
@@ -1990,7 +1990,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
     roadLinkService.getRoadLinkAndComplementaryFromVVH(updatedAsset.linkId) match {
-      case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
+      case None => halt(NotFound(s"RoadLink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) =>
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
         service match {

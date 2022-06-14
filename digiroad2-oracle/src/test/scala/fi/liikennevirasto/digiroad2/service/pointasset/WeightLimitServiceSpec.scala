@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -14,7 +14,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class WeightLimitServiceSpec extends FunSuite with Matchers {
-  def toRoadLink(l: VVHRoadlink) = {
+  def toRoadLink(l: RoadLinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
@@ -24,7 +24,7 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    RoadLinkFetched(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
   val weightLimitService = new TotalWeightLimitService(mockRoadLinkService) {
@@ -64,7 +64,7 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality WeightLimit Asset") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackWeightLimit {
       val result = weightLimitService.getByMunicipality(235).find(_.id == 600076).get
@@ -93,10 +93,10 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
-      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackWeightLimit {
       val beforeUpdate = weightLimitService.getByMunicipality(235).find(_.id == 600076).get
@@ -132,7 +132,7 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality AxleWeightLimit Asset") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackAxleWeightLimit {
       val result = axleWeightLimitService.getByMunicipality(235).find(_.id == 600077).get
@@ -161,10 +161,10 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
-      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackAxleWeightLimit {
       val beforeUpdate = axleWeightLimitService.getByMunicipality(235).find(_.id == 600077).get
@@ -199,7 +199,7 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality BogieWeightLimit Asset") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackBogieWeightLimit {
       val result = bogieWeightLimitService.getByMunicipality(235).find(_.id == 600078).get
@@ -228,10 +228,10 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
-      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackBogieWeightLimit {
       val beforeUpdate = bogieWeightLimitService.getByMunicipality(235).find(_.id == 600078).get
@@ -266,7 +266,7 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality TrailerTruckWeightLimit Asset") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackTrailerTruckWeightLimit {
       val result = trailerTruckWeightLimitService.getByMunicipality(235).find(_.id == 600079).get
@@ -295,10 +295,10 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
-      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollbackTrailerTruckWeightLimit {
       val beforeUpdate = trailerTruckWeightLimitService.getByMunicipality(235).find(_.id == 600079).get

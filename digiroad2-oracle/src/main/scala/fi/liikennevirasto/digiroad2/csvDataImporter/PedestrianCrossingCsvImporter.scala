@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import fi.liikennevirasto.digiroad2.asset.State
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -12,7 +12,7 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override val longValueFieldsMapping: Map[String, String] = coordinateMappings

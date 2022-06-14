@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -41,7 +41,7 @@ sealed trait FeatureStatus{
 
 object FeatureStatus{
   val values = Set[FeatureStatus](Inserted, Processed, WrongMandatoryValue,
-    NoGeometryType, RoadlinkNoTypeInProperties, ErrorsWhileProcessing, WrongRoadlinks)
+    NoGeometryType, RoadLinkNoTypeInProperties, ErrorsWhileProcessing, WrongRoadLinks)
 
   def apply(intValue: Int): FeatureStatus= {
     values.find(_.value == intValue).getOrElse(ErrorsWhileProcessing)
@@ -51,12 +51,12 @@ object FeatureStatus{
   case object Processed extends FeatureStatus{ def value = 1; def description = "Processed successfully";}
   case object WrongMandatoryValue extends FeatureStatus{ def value = 2; def description = "Asset type or sideCode with wrong mandatory value";}
   case object NoGeometryType extends FeatureStatus{ def value = 3; def description = "Geometry type not found";}
-  case object RoadlinkNoTypeInProperties extends FeatureStatus{ def value = 4; def description = "Roadlink with no type in properties";}
+  case object RoadLinkNoTypeInProperties extends FeatureStatus{ def value = 4; def description = "RoadLink with no type in properties";}
   case object ErrorsWhileProcessing extends FeatureStatus{ def value = 5; def description = "Errors while processing";}
-  case object WrongRoadlinks extends FeatureStatus{ def value = 6; def description = "Wrong roadlinks";}
+  case object WrongRoadLinks extends FeatureStatus{ def value = 6; def description = "Wrong roadLinks";}
 }
 
-class MunicipalityApi(val vvhClient: VVHClient,
+class MunicipalityApi(val roadLinkClient: RoadLinkClient,
                       val roadLinkService: RoadLinkService,
                       val speedLimitService: SpeedLimitService,
                       val pavedRoadService: PavedRoadService,
@@ -137,7 +137,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   private def linkIdValidation(linkIds: Set[Long],  roadLinks: Seq[Long]): FeatureStatus = {
     if(!(linkIds.nonEmpty && linkIds.forall(roadLinks.contains(_))))
     {
-      FeatureStatus.WrongRoadlinks
+      FeatureStatus.WrongRoadLinks
     } else {
       FeatureStatus.Inserted
     }
@@ -191,7 +191,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   private def updateLinearAssets(properties: Map[String, String], links: Seq[RoadLink]) = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
-    val timeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+    val timeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
 
     links.foreach { link =>
       speedLimit match {
@@ -249,7 +249,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
                 properties("type") match {
                   case "Roadlink" => validateLinearAssets(properties)
                   case _ =>
-                    List(FeatureStatus.RoadlinkNoTypeInProperties)
+                    List(FeatureStatus.RoadLinkNoTypeInProperties)
                 }
               case "Point" => validatePoint(properties)
               case _ =>

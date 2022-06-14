@@ -11,21 +11,21 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation
 
 class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
-  val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+  val roadLink = RoadLinkFetched(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): PostGISLinearAssetDao = {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+  private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISLinearAssetDao = {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
@@ -36,7 +36,7 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+    new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)

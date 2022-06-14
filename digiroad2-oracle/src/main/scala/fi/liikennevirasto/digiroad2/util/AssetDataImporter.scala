@@ -8,7 +8,7 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -113,9 +113,9 @@ class AssetDataImporter {
 
     val roadsByLinkId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
 
-    val vvhClient = new VVHClient(vvhHost)
-    val vvhLinks = vvhClient.roadLinkData.fetchByLinkIds(roadsByLinkId.keySet)
-    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
+    val roadLinkClient = new RoadLinkClient(vvhHost)
+    val vvhLinks = roadLinkClient.roadLinkData.fetchByLinkIds(roadsByLinkId.keySet)
+    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
@@ -170,7 +170,7 @@ class AssetDataImporter {
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
     val conversionTypeId = 29
     val exceptionTypeId = 1
-    val vvhClient = new VVHClient(vvhServiceHost)
+    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
     val typeId = 190
 
     println("*** Fetching prohibitions from conversion database")
@@ -196,7 +196,7 @@ class AssetDataImporter {
 
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(prohibitions.map(_._2).toSet)
+    val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(prohibitions.map(_._2).toSet)
 
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
@@ -312,7 +312,7 @@ class AssetDataImporter {
     }
   }
 
-  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[RoadLinkFetched], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
     def hasInvalidExceptionType(exception: (Long, Long, Int, Int)): Boolean = {
       !Set(21, 22, 10, 9, 27, 5, 8, 7, 6, 4, 15, 19, 13, 14, 24, 25).contains(exception._3)
     }
@@ -490,7 +490,7 @@ class AssetDataImporter {
   }
 
   def adjustToNewDigitization(vvhHost: String) = {
-    val vvhClient = new VVHClient(vvhHost)
+    val roadLinkClient = new RoadLinkClient(vvhHost)
     val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[Long]()
 
@@ -500,7 +500,7 @@ class AssetDataImporter {
 
         println(s"*** Fetching from VVH with municipality: $municipalityCode")
 
-        val flippedLinks = vvhClient.roadLinkData.fetchByMunicipality(municipalityCode)
+        val flippedLinks = roadLinkClient.roadLinkData.fetchByMunicipality(municipalityCode)
           .filter(isHereFlipped)
           .filterNot(link => processedLinkIds.contains(link.linkId))
 
@@ -546,7 +546,7 @@ class AssetDataImporter {
     }
   }
 
-  private def isHereFlipped(roadLink: VVHRoadlink) = {
+  private def isHereFlipped(roadLink: RoadLinkFetched) = {
     val NotFlipped = 0
     val Flipped = 1
     roadLink.attributes.getOrElse("MTKHEREFLIP", NotFlipped).asInstanceOf[BigInt] == Flipped
@@ -850,11 +850,11 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     * @return
     */
   def updateObstacleToRoadLink(obstacle : Obstacle, roadLinkService: RoadLinkService) : Obstacle = {
-    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: RoadLink) = {
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
-      val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
-      obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
-        municipalityCode = roadlink.municipalityCode, modifiedBy = Some("automatic_correction"),
+    def recalculateObstaclePosition(obstacle: Obstacle, roadLink: RoadLink) = {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadLink.geometry)
+      val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).get
+      obstacle.copy(mValue = mValue, linkId = roadLink.linkId, lon = point.x, lat = point.y,
+        municipalityCode = roadLink.municipalityCode, modifiedBy = Some("automatic_correction"),
         modifiedAt = Some(DateTime.now()), floating = false)
     }
     //FunctionalClass 7 equal to FeatureClass TractorRoad
@@ -917,7 +917,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     * @param vvhRestApiEndPoint
     */
   def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
-    val vvhClient = new VVHClient(vvhRestApiEndPoint)
+    val roadLinkClient = new RoadLinkClient(vvhRestApiEndPoint)
     withDynTransaction {
       val idAddressFi = sql"""select p.id from property p where p.public_id = 'osoite_suomeksi'""".as[Int].list.head
       val idAddressSe = sql"""select p.id from property p where p.public_id = 'osoite_ruotsiksi'""".as[Int].list.head
@@ -927,7 +927,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         val startTime = DateTime.now()
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsWOAddresses(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
+        val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
             if (rlinks.linkId == stops._2) {
@@ -951,7 +951,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       municipalitiesone.foreach { municipalityCode =>
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsMissingOneAddress(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
+        val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
         val finstops=getFinnishStopAddressRSe(municipalityCode, idAddressFi, idAddressSe)
         val swedishstops= getSwedishStopAddressRFi(municipalityCode, idAddressFi, idAddressSe)
         listOfStops.foreach { stops =>   //stop_1:asset_id, stop_2:link_id

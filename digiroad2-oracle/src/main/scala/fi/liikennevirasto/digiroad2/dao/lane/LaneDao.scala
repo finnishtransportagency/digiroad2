@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.lane
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -26,7 +26,7 @@ case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
-class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
+class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService ){
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {
@@ -454,7 +454,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     """.execute
   }
 
-  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = vvhClient.roadLinkData.createVVHTimeStamp()): Unit = {
+  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = roadLinkClient.roadLinkData.createVVHTimeStamp()): Unit = {
     sqlu"""UPDATE LANE_POSITION
            SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $vvhTimestamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )

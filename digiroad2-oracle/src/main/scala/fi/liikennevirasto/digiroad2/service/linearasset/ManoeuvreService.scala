@@ -46,7 +46,7 @@ class ManoeuvreCreationException(val response: Set[String]) extends RuntimeExcep
 class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
+  def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.roadLinkClient)
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 

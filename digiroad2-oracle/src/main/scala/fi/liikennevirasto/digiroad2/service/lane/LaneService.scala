@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
@@ -24,9 +24,9 @@ case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], chang
 
 class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, roadAddressServiceImpl: RoadAddressService) extends LaneOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
-  override def dao: LaneDao = new LaneDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
-  override def historyDao: LaneHistoryDao = new LaneHistoryDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
+  override def dao: LaneDao = new LaneDao(roadLinkServiceImpl.roadLinkClient, roadLinkServiceImpl)
+  override def historyDao: LaneHistoryDao = new LaneHistoryDao(roadLinkServiceImpl.roadLinkClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
@@ -40,7 +40,7 @@ trait LaneOperations {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
-  def vvhClient: VVHClient
+  def roadLinkClient: RoadLinkClient
   def dao: LaneDao
   def historyDao: LaneHistoryDao
   def municipalityDao: MunicipalityDao
@@ -319,7 +319,7 @@ trait LaneOperations {
     PieceWiseLane(lane.id, lane.linkId, lane.sideCode, lane.expired, geometry,
       lane.startMeasure, lane.endMeasure,
       Set(endPoints._1, endPoints._2), lane.modifiedBy, lane.modifiedDateTime,
-      lane.createdBy, lane.createdDateTime,  roadLink.vvhTimeStamp,
+      lane.createdBy, lane.createdDateTime,  roadLink.timeStamp,
       lane.geomModifiedDate, roadLink.administrativeClass, lane.attributes, attributes = Map("municipality" -> lane.municipalityCode, "trafficDirection" -> roadLink.trafficDirection))
     }
   }
@@ -656,7 +656,7 @@ trait LaneOperations {
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def create(newLanes: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, sideCodesForLinkIds: Seq[SideCodesForLinkIds] = Seq(), vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  def create(newLanes: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, sideCodesForLinkIds: Seq[SideCodesForLinkIds] = Seq(), vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
 
     if (newLanes.isEmpty || linkIds.isEmpty)
       return Seq()
@@ -838,7 +838,7 @@ trait LaneOperations {
       val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
-        val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+        val vvhTimeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
 
         lanesToInsert.flatMap { lane =>
           val laneCode = getLaneCode(lane).toInt
