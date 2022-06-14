@@ -41,7 +41,7 @@ class VKMClient {
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
 
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
   private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
@@ -262,7 +262,9 @@ class VKMClient {
       Some(Map(queryIdentifier -> RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)))
     }
     catch {
-      case rae: RoadAddressException => None
+      case rae: RoadAddressException =>
+        logger.error("Error mapping to VKM data to road address: " + rae.getMessage)
+        None
     }
   }
 

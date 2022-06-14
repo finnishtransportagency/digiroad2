@@ -227,7 +227,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes)
         }
         val twoDigitLanes = laneService.pieceWiseLanestoPersistedLane(twoDigitPwLanes.flatten)
-        //Lanes where VKM transform coordinates to road addresses
+        //Lanes where VKM failed to transform coordinates to road addresses
         val missingLanes = lanes.map(_.id).diff(twoDigitLanes.map(_.id))
 
         val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
@@ -240,7 +240,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val lanesToUpdate = lanesToUpdateAndMissingLanes.flatMap(_._1)
     val notUpdatedLanes = lanesToUpdateAndMissingLanes.flatMap(_._2).toSet
     val failedRows = lanesToUpdateAndMissingLanes.flatMap(_._3)
-//    laneService.updateMultipleLaneAttributes(lanesToUpdate, user.username)
+    laneService.updateMultipleLaneAttributes(lanesToUpdate, user.username)
 
 
     notUpdatedLanes.isEmpty match {
