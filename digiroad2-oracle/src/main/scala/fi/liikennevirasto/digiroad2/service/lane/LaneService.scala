@@ -1106,9 +1106,11 @@ trait LaneOperations {
 
   def pieceWiseLanesToTwoDigitWithMassQuery(pwLanes: Seq[PieceWiseLane]): Seq[Option[PieceWiseLane]] = {
     val vkmParameters = pwLanes.map(lane => {
-      MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long], lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
+      MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes.getOrElse("ROAD_NUMBER", None).asInstanceOf[Option[Long]],
+        lane.attributes.getOrElse("ROAD_PART_NUMBER", None).asInstanceOf[Option[Long]])
     }) ++ pwLanes.map(lane => {
-      MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long], lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
+      MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes.getOrElse("ROAD_NUMBER", None).asInstanceOf[Option[Long]],
+        lane.attributes.getOrElse("ROAD_PART_NUMBER", None).asInstanceOf[Option[Long]])
     })
 
     val vkmParametesSplit = vkmParameters.grouped(1000).toSeq

@@ -21,7 +21,7 @@ import org.json4s.{DefaultFormats, Formats, StreamInput}
 
 import java.util.ArrayList
 
-case class MassQueryParams(identifier: String, point: Point, roadNumber: Long, roadPartNumber: Long)
+case class MassQueryParams(identifier: String, point: Point, roadNumber: Option[Long], roadPartNumber: Option[Long])
 case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
 

@@ -205,8 +205,24 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
            address.endAddressM <= laneRoadAddressInfo.endDistance && address.endAddressM >= laneRoadAddressInfo.startDistance)
         val filteredRoadAddresses = (roadLinksFullyInsideRoadAddressRange ++ roadLinksPartiallyInsideRoadAddressRange)
 
+        val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(filteredRoadAddresses.map(_.linkId), false)
         val lanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
-        val twoDigitLanes = lanes.flatMap(lane => laneService.persistedLaneToTwoDigitLaneCode(lane, false))
+        val lanesAndRoadLink = lanes.flatMap(lane => {
+          val roadLink = roadLinks.find(_.linkId == lane.linkId)
+          roadLink match {
+            case Some(rl) => Some((lane, rl))
+            case _ => None
+          }
+        })
+        val pwLanes = lanesAndRoadLink.flatMap(pair => {
+          val lane = pair._1
+          val roadLink = pair._2
+          laneFiller.toLPieceWiseLane(Seq(lane), roadLink)
+
+        })
+
+        val twoDigitPwLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes).flatten
+        val twoDigitLanes = laneService.pieceWiseLanestoPersistedLane(twoDigitPwLanes)
         val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
 
         correctLanes.map(_.copy(attributes = laneProps))
