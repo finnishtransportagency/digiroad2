@@ -276,11 +276,7 @@ object Filter extends Filter {
    override def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
-
-   override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], LinkOperationError]
-  protected def defaultOutFields(): String
-  protected def extractFeature(feature: Map[String, Any]): LinkType
-
+  
   override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
 
     (filter1.isEmpty, filter2.isEmpty) match {
