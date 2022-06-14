@@ -361,7 +361,6 @@ class RoadLinkClient(vvhRestApiEndPoint: String) {
 trait LinkOperationsAbstract {
   type LinkType
   type Content
-  type IdType
   protected val linkGeomSource: LinkGeomSource
   protected def restApiEndPoint: String
   protected def serviceName: String
@@ -385,9 +384,9 @@ trait LinkOperationsAbstract {
 
   protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = ???
 
-  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = ???
+  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = ???
 
-  protected def queryByLinkIds[LinkType](linkIds: Set[IdType],
+  protected def queryByLinkIds[LinkType](linkIds: Set[Long],
                                         fieldSelection: Option[String],
                                         fetchGeometry: Boolean,
                                         resultTransition: (Map[String, Any], List[List[Double]]) => LinkType,
@@ -420,7 +419,6 @@ class VVHAuthPropertyReader {
 }
 
 trait VVHClientOperations extends LinkOperationsAbstract {
-  override type IdType = Long
 
   protected val linkGeomSource: LinkGeomSource
   protected def restApiEndPoint: String
@@ -973,7 +971,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
     // only one used in very old batch
     // TODO: Temporary parsing from string to long. Remove after not needed anymore
-    queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, Filter.withLinkIdFilter)
+    queryByLinkIds(parseLinkIdsToLong(linkIds), fieldSelection, fetchGeometry, resultTransition, Filter.withLinkIdFilter)
 }
 
 class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperations {

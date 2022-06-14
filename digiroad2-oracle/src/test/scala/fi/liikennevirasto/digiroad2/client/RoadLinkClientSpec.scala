@@ -42,7 +42,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     */
   test("Test VVH History LinkId API") {
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result = roadLinkClient.historyData.fetchVVHRoadLinkByLinkIds(Set(440484,440606,440405,440489))
+    val result = roadLinkClient.historyData.fetchVVHRoadLinkByLinkIds(Set("440484","440606","440405","440489"))
     result.nonEmpty should be (true)
   }
   test("Fetch changes with polygon string ") {
@@ -76,7 +76,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
 
   test("Test Change Info fetch by LinkId") {
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result = roadLinkClient.roadLinkChangeInfo.fetchByLinkIds(Set(5176799))
+    val result = roadLinkClient.roadLinkChangeInfo.fetchByLinkIds(Set("5176799"))
     result.nonEmpty should be (true)
   }
 }

@@ -313,7 +313,7 @@ class AssetDataImporter {
   }
 
   def convertToProhibitions(prohibitionSegments: Seq[(Long, String, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[RoadLinkFetched], exceptions: Seq[(Long, String, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
-    def hasInvalidExceptionType(exception: (Long, Long, Int, Int)): Boolean = {
+    def hasInvalidExceptionType(exception: (Long, String, Int, Int)): Boolean = {
       !Set(21, 22, 10, 9, 27, 5, 8, 7, 6, 4, 15, 19, 13, 14, 24, 25).contains(exception._3)
     }
 
