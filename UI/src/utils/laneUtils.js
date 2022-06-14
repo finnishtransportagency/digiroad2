@@ -38,7 +38,7 @@
       return preview();
     },
 
-    offsetByLaneNumber: function (asset, isRoadlink, reverse) {
+    offsetByLaneNumber: function (asset, isRoadLink, reverse) {
       function getOffsetPoint(asset, baseOffset) {
         asset.points = _.map(asset.points, function (point, index, geometry) {
           return GeometryUtils.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
@@ -51,7 +51,7 @@
         return asset.sideCode === 1 || ((asset.sideCode === 2 || asset.sideCode === 3) && (asset.trafficDirection === 'AgainstDigitizing' || asset.trafficDirection === 'TowardsDigitizing'));
       };
 
-      if(isRoadlink) {
+      if(isRoadLink) {
         if (_.isUndefined(asset.sideCode) || noOffset()) {
           return asset;
         }

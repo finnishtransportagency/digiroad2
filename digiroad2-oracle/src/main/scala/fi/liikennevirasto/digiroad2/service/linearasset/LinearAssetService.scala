@@ -616,17 +616,17 @@ trait LinearAssetOperations {
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
       }
       toInsert.foreach{ linearAsset =>
-        val roadlink = roadLinks.find(_.linkId == linearAsset.linkId)
+        val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
         val id =
           (linearAsset.createdBy, linearAsset.createdDateTime) match {
             case (Some(createdBy), Some(createdDateTime)) =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = getGeometry(roadlink))
+                getLinkSource(roadLink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = getGeometry(roadLink))
             case _ =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadlink), geometry = getGeometry(roadlink))
+                getLinkSource(roadLink), geometry = getGeometry(roadLink))
           }
 
         linearAsset.value match {
@@ -689,9 +689,9 @@ trait LinearAssetOperations {
     */
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
     withDynTransaction {
-      val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
+      val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
   }

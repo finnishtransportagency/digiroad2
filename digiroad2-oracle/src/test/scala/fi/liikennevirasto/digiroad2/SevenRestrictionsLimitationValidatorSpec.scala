@@ -19,50 +19,50 @@ import org.scalatest.{FunSuite, Matchers}
 
 class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockDynamicAssetDao: DynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
 
   case class SevenRestrictionsValidation(typeId: Int, service: SevenRestrictionsLimitationValidator, trafficSign: TrafficSignType, value: String )
   class TestWidthLimitValidator extends WidthLimitValidator {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestHeightLimitValidator extends HeightLimitValidator {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestTotalWeightLimitValidator extends TotalWeightLimitValidator {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestTrailerTruckWeightLimitValidator extends TrailerTruckWeightLimitValidator {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestAxleWeightLimitValidator extends AxleWeightLimitValidator {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestBogieWeightLimitValidator extends BogieWeightLimitValidator {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestLengthLimitValidator extends LengthLimitValidator {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 

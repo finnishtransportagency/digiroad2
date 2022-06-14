@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
@@ -150,13 +150,13 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
       val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
       
-      var roadLink:RoadlinkFetched=null
+      var roadLink:RoadLinkFetched=null
       try{
         roadLink= roadLinkClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).get
       }
       catch {
         case e:NoSuchElementException=>
-          logger.warn("Roadlink no longer available: "+oldLinearAsset.linkId+" For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired)
+          logger.warn("RoadLink no longer available: "+oldLinearAsset.linkId+" For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired)
         case e=>
           logger.warn("Some other error occurred, For asset: "+oldLinearAsset.id+ ",Expired: "+ oldLinearAsset.expired+" \n  ",e)
       }

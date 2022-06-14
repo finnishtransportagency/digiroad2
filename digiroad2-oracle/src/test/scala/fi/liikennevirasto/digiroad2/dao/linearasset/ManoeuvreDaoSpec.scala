@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, ManoeuvreElement, NewManoeuvre}
@@ -14,11 +14,11 @@ import org.scalatest.{FunSuite, Matchers}
   */
 class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
-  private def daoWithRoadLinks(roadLinks: Seq[RoadlinkFetched]): ManoeuvreDao = {
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+  private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): ManoeuvreDao = {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
@@ -26,7 +26,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new ManoeuvreDao(mockRoadlinkClient)
+    new ManoeuvreDao(mockRoadLinkClient)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)

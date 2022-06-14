@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PedestrianCrossing, PostGISPedestrianCrossingDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -21,7 +21,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
-  def toRoadLink(l: RoadlinkFetched) = {
+  def toRoadLink(l: RoadLinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
@@ -33,7 +33,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
-    RoadlinkFetched(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    RoadLinkFetched(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
   val service = new PedestrianCrossingService(mockRoadLinkService, mockEventBus) {
@@ -69,7 +69,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       Point(374490.755,6677366.834),
       Point(374508.979,6677381.08))
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((Seq(
-      RoadlinkFetched(1611317, 235, roadLinkGeom, Municipality,
+      RoadLinkFetched(1611317, 235, roadLinkGeom, Municipality,
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
@@ -87,7 +87,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
-      RoadlinkFetched(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections,
+      RoadLinkFetched(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections,
         FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {

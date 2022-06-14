@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -17,8 +17,8 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
-  val roadLinkWithRedundantTrafficDirection: RoadlinkFetched = RoadlinkFetched(1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
-  val roadLinkWithValidTrafficDirection: RoadlinkFetched = RoadlinkFetched(2, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  val roadLinkWithRedundantTrafficDirection: RoadLinkFetched = RoadLinkFetched(1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  val roadLinkWithValidTrafficDirection: RoadLinkFetched = RoadLinkFetched(2, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
 
   when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
 

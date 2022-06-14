@@ -195,8 +195,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment()
     val segment2 = prohibitionSegment(id = 2l, value = 4)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Seq[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil)
 
@@ -208,8 +208,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -222,8 +222,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment()
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -235,7 +235,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Segment without associated road link from VVH is dropped") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLinks: Seq[RoadlinkFetched] = Nil
+    val roadLinks: Seq[RoadLinkFetched] = Nil
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -246,8 +246,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment(value = 21)
     val segment2 = prohibitionSegment(id = 2l, value = 22)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -257,8 +257,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Adjust segment measurements to road link") {
     val segment1 = prohibitionSegment(endMeasure = 0.5)
     val prohibitionSegments = Seq(segment1)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -269,8 +269,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Include exception in prohibition value") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
@@ -282,8 +282,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Exceptions that do not relate to prohibition are not included") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
     val exceptions = Seq((1l, 2l, 8, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
@@ -296,8 +296,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Filter out exceptions that allow all traffic") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 1, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
@@ -310,8 +310,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Filter out exceptions with exception codes not supported") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 20, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
@@ -325,8 +325,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 2))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
@@ -339,8 +339,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("One sided exception splits two sided prohibition") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 2), (1l, 1l, 9, 3))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
@@ -354,8 +354,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
     val exceptions = Seq((1l, 1l, 8, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
@@ -368,8 +368,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Parse validity period into prohibition") {
     val segment = prohibitionSegment(validityPeriod = Some("[[(h8){h7}]*[(t2){d5}]]"))
     val prohibitionSegments = Seq(segment)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -381,8 +381,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Report parse error from time domain parsing") {
     val segment = prohibitionSegment(validityPeriod = Some("[[(h8){h7"))
     val prohibitionSegments = Seq(segment)
-    val roadLink = RoadlinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[RoadlinkFetched] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -403,16 +403,16 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
-    val vvhRoadLinks = Seq(RoadlinkFetched(5170455, 853, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes))
+    val vvhRoadLinks = Seq(RoadLinkFetched(5170455, 853, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes))
     val roadLinks = Seq(RoadLink(5170455, Seq(Point(15,0), Point(15,20), Point(15,40)), 40 ,Municipality, 7,  TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
 
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
@@ -443,23 +443,23 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadlinkFetched(5170459, municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadlinkFetched(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(5170459, municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
 
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
-    val roadLinkService = new RoadLinkService(mockRoadlinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -476,8 +476,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadlinkFetched(linkId, municipality, Seq(Point(20.333,0), Point(20.333,20), Point(20.333,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
+      RoadLinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(linkId, municipality, Seq(Point(20.333,0), Point(20.333,20), Point(20.333,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
     )
     val roadLinks = Seq(RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
                           TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
@@ -485,13 +485,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                           CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
 
 
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
@@ -521,21 +521,21 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170455, municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadlinkFetched(5170458, municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(5170455, municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(5170458, municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
 
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
-    val roadLinkService = new RoadLinkService(mockRoadlinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -552,9 +552,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadlinkFetched(linkId, municipality, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
-      RoadlinkFetched(5170456, municipality, Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(linkId, municipality, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
+      RoadLinkFetched(5170456, municipality, Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     val roadLinks = Seq(
       RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
@@ -564,13 +564,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       RoadLink(5170456, Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)), 20, Municipality, 6, TrafficDirection.BothDirections,
         SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
 
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
@@ -600,9 +600,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadlinkFetched(5170458, municipality, Seq(Point(20.02,0), Point(20.02,10), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
-      RoadlinkFetched(5170456, municipality, Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(5170458, municipality, Seq(Point(20.02,0), Point(20.02,10), Point(20.02,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
+      RoadLinkFetched(5170456, municipality, Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     val roadLinks = Seq(
       RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
@@ -612,13 +612,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       RoadLink(5170456, Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)), 10, Municipality, 6, TrafficDirection.BothDirections,
         SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
 
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0),Point(30.0,30.0)))).thenReturn(roadLinks)
@@ -641,22 +641,22 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170458, municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
-      RoadlinkFetched(5170456, municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(5170458, municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
+      RoadLinkFetched(5170456, municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockRoadlinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -672,21 +672,21 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170458, municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
+      RoadLinkFetched(5170458, municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
     )
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockRoadlinkClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -703,8 +703,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadlinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadlinkFetched(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+      RoadLinkFetched(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
     )
     val roadLinks = Seq(
       RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
@@ -712,13 +712,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       RoadLink(5170458, Seq(Point(0,15), Point(20,15), Point(40,15)), 20, Municipality, 99, TrafficDirection.BothDirections,
         UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
 
-    val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-    when(mockRoadlinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockRoadlinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0),Point(30.0,30.0)))).thenReturn(roadLinks)

@@ -111,12 +111,12 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
 
   private def createGeoJson(maintenanceAsset: Seq[(PersistedLinearAsset, RoadLink)]) = {
     maintenanceAsset.map {
-      case (asset, roadlink) =>
-        val geometry = GeometryUtils.truncateGeometry3D(roadlink.geometry, asset.startMeasure, asset.endMeasure)
+      case (asset, roadLink) =>
+        val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
         Map(
           "type" -> "Feature",
           "geometry" -> getLineStringGeometry(geometry),
-          "properties" -> getProperties(asset, asset.value.getOrElse(DynamicValue(DynamicAssetValue(Seq()))).asInstanceOf[DynamicValue].value.properties, roadlink)
+          "properties" -> getProperties(asset, asset.value.getOrElse(DynamicValue(DynamicAssetValue(Seq()))).asInstanceOf[DynamicValue].value.properties, roadLink)
         )
     }
   }

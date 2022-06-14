@@ -20,7 +20,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: PostGISAssetDao = mockAssetDao

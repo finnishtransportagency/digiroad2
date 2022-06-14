@@ -2,14 +2,13 @@ package fi.liikennevirasto.digiroad2.util
 
 
 import java.util.Properties
-
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Polygon}
 import org.scalatest.{FunSuite, Matchers}
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.Point
 import com.vividsolutions.jts.io.WKTReader
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.vvh.{Filter, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 
 
@@ -19,7 +18,6 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   val geomBuilder = new GeometryBuilder(geomFact)
   val wKTParser = new WKTReader()
   val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-  
   
   test("Polygon & BoundingBox intersection test") {
     val boundingBox= BoundingRectangle(Point(24,60), Point(25,61))

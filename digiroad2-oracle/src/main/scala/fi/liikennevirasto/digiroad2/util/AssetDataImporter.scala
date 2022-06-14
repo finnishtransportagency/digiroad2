@@ -8,7 +8,7 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -115,7 +115,7 @@ class AssetDataImporter {
 
     val roadLinkClient = new RoadLinkClient(vvhHost)
     val vvhLinks = roadLinkClient.roadLinkData.fetchByLinkIds(roadsByLinkId.keySet)
-    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, RoadlinkFetched]) { (m, link) => m + (link.linkId -> link) }
+    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
@@ -312,7 +312,7 @@ class AssetDataImporter {
     }
   }
 
-  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[RoadlinkFetched], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[RoadLinkFetched], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
     def hasInvalidExceptionType(exception: (Long, Long, Int, Int)): Boolean = {
       !Set(21, 22, 10, 9, 27, 5, 8, 7, 6, 4, 15, 19, 13, 14, 24, 25).contains(exception._3)
     }
@@ -546,7 +546,7 @@ class AssetDataImporter {
     }
   }
 
-  private def isHereFlipped(roadLink: RoadlinkFetched) = {
+  private def isHereFlipped(roadLink: RoadLinkFetched) = {
     val NotFlipped = 0
     val Flipped = 1
     roadLink.attributes.getOrElse("geometryflip", NotFlipped).asInstanceOf[BigInt] == Flipped
@@ -850,11 +850,11 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     * @return
     */
   def updateObstacleToRoadLink(obstacle : Obstacle, roadLinkService: RoadLinkService) : Obstacle = {
-    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: RoadLink) = {
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
-      val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
-      obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
-        municipalityCode = roadlink.municipalityCode, modifiedBy = Some("automatic_correction"),
+    def recalculateObstaclePosition(obstacle: Obstacle, roadLink: RoadLink) = {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadLink.geometry)
+      val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).get
+      obstacle.copy(mValue = mValue, linkId = roadLink.linkId, lon = point.x, lat = point.y,
+        municipalityCode = roadLink.municipalityCode, modifiedBy = Some("automatic_correction"),
         modifiedAt = Some(DateTime.now()), floating = false)
     }
     //FunctionalClass 7 equal to FeatureClass TractorRoad

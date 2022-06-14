@@ -12,20 +12,20 @@ import org.scalatest.mockito.MockitoSugar
 
 class DynamicValueAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadlinkClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadlinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
 
   object ServiceWithDao extends TextValueLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadlinkClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
   }
 

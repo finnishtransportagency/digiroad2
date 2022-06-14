@@ -50,11 +50,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private val mockLaneUtils = MockitoSugar.mock[LaneUtils]
   private val mockLaneService = MockitoSugar.mock[LaneService]
 
-  val roadlinkFetcheds = Seq(RoadlinkFetched(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+  val roadLinkFetcheds = Seq(RoadLinkFetched(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway,  None, None, Map("MUNICIPALITYCODE" -> BigInt(408))))
 
   when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
-  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[RoadlinkFetched]])).thenReturn(roadLink)
+  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[RoadLinkFetched]])).thenReturn(roadLink)
 
   def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
 
@@ -149,7 +149,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
@@ -170,7 +170,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
@@ -189,7 +189,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
@@ -208,7 +208,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
@@ -227,7 +227,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     runWithRollback {
@@ -251,7 +251,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     runWithRollback {
@@ -274,7 +274,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     runWithRollback {
@@ -297,7 +297,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     runWithRollback {
@@ -319,7 +319,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
 
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
@@ -343,7 +343,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val trafficDirection = TrafficDirection.BothDirections
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
-    val newRoadLink1 = RoadlinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
 
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 

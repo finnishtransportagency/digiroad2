@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadlinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 
@@ -44,15 +44,15 @@ object ServicePointImporter {
           val point = rows.head._6.head
           val diagonal = Vector3d(150, 150, 0)
           val municipalities = roadLinkClient.roadLinkData.fetchByBounds(BoundingRectangle(point - diagonal, point + diagonal))
-          val municipalityCode = municipalities.groupBy(roadlink => roadlink.municipalityCode).size match {
+          val municipalityCode = municipalities.groupBy(roadLink => roadLink.municipalityCode).size match {
             case 0 =>
               println("No municipality found for asset id " + assetId)
               0
             case 1 => municipalities.head.municipalityCode
             case default =>
-              val groups = municipalities.groupBy(roadlink => roadlink.municipalityCode)
-              val distance = groups.mapValues(links => links.map((roadlink:RoadlinkFetched) => minimumDistance(point, roadlink.geometry)).min)
-              val retval = municipalities.min(Ordering.by((roadlink:RoadlinkFetched) => minimumDistance(point, roadlink.geometry))).municipalityCode
+              val groups = municipalities.groupBy(roadLink => roadLink.municipalityCode)
+              val distance = groups.mapValues(links => links.map((roadLink:RoadLinkFetched) => minimumDistance(point, roadLink.geometry)).min)
+              val retval = municipalities.min(Ordering.by((roadLink:RoadLinkFetched) => minimumDistance(point, roadLink.geometry))).municipalityCode
               print("multiple choice for asset id " + assetId + ": municipality distances " + distance)
               println(" - picking closest one: " + retval)
               retval

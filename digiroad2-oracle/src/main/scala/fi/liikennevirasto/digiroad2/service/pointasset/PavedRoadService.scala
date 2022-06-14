@@ -92,8 +92,8 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     *  override is needed anymore.
     */
     val expiredAssetsIds = changedAssets.flatMap {
-      case (Some(roadlink), changeInfo, assets) =>
-        if (roadlink.isNotPaved && assets.nonEmpty)
+      case (Some(roadLink), changeInfo, assets) =>
+        if (roadLink.isNotPaved && assets.nonEmpty)
           assets.filter(_.vvhTimeStamp < changeInfo.vvhTimeStamp).map(_.id)
         else
           List()
@@ -104,17 +104,17 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     /* Note: This will not change anything if asset is stored using value None (null in database)
     *  This is the intended consequence as it enables the UI to write overrides to VVH pavement info */
     val newAndUpdatedAssets = changedAssets.flatMap{
-      case (Some(roadlink), changeInfo, assets) =>
-        if(roadlink.isPaved)
+      case (Some(roadLink), changeInfo, assets) =>
+        if(roadLink.isPaved)
           if (assets.isEmpty)
-            Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(defaultPropertyData), 0,
-              GeometryUtils.geometryLength(roadlink.geometry), None, None, None, None, false,
-              PavedRoad.typeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
+            Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(defaultPropertyData), 0,
+              GeometryUtils.geometryLength(roadLink.geometry), None, None, None, None, false,
+              PavedRoad.typeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, None, None, Some(MmlNls)))
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
               (a.value.isEmpty || a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
             ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=a.value,
-              startMeasure=0.0, endMeasure=roadlink.length, informationSource = Some(MmlNls)))
+              startMeasure=0.0, endMeasure=roadLink.length, informationSource = Some(MmlNls)))
         else
           None
       case _ =>
