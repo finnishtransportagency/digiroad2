@@ -75,8 +75,8 @@ case class RoadlinkFetchedMtk(linkId: String, municipalityCode: Int, geometry: S
                            constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def verticalLevel: Option[String] = attributes.get("surfacerelation").map(_.toString)
-  val dateValue =attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", "")) 
-  val timeStamp = Try(new DateTime(dateValue).getMillis).getOrElse(BigInt(0)).asInstanceOf[BigInt].longValue()
+  val dateValue = attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", "")) 
+  val timeStamp = Try(new DateTime(dateValue).getMillis).getOrElse(0L)
 }
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
@@ -346,7 +346,7 @@ object RoadLinkClient {
     * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
     * This prevents change info from being applied to the recently created asset. Resolution is one day.
     * @param offsetHours Offset to the timestamp. Defaults to 5 which reflects to VVH offset for batch runs.
-    * @return VVH timestamp for current date //TODO generify this if still need it  DROTH-3271
+    * @return VVH timestamp for current date //TODO generify this if we still need it  DROTH-3271
     */
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     val oneHourInMs = 60 * 60 * 1000L
