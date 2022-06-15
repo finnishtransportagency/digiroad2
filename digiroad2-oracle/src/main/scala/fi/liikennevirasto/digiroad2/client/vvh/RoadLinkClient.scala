@@ -69,13 +69,6 @@ case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[
   val timeStamp = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", 0L)).asInstanceOf[Long]
 }
 
-/*case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[Point],
-                           administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                           featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                           constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
-  
-}*/
-
 case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long, changeType: Int,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
                       newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
