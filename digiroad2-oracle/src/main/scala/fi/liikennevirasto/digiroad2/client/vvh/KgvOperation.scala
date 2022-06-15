@@ -463,16 +463,16 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
   
-  override protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter: String = ""): Seq[LinkType] = {
+  override protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter: Option[String] = None): Seq[LinkType] = {
     if (linkIds.size == 1) {
       queryByLinkId[LinkType](linkIds.head)
     }else {
-      linkIds.grouped(BATCH_SIZE).toList.par.flatMap(queryByLinkIdsUsingFilter).toList
+      linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
     }
   }
 
-  protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String]): Seq[LinkType] = {
-    queryByFilter(Some(FilterOgc.withLinkIdFilter(linkIds)))
+  protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {
+    queryByFilter(Some(FilterOgc.combineFiltersWithAnd(FilterOgc.withLinkIdFilter(linkIds), filter)))
   }
 
   protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {

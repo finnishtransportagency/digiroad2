@@ -400,7 +400,7 @@ trait LinkOperationsAbstract {
 
   protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = ???
 
-  protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter:String): Seq[LinkType] = ???
+  protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter: Option[String] = None): Seq[LinkType] = ???
 
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
@@ -731,7 +731,7 @@ trait VVHClientOperations extends LinkOperationsAbstract {
 
 }
 
-
+// TODO delete thist when no longer needed for extension
 class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
 
   override type LinkType = RoadLinkFetched
@@ -790,12 +790,12 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   /**
     * Returns VVH road links.
     */
-   override protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter:String): Seq[LinkType] = {
+   override protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter: Option[String] = None): Seq[LinkType] = {
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
      val fetchGeometry = true 
      idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(Filter.withLinkIdFilter(ids), None)
+      val definition = layerDefinition(Filter.combineFiltersWithAnd(Filter.withLinkIdFilter(ids),filter), None)
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
 
       fetchVVHFeatures(url) match {
@@ -985,7 +985,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   def fetchByLinkIds(linkIds: Set[String]): Seq[RoadLinkFetched] = {
     // TODO: Temporary parsing from string to long. Remove after not needed anymore
     val ids = parseLinkIdsToLong(linkIds)
-    queryByLinkIds[LinkType](parseLinkIdsToLong(linkIds), Filter.withLinkIdFilter(ids))
+    queryByLinkIds[LinkType](parseLinkIdsToLong(linkIds), Some(Filter.withLinkIdFilter(ids)))
   }
 
   def fetchByLinkIdsF(linkIds: Set[String]) = {
@@ -1006,7 +1006,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
     */
   def fetchByMmlIds(mmlIds: Set[Long]): Seq[RoadLinkFetched] = {
-    queryByLinkIds(mmlIds,Filter.withMmlIdFilter(mmlIds))
+    queryByLinkIds(mmlIds,Some(Filter.withMmlIdFilter(mmlIds)))
   }
 
   def fetchByMunicipality(municipality: Int): Seq[RoadLinkFetched] = {
@@ -1065,7 +1065,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     // only one used in very old batch
     // TODO: Temporary parsing from string to long. Remove after not needed anymore
     val ids = parseLinkIdsToLong(linkIds)
-    queryByLinkIds(parseLinkIdsToLong(linkIds), Filter.withLinkIdFilter(ids))
+    queryByLinkIds(parseLinkIdsToLong(linkIds), Some(Filter.withLinkIdFilter(ids)))
   }
 }
 
