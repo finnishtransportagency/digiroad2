@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.lane.PersistedLane
+import org.joda.time.DateTime
 
 import scala.util.Try
 
@@ -37,12 +38,13 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
                     attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
                     linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface,lanes:Seq[PersistedLane]=Seq()) extends RoadLinkLike {
 
-  def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
+  def municipalityCode: Int = attributes("municipalitycode").asInstanceOf[BigInt].intValue
   def verticalLevel : Int = attributes("surfacerelation").asInstanceOf[BigInt].intValue
-  def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
-  def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  def roadPartNumber: Option[String] = attributes.get("ROADPARTNUMBER").map(_.toString)
-  val timeStamp: Long = attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", BigInt(0))).asInstanceOf[BigInt].longValue()
+  def surfaceType : Int = attributes("surfacetype").asInstanceOf[BigInt].intValue
+  def roadNumber: Option[String] = attributes.get("roadnumber").map(_.toString)
+  def roadPartNumber: Option[String] = attributes.get("roadpartnumber").map(_.toString)
+  val dateValue = attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", ""))
+  val timeStamp: Long = Try(new DateTime(dateValue).getMillis).getOrElse(0L)
   def accessRightId: Option[String] = attributes.get("ACCESS_RIGHT_ID").map(_.toString)
   def privateRoadAssociation: Option[String] = attributes.get("PRIVATE_ROAD_ASSOCIATION").map(_.toString)
   def additionalInfo: Option[String] = attributes.get("ADDITIONAL_INFO").map(_.toString)
