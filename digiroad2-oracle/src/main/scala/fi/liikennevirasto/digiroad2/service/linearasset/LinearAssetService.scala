@@ -97,8 +97,8 @@ trait LinearAssetOperations {
     * @return
     */
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
@@ -251,34 +251,12 @@ trait LinearAssetOperations {
     existingAssets
   }
 
-  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo] = Seq()): Seq[PieceWiseLinearAsset] = {
 
-    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
-    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
-    val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, removedLinkIds)
+    val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
+    val groupedAssets = existingAssets.groupBy(_.linkId)
 
-    val timing = System.currentTimeMillis
-    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
-
-    val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-
-    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                               expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
-                               adjustedMValues = Seq.empty[MValueAdjustment],
-                               adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                               adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-                               valueAdjustments = Seq.empty[ValueAdjustment])
-
-    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
-
-    val newAssets = projectedAssets ++ assetsWithoutChangedLinks
-
-    if (newAssets.nonEmpty) {
-      logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
-    }
-    val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(roadLinks, groupedAssets, typeId)
 
     filledTopology
   }
