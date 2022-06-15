@@ -17,13 +17,13 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
-  val roadLinkWithRedundantTrafficDirection: RoadLinkFetched = RoadLinkFetched(1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
-  val roadLinkWithValidTrafficDirection: RoadLinkFetched = RoadLinkFetched(2, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  val roadLinkWithRedundantTrafficDirection: RoadLinkFetched = RoadLinkFetched("1", 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  val roadLinkWithValidTrafficDirection: RoadLinkFetched = RoadLinkFetched("2", 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
 
-  when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
+  when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
 
   test("A redundant traffic direction is removed, but a valid is not") {
-    val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set(1, 2))
+    val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set("1", "2"))
     runWithRollback {
       RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, linkSet.head.linkId, None, linkSet.head.trafficDirection.value)
       RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, linkSet.last.linkId, None, TrafficDirection.TowardsDigitizing.value)

@@ -34,7 +34,7 @@ class PostGISPointMassLimitationDao {
     def apply(r: PositionedResult) : WeightGroupLimitation = {
       val id = r.nextLong()
       val typeId = r.nextInt()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

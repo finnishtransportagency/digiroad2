@@ -51,10 +51,10 @@ object PostGISTrailerTruckWeightLimitDao {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("yhdistelman_suurin_sallittu_massa").first
   }
 
-  implicit val getPointAsset = new GetResult[WeightLimit] {
+  implicit val getPointAsset: GetResult[WeightLimit] = new GetResult[WeightLimit] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

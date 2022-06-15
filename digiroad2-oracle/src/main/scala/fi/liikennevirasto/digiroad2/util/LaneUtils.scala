@@ -201,19 +201,19 @@ object LaneUtils {
     }
   }
 
-  def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {
+  def getMappedChanges(changes: Seq[ChangeInfo]): Map[String, Seq[ChangeInfo]] = {
     (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
       .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
   }
 
-  def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
+  def deletedRoadLinkIds(changes: Map[String, Seq[ChangeInfo]], currentLinkIds: Set[String]): Seq[String] = {
     changes.filter(c =>
       !c._2.exists(ci => ci.newId.contains(c._1)) &&
         !currentLinkIds.contains(c._1)
     ).keys.toSeq
   }
 
-  def newChangeInfoDetected(lane : PersistedLane, changes: Map[Long, Seq[ChangeInfo]]): Boolean = {
+  def newChangeInfoDetected(lane : PersistedLane, changes: Map[String, Seq[ChangeInfo]]): Boolean = {
     changes.getOrElse(lane.linkId, Seq()).exists(c =>
       c.vvhTimeStamp > lane.vvhTimeStamp && (c.oldId.getOrElse(0) == lane.linkId || c.newId.getOrElse(0) == lane.linkId)
     )

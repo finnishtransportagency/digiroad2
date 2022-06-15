@@ -29,10 +29,10 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     def endDate(roadLinkFetched: RoadLinkFetched) =
       roadLinkFetched.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
 
-    def newLinkId(roadLinkFetched: RoadLinkFetched) : Option[BigInt] = {
+    def newLinkId(roadLinkFetched: RoadLinkFetched) : Option[String] = {
       roadLinkFetched.attributes.get("LINKID_NEW") match {
         case Some(linkId) =>
-          Some(linkId.asInstanceOf[BigInt].longValue())
+          Some(linkId.asInstanceOf[BigInt].toString)
         case _ =>
           None
       }

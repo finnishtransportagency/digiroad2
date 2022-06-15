@@ -75,7 +75,7 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
   }
 
   def createMaintenanceRoads(maintenanceRoadAttributes: CsvAssetRow, username: String): Unit = {
-    val linkId = getPropertyValue(maintenanceRoadAttributes, "linkid").asInstanceOf[Integer].toLong
+    val linkId = getPropertyValue(maintenanceRoadAttributes, "linkid").asInstanceOf[String]
     val newKoProperty = DynamicProperty("huoltotie_kayttooikeus", "single_choice", false, Seq(DynamicPropertyValue(getPropertyValue(maintenanceRoadAttributes, "rightOfUse"))))
     val orAccessProperty = DynamicProperty("huoltotie_huoltovastuu", "single_choice", false, Seq(DynamicPropertyValue(getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility"))))
 

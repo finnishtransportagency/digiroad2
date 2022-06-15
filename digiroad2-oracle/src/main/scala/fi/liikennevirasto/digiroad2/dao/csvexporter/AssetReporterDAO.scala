@@ -24,10 +24,10 @@ class AssetReporterDAO {
     }
   }
 
-  def linearAssetQuery(linkIds: Seq[Long], assetTypesList: Seq[Int]): List[AssetReport] = {
+  def linearAssetQuery(linkIds: Seq[String], assetTypesList: Seq[Int]): List[AssetReport] = {
     val filter = if (assetTypesList.isEmpty) "" else s"AND a.asset_type_id IN (${assetTypesList.mkString(",")})"
 
-    MassQuery.withIds(linkIds.toSet){idTableName =>
+    MassQuery.withStringIds(linkIds.toSet){ idTableName =>
       sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE,
             CASE WHEN a.MODIFIED_BY IS NULL THEN a.CREATED_BY ELSE a.MODIFIED_BY END AS UPDATED_BY,
             CASE WHEN a.MODIFIED_DATE IS NULL THEN a.CREATED_DATE ELSE a.MODIFIED_DATE END AS UPDATED_DATE
@@ -43,8 +43,8 @@ class AssetReporterDAO {
     }
   }
 
-  def laneQuery(linkIds: Seq[Long]): List[AssetReport] = {
-    MassQuery.withIds(linkIds.toSet){ idTableName =>
+  def laneQuery(linkIds: Seq[String]): List[AssetReport] = {
+    MassQuery.withStringIds(linkIds.toSet){ idTableName =>
       sql"""SELECT ${Lanes.typeId}, ${Lanes.nameFI}, ${Lanes.geometryType},
             CASE WHEN l.MODIFIED_BY IS NULL THEN l.CREATED_BY ELSE l.MODIFIED_BY END AS UPDATED_BY,
             CASE WHEN l.MODIFIED_DATE IS NULL THEN l.CREATED_DATE ELSE l.MODIFIED_DATE END AS UPDATED_DATE
@@ -56,8 +56,8 @@ class AssetReporterDAO {
     }
   }
 
-  def manoeuvreQuery(linkIds: Seq[Long]): List[AssetReport] = {
-    MassQuery.withIds(linkIds.toSet){ idTableName =>
+  def manoeuvreQuery(linkIds: Seq[String]): List[AssetReport] = {
+    MassQuery.withStringIds(linkIds.toSet){ idTableName =>
       sql"""SELECT ${Manoeuvres.typeId}, ${Manoeuvres.nameFI}, ${Manoeuvres.geometryType},
             CASE WHEN m.MODIFIED_BY IS NULL THEN m.CREATED_BY ELSE m.MODIFIED_BY END AS UPDATED_BY,
             CASE WHEN m.MODIFIED_DATE IS NULL THEN m.CREATED_DATE ELSE m.MODIFIED_DATE END AS UPDATED_DATE
@@ -71,8 +71,8 @@ class AssetReporterDAO {
     }
   }
 
-  def pointAssetQuery(linkIds: Seq[Long], assetTypesList: Seq[Int]): List[AssetReport] = {
-    MassQuery.withIds(linkIds.toSet){ idTableName =>
+  def pointAssetQuery(linkIds: Seq[String], assetTypesList: Seq[Int]): List[AssetReport] = {
+    MassQuery.withStringIds(linkIds.toSet){ idTableName =>
       sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE,
             CASE WHEN a.MODIFIED_BY IS NULL THEN a.CREATED_BY ELSE a.MODIFIED_BY END AS UPDATED_BY,
             CASE WHEN a.MODIFIED_DATE IS NULL THEN a.CREATED_DATE ELSE a.MODIFIED_DATE END AS UPDATED_DATE

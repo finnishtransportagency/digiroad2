@@ -84,7 +84,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       "kelluvuus" -> massTransitStop.floating
     }
 
-    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = {
+    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[String]) = {
       "link_id" -> Some(massTransitStop.linkId)
     }
 

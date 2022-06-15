@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.PersistedLane
 import scala.util.Try
 
 trait RoadLinkLike extends PolyLine{
-  def linkId: Any
+  def linkId: String
   def municipalityCode: Int
   def length: Double
   def administrativeClass: AdministrativeClass
@@ -20,7 +20,7 @@ trait RoadLinkLike extends PolyLine{
   def timeStamp: Long
 }
 
-case class RoadLinkProperties(linkId: Long,
+case class RoadLinkProperties(linkId: String,
                               functionalClass: Int,
                               linkType: LinkType,
                               trafficDirection: TrafficDirection,
@@ -28,9 +28,9 @@ case class RoadLinkProperties(linkId: Long,
                               modifiedAt: Option[String],
                               modifiedBy: Option[String])
 
-case class TinyRoadLink(linkId: Long)
+case class TinyRoadLink(linkId: String)
 
-case class RoadLink(linkId: Long, geometry: Seq[Point],
+case class RoadLink(linkId: String, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
@@ -90,6 +90,18 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   }
 
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]
+}
+
+sealed trait LinkId {
+  def value: String
+}
+
+object LinkId {
+  case object Unknown extends LinkId { def value = "99" }
+
+  def isUnknown(id: String): Boolean = {
+    id == null || id == Unknown.value
+  }
 }
 
 sealed trait SurfaceType {

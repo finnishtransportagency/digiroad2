@@ -35,13 +35,14 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   }
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
   test("start processing test") {
-
+    val linkId1 = "11478947"
+    val linkId2 = "11478953"
     val roadLinks = Seq(
-      RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
+      RoadLink(linkId1,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
         State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
           "starttime" -> BigInt(1446398762000L), "versionstarttime" -> BigInt(1584662329000L))),
-      RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
+      RoadLink(linkId2,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
         State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
           "starttime" -> BigInt(1446398700000L))))
@@ -49,48 +50,48 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(312, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(Seq())
 
-    val roadLinksTemp = Seq(RoadAddressTEMP(11478947,7421,1,Combined,1312,1332,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")),
-      RoadAddressTEMP(11478953,7421,1,Combined,1332,1500,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")))
+    val roadLinksTemp = Seq(RoadAddressTEMP(linkId1,7421,1,Combined,1312,1332,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")),
+      RoadAddressTEMP(linkId2,7421,1,Combined,1332,1500,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")))
 
     when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(roadLinksTemp)
 
     ResolvingFrozenRoadLinksTest.processing(312)
 
-    val captor = ArgumentCaptor.forClass(classOf[Set[Long]])
+    val captor = ArgumentCaptor.forClass(classOf[Set[String]])
     verify(mockRoadLinkTempDao, Mockito.atLeastOnce).deleteInfoByLinkIds(captor.capture)
     captor.getAllValues.size() should be (1)
-    captor.getValue.asInstanceOf[Set[Long]].head should be (11478947)
+    captor.getValue.asInstanceOf[Set[String]].head should be (linkId1)
   }
 
   test("missing information in middle of the road"){
     val roadLinks = Seq(
-      RoadLink(1490363, Seq(Point(415512.94000000041,6989434.0329999998), Point(415349.89199999999,6989472.9849999994), Point(415141.25800000038, 6989503.9090000018)), 10
+      RoadLink("1490363", Seq(Point(415512.94000000041,6989434.0329999998), Point(415349.89199999999,6989472.9849999994), Point(415141.25800000038, 6989503.9090000018)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin" -> "Sininentie", "roadnameswe" -> null, "ROADNUMBER" -> "77", "ROADPARTNUMBER" -> "7")),
-      RoadLink(1490369, Seq(Point(415512.94000000041, 6989434.0329999998), Point(415707.37399999984, 6989417.0780000016), Point(415976.35800000001, 6989464.9849999994)), 10
+      RoadLink("1490369", Seq(Point(415512.94000000041, 6989434.0329999998), Point(415707.37399999984, 6989417.0780000016), Point(415976.35800000001, 6989464.9849999994)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin"-> "Sininentie", "roadnameswe"-> null, "ROADNUMBER"-> "77", "ROADPARTNUMBER" -> "8")),
-      RoadLink(1490371, Seq(Point(415512.94000000041, 6989434.0329999998), Point(415530.69299999997, 6989518.8949999996)), 10
+      RoadLink("1490371", Seq(Point(415512.94000000041, 6989434.0329999998), Point(415530.69299999997, 6989518.8949999996)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin" -> "Kämärintie", "roadnameswe" -> null, "ROADNUMBER" -> "16934", "ROADPARTNUMBER" -> "1")),
-      RoadLink(1490374, Seq(Point(415976.35800000001, 6989464.9849999994), Point(416063.48300000001, 6989495.443)), 10
+      RoadLink("1490374", Seq(Point(415976.35800000001, 6989464.9849999994), Point(416063.48300000001, 6989495.443)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin" -> "Sininentie", "roadnameswe" -> null, "ROADNUMBER" -> "77", "ROADPARTNUMBER" -> "8")),
-      RoadLink(1490376, Seq(Point(415468.00499999989, 6989158.6240000017), Point(415487.87299999967, 6989275.7030000016), Point(415512.94000000041, 6989434.0329999998)), 10
+      RoadLink("1490376", Seq(Point(415468.00499999989, 6989158.6240000017), Point(415487.87299999967, 6989275.7030000016), Point(415512.94000000041, 6989434.0329999998)), 10
         , State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin" -> "Yhteisahontie", "roadnameswe" -> null, "ROADNUMBER" -> "648", "ROADPARTNUMBER" -> "8")),
-      RoadLink(1490379, Seq(Point(415464.78699999955,6989139.6889999993), Point(415468.00499999989, 6989158.6240000017)), 10
+      RoadLink("1490379", Seq(Point(415464.78699999955,6989139.6889999993), Point(415468.00499999989, 6989158.6240000017)), 10
         , State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
         Map("MUNICIPALITYCODE" -> BigInt(216), "roadnamefin" -> "Yhteisahontie", "roadnameswe" -> null, "ROADNUMBER" -> "648", "ROADPARTNUMBER" -> "8")))
 
     val viiteRoadAddress = Seq(ViiteRoadAddress(21675,77,7,Combined,4082,4461,None,None,
-      1490363,0.0,378.889,AgainstDigitizing,List(),false,None,None,None),
+      "1490363",0.0,378.889,AgainstDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(21707,77,8,Combined,469,562,None,None,
-        1490374,0.0,92.297,TowardsDigitizing,List(),false,None,None,None),
+        "1490374",0.0,92.297,TowardsDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(21717,648,8,Combined,6396,6415,None,None,
-        1490379,0.0,19.207,TowardsDigitizing,List(),false,None,None,None),
+        "1490379",0.0,19.207,TowardsDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(23366,16934,1,Combined,0,87,None,None,
-        1490371,0.0,86.741,TowardsDigitizing,List(),false,None,None,None))
+        "1490371",0.0,86.741,TowardsDigitizing,List(),false,None,None,None))
 
 
     RoadAddress(Some("216"), 648, 8, Track.Combined, 6416)
@@ -110,49 +111,49 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val toCreate = ResolvingFrozenRoadLinksTest.processing(216)._1.map(_.roadAddress)
 
     toCreate.size should be (2)
-    val createdInSininentie = toCreate.find(_.linkId == 1490369)
+    val createdInSininentie = toCreate.find(_.linkId == "1490369")
     createdInSininentie.nonEmpty should be (true)
     createdInSininentie.get.sideCode.get should be (SideCode.TowardsDigitizing)
 
-    val createdInYhteisahontie = toCreate.find(_.linkId == 1490376)
+    val createdInYhteisahontie = toCreate.find(_.linkId == "1490376")
     createdInYhteisahontie.nonEmpty should be (true)
     createdInYhteisahontie.get.sideCode.get should be (SideCode.TowardsDigitizing)
   }
 
   test("missing right and left ajorata"){
     val roadLinks = Seq(
-      RoadLink(11478950,List(Point(376585.751,6992711.448,159.9759999999951), Point(376569.312,6992714.125,160.19400000000314)),16.65,
+      RoadLink("11478950",List(Point(376585.751,6992711.448,159.9759999999951), Point(376569.312,6992714.125,160.19400000000314)),16.65,
         State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
+      RoadLink("11478947",List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
         State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
+      RoadLink("11478953",List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
         State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(11478956,List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
+      RoadLink("11478956",List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
         State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(11478942,List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
+      RoadLink("11478942",List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
         State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(6376556,List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
+      RoadLink("6376556",List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
         State,99, TrafficDirection.BothDirections,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(2439671,List(Point(376642.368,6992709.787,160.07399999999325), Point(376593.53,6992710.187,159.96400000000722), Point(376585.751,6992711.448,159.9759999999951)),56.9052,
+      RoadLink("2439671",List(Point(376642.368,6992709.787,160.07399999999325), Point(376593.53,6992710.187,159.96400000000722), Point(376585.751,6992711.448,159.9759999999951)),56.9052,
         State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29",  "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")),
-      RoadLink(2439673,List(Point(376586.275,6992719.353,159.9869999999937), Point(376630.419,6992726.587,159.94599999999627), Point(376639.195,6992733.214,160.125)),56.885,
+      RoadLink("2439673",List(Point(376586.275,6992719.353,159.9869999999937), Point(376630.419,6992726.587,159.94599999999627), Point(376639.195,6992733.214,160.125)),56.885,
         State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
         Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")))
 
     val viiteRoadAddress = Seq(
       ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,
-        6376556,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
+        "6376556",0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,
-        11478942,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
+        "11478942",0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(81202,16,29,RightSide,4758,4815,None,None,
-        2439671,0.0,56.905,AgainstDigitizing,List(),false,None,None,None))
+        "2439671",0.0,56.905,AgainstDigitizing,List(),false,None,None,None))
 
     when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(312, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
@@ -177,27 +178,27 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val toCreate = ResolvingFrozenRoadLinksTest.processing(312)._1.map(_.roadAddress)
 
     toCreate.size should be (4)
-    toCreate.exists(x => x.linkId == 11478947 && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
-    toCreate.exists(x => x.linkId == 2439673 && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
-    toCreate.exists(x => x.linkId == 11478953 && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
-    toCreate.exists(x => x.linkId == 11478956 && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
+    toCreate.exists(x => x.linkId == "11478947" && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
+    toCreate.exists(x => x.linkId == "2439673" && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
+    toCreate.exists(x => x.linkId == "11478953" && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
+    toCreate.exists(x => x.linkId == "11478956" && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
   }
 
   test("cleaning missing addresses without success") {
 
-    val road1 = RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
+    val road1 = RoadLink("11478947",List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
       State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road2 = RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
+    val road2 = RoadLink("11478953",List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
       State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road3 = RoadLink(11478956,List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
+    val road3 = RoadLink("11478956",List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
       State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road4 = RoadLink(11478942,List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
+    val road4 = RoadLink("11478942",List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
       State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road5 = RoadLink(6376556,List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
+    val road5 = RoadLink("6376556",List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
       State,99, TrafficDirection.BothDirections,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
 
@@ -205,13 +206,13 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     val address = Seq(
       ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,
-        6376556,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
+        "6376556",0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,
-        11478942,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
+        "11478942",0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(81200, 16, 29, LeftSide, 4740,4757,None,None,
-        11478953,0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
+        "11478953",0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
 
-    when(mockRoadAddressService.getAllByLinkIds(any[Seq[Long]] /*Seq(11478953, 11478956, 6376556, 11478942, 11478947)*/)).thenReturn(address)
+    when(mockRoadAddressService.getAllByLinkIds(any[Seq[String]] /*Seq(11478953, 11478956, 6376556, 11478942, 11478947)*/)).thenReturn(address)
 
     val missingRoadLinks = Map((Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875), road3) -> Seq(road1, road4, road5),
     (Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875), road1) -> Seq(road2, road3))
@@ -223,19 +224,19 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
   test("cleaning missing addresses success") {
 
-    val road1 = RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
+    val road1 = RoadLink("11478947",List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
       State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road2 = RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
+    val road2 = RoadLink("11478953",List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
       State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road3 = RoadLink(11478956,List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
+    val road3 = RoadLink("11478956",List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
       State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road4 = RoadLink(11478942,List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
+    val road4 = RoadLink("11478942",List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
       State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
-    val road5 = RoadLink(6376556,List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
+    val road5 = RoadLink("6376556",List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
       State,99, TrafficDirection.BothDirections,UnknownLinkType, None, None,
       Map("roadnamefin" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
 
@@ -243,11 +244,11 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     val address = Seq(
       ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,
-        6376556,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
+        "6376556",0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,
-        11478942,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
+        "11478942",0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
       ViiteRoadAddress(81200, 16, 29, LeftSide, 4740,4757,None,None,
-        11478947,0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
+        "11478947",0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
 
 
     val mappedAddresses = address.flatMap { address =>
@@ -270,9 +271,10 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   test("Postgres drop trailing millisecond zero, add it back by using to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS')") {
     val roadLinkTempDao = new RoadLinkTempDAO()
     val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
+    val linkId = "123456789"
     runWithRollback{
-      sqlu"""INSERT INTO temp_road_address_info (id,link_id,municipality_code,road_number,road_part,track_code,start_address_m,end_address_m,start_m_value,end_m_value,side_code,created_date,created_by) VALUES (nextval('primary_key_seq'),123456789,1,1,1,2,1,1,0,11.1,1,'2019-12-01 12:41:21.000','test');""".execute
-      val roadAddress1 =  roadLinkTempDao.getByLinkIds(Set(123456789))
+      sqlu"""INSERT INTO temp_road_address_info (id,link_id,municipality_code,road_number,road_part,track_code,start_address_m,end_address_m,start_m_value,end_m_value,side_code,created_date,created_by) VALUES (nextval('primary_key_seq'),$linkId,1,1,1,2,1,1,0,11.1,1,'2019-12-01 12:41:21.000','test');""".execute
+      val roadAddress1 =  roadLinkTempDao.getByLinkIds(Set(linkId))
       val roadAddress2 =  roadLinkTempDao.getByRoadNumber(1)
       val roadAddress3 =  roadLinkTempDao.getByMunicipality(1)
       val roadAddress4 =  roadLinkTempDao.getByRoadNumberRoadPartTrack(1,2,Set(1))

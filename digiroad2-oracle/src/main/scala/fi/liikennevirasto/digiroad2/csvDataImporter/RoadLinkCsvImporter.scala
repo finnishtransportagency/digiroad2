@@ -19,13 +19,13 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  case class NonUpdatedLink(linkId: Long, csvRow: String)
+  case class NonUpdatedLink(linkId: String, csvRow: String)
   case class ImportResultRoadLink(nonUpdatedLinks: List[NonUpdatedLink] = Nil,
                                   incompleteRows: List[IncompleteRow] = Nil,
                                   malformedRows: List[MalformedRow] = Nil,
                                   excludedRows: List[ExcludedRow] = Nil) extends ImportResult
 
-  case class CsvRoadLinkRow(linkId: Int, objectID: Int = 0, properties: Seq[AssetProperty])
+  case class CsvRoadLinkRow(linkId: String, objectID: Int = 0, properties: Seq[AssetProperty])
 
   type ImportResultData = ImportResultRoadLink
 
@@ -66,7 +66,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
-  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): Option[Long] = {
+  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): Option[String] = {
     try {
       if (hasTrafficDirectionChange) {
         RoadLinkDAO.get(RoadLinkDAO.TrafficDirection, roadLinkAttribute.linkId) match {
@@ -90,7 +90,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     }
   }
 
-  def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[Long] = {
+  def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[String] = {
     val timeStamps = new java.util.Date().getTime 
     // check objec id used and delete or change code
     val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap ++ Map("versionstarttime" -> timeStamps) ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)
@@ -173,7 +173,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
       override val delimiter: Char = ';'
     })
     // check objec id used and delete or change code
-    def getCompletaryVVHInfo(linkId: Long) = {
+    def getCompletaryVVHInfo(linkId: String) = {
       roadLinkClient.complementaryData.fetchByLinkId(linkId) match {
         case Some(vvhRoadLink) => (vvhRoadLink.attributes.get("OBJECTID"), vvhRoadLink.administrativeClass.value)
         case _ => None
@@ -196,7 +196,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
             case parameters => MalformedRow(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedRows
           })
       } else {
-        val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("linkin id").toInt) match {
+        val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("linkin id")) match {
           case None => (None, None)
           case (Some(objId), adminClass) => (objId, adminClass)
         }
@@ -212,7 +212,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
 
           withDynTransaction {
             if (propertiesOTH.nonEmpty || hasDirectionType) {
-              val parsedRowOTH = CsvRoadLinkRow(row("linkin id").toInt, properties = propertiesOTH)
+              val parsedRowOTH = CsvRoadLinkRow(row("linkin id"), properties = propertiesOTH)
               updateRoadLinkOTH(parsedRowOTH, Some(username), hasDirectionType) match {
                 case None => result
                 case Some(value) =>
@@ -220,7 +220,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
               }
             }
             if (propertiesVVH.nonEmpty) {
-              val parsedRowVVH = CsvRoadLinkRow(row("linkin id").toInt, objectId.toString.toInt, properties = propertiesVVH)
+              val parsedRowVVH = CsvRoadLinkRow(row("linkin id"), objectId.toString.toInt, properties = propertiesVVH)
               updateRoadLinkInVVH(parsedRowVVH) match {
                 case None => result
                 case Some(value) =>
@@ -232,7 +232,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
         } else {
           result.copy(
             nonUpdatedLinks = objectId match {
-              case None => NonUpdatedLink(linkId = row("linkin id").toInt, csvRow = rowToString(row)) :: result.nonUpdatedLinks
+              case None => NonUpdatedLink(linkId = row("linkin id"), csvRow = rowToString(row)) :: result.nonUpdatedLinks
               case _ => result.nonUpdatedLinks
             },
             excludedRows = unauthorizedAdminClass match {

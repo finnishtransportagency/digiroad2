@@ -392,7 +392,7 @@ object DataFixture {
         case (_, x) =>
           x match {
             case u: List[Any] =>
-              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet, Seq())
+              speedLimitService.purgeUnknown(u.asInstanceOf[List[String]].toSet, Seq())
             case _ =>
           }
         case _ =>
@@ -487,7 +487,7 @@ object DataFixture {
               case Some(roadLink) =>
                 dataImporter.insertNumberPropertyData(propertyId, assetId, roadLink.administrativeClass.value)
               case _ =>
-                println("The roadlink with id %d was not found".format(linkId))
+                println(s"The roadlink with id $linkId was not found")
             }
           case (assetId, linkId, Some(value)) =>
             println("The administration class property already exists on the asset with id %d ".format(assetId))
@@ -1101,7 +1101,7 @@ object DataFixture {
       }
 
     PostGISDatabase.withDynTransaction {
-      val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
+      val additionalPanelIdToExpire : Seq[(Option[Long], String, Int)] = municipalities.flatMap { municipality =>
         println("")
         println(DateTime.now())
         println(s"Fetching Traffic Signs for Municipality: $municipality")
@@ -2034,7 +2034,7 @@ object DataFixture {
     println("\n")
   }
 
-  def GetAccessRightID(linkId:Long):String ={
+  def GetAccessRightID(linkId: String):String ={
     PostGISDatabase.withDynSession {
       val response= LinkAttributesDao.getExistingValues(linkId).getOrElse("ACCESS_RIGHT_ID", "")
       response

@@ -16,7 +16,7 @@ case class geometryFields(`type`: String, coordinates: Seq[Seq[(Double, Double, 
 case class propertiesFields(
                              id: Long,
                              areaId: Int,
-                             linkId: Int,
+                             linkId: String,
                              mmlId: Int,
                              verticalLevel: Int,
                              startMeasure: Double,

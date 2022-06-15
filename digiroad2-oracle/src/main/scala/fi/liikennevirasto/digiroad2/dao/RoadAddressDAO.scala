@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, linkId: Long,
+                       endDate: Option[DateTime] = None, linkId: String,
                        startMValue: Double, endMValue: Double, sideCode: SideCode, geom: Seq[Point],
                        expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime]) {
   def addressMValueToLRM(addrMValue: Long): Option[Double] = {
@@ -39,7 +39,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 }
 
 //TODO - Remove after new service NLS is used
-case class RoadAddressTEMP(linkId: Long, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long,
+case class RoadAddressTEMP(linkId: String, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long,
                            startMValue: Double, endMValue: Double, geom: Seq[Point] = Seq(), sideCode: Option[SideCode] = None,
                            municipalityCode: Option[Int] = None, createdDate: Option[String] = None) {
 

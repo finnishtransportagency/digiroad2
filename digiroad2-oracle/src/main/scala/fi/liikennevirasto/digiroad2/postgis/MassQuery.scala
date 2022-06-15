@@ -37,6 +37,35 @@ object MassQuery {
     }
   }
 
+  def withStringIds[T](ids: Set[String])(f: String => T): T = {
+    LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.size}"){
+      LogUtils.time(logger, "TEST LOG create TEMP_STRING_ID table"){
+        sqlu"""
+          CREATE TEMPORARY TABLE IF NOT EXISTS TEMP_STRING_ID (
+            ID VARCHAR(40) NOT NULL,
+            CONSTRAINT TEMP_STRING_ID_PK PRIMARY KEY (ID)
+          ) ON COMMIT DELETE ROWS
+        """.execute
+      }
+      val insertLinkIdPS = dynamicSession.prepareStatement("insert into temp_string_id (id) values (?)")
+
+      LogUtils.time(logger, s"TEST LOG insert into TEMP_STRING_ID ${ids.size}"){
+        try {
+          ids.foreach { id =>
+            insertLinkIdPS.setString(1, id)
+            insertLinkIdPS.addBatch()
+          }
+          insertLinkIdPS.executeBatch()
+          val ret = f("temp_string_id")
+          sqlu"TRUNCATE TABLE TEMP_STRING_ID".execute
+          ret
+        } finally {
+          insertLinkIdPS.close()
+        }
+      }
+    }
+  }
+
   def executeBatch[T](query: String)(f: PreparedStatement => T): T = {
     val statement = dynamicSession.prepareStatement(query)
     try {

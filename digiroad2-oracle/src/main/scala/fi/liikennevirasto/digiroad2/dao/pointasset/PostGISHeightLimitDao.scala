@@ -53,7 +53,7 @@ object PostGISHeightLimitDao {
   implicit val getPointAsset = new GetResult[HeightLimit] {
     def apply(r: PositionedResult): HeightLimit = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
