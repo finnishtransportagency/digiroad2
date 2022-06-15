@@ -180,7 +180,7 @@ object Extractor {
     else TrafficDirection.UnknownDirection
   }
   
-  private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
+  private def extractAttributes(attributesMap: Map[String, Any],validFromDate:Long,lastEditedDate:Long,starttime:Long): Map[String, Any] = {
     Map(
       "ROADNUMBER"            -> attributesMap("roadnumber"),
       "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
@@ -199,9 +199,9 @@ object Extractor {
       "ADDRESSFROMLEFT"       -> attributesMap("addressfromleft"),
       "ADDRESSTOLEFT"         -> attributesMap("addresstoleft"),
       "GEOMETRYFLIP"          -> attributesMap("geometryflip"),
-      "STARTTIME"             -> attributesMap("starttime"),
-      "VERSIONSTARTTIME"      -> attributesMap("versionstarttime"), // dateformat ?
-      "SOURCEMODIFICATIONTIME"-> attributesMap("sourcemodificationtime")
+      "STARTTIME"             -> starttime,
+      "VERSIONSTARTTIME"      -> lastEditedDate,
+      "SOURCEMODIFICATIONTIME"-> validFromDate
     )
   }
   
@@ -227,7 +227,11 @@ object Extractor {
 
   def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLinkFetched = {
     val attributes = feature.properties
-
+    
+    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
+    val lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
+    val starttime = Option(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis)
+    
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
@@ -247,7 +251,7 @@ object Extractor {
       linkGeometry,
       extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
-      extractAttributes(attributes)
+      extractAttributes(attributes,validFromDate.get,lastEditedDate.get,starttime.get)
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
       , extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
