@@ -205,8 +205,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
         lastModifiedBy(None, roadLink.modifiedBy),
-        "startNode" -> roadLink.attributes.get("STARTNODE"), //delete
-        "endNode" -> roadLink.attributes.get("ENDNODE"),//delete
+        "startNode" -> roadLink.attributes.get("STARTNODE"), //TODO DROTH-3255 delete ?
+        "endNode" -> roadLink.attributes.get("ENDNODE"),//TODO DROTH-3255 delete ?
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"), //complementary
         "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
@@ -215,8 +215,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         .filterNot(_._1 == "sourceid")
         .filterNot(_._1 == "ROADNUMBER")
         .filterNot(_._1 == "ROADPARTNUMBER")
-        .filterNot(_._1 == "STARTNODE") //delete
-        .filterNot(_._1 == "ENDNODE")  //delete
+        .filterNot(_._1 == "STARTNODE") //TODO DROTH-3255 delete?
+        .filterNot(_._1 == "ENDNODE")  //TODO DROTH-3255 delete
         .filterNot(_._1 == "CUST_OWNER")
         .filterNot(_._1 == "roadclass" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
         .filterNot(_._1 == "ACCESS_RIGHT_ID")
