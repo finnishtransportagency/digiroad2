@@ -139,7 +139,7 @@ object FilterOgc extends Filter {
 }
 
 object Extractor {
-  //TODO rename ?
+
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
@@ -150,7 +150,7 @@ object Extractor {
     12131 -> FeatureClass.CarRoad_IIIa,
     12132 -> FeatureClass.CarRoad_IIIb
   )
-  //TODO rename ?
+
   private val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
@@ -163,7 +163,7 @@ object Extractor {
         .getOrElse(Unknown)
     else Unknown
   }
-  //TODO rename ?
+
   def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
     if (attributes("lifecyclestatus").asInstanceOf[String] != null)
       Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
@@ -171,7 +171,7 @@ object Extractor {
         .getOrElse(ConstructionType.InUse)
     else ConstructionType.InUse
   }
-  //TODO rename ?
+  
   private  def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
     if (attributes("directiontype").asInstanceOf[String] != null)
       Option(attributes("directiontype").asInstanceOf[String].toInt)
