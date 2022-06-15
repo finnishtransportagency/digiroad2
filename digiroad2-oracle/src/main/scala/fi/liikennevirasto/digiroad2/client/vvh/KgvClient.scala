@@ -33,7 +33,7 @@ sealed trait Collection {
   def value :String
 }
   
-object MtkCollection {
+object KgvCollection {
   case object Frozen extends Collection { def value = "keskilinjavarasto:frozenlinks" }
   case object Changes extends Collection { def value = "keskilinjavarasto:change" }
   case object UnFrozen extends Collection { def value = "keskilinjavarasto:road_links" }
@@ -256,7 +256,7 @@ object Extractor {
   }
 }
 
-trait MtkOperation extends LinkOperationsAbstract{
+trait KgvOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
   override type IdType = String
@@ -423,7 +423,7 @@ trait MtkOperation extends LinkOperationsAbstract{
     }else {
       ""
     }
-    fetchFeatures(s"$restApiEndPoint/${MtkCollection.Frozen.value}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
+    fetchFeatures(s"$restApiEndPoint/${KgvCollection.Frozen.value}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
     match {
       case Left(features) =>features.get.features.map(feature=>
         Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
@@ -433,13 +433,13 @@ trait MtkOperation extends LinkOperationsAbstract{
 
  override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
     val filterString  = s"filter=${encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter))}"
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${queryString}") match {
+    fetchFeatures(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items/${queryString}") match {
       case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
@@ -448,7 +448,7 @@ trait MtkOperation extends LinkOperationsAbstract{
   override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = {
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${queryString}") match {
+    fetchFeatures(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items/${queryString}") match {
       case Left(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[IdType])
       case Right(error) => throw new ClientException(error.toString)
     }
@@ -458,7 +458,7 @@ trait MtkOperation extends LinkOperationsAbstract{
                                            fieldSelection: Option[String] =None,
                                            fetchGeometry: Boolean =false
                                 ): Seq[LinkType] = {
-    fetchFeatures(s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items/${linkId}") match {
+    fetchFeatures(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items/${linkId}") match {
       case Left(features) =>features.get.features.map(feature=>
         Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
@@ -482,7 +482,7 @@ trait MtkOperation extends LinkOperationsAbstract{
 
   protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    val url = s"${restApiEndPoint}/${MtkCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
+    val url = s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
     if(!pagination){
       fetchFeatures(url)
       match {
@@ -497,13 +497,13 @@ trait MtkOperation extends LinkOperationsAbstract{
 
   protected def queryByDatetimeAndFilter[LinkType](lowerDate: DateTime, higherDate: DateTime,filter:Option[String]=None): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}" +
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${KgvCollection.Frozen.value}" +
       s"/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 
   protected def queryByLastEditedDate[LinkType](lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     val filterString  = s"&filter=${encode(FilterOgc.withLastEditedDateFilter(lowerDate,higherDate))}"
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${MtkCollection.Frozen.value}" +
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${KgvCollection.Frozen.value}" +
       s"/items?filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 
