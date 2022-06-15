@@ -181,31 +181,28 @@ object Extractor {
   }
   
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
-    attributesMap.filterKeys{ x => Set(
-      "roadnumber",
-      "roadpartnumber",
-      "municipalitycode",
-      "surfacetype",
-      "sourceid",
-      "roadclass",
-      "xyaccuracy",
-      "zaccuracy",
-      "surfacerelation",
-      "lifecyclestatus",
-      "roadnamefin",
-      "roadnameswe",
-      "addressfromright",
-      "addresstoright",
-      "addressfromleft",
-      "addresstoleft",
-      "geometryflip",
-      "starttime",
-      "versionstarttime",
-      "sourcemodificationtime"
-    ).contains(x)
-    }.filter { case (_, value) =>
-      value != null
-    }
+    Map(
+      "ROADNUMBER"            -> attributesMap("roadnumber"),
+      "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
+      "MUNICIPALITYCODE"      -> attributesMap("municipalitycode"),
+      "SURFACETYPE"           -> attributesMap("surfacetype"),
+      "SOURCEID"              -> attributesMap("sourceid"),
+      "ROADCLASS"             -> attributesMap("roadclass"),
+      "XYACCURACY"            -> attributesMap("xyaccuracy"),
+      "ZACCURACY"             -> attributesMap("zaccuracy"),
+      "SURFACERELATION"       -> attributesMap("surfacerelation"),
+      "LIFECYCLESTATUS"       -> attributesMap("lifecyclestatus"),
+      "ROADNAMEFIN"           -> attributesMap("roadnamefin"),
+      "ROADNAMESWE"           -> attributesMap("roadnameswe"),
+      "ADDRESSFROMRIGHT"      -> attributesMap("addressfromright"),
+      "ADDRESSTORIGHT"        -> attributesMap("addresstoright"),
+      "ADDRESSFROMLEFT"       -> attributesMap("addressfromleft"),
+      "ADDRESSTOLEFT"         -> attributesMap("addresstoleft"),
+      "GEOMETRYFLIP"          -> attributesMap("geometryflip"),
+      "STARTTIME"             -> attributesMap("starttime"),
+      "VERSIONSTARTTIME"      -> attributesMap("versionstarttime"),
+      "SOURCEMODIFICATIONTIME"-> attributesMap("sourcemodificationtime")
+    )
   }
   
   /**

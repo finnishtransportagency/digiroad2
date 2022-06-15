@@ -38,12 +38,12 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
                     attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
                     linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface,lanes:Seq[PersistedLane]=Seq()) extends RoadLinkLike {
 
-  def municipalityCode: Int = attributes("municipalitycode").asInstanceOf[BigInt].intValue
-  def verticalLevel : Int = attributes("surfacerelation").asInstanceOf[BigInt].intValue
-  def surfaceType : Int = attributes("surfacetype").asInstanceOf[BigInt].intValue
-  def roadNumber: Option[String] = attributes.get("roadnumber").map(_.toString)
-  def roadPartNumber: Option[String] = attributes.get("roadpartnumber").map(_.toString)
-  val dateValue = attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", ""))
+  def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
+  def verticalLevel : Int = attributes("SURFACERELATION").asInstanceOf[BigInt].intValue
+  def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
+  def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
+  def roadPartNumber: Option[String] = attributes.get("ROADPARTNUMBER").map(_.toString)
+  val dateValue = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", ""))
   val timeStamp: Long = Try(new DateTime(dateValue).getMillis).getOrElse(0L)
   def accessRightId: Option[String] = attributes.get("ACCESS_RIGHT_ID").map(_.toString)
   def privateRoadAssociation: Option[String] = attributes.get("PRIVATE_ROAD_ASSOCIATION").map(_.toString)
@@ -54,16 +54,16 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
   def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
   def extractMTKClass(attributes: Map[String, Any]): MTKClassWidth = {
-    Try(attributes("roadclass").asInstanceOf[BigInt])
+    Try(attributes("ROADCLASS").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(MTKClassWidth.apply)
       .getOrElse(MTKClassWidth.Unknown)
   }
 
   def roadIdentifier: Option[Either[Int, String]] = {
-    Try(Left(attributes("roadnumber").asInstanceOf[BigInt].intValue()))
-      .orElse(Try(Right(getStringAttribute("roadnamefin"))))
-      .orElse(Try(Right(getStringAttribute("roadnameswe"))))
+    Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
+      .orElse(Try(Right(getStringAttribute("ROADNAMEFIN"))))
+      .orElse(Try(Right(getStringAttribute("ROADNAMESWE"))))
       .toOption
   }
 
@@ -86,8 +86,8 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
   }
 
   def roadNameIdentifier: Option[String] = {
-    Try(getStringAttribute("roadnamefin"))
-      .orElse(Try(getStringAttribute("roadnameswe")))
+    Try(getStringAttribute("ROADNAMEFIN"))
+      .orElse(Try(getStringAttribute("ROADNAMESWE")))
       .toOption
   }
 

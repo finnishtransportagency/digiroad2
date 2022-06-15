@@ -65,8 +65,8 @@ case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[
                            featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
                            constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  def verticalLevel: Option[String] = attributes.get("surfacerelation").map(_.toString)
-  val dateValue = attributes.getOrElse("versionstarttime", attributes.getOrElse("starttime", ""))
+  def verticalLevel: Option[String] = attributes.get("SURFACERELATION").map(_.toString)
+  val dateValue = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", ""))
   val timeStamp = Try(new DateTime(dateValue).getMillis).getOrElse(0L)
 }
 
