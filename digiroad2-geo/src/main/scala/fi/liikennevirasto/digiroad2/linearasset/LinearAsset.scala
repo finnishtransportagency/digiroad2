@@ -6,7 +6,7 @@ import org.joda.time.{DateTime, LocalDate}
 
 trait LinearAsset extends PolyLine {
   val id: Long
-  val linkId: Long
+  val linkId: String
   val sideCode: SideCode
   val value: Option[Value]
   val vvhTimeStamp: Long
@@ -163,23 +163,23 @@ object ValidityPeriodDayOfWeek {
   case object Unknown extends ValidityPeriodDayOfWeek { val value = 99 }
 }
 
-case class PieceWiseLinearAsset(id: Long, linkId: Long, sideCode: SideCode, value: Option[Value], geometry: Seq[Point], expired: Boolean,
+case class PieceWiseLinearAsset(id: Long, linkId: String, sideCode: SideCode, value: Option[Value], geometry: Seq[Point], expired: Boolean,
                                 startMeasure: Double, endMeasure: Double,
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
                                 vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
                                 attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[InformationSource]) extends LinearAsset
 
-case class PersistedLinearAsset(id: Long, linkId: Long, sideCode: Int, value: Option[Value],
+case class PersistedLinearAsset(id: Long, linkId: String, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
                                 vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
                                 informationSource: Option[InformationSource])
 
-case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
+case class NewLinearAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
 
-case class InaccurateLinearAsset(assetId: Option[Long], municipality: String, administrativeClass: String, linkId: Option[Long])
+case class InaccurateLinearAsset(assetId: Option[Long], municipality: String, administrativeClass: String, linkId: Option[String])
 
 case class LightLinearAsset(geometry: Seq[Point], value: Int, expired: Boolean, typeId: Int, sideCode: Int)
 

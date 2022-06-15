@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  BucketName:
+    Description: "Name for prod lambda deployment bucket"
+    Type: String
+  AccountID:
+    Description: "ID of Development AWS account"
+    Type: String
+  Owner:
+    Description: "Owner of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  Project:
+    Description: "Project of the of application, that these resources are created for. Used when tagging the resources"
+    Type: String
+  ApplicationName:
+    Description: "Name of the application (no whitespace or special characters)"
+    Type: String
+
+Resources:
+  LambdaDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      AccessControl: 'Private'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [!Ref ApplicationName, 'lambdaDeploymentBucket' ] ]
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  DeploymentBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LambdaDeploymentBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              AWS: !Ref AccountID
+            Resource: "arn:aws:s3:::prod-batch-lambda-deployment-bucket/*"
+            Condition: {
+              "StringEquals": {"s3:x-amz-acl":"bucket-owner-full-control"}
+            }
+
+Outputs:
+  BucketOutput:
+    Description: 'Name of production batch lambda S3 deployment bucket'
+    Value: 'prod-batch-lambda-deployment-bucket'
+    Export:
+      Name: 'BatchLambda-deployment-bucket'

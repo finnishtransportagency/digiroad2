@@ -7,9 +7,9 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
-case class IncomingHeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingHeightLimit(lon: Double, lat: Double, linkId: String, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
-case class HeightLimit(id: Long, linkId: Long,
+case class HeightLimit(id: Long, linkId: String,
                        lon: Double, lat: Double,
                        mValue: Double, floating: Boolean,
                        vvhTimeStamp: Long,

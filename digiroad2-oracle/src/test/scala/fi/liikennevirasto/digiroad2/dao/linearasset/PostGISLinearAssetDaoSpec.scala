@@ -11,21 +11,21 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.StaticQuery.interpolation
 
 class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
-  val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+  val roadLink = RoadLinkFetched("388562360", 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-  private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): PostGISLinearAssetDao = {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
+  private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISLinearAssetDao = {
+    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
@@ -36,12 +36,12 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
       when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+    new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  def setupTestProhibition(linkId: Long,
+  def setupTestProhibition(linkId: String,
                            prohibitionValues: Set[ProhibitionValue]): Unit = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -73,7 +73,7 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch simple prohibition without validity periods or exceptions") {
     val dao = new PostGISLinearAssetDao(null, null)
-    val linkId = 1l
+    val linkId = "1l"
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty, ""))
 
     runWithRollback {
@@ -91,7 +91,7 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch prohibition with validity period") {
     val dao = new PostGISLinearAssetDao(null, null)
-    val linkId = 1l
+    val linkId = "1l"
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, ""))
 
     runWithRollback {
@@ -109,7 +109,7 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch prohibition with validity period and exceptions") {
     val dao = new PostGISLinearAssetDao(null, null)
-    val linkId = 1l
+    val linkId = "1l"
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), ""))
 
@@ -128,7 +128,7 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch prohibition with validity period, exceptions and additional information") {
     val dao = new PostGISLinearAssetDao(null, null)
-    val linkId = 1l
+    val linkId = "1l"
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), "test value string"))
 
@@ -147,11 +147,11 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch multiple prohibitions") {
     val dao = new PostGISLinearAssetDao(null, null)
-    val linkId1 = 1l
-    val linkId2 = 2l
-    val linkId3 = 3l
-    val linkId4 = 4l
-    val linkId5 = 5l
+    val linkId1 = "1l"
+    val linkId2 = "2l"
+    val linkId3 = "3l"
+    val linkId4 = "4l"
+    val linkId5 = "5l"
     val fixtureProhibitionValues1 = Set(
       ProhibitionValue(typeId = 10, Set(
         ValidityPeriod(12, 16, Weekday), ValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3), additionalInfo = ""),

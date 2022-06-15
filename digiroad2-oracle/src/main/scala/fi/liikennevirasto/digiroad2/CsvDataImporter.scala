@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -33,7 +33,7 @@ object Status {
 
 case class ImportStatusInfo(id: Long, status: Int, statusDescription: String, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], jobName: String, content: Option[String])
 
-class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
+class RoadLinkNotFoundException(linkId: String) extends RuntimeException
 
 case class IncompleteRow(missingParameters: List[String], csvRow: String)
 case class MalformedRow(malformedParameters: List[String], csvRow: String)
@@ -50,7 +50,7 @@ trait CsvDataImporterOperations {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
-  def vvhClient: VVHClient
+  def roadLinkClient: RoadLinkClient
   def eventBus: DigiroadEventBus
 
   lazy val viiteClient: SearchViiteClient = {
@@ -121,6 +121,6 @@ class CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiro
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 }

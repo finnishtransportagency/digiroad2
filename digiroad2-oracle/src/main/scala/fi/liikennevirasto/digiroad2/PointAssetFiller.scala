@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 
 object PointAssetFiller {
 
-  case class AssetAdjustment(assetId: Long, lon: Double, lat: Double, linkId: Long, mValue: Double, floating: Boolean, vvhTimeStamp: Long)
+  case class AssetAdjustment(assetId: Long, lon: Double, lat: Double, linkId: String, mValue: Double, floating: Boolean, vvhTimeStamp: Long)
   private val MaxDistanceDiffAllowed = 3.0
 
   def correctRoadLinkAndGeometry(asset: PersistedPointAsset , roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]): Option[AssetAdjustment]={

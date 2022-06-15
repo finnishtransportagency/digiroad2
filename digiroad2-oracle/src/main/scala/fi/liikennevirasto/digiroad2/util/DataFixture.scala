@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit, WidthLimit, CyclingAndWa
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, _}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
@@ -46,8 +46,8 @@ object DataFixture {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val viiteClient: SearchViiteClient = {
@@ -55,7 +55,7 @@ object DataFixture {
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
   }
 
   lazy val obstacleService: ObstacleService = {
@@ -74,7 +74,7 @@ object DataFixture {
   }
 
   lazy val speedLimitService: SpeedLimitService = {
-    new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
+    new SpeedLimitService(new DummyEventBus, roadLinkClient, roadLinkService)
   }
 
   lazy val manoeuvreService: ManoeuvreService = {
@@ -121,7 +121,7 @@ object DataFixture {
   }
 
   lazy val postGISLinearAssetDao : PostGISLinearAssetDao = {
-    new PostGISLinearAssetDao(vvhClient, roadLinkService)
+    new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
   }
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
@@ -179,20 +179,6 @@ object DataFixture {
   lazy val municipalityService: MunicipalityService = new MunicipalityService
 
   lazy val redundantTrafficDirectionRemoval = new RedundantTrafficDirectionRemoval(roadLinkService)
-
-  lazy val dynamicLinearAssetUpdateProcess = new DynamicLinearAssetUpdateProcess(roadLinkService, eventbus)
-
-  lazy val linearAssetUpdateProcess = new LinearAssetUpdateProcess(roadLinkService, eventbus)
-
-  lazy val maintenanceRoadUpdateProcess = new MaintenanceRoadUpdateProcess(roadLinkService, eventbus)
-
-  lazy val pavedRoadUpdateProcess = new PavedRoadUpdateProcess(roadLinkService, eventbus)
-
-  lazy val prohibitionUpdateProcess = new ProhibitionUpdateProcess(roadLinkService, eventbus)
-
-  lazy val roadWidthUpdateProcess = new RoadWidthUpdateProcess(roadLinkService, eventbus)
-
-  lazy val speedLimitUpdateProcess = new SpeedLimitUpdateProcess(eventbus, vvhClient, roadLinkService)
 
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
@@ -350,8 +336,8 @@ object DataFixture {
   def linkFloatObstacleAssets(): Unit = {
     println("\nGenerating list of Obstacle assets to linking")
     println(DateTime.now())
-    val vvhClient = new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
     val batchSize = 1000
     var obstaclesFound = true
     var lastIdUpdate : Long = 0
@@ -406,7 +392,7 @@ object DataFixture {
         case (_, x) =>
           x match {
             case u: List[Any] =>
-              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet, Seq())
+              speedLimitService.purgeUnknown(u.asInstanceOf[List[String]].toSet, Seq())
             case _ =>
           }
         case _ =>
@@ -463,14 +449,14 @@ object DataFixture {
 
     if(assets.nonEmpty){
 
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
           case (assetId, linkId, point, mValue, None) =>
-            val roadlink = roadLinks.find(_.linkId == linkId)
+            val roadLink = roadLinks.find(_.linkId == linkId)
             PointAssetOperations.isFloating(municipalityCode = municipality, lon = point.x, lat = point.y,
-              mValue = mValue, roadLink = roadlink) match {
+              mValue = mValue, roadLink = roadLink) match {
               case (isFloating, Some(reason)) =>
                 dataImporter.insertNumberPropertyData(propertyId, assetId, reason.value)
               case _ =>
@@ -492,16 +478,16 @@ object DataFixture {
 
     if(assets.nonEmpty){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
           case (assetId, linkId, None) =>
             roadLinks.find(_.linkId == linkId) match {
-              case Some(roadlink) =>
-                dataImporter.insertNumberPropertyData(propertyId, assetId, roadlink.administrativeClass.value)
+              case Some(roadLink) =>
+                dataImporter.insertNumberPropertyData(propertyId, assetId, roadLink.administrativeClass.value)
               case _ =>
-                println("The roadlink with id %d was not found".format(linkId))
+                println(s"The roadlink with id $linkId was not found")
             }
           case (assetId, linkId, Some(value)) =>
             println("The administration class property already exists on the asset with id %d ".format(assetId))
@@ -553,15 +539,15 @@ object DataFixture {
 
     if (assets.nonEmpty) {
 
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
           case (assetId, linkId, None) =>
             println("Asset with asset-id: %d doesn't have Administration Class value.".format(assetId))
           case (assetId, linkId, adminClass) =>
-            val roadlink = roadLinks.find(_.linkId == linkId)
-            MassTransitStopOperations.isFloating(AdministrativeClass.apply(adminClass.get), roadlink) match {
+            val roadLink = roadLinks.find(_.linkId == linkId)
+            MassTransitStopOperations.isFloating(AdministrativeClass.apply(adminClass.get), roadLink) match {
               case (_, Some(reason)) =>
                 dataImporter.updateFloating(assetId, true)
                 dataImporter.updateNumberPropertyData(floatingReasonPropertyId, assetId, reason.value)
@@ -576,7 +562,7 @@ object DataFixture {
   def importVVHRoadLinksByMunicipalities(): Unit = {
     println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
     println(DateTime.now())
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
     val assetTypeId = 110
 
     lazy val linearAssetService: LinearAssetService = {
@@ -647,7 +633,7 @@ object DataFixture {
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new PostGISLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
@@ -753,7 +739,7 @@ object DataFixture {
     println(DateTime.now())
 
     val dao = new PostGISLinearAssetDao(null, null)
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {
       new RoadWidthService(roadLinkService, new DummyEventBus)
@@ -905,7 +891,7 @@ object DataFixture {
     println("\nUpdate Information Source for RoadWidth")
     println(DateTime.now())
 
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     //    Get All Municipalities
     val municipalities: Seq[Int] =
@@ -969,7 +955,7 @@ object DataFixture {
     println("\nUpdate Information Source for Pavement")
     println(DateTime.now())
 
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -1115,7 +1101,7 @@ object DataFixture {
       }
 
     PostGISDatabase.withDynTransaction {
-      val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
+      val additionalPanelIdToExpire : Seq[(Option[Long], String, Int)] = municipalities.flatMap { municipality =>
         println("")
         println(DateTime.now())
         println(s"Fetching Traffic Signs for Municipality: $municipality")
@@ -1641,10 +1627,10 @@ object DataFixture {
           val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
 
           cyclingAndWalkingInfo.foreach { asset =>
-            val roadlink = roadLinks.find(_.linkId == asset.linkId)
+            val roadLink = roadLinks.find(_.linkId == asset.linkId)
             val value = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("cyclingAndWalking_type", "single_choice", true, Seq(DynamicPropertyValue(asset.value))))))
 
-            roadlink match {
+            roadLink match {
               case Some(link) =>
                 val id = dynamicLinearAssetService.createWithoutTransaction(typeId = assetType,
                   linkId = asset.linkId,
@@ -1652,7 +1638,7 @@ object DataFixture {
                   sideCode = SideCode.BothDirections.value,
                   measures = Measures(0, GeometryUtils.geometryLength(link.geometry)),
                   username = username,
-                  roadLink = roadlink)
+                  roadLink = roadLink)
                 println(s"Asset created with id $id in the roadlink ${asset.linkId}")
               case _ => println(s"Error: Can't create asset in the roadlink ${asset.linkId}")
             }
@@ -1875,14 +1861,14 @@ object DataFixture {
       allAdjacentsRoadLinks.filter(r => GeometryUtils.areAdjacent(r.geometry, point))
     }
 
-    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadlink: RoadLink): Unit = {
+    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadLink: RoadLink): Unit = {
       //Create new SpeedLimits on gaps
       newSpeedLimits.foreach { speedLimit =>
-        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(vvhClient.roadLinkData.createVVHTimeStamp()), linkSource = roadlink.linkSource)
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(roadLinkClient.roadLinkData.createVVHTimeStamp()), linkSource = roadLink.linkSource)
         println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value + " and sidecode: " + speedLimit.sideCode)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(roadlink.geometry))
+        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(roadLink.geometry))
         println("\nRemoved linkId " + speedLimit.linkId + " from UnknownSpeedLimits working list")
         println("")
       }
@@ -2048,7 +2034,7 @@ object DataFixture {
     println("\n")
   }
 
-  def GetAccessRightID(linkId:Long):String ={
+  def GetAccessRightID(linkId: String):String ={
     PostGISDatabase.withDynSession {
       val response= LinkAttributesDao.getExistingValues(linkId).getOrElse("ACCESS_RIGHT_ID", "")
       response
@@ -2353,60 +2339,7 @@ object DataFixture {
         UpdateIncompleteLinkList.runUpdate()
       case Some("refresh_road_link_cache") =>
         RefreshRoadLinkCache.refreshCache()
-      case Some("update_animal_warnings") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(AnimalWarnings.typeId)
-      case Some("update_care_class") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(CareClass.typeId)
-      case Some("update_carrying_capacity") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(CarryingCapacity.typeId)
-      case Some("update_damaged_by_thaw") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(DamagedByThaw.typeId)
-      case Some("update_height_limit") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(HeightLimit.typeId)
-      case Some("update_length_limit") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(LengthLimit.typeId)
-      case Some("update_width_limit") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(WidthLimit.typeId)
-      case Some("update_total_weight_limit") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(TotalWeightLimit.typeId)
-      case Some("update_trailer_truck_weight_limit") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(TrailerTruckWeightLimit.typeId)
-      case Some("update_axle_weight_limit") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(AxleWeightLimit.typeId)
-      case Some("update_bogie_weight_limit") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(BogieWeightLimit.typeId)
-      case Some("update_mass_transit_lane") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(MassTransitLane.typeId)
-      case Some("update_parking_prohibition") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(ParkingProhibition.typeId)
-      case Some("update_cycling_and_walking") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(CyclingAndWalking.typeId)
-      case Some("update_lit_road") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(LitRoad.typeId)
-      case Some("update_road_work_asset") =>
-        dynamicLinearAssetUpdateProcess.updateDynamicLinearAssets(RoadWorksAsset.typeId)
-      case Some("update_number_of_lanes") =>
-        linearAssetUpdateProcess.updateLinearAssets(NumberOfLanes.typeId)
-      case Some("update_traffic_volume") =>
-        linearAssetUpdateProcess.updateLinearAssets(TrafficVolume.typeId)
-      case Some("update_winter_speed_limit") =>
-        linearAssetUpdateProcess.updateLinearAssets(WinterSpeedLimit.typeId)
-      case Some("update_european_road_numbers") =>
-        linearAssetUpdateProcess.updateLinearAssets(EuropeanRoads.typeId)
-      case Some("update_exit_numbers") =>
-        linearAssetUpdateProcess.updateLinearAssets(ExitNumbers.typeId)
-      case Some("update_maintenance_roads") =>
-        maintenanceRoadUpdateProcess.updateMaintenanceRoads()
-      case Some("update_paved_roads") =>
-        pavedRoadUpdateProcess.updatePavedRoads()
-      case Some("update_prohibitions") =>
-        prohibitionUpdateProcess.updateProhibitions(Prohibition.typeId)
-      case Some("update_hazmat_prohibitions") =>
-        prohibitionUpdateProcess.updateProhibitions(HazmatTransportProhibition.typeId)
-      case Some("update_road_width") =>
-        roadWidthUpdateProcess.updateRoadWidth()
-      case Some("update_speed_limits") =>
-        speedLimitUpdateProcess.updateSpeedLimits()
+        exit()  //For a currently unknown reason refreshCache batch doesn't exit automatically upon completion
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2424,12 +2357,7 @@ object DataFixture {
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite | change_lanes_according_to_VVH_changes |" +
         " validate_lane_changes_according_to_VVH_changes | populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal | update_incomplete_link_list |" +
-        " refresh_road_link_cache | update_animal_warnings | update_care_class | update_carrying_capacity | update_damaged_by_thaw |" +
-        " update_height_limit | update_length_limit | update_width_limit | update_total_weight_limit | update_trailer_truck_weight_limit |" +
-        " update_axle_weight_limit | update_bogie_weight_limit | update_mass_transit_lane | update_parking_prohibition |" +
-        " update_cycling_and_walking | update_lit_road | update_road_work_asset | update_number_of_lanes | update_traffic_volume |" +
-        " update_winter_speed_limit | update_european_road_numbers | update_exit_numbers | update_maintenance_roads | update_paved_roads |" +
-        " update_prohibitions | update_hazmat_prohibitions | update_road_width | update_speed_limits")
+        " refresh_road_link_cache |")
     }
   }
 }

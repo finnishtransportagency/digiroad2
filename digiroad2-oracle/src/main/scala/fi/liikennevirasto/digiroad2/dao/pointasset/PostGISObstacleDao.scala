@@ -15,7 +15,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
 
-case class ObstacleRow(id: Long, linkId: Long,
+case class ObstacleRow(id: Long, linkId: String,
                        lon: Double, lat: Double,
                        mValue: Double, floating: Boolean,
                        vvhTimeStamp: Long,
@@ -28,7 +28,7 @@ case class ObstacleRow(id: Long, linkId: Long,
                        expired: Boolean = false,
                        linkSource: LinkGeomSource)
 
-case class Obstacle(id: Long, linkId: Long,
+case class Obstacle(id: Long, linkId: String,
                     lon: Double, lat: Double,
                     mValue: Double, floating: Boolean,
                     vvhTimeStamp: Long,
@@ -138,7 +138,7 @@ object PostGISObstacleDao {
   implicit val getPointAsset: GetResult[ObstacleRow] = new GetResult[ObstacleRow] {
     def apply(r: PositionedResult): ObstacleRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

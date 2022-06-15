@@ -8,7 +8,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 
 object LinkIdImporter {
@@ -24,7 +24,7 @@ object LinkIdImporter {
       }
       sqlu"""create table mml_id_to_link_id (
           mml_id number(38, 0),
-          link_id number(38, 0),
+          link_id varchar(40),
           primary key (mml_id)
         )""".execute
     }
@@ -44,7 +44,7 @@ object LinkIdImporter {
   }
 
   def updateTable(tableName: String, vvhHost: String): Unit = {
-    val vvhClient = new VVHClient(vvhHost)
+    val roadLinkClient = new RoadLinkClient(vvhHost)
 
     withDynTransaction {
       sqlu"""delete from mml_id_to_link_id""".execute
@@ -72,11 +72,11 @@ object LinkIdImporter {
                       limit $max
                 ) derivedMml where rnum >= $min
           """.as[Long].list
-        val links = vvhClient.roadLinkData.fetchByMmlIds(mmlIds.toSet)
+        val links = roadLinkClient.roadLinkData.fetchByMmlIds(mmlIds.toSet)
         links.foreach { link =>
           val mmlId = link.attributes("MTKID").asInstanceOf[BigInt].longValue()
           tempPS.setLong(1, mmlId)
-          tempPS.setLong(2, link.linkId)
+          tempPS.setString(2, link.linkId)
           tempPS.addBatch()
         }
         try {

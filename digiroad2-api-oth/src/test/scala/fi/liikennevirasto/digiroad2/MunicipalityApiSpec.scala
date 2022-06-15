@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -39,17 +39,17 @@ object sTestTransactions {
 
 class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val obstacleService = new ObstacleService(mockRoadLinkService)
-  val speedLimitService = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
+  val speedLimitService = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService)
   val pavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val dataSetId = "ab70d6a9-9616-4cc4-abbe-6272c2344709"
-  val roadLinksList: List[List[Long]] = List(List(441062, 441063, 441070, 452512), List(445212))
+  val roadLinksList: List[List[String]] = List(List("441062", "441063", "441070", "452512"), List("445212"))
 
   val commonLinearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "100001", "functionalClass" -> "Katu", "type" -> "Roadlink")
   val commonPointProperties: Map[String, String] = Map("id" -> "100000", "type" -> "obstacle", "class" -> "1")
@@ -62,14 +62,14 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val commonFeatureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonLinearFeature, commonPointFeature))
 
-  object ServiceWithDao extends MunicipalityApi(mockVVHClient, mockRoadLinkService, speedLimitService, pavedRoadService, obstacleService, new OthSwagger){
+  object ServiceWithDao extends MunicipalityApi(mockRoadLinkClient, mockRoadLinkService, speedLimitService, pavedRoadService, obstacleService, new OthSwagger){
     override def awsDao: AwsDao = new AwsDao
   }
   def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
 
   test("number of features doesn't match with the number of list of road links give") {
 
-    val wrongRoadLinksList: List[List[Long]] = List(List(441062, 441063, 441070, 452512))
+    val wrongRoadLinksList: List[List[String]] = List(List("441062", "441063", "441070", "452512"))
     val dataSet = Dataset(dataSetId, commonFeatureCollection, wrongRoadLinksList)
 
     runWithRollback {
@@ -80,13 +80,14 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("validate if features have id key/value") {
-    val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
+    val linkId = "5000"
+    val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
     val pointProperties: Map[String, String] = Map("type" -> "obstacle", "class" -> "1")
     val pointGeometry: Geometry = Geometry("Point", List(List(385786, 6671390, 0)))
     val pointFeature: Feature = Feature("Feature", pointGeometry, pointProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(pointFeature))
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
 
     val dataSet = Dataset(dataSetId, featureCollection, roadLinksList)
 
@@ -100,9 +101,11 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("validate if roadLink exists on VVH") {
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5, 10), false)).thenReturn(Seq())
+    val linkId1 = "5"
+    val linkId2 = "10"
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId1, linkId2), false)).thenReturn(Seq())
 
-    val roadLinksList: List[List[Long]] = List(List(5),List(10))
+    val roadLinksList: List[List[String]] = List(List(linkId1),List(linkId2))
     val dataSet = Dataset(dataSetId, commonFeatureCollection, roadLinksList)
 
     runWithRollback {
@@ -117,10 +120,11 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("validate if the Geometry Type is one of the allowed") {
-    val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
+    val linkId = "5000"
+    val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
     val pointGeometry: Geometry = Geometry("WrongGeometryType", List(List(385786, 6671390, 0)))
     val pointFeature: Feature = Feature("Feature", pointGeometry, commonPointProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(pointFeature))
@@ -139,10 +143,11 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new obstacle with nonvalid value to be created/updated") {
-    val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
+    val linkId = "5000"
+    val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
     val pointProperties: Map[String, String] = Map("id" -> "100000", "type" -> "obstacle", "class" -> "10")
     val pointFeature: Feature = Feature("Feature", commonPointGeometry, pointProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(pointFeature))
@@ -161,10 +166,11 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new speedlimit with nonvalid value to be created/updated") {
-    val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
+    val linkId = "5000"
+    val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "speedLimit" -> "210", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
     val linearFeature: Feature = Feature("Feature", commonLinearGeometry, linearProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(linearFeature))
@@ -183,10 +189,11 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new pavementClass with nonvalid value to be created/updated") {
-    val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
+    val linkId = "5000"
+    val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "100", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
     val linearFeature: Feature = Feature("Feature", commonLinearGeometry, linearProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(linearFeature))
@@ -205,18 +212,19 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new speedlimit with valid value to be created") {
-    val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val newVVHroadLink = VVHRoadlink(5000L, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(5000)).thenReturn(Some(newVVHroadLink))
+    val linkId = "5000"
+    val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
 
 
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
     val linearFeature: Feature = Feature("Feature", commonLinearGeometry, linearProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(linearFeature))
@@ -239,7 +247,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       datasetStatus2 should be(3)
       featuresStatus2 should be (List(("200000","1")))
-      createdSpeedLimit.head.linkId should be (5000)
+      createdSpeedLimit.head.linkId should be (linkId)
       createdSpeedLimit.head.value should be(Some(SpeedLimitValue(100)))
       createdSpeedLimit.head.startMeasure should be (0.0)
       createdSpeedLimit.head.endMeasure should be (100.0)
@@ -248,19 +256,20 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new pavementClass with valid value to be created") {
-    val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val newVVHroadLink = VVHRoadlink(5000L, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(5000)).thenReturn(Some(newVVHroadLink))
+    val linkId = "5000"
+    val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
 
 
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockVVHClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
     val linearFeature: Feature = Feature("Feature", commonLinearGeometry, linearProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(linearFeature))
@@ -283,7 +292,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       datasetStatus2 should be(3)
       featuresStatus2 should be (List(("200000","1")))
-      createdPavementClass.head.linkId should be (5000)
+      createdPavementClass.head.linkId should be (linkId)
       createdPavementClass.head.value.toString should be(
         Some(DynamicValue(DynamicAssetValue(List(
           DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(1))),
@@ -297,21 +306,22 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new obstacle with valid value to be created") {
-    val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val newVVHroadLink = VVHRoadlink(5000L, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(5000)).thenReturn(Some(newVVHroadLink))
-    when(mockRoadLinkService.getRoadLinkFromVVH(5000, false)).thenReturn(Some(newRoadLink))
+    val linkId = "5000"
+    val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
+    when(mockRoadLinkService.getRoadLinkFromVVH(linkId, false)).thenReturn(Some(newRoadLink))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
 
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockVVHClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
-    val roadLinksList: List[List[Long]] = List(List(5000))
+    val roadLinksList: List[List[String]] = List(List(linkId))
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonPointFeature))
 
     val dataSet = Dataset(dataSetId, featureCollection, roadLinksList)

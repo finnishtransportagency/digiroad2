@@ -14,7 +14,7 @@ class InaccurateAssetDAO {
       """.execute
   }
 
-  def createInaccurateLink(linkId: Long, typeId: Int, municipalityCode: Int, administrativeClass: AdministrativeClass) = {
+  def createInaccurateLink(linkId: String, typeId: Int, municipalityCode: Int, administrativeClass: AdministrativeClass) = {
     sqlu"""
         insert into inaccurate_asset (link_id, asset_type_id, municipality_code, administrative_class)
         values ($linkId, $typeId, $municipalityCode, ${administrativeClass.value})
@@ -38,7 +38,7 @@ class InaccurateAssetDAO {
        from inaccurate_asset ia
        left join municipality m on ia.municipality_code = m.id
        where ia.asset_type_id = $typeId #$withAuthorizedMunicipalities #$withAdminClassRestrictions
-     """.as[(Option[Long], String, Int, Option[Long])].list
+     """.as[(Option[Long], String, Int, Option[String])].list
 
     inaccurates.map{ case(asseId, municipality, administrativeClass, linkId ) =>
       InaccurateLinearAsset(asseId, municipality, AdministrativeClass(administrativeClass).toString, linkId)
@@ -58,8 +58,9 @@ class InaccurateAssetDAO {
     sqlu"""delete from inaccurate_asset where asset_id in (#${assetIds.mkString(",")})""".execute
   }
 
-  def deleteInaccurateAssetByLinkIds(linkIds: Set[Long], typeId: Int): Unit = {
-    sqlu"""delete from inaccurate_asset where link_id in (#${linkIds.mkString(",")}) and asset_type_id = $typeId""".execute
+  def deleteInaccurateAssetByLinkIds(linkIds: Set[String], typeId: Int): Unit = {
+    val linkIdList = linkIds.map(id => s"'$id'").mkString(",")
+    sqlu"""delete from inaccurate_asset where link_id in ($linkIdList) and asset_type_id = $typeId""".execute
   }
 }
 

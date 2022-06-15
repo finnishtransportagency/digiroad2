@@ -7,12 +7,12 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class RoadLinkTempDAO {
-  def getByLinkIds(linkIds: Set[Long]): Seq[RoadAddressTEMP] = {
-    val linkTypeInfo = MassQuery.withIds(linkIds) { idTableName =>
+  def getByLinkIds(linkIds: Set[String]): Seq[RoadAddressTEMP] = {
+    val linkTypeInfo = MassQuery.withStringIds(linkIds) { idTableName =>
       sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code,to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS') 
               from temp_road_address_info temp
               join  #$idTableName i on i.id = temp.link_id
-         """.as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
+         """.as[(String, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
     }
     linkTypeInfo.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, startMValue, endMValue, sideCode, createdDate) =>
       RoadAddressTEMP(linkId, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, startMValue, endMValue, sideCode = sideCode.map(SideCode.apply), municipalityCode = municipalityCode, createdDate = createdDate)
@@ -21,7 +21,7 @@ class RoadLinkTempDAO {
 
   def getByRoadNumber(roadNumber: Int): Seq[RoadAddressTEMP] = {
     sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code, to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS')
-            from temp_road_address_info where road_number = $roadNumber""".as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
+            from temp_road_address_info where road_number = $roadNumber""".as[(String, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
       .map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, startMValue, endMValue, sideCode, createdDate) =>
         RoadAddressTEMP(linkId, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, startMValue, endMValue, sideCode = sideCode.map(SideCode.apply), municipalityCode = municipalityCode, createdDate = createdDate)
       }
@@ -29,7 +29,7 @@ class RoadLinkTempDAO {
 
   def getByMunicipality(municipality: Int): Seq[RoadAddressTEMP] = {
     sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code, to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS')
-            from temp_road_address_info where municipality_code = $municipality""".as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
+            from temp_road_address_info where municipality_code = $municipality""".as[(String, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
       .map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, startMValue, endMValue, sideCode, createdDate) =>
         RoadAddressTEMP(linkId, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, startMValue, endMValue, sideCode = sideCode.map(SideCode.apply), municipalityCode = municipalityCode, createdDate = createdDate)
       }
@@ -42,7 +42,7 @@ class RoadLinkTempDAO {
              JOIN #$idTableName i on i.id = t.road_part
             WHERE road_number = $roadNumber
             AND track_code = $trackCode
-            """.as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
+            """.as[(String, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int], Option[String])].list
         }
       linkTypeInfo.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, startMValue, endMValue, sideCode, createdDate) =>
         RoadAddressTEMP(linkId, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, startMValue, endMValue, sideCode = sideCode.map(SideCode.apply), municipalityCode = municipalityCode, createdDate = createdDate)
@@ -65,8 +65,9 @@ class RoadLinkTempDAO {
            where municipality_code = $municipalityCode""".execute
   }
 
-  def deleteInfoByLinkIds(linkIds: Set[Long]): Unit = {
+  def deleteInfoByLinkIds(linkIds: Set[String]): Unit = {
+    val linkIdList = linkIds.map(id => s"'$id'").mkString(",")
     sqlu"""delete from temp_road_address_info
-           where link_id in (#${linkIds.mkString(",")})""".execute
+           where link_id in (#$linkIdList)""".execute
   }
 }

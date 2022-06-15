@@ -13,7 +13,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
-case class RailwayCrossingRow(id: Long, linkId: Long,
+case class RailwayCrossingRow(id: Long, linkId: String,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
                               vvhTimeStamp: Long,
@@ -25,7 +25,7 @@ case class RailwayCrossingRow(id: Long, linkId: Long,
                               modifiedAt: Option[DateTime] = None,
                               linkSource: LinkGeomSource)
 
-case class RailwayCrossing(id: Long, linkId: Long,
+case class RailwayCrossing(id: Long, linkId: String,
                            lon: Double, lat: Double,
                            mValue: Double, floating: Boolean,
                            vvhTimeStamp: Long,
@@ -106,7 +106,7 @@ object PostGISRailwayCrossingDao {
   implicit val getPointAsset = new GetResult[RailwayCrossingRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

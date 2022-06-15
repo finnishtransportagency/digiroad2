@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.client.Caching
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -12,12 +12,12 @@ import org.slf4j.{Logger, LoggerFactory}
 
 object RefreshRoadLinkCache {
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   }
 
   def refreshCache(): Unit = {
@@ -30,10 +30,10 @@ object RefreshRoadLinkCache {
       }
 
       if (flushSuccess) {
-        val roadLinks = municipalities.flatMap(municipality => {
+        municipalities.foreach(municipality => {
           roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality)
         })
-        logger.info("Cached " + roadLinks.size + " roadlinks with overrided properties from database")
+        logger.info("Cached roadlinks with overrided properties from database")
       }
       else logger.error("Flushing cache failed")
     }

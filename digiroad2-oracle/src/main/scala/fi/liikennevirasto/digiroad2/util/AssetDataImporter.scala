@@ -8,7 +8,7 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -35,7 +35,7 @@ AssetDataImporter {
                            validFrom: LocalDate = LocalDate.now,
                            validTo: Option[LocalDate] = None,
                            point: Point,
-                           roadLinkId: Long,
+                           roadLinkId: String,
                            municipalityCode: Int,
                            bearing: Double)
 
@@ -108,14 +108,14 @@ class AssetDataImporter {
 
   def importEuropeanRoads(conversionDatabase: DatabaseDef, vvhHost: String) = {
     val roads = conversionDatabase.withDynSession {
-      sql"""select link_id, eur_nro from eurooppatienumero""".as[(Long, String)].list
+      sql"""select link_id, eur_nro from eurooppatienumero""".as[(String, String)].list
     }
 
-    val roadsByLinkId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
+    val roadsByLinkId = roads.foldLeft(Map.empty[String, (String, String)]) { (m, road) => m + (road._1 -> road) }
 
-    val vvhClient = new VVHClient(vvhHost)
-    val vvhLinks = vvhClient.roadLinkData.fetchByLinkIds(roadsByLinkId.keySet)
-    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
+    val roadLinkClient = new RoadLinkClient(vvhHost)
+    val vvhLinks = roadLinkClient.roadLinkData.fetchByLinkIds(roadsByLinkId.keySet)
+    val linksByLinkId = vvhLinks.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
@@ -138,7 +138,7 @@ class AssetDataImporter {
         val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
         lrmPositionPS.setLong(1, lrmPositionId)
-        lrmPositionPS.setLong(2, linkId)
+        lrmPositionPS.setString(2, linkId)
         lrmPositionPS.setInt(3, SideCode.BothDirections.value)
         lrmPositionPS.setDouble(4, 0)
         lrmPositionPS.setDouble(5, link.map(_.geometry).map(GeometryUtils.geometryLength).getOrElse(0))
@@ -170,7 +170,7 @@ class AssetDataImporter {
   def importProhibitions(conversionDatabase: DatabaseDef, vvhServiceHost: String) = {
     val conversionTypeId = 29
     val exceptionTypeId = 1
-    val vvhClient = new VVHClient(vvhServiceHost)
+    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
     val typeId = 190
 
     println("*** Fetching prohibitions from conversion database")
@@ -182,7 +182,7 @@ class AssetDataImporter {
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $conversionTypeId and s.kaista is null
-       """.as[(Long, Long, Double, Double, Int, Int, Int, Option[String])].list
+       """.as[(Long, String, Double, Double, Int, Int, Int, Option[String])].list
     }
 
     val exceptions = conversionDatabase.withDynSession {
@@ -191,12 +191,12 @@ class AssetDataImporter {
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = $exceptionTypeId and s.kaista is null
-       """.as[(Long, Long, Int, Int)].list
+       """.as[(Long, String, Int, Int)].list
     }
 
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(prohibitions.map(_._2).toSet)
+    val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(prohibitions.map(_._2).toSet)
 
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
@@ -224,7 +224,7 @@ class AssetDataImporter {
 
           val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
           lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, asset.linkId)
+          lrmPositionPS.setString(2, asset.linkId)
           lrmPositionPS.setDouble(3, asset.startMeasure)
           lrmPositionPS.setDouble(4, asset.endMeasure)
           lrmPositionPS.setInt(5, asset.sideCode)
@@ -278,7 +278,7 @@ class AssetDataImporter {
       executedAssetInserts
   }
 
-  private def expandSegments(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptionSideCodes: Seq[Int]): Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])] = {
+  private def expandSegments(segments: Seq[(Long, String, Double, Double, Int, Int, Int, Option[String])], exceptionSideCodes: Seq[Int]): Seq[(Long, String, Double, Double, Int, Int, Int, Option[String])] = {
     if (segments.forall(_._7 == 1) && exceptionSideCodes.forall(_ == 1)) segments
     else {
       val (bothSided, oneSided) = segments.partition(_._7 == 1)
@@ -287,7 +287,7 @@ class AssetDataImporter {
     }
   }
 
-  def expandExceptions(exceptions: Seq[(Long, Long, Int, Int)], prohibitionSideCodes: Seq[(Int)]) = {
+  def expandExceptions(exceptions: Seq[(Long, String, Int, Int)], prohibitionSideCodes: Seq[(Int)]) = {
     if (exceptions.forall(_._4 == 1) && prohibitionSideCodes.forall(_ == 1)) exceptions
     else {
       val (bothSided, oneSided) = exceptions.partition(_._4 == 1)
@@ -296,7 +296,7 @@ class AssetDataImporter {
     }
   }
 
-  private def parseProhibitionValues(segments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], exceptions: Seq[(Long, Long, Int, Int)], linkId: Long, sideCode: Int): Seq[Either[String, ProhibitionValue]] = {
+  private def parseProhibitionValues(segments: Seq[(Long, String, Double, Double, Int, Int, Int, Option[String])], exceptions: Seq[(Long, String, Int, Int)], linkId: String, sideCode: Int): Seq[Either[String, ProhibitionValue]] = {
     val timeDomainParser = new TimeDomainParser
     segments.map { segment =>
       val exceptionsForProhibition = exceptions.filter { z => z._2 == linkId && z._4 == sideCode }.map(_._3).toSet
@@ -312,12 +312,12 @@ class AssetDataImporter {
     }
   }
 
-  def convertToProhibitions(prohibitionSegments: Seq[(Long, Long, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[VVHRoadlink], exceptions: Seq[(Long, Long, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
-    def hasInvalidExceptionType(exception: (Long, Long, Int, Int)): Boolean = {
+  def convertToProhibitions(prohibitionSegments: Seq[(Long, String, Double, Double, Int, Int, Int, Option[String])], roadLinks: Seq[RoadLinkFetched], exceptions: Seq[(Long, String, Int, Int)]): Seq[Either[String, PersistedLinearAsset]] = {
+    def hasInvalidExceptionType(exception: (Long, String, Int, Int)): Boolean = {
       !Set(21, 22, 10, 9, 27, 5, 8, 7, 6, 4, 15, 19, 13, 14, 24, 25).contains(exception._3)
     }
 
-    def hasInvalidProhibitionType(prohibition: (Long, Long, Double, Double, Int, Int, Int, Option[String])): Boolean = {
+    def hasInvalidProhibitionType(prohibition: (Long, String, Double, Double, Int, Int, Int, Option[String])): Boolean = {
       !Set(3, 2, 23, 12, 11, 26, 10, 9, 27, 5, 8, 7, 6, 4, 15, 19, 13, 14, 24, 25).contains(prohibition._6)
     }
     val (segmentsWithRoadLink, segmentsWithoutRoadLink) = prohibitionSegments.partition { s => roadLinks.exists(_.linkId == s._2) }
@@ -372,7 +372,7 @@ class AssetDataImporter {
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to > current_timestamp or a.valid_to is null)
           #$floatingFilter"""
-        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String],
+        .as[(Long, String, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String],
             Option[DateTime], Boolean, Int, Int, Int, Option[String], Option[DateTime], Option[Int])].list
     }
 
@@ -490,9 +490,9 @@ class AssetDataImporter {
   }
 
   def adjustToNewDigitization(vvhHost: String) = {
-    val vvhClient = new VVHClient(vvhHost)
+    val roadLinkClient = new RoadLinkClient(vvhHost)
     val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
-    val processedLinkIds = mutable.Set[Long]()
+    val processedLinkIds = mutable.Set[String]()
 
     withDynTransaction {
       municipalities.foreach { municipalityCode =>
@@ -500,11 +500,11 @@ class AssetDataImporter {
 
         println(s"*** Fetching from VVH with municipality: $municipalityCode")
 
-        val flippedLinks = vvhClient.roadLinkData.fetchByMunicipality(municipalityCode)
+        val flippedLinks = roadLinkClient.roadLinkData.fetchByMunicipality(municipalityCode)
           .filter(isHereFlipped)
           .filterNot(link => processedLinkIds.contains(link.linkId))
 
-        var updatedCount = MassQuery.withIds(flippedLinks.map(_.linkId).toSet) { idTableName =>
+        var updatedCount = MassQuery.withStringIds(flippedLinks.map(_.linkId).toSet) { idTableName =>
           sqlu"""
             update lrm_position pos
             set pos.side_code = 5 - pos.side_code
@@ -546,7 +546,7 @@ class AssetDataImporter {
     }
   }
 
-  private def isHereFlipped(roadLink: VVHRoadlink) = {
+  private def isHereFlipped(roadLink: RoadLinkFetched) = {
     val NotFlipped = 0
     val Flipped = 1
     roadLink.attributes.getOrElse("MTKHEREFLIP", NotFlipped).asInstanceOf[BigInt] == Flipped
@@ -636,7 +636,7 @@ class AssetDataImporter {
             and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
-          """.as[(Long, Long, Int, Option[Int], Double, Double, Int)].list
+          """.as[(Long, String, Int, Option[Int], Double, Double, Int)].list
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, linkId, sideCode, value, startMeasure, endMeasure, linkSource) = speedLimitLink
@@ -664,7 +664,7 @@ class AssetDataImporter {
             and floating = '0'
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
-          """.as[(Long, Long, Int, Double, Double, Option[Int], Int)].list
+          """.as[(Long, String, Int, Double, Double, Option[Int], Int)].list
 
       linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value, linkSource) =>
         dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None, None, None, None, linkSource = LinkGeomSource.apply(linkSource))
@@ -812,7 +812,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     }
   }
 
-  def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
+  def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, String, Point, Double, Option[Int])] = {
     implicit val getPoint = GetResult(r => objectToPoint(r.nextObject))
     sql"""
       select a.id, lrm.link_id, geometry, lrm.start_measure, np.value
@@ -823,10 +823,10 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
       where a.asset_type_id = $assetTypeId and a.floating = '1' and a.municipality_code = $municipality
-      """.as[(Long, Long, Point, Double, Option[Int])].list
+      """.as[(Long, String, Point, Double, Option[Int])].list
   }
 
-  def getNonFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int): Seq[(Long, Long, Option[Int])] ={
+  def getNonFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int): Seq[(Long, String, Option[Int])] ={
     sql"""
       select a.id, lrm.link_id, np.value
       from
@@ -836,7 +836,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = $publicId
       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
       where a.asset_type_id = $assetTypeId and a.floating = '0' and a.municipality_code = $municipality
-      """.as[(Long, Long, Option[Int])].list
+      """.as[(Long, String, Option[Int])].list
   }
 
   /**
@@ -850,11 +850,11 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     * @return
     */
   def updateObstacleToRoadLink(obstacle : Obstacle, roadLinkService: RoadLinkService) : Obstacle = {
-    def recalculateObstaclePosition(obstacle: Obstacle, roadlink: RoadLink) = {
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadlink.geometry)
-      val point = GeometryUtils.calculatePointFromLinearReference(roadlink.geometry, mValue).get
-      obstacle.copy(mValue = mValue, linkId = roadlink.linkId, lon = point.x, lat = point.y,
-        municipalityCode = roadlink.municipalityCode, modifiedBy = Some("automatic_correction"),
+    def recalculateObstaclePosition(obstacle: Obstacle, roadLink: RoadLink) = {
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(obstacle.lon, obstacle.lat, 0), roadLink.geometry)
+      val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).get
+      obstacle.copy(mValue = mValue, linkId = roadLink.linkId, lon = point.x, lat = point.y,
+        municipalityCode = roadLink.municipalityCode, modifiedBy = Some("automatic_correction"),
         modifiedAt = Some(DateTime.now()), floating = false)
     }
     //FunctionalClass 7 equal to FeatureClass TractorRoad
@@ -882,19 +882,19 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         // Has to be up to 50 cm away and the second closest at least 5 times this distance away
         if (rl1._1 <= .5 && rl1._1 * 5 <= rl2._1) {
           println("* Accepted closest for obstacle id=" + obstacle.id + ": road links and distances are " +
-            "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
+            s"${rl1._2.linkId} -> %2.3f m, ${rl2._2.linkId} -> %2.3f m".format(rl1._1, rl2._1))
           recalculateObstaclePosition(obstacle, rl1._2)
         } else {
           val closestOther = otherLinks.map(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry)).sorted.headOption
           val rl3 = roadLinksByDistance.tail.tail.headOption.map(_._1)
           if (rl1._1 <= .5 && rl2._1 <= .5 && closestOther.getOrElse(10.0) > 0.5 && rl3.getOrElse(10.0) > 0.5) {
             println("* Accepted closest in joining segments for obstacle id=" + obstacle.id + ": road links and distances are " +
-              "%d -> %2.3f m, %d -> %2.3f m, next links (1-5): %2.3f m, (6-8): %2.3f m".format(
-                rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1, closestOther.getOrElse(10.0), rl3.getOrElse(10.0)))
+              s"${rl1._2.linkId} -> %2.3f m, ${rl2._2.linkId} -> %2.3f m, next links (1-5): %2.3f m, (6-8): %2.3f m".format(
+                rl1._1, rl2._1, closestOther.getOrElse(10.0), rl3.getOrElse(10.0)))
             recalculateObstaclePosition(obstacle, rl1._2)
           } else {
             println("! Rejected; multiple candidates for obstacle id=" + obstacle.id + ": road links and distances are " +
-              "%d -> %2.3f m, %d -> %2.3f m".format(rl1._2.linkId, rl1._1, rl2._2.linkId, rl2._1))
+              s"${rl1._2.linkId} -> %2.3f m, ${rl2._2.linkId} -> %2.3f m".format(rl1._1, rl2._1))
             obstacle
           }
         }
@@ -917,7 +917,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     * @param vvhRestApiEndPoint
     */
   def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
-    val vvhClient = new VVHClient(vvhRestApiEndPoint)
+    val roadLinkClient = new RoadLinkClient(vvhRestApiEndPoint)
     withDynTransaction {
       val idAddressFi = sql"""select p.id from property p where p.public_id = 'osoite_suomeksi'""".as[Int].list.head
       val idAddressSe = sql"""select p.id from property p where p.public_id = 'osoite_ruotsiksi'""".as[Int].list.head
@@ -927,7 +927,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         val startTime = DateTime.now()
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsWOAddresses(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
+        val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
             if (rlinks.linkId == stops._2) {
@@ -951,7 +951,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       municipalitiesone.foreach { municipalityCode =>
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsMissingOneAddress(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
+        val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
         val finstops=getFinnishStopAddressRSe(municipalityCode, idAddressFi, idAddressSe)
         val swedishstops= getSwedishStopAddressRFi(municipalityCode, idAddressFi, idAddressSe)
         listOfStops.foreach { stops =>   //stop_1:asset_id, stop_2:link_id
@@ -1046,7 +1046,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                        not exists (select 1 from Text_property_value fiv where a.id = fiv.asset_id and fiv.property_id=$idAddressFi)
                        and
                        not exists (select 1 from Text_property_value sev where a.id = sev.asset_id and sev.property_id=$idAddressSe)
-                       AND a.MUNICIPALITY_CODE=$municipalityNumber""".as[(Long, Long)].list
+                       AND a.MUNICIPALITY_CODE=$municipalityNumber""".as[(Long, String)].list
     }
 
   /**
@@ -1064,7 +1064,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                       AND ((fiv.PROPERTY_ID = $idAddressSe)  AND   (not exists (select 1 from Text_property_value fiv where a.id = fiv.asset_id and fiv.property_id=$idAddressFi))
                       OR
                       (fiv.PROPERTY_ID = $idAddressFi  AND  ( not exists (select 1 from Text_property_value sev where a.id = sev.asset_id and sev.property_id=$idAddressSe))))
-                      ORDER BY a.id""".as[(Long, Long)].list
+                      ORDER BY a.id""".as[(Long, String)].list
   }
 /**
   * Gets masstransitstop asset_id, street name and link-id for stops that have ONLY swedish address
@@ -1078,7 +1078,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                        WHERE
                        a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE =$municipalityNumber AND se.PROPERTY_ID = $idAddressSe
                        AND (a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID = $idAddressFi))
-         """.as[(Long, String,Long)].list
+         """.as[(Long, String, String)].list
     //asset_id,stop's street name,link-id
   }
 
@@ -1094,7 +1094,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                   WHERE
                   a.Asset_Type_ID=10 AND  a.MUNICIPALITY_CODE=$municipalityNumber AND fiv.PROPERTY_ID = $idAddressFi
                   AND (a.ID NOT IN (SELECT ASSET_ID FROM Text_property_value WHERE PROPERTY_ID = $idAddressSe))
-         """.as[(Long, String,Long)].list
+         """.as[(Long, String, String)].list
       //asset_id,stop's street name,link-id
     }
 
@@ -1146,7 +1146,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       }
     }
 
-  def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int, createdBy: String) {
+  def insertNewAsset(typeId: Int, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int, createdBy: String) {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val propertyId = sql"""select id from property where public_id = 'mittarajoitus'""".as[Long].first
@@ -1169,8 +1169,8 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     insertNumberPropertyData(propertyId, assetId, value)
   }
 
-  def getAllLinkIdByAsset(typeId: Long, linkId: Seq[Long]) = {
-    MassQuery.withIds(linkId.toSet) { idTableName =>
+  def getAllLinkIdByAsset(typeId: Long, linkId: Seq[String]) = {
+    MassQuery.withStringIds(linkId.toSet) { idTableName =>
       sql"""
             select pos.LINK_ID, prop.VALUE, a.id
             from ASSET a
@@ -1179,12 +1179,12 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             join number_property_value prop on prop.asset_id = a.id
             join #$idTableName i on i.id = pos.link_id
             where a.asset_type_id = $typeId
-            and (a.valid_to > current_timestamp or a.valid_to is null)""".as[(Long, Int, Long)].list
+            and (a.valid_to > current_timestamp or a.valid_to is null)""".as[(String, Int, Long)].list
     }
   }
-  def getAssetsByLinkIds(typeId: Long, linkId: Seq[Long], includeExpire: Boolean) = {
+  def getAssetsByLinkIds(typeId: Long, linkId: Seq[String], includeExpire: Boolean) = {
     val filter = if (includeExpire) "" else "and (a.valid_to > current_timestamp or a.valid_to is null)"
-    MassQuery.withIds(linkId.toSet) { idTableName =>
+    MassQuery.withStringIds(linkId.toSet) { idTableName =>
       sql"""
             select a.id, pos.link_id, pos.start_measure, pos.end_measure
             from ASSET a
@@ -1192,7 +1192,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             join LRM_POSITION pos on al.position_id = pos.id
             join #$idTableName i on i.id = pos.link_id
             where a.asset_type_id = $typeId
-            #$filter""".as[(Long, Long, Long, Long)].list
+            #$filter""".as[(Long, String, Long, Long)].list
     }
   }
 }

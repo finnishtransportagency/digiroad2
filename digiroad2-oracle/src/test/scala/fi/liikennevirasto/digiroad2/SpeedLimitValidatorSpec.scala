@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SpeedLimit, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -17,7 +17,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
@@ -41,9 +41,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("get inaccurate SpeedLimit when speed limit traffic sign value is different of the speed limit value") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, "1000l", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
@@ -58,9 +58,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("when existing two speed limit traffic signs at on speed limit, and one sign it's ok the other not") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, "1000l", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -81,9 +81,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("when existing speed limit traffic signs, with different direction of the Speed limit asset") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, "1000l", SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -103,9 +103,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("when existing speed limit traffic sign, with valid asset") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, "1000l", SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -124,8 +124,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("verify two Speed Limits in one road link, with a valid traffic sign for one of them") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -151,8 +151,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a urban area traffic sign") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -176,8 +176,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a Speed limit ends traffic sign with different direction") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -200,8 +200,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a Speed limit ends traffic sign with valid conditions") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -225,8 +225,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a Speed limit ends traffic sign with valid conditions but value different") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -250,8 +250,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a Urban area ends traffic sign with valid conditions and value different of 80") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -275,8 +275,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a Speed limit area ends traffic sign with valid values but at 30 meters or less of the beginning of road link") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -299,8 +299,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a Speed limit area ends traffic sign with valid values but at 30 meters or less of the end of road link") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(
@@ -323,8 +323,8 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   test("validate Speed Limit when exist a Speed limit area ends traffic sign with valid values") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
-      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val linkIdForTests = 1000
+      val roadLink = RoadLink("1000l", geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = "1000l"
 
       val speedLimitsSeq =
         Seq(

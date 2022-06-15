@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
+import fi.liikennevirasto.digiroad2.client.vvh.RoadNodesFetched
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -84,7 +84,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       "kelluvuus" -> massTransitStop.floating
     }
 
-    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = {
+    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[String]) = {
       "link_id" -> Some(massTransitStop.linkId)
     }
 
@@ -743,7 +743,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def roadNodesToApi(roadNodes: Seq[VVHRoadNodes]) = {
+  def roadNodesToApi(roadNodes: Seq[RoadNodesFetched]) = {
     roadNodes.map { roadNode =>
       Map("nodeId" -> roadNode.nodeId,
           "nodeType" -> roadNode.formOfNode.value,

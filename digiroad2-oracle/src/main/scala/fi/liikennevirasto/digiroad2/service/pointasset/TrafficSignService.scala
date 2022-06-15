@@ -5,10 +5,10 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.lane.LaneType
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
@@ -16,9 +16,9 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
-case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, roadLink: RoadLink)
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class AdditionalPanelInfo(mValue: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
+case class TrafficSignInfo(id: Long, linkId: String, validityDirection: Int, signType: Int, roadLink: RoadLink)
 case class TrafficSignInfoUpdate(newSign: TrafficSignInfo, oldSign: PersistedTrafficSign)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
@@ -98,7 +98,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def createWithoutTransaction(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    val id = PostGISTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    val id = PostGISTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
 
     eventBus.publish("trafficSign:create", TrafficSignInfo(id, asset.linkId, asset.validityDirection,  getProperty(asset, typePublicId).get.propertyValue.toInt, roadLink))
     id
@@ -111,7 +111,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   }
 
   def createFloatingWithoutTransaction(asset: IncomingTrafficSign, username: String, municipality: Int): Long = {
-    PostGISTrafficSignDao.createFloating(asset, 0, username, municipality, VVHClient.createVVHTimeStamp(), LinkGeomSource.Unknown, floating = true)
+    PostGISTrafficSignDao.createFloating(asset, 0, username, municipality, RoadLinkClient.createVVHTimeStamp(), LinkGeomSource.Unknown, floating = true)
   }
 
   override def update(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String): Long = {
@@ -148,7 +148,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         roadLinks.find(_.linkId == asset.linkId) match {
           case Some(roadLink) => roadLink
           case _ =>
-            historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+            historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.timeStamp)(Ordering.Long.reverse).headOption
             .getOrElse(throw new IllegalStateException(s"Road link no longer available ${asset.linkId}"))
         })
     }
@@ -160,9 +160,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val updatedId = oldAsset match {
       case old if old.bearing != updatedAsset.bearing || !GeometryUtils.areAdjacent(Point(old.lon, old.lat), Point(updatedAsset.lon, updatedAsset.lat)) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
-        PostGISTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        PostGISTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        PostGISTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp())), roadLink.linkSource)
     }
     eventBus.publish("trafficSign:update", TrafficSignInfoUpdate(TrafficSignInfo(updatedId, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, roadLink), oldAsset))
     updatedId
@@ -269,7 +269,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def createFromCoordinates(trafficSign: IncomingTrafficSign, roadLink: RoadLink, username: String, isFloating: Boolean = false): Long = {
     if (isFloating)
-      createFloatingWithoutTransaction(trafficSign.copy(linkId = 0), username, roadLink.municipalityCode)
+      createFloatingWithoutTransaction(trafficSign.copy(linkId = LinkId.Unknown.value), username, roadLink.municipalityCode)
     else {
       checkDuplicates(trafficSign) match {
         case Some(existingAsset) =>
@@ -319,7 +319,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def getTrafficSign(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+  def getTrafficSign(linkIds : Seq[String]): Seq[PersistedTrafficSign] = {
     PostGISTrafficSignDao.fetchByLinkId(linkIds)
   }
 
@@ -360,7 +360,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     query + s" and created_by != 'batch_process_trafficSigns' and municipality_code in (${municipalities.mkString(",")})"
   }
 
-  def expire(linkIds: Set[Long], username: String, newTransaction: Boolean = true) : Unit = {
+  def expire(linkIds: Set[String], username: String, newTransaction: Boolean = true) : Unit = {
     if(newTransaction)
     withDynSession {
       PostGISTrafficSignDao.expire(linkIds, username)
@@ -406,7 +406,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     TrafficSignType.values.filter(_.group == trafficSignGroup).map(_.OTHvalue)
   }
 
-  def getTrafficSignsByDistance(sign: PersistedAsset, groupedAssets: Map[Long, Seq[PersistedAsset]], distance: Int): Seq[PersistedTrafficSign]={
+  def getTrafficSignsByDistance(sign: PersistedAsset, groupedAssets: Map[String, Seq[PersistedAsset]], distance: Int): Seq[PersistedTrafficSign]={
     val sameLinkAssets = groupedAssets.getOrElse(sign.linkId, Seq())
 
     sameLinkAssets.filter{ ts =>
@@ -475,8 +475,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       Set()
   }
 
-  def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
-                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[RoadLinkLike] = Seq()) : Set[AdditionalPanelInfo] = {
+  def getAdditionalPanels(linkId: String, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
+                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[RoadLink] = Seq()) : Set[AdditionalPanelInfo] = {
 
     val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
 
@@ -529,7 +529,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }.toSet
   }
 
-  def getAdjacent(point: Point, linkId: Long, roadLinks : Seq[RoadLinkLike]): Seq[(Point, Point, Long, Seq[Point])] = {
+  def getAdjacent(point: Point, linkId: String, roadLinks : Seq[RoadLink]): Seq[(Point, Point, String, Seq[Point])] = {
     if (roadLinks.isEmpty) {
       roadLinkService.getAdjacent(linkId, Seq(point), false).map { adjacentRoadLink =>
         val (start, end) = GeometryUtils.geometryEndpoints(adjacentRoadLink.geometry)
@@ -546,7 +546,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def expireAssetsByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String] = None) : Unit = {
+  def expireAssetsByLinkId(linkIds: Seq[String], signsType: Set[Int] = Set(), username: Option[String] = None) : Unit = {
     PostGISTrafficSignDao.expireAssetByLinkId(linkIds, signsType, username)
   }
 
