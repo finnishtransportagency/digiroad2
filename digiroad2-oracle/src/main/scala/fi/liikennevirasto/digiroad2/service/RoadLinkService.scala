@@ -436,16 +436,10 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * This method is used by CsvGenerator.
     *
     * @param linkIds
-    * @param fieldSelection
-    * @param fetchGeometry
-    * @param resultTransition
-    * @tparam T
     * @return
     */
-  def fetchVVHRoadlinks(linkIds: Set[String],
-                           fieldSelection: Option[String],
-                           fetchGeometry: Boolean): Seq[RoadLinkFetched] = {
-    if (linkIds.nonEmpty) roadLinkClient.roadLinkData.fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry)
+  def fetchVVHRoadlinks(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+    if (linkIds.nonEmpty) roadLinkClient.roadLinkData.fetchVVHRoadlinks(linkIds)
     else Seq.empty[RoadLinkFetched]
   }
 
