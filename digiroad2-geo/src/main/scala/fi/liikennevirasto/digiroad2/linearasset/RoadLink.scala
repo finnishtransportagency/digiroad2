@@ -38,9 +38,9 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
                     attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
                     linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface,lanes:Seq[PersistedLane]=Seq()) extends RoadLinkLike {
 
-  def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
-  def verticalLevel : Int = attributes("SURFACERELATION").asInstanceOf[BigInt].intValue
-  def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
+  def municipalityCode: Int = attributes("MUNICIPALITYCODE").toString.toInt
+  def verticalLevel : Int = attributes("SURFACERELATION").toString.toInt
+  def surfaceType : Int = attributes("SURFACETYPE").toString.toInt
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def roadPartNumber: Option[String] = attributes.get("ROADPARTNUMBER").map(_.toString)
   val timeStamp = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", 0L)).asInstanceOf[Long]
