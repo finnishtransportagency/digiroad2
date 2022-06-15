@@ -121,7 +121,7 @@ object SurfaceType {
   case object None extends SurfaceType { def value = 1 }
   case object Paved extends SurfaceType { def value = 2}
 }
-// rename ?
+
 sealed trait RoadClassWidth {
   def value: Int
   def width: Int
