@@ -322,7 +322,7 @@ trait KgvOperation extends LinkOperationsAbstract{
                   .build()
     
     var response: CloseableHttpResponse = null
-    LogUtils.time(logger, s"fetch roadlink features with URL: ${url}") {
+    LogUtils.time(logger, s"fetch roadLink features",url = Some(url)) {
       try {
         response = client.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -438,6 +438,8 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
+    if(polygon.getCoordinates.size == 0)
+      return Seq[LinkType]()
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
@@ -447,6 +449,8 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = {
+    if(polygon.getCoordinates.size == 0)
+      return Seq[IdType]()
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
@@ -464,11 +468,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
   
   override protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter: Option[String] = None): Seq[LinkType] = {
-    if (linkIds.size == 1) {
-      queryByLinkId[LinkType](linkIds.head)
-    }else {
       linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
-    }
   }
 
   protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {
