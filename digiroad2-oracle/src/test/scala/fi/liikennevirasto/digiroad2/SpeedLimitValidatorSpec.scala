@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SpeedLimit, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -18,7 +18,7 @@ import org.scalatest.{FunSuite, Matchers}
 class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]

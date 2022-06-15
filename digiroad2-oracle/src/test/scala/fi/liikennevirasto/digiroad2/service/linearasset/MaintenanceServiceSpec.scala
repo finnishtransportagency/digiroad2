@@ -20,14 +20,14 @@ import org.scalatest.{FunSuite, Matchers}
 class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val (linkId1, linkId2, linkId3) = ("388562360", "388562361", "388562362")
 
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+  when(mockKgvRoadLinkClient.fetchByLinkId(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockKgvRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId2))).thenReturn(Seq(RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))

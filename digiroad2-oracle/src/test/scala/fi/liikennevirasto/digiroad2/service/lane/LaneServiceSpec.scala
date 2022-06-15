@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
@@ -22,7 +22,7 @@ import org.scalatest.{FunSuite, Matchers}
 class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
@@ -39,7 +39,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
 
 
   val lanePropertiesValues1 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),

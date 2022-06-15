@@ -20,13 +20,13 @@ import slick.jdbc.{StaticQuery => Q}
 class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   private val linkId = "388562360"
 
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+  when(mockKgvRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockKgvRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(

@@ -26,15 +26,15 @@ import slick.jdbc.StaticQuery.interpolation
 class ProhibitionServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
   val linkId = "388562360"
 
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+  when(mockKgvRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockKgvRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(
@@ -163,7 +163,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Update prohibition") {
     val linkId = "1610349"
-    when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    when(mockKgvRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
     runWithRollback {
       val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
       val asset = ServiceWithDao.create(Seq(NewLinearAsset(linkId, 0, 20, prohibition, 1, 0, None)), 190, "testUser")
@@ -339,11 +339,11 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   test("Create prohibitions on actor update when exist sideCode adjustment") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
+    val timeStamp = new KgvRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+    when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f

@@ -24,7 +24,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
@@ -32,9 +32,9 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
-  val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
-  when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  val timeStamp = new KgvRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
+  when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
 
   val roadLinkWithLinkSource = RoadLink(
     "1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,

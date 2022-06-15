@@ -52,9 +52,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Override road link traffic direction with adjusted value") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(Set("1611447")))
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkIds(Set("1611447")))
         .thenReturn(Seq(RoadLinkFetched("1611447", 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set("1611447"))
@@ -68,9 +68,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Include road link functional class with adjusted value") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(Set("1611447")))
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkIds(Set("1611447")))
         .thenReturn(Seq(RoadLinkFetched("1611447", 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set("1611447"))
@@ -83,13 +83,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     PostGISDatabase.withDynTransaction {
       val oldRoadLink = RoadLinkFetched("30", 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MTKCLASS" -> BigInt(12314)))
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
 
       val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
       val service = new TestService(mockRoadLinkClient)
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId("30")).thenReturn(None)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId("30")).thenReturn(None)
       when(mockRoadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchByLinkId("30")).thenReturn(Some(oldRoadLink))
 
@@ -105,10 +105,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adjust link type") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId("1"))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId("1"))
         .thenReturn(Some(RoadLinkFetched("1", 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val linkProperty = LinkProperties("1", 5, PedestrianZone, TrafficDirection.BothDirections, Municipality)
@@ -121,10 +121,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Override administrative class") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId("1"))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId("1"))
         .thenReturn(Some(RoadLinkFetched("1", 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val linkProperty = LinkProperties("1", 5, PedestrianZone, TrafficDirection.UnknownDirection, Private)
@@ -137,14 +137,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Provide last edited date from VVH on road link modification date if there are no overrides") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
       val lastEditedDate = DateTime.now()
       val roadLinks = Seq(RoadLinkFetched("1", 0, Nil, Municipality, TrafficDirection.TowardsDigitizing, AllOthers, Some(lastEditedDate)))
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(roadLinks).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(roadLinks).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
 
       val service = new TestService(mockRoadLinkClient)
@@ -157,11 +157,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adjust link traffic direction to value that is in VVH") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val linkId = "1"
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val roadLink = simulateQuery {
@@ -180,12 +180,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Adjust non-existent road link") {
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
     val linkId = "1"
 
-    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(None)
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+    when(mockKgvRoadLinkClient.fetchByLinkId(linkId)).thenReturn(None)
     when(mockRoadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     when(mockVVHComplementaryClient.fetchByLinkId(linkId)).thenReturn(None)
 
@@ -198,11 +198,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Validate access rights to municipality") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val linkId = "1"
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       var validatedCode = 0
@@ -257,12 +257,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Remove road link from incomplete link list once functional class and link type are specified") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val linkId = "1"
 
       val roadLink = RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(roadLink))
       val service = new TestService(mockRoadLinkClient)
 
       sqlu"""insert into incomplete_link (id, link_id, municipality_code, administrative_class) values (43241231233, 1, 91, 1)""".execute
@@ -291,7 +291,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink = RoadLinkFetched(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     val service = new TestService(mockRoadLinkClient)
@@ -301,9 +301,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (2, $oldLinkId, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.head.functionalClass should be(3)
@@ -330,7 +330,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink = RoadLinkFetched(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockRoadLinkClient)
 
@@ -342,16 +342,16 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (6, $oldLinkId2, ${Freeway.value}, 'test' )""".execute
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.foreach(_.functionalClass should be(3))
       before.foreach(_.linkType should be(Freeway))
       before.foreach(_.trafficDirection should be(TrafficDirection.TowardsDigitizing))
 
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = generateProperties(Seq(newRoadLink) ++ oldRoadLinks)
       after.head.functionalClass should be(3)
@@ -377,7 +377,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink = RoadLinkFetched(newLinkId, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockRoadLinkClient)
 
@@ -389,14 +389,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId1, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (6, $oldLinkId2, ${Motorway.value}, 'test' )""".execute
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.length should be(2)
 
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = generateProperties(Seq(newRoadLink))
       after.head.functionalClass should be(UnknownFunctionalClass.value)
@@ -419,7 +419,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink = RoadLinkFetched(newLinkId, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockRoadLinkClient)
 
@@ -430,14 +430,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (6, $oldLinkId2, ${Freeway.value}, 'test' )""".execute
 
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(oldRoadLinks).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.length should be(2)
 
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = generateProperties(Seq(newRoadLink), changeInfo)
       after.head.functionalClass should be(3)
@@ -460,7 +460,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       RoadLinkFetched(newLinkId2, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockRoadLinkClient)
 
@@ -469,16 +469,16 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.TowardsDigitizing.value}, 'test' )""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (5, $oldLinkId, ${SlipRoad.value}, 'test' )""".execute
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.foreach(_.functionalClass should be(3))
       before.foreach(_.linkType should be(SlipRoad))
       before.foreach(_.trafficDirection should be(TrafficDirection.TowardsDigitizing))
 
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(newRoadLinks).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(newRoadLinks).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = generateProperties(newRoadLinks, changeInfo)
       after.length should be(2)
@@ -501,7 +501,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink = RoadLinkFetched(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockRoadLinkClient)
 
@@ -510,9 +510,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (2, $oldLinkId, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (3, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.head.functionalClass should be(3)
@@ -521,7 +521,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""delete from link_type where id=2""".execute
 
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
       val after = generateProperties(Seq(newRoadLink), Seq(changeInfo))
       after.head.functionalClass should be(3)
@@ -545,7 +545,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink = RoadLinkFetched(newLinkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockRoadLinkClient)
 
@@ -554,9 +554,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into link_type (id, link_id, link_type, modified_by) values (3, $oldLinkId, ${Freeway.value}, 'test' )""".execute
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by) values (4, $oldLinkId, ${TrafficDirection.BothDirections.value}, 'test' )""".execute
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(oldRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val before = service.getRoadLinksFromVVH(boundingBox)
       before.head.functionalClass should be(3)
@@ -565,7 +565,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""insert into functional_class (id, link_id, functional_class, modified_by) values (2, $newLinkId, 6, 'test' )""".execute
 
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
       val after = generateProperties(Seq(newRoadLink), Seq(changeInfo))
       after.head.functionalClass should be(6)
@@ -584,7 +584,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val roadLink = RoadLinkFetched(linkId, 235, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, Option(new DateTime("2016-02-12T12:55:04")), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockRoadLinkClient)
 
@@ -593,9 +593,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into traffic_direction (id, link_id, traffic_direction, modified_by, modified_date) values (2, $linkId, ${TrafficDirection.TowardsDigitizing.value}, 'test', TO_TIMESTAMP('2014-02-10 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'))""".execute
       sqlu"""insert into link_type (id, link_id, link_type, modified_by, modified_date) values (5, $linkId, ${Freeway.value}, 'test', TO_TIMESTAMP('2015-03-10 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'))""".execute
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(roadLink)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(roadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Nil).future)
       val roadLinkAfterDateComparison = service.getRoadLinksFromVVH(boundingBox).head
 
@@ -610,7 +610,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   ignore("Only road links with construction type 'in use' should be saved to incomplete_link table (not 'under construction' or 'planned')") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
       val mockVVHComplementaryDataClient = MockitoSugar.mock[VVHComplementaryClient]
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -619,11 +619,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val vvhRoadLink3 = RoadLinkFetched("3", 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.Planned, linkSource = LinkGeomSource.NormalLinkInterface)
       val vvhRoadLink4 = RoadLinkFetched("4", 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockRoadLinkClient.complementaryData).thenReturn(mockVVHComplementaryDataClient)
       when(mockVVHComplementaryDataClient.fetchWalkwaysByMunicipalitiesF(91)).thenReturn(Promise.successful(Seq()).future)
-      when(mockVVHRoadLinkClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)).future)
       when(mockVVHChangeInfoClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
       val service = new TestService(mockRoadLinkClient, mockEventBus)
       val roadLinks = service.getRoadLinksFromVVH(91)
@@ -649,7 +649,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   ignore("Should not save links to incomplete_link when the road source is not normal") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
       val mockVVHComplementaryDataClient = MockitoSugar.mock[VVHComplementaryClient]
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -660,14 +660,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val vvhRoadLink5 = RoadLinkFetched("5", 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
       val vvhRoadLink6 = RoadLinkFetched("6", 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.ComplimentaryLinkInterface)
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockRoadLinkClient.complementaryData).thenReturn(mockVVHComplementaryDataClient)
       when(mockVVHComplementaryDataClient.fetchWalkwaysByMunicipalitiesF(91)).thenReturn(Promise.successful(Seq()).future)
-      when(mockVVHRoadLinkClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4, vvhRoadLink5, vvhRoadLink6)).future)
+      when(mockKgvRoadLinkClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4, vvhRoadLink5, vvhRoadLink6)).future)
       when(mockVVHChangeInfoClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
       val service = new TestService(mockRoadLinkClient, mockEventBus)
-      when(mockVVHRoadLinkClient.fetchByLinkId("5")).thenReturn(Some(vvhRoadLink5))
+      when(mockKgvRoadLinkClient.fetchByLinkId("5")).thenReturn(Some(vvhRoadLink5))
 
       val roadLinks = service.getRoadLinksFromVVH(91)
 
@@ -695,7 +695,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
     val service = new TestService(mockRoadLinkClient)
@@ -711,12 +711,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val vvhRoadLink4 = RoadLinkFetched("8", 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse)
 
     PostGISDatabase.withDynTransaction {
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockRoadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchWalkwaysByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(complRoadLink1, complRoadLink2, complRoadLink3, complRoadLink4)))
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)))
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)))
 
       val roadlinks = service.getRoadLinksWithComplementaryFromVVH(boundingBox, Set(91))
 
@@ -752,9 +752,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "MUNICIPALITYCODE" -> BigInt(91))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+    when(mockKgvRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
       .thenReturn(Seq(RoadLinkFetched("1611447", 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
     val service = new TestService(mockRoadLinkClient)
 
@@ -778,9 +778,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "MUNICIPALITYCODE" -> BigInt(60))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+    when(mockKgvRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
       .thenReturn(Seq(RoadLinkFetched("1611447", 60, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
     val service = new TestService(mockRoadLinkClient)
 
@@ -858,15 +858,15 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
       when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(BoundingRectangle(Point(386028.117,6671112.263,20.596000000005006),Point(386028.317,6671112.4629999995,20.596000000005006)), Set())).thenReturn(Future(vvhRoadLinks))
-      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(BoundingRectangle(Point(386133.12200000003,6671115.893,21.547000000005937),Point(386133.322,6671116.092999999,21.547000000005937)), Set())).thenReturn(Future(Seq()))
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(BoundingRectangle(Point(386028.117,6671112.263,20.596000000005006),Point(386028.317,6671112.4629999995,20.596000000005006)), Set())).thenReturn(Future(vvhRoadLinks))
+      when(mockKgvRoadLinkClient.fetchByMunicipalitiesAndBoundsF(BoundingRectangle(Point(386133.12200000003,6671115.893,21.547000000005937),Point(386133.322,6671116.092999999,21.547000000005937)), Set())).thenReturn(Future(Seq()))
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
-      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(sourceRoadLinkVVH))
+      when(mockKgvRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(sourceRoadLinkVVH))
 
       val service = new RoadLinkTestService(mockRoadLinkClient)
       val adjacents = service.getAdjacent("445521", Seq(Point(386133.222, 6671115.993, 21.547000000005937)))
@@ -961,11 +961,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Added privateRoadAssociation, additionalInfo and accessRightId fields if private road") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val linkId = "1"
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val linkProperty = LinkProperties(linkId, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
@@ -981,11 +981,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Added privateRoadAssociation, additionalInfo and accessRightId fields if road different from private") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val linkId = "1"
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val linkProperty = LinkProperties(linkId, 5, PedestrianZone, TrafficDirection.UnknownDirection, Municipality, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
@@ -1001,11 +1001,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Update privateRoadAssociation, additionalInfo and accessRightId fields if private road") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val linkId = "1"
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val linkProperty = LinkProperties(linkId, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
@@ -1028,11 +1028,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Expire privateRoadAssociation, additionalInfo and accessRightId fields if switch private road to another type") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val linkId = "1"
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(RoadLinkFetched(linkId, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockRoadLinkClient)
       val linkProperty = LinkProperties(linkId, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
@@ -1184,7 +1184,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test to fetch road link by private road association name") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
       val dummyRoadAssociationName = "Dummy Road Association"
@@ -1213,8 +1213,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(Seq()))
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
 
       val result = service.getPrivateRoadsByAssociationName(refactoredDummyRoadAssName, false)
 
@@ -1231,7 +1231,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Test to fetch road link by private road association name having road links with different road association name, different municipalities and no road name") {
     PostGISDatabase.withDynTransaction {
       val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
       val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
       val dummyRoadAssociationNameNumberOne = "Dummy Road Association number one"
@@ -1262,8 +1262,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(Seq()))
 
-      when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
+      when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+      when(mockKgvRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
 
       val result = service.getPrivateRoadsByAssociationName(refactoredDummyRoadAssNameNumberOne, false)
 

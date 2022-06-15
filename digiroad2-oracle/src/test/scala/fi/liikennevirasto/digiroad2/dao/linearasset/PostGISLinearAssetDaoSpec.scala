@@ -11,7 +11,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, KgvRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -23,17 +23,17 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISLinearAssetDao = {
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
 
-    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+    when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
+    when(mockKgvRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockKgvRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
