@@ -442,12 +442,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @tparam T
     * @return
     */
-  def fetchVVHRoadlinks[T](linkIds: Set[String],
+  def fetchVVHRoadlinks(linkIds: Set[String],
                            fieldSelection: Option[String],
-                           fetchGeometry: Boolean,
-                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = {
-    if (linkIds.nonEmpty) roadLinkClient.roadLinkData.fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition)
-    else Seq.empty[T]
+                           fetchGeometry: Boolean): Seq[RoadLinkFetched] = {
+    if (linkIds.nonEmpty) roadLinkClient.roadLinkData.fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry)
+    else Seq.empty[RoadLinkFetched]
   }
 
   /**

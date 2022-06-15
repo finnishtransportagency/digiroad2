@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client
 import com.vividsolutions.jts.geom.GeometryFactory
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadlinkFetchedMtk}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.geotools.geometry.jts.GeometryBuilder
 import org.joda.time.DateTime
@@ -25,18 +25,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     val result= roadLinkClient.historyData.fetchByMunicipalitiesAndBounds(BoundingRectangle(Point(564000, 6930000),Point(566000, 6931000)), Set(420))
     result.size should be >1
   }
-
-  test("Fetch roadlinks with polygon string ") {
-    val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result= roadLinkClient.roadLinkData.fetchByPolygon(geomBuilder.polygon(564000,6930000,566000,6931000,567000,6933000))
-    result.size should be >1
-  }
-
-  test("Fetch roadlinks with empty polygon string") {
-    val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result= roadLinkClient.roadLinkData.fetchByPolygon(geomBuilder.polygon())
-    result.size should be (0)
-  }
+  
   /**
     * Checks that VVH history link id search works and returns something
     */
@@ -134,7 +123,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
   ignore("Fetch roadlink with municipality ") {
     val vvhClient= new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
     val begin = System.currentTimeMillis()
-    val result:Seq[RoadlinkFetchedMtk]= vvhClient.roadLinkData2.fetchByMunicipality(297)
+    val result:Seq[RoadLinkFetched]= vvhClient.roadLinkData2.fetchByMunicipality(297)
     val duration = System.currentTimeMillis() - begin
     println(s"roadlink with municipality completed in $duration ms and in second ${duration / 1000}")
     // in old environment Kuopio has 62432 link

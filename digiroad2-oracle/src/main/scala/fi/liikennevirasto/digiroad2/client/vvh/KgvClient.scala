@@ -228,7 +228,7 @@ object Extractor {
    lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadlinkFetchedMtk = {
+  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLinkFetched = {
     val attributes = feature.properties
 
     val linkGeometry: Seq[Point] = path.map(point => {
@@ -246,7 +246,7 @@ object Extractor {
    
     val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
-    RoadlinkFetchedMtk(linkId, municipalityCode,
+    RoadLinkFetched(linkId, municipalityCode,
       linkGeometry,
       extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
@@ -259,7 +259,7 @@ object Extractor {
 trait MtkOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
-  type IdType = String
+  override type IdType = String
 
   protected val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
   
@@ -465,11 +465,10 @@ trait MtkOperation extends LinkOperationsAbstract{
     }
   }
 
-  override protected def queryByLinkIds[LinkType](linkIds: Set[String],
-                                           fieldSelection: Option[String],
-                                           fetchGeometry: Boolean,
-                                           resultTransition: (Map[String, Any], List[List[Double]]) => LinkType,
-                                           filter: Set[Long] => String): Seq[LinkType] = {
+  override protected def queryByLinkIds[LinkType](linkIds: Set[IdType],
+                                                  fieldSelection: Option[String],
+                                                  fetchGeometry: Boolean,
+                                                  filter: String = ""): Seq[LinkType] = {
     if (linkIds.size == 1) {
       queryByLinkId[LinkType](linkIds.head)
     }else {
