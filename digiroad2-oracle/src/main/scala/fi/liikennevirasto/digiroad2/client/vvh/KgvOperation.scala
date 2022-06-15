@@ -52,7 +52,7 @@ object FilterOgc extends Filter {
         ""
       } else {
         val query = ids.map(t=>singleAddQuatation(t.toString)).mkString(",")
-        s"$attributeName IN ($query)"
+        s"${attributeName.toLowerCase} IN ($query)"
       }
     filter
   }

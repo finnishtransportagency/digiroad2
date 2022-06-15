@@ -66,7 +66,7 @@ case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[
                            constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def verticalLevel: Option[String] = attributes.get("SURFACERELATION").map(_.toString)
-  val timeStamp = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", 0L)).asInstanceOf[Long]
 }
 
 /*case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[Point],

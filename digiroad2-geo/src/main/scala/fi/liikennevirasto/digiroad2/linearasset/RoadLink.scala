@@ -43,7 +43,7 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
   def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def roadPartNumber: Option[String] = attributes.get("ROADPARTNUMBER").map(_.toString)
-  val timeStamp: Long = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp = attributes.getOrElse("VERSIONSTARTTIME", attributes.getOrElse("STARTTIME", 0L)).asInstanceOf[Long]
   def accessRightId: Option[String] = attributes.get("ACCESS_RIGHT_ID").map(_.toString)
   def privateRoadAssociation: Option[String] = attributes.get("PRIVATE_ROAD_ASSOCIATION").map(_.toString)
   def additionalInfo: Option[String] = attributes.get("ADDITIONAL_INFO").map(_.toString)
