@@ -311,7 +311,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
   }
   
-  protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError2] = {
+  protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
     val request = new HttpGet(url)
     addHeaders(request)
     
@@ -357,11 +357,11 @@ trait KgvOperation extends LinkOperationsAbstract{
           }
           Left(resort)
         } else {
-          Right(LinkOperationError2(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString))
+          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString))
         }
       }
       catch {
-        case e: Exception => Right(LinkOperationError2(e.toString, ""))
+        case e: Exception => Right(LinkOperationError(e.toString, ""))
       }
       finally {
         if (response != null) {
@@ -455,21 +455,15 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
 
-  protected def queryByLinkId[LinkType](linkId: String,
-                                           fieldSelection: Option[String] =None,
-                                           fetchGeometry: Boolean =false
-                                ): Seq[LinkType] = {
+  protected def queryByLinkId[LinkType](linkId: String): Seq[LinkType] = {
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
       case Left(features) =>features.get.features.map(feature=>
         Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
-
-  override protected def queryByLinkIds[LinkType](linkIds: Set[IdType],
-                                                  fieldSelection: Option[String],
-                                                  fetchGeometry: Boolean,
-                                                  filter: String = ""): Seq[LinkType] = {
+  
+  override protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter: String = ""): Seq[LinkType] = {
     if (linkIds.size == 1) {
       queryByLinkId[LinkType](linkIds.head)
     }else {
