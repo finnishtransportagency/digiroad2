@@ -29,16 +29,16 @@ sealed case class FeatureCollection(`type`: String, features: List[Feature], crs
 sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
 
-sealed trait Collection {
+trait KgvCollection {
   def value :String
 }
   
 object KgvCollection {
-  case object Frozen extends Collection { def value = "keskilinjavarasto:frozenlinks" }
-  case object Changes extends Collection { def value = "keskilinjavarasto:change" }
-  case object UnFrozen extends Collection { def value = "keskilinjavarasto:road_links" }
-  case object LinkVersios extends Collection { def value = "keskilinjavarasto:road_links_versions" }
-  case object LinkCorreponceTable extends Collection { def value = "keskilinjavarasto:frozenlinks_vastintaulu" }
+  case object Frozen extends KgvCollection { def value = "keskilinjavarasto:frozenlinks" }
+  case object Changes extends KgvCollection { def value = "keskilinjavarasto:change" }
+  case object UnFrozen extends KgvCollection { def value = "keskilinjavarasto:road_links" }
+  case object LinkVersios extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
+  case object LinkCorreponceTable extends KgvCollection { def value = "keskilinjavarasto:frozenlinks_vastintaulu" }
 }
 
 object FilterOgc extends Filter {
@@ -423,7 +423,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     }else {
       ""
     }
-    fetchFeatures(s"$restApiEndPoint/${KgvCollection.Frozen.value}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
+    fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
     match {
       case Left(features) =>features.get.features.map(feature=>
         Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
@@ -433,13 +433,13 @@ trait KgvOperation extends LinkOperationsAbstract{
 
  override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
     val filterString  = s"filter=${encode(FilterOgc.combineFiltersWithAnd(FilterOgc.withMunicipalityFilter(Set(municipality)), filter))}"
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}/items?${filterString}&filter-lang=${cqlLang}&crs=${crs}")
   }
 
   override protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = {
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
-    fetchFeatures(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items/${queryString}") match {
+    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
       case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
@@ -448,7 +448,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = {
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
-    fetchFeatures(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items/${queryString}") match {
+    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
       case Left(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[IdType])
       case Right(error) => throw new ClientException(error.toString)
     }
@@ -458,7 +458,7 @@ trait KgvOperation extends LinkOperationsAbstract{
                                            fieldSelection: Option[String] =None,
                                            fetchGeometry: Boolean =false
                                 ): Seq[LinkType] = {
-    fetchFeatures(s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items/${linkId}") match {
+    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
       case Left(features) =>features.get.features.map(feature=>
         Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
@@ -482,7 +482,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    val url = s"${restApiEndPoint}/${KgvCollection.Frozen.value}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
+    val url = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
     if(!pagination){
       fetchFeatures(url)
       match {
@@ -503,7 +503,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def queryByLastEditedDate[LinkType](lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     val filterString  = s"&filter=${encode(FilterOgc.withLastEditedDateFilter(lowerDate,higherDate))}"
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${KgvCollection.Frozen.value}" +
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}" +
       s"/items?filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 

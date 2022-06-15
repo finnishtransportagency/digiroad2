@@ -355,10 +355,9 @@ object RoadLinkClient {
 }
 
 class RoadLinkClient(vvhRestApiEndPoint: String) {
-  lazy val roadLinkData2: KgvRoadLinkClient = new KgvRoadLinkClient(vvhRestApiEndPoint)
-  lazy val roadLinkData: KgvRoadLinkClient = new KgvRoadLinkClient(vvhRestApiEndPoint)
+  lazy val roadLinkData: KgvRoadLinkClient = new KgvRoadLinkClient(collection=KgvCollection.Frozen)
   // TODO no real used boolean is always false
-  lazy val frozenTimeRoadLinkData: VVHRoadLinkClient = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
+  lazy val frozenTimeRoadLinkData: VVHFrozenTimeRoadLinkClientServicePoint = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   // TODO remove/ turn off REDO
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
   // TODO remove/ turn off REDO
@@ -421,17 +420,17 @@ trait LinkOperationsAbstract {
 
 }
 
-class KgvRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
+class KgvRoadLinkClient(roadlinkEndpoint: String = "",collection: KgvCollection = null) extends KgvOperation {
   
   override type LinkType = RoadLinkFetched
-  override def restApiEndPoint: String = roadlinkEndpoint
-  protected override val serviceName = "Roadlink_data"
+  override def restApiEndPoint: String = Digiroad2Properties.kmtkEndpoint
+  protected override val serviceName = collection.value
   protected override val disableGeometry = false
   protected def extractRoadLinkFeature(attributes: Map[String, Any]=Map(("","")), path: List[List[Double]]=List(List(0.0))): LinkType = ???
   
   val filter:Filter =FilterOgc
   
-  def createVVHTimeStamp(): Long =  RoadLinkClient.createVVHTimeStamp() 
+  def createVVHTimeStamp(offsetHours: Int = 5): Long =  RoadLinkClient.createVVHTimeStamp(offsetHours) 
 
   def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
     queryByMunicipality(municipality)
@@ -470,12 +469,6 @@ class KgvRoadLinkClient(roadlinkEndpoint: String = "") extends MtkOperation {
     * and PostGISLinearAssetDao.createSpeedLimit.
     */
   def fetchByLinkId(linkId: IdType): Option[LinkType] = fetchByLinkIds(Set(linkId)).headOption
-  
-  def fetchRoadLinkByLinkId(linkId: IdType): Option[LinkType] = {
-    fetchByLinkId(linkId) match {
-      case Some(vvhRoadLink) => Some(vvhRoadLink)
-    }
-  }
   
   /**
     * Returns road links by link ids.
