@@ -415,7 +415,7 @@ trait LinkOperationsAbstract {
 class KgvRoadLinkClient(roadlinkEndpoint: String = "",collection: KgvCollection = null) extends KgvOperation {
   
   override type LinkType = RoadLinkFetched
-  override def restApiEndPoint: String = Digiroad2Properties.kmtkEndpoint
+  override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
   protected override val serviceName = collection.value
   protected override val disableGeometry = false
   protected def extractRoadLinkFeature(attributes: Map[String, Any]=Map(("","")), path: List[List[Double]]=List(List(0.0))): LinkType = ???

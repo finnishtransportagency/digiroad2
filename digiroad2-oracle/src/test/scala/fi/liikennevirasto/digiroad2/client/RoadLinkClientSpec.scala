@@ -63,7 +63,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Test Change Info fetch by LinkId") {
+  ignore("Test Change Info fetch by LinkId") {
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result = roadLinkClient.roadLinkChangeInfo.fetchByLinkIds(Set("5176799"))
     result.nonEmpty should be(true)
@@ -78,7 +78,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
       6673093.5, 25496486.5
     )
 
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val result = roadLinkClient.roadLinkData.fetchByPolygonF(polygonTest2)
 
     val result1 = Await.result(result, atMost = Duration.Inf)
@@ -86,42 +86,42 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
   }
 
   ignore("Fetch roadlinks with id") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val result = roadLinkClient.roadLinkData.fetchByLinkId("000253b3-4dc1-42de-b4b8-f469e4c65283:1")
     result.size should be(1)
   }
 
   ignore("Fetch roadlinks with two id") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val result = roadLinkClient.roadLinkData.fetchByLinkIds(Set("000253b3-4dc1-42de-b4b8-f469e4c65283:1", "0023d7fc-18b9-4d67-bfdc-5c4176c80fba:1"))
     result.size should be(2)
   }
 
   ignore("Fetch roadlink with bbox") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val result = roadLinkClient.roadLinkData.fetchByMunicipalitiesAndBounds(BoundingRectangle(Point(380310.0517099907, 6677916.351437694), Point(380580.0517099907, 6678083.226437694)), Set())
     result.size should be(26)
   }
 
   ignore("Fetch roadlink with bbox, Kuopio 200m") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val result = roadLinkClient.roadLinkData.fetchByMunicipalitiesAndBounds(BoundingRectangle(Point(531785.8749662223, 6972615.888297602), Point(536105.8749662223, 6975285.888297602)), Set())
     result.size should be(2307)
   }
 
   ignore("Fetch roadlink with bbox in municipality border area, select link only from one") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val result = roadLinkClient.roadLinkData.fetchByMunicipalitiesAndBounds(BoundingRectangle(Point(380310.0517099907, 6677916.351437694), Point(380580.0517099907, 6678083.226437694)), Set(49))
     result.size should be(23)
   }
   ignore("Fetch roadlink with bbox and municipality 49 and 91") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val result = roadLinkClient.roadLinkData.fetchByMunicipalitiesAndBounds(BoundingRectangle(Point(380310.0517099907, 6677916.351437694), Point(380580.0517099907, 6678083.226437694)), Set(49, 91))
     result.size should be(26)
   }
 
   ignore("Fetch roadlink with municipality ") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result: Seq[RoadLinkFetched] = roadLinkClient.roadLinkData.fetchByMunicipality(297)
     val duration = System.currentTimeMillis() - begin
@@ -131,7 +131,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
   }
 
   ignore("Fetch roadlink with municipality small") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result = roadLinkClient.roadLinkData.fetchByMunicipality(766)
     println(result.head.linkId)
@@ -141,7 +141,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
   }
 
   ignore("Fetch roadlink with municipality mtk") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result = roadLinkClient.roadLinkData.fetchWalkwaysByMunicipalitiesF(297)
     val result1 = Await.result(result, atMost = Duration.Inf)
@@ -151,7 +151,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
   }
 
   ignore("Fetch roadlink with roadname") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result = roadLinkClient.roadLinkData.fetchByRoadNames("ROADNAMEFIN", Set("Rantatie"))
     val duration = System.currentTimeMillis() - begin
@@ -159,7 +159,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
     result.size should be(2286)
   }
   ignore("Fetch roadlink with two road name") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result = roadLinkClient.roadLinkData.fetchByRoadNames("ROADNAMEFIN", Set("Rantatie", "Mannerheimintie"))
     val duration = System.currentTimeMillis() - begin
@@ -168,7 +168,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
   }
 
   ignore("Fetch roadlink with roadname Tarkk'ampujankuja") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result = roadLinkClient.roadLinkData.fetchByRoadNames("ROADNAMEFIN", Set("Tarkk'ampujankuja"))
     val duration = System.currentTimeMillis() - begin
@@ -177,7 +177,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
   }
 
   ignore("fetch by fetchByChangesDates") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result = roadLinkClient.roadLinkData.fetchByChangesDates(DateTime.parse("2022-03-30T00:00:00.000Z"), DateTime.parse("2022-04-1T12:31:12.000Z"))
     val duration = System.currentTimeMillis() - begin
@@ -186,7 +186,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
   }
 
   ignore("fetch by date fetchByDatetime") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
+    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.kgvEndpoint)
     val begin = System.currentTimeMillis()
     val result = roadLinkClient.roadLinkData.fetchByDatetime(DateTime.parse("2018-02-12T00:00:00Z"), DateTime.parse("2018-02-13T12:31:12Z"))
     val duration = System.currentTimeMillis() - begin

@@ -295,7 +295,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   }
 
   protected def addHeaders(request: HttpRequestBase): Unit = {
-    request.addHeader("X-API-Key", Digiroad2Properties.kmtkApiKey)
+    request.addHeader("X-API-Key", Digiroad2Properties.kgvApiKey)
     request.addHeader("accept","application/geo+json")
   }
 
