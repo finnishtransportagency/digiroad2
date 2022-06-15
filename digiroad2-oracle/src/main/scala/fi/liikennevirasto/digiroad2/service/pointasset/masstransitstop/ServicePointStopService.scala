@@ -116,7 +116,7 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
 
   def transformToPersistedMassTransitStop(servicePoints :Seq[ServicePoint]): Seq[PersistedMassTransitStop] = {
     servicePoints.map { sp =>
-      PersistedMassTransitStop(sp.id, sp.nationalId, 0, sp.stopTypes, sp.municipalityCode, sp.lon, sp.lat, 0, None, None, None,
+      PersistedMassTransitStop(sp.id, sp.nationalId, "", sp.stopTypes, sp.municipalityCode, sp.lon, sp.lat, 0, None, None, None,
         floating = false, 0L, sp.created, sp.modified, sp.propertyData, LinkGeomSource.Unknown)
     }
   }

@@ -24,7 +24,7 @@ object LinkIdImporter {
       }
       sqlu"""create table mml_id_to_link_id (
           mml_id number(38, 0),
-          link_id number(38, 0),
+          link_id varchar(40),
           primary key (mml_id)
         )""".execute
     }
@@ -76,7 +76,7 @@ object LinkIdImporter {
         links.foreach { link =>
           val mmlId = link.attributes("MTKID").asInstanceOf[BigInt].longValue()
           tempPS.setLong(1, mmlId)
-          tempPS.setLong(2, link.linkId)
+          tempPS.setString(2, link.linkId)
           tempPS.addBatch()
         }
         try {

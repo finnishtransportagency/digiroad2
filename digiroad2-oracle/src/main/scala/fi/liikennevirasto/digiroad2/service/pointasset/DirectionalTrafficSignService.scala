@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SimplePointAssetProperty
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, PostGISDirectionalTrafficSignDao}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
-case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, bearing: Option[Int], propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: String, validityDirection: Int, bearing: Option[Int], propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
 
 
 class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -35,7 +35,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
 
   def createFromCoordinates(incomingDirectionalTrafficSign: IncomingDirectionalTrafficSign, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
     if(isFloating)
-      createFloatingWithoutTransaction(incomingDirectionalTrafficSign.copy(linkId = 0), username, roadLink)
+      createFloatingWithoutTransaction(incomingDirectionalTrafficSign.copy(linkId = LinkId.Unknown.value), username, roadLink)
     else {
       checkDuplicates(incomingDirectionalTrafficSign) match {
         case Some(existingAsset) =>

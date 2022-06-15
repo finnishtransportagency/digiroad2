@@ -20,7 +20,7 @@ object LinearAssetUtils {
     )
   }
 
-  def newChangeInfoDetected(asset : LinearAsset, changes: Map[Long, Seq[ChangeInfo]]) = {
+  def newChangeInfoDetected(asset : LinearAsset, changes: Map[String, Seq[ChangeInfo]]) = {
     changes.getOrElse(asset.linkId, Seq()).exists(c =>
       c.vvhTimeStamp > asset.vvhTimeStamp && (c.oldId.getOrElse(0) == asset.linkId || c.newId.getOrElse(0) == asset.linkId)
     )
@@ -31,7 +31,7 @@ object LinearAssetUtils {
     newChangeInfoDetected(persistedLinearAssetToLinearAsset(a), changes)
   }
 
-  def newChangeInfoDetected(a: PersistedLinearAsset, changes: Map[Long, Seq[ChangeInfo]]): Boolean = {
+  def newChangeInfoDetected(a: PersistedLinearAsset, changes: Map[String, Seq[ChangeInfo]]): Boolean = {
     newChangeInfoDetected(persistedLinearAssetToLinearAsset(a), changes)
   }
 
@@ -39,19 +39,19 @@ object LinearAssetUtils {
      Used by LinearAssetService and SpeedLimitService
    */
   @Deprecated
-  def deletedRoadLinkIds(change: Seq[ChangeInfo], current: Seq[RoadLink]): Seq[Long] = {
+  def deletedRoadLinkIds(change: Seq[ChangeInfo], current: Seq[RoadLink]): Seq[String] = {
     change.filter(_.oldId.nonEmpty).flatMap(_.oldId).filterNot(id => current.exists(rl => rl.linkId == id)).
       filterNot(id => change.exists(ci => ci.newId.getOrElse(0) == id))
   }
 
-  def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
+  def deletedRoadLinkIds(changes: Map[String, Seq[ChangeInfo]], currentLinkIds: Set[String]): Seq[String] = {
     changes.filter(c =>
       !c._2.exists(ci => ci.newId.contains(c._1)) &&
         !currentLinkIds.contains(c._1)
     ).keys.toSeq
   }
 
-  def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {
+  def getMappedChanges(changes: Seq[ChangeInfo]): Map[String, Seq[ChangeInfo]] = {
     (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
       .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
   }

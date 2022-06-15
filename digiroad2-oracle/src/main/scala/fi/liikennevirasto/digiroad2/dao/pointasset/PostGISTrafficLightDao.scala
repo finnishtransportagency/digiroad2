@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 import scala.util.Try
 
-case class TrafficLightRow(id: Long, linkId: Long,
+case class TrafficLightRow(id: Long, linkId: String,
                            lon: Double, lat: Double,
                            mValue: Double, floating: Boolean,
                            vvhTimeStamp: Long,
@@ -28,7 +28,7 @@ case class TrafficLightRow(id: Long, linkId: Long,
                            modifiedAt: Option[DateTime] = None,
                            linkSource: LinkGeomSource)
 
-case class TrafficLight(id: Long, linkId: Long,
+case class TrafficLight(id: Long, linkId: String,
                         lon: Double, lat: Double,
                         mValue: Double, floating: Boolean,
                         vvhTimeStamp: Long,
@@ -130,7 +130,7 @@ object PostGISTrafficLightDao {
   implicit val getPointAsset = new GetResult[TrafficLightRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

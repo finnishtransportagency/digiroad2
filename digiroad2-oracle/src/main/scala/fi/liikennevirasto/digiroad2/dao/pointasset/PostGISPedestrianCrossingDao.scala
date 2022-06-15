@@ -14,7 +14,7 @@ import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import scala.language.reflectiveCalls
 
-case class PedestrianCrossingRow(id: Long, linkId: Long,
+case class PedestrianCrossingRow(id: Long, linkId: String,
                                  lon: Double, lat: Double,
                                  mValue: Double, floating: Boolean,
                                  vvhTimeStamp: Long,
@@ -27,7 +27,7 @@ case class PedestrianCrossingRow(id: Long, linkId: Long,
                                  expired: Boolean = false,
                                  linkSource: LinkGeomSource)
 
-case class PedestrianCrossing(id: Long, linkId: Long,
+case class PedestrianCrossing(id: Long, linkId: String,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
                               vvhTimeStamp: Long,
@@ -170,7 +170,7 @@ class PostGISPedestrianCrossingDao() {
     """
   }
 
-  def fetchPedestrianCrossingByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
+  def fetchPedestrianCrossingByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val query =
       """
@@ -189,14 +189,14 @@ class PostGISPedestrianCrossingDao() {
           left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
       """
     val queryWithFilter =
-      query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.mkString(",")})" + filterExpired
+      query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.map(id => s"'$id'").mkString(",")})" + filterExpired
     queryToPedestrian(queryWithFilter)
   }
 
   implicit val getPointAssetRow = new GetResult[PedestrianCrossingRow] {
     def apply(r: PositionedResult) : PedestrianCrossingRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()

@@ -9,7 +9,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
-case class RoadLinkValue(linkId: Long, value: Option[Int])
+case class RoadLinkValue(linkId: String, value: Option[Int])
 case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int, timeStamp:Option[String], mmlId: Option[Long])
 
 sealed trait RoadLinkDAO{
@@ -21,31 +21,31 @@ sealed trait RoadLinkDAO{
 
   def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int]
 
-  def getExistingValue(linkId: Long): Option[Int]= {
+  def getExistingValue(linkId: String): Option[Int]= {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
   }
 
   implicit val getRoadLinkRow: GetResult[RoadLinkValue] = new GetResult[RoadLinkValue] {
     def apply(r: PositionedResult): RoadLinkValue = {
-      val id = r.nextLong
+      val id = r.nextString()
       val value = r.nextIntOption()
       RoadLinkValue(id, value)
     }
   }
 
-  def getExistingValues(linkIds: Seq[Long]): Seq[RoadLinkValue] = {
+  def getExistingValues(linkIds: Seq[String]): Seq[RoadLinkValue] = {
     if (linkIds.nonEmpty) {
-      Q.queryNA[RoadLinkValue](s"""select link_id,$column from $table where link_id IN (${linkIds.mkString(",")})""")(getRoadLinkRow).iterator.toSeq
+      Q.queryNA[RoadLinkValue](s"""select link_id,$column from $table where link_id IN (${linkIds.map(id => s"'$id'").mkString(",")})""")(getRoadLinkRow).iterator.toSeq
     } else Seq()
   }
   
-  def getLinkIdByValue(value: Int, since: Option[String]): Seq[Long] = {
+  def getLinkIdByValue(value: Int, since: Option[String]): Seq[String] = {
     val sinceDateQuery = since match {
       case Some(date) => " AND modified_date >= to_date('" + date + "', 'YYYYMMDD')"
       case _ =>""
     }
 
-    sql"""select link_id from #$table where #$column = $value #$sinceDateQuery""".as[Long].list
+    sql"""select link_id from #$table where #$column = $value #$sinceDateQuery""".as[String].list
   }
 
 
@@ -60,11 +60,11 @@ sealed trait RoadLinkDAO{
          where not exists (select * from $table where link_id =(?))""".stripMargin)
     try {
       entries.foreach { property =>
-        insertLinkPropertyPS.setLong(1, property.linkProperty.linkId)
+        insertLinkPropertyPS.setString(1, property.linkProperty.linkId)
         insertLinkPropertyPS.setInt(2, property.value)
         insertLinkPropertyPS.setString(3, property.timeStamp.get)
         insertLinkPropertyPS.setString(4, property.username.getOrElse(""))
-        insertLinkPropertyPS.setLong(5, property.linkProperty.linkId)
+        insertLinkPropertyPS.setString(5, property.linkProperty.linkId)
         insertLinkPropertyPS.addBatch()
       }
       insertLinkPropertyPS.executeBatch()
@@ -84,7 +84,7 @@ sealed trait RoadLinkDAO{
       entries.foreach { property =>
         updateLinkPropertyPS.setLong(1, property.value)
         updateLinkPropertyPS.setString(2, property.username.getOrElse(""))
-        updateLinkPropertyPS.setLong(3, property.linkProperty.linkId)
+        updateLinkPropertyPS.setString(3, property.linkProperty.linkId)
         updateLinkPropertyPS.addBatch()
       }
       updateLinkPropertyPS.executeBatch()
@@ -99,15 +99,15 @@ sealed trait RoadLinkDAO{
             where not exists (select * from #$table where link_id =${linkProperty.linkId})""".execute
   }
 
-  def insertValues(linkId: Long, username: Option[String], value: Int) = {
+  def insertValues(linkId: String, username: Option[String], value: Int) = {
     sqlu""" insert into #$table (id, link_id, #$column, modified_by )
             select nextval('primary_key_seq'), $linkId, $value, $username
             where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
-  def insertValues(linkId: Long, username: Option[String], value: Int, timeStamp: String) = {
+  def insertValues(linkId: String, username: Option[String], value: Int, timeStamp: String) = {
     sqlu""" insert into #$table (id, link_id, #$column, modified_date, modified_by)
-            select nextval('primary_key_seq'), ${linkId}, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
+            select nextval('primary_key_seq'), $linkId, $value,to_timestamp($timeStamp, 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'), $username
            where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
@@ -128,7 +128,7 @@ sealed trait RoadLinkDAO{
                where link_id = ${linkProperty.linkId}""".execute
   }
 
-  def updateValues(linkId: Long, username: Option[String], value: Int): Unit = {
+  def updateValues(linkId: String, username: Option[String], value: Int): Unit = {
     sqlu"""update #$table
                set #$column = $value,
                    modified_date = current_timestamp,
@@ -137,7 +137,7 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
+  def expireValues(linkId: String, username: Option[String], changeTimeStamp: Option[Long] = None) = {
     val withTimeStamp = changeTimeStamp match {
       case Some(ts) => ", adjusted_timestamp = " + ts + ""
       case _ => ""
@@ -152,7 +152,7 @@ sealed trait RoadLinkDAO{
         """.execute
   }
 
-  def deleteValues(linkId: Long) = {
+  def deleteValues(linkId: String) = {
     sqlu"""delete from #$table
                  where link_id = $linkId""".execute
   }
@@ -177,12 +177,12 @@ object RoadLinkDAO{
     }
   }
 
-  def get(propertyName: String, linkId: Long): Option[Int]= {
+  def get(propertyName: String, linkId: String): Option[Int]= {
     val dao = getDao(propertyName)
     dao.getExistingValue(linkId)
   }
 
-  def getValues(propertyName: String, linkIds: Seq[Long]): Seq[RoadLinkValue]= {
+  def getValues(propertyName: String, linkIds: Seq[String]): Seq[RoadLinkValue]= {
     val dao = getDao(propertyName)
     dao.getExistingValues(linkIds)
   }
@@ -197,7 +197,7 @@ object RoadLinkDAO{
     dao.getVVHValue(roadLinkFetched)
   }
 
-  def getLinkIdByValue(propertyName: String, value: Int, since: Option[String]): Seq[Long] = {
+  def getLinkIdByValue(propertyName: String, value: Int, since: Option[String]): Seq[String] = {
     val dao = getDao(propertyName)
     dao.getLinkIdByValue(value, since)
   }
@@ -224,7 +224,7 @@ object RoadLinkDAO{
     }))
   }
   
-  def insert(propertyName: String, linkId: Long, username: Option[String], value: Int) = {
+  def insert(propertyName: String, linkId: String, username: Option[String], value: Int) = {
     val dao = getDao(propertyName)
     dao.insertValues(linkId, username, value)
   }
@@ -242,7 +242,7 @@ object RoadLinkDAO{
   }
 
 
-  def update(propertyName: String, linkId: Long, username: Option[String], value: Int, existingValue: Int) = {
+  def update(propertyName: String, linkId: String, username: Option[String], value: Int, existingValue: Int) = {
     val dao = getDao(propertyName)
 
     if(existingValue != value)
@@ -266,7 +266,7 @@ object RoadLinkDAO{
 
   }
 
-  def delete(propertyName: String, linkId: Long) = {
+  def delete(propertyName: String, linkId: String) = {
     val dao = getDao(propertyName)
     dao.deleteValues(linkId)
   }
@@ -313,11 +313,11 @@ object RoadLinkDAO{
            where not exists (select * from $table where link_id =(?))""".stripMargin)
       try {
         entries.foreach { property =>
-          insertLinkPropertyPS.setLong(1, property.linkProperty.linkId)
+          insertLinkPropertyPS.setString(1, property.linkProperty.linkId)
           insertLinkPropertyPS.setInt(2, property.value)
           insertLinkPropertyPS.setString(3, property.username.getOrElse(""))
           insertLinkPropertyPS.setInt(4, property.linkProperty.linkType.value)
-          insertLinkPropertyPS.setLong(5, property.linkProperty.linkId)
+          insertLinkPropertyPS.setString(5, property.linkProperty.linkId)
           insertLinkPropertyPS.addBatch()
         }
         insertLinkPropertyPS.executeBatch()
@@ -336,8 +336,8 @@ object RoadLinkDAO{
 
     }
 
-    def getLinkIds(): Seq[Long] = {
-      sql"""select link_id from traffic_direction""".as[Long].list
+    def getLinkIds(): Seq[String] = {
+      sql"""select link_id from traffic_direction""".as[String].list
     }
     override def updateValuesMass(entries:Seq[MassOperationEntry]): Unit ={
       val updateLinkPropertyPS = dynamicSession.prepareStatement(
@@ -352,7 +352,7 @@ object RoadLinkDAO{
           updateLinkPropertyPS.setInt(1, property.value)
           updateLinkPropertyPS.setString(2, property.username.getOrElse(""))
           updateLinkPropertyPS.setInt(3, property.linkProperty.linkType.value)
-          updateLinkPropertyPS.setLong(4, property.linkProperty.linkId)
+          updateLinkPropertyPS.setString(4, property.linkProperty.linkId)
           updateLinkPropertyPS.addBatch()
         }
         updateLinkPropertyPS.executeBatch()
@@ -376,13 +376,13 @@ object RoadLinkDAO{
       None
     }
 
-    def getAllLinkType(linkIds: Seq[Long]) = {
-      val linkTypeInfo = MassQuery.withIds(linkIds.toSet) { idTableName =>
+    def getAllLinkType(linkIds: Seq[String]) = {
+      val linkTypeInfo = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
         sql"""
         select lt.link_id, lt.link_type
            from link_type lt
            join  #$idTableName i on i.id = lt.link_id
-         """.as[(Long, Int)].list
+         """.as[(String, Int)].list
       }
       linkTypeInfo.map {
         case (linkId, linkType) =>
@@ -396,7 +396,7 @@ object RoadLinkDAO{
     def table: String = AdministrativeClass
     def column: String = AdministrativeClass
 
-    override def getExistingValue(linkId: Long): Option[Int]= {
+    override def getExistingValue(linkId: String): Option[Int]= {
       sql"""select #$column from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > current_timestamp) """.as[Int].firstOption
     }
 
@@ -415,7 +415,7 @@ object RoadLinkDAO{
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
-    override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
+    override def expireValues(linkId: String, username: Option[String], changeTimeStamp: Option[Long] = None) = {
       sqlu"""update #$table
                  set valid_to = current_timestamp - INTERVAL'1 DAYS',
                      modified_by = $username
@@ -432,7 +432,7 @@ object RoadLinkDAO{
 
     }
 
-    override def updateValues(linkId: Long, username: Option[String], value: Int) = {
+    override def updateValues(linkId: String, username: Option[String], value: Int) = {
       throw new UnsupportedOperationException("Administrative Class keeps history, should be used the update values implemented")
     }
 
@@ -444,7 +444,7 @@ object RoadLinkDAO{
       throw new UnsupportedOperationException("Administrative Class keeps history, should be used the update values implemented")
     }
 
-    override def deleteValues(linkId: Long) = {
+    override def deleteValues(linkId: String) = {
       throw new UnsupportedOperationException("Administrative Class keeps history, ins't suppost to be deleted any row from db")
     }
 
@@ -454,7 +454,7 @@ object RoadLinkDAO{
         select t.link_id, #$column
            from #$table t
            join  #$idTableName i on i.id = t.link_id
-         """.as[(Long, Int)].list
+         """.as[(String, Int)].list
       }
       linkTypeInfo.map {
         case (linkId, administrativeClassValue) =>
@@ -469,7 +469,7 @@ object RoadLinkDAO{
     def table: String = LinkAttributes
     def column: String = LinkAttributes
 
-    def getExistingValues(linkId: Long, changeTimeStamp: Option[Long] = None ) = {
+    def getExistingValues(linkId: String, changeTimeStamp: Option[Long] = None ) = {
       val withTimeStamp = changeTimeStamp match {
         case Some(ts) => "and adjusted_timestamp < " + ts + ""
         case _ => ""
@@ -478,7 +478,7 @@ object RoadLinkDAO{
       sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > current_timestamp #$withTimeStamp) """.as[(String, String)].list.toMap
     }
 
-    def insertAttributeValueByChanges(linkId: Long, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
+    def insertAttributeValueByChanges(linkId: String, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
       sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, adjusted_timestamp)values(
              nextval('primary_key_seq'), $linkId, $attributeName, $value, $username, $changeTimeStamp)""".execute
     }
@@ -487,9 +487,9 @@ object RoadLinkDAO{
       sql"""select distinct value from #$table where name = $attributeName and (valid_to is null or valid_to > current_timestamp)""".as[String].list
     }
 
-    def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, Long)] = {
+    def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, String)] = {
       sql"""select value, link_id from #$table where name = $attributeName
-           and (valid_to is null or valid_to > current_timestamp) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
+           and (valid_to is null or valid_to > current_timestamp) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, String)].list
     }
 
     def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String, mmlId: Option[Long]): Unit = {

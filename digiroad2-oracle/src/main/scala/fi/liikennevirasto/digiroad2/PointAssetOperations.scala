@@ -43,12 +43,12 @@ object FloatingReason{
 trait IncomingPointAsset {
   val lon: Double
   val lat: Double
-  val linkId: Long
+  val linkId: String
 }
 
 trait IncomePointAsset {
   val mValue: Long
-  val linkId: Long
+  val linkId: String
 }
 
 trait PointAsset extends FloatingAsset {
@@ -60,7 +60,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val lon: Double
   val lat: Double
   val municipalityCode: Int
-  val linkId: Long
+  val linkId: String
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long
@@ -73,7 +73,7 @@ trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
   val lon: Double
   val lat: Double
   val municipalityCode: Int
-  val linkId: Long
+  val linkId: String
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long
@@ -230,7 +230,7 @@ trait  PointAssetOperations{
     }
   }
 
-  protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
+  protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, String, Option[Long])] ={
     var query = s"""
           select a.$idField, m.name_fi, lrm.link_id, null
           from asset a
@@ -239,7 +239,7 @@ trait  PointAssetOperations{
           join lrm_position lrm on al.position_id = lrm.id
           where asset_type_id = $typeId and floating = '1' and (valid_to is null or valid_to > current_timestamp)"""
 
-    StaticQuery.queryNA[(Long, String, Long, Option[Long])](addQueryFilter(query)).list
+    StaticQuery.queryNA[(Long, String, String, Option[Long])](addQueryFilter(query)).list
   }
 
   protected def getFloatingPointAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Seq[FloatingPointAsset] = {
@@ -279,10 +279,10 @@ trait  PointAssetOperations{
     getByMunicipality(mapRoadLinks, roadLinks, Seq(), (_, _, _, _, _) => None, withMunicipality(municipalityCode))
   }
 
-  protected def getByMunicipality[T](mapRoadLinks: Map[Long, RoadLink], roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
+  protected def getByMunicipality[T](mapRoadLinks: Map[String, RoadLink], roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
             adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate], withFilter: String => String): Seq[PersistedAsset] = {
 
-    def linkIdToRoadLink(linkId: Long): Option[RoadLinkLike] =
+    def linkIdToRoadLink(linkId: String): Option[RoadLinkLike] =
       mapRoadLinks.get(linkId)
 
     withDynTransaction {
@@ -296,7 +296,7 @@ trait  PointAssetOperations{
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkByLinkIdFromVVH(x.linkId) }
 
-    def findRoadlink(linkId: Long): Option[RoadLinkLike] =
+    def findRoadlink(linkId: String): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)
 
     withDynTransaction {
@@ -308,7 +308,7 @@ trait  PointAssetOperations{
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[RoadLinkLike] = Some(roadLink)
 
-    def findRoadlink(linkId: Long): Option[RoadLinkLike] =
+    def findRoadlink(linkId: String): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)
 
     withDynTransaction {
@@ -340,19 +340,19 @@ trait  PointAssetOperations{
     fetchPointAssetsWithExpired(withFilter(filter))
   }
 
-  def getPersistedAssetsByLinkId(linkId: Long): Seq[PersistedAsset] = {
+  def getPersistedAssetsByLinkId(linkId: String): Seq[PersistedAsset] = {
     withDynSession {
       getPersistedAssetsByLinkIdWithoutTransaction(linkId)
     }
   }
 
-  def getPersistedAssetsByLinkIdWithoutTransaction(linkId: Long): Seq[PersistedAsset] = {
+  def getPersistedAssetsByLinkIdWithoutTransaction(linkId: String): Seq[PersistedAsset] = {
     val filter = s"where a.asset_type_id = $typeId and lp.link_Id = $linkId"
     fetchPointAssets(withFilter(filter))
   }
 
-  def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[Long]): Seq[PersistedAsset] = {
-    MassQuery.withIds(linkIds) { idTableName =>
+  def getPersistedAssetsByLinkIdsWithoutTransaction(linkIds: Set[String]): Seq[PersistedAsset] = {
+    MassQuery.withStringIds(linkIds) { idTableName =>
       val filter = s"join $idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
       fetchPointAssets(withFilter(filter))
     }
@@ -394,14 +394,14 @@ trait  PointAssetOperations{
   }
 
   protected def convertPersistedAsset[T](setFloating: (PersistedAsset, Boolean) => T,
-                                         roadLinkByLinkId: Long => Option[RoadLinkLike])
+                                         roadLinkByLinkId: String => Option[RoadLinkLike])
                                         (persistedStop: PersistedAsset): (T, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
     (setFloating(persistedStop, floating), floatingReason)
   }
 
   protected def adjustPersistedAsset[T](setFloating: (PersistedAsset, Boolean) => T,
-                                        roadLinkByLinkId: Long => Option[RoadLinkLike],
+                                        roadLinkByLinkId: String => Option[RoadLinkLike],
                                         changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink],
                                         adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate])
                                        (persistedAsset: PersistedAsset): (T, Option[FloatingReason]) = {
@@ -445,7 +445,7 @@ trait  PointAssetOperations{
 
   protected def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[RoadLinkLike]) : String = {
     roadLinkOption match {
-      case None => "No road link found with id %d".format(persistedAsset.linkId)
+      case None => s"No road link found with id ${persistedAsset.linkId}"
       case Some(roadLink) =>
         if (roadLink.municipalityCode != persistedAsset.municipalityCode) {
           "Road link and asset have differing municipality codes (%d vs %d)".format(roadLink.municipalityCode, persistedAsset.municipalityCode)

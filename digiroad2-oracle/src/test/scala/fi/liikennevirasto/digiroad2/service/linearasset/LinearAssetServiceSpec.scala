@@ -28,17 +28,20 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools: PolygonTools = MockitoSugar.mock[PolygonTools]
 
+  val linkId = "388562360"
+  val linkId1 = "1"
+
   when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(388562360L)).thenReturn(Some(RoadLinkFetched(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(RoadLinkFetched(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadLinkFetched(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource: RoadLink = RoadLink(
-    1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
   val mockLinearAssetDao: PostGISLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -82,7 +85,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   test("Separate linear asset") {
     val typeId = 140
     runWithRollback {
-      val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
+      val newLimit = NewLinearAsset(linkId = linkId, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -93,12 +96,12 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
       val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.last)).head
 
-      createdLimit.linkId should be (388562360)
+      createdLimit.linkId should be (linkId)
       createdLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       createdLimit.value should be (Some(NumericValue(2)))
       createdLimit.modifiedBy should be (Some("unittest"))
 
-      createdLimit1.linkId should be (388562360)
+      createdLimit1.linkId should be (linkId)
       createdLimit1.sideCode should be (SideCode.AgainstDigitizing.value)
       createdLimit1.value should be (Some(NumericValue(3)))
       createdLimit1.createdBy should be (Some("test"))
@@ -108,7 +111,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   test("Separate with empty value towards digitization") {
     val typeId = 140
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -117,12 +120,12 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
-      oldLimit.linkId should be (388562360)
+      oldLimit.linkId should be (linkId)
       oldLimit.sideCode should be (SideCode.BothDirections.value)
       oldLimit.expired should be (true)
       oldLimit.modifiedBy should be (None)
 
-      createdLimit.linkId should be (388562360)
+      createdLimit.linkId should be (linkId)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
       createdLimit.value should be (Some(NumericValue(3)))
       createdLimit.expired should be (false)
@@ -133,7 +136,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   test("Separate with empty value against digitization") {
     val typeId = 140
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -143,7 +146,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(newAssetIdAfterUpdate.head)).head
 
-      oldLimit.linkId should be (388562360)
+      oldLimit.linkId should be (linkId)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       oldLimit.value should be (Some(NumericValue(2)))
       oldLimit.expired should be (false)
@@ -155,7 +158,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   test("Split linear asset") {
     val typeId = 140
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -166,14 +169,14 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(createdId)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
 
-      oldLimit.linkId should be (388562360)
+      oldLimit.linkId should be (linkId)
       oldLimit.sideCode should be (SideCode.BothDirections.value)
       oldLimit.value should be (Some(NumericValue(2)))
       oldLimit.modifiedBy should be (Some("unittest"))
       oldLimit.startMeasure should be (2.0)
       oldLimit.endMeasure should be (10.0)
 
-      createdLimit.linkId should be (388562360)
+      createdLimit.linkId should be (linkId)
       createdLimit.sideCode should be (SideCode.BothDirections.value)
       createdLimit.value should be (Some(NumericValue(3)))
       createdLimit.createdBy should be (Some("test"))
@@ -185,7 +188,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   test("Separation should call municipalityValidation") {
     def failingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = { throw new IllegalArgumentException }
     runWithRollback {
-      val newLimit = NewLinearAsset(388562360, 0, 10, NumericValue(1), 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, NumericValue(1), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
       intercept[IllegalArgumentException] {
         ServiceWithDao.separate(assetId, Some(NumericValue(1)), Some(NumericValue(2)), "unittest", failingMunicipalityValidation)
@@ -197,10 +200,10 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
   test("Should expire assets from deleted road links through the actor")
   {
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val oldLinkId3 = 5003
-    val newLinkId = 6000
+    val oldLinkId1 = "5001"
+    val oldLinkId2 = "5002"
+    val oldLinkId3 = "5003"
+    val newLinkId = "6000"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -261,10 +264,10 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynSession[T](f: => T): T  = f
     }
 
-    val oldLinkId = 5000
-    val newLinkId1 = 6001
-    val newLinkId2 = 6002
-    val newLinkId3 = 6003
+    val oldLinkId = "5000"
+    val newLinkId1 = "6001"
+    val newLinkId2 = "6002"
+    val newLinkId3 = "6003"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -340,10 +343,10 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId = 5000
-    val newLinkId1 = 6001
-    val newLinkId2 = 6002
-    val newLinkId3 = 6003
+    val oldLinkId = "5000"
+    val newLinkId1 = "6001"
+    val newLinkId2 = "6002"
+    val newLinkId3 = "6003"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -416,10 +419,10 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val oldLinkId3 = 5003
-    val newLinkId = 6000
+    val oldLinkId1 = "5001"
+    val oldLinkId2 = "5002"
+    val oldLinkId3 = "5003"
+    val newLinkId = "6000"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -505,9 +508,9 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val newLinkId = 6000
+    val oldLinkId1 = "5001"
+    val oldLinkId2 = "5002"
+    val newLinkId = "6000"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -584,15 +587,15 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 1234
-    val oldLinkId2 = 1235
+    val oldLinkId1 = "1234"
+    val oldLinkId2 = "1235"
     val assetTypeId = 100
     val vvhTimeStamp = 14440000
 
     val roadLinkWithLinkSource = RoadLink(
       oldLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
 
     PostGISDatabase.withDynTransaction {
@@ -640,14 +643,14 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
 
     val assetsInfo = Seq(
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(2), SideCode.AgainstDigitizing.value, 0, None), NumberOfLanes.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1000), SideCode.AgainstDigitizing.value, 0, None), TotalWeightLimit.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1200), SideCode.AgainstDigitizing.value, 0, None), TrailerTruckWeightLimit.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(1100), SideCode.AgainstDigitizing.value, 0, None), AxleWeightLimit.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(2000), SideCode.AgainstDigitizing.value, 0, None), BogieWeightLimit.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(400), SideCode.AgainstDigitizing.value, 0, None), HeightLimit.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(200), SideCode.AgainstDigitizing.value, 0, None), LengthLimit.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, NumericValue(300), SideCode.AgainstDigitizing.value, 0, None), WidthLimit.typeId))
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(2), SideCode.AgainstDigitizing.value, 0, None), NumberOfLanes.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(1000), SideCode.AgainstDigitizing.value, 0, None), TotalWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(1200), SideCode.AgainstDigitizing.value, 0, None), TrailerTruckWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(1100), SideCode.AgainstDigitizing.value, 0, None), AxleWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(2000), SideCode.AgainstDigitizing.value, 0, None), BogieWeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(400), SideCode.AgainstDigitizing.value, 0, None), HeightLimit.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(200), SideCode.AgainstDigitizing.value, 0, None), LengthLimit.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, NumericValue(300), SideCode.AgainstDigitizing.value, 0, None), WidthLimit.typeId))
 
     PostGISDatabase.withDynTransaction {
       assetsInfo.foreach(testSideCodeAdjustment)
@@ -657,7 +660,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   def testSideCodeAdjustment(assetInfo: TestAssetInfo) {
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
     val id = ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "sideCode_adjust").head
     val original = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
 
@@ -743,7 +746,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId1 = 3056622
+    val oldLinkId1 = "3056622"
     val municipalityCode = 444
     val administrativeClass = State
     val trafficDirection = TrafficDirection.BothDirections
@@ -769,7 +772,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT $asset, $asset, id, 4779 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(roadLinks)
       val before = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       before should have size 2
 
@@ -815,28 +818,28 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
-    val roadLink1 = RoadLink(100, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
-    val roadLink2 = RoadLink(200, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
-    val roadLink3 = RoadLink(300, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 7, TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink1 = RoadLink("100", List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink2 = RoadLink("200", List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink3 = RoadLink("300", List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 7, TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
     val heightLimitAssetId = 70
 
     PostGISDatabase.withDynTransaction {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
-      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, '100')""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset1, ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset1, $lrm1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1, $asset1, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
-      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, 200)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, '200')""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset2,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset2, $lrm2)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset2, $asset2, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
-      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, 300)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, '300')""".execute
       sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset3,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset3, $lrm3)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3, $asset3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
       val result = service.getChanged(heightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
       result.length should be(1)
@@ -852,11 +855,11 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
-    val roadLink1 = RoadLink(1611374, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink1 = RoadLink("1611374", List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 8, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
     val totalWeightLimitAssetId = 30
 
     PostGISDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1))
 
       //Linear assets that have been changed in OTH between given date values Before Update
       val resultBeforeUpdate = service.getChanged(totalWeightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
@@ -900,8 +903,8 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val oldLinkId = 5000
-    val newLinkId = 6000
+    val oldLinkId = "5000"
+    val newLinkId = "6000"
     val municipalityCode = 444
     val functionalClass = 1
     val assetTypeId = 170
@@ -935,7 +938,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       projectedAssets.asInstanceOf[Seq[PersistedLinearAsset]].length should be(1)
       projectedAssets.asInstanceOf[Seq[PersistedLinearAsset]]foreach { proj =>
         proj.id should be (0)
-        proj.linkId should be (6000)
+        proj.linkId should be (newLinkId)
       }
       dynamicSession.rollback()
     }

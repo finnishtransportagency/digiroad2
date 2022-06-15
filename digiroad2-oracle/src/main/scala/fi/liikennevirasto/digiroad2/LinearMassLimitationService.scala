@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
-case class MassLimitationAsset(linkId: Long, administrativeClass: AdministrativeClass, sideCode: Int, value: Option[Value], geometry: Seq[Point],
+case class MassLimitationAsset(linkId: String, administrativeClass: AdministrativeClass, sideCode: Int, value: Option[Value], geometry: Seq[Point],
                               attributes: Map[String, Any] = Map())
 
 class LinearMassLimitationService(roadLinkService: RoadLinkService, dynamicDao: DynamicLinearAssetDao) {
@@ -39,7 +39,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dynamicDao: 
     }.toSeq
   }
 
-  private def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  private def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[String]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       MassLimitationAssetTypes.flatMap(dynamicDao.fetchDynamicLinearAssetsByLinkIds(_ , linkIds))
     }.filterNot(_.expired)

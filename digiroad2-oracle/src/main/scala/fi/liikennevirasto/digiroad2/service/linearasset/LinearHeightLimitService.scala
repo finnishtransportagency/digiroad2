@@ -25,7 +25,7 @@ class LinearHeightLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImp
       updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
 
-    eventBus.publish("heightLimit:Validator",AssetValidatorInfo(ids.toSet, outputIds.toSet))
+    eventBus.publish("heightLimit:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))
     outputIds
   }
 

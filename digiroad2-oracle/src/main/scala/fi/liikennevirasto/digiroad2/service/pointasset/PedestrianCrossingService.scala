@@ -6,14 +6,14 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
-case class IncomingPedestrianCrossingAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
+case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingPedestrianCrossingAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
 class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) extends PointAssetOperations {
   type IncomingAsset = IncomingPedestrianCrossing
@@ -43,7 +43,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
 
   def createFromCoordinates(incomingPedestrianCrossing: IncomingPedestrianCrossing, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
     if(isFloating)
-      createFloatingWithoutTransaction(incomingPedestrianCrossing.copy(linkId = 0), username, roadLink)
+      createFloatingWithoutTransaction(incomingPedestrianCrossing.copy(linkId = LinkId.Unknown.value), username, roadLink)
     else {
       checkDuplicates(incomingPedestrianCrossing) match {
         case Some(existingAsset) =>

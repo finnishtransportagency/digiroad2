@@ -82,8 +82,8 @@ class VerificationDao {
     }
   }
 
-  def getLastModificationLinearAssets(ids: Set[Long]) : Seq[LatestModificationInfo] = {
-    val lastModification = MassQuery.withIds(ids) { idTableName =>
+  def getLastModificationLinearAssets(linkIds: Set[String]) : Seq[LatestModificationInfo] = {
+    val lastModification = MassQuery.withStringIds(linkIds) { idTableName =>
       sql"""
       select typeId, modified_date, modified_by
       from (
@@ -107,8 +107,8 @@ class VerificationDao {
     }
   }
 
-  def getSuggestedLinearAssets(ids: Set[Long]): Seq[(Long, Int)] = {
-    MassQuery.withIds(ids) { idTableName =>
+  def getSuggestedLinearAssets(linkIds: Set[String]): Seq[(Long, Int)] = {
+    MassQuery.withStringIds(linkIds) { idTableName =>
       sql"""
       select a.id, a.asset_type_id
         from asset a
@@ -265,16 +265,16 @@ class VerificationDao {
       """.as[(Int)].list
   }
 
-  def getModifiedAssetTypes(linkIds : Set[Long]) : List[LatestModificationInfo] = {
+  def getModifiedAssetTypes(linkIds : Set[String]) : List[LatestModificationInfo] = {
     val modifiedAssetTypes =
       if (linkIds.size >= 100000) {
         logger.info(s"BATCH LOG Using mass query (${linkIds.size} links)")
-        MassQuery.withIds(linkIds) { idTableName =>
+        MassQuery.withStringIds(linkIds) { idTableName =>
           queryModifiedAssetTypes(s"select id from $idTableName")
         }
       } else {
         logger.info(s"BATCH LOG Querying with id list (${linkIds.size} links)")
-        queryModifiedAssetTypes(s"${linkIds.mkString(",")}")
+        queryModifiedAssetTypes(s"${linkIds.map(id => s"'$id'").mkString(",")}")
       }
     modifiedAssetTypes.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
       LatestModificationInfo(assetTypeCode, modifiedBy, modifiedDate)
