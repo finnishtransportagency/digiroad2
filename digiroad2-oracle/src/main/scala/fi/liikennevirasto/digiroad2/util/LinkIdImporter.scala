@@ -74,7 +74,7 @@ object LinkIdImporter {
           """.as[Long].list
         val links = roadLinkClient.roadLinkData.fetchByMmlIds(mmlIds.toSet)
         links.foreach { link =>
-          val mmlId = link.attributes("sourceid").asInstanceOf[BigInt].longValue()
+          val mmlId = link.attributes("SOURCEID").asInstanceOf[BigInt].longValue()
           tempPS.setLong(1, mmlId)
           tempPS.setString(2, link.linkId)
           tempPS.addBatch()

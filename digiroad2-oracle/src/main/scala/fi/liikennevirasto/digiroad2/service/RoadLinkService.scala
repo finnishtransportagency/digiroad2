@@ -1715,11 +1715,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
         link = roadLink,
         value =
           if (municipalitiesCodeToValidate.contains(roadLink.municipalityCode)) {
-            roadLink.attributes.getOrElse("roadnameswe", "").toString
+            roadLink.attributes.getOrElse("ROADNAMESWE", "").toString
           } else {
-            roadLink.attributes.getOrElse("roadnamefin", "").toString
+            roadLink.attributes.getOrElse("ROADNAMEFIN", "").toString
           },
-        createdAt = roadLink.attributes.get("starttime") match {
+        createdAt = roadLink.attributes.get("STARTTIME") match {
           case Some(date) => Some(new DateTime(date.asInstanceOf[BigInt].toLong, timezone))
           case _ => None
         },

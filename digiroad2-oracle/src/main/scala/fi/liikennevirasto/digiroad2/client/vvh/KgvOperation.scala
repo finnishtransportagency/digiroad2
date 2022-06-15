@@ -200,7 +200,7 @@ object Extractor {
       "ADDRESSTOLEFT"         -> attributesMap("addresstoleft"),
       "GEOMETRYFLIP"          -> attributesMap("geometryflip"),
       "STARTTIME"             -> attributesMap("starttime"),
-      "VERSIONSTARTTIME"      -> attributesMap("versionstarttime"),
+      "VERSIONSTARTTIME"      -> attributesMap("versionstarttime"), // dateformat ?
       "SOURCEMODIFICATIONTIME"-> attributesMap("sourcemodificationtime")
     )
   }

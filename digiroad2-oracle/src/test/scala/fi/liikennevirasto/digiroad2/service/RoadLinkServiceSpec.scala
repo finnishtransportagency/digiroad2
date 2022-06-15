@@ -96,7 +96,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val linkProperty = LinkProperties("30", 8, CycleOrPedestrianPath, TrafficDirection.BothDirections, Municipality)
       val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
-      roadLink.map(_.attributes("roadclass")) should be (Some(12314))
+      roadLink.map(_.attributes("ROADCLASS")) should be (Some(12314))
       dynamicSession.rollback()
     }
   }
@@ -746,9 +746,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Get information about changes in road names when using all other municipalities") {
     val modifiedAt = Some(DateTime.parse("2015-05-07T12:00Z"))
     val attributes: Map[String, Any] =
-      Map("roadnameswe" -> "roadnameswe",
-        "roadnamefin" -> "roadnamefin",
-        "starttime" -> BigInt.apply(1446132842000L),
+      Map("ROADNAMESWE" -> "ROADNAMESWE",
+        "ROADNAMEFIN" -> "ROADNAMEFIN",
+        "STARTTIME" -> BigInt.apply(1446132842000L),
         "MUNICIPALITYCODE" -> BigInt(91))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
@@ -763,7 +763,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       changedVVHRoadlinks.length should be(1)
       changedVVHRoadlinks.head.link.linkId should be("1611447")
       changedVVHRoadlinks.head.link.municipalityCode should be(91)
-      changedVVHRoadlinks.head.value should be(attributes.get("roadnamefin").get.toString)
+      changedVVHRoadlinks.head.value should be(attributes.get("ROADNAMEFIN").get.toString)
       changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
       changedVVHRoadlinks.head.changeType should be("Modify")
     }
@@ -772,9 +772,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Get information about changes in road names when using the municipalities of Ahvenanmaa") {
     val modifiedAt = Some(DateTime.parse("2015-05-07T12:00Z"))
     val attributes: Map[String, Any] =
-      Map("roadnameswe" -> "roadnameswe",
-        "roadnamefin" -> "roadnamefin",
-        "starttime" -> BigInt.apply(1446132842000L),
+      Map("ROADNAMESWE" -> "ROADNAMESWE",
+        "ROADNAMEFIN" -> "ROADNAMEFIN",
+        "STARTTIME" -> BigInt.apply(1446132842000L),
         "MUNICIPALITYCODE" -> BigInt(60))
 
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
@@ -789,7 +789,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       changedVVHRoadlinks.length should be(1)
       changedVVHRoadlinks.head.link.linkId should be("1611447")
       changedVVHRoadlinks.head.link.municipalityCode should be(60)
-      changedVVHRoadlinks.head.value should be(attributes.get("roadnameswe").get.toString)
+      changedVVHRoadlinks.head.value should be(attributes.get("ROADNAMESWE").get.toString)
       changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
       changedVVHRoadlinks.head.changeType should be("Modify")
     }
@@ -1196,9 +1196,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (66666666, 'PRIVATE_ROAD_ASSOCIATION', $linkId2, $dummyRoadAssociationName, 'test_user')""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (77777777, 'PRIVATE_ROAD_ASSOCIATION', $linkId3, $dummyRoadAssociationName, 'test_user')""".execute
 
-      val attributesRoad1 = Map("roadnamefin" -> "Road Number 1", "MUNICIPALITYCODE" -> BigInt(16))
-      val attributesRoad2 = Map("roadnamefin" -> "Road Number 2", "MUNICIPALITYCODE" -> BigInt(16))
-      val attributesRoad3 = Map("roadnamefin" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad1 = Map("ROADNAMEFIN" -> "Road Number 1", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad2 = Map("ROADNAMEFIN" -> "Road Number 2", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad3 = Map("ROADNAMEFIN" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
 
       val vvhRoadLinks = Seq(
         RoadLinkFetched(linkId1, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad1, length = 100),
@@ -1220,9 +1220,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       result.length should be (3)
 
-      result.map(_.roadName).contains(attributesRoad1("roadnamefin")) should be(true)
-      result.map(_.roadName).contains(attributesRoad2("roadnamefin")) should be(true)
-      result.map(_.roadName).contains(attributesRoad3("roadnamefin")) should be(true)
+      result.map(_.roadName).contains(attributesRoad1("ROADNAMEFIN")) should be(true)
+      result.map(_.roadName).contains(attributesRoad2("ROADNAMEFIN")) should be(true)
+      result.map(_.roadName).contains(attributesRoad3("ROADNAMEFIN")) should be(true)
 
       dynamicSession.rollback()
     }
@@ -1246,9 +1246,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (66666666, 'PRIVATE_ROAD_ASSOCIATION', $linkId2, $dummyRoadAssociationNameNumberOne, 'test_user')""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (77777777, 'PRIVATE_ROAD_ASSOCIATION', $linkId3, $dummyRoadAssociationNameNumberTwo, 'test_user')""".execute
 
-      val attributesRoad1 = Map("roadnamefin" -> "Road Number 1", "MUNICIPALITYCODE" -> BigInt(16))
-      val attributesRoad2 = Map("roadnamefin" -> "", "MUNICIPALITYCODE" -> BigInt(766))
-      val attributesRoad3 = Map("roadnamefin" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad1 = Map("ROADNAMEFIN" -> "Road Number 1", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad2 = Map("ROADNAMEFIN" -> "", "MUNICIPALITYCODE" -> BigInt(766))
+      val attributesRoad3 = Map("ROADNAMEFIN" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
 
       val vvhRoadLinks = Seq(
         RoadLinkFetched(linkId1, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad1, length = 100),
@@ -1269,8 +1269,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       result.length should be (2)
 
-      result.map(_.roadName).contains(attributesRoad1("roadnamefin")) should be(true)
-      result.map(_.roadName).contains(attributesRoad3("roadnamefin")) should be(false)
+      result.map(_.roadName).contains(attributesRoad1("ROADNAMEFIN")) should be(true)
+      result.map(_.roadName).contains(attributesRoad3("ROADNAMEFIN")) should be(false)
       result.map(_.roadName).contains(noRoadName) should be(true)
 
       dynamicSession.rollback()

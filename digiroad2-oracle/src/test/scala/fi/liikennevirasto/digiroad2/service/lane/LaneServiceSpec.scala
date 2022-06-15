@@ -1081,7 +1081,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000
@@ -1110,7 +1110,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000
@@ -1140,7 +1140,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000
@@ -1173,7 +1173,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000
@@ -1206,7 +1206,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000
@@ -1240,7 +1240,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000
@@ -1275,7 +1275,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000
@@ -1358,7 +1358,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
-          "roadnamefin" -> "Testitie",
+          "ROADNAMEFIN" -> "Testitie",
           "VIITE_ROAD_PART_NUMBER" -> 7,
           "VIITE_ROAD_NUMBER" -> 100,
           "VIITE_END_ADDR" -> 2000

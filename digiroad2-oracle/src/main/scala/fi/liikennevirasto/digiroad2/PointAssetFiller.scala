@@ -100,7 +100,7 @@ object PointAssetFiller {
         val roadLength = GeometryUtils.geometryLength(roadLink.geometry)
         val mValue = if(asset.mValue > roadLength) roadLength else asset.mValue
         correctGeometry(asset.id, roadLink, mValue, roadLink.attributes.getOrElse("versionstarttime",
-          roadLink.attributes.getOrElse("starttime", BigInt(0))).asInstanceOf[BigInt].longValue())
+          roadLink.attributes.getOrElse("STARTTIME", BigInt(0))).asInstanceOf[BigInt].longValue())
       case _ =>
         None
     }

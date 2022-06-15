@@ -245,7 +245,7 @@ trait ResolvingFrozenRoadLinks {
 
     val frozenRoadLinks = missingRoadLinks.filter { road =>
       val matchedAddress = tempRoadAddress.find(_.linkId == road.linkId)
-      val vvhtimestamp = road.attributes.getOrElse("versionstarttime", road.attributes.getOrElse("starttime", BigInt(0))).asInstanceOf[BigInt].longValue()
+      val vvhtimestamp = road.attributes.getOrElse("VERSIONSTARTTIME", road.attributes.getOrElse("STARTTIME", BigInt(0))).asInstanceOf[BigInt].longValue()
 
       val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
 

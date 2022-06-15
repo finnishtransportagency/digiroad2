@@ -38,22 +38,22 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     "liikennevirran suunta" -> "DIRECTIONTYPE",
     "tielinkin tyyppi" -> "link_Type",
     "kuntanumero" -> "MUNICIPALITYCODE",
-    "osoitenumerot oikealla alku" -> "addressfromright",
-    "osoitenumerot oikealla loppu" -> "addresstoright",
-    "osoitenumerot vasemmalla alku" -> "addressfromleft",
-    "osoitenumerot vasemmalla loppu" -> "addresstoleft",
+    "osoitenumerot oikealla alku" -> "ADDRESSFROMRIGHT",
+    "osoitenumerot oikealla loppu" -> "ADDRESSTORIGHT",
+    "osoitenumerot vasemmalla alku" -> "ADDRESSFROMLEFT",
+    "osoitenumerot vasemmalla loppu" -> "ADDRESSTOLEFT",
     "linkin tila" -> "CONSTRUCTIONTYPE"
   )
 
   private val codeValueFieldMappings = Map(
-    "tasosijainti" -> "surfacerelation"
+    "tasosijainti" -> "SURFACERELATION"
   )
 
   private val fieldInOTH = List("link_Type", "functional_Class")
 
   private val textFieldMappings = Map(
-    "tien nimi (suomi)" -> "roadnamefin",
-    "tien nimi (ruotsi)" -> "roadnameswe"
+    "tien nimi (suomi)" -> "ROADNAMEFIN",
+    "tien nimi (ruotsi)" -> "ROADNAMESWE"
   )
 
   private val mandatoryFields = "linkin id"

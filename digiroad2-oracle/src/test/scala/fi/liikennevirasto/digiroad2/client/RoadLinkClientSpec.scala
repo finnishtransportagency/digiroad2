@@ -153,7 +153,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
   ignore("Fetch roadlink with roadname") {
     val vvhClient= new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
     val begin = System.currentTimeMillis()
-    val result= vvhClient.roadLinkData2.fetchByRoadNames("roadnamefin",Set("Rantatie"))
+    val result= vvhClient.roadLinkData2.fetchByRoadNames("ROADNAMEFIN",Set("Rantatie"))
     val duration = System.currentTimeMillis() - begin
     println(s"roadlink with municipality completed in $duration ms and in second ${duration / 1000}")
     result.size should be (2286)
@@ -161,7 +161,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
   ignore("Fetch roadlink with two road name") {
     val vvhClient= new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
     val begin = System.currentTimeMillis()
-    val result= vvhClient.roadLinkData2.fetchByRoadNames("roadnamefin",Set("Rantatie","Mannerheimintie"))
+    val result= vvhClient.roadLinkData2.fetchByRoadNames("ROADNAMEFIN",Set("Rantatie","Mannerheimintie"))
     val duration = System.currentTimeMillis() - begin
     println(s"roadlink with municipality completed in $duration ms and in second ${duration / 1000}")
     result.size should be (2473)
@@ -170,7 +170,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
   ignore("Fetch roadlink with roadname Tarkk'ampujankuja") {
     val vvhClient= new RoadLinkClient(Digiroad2Properties.kmtkEndpoint)
     val begin = System.currentTimeMillis()
-    val result= vvhClient.roadLinkData2.fetchByRoadNames("roadnamefin",Set("Tarkk'ampujankuja"))
+    val result= vvhClient.roadLinkData2.fetchByRoadNames("ROADNAMEFIN",Set("Tarkk'ampujankuja"))
     val duration = System.currentTimeMillis() - begin
     println(s"roadlink with municipality completed in $duration ms and in second ${duration / 1000}")
     result.size should be (2286)

@@ -198,7 +198,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map { roadLink =>
       Map("linkId" -> roadLink.linkId,
-        "mmlId" -> roadLink.attributes.get("sourceid"),
+        "mmlId" -> roadLink.attributes.get("SOURCEID"),
         "administrativeClass" -> roadLink.administrativeClass.value,
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.value,
@@ -212,13 +212,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
         "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes
-        .filterNot(_._1 == "sourceid")
+        .filterNot(_._1 == "SOURCEID")
         .filterNot(_._1 == "ROADNUMBER")
         .filterNot(_._1 == "ROADPARTNUMBER")
         .filterNot(_._1 == "STARTNODE") //TODO DROTH-3255 delete?
         .filterNot(_._1 == "ENDNODE")  //TODO DROTH-3255 delete
         .filterNot(_._1 == "CUST_OWNER")
-        .filterNot(_._1 == "roadclass" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+        .filterNot(_._1 == "ROADCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
         .filterNot(_._1 == "ACCESS_RIGHT_ID")
         .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
         .filterNot(_._1 == "ADDITIONAL_INFO")

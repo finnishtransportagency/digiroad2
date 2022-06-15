@@ -16,7 +16,7 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val linkId = "100"
-  val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345), "sourceid" -> BigInt(1234), "surfacerelation" -> BigInt(1)))
+  val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345), "SOURCEID" -> BigInt(1234), "SURFACERELATION" -> BigInt(1)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockMaintenanceService = MockitoSugar.mock[MaintenanceService]
   val serviceRoadAPI = new ServiceRoadAPI(mockMaintenanceService, mockRoadLinkService, new OthSwagger)

@@ -20,7 +20,7 @@ class LanePartitionerSpec extends FunSuite with Matchers {
   }
 
   def createRoadLink(id: String, geometry: Seq[Point], trafficDirection: TrafficDirection, roadIdentifier: String): RoadLink ={
-    RoadLink(id,geometry, 1.0, State, 1, trafficDirection, Motorway, None, None, Map("roadnamefin" -> roadIdentifier))
+    RoadLink(id,geometry, 1.0, State, 1, trafficDirection, Motorway, None, None, Map("ROADNAMEFIN" -> roadIdentifier))
   }
 
   def createLanes(): Seq[PieceWiseLane] = {

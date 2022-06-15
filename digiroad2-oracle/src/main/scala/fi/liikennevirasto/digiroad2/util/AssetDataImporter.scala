@@ -549,7 +549,7 @@ class AssetDataImporter {
   private def isHereFlipped(roadLink: RoadLinkFetched) = {
     val NotFlipped = 0
     val Flipped = 1
-    roadLink.attributes.getOrElse("geometryflip", NotFlipped).asInstanceOf[BigInt] == Flipped
+    roadLink.attributes.getOrElse("GEOMETRYFLIP", NotFlipped).asInstanceOf[BigInt] == Flipped
   }
 
   def generateValuesForLitRoads(): Unit = {
@@ -931,8 +931,8 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
             if (rlinks.linkId == stops._2) {
-              val finRoadName = rlinks.attributes.get("roadnamefin").getOrElse("none").toString
-              val seRoadName = rlinks.attributes.get("roadnameswe").getOrElse("none").toString
+              val finRoadName = rlinks.attributes.get("ROADNAMEFIN").getOrElse("none").toString
+              val seRoadName = rlinks.attributes.get("ROADNAMESWE").getOrElse("none").toString
               if (finRoadName != null && finRoadName!="none")
               {
                 createTextPropertyValue(stops._1, idAddressFi, finRoadName)
@@ -963,8 +963,8 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                 {
                 if (finstop._1==stops._1 && finstop._3==rlinks.linkId )
                   {
-                    val swedishaddress=rlinks.attributes.getOrElse("roadnameswe","none").toString
-                    if (swedishaddress!="none" && swedishaddress!=null && rlinks.attributes.getOrElse("roadnamefin","null").toString.toUpperCase()==finstop._2.toUpperCase())
+                    val swedishaddress=rlinks.attributes.getOrElse("ROADNAMESWE","none").toString
+                    if (swedishaddress!="none" && swedishaddress!=null && rlinks.attributes.getOrElse("ROADNAMEFIN","null").toString.toUpperCase()==finstop._2.toUpperCase())
                      {
                        createTextPropertyValue(stops._1, idAddressSe, swedishaddress)
                        sweAddressAdded=true
@@ -975,8 +975,8 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
                   swedishstops.foreach{swestop=> //swestop  _1:asset_id, _2:address,_3:link-id
                     if (swestop._1==stops._1 && swestop._3==rlinks.linkId)
                     {
-                      val finAddress=rlinks.attributes.getOrElse("roadnamefin","none").toString
-                      if (finAddress!="none" && finAddress!=null && rlinks.attributes.getOrElse("roadnameswe","null").toString.toUpperCase()==swestop._2.toUpperCase())
+                      val finAddress=rlinks.attributes.getOrElse("ROADNAMEFIN","none").toString
+                      if (finAddress!="none" && finAddress!=null && rlinks.attributes.getOrElse("ROADNAMESWE","null").toString.toUpperCase()==swestop._2.toUpperCase())
                       {
                         createTextPropertyValue(stops._1, idAddressFi, finAddress)
                       }
