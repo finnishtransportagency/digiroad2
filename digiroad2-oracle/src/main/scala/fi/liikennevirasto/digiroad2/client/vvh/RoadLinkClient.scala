@@ -378,7 +378,6 @@ trait LinkOperationsAbstract {
   protected val linkGeomSource: LinkGeomSource
   protected def restApiEndPoint: String
   protected def serviceName: String
-  protected val disableGeometry: Boolean
 
   case class LinkOperationError(content: String, statusCode:String) extends Exception
   class ClientException(response: String) extends RuntimeException(response)
@@ -408,13 +407,11 @@ trait LinkOperationsAbstract {
 
 }
 
-class KgvRoadLinkClient(roadlinkEndpoint: String = "",collection: Option[KgvCollection] = None) extends KgvOperation {
+class KgvRoadLinkClient(collection: Option[KgvCollection] = None) extends KgvOperation {
   
   override type LinkType = RoadLinkFetched
   override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
   protected override val serviceName = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
-  protected override val disableGeometry = false
-  protected def extractRoadLinkFeature(attributes: Map[String, Any]=Map(("","")), path: List[List[Double]]=List(List(0.0))): LinkType = ???
   
   val filter:Filter =FilterOgc
   
@@ -460,7 +457,7 @@ class KgvRoadLinkClient(roadlinkEndpoint: String = "",collection: Option[KgvColl
   
   /**
     * Returns road links by link ids.
-    * Used by VVHClient.fetchByLinkId, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
+    * Used by KgvRoadLinkClient.fetchByLinkId, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
     * PostGISLinearAssetDao.getLinksWithLengthFromVVH, PostGISLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
     */
   def fetchByLinkIds(linkIds: Set[IdType]): Seq[LinkType] = {
@@ -470,7 +467,7 @@ class KgvRoadLinkClient(roadlinkEndpoint: String = "",collection: Option[KgvColl
   def fetchByLinkIdsF(linkIds: Set[IdType]) = Future(fetchByLinkIds(linkIds))
   
   /**
-    * Returns VVH road links.
+    * Returns road links.
     * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator) Rename // only one used in very old batch
     */
   def fetchVVHRoadlinks[LinkType](linkIds: Set[IdType]): Seq[LinkType] =
@@ -478,7 +475,7 @@ class KgvRoadLinkClient(roadlinkEndpoint: String = "",collection: Option[KgvColl
     queryByLinkIds[LinkType](linkIds)
 
   /**
-    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    * Returns road links. Obtain all RoadLinks changes between two given dates.
     */
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     queryByLastEditedDate(lowerDate,higherDate)
@@ -513,7 +510,8 @@ class KgvRoadLinkClient(roadlinkEndpoint: String = "",collection: Option[KgvColl
   def fetchByMmlId(mmlId: Long) : Option[LinkType]= fetchByMmlIds(Set(mmlId)).headOption
   
 }
-
+// TODO delete thist when no longer needed for extension remove all unneeded code in LinkOperationsAbstract
+// TODO final cleanupping DROTH-3275
 trait VVHClientOperations extends LinkOperationsAbstract {
 
   protected val linkGeomSource: LinkGeomSource
@@ -1153,7 +1151,8 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     }.toList
   }
 }
-// TODO for in seeable future we are not going to fetch roadnode, DROTH-3255 detele? 
+// TODO for in seeable future we are not going to fetch roadnode, DROTH-3255 detele or move all base class method into this as referense for future? 
+// TODO only node specific thing seems to be  NODEID, SUBTYPE, FORMOFNODE, 
 class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
 
   override type LinkType = RoadNodesFetched
