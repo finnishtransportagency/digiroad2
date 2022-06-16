@@ -408,7 +408,10 @@ trait VVHClientOperations {
     
     val response = client.execute(request)
     try {
-      mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      response.getStatusLine.getStatusCode match {
+        case 200 => mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        case _ => throw new VVHClientException(response.toString)
+      }
     } finally {
       response.close()
       val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
@@ -428,7 +431,10 @@ trait VVHClientOperations {
    
     val response = client.execute(request)
     try {
-      mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      response.getStatusLine.getStatusCode match {
+        case 200 => mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        case _ => throw new VVHClientException(response.toString)
+      }
     } finally {
       response.close()
       val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001

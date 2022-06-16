@@ -10,8 +10,9 @@ import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.getRoadAddressToProcess
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, RoadAddressException, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.slf4j.LoggerFactory
 
 import java.io.{InputStream, InputStreamReader}
 import scala.util.{Success, Try}
@@ -30,6 +31,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   lazy val laneService: LaneService = new LaneService(roadLinkServiceImpl, eventBusImpl, roadAddressService)
   lazy val laneFiller: LaneFiller = new LaneFiller
   private val csvImportUser = "csv_importer"
+  val logger = LoggerFactory.getLogger(getClass)
 
   private val nonMandatoryFieldsMapping: Map[String, String] = Map(
     "id" -> "id",
@@ -181,9 +183,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
-    val mappedByRoadNumber = laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).values
-    val lanesToUpdateForRoad = mappedByRoadNumber.flatMap(propsByRoad => {
-      propsByRoad.map(props => {
+      val lanesToUpdateAndMissingLanes = laneAssetProperties.map(props => {
         val roadNumber = getPropertyValue(props, "road number").toLong
         val roadPartNumber = getPropertyValue(props, "road part").toLong
         val laneCode = getPropertyValue(props, "lane")
@@ -196,7 +196,9 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val laneProps = Seq(LaneProperty("start_date", Seq(LanePropertyValue(startDate))))
 
         val laneRoadAddressInfo = LaneRoadAddressInfo(roadNumber, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
-        val roadAddresses = getRoadAddressToProcess(laneRoadAddressInfo).flatMap(_.addresses)
+        val roadAddresses = LogUtils.time(logger, "Get roadAddresses for road: " + roadNumber + "part: " + roadPartNumber){
+          getRoadAddressToProcess(laneRoadAddressInfo).flatMap(_.addresses)
+        }
 
         val roadLinksFullyInsideRoadAddressRange = roadAddresses.filter(address =>
           address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance)
@@ -221,15 +223,36 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
         })
 
-        val twoDigitPwLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes).flatten
-        val twoDigitLanes = laneService.pieceWiseLanestoPersistedLane(twoDigitPwLanes)
-        val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
+        val twoDigitPwLanes = LogUtils.time(logger, "Transform " + pwLanes.size + " lanes to two digit lanes with mass query"){
+            laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes)
+        }
+        val twoDigitLanes = laneService.pieceWiseLanestoPersistedLane(twoDigitPwLanes.flatten)
+        //Lanes where VKM transform coordinates to road addresses
+        val missingLanes = lanes.map(_.id).diff(twoDigitLanes.map(_.id))
 
-        correctLanes.map(_.copy(attributes = laneProps))
+        val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
+        if (missingLanes.nonEmpty){
+          (correctLanes.map(_.copy(attributes = laneProps)), missingLanes, Some(props))
+        }
+        else (correctLanes.map(_.copy(attributes = laneProps)), missingLanes, None)
       })
-    })
-    lanesToUpdateForRoad.foreach(lanes => laneService.updateMultipleLaneAttributes(lanes, user.username))
-    result
+
+    val lanesToUpdate = lanesToUpdateAndMissingLanes.flatMap(_._1)
+    val notUpdatedLanes = lanesToUpdateAndMissingLanes.flatMap(_._2).toSet
+    val failedRows = lanesToUpdateAndMissingLanes.flatMap(_._3)
+//    laneService.updateMultipleLaneAttributes(lanesToUpdate, user.username)
+
+
+    notUpdatedLanes.isEmpty match {
+      case true => result
+      case false =>
+        val failedRowsMessage = failedRows.map(props => props.map(prop => {
+          prop.columnName + " " + prop.value.toString
+        })).mkString("\n")
+        val notImported = result.notImportedData ++ List(NotImportedData(" Something went wrong on rows: " + failedRowsMessage +
+          " Not updated lane ids: " + notUpdatedLanes.mkString("\n"), "" ))
+        result.copy(notImportedData = notImported)
+    }
   }
 
   def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): (ImportResultData, Set[Long]) = {
