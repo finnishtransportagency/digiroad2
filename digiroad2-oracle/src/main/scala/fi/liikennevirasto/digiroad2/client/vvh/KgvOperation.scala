@@ -492,7 +492,7 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def queryByDatetimeAndFilter[LinkType](lowerDate: DateTime, higherDate: DateTime,filter:Option[String]=None): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
-    queryWithPaginationThreaded(s"${restApiEndPoint}/${KgvCollection.Frozen.value}" +
+    queryWithPaginationThreaded(s"${restApiEndPoint}/${serviceName}" +
       s"/items?datetime=${encode(lowerDate.toString)}/${encode(higherDate.toString)}&filter-lang=${cqlLang}&crs=${crs}${filterString}").asInstanceOf[Seq[LinkType]]
   }
 
