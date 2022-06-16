@@ -798,9 +798,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Should not return roadLinks because it has FeatureClass Winter Roads") {
     PostGISDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val vvhRoadLinks = Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads))
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(Set(1611447L)))
+        .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads)))
       val service = new RoadLinkTestService(mockVVHClient)
-      val roadLinks = generateProperties(vvhRoadLinks)
+      val roadLinks = service.getRoadLinksByLinkIdsFromVVH(Set(1611447L))
       roadLinks.length should be (0)
       dynamicSession.rollback()
     }
@@ -810,12 +813,15 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Should only return roadLinks that doesn't have FeatureClass Winter Roads") {
     PostGISDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val vvhRoadLinks = Seq(
-        VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads),
-        VVHRoadlink(1611448, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-        VVHRoadlink(1611449, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByMunicipality(91))
+        .thenReturn(Seq(
+          VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.WinterRoads),
+          VVHRoadlink(1611448, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+          VVHRoadlink(1611449, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new RoadLinkTestService(mockVVHClient)
-      val roadLinks = generateProperties(vvhRoadLinks)
+      val roadLinks = service.getRoadLinksFromVVHByMunicipality(91)
       roadLinks.length should be (2)
       roadLinks.sortBy(_.linkId)
       roadLinks.head.linkId should be(1611448)
