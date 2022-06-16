@@ -379,7 +379,7 @@ trait LinkOperationsAbstract {
   protected def restApiEndPoint: String
   protected def serviceName: String
 
-  case class LinkOperationError(content: String, statusCode:String) extends Exception
+  case class LinkOperationError(content: String, statusCode:String) extends Exception(s"Content: ${content}, Status code: ${statusCode}")
   class ClientException(response: String) extends RuntimeException(response)
 
   protected implicit val jsonFormats: Formats = DefaultFormats
