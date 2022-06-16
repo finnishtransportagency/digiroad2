@@ -261,15 +261,10 @@ trait KgvOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
   override type IdType = String
-
-  protected val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
   
+  protected val linkGeomSource: LinkGeomSource
   protected def serviceName: String
-  protected val disableGeometry: Boolean
-  protected def mapFields(content:Content, url: String): Either[List[Map[String, Any]], LinkOperationError]  = ???
-  protected def defaultOutFields(): String = ???
-  protected def extractFeature(feature: Map[String, Any]): LinkType = ???
-
+  
   private val cqlLang = "cql-text"
   private val bboxCrsType = "EPSG%3A3067"
   private val crs = "EPSG%3A3067"
