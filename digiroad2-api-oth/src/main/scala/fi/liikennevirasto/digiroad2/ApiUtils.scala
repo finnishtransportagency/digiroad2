@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.awsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import org.joda.time.DateTime
 
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
@@ -14,6 +15,7 @@ import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 
 object ApiUtils {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -41,34 +43,44 @@ object ApiUtils {
 
     val queryString = if (request.getQueryString != null) s"?${request.getQueryString}" else ""
     val path = "/digiroad" + request.getRequestURI + queryString
-    val workId = getWorkId(requestId, params, responseType)
+    val workId = getWorkId(requestId, params, responseType) // Used to name s3 objects
+    val queryId = params.get("queryId") match {             // Used to identify requests in logs
+      case Some(id) => id
+      case None =>
+        val id = Integer.toHexString(new Random().nextInt)
+        logger.info(s"API LOG $id: Received query $path at ${DateTime.now}")
+        id
+    }
+
     val objectExists = s3Service.isS3ObjectAvailable(s3Bucket, workId, 2, Some(objectTTLSeconds))
 
     (params.get("retry"), objectExists) match {
       case (_, true) =>
         val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
-        redirectToUrl(preSignedUrl)
+        redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
-        newQuery(workId, path, f, params, responseType)
+        newQuery(workId, queryId, path, f, params, responseType)
 
       case (Some(retry: String), false) =>
         val currentRetry = retry.toInt
         if (currentRetry <= MAX_RETRIES)
-          redirectBasedOnS3ObjectExistence(workId, path, currentRetry)
-        else
+          redirectBasedOnS3ObjectExistence(workId, queryId, path, currentRetry)
+        else {
+          logger.info(s"API LOG $queryId: Maximum retries reached. Unable to respond to query.")
           BadRequest("Maximum retries reached. Unable to get object.")
+        }
     }
   }
 
   /** Work id formed of request id (i.e. "integration") and query params */
   def getWorkId(requestId: String, params: Params, contentType: String): String = {
-    val sortedParams = params.toSeq.filterNot(_._1 == "retry").sortBy(_._1)
+    val sortedParams = params.toSeq.filterNot(param => param._1 == "retry" || param._1 == "queryId").sortBy(_._1)
     val identifiers = Seq(requestId) ++ sortedParams.map(_._2.replaceAll(",", "-"))
     s"${identifiers.mkString("_")}.$contentType"
   }
 
-  def newQuery[T](workId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
+  def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
     val ret = Future { f(params) }
     try {
       val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
@@ -77,10 +89,13 @@ object ApiUtils {
         case _ =>
           val responseString = formatResponse(response, responseType)
           val responseSize = responseString.getBytes("utf-8").length
-          if (responseSize < MAX_RESPONSE_SIZE_BYTES) response
+          if (responseSize < MAX_RESPONSE_SIZE_BYTES) {
+            logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now} without any redirects.")
+            response
+          }
           else {
             Future { s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType) }
-            redirectToUrl(path, Some(1))
+            redirectToUrl(path, queryId, Some(1))
           }
       }
     } catch {
@@ -90,7 +105,7 @@ object ApiUtils {
           val responseBody = formatResponse(finished,  responseType)
           s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
         }
-        redirectToUrl(path, Some(1))
+        redirectToUrl(path, queryId, Some(1))
     }
   }
 
@@ -107,15 +122,16 @@ object ApiUtils {
     }
   }
 
-  def redirectToUrl(path: String, nextRetry: Option[Int] = None): ActionResult = {
+  def redirectToUrl(path: String, queryId: String, nextRetry: Option[Int] = None): ActionResult = {
     nextRetry match {
       case Some(retryValue) if retryValue == 1 =>
         val paramSeparator = if (path.contains("?")) "&" else "?"
-        Found.apply(path + paramSeparator + s"retry=$retryValue")
+        Found.apply(path + paramSeparator + s"queryId=$queryId&retry=$retryValue")
       case Some(retryValue) if retryValue > 1 =>
         val newPath = path.replaceAll("""retry=\d+""", s"retry=$retryValue")
         Found.apply(newPath)
       case _ =>
+        logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now}")
         Found.apply(path)
     }
   }
@@ -136,14 +152,14 @@ object ApiUtils {
     }
   }
 
-  def redirectBasedOnS3ObjectExistence(workId: String, path: String, currentRetry: Int): ActionResult = {
+  def redirectBasedOnS3ObjectExistence(workId: String, queryId: String, path: String, currentRetry: Int): ActionResult = {
     // If object exists in s3, returns pre-signed url otherwise redirects to same url with incremented retry param
     val s3ObjectAvailable = objectAvailableInS3(workId, TimeUnit.SECONDS.toMillis(MAX_WAIT_TIME_SECONDS))
     if (s3ObjectAvailable) {
       val preSignedUrl = s3Service.getPreSignedUrl(s3Bucket, workId)
-      redirectToUrl(preSignedUrl)
+      redirectToUrl(preSignedUrl, queryId)
     } else {
-      redirectToUrl(path, Some(currentRetry + 1))
+      redirectToUrl(path, queryId, Some(currentRetry + 1))
     }
   }
 }
