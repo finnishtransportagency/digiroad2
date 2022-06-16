@@ -340,7 +340,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
-    val timeStamp = new KgvRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)

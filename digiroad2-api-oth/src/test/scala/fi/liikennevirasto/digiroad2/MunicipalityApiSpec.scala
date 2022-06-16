@@ -221,7 +221,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
-    val timeStamp = new KgvRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
+    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp()
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
@@ -265,7 +265,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
-    val timeStamp = new KgvRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
+    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp()
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockRoadLinkClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
@@ -317,7 +317,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
 
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
-    val timeStamp = new KgvRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
+    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp()
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockRoadLinkClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
