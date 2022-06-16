@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.scalatest.{FunSuite, Matchers}
 
 class JsonSerializerTest extends FunSuite with Matchers {
-// delete these test as redundant
+//TODO delete these test as redundant, these are for old vvh cache system DROTH-3275
   val serializer = new JsonSerializer
   test("testWriteReadCachedGeometry") {
     val f = File.createTempFile("test", ".cache")
