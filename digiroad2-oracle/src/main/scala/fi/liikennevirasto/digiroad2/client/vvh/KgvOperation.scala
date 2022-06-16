@@ -375,7 +375,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
 
     @tailrec
-    def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int): Set[FeatureCollection] = {
+    def paginateAtomic(finalResponse: Set[FeatureCollection] = Set(), baseUrl: String = "", limit: Int, position: Int,counter:Int =0): Set[FeatureCollection] = {
       val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
       if (!pageAllReadyFetched.contains(url)) {
         val resort = fetchFeatures(url) match {
@@ -386,16 +386,16 @@ trait KgvOperation extends LinkOperationsAbstract{
         resort match {
           case Some(feature) if feature.numberReturned == 0 => finalResponse
           case Some(feature) if feature.numberReturned != 0 =>
-              if ( finalResponse.size == WARNING_LEVEL) logger.warn(s"Getting the resort is taking very long time, URL was : $url")
+              if ( counter == WARNING_LEVEL) logger.warn(s"Getting the resort is taking very long time, URL was : $url")
             if(feature.nextPageLink.nonEmpty) {
-              paginateAtomic(finalResponse ++ Set(feature), baseUrl, limit, newPosition)
+              paginateAtomic(finalResponse ++ Set(feature), baseUrl, limit, newPosition, counter+1)
             }else {
               finalResponse ++ Set(feature)
             }
           case None => finalResponse
         }
       } else {
-        paginateAtomic(finalResponse, baseUrl, limit, newPosition)
+        paginateAtomic(finalResponse, baseUrl, limit, newPosition,counter+1)
       }
     }
 
