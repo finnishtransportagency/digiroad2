@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.CarRoad_IIIa
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -16,22 +16,22 @@ class SpeedLimitUpdateProcessSpec extends FunSuite with Matchers{
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  object TestSpeedLimitUpdateProcess extends SpeedLimitUpdateProcess(mockEventBus, mockVVHClient, mockRoadLinkService) {
-    override val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
+  object TestSpeedLimitUpdateProcess extends SpeedLimitUpdateProcess(mockEventBus, mockRoadLinkClient, mockRoadLinkService) {
+    override val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkClient, mockRoadLinkService)
   }
 
   test("Should map the speed limit of an old link to three new links") {
 
-    val oldLinkId = 5000
-    val newLinkId1 = 6001
-    val newLinkId2 = 6002
-    val newLinkId3 = 6003
+    val oldLinkId = "5000"
+    val newLinkId1 = "6001"
+    val newLinkId2 = "6002"
+    val newLinkId3 = "6003"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -51,11 +51,11 @@ class SpeedLimitUpdateProcessSpec extends FunSuite with Matchers{
 
     runWithRollback {
 
-      when(mockVVHClient.createVVHTimeStamp()).thenReturn(0L)
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId)).thenReturn(Some(VVHRoadlink(oldLinkId, oldRoadLink.municipalityCode, oldRoadLink.geometry,
+      when(mockRoadLinkClient.createVVHTimeStamp()).thenReturn(0L)
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId)).thenReturn(Some(RoadLinkFetched(oldLinkId, oldRoadLink.municipalityCode, oldRoadLink.geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 25)))
       TestSpeedLimitUpdateProcess.create(Seq(NewLimit(oldLinkId, 0.0, 25.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockVVHClient.roadLinkData.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkClient.roadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdateProcess.updateByRoadLinks(municipalityCode, newRoadLinks, changeInfo)
       newRoadLinks.sortBy(_.linkId).foreach { roadLink =>
         val asset = TestSpeedLimitUpdateProcess.getExistingAssetByRoadLink(roadLink, false)
@@ -67,10 +67,10 @@ class SpeedLimitUpdateProcessSpec extends FunSuite with Matchers{
   }
 
   test("Should map the speed limit of three old links to one new link") {
-    val oldLinkId1 = 5001
-    val oldLinkId2 = 5002
-    val oldLinkId3 = 5003
-    val newLinkId = 6000
+    val oldLinkId1 = "5001"
+    val oldLinkId2 = "5002"
+    val oldLinkId3 = "5003"
+    val newLinkId = "6000"
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -88,16 +88,16 @@ class SpeedLimitUpdateProcessSpec extends FunSuite with Matchers{
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
     runWithRollback {
-      when(mockVVHClient.createVVHTimeStamp()).thenReturn(0L)
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId1)).thenReturn(Some(VVHRoadlink(oldLinkId1, oldRoadLinks(0).municipalityCode, oldRoadLinks(0).geometry,
+      when(mockRoadLinkClient.createVVHTimeStamp()).thenReturn(0L)
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId1)).thenReturn(Some(RoadLinkFetched(oldLinkId1, oldRoadLinks(0).municipalityCode, oldRoadLinks(0).geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 10)))
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId2)).thenReturn(Some(VVHRoadlink(oldLinkId2, oldRoadLinks(1).municipalityCode, oldRoadLinks(1).geometry,
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId2)).thenReturn(Some(RoadLinkFetched(oldLinkId2, oldRoadLinks(1).municipalityCode, oldRoadLinks(1).geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 10)))
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId3)).thenReturn(Some(VVHRoadlink(oldLinkId3, oldRoadLinks(2).municipalityCode, oldRoadLinks(2).geometry,
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId3)).thenReturn(Some(RoadLinkFetched(oldLinkId3, oldRoadLinks(2).municipalityCode, oldRoadLinks(2).geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 5)))
       TestSpeedLimitUpdateProcess.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId1, 0.0, 10.0),
         NewLimit(oldLinkId1, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockVVHClient.roadLinkData.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkClient.roadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdateProcess.updateByRoadLinks(municipalityCode, Seq(newRoadLink), changeInfo)
       val newAsset = TestSpeedLimitUpdateProcess.getExistingAssetByRoadLink(newRoadLink, false).head
       newAsset.linkId should be(newRoadLink.linkId)

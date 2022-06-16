@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.Removed
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, RoadLink}
@@ -16,11 +16,11 @@ class LinearAssetUpdateProcessSpec extends FunSuite with Matchers{
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -29,11 +29,11 @@ class LinearAssetUpdateProcessSpec extends FunSuite with Matchers{
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
   test("Asset on a removed road link should be expired") {
-    val oldRoadLinkId = 150L
+    val oldRoadLinkId = "150L"
     val oldRoadLink = RoadLink(
       oldRoadLinkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
@@ -45,7 +45,7 @@ class LinearAssetUpdateProcessSpec extends FunSuite with Matchers{
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       TestLinearAssetUpdateProcess.updateByRoadLinks(NumberOfLanes.typeId, 1, Seq(), Seq(change))
       val linksWithExpiredAssets = TestLinearAssetUpdateProcess.dao.getLinksWithExpiredAssets(Seq(oldRoadLinkId), NumberOfLanes.typeId)
-      linksWithExpiredAssets should be(List(150L))
+      linksWithExpiredAssets should be(List(oldRoadLinkId))
     }
   }
 }
