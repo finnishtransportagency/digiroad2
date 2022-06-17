@@ -582,7 +582,6 @@ trait VVHClientOperations extends LinkOperationsAbstract {
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], LinkOperationError] = {
     val fetchVVHStartTime = System.currentTimeMillis()
     val request = new HttpGet(url)
-    // TODO this is very questionable practice, every call create new client and connection, no connection pooling or caching
     val client = HttpClientBuilder.create().build()
     val vVHAuthPropertyReader = new VVHAuthPropertyReader
     request.addHeader("Authorization", "Basic " + vVHAuthPropertyReader.getAuthInBase64)
