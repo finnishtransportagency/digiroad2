@@ -3,12 +3,12 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.asset.{AnimalWarnings, AxleWeightLimit, BogieWeightLimit, CareClass, CarryingCapacity, CyclingAndWalking, DamagedByThaw, EuropeanRoads, ExitNumbers, HazmatTransportProhibition, HeightLimit, LengthLimit, LitRoad, MassTransitLane, NumberOfLanes, ParkingProhibition, Prohibition, RoadWorksAsset, TotalWeightLimit, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
 import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 
 object LinearAssetUpdater {
 
   lazy val eventbus: DigiroadEventBus = {
-    new DigiroadEventBus
+    new DummyEventBus
   }
 
   lazy val roadLinkClient: RoadLinkClient = {
