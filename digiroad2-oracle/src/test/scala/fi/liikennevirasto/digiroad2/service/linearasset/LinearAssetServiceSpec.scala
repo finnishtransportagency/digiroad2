@@ -198,7 +198,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
   // Tests for DROTH-76 Automatics for fixing linear assets after geometry update (using VVH change info data)
 
-  test("Should expire assets from deleted road links through the actor")
+  ignore("Should expire assets from deleted road links through the actor")
   {
     val oldLinkId1 = "5001"
     val oldLinkId2 = "5002"
@@ -254,7 +254,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     }
   }
 
-  test("Should map linear asset (lit road) of old link to three new road links, asset covers the whole road link") {
+  ignore("Should map linear asset (lit road) of old link to three new road links, asset covers the whole road link") {
 
     // Divided road link (change types 5 and 6)
 
@@ -333,7 +333,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     }
   }
 
-  test("Should map linear assets (lit road) of old link to three new road links, asset covers part of road link") {
+  ignore("Should map linear assets (lit road) of old link to three new road links, asset covers part of road link") {
 
     // Divided road link (change types 5 and 6)
 
@@ -409,7 +409,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     }
   }
 
-  test("Should map linear assets (lit road) of three old links to one new link") {
+  ignore("Should map linear assets (lit road) of three old links to one new link") {
 
     // Combined road link (change types 1 and 2)
 
@@ -498,7 +498,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     }
   }
 
-  test("Should map winter speed limits of two old links to one new link") {
+  ignore("Should map winter speed limits of two old links to one new link") {
 
     // Combined road link (change types 1 and 2)
 
@@ -732,7 +732,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     (yesterday + 24*60*60*1000L) should be (today)
   }
 
-  test("Should extend traffic count on segment") {
+  ignore("Should extend traffic count on segment") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
@@ -889,7 +889,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     }
   }
 
-  test("Adjust projected asset with creation"){
+  ignore("Adjust projected asset with creation"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]

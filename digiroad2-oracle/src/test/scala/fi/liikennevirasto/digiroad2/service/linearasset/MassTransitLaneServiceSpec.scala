@@ -31,7 +31,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
   }
   case class TestAssetInfo(newLinearAsset: NewLinearAsset, typeId: Int)
 
-  test("Adjust projected mtl asset with creation"){
+  ignore("Adjust projected mtl asset with creation"){
 
    val massTransitLaneValue = DynamicValue(DynamicAssetValue(Seq(
      DynamicProperty("public_validity_period", "time_period", false, Seq(DynamicPropertyValue(Map("days" -> 1,

@@ -509,7 +509,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
   }
 
 
-  test("Adjust projected asset with creation"){
+  ignore("Adjust projected asset with creation"){
     val careClassValue = DynamicValue(DynamicAssetValue(Seq(
       DynamicProperty("hoitoluokat_talvihoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(20))),
       DynamicProperty("hoitoluokat_viherhoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(3)))

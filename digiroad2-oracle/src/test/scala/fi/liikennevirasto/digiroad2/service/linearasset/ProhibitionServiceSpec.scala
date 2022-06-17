@@ -75,7 +75,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
-  test("Should map hazmat prohibitions of two old links to one new link") {
+  ignore("Should map hazmat prohibitions of two old links to one new link") {
 
     // Combined road link (change types 1 and 2)
 
@@ -245,7 +245,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map vehicle prohibition of two old links to one new link") {
+  ignore("Should map vehicle prohibition of two old links to one new link") {
 
     // Combined road link (change types 1 and 2)
 
@@ -414,7 +414,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should extend vehicle prohibition on road extension") {
+  ignore("Should extend vehicle prohibition on road extension") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
@@ -514,7 +514,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     prohibition1 == prohibition2 should be (false)
   }
 
-  test("Adjust projected asset with creation"){
+  ignore("Adjust projected asset with creation"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
 
