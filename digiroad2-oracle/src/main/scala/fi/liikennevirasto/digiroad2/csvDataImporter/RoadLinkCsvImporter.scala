@@ -92,7 +92,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
 
   def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[String] = {
     val timeStamps = new java.util.Date().getTime 
-    // check objec id used and delete or change code
+    
     val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap ++ Map("versionstarttime" -> timeStamps) ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)
     roadLinkClient.complementaryData.updateVVHFeatures(mapProperties) match {
       case Right(error) => Some(roadLinkVVHAttribute.linkId)
@@ -166,13 +166,13 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
       inputStream.close()
     }
   }
-
+  //TODO remove possibility to save into vvh database
   def processing(inputStream: InputStream, username: String): ImportResultRoadLink = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    // check objec id used and delete or change code
+    
     def getCompletaryVVHInfo(linkId: String) = {
       roadLinkClient.complementaryData.fetchByLinkId(linkId) match {
         case Some(vvhRoadLink) => (vvhRoadLink.attributes.get("OBJECTID"), vvhRoadLink.administrativeClass.value)
