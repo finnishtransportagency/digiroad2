@@ -23,7 +23,6 @@ import scala.concurrent.{Await, Future}
 import scala.util.Try
 
 sealed case class Link(title:String,`type`: String,rel:String,href:String)
-
 sealed case class FeatureCollection(`type`: String, features: List[Feature], 
                                     crs: Option[Map[String, Any]] = None, numberReturned:Int=0,
                                     nextPageLink:String="",previousPageLink:String="")
