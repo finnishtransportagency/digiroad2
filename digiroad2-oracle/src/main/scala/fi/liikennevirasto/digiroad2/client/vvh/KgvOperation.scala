@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.FilterOgc.withFilter
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
@@ -23,8 +24,8 @@ import scala.util.Try
 
 sealed case class Link(title:String,`type`: String,rel:String,href:String)
 
-sealed case class FeatureCollection(`type`: String, features: List[Feature], crs: Option[Map[String, Any]] = None,
-                                    numberReturned:Int=0,
+sealed case class FeatureCollection(`type`: String, features: List[Feature], 
+                                    crs: Option[Map[String, Any]] = None, numberReturned:Int=0,
                                     nextPageLink:String="",previousPageLink:String="")
 sealed case class Feature(`type`: String, geometry: Geometry, properties: Map[String, Any])
 sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
@@ -44,35 +45,21 @@ object KgvCollection {
 object FilterOgc extends Filter {
 
   val singleFilter= (field:String,value:String) => s"${field}='${value}'"
-  val singleAddQuatation= (value:String) => s"'${value}'"
+  val singleAddQuotation= (value:String) => s"'${value}'"
   
   override def withFilter[T](attributeName: String, ids: Set[T]): String = {
-    val filter =
-      if (ids.isEmpty) {
-        ""
-      } else {
-        val query = ids.map(t=>singleAddQuatation(t.toString)).mkString(",")
-        s"${attributeName.toLowerCase} IN ($query)"
-      }
-    filter
+      if (ids.nonEmpty) 
+        s"${attributeName.toLowerCase} IN (${ids.map(t=>singleAddQuotation(t.toString)).mkString(",")})"
+      else ""
   }
   
   override def withMunicipalityFilter(municipalities: Set[Int]): String = {
-    val singleFilter= (municipalities:Int) => s"municipalitycode=${municipalities}"
-    if (municipalities.size ==1) {
-      singleFilter(municipalities.head)
-    }else {
-      withFilter("municipalitycode",municipalities)
-    }
+    if (municipalities.size == 1) singleFilter("municipalitycode",municipalities.head.toString)
+    else withFilter("municipalitycode",municipalities)
   }
   override def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
-    val filter =
-      if (names.isEmpty) {
-        ""
-      } else {
-        withFilter(attributeName,names)
-      }
-    filter
+      if (names.nonEmpty) withFilter(attributeName,names) 
+      else ""
   }
 
   override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
@@ -90,42 +77,22 @@ object FilterOgc extends Filter {
   
   // Query filters methods
   override def withLinkIdFilter[T](linkIds: Set[T]): String = {
-    val filter =
-      if (linkIds.isEmpty) {
-        ""
-      } else {
-        withFilter("id",linkIds)
-      }
-    filter
+      if (linkIds.nonEmpty) withFilter("id",linkIds)
+      else ""
   }
 
   override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
-    val filter =
-      if (roadNames.isEmpty) {
-        ""
-      } else {
-        withFilter(roadNameSource,roadNames)
-      }
-    filter
+      if (roadNames.nonEmpty) withFilter(roadNameSource,roadNames)
+      else ""
   }
 
   override def withMtkClassFilter(ids: Set[Long]): String = {
-    val filter =
-      if (ids.isEmpty) {
-        ""
-      } else {
-        withFilter("roadclass",ids)
-      }
-    filter
+      if (ids.nonEmpty) withFilter("roadclass",ids)
+      else ""
   }
   def withContructionFilter(values: Set[Int]): String = {
-    val filter =
-      if (values.isEmpty) {
-        ""
-      } else {
-        withFilter("lifecyclestatus",values)
-      }
-    filter
+      if (values.nonEmpty) withFilter("lifecyclestatus",values)
+      else ""
   }
 
   override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
