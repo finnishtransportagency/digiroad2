@@ -54,7 +54,7 @@
       [21, 'Lautta/lossi']
     ];
 
-    var verticalLevelTypes= [
+    var surfaceRelationTypes= [
       [-11, 'Tunneli'],
       [-3, 'Alikulku, taso 3'],
       [-2, 'Alikulku, taso 2'],
@@ -98,16 +98,16 @@
       return localizedLinkType && localizedLinkType[1];
     };
 
-    var getVerticalLevelType = function(verticalLevel) {
-      if (typeof verticalLevel === 'string') {
-        var multipleLevels = verticalLevel.includes(",");
+    var getsurfaceRelationType = function(surfaceRelation) {
+      if (typeof surfaceRelation === 'string') {
+        var multipleLevels = surfaceRelation.includes(",");
         if (multipleLevels) {
           return "[useita eri arvoja]";
         }
       }
 
-      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel); });
-      return verticalLevelType && verticalLevelType[1];
+      var surfaceRelationType = _.find(surfaceRelationTypes, function(y) { return y[0] === parseInt(surfaceRelation); });
+      return surfaceRelationType && surfaceRelationType[1];
     };
 
     var getConstructionType = function(constructionTypeId){
@@ -208,7 +208,7 @@
               '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
               '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
             '</div>' +
-            staticField('Silta, alikulku tai tunneli', 'verticalLevel') +
+            staticField('Silta, alikulku tai tunneli', 'surfaceRelation') +
             staticField('Kuntanumero', 'municipalityCode') +
             staticField('Tiennimi (Suomi)', 'roadNameFi') +
             staticField('Tiennimi (Ruotsi)', 'roadNameSe') +
@@ -303,12 +303,12 @@
         localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || '',
         localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
         localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
-        addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
-        addressNumbersLeft : addressNumberString(linkProperty.minAddressNumberLeft, linkProperty.maxAddressNumberLeft),
+        addressNumbersRight : addressNumberString(linkProperty.addressFromRight, linkProperty.addressFromLeft),
+        addressNumbersLeft : addressNumberString(linkProperty.minAddressNumberLeft, linkProperty.addressToLeft),
         track : isNaN(parseFloat(linkProperty.track)) ? '' : linkProperty.track,
         startAddrMValue : isNaN(parseFloat(linkProperty.startAddrMValue)) ? '' : linkProperty.startAddrMValue,
         endAddrMValue : isNaN(parseFloat(linkProperty.endAddrMValue)) ? '' : linkProperty.endAddrMValue,
-        verticalLevel : getVerticalLevelType(linkProperty.verticalLevel) || '',
+        surfaceRelation : getsurfaceRelationType(linkProperty.surfaceRelation) || '',
         constructionType : getConstructionType(linkProperty.constructionType) || '',
         linkSource : getLinkSource(linkProperty.linkSource) || '',
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',

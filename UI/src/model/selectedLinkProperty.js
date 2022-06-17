@@ -56,11 +56,11 @@
       var properties = _.cloneDeep(_.head(selectedData));
       var isMultiSelect = selectedData.length > 1;
       if (isMultiSelect) {
-        var ambiguousFields = ['municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'modifiedAt', 'modifiedBy'];
+        var ambiguousFields = ['municipalityCode', 'surfaceRelation', 'roadNameFi', 'roadNameSe', 'modifiedAt', 'modifiedBy'];
         properties = _.omit(properties, ambiguousFields);
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
-        var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
+        var surfaceRelations = {surfaceRelation: extractUniqueValues(selectedData, 'surfaceRelation')};
         var roadNumbers = extractUniqueValues(selectedData, 'roadNumber');
         var roadPartNumbers = {roadPartNumber: null};
         var startAddrMValue = {startAddrMValue: null};
@@ -76,7 +76,7 @@
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe')
         };
-        _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, startAddrMValue, endAddrMValue);
+        _.merge(properties, latestModified, municipalityCodes, surfaceRelations, roadPartNumbers, roadNames, startAddrMValue, endAddrMValue);
       }
 
       return properties;

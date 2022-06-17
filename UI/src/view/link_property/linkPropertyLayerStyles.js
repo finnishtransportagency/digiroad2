@@ -79,24 +79,24 @@
       new StyleRule().where('linkType').is(99).use({ stroke: { color: '#000', opacity: 0.3}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })
     ];
 
-    var verticalLevelRules = [
-      new StyleRule().where('verticalLevel').is(-11).use({ stroke: { color: '#01b'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),
-      new StyleRule().where('verticalLevel').is(-2).use({ stroke: { color: '#9d57df'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
-      new StyleRule().where('verticalLevel').is(-3).use({ stroke: { color: '#ffdf38'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
-      new StyleRule().where('verticalLevel').is(-1).use({ stroke: { color: '#f00'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
-      new StyleRule().where('verticalLevel').is(0).use({ stroke: { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } }),
-      new StyleRule().where('verticalLevel').is(1).use({ stroke: { color: '#1b0'}, icon: { src: 'images/link-properties/arrow-drop-green.svg' } }),
-      new StyleRule().where('verticalLevel').is(2).use({ stroke: { color: '#f5d'}, icon: { src: 'images/link-properties/arrow-drop-pink.svg' } }),
-      new StyleRule().where('verticalLevel').is(3).use({ stroke: { color: '#0cd'}, icon: { src: 'images/link-properties/arrow-drop-cyan.svg' } }),
-      new StyleRule().where('verticalLevel').is(4).use({ stroke: { color: '#444'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } })
+    var surfaceRelationRules = [
+      new StyleRule().where('surfaceRelation').is(-11).use({ stroke: { color: '#01b'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),
+      new StyleRule().where('surfaceRelation').is(-2).use({ stroke: { color: '#9d57df'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
+      new StyleRule().where('surfaceRelation').is(-3).use({ stroke: { color: '#ffdf38'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
+      new StyleRule().where('surfaceRelation').is(-1).use({ stroke: { color: '#f00'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
+      new StyleRule().where('surfaceRelation').is(0).use({ stroke: { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } }),
+      new StyleRule().where('surfaceRelation').is(1).use({ stroke: { color: '#1b0'}, icon: { src: 'images/link-properties/arrow-drop-green.svg' } }),
+      new StyleRule().where('surfaceRelation').is(2).use({ stroke: { color: '#f5d'}, icon: { src: 'images/link-properties/arrow-drop-pink.svg' } }),
+      new StyleRule().where('surfaceRelation').is(3).use({ stroke: { color: '#0cd'}, icon: { src: 'images/link-properties/arrow-drop-cyan.svg' } }),
+      new StyleRule().where('surfaceRelation').is(4).use({ stroke: { color: '#444'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } })
     ];
 
-    var unknownVerticalLevelDefaultRules = [
-      new StyleRule().where('verticalLevel').is(99).use({ stroke: { color: '#000', opacity: 0.3}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })
+    var unknownsurfaceRelationDefaultRules = [
+      new StyleRule().where('surfaceRelation').is(99).use({ stroke: { color: '#000', opacity: 0.3}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })
     ];
 
-    var unknownVerticalLevelUnselectedRules = [
-      new StyleRule().where('verticalLevel').is(99).use({ stroke: { color: '#000', opacity: 0.3}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })
+    var unknownsurfaceRelationUnselectedRules = [
+      new StyleRule().where('surfaceRelation').is(99).use({ stroke: { color: '#000', opacity: 0.3}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })
     ];
 
     var unknownLinkTypeHistoryDefaultRules = [
@@ -158,14 +158,14 @@
     linkTypeDefaultStyleProvider.addRules(overlayDefaultOpacity);
     linkTypeDefaultStyleProvider.addRules(linkStatusRules);
 
-    var verticalLevelDefaultStyleProvider = new StyleRuleProvider({stroke : { opacity: 0.7 }});
-    verticalLevelDefaultStyleProvider.addRules(verticalLevelRules);
-    verticalLevelDefaultStyleProvider.addRules(unknownVerticalLevelDefaultRules);
-    verticalLevelDefaultStyleProvider.addRules(zoomLevelRules);
-    verticalLevelDefaultStyleProvider.addRules(overlayRules);
-    verticalLevelDefaultStyleProvider.addRules(linkTypeSizeRules);
-    verticalLevelDefaultStyleProvider.addRules(overlayDefaultOpacity);
-    verticalLevelDefaultStyleProvider.addRules(linkStatusRules);
+    var surfaceRelationDefaultStyleProvider = new StyleRuleProvider({stroke : { opacity: 0.7 }});
+    surfaceRelationDefaultStyleProvider.addRules(surfaceRelationRules);
+    surfaceRelationDefaultStyleProvider.addRules(unknownsurfaceRelationDefaultRules);
+    surfaceRelationDefaultStyleProvider.addRules(zoomLevelRules);
+    surfaceRelationDefaultStyleProvider.addRules(overlayRules);
+    surfaceRelationDefaultStyleProvider.addRules(linkTypeSizeRules);
+    surfaceRelationDefaultStyleProvider.addRules(overlayDefaultOpacity);
+    surfaceRelationDefaultStyleProvider.addRules(linkStatusRules);
 
     var functionalClassHistoryDefaultStyleProvider = new StyleRuleProvider({stroke : { opacity: 0.3 }});
     functionalClassHistoryDefaultStyleProvider.addRules(functionalClassRules);
@@ -209,8 +209,8 @@
           }
         },
         'vertical-level': {
-          'default': verticalLevelDefaultStyleProvider,
-          'select': verticalLevelDefaultStyleProvider
+          'default': surfaceRelationDefaultStyleProvider,
+          'select': surfaceRelationDefaultStyleProvider
         }
       };
       return styleProviders[dataset][renderIntent];
