@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.util.NoSuchElementException
-
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -10,6 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLink
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.generateUnknownSpeedLimitsForLink
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
@@ -205,7 +205,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     }
   }
 
-  protected def creatUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[String, RoadLink]): Seq[UnknownSpeedLimit] = {
+  protected def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[String, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByLinkId(limit.linkId)
@@ -225,31 +225,14 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
   private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false, roadFilterFunction: RoadLink => Boolean) = {
 
     val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(roadFilterFunction), showSpeedLimitsHistory)
-    val mappedChanges = LinearAssetUtils.getMappedChanges(change)
-    val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
-    val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet))
-
-    // filter those road links that have already been projected earlier from being reprojected
-    val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, mappedChanges))
-
-    val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || roadFilterFunction(rl))
-
-    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                                  expiredAssetIds = oldSpeedLimits.map(_.id).toSet,
-                                  adjustedMValues = Seq.empty[MValueAdjustment],
-                                  adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-                                  valueAdjustments = Seq.empty[ValueAdjustment])
-
-
-    val (newSpeedLimits, projectedChangeSet) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks,
-                                                                    speedLimitsOnChangedLinks, change, initChangeSet, speedLimitLinks)
-
-    val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
+    val speedLimits = (speedLimitLinks).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, Some(projectedChangeSet))
-
+    val filledTopology = roadLinks.foldLeft(Seq.empty[SpeedLimit]) { case (existingSegments, roadLink) =>
+      val currentSegments = speedLimits.getOrElse(roadLink.linkId, Nil)
+      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, currentSegments)
+      existingSegments ++ currentSegments ++ generatedSpeedLimits
+    }
     (filledTopology, roadLinksByLinkId)
   }
 

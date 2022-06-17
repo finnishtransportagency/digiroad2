@@ -104,8 +104,8 @@ trait LinearAssetOperations {
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)._1
+    val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
@@ -165,13 +165,13 @@ trait LinearAssetOperations {
     * @return
     */
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    getByRoadLinks(typeId, roadLinks, change)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
+    getByRoadLinks(typeId, roadLinks)
   }
 
   def getByMunicipalityAndRoadLinks(typeId: Int, municipality: Int): Seq[(PieceWiseLinearAsset, RoadLink)] = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
+    val linearAssets = getByRoadLinks(typeId, roadLinks)
     linearAssets.map{ asset => (asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new NoSuchElementException))}
   }
 
@@ -234,7 +234,7 @@ trait LinearAssetOperations {
     existingAssets
   }
 
-  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo] = Seq()): Seq[PieceWiseLinearAsset] = {
+  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
     val groupedAssets = existingAssets.groupBy(_.linkId)
@@ -554,64 +554,8 @@ trait LinearAssetOperations {
     }
   }
 
-  /*
-   * Creates new linear assets and updates existing. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
-   */
-  def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
-    if (newLinearAssets.nonEmpty)
-      logger.info("Saving projected linear assets")
-    def getValuePropertyId(value: Option[Value], typeId: Int) = {
-      value match {
-        case Some(NumericValue(intValue)) =>
-          LinearAssetTypes.numericValuePropertyId
-        case Some(TextualValue(textValue)) =>
-          LinearAssetTypes.getValuePropertyId(typeId)
-        case _ => ""
-      }
-    }
-
-    val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
-    withDynTransaction {
-      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-      if(toUpdate.nonEmpty) {
-        val toUpdateText = toUpdate.filter(a =>
-          Set(EuropeanRoads.typeId, ExitNumbers.typeId).contains(a.typeId))
-
-        val groupedNum = toUpdate.filterNot(a => toUpdateText.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
-        val groupedText = toUpdateText.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
-
-        val persisted = (groupedNum.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
-          groupedText.flatMap(group => dao.fetchAssetsWithTextualValuesByIds(group._2.map(_.id).toSet, group._1)).toSeq).groupBy(_.id)
-
-        updateProjected(toUpdate, persisted)
-        if (newLinearAssets.nonEmpty)
-          logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-      }
-      toInsert.foreach{ linearAsset =>
-        val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-        val id =
-          (linearAsset.createdBy, linearAsset.createdDateTime) match {
-            case (Some(createdBy), Some(createdDateTime)) =>
-              dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-                Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = getGeometry(roadLink))
-            case _ =>
-              dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-                Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLink), geometry = getGeometry(roadLink))
-          }
-
-        linearAsset.value match {
-          case Some(NumericValue(intValue)) =>
-            dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
-          case Some(TextualValue(textValue)) =>
-            dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
-          case _ => None
-        }
-      }
-      if (toInsert.nonEmpty)
-        logger.info("Added assets for linkids " + newLinearAssets.map(_.linkId))
-    }
+  def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
+    //overridden in batch processes, no need to implement here
   }
 
   protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {

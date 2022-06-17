@@ -23,49 +23,20 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
 
-      val linkIds = roadLinks.map(_.linkId)
-      val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
-      val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-      val existingAssets =
-        withDynTransaction {
-          dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds ++ removedLinkIds)
-        }
+    val linkIds = roadLinks.map(_.linkId)
 
-      val timing = System.currentTimeMillis
-      val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
-
-      val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-
-      val initChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                                    expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
-                                    adjustedMValues = Seq.empty[MValueAdjustment],
-                                    adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                    adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-        valueAdjustments = Seq.empty[ValueAdjustment])
-
-      val (projectedAssets, changedSetProjected) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-        assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
-
-      val (newRoadWidthAssets, changedSet) = getRoadWidthAssetChanges(existingAssets, projectedAssets, roadLinks, changes, newAssetIds =>
-        withDynTransaction {
-          dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, newAssetIds)
-      }, changedSetProjected)
-
-      val newAssets = assetsWithoutChangedLinks ++ projectedAssets.filterNot(a =>
-        newRoadWidthAssets.exists(b => b.linkId == a.linkId && b.sideCode == a.sideCode && b.startMeasure == a.startMeasure && b.endMeasure == a.endMeasure)) ++
-        newRoadWidthAssets
-
-      if (newAssets.nonEmpty) {
-        logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
+    val existingAssets =
+      withDynTransaction {
+        dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds)
       }
 
-      val groupedAssets = (existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
-      val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+    val groupedAssets = existingAssets.groupBy(_.linkId)
+    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(roadLinks, groupedAssets, typeId)
 
-      filledTopology
-    }
+    filledTopology
+  }
 
   def getRoadWidthAssetChanges(linearAssets: Seq[PersistedLinearAsset], projectedAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo],
                                fetchModifications: Seq[String] => Seq[AssetLastModification], changedSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
@@ -127,52 +98,6 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
                                   adjustedSideCodes = changedSet.adjustedSideCodes.filterNot(change => expiredAssets.map(_._1).contains(change.assetId))))
   }
 
-  override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
-    if (newLinearAssets.nonEmpty)
-      logger.info("Saving projected road Width assets")
-
-    val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
-    withDynTransaction {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-        if(toUpdate.nonEmpty) {
-          val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
-          updateProjected(toUpdate, persisted)
-
-          if (newLinearAssets.nonEmpty)
-            logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-        }
-
-      toInsert.foreach{ linearAsset =>
-        val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-        val id = (linearAsset.createdBy, linearAsset.createdDateTime) match {
-          case (Some(createdBy), Some(createdDateTime)) =>
-            dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.modifiedBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp,
-              getLinkSource(roadLink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, Some(MmlNls.value), geometry = getGeometry(roadLink))
-          case _ =>
-            dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp,
-              getLinkSource(roadLink), verifiedBy = linearAsset.verifiedBy, informationSource = Some(MmlNls.value), geometry = getGeometry(roadLink))
-        }
-        linearAsset.value match {
-          case Some(DynamicValue(multiTypeProps)) =>
-            val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
-            validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
-
-          case Some(NumericValue(intValue)) =>
-            val multiTypeProps = DynamicAssetValue(Seq(DynamicProperty("width","integer",true,Seq(DynamicPropertyValue(intValue)))))
-            val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
-            validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
-
-          case _ => logger.error("Updating asset's " + linearAsset.id + " properties failed")
-        }
-      }
-      if (newLinearAssets.nonEmpty)
-        logger.info("Added assets for linkids " + toInsert.map(_.linkId))
-    }
-  }
 
   override def updateChangeSet(changeSet: ChangeSet) : Unit = {
     withDynTransaction {
