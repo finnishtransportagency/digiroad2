@@ -49,7 +49,7 @@ class ProhibitionUpdateProcessSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Road width assets should be mapped to a new road link combined from two shorter links") {
+  test("Prohibition assets should be mapped to a new road link combined from two shorter links") {
     val oldRoadLinkId1 = "160L"
     val oldRoadLinkId2 = "170L"
     val newRoadLinkId = "310L"
@@ -70,7 +70,9 @@ class ProhibitionUpdateProcessSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
-      val linearAssetIds = TestProhibitionUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId1, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None), NewLinearAsset(oldRoadLinkId2, 10, 20, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)), Prohibition.typeId, "testuser")
+      val linearAssetIds = TestProhibitionUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId1, 0, 10,
+        Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None), NewLinearAsset(oldRoadLinkId2, 10, 20,
+        Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)), Prohibition.typeId, "testuser")
       val assetsBefore = TestProhibitionUpdateProcess.getPersistedAssetsByIds(Prohibition.typeId, linearAssetIds.toSet, false)
       assetsBefore.size should be(2)
       assetsBefore.foreach(asset => asset.expired should be(false))
