@@ -260,7 +260,6 @@ object Extractor {
 trait KgvOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
-  override type IdType = String
   
   protected val linkGeomSource: LinkGeomSource
   protected def serviceName: String
@@ -443,13 +442,13 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
 
-  override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[IdType] = {
+  override protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = {
     if(polygon.getCoordinates.size == 0)
-      return Seq[IdType]()
+      return Seq[String]()
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[IdType])
+      case Left(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[String])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -462,7 +461,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     }
   }
   
-  override protected def queryByLinkIds[LinkType](linkIds: Set[IdType], filter: Option[String] = None): Seq[LinkType] = {
+  override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
       linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
   }
 
