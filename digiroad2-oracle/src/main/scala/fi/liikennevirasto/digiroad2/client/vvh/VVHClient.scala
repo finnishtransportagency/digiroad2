@@ -114,7 +114,7 @@ object ChangeType {
   case object New extends ChangeType { def value = 12 }
   case object ReplacedCommonPart extends ChangeType { def value = 13 }
   case object ReplacedNewPart extends ChangeType { def value = 14 }
-  case object ReplacedRemovedPart extends ChangeType { def value = 16 }
+  case object ReplacedRemovedPart extends ChangeType { def value = 15 }
 
   /**
     * Return true if this is a replacement where segment or part of it replaces another, older one
@@ -153,6 +153,14 @@ object ChangeType {
     ChangeType.apply(changeInfo.changeType) match {
       case LengthenedNewPart => true
       case ReplacedNewPart => true
+      case _ => false
+    }
+  }
+
+  def isDividedChange(changeInfo: ChangeInfo) = {
+    ChangeType.apply(changeInfo.changeType) match {
+      case DividedModifiedPart => true
+      case DividedNewPart => true
       case _ => false
     }
   }
@@ -400,7 +408,10 @@ trait VVHClientOperations {
     
     val response = client.execute(request)
     try {
-      mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      response.getStatusLine.getStatusCode match {
+        case 200 => mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        case _ => throw new VVHClientException(response.toString)
+      }
     } finally {
       response.close()
       val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
@@ -420,7 +431,10 @@ trait VVHClientOperations {
    
     val response = client.execute(request)
     try {
-      mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+      response.getStatusLine.getStatusCode match {
+        case 200 => mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
+        case _ => throw new VVHClientException(response.toString)
+      }
     } finally {
       response.close()
       val fetchVVHTimeSec = (System.currentTimeMillis()-fetchVVHStartTime)*0.001
@@ -1007,6 +1021,28 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     val newEndMeasure = extractMeasure(attributes("NEW_END"))
 
     ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
+  }
+
+  def fetchByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
+    val definition = layerDefinition(withCreatedDateFilter(since, until))
+    val url = serviceUrl(definition, queryParameters())
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
+  protected  def withCreatedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withCreatedDateLimitFilter("CREATED_DATE", lowerDate, higherDate)
+  }
+
+  protected def withCreatedDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
   }
 
   def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[ChangeInfo] = {

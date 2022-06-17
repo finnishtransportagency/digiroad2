@@ -1339,7 +1339,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
 
   def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
-    LogUtils.time(logger,"TEST LOG roadLinkDataByLinkId"){getRoadLinkDataByLinkIds(allVvhRoadLinks)}
+    val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
+    LogUtils.time(logger,"TEST LOG roadLinkDataByLinkId"){getRoadLinkDataByLinkIds(vvhRoadLinks)}
   }
 
   /**
@@ -1744,6 +1745,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getChangeInfo(linkIds: Set[Long]): Seq[ChangeInfo] ={
     vvhClient.roadLinkChangeInfo.fetchByLinkIds(linkIds)
+  }
+
+  def getChangeInfoByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
+    vvhClient.roadLinkChangeInfo.fetchByDates(since, until)
   }
 
   def roadLinksWithConsistentAddress(roadLinksWithRoadAddress: Seq[RoadLink]): Seq[RoadLink] = {

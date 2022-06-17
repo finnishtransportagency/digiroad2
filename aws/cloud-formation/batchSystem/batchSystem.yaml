@@ -248,7 +248,7 @@ Resources:
           Input: !Ref LambdaInputDaily
           Id: !Join [ '-' , [!Ref EnvironmentName, 'DailyLambda']]
 
-#  Need special Event Rule for this batch because batch must be started at specific time
+  #  Need special Event Rule for this batch because batch must be started at specific time
   RunRefreshCacheBatch:
     Type: AWS::Events::Rule
     Properties:

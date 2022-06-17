@@ -1,11 +1,10 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.InputStreamReader
-
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.JWTAuthentication
-import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo, NumericValues}
+import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo, NumericValues, UpdateOnlyStartDates}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
@@ -53,6 +52,18 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     else
       validateOperation()
     importAssets(fileParams("csv-file"), assetType)
+  }
+
+  post("/:lanes") {
+    val updateOnlyStartDates = params.get("updateStartDates") match {
+      case Some(param) => UpdateOnlyStartDates(param.toBoolean)
+      case _ => UpdateOnlyStartDates(false)
+    }
+    if(!userProvider.getCurrentUser().isOperator())
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    else
+      validateOperation()
+    importLanes(fileParams("csv-file"), updateOnlyStartDates)
   }
 
   post("/maintenanceRoads") {
@@ -127,6 +138,19 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       val user = userProvider.getCurrentUser()
       val newLogId = createNewLog(user.username, fileName, s"import_${TrafficSigns.layerName}")
       eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId, municipalitiesToExpire.map(NumericValues)))
+      getLogById(newLogId)
+    }
+  }
+
+  def importLanes(csvFileItem: FileItem, updateStartDates: UpdateOnlyStartDates): Option[ImportStatusInfo] = {
+    val fileName = csvFileItem.getName
+    val csvFileInputStream = csvFileItem.getInputStream
+    if(csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else {
+      val user = userProvider.getCurrentUser()
+      val newLogId = createNewLog(user.username, fileName, "import_lanes")
+      eventBus.publish("importCSVData", CsvDataImporterInfo(Lanes.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId, Set(updateStartDates)))
       getLogById(newLogId)
     }
   }
