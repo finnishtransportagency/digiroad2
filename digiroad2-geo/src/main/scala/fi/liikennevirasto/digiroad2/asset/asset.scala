@@ -13,8 +13,10 @@ sealed trait LinkGeomSource{
   def value: Int
 }
 
+object DummySource{
+  case object Dummy extends LinkGeomSource {def value = 0;}
+}
 //LINKIN LÄHDE (1 = tielinkkien rajapinta, 2 = täydentävien linkkien rajapinta, 3 = suunnitelmalinkkien rajapinta, 4 = jäädytettyjen linkkien rajapinta, 5 = historialinkkien rajapinta)
-
 object LinkGeomSource{
   val values = Set(NormalLinkInterface, ComplimentaryLinkInterface , SuravageLinkInterface, FrozenLinkInterface, HistoryLinkInterface)
 

@@ -2,13 +2,14 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, KgvRoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{DummyCollection, KgvRoadLinkClient, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
+
 import javax.sql.DataSource
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
@@ -221,7 +222,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
-    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp()
+    val timeStamp = new KgvRoadLinkClient(Some(DummyCollection.Dummy),Some(DummySource.Dummy)).createVVHTimeStamp()
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
@@ -265,7 +266,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
-    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp()
+    val timeStamp = new KgvRoadLinkClient(Some(DummyCollection.Dummy),Some(DummySource.Dummy)).createVVHTimeStamp()
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockRoadLinkClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
@@ -317,7 +318,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
 
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
-    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp()
+    val timeStamp = new KgvRoadLinkClient(Some(DummyCollection.Dummy),Some(DummySource.Dummy)).createVVHTimeStamp()
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockRoadLinkClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 

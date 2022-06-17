@@ -32,7 +32,9 @@ sealed case class Geometry(`type`: String, coordinates: List[List[Double]])
 trait KgvCollection {
   def value :String
 }
-  
+object DummyCollection {
+  case object Dummy extends KgvCollection { def value = "" }
+} 
 object KgvCollection {
   case object Frozen extends KgvCollection { def value = "keskilinjavarasto:frozenlinks" }
   case object Changes extends KgvCollection { def value = "keskilinjavarasto:change" }

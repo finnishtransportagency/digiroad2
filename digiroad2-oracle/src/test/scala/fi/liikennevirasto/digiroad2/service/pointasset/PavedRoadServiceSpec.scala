@@ -394,7 +394,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockKgvRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient]
-    val timeStamp = new KgvRoadLinkClient().createVVHTimeStamp(-5)
+    val timeStamp = new KgvRoadLinkClient(Some(DummyCollection.Dummy),Some(DummySource.Dummy)).createVVHTimeStamp(-5)
     when(mockKgvRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockRoadLinkClient.roadLinkData).thenReturn(mockKgvRoadLinkClient)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
