@@ -489,7 +489,7 @@ class AssetFiller {
     }
   }
 
-  def fillRoadLinksWithoutAsset(roadLinks: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): Seq[PieceWiseLinearAsset] = {
+  def fillRoadLinksWithoutAsset(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): Seq[PieceWiseLinearAsset] = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset]) => Seq[PersistedLinearAsset]] = Seq(
       generateTwoSidedNonExistingLinearAssets(typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),

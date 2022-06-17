@@ -90,7 +90,8 @@ class DataExporter(dataExportManager: DataExportManager) extends Actor {
 class SpeedLimitUpdater[A, B, C](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     case (affectedLinkIds: Set[A], expiredLinkIds: Seq[A]) => speedLimitProvider.purgeUnknown(affectedLinkIds.asInstanceOf[Set[String]], expiredLinkIds.asInstanceOf[Seq[String]])
-    case _      => println("speedLimitFiller: Received unknown message")
+    case _ => println("speedLimitFiller: Received unknown message")
+  }
 }
 
 class HazmatTransportProhibitionValidation(prohibitionValidator: HazmatTransportProhibitionValidator) extends Actor {

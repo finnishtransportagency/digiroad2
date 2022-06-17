@@ -2,14 +2,14 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset.UnknownLinkType
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SpeedLimit, SpeedLimitFiller, SpeedLimitValue, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, SpeedLimitService}
 
-class SpeedLimitUpdateProcess(eventbusImpl: DigiroadEventBus, vvhClient: VVHClient, roadLinkServiceImpl: RoadLinkService) extends SpeedLimitService(eventbusImpl, vvhClient, roadLinkServiceImpl){
+class SpeedLimitUpdateProcess(eventbusImpl: DigiroadEventBus, roadLinkClient: RoadLinkClient, roadLinkServiceImpl: RoadLinkService) extends SpeedLimitService(eventbusImpl, roadLinkClient, roadLinkServiceImpl){
 
   def updateSpeedLimits() = {
     withDynTransaction {
@@ -97,8 +97,8 @@ class SpeedLimitUpdateProcess(eventbusImpl: DigiroadEventBus, vvhClient: VVHClie
 
   }
 
-  override def purgeUnknown(linkIds: Set[Long], expiredLinkIds: Seq[Long]): Unit = {
-    val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(linkIds)
+  override def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
+    val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(linkIds)
     roadLinks.foreach { rl =>
       dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
     }
