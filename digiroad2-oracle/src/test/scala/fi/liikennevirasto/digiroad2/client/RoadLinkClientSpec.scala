@@ -56,7 +56,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers {
 
   test("Frozen In Time API test ") {
     val frozenApiEnabled = Digiroad2Properties.vvhRoadlinkFrozen
-    if (frozenApiEnabled == "true") { //Api only exists in QA and Production
+    if (frozenApiEnabled=="true") { //Api only exists in QA and Production
       val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
       val result = roadLinkClient.frozenTimeRoadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000), Point(446000, 7005244)))
       result.size should be > 1

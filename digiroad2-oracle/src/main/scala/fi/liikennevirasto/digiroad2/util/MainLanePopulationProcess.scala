@@ -125,7 +125,7 @@ object MainLanePopulationProcess {
       Queries.getMunicipalities
     }
 
-   municipalities.foreach { municipality =>
+    municipalities.foreach { municipality =>
       logger.info("Deleting lanes from municipality -> " + municipality)
       PostGISDatabase.withDynTransaction(laneService.expireAllMunicipalityLanes(municipality, username))
     }
