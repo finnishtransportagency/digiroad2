@@ -15,12 +15,12 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dynamicDao: 
   final val MassLimitationAssetTypes = Seq(TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,false)
     Seq(getByRoadLinks(MassLimitationAssetTypes, roadLinks))
   }
 
   def getWithComplementaryByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities,asyncMode = false)
     Seq(getByRoadLinks(MassLimitationAssetTypes, roadLinks))
   }
 

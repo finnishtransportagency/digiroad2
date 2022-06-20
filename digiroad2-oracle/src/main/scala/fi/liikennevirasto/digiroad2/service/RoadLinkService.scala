@@ -303,8 +303,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links
     */
-  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
-    getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
+  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(),asyncMode: Boolean = true) : Seq[RoadLink] =
+    getRoadLinksAndChangesFromVVH(bounds, municipalities,asyncMode)._1
 
   /**
     * This method returns "real" road links and "complementary" road links by bounding box and municipalities.
@@ -313,8 +313,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links
     */
-  def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction: Boolean = true) : Seq[RoadLink] =
-    getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities, newTransaction)._1
+  def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction: Boolean = true,asyncMode: Boolean = true) : Seq[RoadLink] =
+    getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities, newTransaction,asyncMode)._1
 
   /**
     * This method is utilized to find adjacent links of a road link.

@@ -654,7 +654,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromVVH with bbox"){
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
-      val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH")(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
+      val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH")(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities,false))
       val roadLinks = if(withRoadAddress) {
         val viiteInformation = LogUtils.time(logger, "TEST LOG Get Viite road address for links")(roadAddressService.roadLinkWithRoadAddress(roadLinkSeq))
         val vkmInformation = LogUtils.time(logger, "TEST LOG Get Temp road address for links")(roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
@@ -667,7 +667,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
+    val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities,false)
     val roadLinks = if(withRoadAddress) {
       val viiteInformation = roadAddressService.roadLinkWithRoadAddress(roadLinkSeq)
       val vkmInformation = roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))
