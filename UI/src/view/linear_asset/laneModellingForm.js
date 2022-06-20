@@ -502,6 +502,12 @@
         GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
+      var promoteToMainLane = $('<li>').append($('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
+        selectedAsset.promoteToMainLane(currentLaneNumber);
+        prepareLanesStructure();
+        reloadForm($('#feature-attributes'));
+      }).prop("disabled", false));
+
       var prepareLanesStructure = function () {
         if(_.isUndefined(selectedAsset.getLane(currentLaneNumber))){
           if(currentLaneNumber == "2"){
@@ -525,7 +531,7 @@
       deleteLane.prop('disabled', lane.id !== 0);
 
       if(currentLaneNumber !== 1)
-        body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
+        body.find('.form').append($('<div class="lane-buttons">').append(promoteToMainLane).append(expireLane).append(deleteLane));
     }
 
     function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled, body) {
