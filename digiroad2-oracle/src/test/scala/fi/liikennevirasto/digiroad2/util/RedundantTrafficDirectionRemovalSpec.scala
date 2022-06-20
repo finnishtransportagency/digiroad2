@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.mockito.ArgumentMatchers.any
@@ -25,13 +25,13 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
   test("A redundant traffic direction is removed, but a valid is not") {
     val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set(1, 2))
     runWithRollback {
-      RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, linkSet.head.linkId, None, linkSet.head.trafficDirection.value)
-      RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, linkSet.last.linkId, None, TrafficDirection.TowardsDigitizing.value)
-      val linkIdsBeforeRemoval = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
+      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, linkSet.head.linkId, None, linkSet.head.trafficDirection.value)
+      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, linkSet.last.linkId, None, TrafficDirection.TowardsDigitizing.value)
+      val linkIdsBeforeRemoval = RoadLinkOverrideDAO.TrafficDirectionDao.getLinkIds()
       linkIdsBeforeRemoval should contain(linkSet.head.linkId)
       linkIdsBeforeRemoval should contain(linkSet.last.linkId)
       mockedTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB()
-      val linkIdsAfterRemoval = RoadLinkDAO.TrafficDirectionDao.getLinkIds()
+      val linkIdsAfterRemoval = RoadLinkOverrideDAO.TrafficDirectionDao.getLinkIds()
       linkIdsAfterRemoval should not contain linkSet.head.linkId
       linkIdsAfterRemoval should contain(linkSet.last.linkId)
     }

@@ -12,7 +12,7 @@ import slick.jdbc.StaticQuery.interpolation
 case class RoadLinkValue(linkId: Long, value: Option[Int])
 case class MassOperationEntry(linkProperty: LinkProperties, username: Option[String], value: Int, timeStamp:Option[String], mmlId: Option[Long])
 
-sealed trait RoadLinkDAO{
+sealed trait RoadLinkOverrideDAO{
 
   def table: String
   def column : String
@@ -158,7 +158,7 @@ sealed trait RoadLinkDAO{
   }
 }
 
-object RoadLinkDAO{
+object RoadLinkOverrideDAO{
 
   val FunctionalClass = "functional_class"
   val TrafficDirection = "traffic_direction"
@@ -167,7 +167,7 @@ object RoadLinkDAO{
   val VVHAdministrativeClass = "vvh_administrative_class"
   val LinkAttributes = "road_link_attributes"
 
-  private def getDao(propertyName: String): RoadLinkDAO = {
+  private def getDao(propertyName: String): RoadLinkOverrideDAO = {
     propertyName.toLowerCase match {
       case FunctionalClass => FunctionalClassDao
       case TrafficDirection => TrafficDirectionDao
@@ -272,7 +272,7 @@ object RoadLinkDAO{
   }
 
 
-  case object FunctionalClassDao extends RoadLinkDAO {
+  case object FunctionalClassDao extends RoadLinkOverrideDAO {
 
     def table: String = FunctionalClass
     def column: String = FunctionalClass
@@ -286,7 +286,7 @@ object RoadLinkDAO{
     }
   }
 
-  case object TrafficDirectionDao extends RoadLinkDAO {
+  case object TrafficDirectionDao extends RoadLinkOverrideDAO {
 
     def table: String = TrafficDirection
     def column: String = TrafficDirection
@@ -363,7 +363,7 @@ object RoadLinkDAO{
     
   }
 
-  case object LinkTypeDao extends RoadLinkDAO {
+  case object LinkTypeDao extends RoadLinkOverrideDAO {
 
     def table: String = LinkType
     def column: String = LinkType
@@ -391,7 +391,7 @@ object RoadLinkDAO{
     }
   }
 
-  case object AdministrativeClassDao extends RoadLinkDAO {
+  case object AdministrativeClassDao extends RoadLinkOverrideDAO {
 
     def table: String = AdministrativeClass
     def column: String = AdministrativeClass
@@ -464,7 +464,7 @@ object RoadLinkDAO{
 
   }
 
-  case object LinkAttributesDao extends RoadLinkDAO {
+  case object LinkAttributesDao extends RoadLinkOverrideDAO {
 
     def table: String = LinkAttributes
     def column: String = LinkAttributes
