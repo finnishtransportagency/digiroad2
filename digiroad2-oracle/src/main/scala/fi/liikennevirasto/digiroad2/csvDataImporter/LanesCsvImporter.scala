@@ -355,12 +355,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
           //Lanes created from CSV-import have to be processed through fill topology to combine overlapping lanes etc.
           if (createdLaneIds.nonEmpty) {
-            val createdLanes = laneService.getPersistedLanesByIds(createdLaneIds)
+            val createdLanes = laneService.getPersistedLanesByIds(createdLaneIds, false)
             val groupedLanes = createdLanes.groupBy(_.linkId)
             if (groupedLanes.isEmpty) result
             else {
               val linkIds = createdLanes.map(_.linkId).toSet
-              val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+              val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, false)
               val changeSet = laneFiller.fillTopology(roadLinks, groupedLanes)._2
 
               //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and
