@@ -94,7 +94,7 @@ aws cloudformation create-stack \
 aws cloudformation create-stack \
 --stack-name SNS-notifications \
 --template-body file://aws/cloud-formation/sns/snsNotifications.yaml \
---parameters file://aws/cloud-formation/sns/sns-parameter.json
+--parameters file://aws/cloud-formation/sns/prod-sns-parameter.json
 ```
 
 ##Eräajoja varten tuotantotilille luotavat resurssit
