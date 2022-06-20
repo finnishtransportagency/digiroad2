@@ -48,7 +48,7 @@ create table roadlink (
 	constraint roadlink_linkid unique (linkid),
 	constraint roadlink_mtkid unique (mtkid)
 );
-create index roadlink_spatial_index on roadlink (shape);
+create index roadlink_spatial_index on roadlink USING gist (shape);
 create index adminclass_index on roadlink (adminclass);
 create index constructio_index on roadlink (constructiontype);
 create index linkid_index on roadlink (linkid);
