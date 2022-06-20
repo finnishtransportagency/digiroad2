@@ -15,7 +15,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dynamicDao: 
   final val MassLimitationAssetTypes = Seq(TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,false)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,asyncMode = false)
     Seq(getByRoadLinks(MassLimitationAssetTypes, roadLinks))
   }
 

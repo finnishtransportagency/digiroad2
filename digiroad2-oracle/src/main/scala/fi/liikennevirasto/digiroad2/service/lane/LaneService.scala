@@ -73,7 +73,7 @@ trait LaneOperations {
     * @return
     */
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): (Seq[Seq[PieceWiseLane]], Seq[RoadLink]) = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,false)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,asyncMode = false)
     val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
