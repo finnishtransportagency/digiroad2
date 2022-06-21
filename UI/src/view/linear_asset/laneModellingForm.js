@@ -504,6 +504,7 @@
 
       var promoteToMainLane = $('<li>').append($('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
         selectedAsset.promoteToMainLane(currentLaneNumber);
+        currentLaneNumber = 1
         prepareLanesStructure();
         reloadForm($('#feature-attributes'));
       }).prop("disabled", false));
