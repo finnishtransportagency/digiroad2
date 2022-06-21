@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "BatchSNSTopicName",
+    "ParameterValue": "BatchFailTopic"
+  },
+  {
+    "ParameterKey": "Owner",
+    "ParameterValue": "vayla"
+  },
+  {
+    "ParameterKey": "Project",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "BatchFailInputPathExitCode",
+    "ParameterValue": "$.detail.attempts[0].container.exitCode"
+  },
+  {
+    "ParameterKey": "BatchFailInputPathLogStream",
+    "ParameterValue": "$.detail.attempts[0].container.logStreamName"
+  }
+]

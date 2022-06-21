@@ -64,7 +64,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds,asyncMode = false)
     getByRoadLinks(roadLinks)
   }
 
