@@ -31,7 +31,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
   val roadLinkWithLinkSource = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
+  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
@@ -114,7 +114,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrm)""".execute
       sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values ($assetId, $assetId, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', current_timestamp, 'dr2_test_data')""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = ServiceWithDao.getByBoundingBox(assetTypeId, boundingBox).toList
 
       before.length should be (1)
@@ -123,7 +123,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       before.head.map(_.startMeasure should be (0))
       before.head.map(_.endMeasure should be (25))
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = ServiceWithDao.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (3)

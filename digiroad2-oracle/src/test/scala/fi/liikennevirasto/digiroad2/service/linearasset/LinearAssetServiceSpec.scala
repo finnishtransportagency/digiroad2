@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUt
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.{any, _}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -36,7 +36,7 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
   val roadLinkWithLinkSource: RoadLink = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
+  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
@@ -292,7 +292,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList
 
       before.length should be (1)
@@ -301,7 +301,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       before.head.map(_.startMeasure should be (0))
       before.head.map(_.endMeasure should be (25))
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (3)
@@ -371,7 +371,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'), 1)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (3)
@@ -382,7 +382,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       beforeByValue(Some(NumericValue(1))).length should be (1)
       beforeByValue(None).length should be (2)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (5)
@@ -455,7 +455,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,$asset3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (3)
@@ -476,7 +476,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       linearAssets3.head.endMeasure should be (5)
 
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
 //      after.foreach(println)
@@ -541,7 +541,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3,$asset3,(select id from property where public_id = 'mittarajoitus'),60)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (4)
@@ -557,7 +557,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       linearAssets2.filter(l => l.id > 0).head.startMeasure should be (0)
       linearAssets2.filter(l => l.id > 0).head.endMeasure should be (5)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 //      after.foreach(println)
       after.length should be(4)
@@ -768,7 +768,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset,$lrm)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT $asset, $asset, id, 4779 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       val before = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       before should have size 2
