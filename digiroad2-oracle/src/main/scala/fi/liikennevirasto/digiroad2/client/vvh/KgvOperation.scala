@@ -179,7 +179,10 @@ object Extractor {
   private def anyToDouble(value: Any): Option[Double] = {
     value match {
       case null => None
-      case _ => Some(value.toString.toDouble)
+      case _ => {
+        val doubleValue = Try(value.toString.toDouble).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}") )
+        Some(doubleValue)
+      }
     }
   }
 
