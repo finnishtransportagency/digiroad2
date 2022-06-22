@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
-
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Manoeuvres, SideCode}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
@@ -10,6 +9,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, _}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -64,8 +64,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds)
-    getByRoadLinks(roadLinks)
+    val roadLinks = LogUtils.time(logger, "TEST LOG manoeuvres get roadlinks by boundingBox") {
+      roadLinkService.getRoadLinksFromVVH(bounds,asyncMode = false)
+    }
+    LogUtils.time(logger, "TEST LOG manoeuvres get assets by roadlinks, roadlink count: " + roadLinks.size) {
+      getByRoadLinks(roadLinks)
+    }
   }
 
   def updateManoeuvre(userName: String, oldManoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates, modifiedDate: Option[DateTime]): Long = {
