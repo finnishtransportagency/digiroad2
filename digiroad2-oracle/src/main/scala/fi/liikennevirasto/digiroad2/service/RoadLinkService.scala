@@ -462,7 +462,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
     )
         withDynTransaction {
-          LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH, link count: " + links.size)(
+          LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH from boundingBox request, link count: " + links.size)(
       (enrichRoadLinksFromVVH(links), changes)
           )
     }
@@ -1340,7 +1340,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[VVHRoadlink]): Seq[RoadLink] = {
     val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
-    LogUtils.time(logger,"TEST LOG roadLinkDataByLinkId, link count: " + vvhRoadLinks.size){getRoadLinkDataByLinkIds(vvhRoadLinks)}
+    LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + vvhRoadLinks.size){getRoadLinkDataByLinkIds(vvhRoadLinks)}
   }
 
   /**

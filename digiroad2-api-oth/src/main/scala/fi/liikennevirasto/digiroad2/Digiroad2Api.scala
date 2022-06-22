@@ -312,13 +312,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/massTransitStops") {
     val user = userProvider.getCurrentUser()
-    val bbox = LogUtils.time(logger, "TEST LOG massTransitStops construct bbox"){
+    val bbox = LogUtils.time(logger, "TEST LOG massTransitStops construct boundingBox"){
       params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     }
-    LogUtils.time(logger, "TEST LOG massTransitStops validate bbox") {
+    LogUtils.time(logger, "TEST LOG massTransitStops validate boundingBox") {
       validateBoundingBox(bbox)
     }
-    val massTransitStops = LogUtils.time(logger, "TEST LOG massTransitStops get by bbox") {
+    val massTransitStops = LogUtils.time(logger, "TEST LOG massTransitStops get by boundingBox") {
       massTransitStopService.getByBoundingBox(user, bbox)
     }
     LogUtils.time(logger, "TEST LOG massTransitStops map asset fields, asset count: " + massTransitStops.size) {
@@ -660,10 +660,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
-    LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromVVH with bbox"){
+    LogUtils.time(logger,"TEST LOG Total time getRoadLinksFromVVH with boundingBox"){
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
-      val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH with bbox")(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
+      val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH with boundingBox")(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
       val roadLinks = if(withRoadAddress) {
         val viiteInformation = LogUtils.time(logger, "TEST LOG Get Viite road address for links, link count: " + roadLinkSeq.size)(roadAddressService.roadLinkWithRoadAddress(roadLinkSeq))
         val missingViiteAddress = viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))
@@ -1669,13 +1669,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/manoeuvres") {
     params.get("bbox").map { bbox =>
-      val boundingRectangle = LogUtils.time(logger, "TEST LOG manoeuvres construct bbox") {
+      val boundingRectangle = LogUtils.time(logger, "TEST LOG manoeuvres construct boundingBox") {
         constructBoundingRectangle(bbox)
       }
-      LogUtils.time(logger, "TEST LOG manoeuvres validate bbox") {
+      LogUtils.time(logger, "TEST LOG manoeuvres validate boundingBox") {
         validateBoundingBox(boundingRectangle)
       }
-      LogUtils.time(logger, "TEST LOG Get manoeuvres by bbox total operation") {
+      LogUtils.time(logger, "TEST LOG Get manoeuvres by boundingBox total operation") {
         manoeuvreService.getByBoundingBox(boundingRectangle, Set())
       }
     } getOrElse {

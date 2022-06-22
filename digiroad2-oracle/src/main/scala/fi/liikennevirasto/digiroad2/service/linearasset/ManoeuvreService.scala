@@ -65,7 +65,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    val roadLinks = LogUtils.time(logger, "TEST LOG manoeuvres get roadlinks by bbox") {
+    val roadLinks = LogUtils.time(logger, "TEST LOG manoeuvres get roadlinks by boundingBox") {
       roadLinkService.getRoadLinksFromVVH(bounds)
     }
     LogUtils.time(logger, "TEST LOG manoeuvres get assets by roadlinks, roadlink count: " + roadLinks.size) {
