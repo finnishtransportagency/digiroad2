@@ -57,7 +57,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     ,RoadLink(388562362l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
 
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinkWithLinkSource, Nil))
+  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinkWithLinkSource, Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(roadLinkWithLinkSource.headOption)
 
@@ -142,7 +142,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetId = service.create(Seq(NewLinearAsset(newLinkId, 0, 20, propertyData, 1, 0, None)), PavedRoad.typeId, "testuser")
       val newAsset = service.getPersistedAssetsByIds(PavedRoad.typeId, newAssetId.toSet)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), Nil))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(newAsset)
 
       val existingAssets = service.getByBoundingBox(PavedRoad.typeId, boundingBox).toList.flatten
@@ -187,7 +187,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(List())
 
       val existingAssets = service.getByBoundingBox(PavedRoad.typeId, boundingBox).toList.flatten
@@ -338,7 +338,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfoSeq))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(List())
 
       service.getByBoundingBox(PavedRoad.typeId, boundingBox)
@@ -378,7 +378,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), Nil))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(PavedRoad.typeId, boundingBox).toList.flatten
@@ -426,7 +426,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L))
       assets should have size(1)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       after should have size(1)
 
@@ -460,7 +460,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, propertyData, 1, 0, None)), assetTypeId, "testuser")
       val newAsset = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId.toSet)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfoSeq))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(List(newAsset.head))
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten.filter(_.value.isDefined)
@@ -558,7 +558,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(), changeInfoSeq))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -586,7 +586,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), Nil))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten

@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, _}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -65,12 +64,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    val roadLinks = LogUtils.time(logger, "TEST LOG manoeuvres get roadlinks by boundingBox") {
-      roadLinkService.getRoadLinksFromVVH(bounds)
-    }
-    LogUtils.time(logger, "TEST LOG manoeuvres get assets by roadlinks, roadlink count: " + roadLinks.size) {
-      getByRoadLinks(roadLinks)
-    }
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds,asyncMode = false)
+    getByRoadLinks(roadLinks)
   }
 
   def updateManoeuvre(userName: String, oldManoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates, modifiedDate: Option[DateTime]): Long = {

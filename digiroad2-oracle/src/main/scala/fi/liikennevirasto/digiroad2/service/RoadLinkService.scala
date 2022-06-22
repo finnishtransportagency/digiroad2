@@ -303,8 +303,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links
     */
-  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
-    getRoadLinksAndChangesFromVVH(bounds, municipalities)._1
+  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(),asyncMode: Boolean = true) : Seq[RoadLink] =
+    getRoadLinksAndChangesFromVVH(bounds, municipalities,asyncMode)._1
 
   /**
     * This method returns "real" road links and "complementary" road links by bounding box and municipalities.
@@ -313,8 +313,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links
     */
-  def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction: Boolean = true) : Seq[RoadLink] =
-    getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities, newTransaction)._1
+  def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction: Boolean = true,asyncMode: Boolean = true) : Seq[RoadLink] =
+    getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities, newTransaction,asyncMode)._1
 
   /**
     * This method is utilized to find adjacent links of a road link.
@@ -457,9 +457,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links and change data
     */
-  def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo]) = {
-    val (changes, links) = LogUtils.time(logger, "TEST LOG VVH fetch by boundingBox")(
-      Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
+  def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(),asyncMode: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val (changes, links) = if (!asyncMode){
+      (vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(bounds, municipalities),
+        vvhClient.roadLinkData.fetchByMunicipalitiesAndBounds(bounds, municipalities))
+    }else LogUtils.time(logger, "TEST LOG VVH fetch by boundingBox")(
+      Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
+        .zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
     )
         withDynTransaction {
           LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH from boundingBox request, link count: " + links.size)(
@@ -528,15 +532,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links and change data
     */
-  def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction:Boolean = true): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val fut = for{
-      f1Result <- vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities)
-      f2Result <- vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
-      f3Result <- vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)
-    } yield (f1Result, f2Result, f3Result)
+  def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction:Boolean = true,asyncMode: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo])= {
 
-    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
-
+    val (complementaryLinks, changes, links) = if (!asyncMode) {
+      val changes = vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(bounds, municipalities)
+      val complementaryLinks = vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalities(bounds, municipalities)
+      val links = vvhClient.roadLinkData.fetchByMunicipalitiesAndBounds(bounds, municipalities)
+      (complementaryLinks, changes, links)
+    } else {
+      val fut = for {
+        f1Result <- vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities)
+        f2Result <- vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
+        f3Result <- vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)
+      } yield (f1Result, f2Result, f3Result)
+      Await.result(fut, Duration.Inf)
+    }
+    
     if(newTransaction){
       withDynTransaction {
         (enrichRoadLinksFromVVH(links ++ complementaryLinks), changes)
@@ -546,13 +557,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   }
 
-  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction:Boolean = true): Seq[RoadLink] = {
-    val fut = for{
-      f1Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
-      f2Result <- vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)
-    } yield (f1Result, f2Result)
+  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction:Boolean = true,asyncMode: Boolean = true): Seq[RoadLink] = {
 
-    val (complementaryLinks, links) = Await.result(fut, Duration.Inf)
+    val (complementaryLinks, links) = if (!asyncMode) {
+      val complementaryLinks = vvhClient.complementaryData.fetchByLinkIds(linkIds)
+      val links = vvhClient.roadLinkData.fetchByLinkIds(linkIds)
+      (complementaryLinks, links)
+    } else {
+      val fut = for{
+        f1Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
+        f2Result <- vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)
+      } yield (f1Result, f2Result)
+      Await.result(fut, Duration.Inf)
+    }
 
     if(newTransaction){
       withDynTransaction {
