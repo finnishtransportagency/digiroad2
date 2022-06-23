@@ -13,7 +13,9 @@ import org.apache.http.impl.client.HttpClients
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.{DefaultFormats, StreamInput}
+import org.slf4j.LoggerFactory
 
+import java.math.BigInteger
 import java.net.URLEncoder
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -107,7 +109,7 @@ object FilterOgc extends Filter {
 }
 
 object Extractor {
-
+  lazy val logger = LoggerFactory.getLogger(getClass)
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
@@ -148,26 +150,36 @@ object Extractor {
     else TrafficDirection.UnknownDirection
   }
   
-  private def extractAttributes(attributesMap: Map[String, Any],validFromDate:Long,lastEditedDate:Long,starttime:Long): Map[String, Any] = {
+  private def extractAttributes(attributesMap: Map[String, Any],validFromDate:BigInt,lastEditedDate:BigInt,starttime:BigInt): Map[String, Any] = {
+    def numberConversio(field:String): BigInt = {
+      try {
+        toBigInt(attributesMap(field).toString.toInt)
+      } catch {
+        case _: Exception =>
+          logger.warn(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
+         0
+      }
+    }
+    
     Map(
-      "ROADNUMBER"            -> attributesMap("roadnumber"),
-      "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
-      "MUNICIPALITYCODE"      -> attributesMap("municipalitycode"),
-      "SURFACETYPE"           -> attributesMap("surfacetype"),
+      "ROADNUMBER"            -> numberConversio("roadnumber"),
+      "ROADPARTNUMBER"        -> numberConversio("roadpartnumber"),
+      "MUNICIPALITYCODE"      -> numberConversio("municipalitycode"),
+      "SURFACETYPE"           -> numberConversio("surfacetype"),
 
-      "MTKID"                 -> attributesMap("sourceid"),
-      "MTKCLASS"              -> attributesMap("roadclass"),
-      "HORIZONTALACCURACY"    -> attributesMap("xyaccuracy"),
-      "VERTICALACCURACY"      -> attributesMap("zaccuracy"),
-      "VERTICALLEVEL"         -> attributesMap("surfacerelation"),
-      "CONSTRUCTIONTYPE"      -> attributesMap("lifecyclestatus"),
+      "MTKID"                 -> numberConversio("sourceid"),
+      "MTKCLASS"              -> numberConversio("roadclass"),
+      "HORIZONTALACCURACY"    -> anyToDouble(attributesMap("xyaccuracy")),
+      "VERTICALACCURACY"      -> anyToDouble(attributesMap("zaccuracy")),
+      "VERTICALLEVEL"         -> numberConversio("surfacerelation"),
+      "CONSTRUCTIONTYPE"      -> numberConversio("lifecyclestatus"),
       "ROADNAME_FI"           -> attributesMap("roadnamefin"),
       "ROADNAME_SE"           -> attributesMap("roadnameswe"),
 
-      "FROM_RIGHT"            -> attributesMap("addressfromright"),
-      "TO_RIGHT"              -> attributesMap("addresstoright"),
-      "FROM_LEFT"             -> attributesMap("addressfromleft"),
-      "TO_LEFT"               -> attributesMap("addresstoleft"),
+      "FROM_RIGHT"            -> numberConversio("addressfromright"),
+      "TO_RIGHT"              -> numberConversio("addresstoright"),
+      "FROM_LEFT"             -> numberConversio("addressfromleft"),
+      "TO_LEFT"               -> numberConversio("addresstoleft"),
       
       "MTKHEREFLIP"           -> attributesMap("geometryflip"),
       "CREATED_DATE"          -> starttime,
@@ -189,6 +201,10 @@ object Extractor {
     }
   }
 
+  def toBigInt(value: Int): BigInt = {
+    Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
+  }
+
  private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
     val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
     var lastEditedDate : Option[Long] = Option(0)
@@ -198,13 +214,13 @@ object Extractor {
    
    lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
-
+  
   def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLinkFetched = {
     val attributes = feature.properties
     
-    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
-    val lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
-    val starttime = Option(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis)
+    val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
+    val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
+    val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
     
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
@@ -225,7 +241,7 @@ object Extractor {
       linkGeometry,
       extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
-      extractAttributes(attributes,validFromDate.get,lastEditedDate.get,starttime.get)
+      extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
       , extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
