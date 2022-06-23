@@ -436,10 +436,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * This method is used by CsvGenerator.
     *
     * @param linkIds
-    * @param fieldSelection
-    * @param fetchGeometry
-    * @param resultTransition
-    * @tparam T
     * @return
     */
   def fetchVVHRoadlinks[T](linkIds: Set[String],
