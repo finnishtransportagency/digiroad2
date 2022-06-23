@@ -65,6 +65,10 @@
         "value": "false"
       },
       {
+        "name": "kgv.endpoint",
+        "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+      },
+      {
         "name": "viiteRestApiEndPoint",
         "value": "https://api.vaylapilvi.fi/viite/api/viite/"
       },
@@ -139,6 +143,10 @@
       {
         "name": "vvhRest.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/vvhRest.password"
+      },
+      {
+        "name": "kgv.apikey",
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/kgv.apikey"
       },
       {
         "name": "oag.password",
