@@ -154,22 +154,25 @@ object Extractor {
       "ROADPARTNUMBER"        -> attributesMap("roadpartnumber"),
       "MUNICIPALITYCODE"      -> attributesMap("municipalitycode"),
       "SURFACETYPE"           -> attributesMap("surfacetype"),
-      "SOURCEID"              -> attributesMap("sourceid"),
-      "ROADCLASS"             -> attributesMap("roadclass"),
-      "XYACCURACY"            -> attributesMap("xyaccuracy"),
-      "ZACCURACY"             -> attributesMap("zaccuracy"),
-      "SURFACERELATION"       -> attributesMap("surfacerelation"),
-      "LIFECYCLESTATUS"       -> attributesMap("lifecyclestatus"),
-      "ROADNAMEFIN"           -> attributesMap("roadnamefin"),
-      "ROADNAMESWE"           -> attributesMap("roadnameswe"),
-      "ADDRESSFROMRIGHT"      -> attributesMap("addressfromright"),
-      "ADDRESSTORIGHT"        -> attributesMap("addresstoright"),
-      "ADDRESSFROMLEFT"       -> attributesMap("addressfromleft"),
-      "ADDRESSTOLEFT"         -> attributesMap("addresstoleft"),
-      "GEOMETRYFLIP"          -> attributesMap("geometryflip"),
-      "STARTTIME"             -> starttime,
-      "VERSIONSTARTTIME"      -> lastEditedDate,
-      "SOURCEMODIFICATIONTIME"-> validFromDate
+
+      "MTKID"                 -> attributesMap("sourceid"),
+      "MTKCLASS"              -> attributesMap("roadclass"),
+      "HORIZONTALACCURACY"    -> attributesMap("xyaccuracy"),
+      "VERTICALACCURACY"      -> attributesMap("zaccuracy"),
+      "VERTICALLEVEL"         -> attributesMap("surfacerelation"),
+      "CONSTRUCTIONTYPE"      -> attributesMap("lifecyclestatus"),
+      "ROADNAME_FI"           -> attributesMap("roadnamefin"),
+      "ROADNAME_SE"           -> attributesMap("roadnameswe"),
+
+      "FROM_RIGHT"            -> attributesMap("addressfromright"),
+      "TO_RIGHT"              -> attributesMap("addresstoright"),
+      "FROM_LEFT"             -> attributesMap("addressfromleft"),
+      "TO_LEFT"               -> attributesMap("addresstoleft"),
+      
+      "MTKHEREFLIP"           -> attributesMap("geometryflip"),
+      "CREATED_DATE"          -> starttime,
+      "LAST_EDITED_DATE"      -> lastEditedDate,
+      "VALIDFROM"             -> validFromDate
     )
   }
   
