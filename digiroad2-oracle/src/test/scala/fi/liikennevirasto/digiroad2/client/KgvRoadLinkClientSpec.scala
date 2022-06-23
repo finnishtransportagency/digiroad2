@@ -35,7 +35,7 @@ class KgvRoadLinkClientSpec extends FunSuite with Matchers{
     result1.size should be > 1
   }
 
-  test("Fetch roadlinks with id") {
+  ignore("Fetch roadlinks with id") {
     val roadLinkClient = new KgvRoadLinkClient(collection,linkGeomSourceValue)
     val result = roadLinkClient.fetchByLinkId("0001c8d6-96d2-4006-9d0b-5d56530f9442:1")
     result.size should be(1)
