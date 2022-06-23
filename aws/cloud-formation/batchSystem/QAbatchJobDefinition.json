@@ -147,7 +147,7 @@
       },
       {
         "name": "kgv.apikey",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/qa/kgv.apikey"
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/qa/apikey/kgv.apikey"
       },
       {
         "name": "oag.password",
