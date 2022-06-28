@@ -1720,10 +1720,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val municipalitiesCodeToValidate = List(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
     val timezone = DateTimeZone.forOffsetHours(0)
 
-    val roadLinks =
-      withDynTransaction {
-        enrichRoadLinksFromVVH(getRoadLinksBetweenTwoDatesFromVVH(sinceDate, untilDate))
-      }
+    val roadLinksBetweenDates = getRoadLinksBetweenTwoDatesFromVVH(sinceDate, untilDate)
+    val roadLinks = withDynTransaction { enrichRoadLinksFromVVH(roadLinksBetweenDates) }
 
     roadLinks.map { roadLink =>
       ChangedVVHRoadlink(
