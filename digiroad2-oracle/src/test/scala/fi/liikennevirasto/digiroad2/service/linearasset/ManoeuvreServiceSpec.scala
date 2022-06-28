@@ -29,7 +29,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]]))
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
     .thenReturn(Seq(vvhRoadLink(1611419, 235), vvhRoadLink(1611412, 235), vvhRoadLink(1611410, 235)))
   when(mockRoadLinkService.getRoadLinksFromVVH(municipality = 235))
     .thenReturn(Seq(vvhRoadLink(123, 235), vvhRoadLink(125, 235), vvhRoadLink(124, 235), vvhRoadLink(233, 235), vvhRoadLink(234, 235, Seq(Point(15, 0), Point(20, 0)))))

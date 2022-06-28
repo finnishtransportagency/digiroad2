@@ -97,14 +97,14 @@ trait LinearAssetOperations {
     * @return
     */
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities,asyncMode = false)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
+    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities,asyncMode = false)
     val linearAssets = getByRoadLinks(typeId, roadLinks, change)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
