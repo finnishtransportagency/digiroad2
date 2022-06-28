@@ -217,7 +217,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedMassTransitStop] = {
     val roadLinks = LogUtils.time(logger, "TEST LOG Get and enrich roadlinks and complementaries"){
-      roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
+      roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds,asyncMode=false)
     }
     LogUtils.time(logger, "TEST LOG Get massTransitStop assets by bounding box") {
       super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
