@@ -115,6 +115,10 @@
       });
     };
 
+    self.getSelectedLanes = function (lane){
+      return collection.getGroup(lane);
+    };
+
     self.open = function(linearAsset, singleLinkSelect) {
       self.close();
       var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
@@ -244,6 +248,18 @@
       return sideCodesMapped;
     }
 
+    function useOriginalLaneCode(lanes) {
+      return _.map(lanes, function(lane){
+        if(lane.originalLaneCode) {
+          lane.newLaneCode = getLaneCodeValue(lane);
+          setPropertyByPublicId(lane, "lane_code", lane.originalLaneCode);
+          return lane;
+        }
+          else return lane;
+      });
+
+    }
+
     self.save = function(isAddByRoadAddressActive) {
       eventbus.trigger(self.singleElementEvent('saving'));
       omitIrrelevantExpiredLanes();
@@ -252,7 +268,8 @@
       var sideCode = _.head(self.selection).sideCode;
       var sideCodesForLinks = getSideCodesForLinks();
 
-      var lanes = omitUnrelevantProperties(self.selection);
+      var lanesWithOriginalLaneCode = useOriginalLaneCode(self.selection);
+      var lanes = omitUnrelevantProperties(lanesWithOriginalLaneCode);
 
       var payload;
       if(isAddByRoadAddressActive) {
@@ -383,7 +400,7 @@
 
     this.promoteToMainLane = function(laneNumber) {
       var lanesOnLink = self.selection;
-      var lanesWithOrderNumbers = getOrderingNumbers(lanesOnLink);
+      var lanesWithOrderNumbers = self.getOrderingNumbers(lanesOnLink);
       var newMainLane = _.find(lanesWithOrderNumbers, function(lane) {
         return getLaneCodeValue(lane) === laneNumber;
       });
@@ -396,7 +413,7 @@
     var laneCodesAfterPromotion = function (lanesWithOrderNumbers, newMainLane) {
       var newMainLaneOrderNo = newMainLane.orderNo;
       lanesWithOrderNumbers.forEach(function (lane) {
-        lane.oldLaneCode = getLaneCodeValue(lane);
+        lane.originalLaneCode = getLaneCodeValue(lane);
         var difference = newMainLaneOrderNo - lane.orderNo;
         if (difference > 0) {
           setPropertyByPublicId(lane, 'lane_code', difference * 2);
@@ -416,7 +433,7 @@
       });
     }
 
-    var getOrderingNumbers = function(lanesOnLink) {
+    this.getOrderingNumbers = function(lanesOnLink) {
       var leftAndRightLanesPartitioned = _.partition(lanesOnLink, function(lane) {
         var laneCode = getLaneCodeValue(lane);
         return laneCode % 2 === 0;
@@ -434,8 +451,21 @@
       }, 'asc');
       var lanesLeftToRight = leftLanesOrdered.concat(rightLanesOrdered);
 
+      var orderNumberCounter = 0;
       lanesLeftToRight.forEach(function (lane) {
-        lane.orderNo = lanesLeftToRight.indexOf(lane) + 1;
+        var laneCode = getLaneCodeValue(lane);
+        var previousLane = lanesLeftToRight[lanesLeftToRight.indexOf(lane) - 1];
+        if(previousLane){
+          if(getLaneCodeValue(previousLane) == laneCode) {
+            lane.orderNo = orderNumberCounter;
+          }
+          else {
+            lane.orderNo = orderNumberCounter += 1;
+          }
+        }
+        else {
+          lane.orderNo = orderNumberCounter += 1;
+        }
       });
 
       return lanesLeftToRight;
