@@ -999,7 +999,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
   protected override val disableGeometry = false
 
-  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   protected def dao: RoadLinkDAO = new RoadLinkDAO
 
   override protected def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = ???
@@ -1008,6 +1007,16 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
 
   protected override def defaultOutFields(): String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
+  }
+
+  /**
+   * Opens new dynSession only if there is not connection open
+   */
+  protected def withDbConnection[T](f: => T): T = {
+    if (PostGISDatabase.isTransactionOpen)
+      f
+    else
+      PostGISDatabase.withDynSession{ f }
   }
 
   /**
@@ -1030,7 +1039,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
     val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
 
-    withDynSession {
+    withDbConnection {
       dao.getByMunicipality(municipality, Some(roadNumberFilters))
     }
   }
@@ -1039,7 +1048,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
    * Returns VVH road links by municipality.
    */
   protected override def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHType] = {
-    withDynSession {
+    withDbConnection {
       dao.getByMunicipality(municipality, filter)
     }
   }
@@ -1049,7 +1058,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
    */
   protected override def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[VVHType] = {
-    withDynSession {
+    withDbConnection {
       dao.getByMunicipalitiesAndBounds(bounds, municipalities, filter)
     }
   }
@@ -1058,7 +1067,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     if (polygon.getCoordinates.isEmpty) {
       return Seq.empty[Long]
     }
-    withDynSession { dao.getLinksIdByPolygons(polygon) }
+    withDbConnection { dao.getLinksIdByPolygons(polygon) }
   }
 
   /**
@@ -1067,7 +1076,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   protected def queryByMultipleValues[T, A](values: Set[A],
                                             filter: Set[A] => String): Seq[T] = {
     if (values.nonEmpty) {
-      withDynSession {
+      withDbConnection {
         dao.getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
       }
     } else Seq.empty[T]
@@ -1080,7 +1089,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     if(polygon.getCoordinates.isEmpty)
       return Seq[VVHType]()
 
-    withDynSession { dao.getByPolygon(polygon) }
+    withDbConnection { dao.getByPolygon(polygon) }
   }
 
   // Query filters methods
@@ -1168,7 +1177,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
     */
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
-    withDynSession {
+    withDbConnection {
       dao.getLinksWithFilter(withLastEditedDateFilter(lowerDate, higherDate))
     }
   }
