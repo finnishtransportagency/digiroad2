@@ -16,7 +16,7 @@ import slick.jdbc.StaticQuery.interpolation
 import scala.collection.mutable.ListBuffer
 
 class RoadLinkDAO {
-  private val geometryColumn: String = "shape"
+  protected val geometryColumn: String = "shape"
 
   implicit val getRoadLink: GetResult[VVHRoadlink] = new GetResult[VVHRoadlink] {
     def apply(r: PositionedResult): VVHRoadlink = {

@@ -19,6 +19,8 @@ object PostGISDatabase {
     override def initialValue(): Boolean = { false }
   }
 
+  def isTransactionOpen: Boolean = transactionOpen.get()
+
   def withDynTransaction[T](f: => T): T = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
