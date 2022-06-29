@@ -9,6 +9,7 @@ import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.StaticQuery.interpolation
 import Database.dynamicSession
+import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 
 object PostGISDatabase {
@@ -80,5 +81,12 @@ object PostGISDatabase {
                                          $rightTopY,
                                          3067)
     """
+  }
+
+  def polygonFilter(polygon: Polygon, geometryColumn: String): String = {
+    val geom = polygon.getCoordinates.map(point => s"${point.x} ${point.y}")
+    val lineString = s"'LINESTRING(${geom.mkString(",")})'"
+
+    s"$geometryColumn && ST_MakePolygon(ST_GeomFromText($lineString, 3067))"
   }
 }

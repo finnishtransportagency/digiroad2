@@ -5,7 +5,9 @@ import java.util.ArrayList
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, OAGAuthPropertyReader}
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
@@ -215,7 +217,7 @@ object VVHClient {
 
 class VVHClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData: VVHRoadLinkClient = new VVHRoadLinkClient(vvhRestApiEndPoint)
-  lazy val frozenTimeRoadLinkData: VVHRoadLinkClient = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
+  lazy val frozenTimeRoadLinkData: VVHFrozenTimeRoadLinkClientServicePoint = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
@@ -551,12 +553,12 @@ trait VVHClientOperations {
 
 }
 
-class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
+class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends OldVVHRoadLinkClient(vvhRestApiEndPoint){
   protected override val serviceName = "Roadlink_temp"
   protected override val disableGeometry = false
 }
 
-class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
+class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   override type VVHType = VVHRoadlink
 
@@ -988,6 +990,312 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
 }
 
+class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
+
+  override type VVHType = VVHRoadlink
+
+  protected override val restApiEndPoint = vvhRestApiEndPoint
+  protected override val serviceName = "Roadlink_data"
+  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
+  protected override val disableGeometry = false
+
+  def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  protected def dao: RoadLinkDAO = new RoadLinkDAO
+
+  override protected def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = ???
+  override protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = ???
+
+
+  protected override def defaultOutFields(): String = {
+    "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
+  }
+
+  /**
+    * Returns VVH road links in bounding box area. Municipalities are optional.
+    * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
+    */
+  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[VVHRoadlink] = {
+    val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)
+      Some(withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
+    else
+      None
+    queryByMunicipalitiesAndBounds(bounds, municipalities, roadNumberFilters)
+  }
+
+  /**
+    * Returns VVH road links by municipality.
+    * Used by VVHClient.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) and
+    * RoadLinkService.getViiteRoadLinksFromVVH(municipality, roadNumbers).
+    */
+  def queryByRoadNumbersAndMunicipality(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
+    val roadNumberFilters = withRoadNumbersFilter(roadNumbers, true, "")
+
+    withDynSession {
+      dao.getByMunicipality(municipality, Some(roadNumberFilters))
+    }
+  }
+
+  /**
+   * Returns VVH road links by municipality.
+   */
+  protected override def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHType] = {
+    withDynSession {
+      dao.getByMunicipality(municipality, filter)
+    }
+  }
+
+  /**
+     * Returns VVH road links in bounding box area. Municipalities are optional.
+   */
+  protected override def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
+                                                        filter: Option[String]): Seq[VVHType] = {
+    withDynSession {
+      dao.getByMunicipalitiesAndBounds(bounds, municipalities, filter)
+    }
+  }
+
+  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
+    if (polygon.getCoordinates.isEmpty) {
+      return Seq.empty[Long]
+    }
+    withDynSession { dao.getLinksIdByPolygons(polygon) }
+  }
+
+  /**
+   * Returns VVH road links.
+   */
+  protected def queryByMultipleValues[T, A](values: Set[A],
+                                            filter: Set[A] => String): Seq[T] = {
+    if (values.nonEmpty) {
+      withDynSession {
+        dao.getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
+      }
+    } else Seq.empty[T]
+  }
+
+  /**
+   * Returns VVH road links in polygon area.
+   */
+  protected override def queryByPolygons(polygon: Polygon): Seq[VVHType] = {
+    if(polygon.getCoordinates.isEmpty)
+      return Seq[VVHType]()
+
+    withDynSession { dao.getByPolygon(polygon) }
+  }
+
+  // Query filters methods
+  protected override def withFilter[T](attributeName: String, ids: Set[T]): String = {
+    if (ids.nonEmpty)
+      s"$attributeName in (${ids.mkString(",")})"
+    else ""
+  }
+
+  protected override def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
+    if (names.nonEmpty) {
+      val nameString = names.map(name => s"'$name'")
+      s"$attributeName in (${nameString.mkString(",")})"
+    } else ""
+  }
+
+  protected override  def withLimitFilter(attributeName: String, low: Int, high: Int,
+                                          includeAllPublicRoads: Boolean = false): String = {
+    if (low < 0 || high < 0 || low > high) {
+      ""
+    } else {
+      if (includeAllPublicRoads) {
+        s"ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high)"
+      } else {
+        s"( $attributeName >= $low and $attributeName <= $high )"
+      }
+    }
+  }
+
+  protected def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
+    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
+  }
+
+  protected def withLinkIdFilter(linkIds: Set[Long]): String = {
+    withFilter("LINKID", linkIds)
+  }
+
+  protected def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
+    withRoadNameFilter(roadNameSource, roadNames)
+  }
+
+  protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
+    withFilter("MTKID", mmlIds)
+  }
+
+  protected def withMtkClassFilter(ids: Set[Long]): String = {
+    withFilter("MTKCLASS", ids)
+  }
+
+  protected  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
+  }
+
+  protected def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s"( $attributeName >= date '$since' and $attributeName <=date '$until' )"
+  }
+
+
+  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
+    if (roadNumbers.isEmpty) return s"($filter)"
+    if (includeAllPublicRoads)
+      return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
+    val limit = roadNumbers.head
+    val filterAdd = s"(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
+  }
+
+  protected override def combineFiltersWithAnd(filter1: String, filter2: String): String = {
+    (filter1.isEmpty, filter2.isEmpty) match {
+      case (true,true) => ""
+      case (true,false) => filter2
+      case (false,true) => filter1
+      case (false,false) => s"$filter1 AND $filter2"
+    }
+  }
+
+  /**
+    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    */
+  def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
+    withDynSession {
+      dao.getLinksWithFilter(withLastEditedDateFilter(lowerDate, higherDate))
+    }
+  }
+
+  /**
+    * Returns VVH road link by linkid
+    * Used by Digiroad2Api.createMassTransitStop, Digiroad2Api.validateUserRights, Digiroad2Api &#47;manoeuvres DELETE endpoint, Digiroad2Api manoeuvres PUT endpoint,
+    * CsvImporter.updateAssetByExternalIdLimitedByRoadType, RoadLinkService,getRoadLinkMiddlePointByLinkId, RoadLinkService.updateLinkProperties, RoadLinkService.getRoadLinkGeometry,
+    * RoadLinkService.updateAutoGeneratedProperties, LinearAssetService.split, LinearAssetService.separate, MassTransitStopService.fetchRoadLink, PointAssetOperations.getById
+    * and PostGISLinearAssetDao.createSpeedLimit.
+    */
+  def fetchByLinkId(linkId: Long): Option[VVHRoadlink] = fetchByLinkIds(Set(linkId)).headOption
+
+  /**
+    * Returns VVH road links by link ids.
+    * Used by VVHClient.fetchByLinkId, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
+    * PostGISLinearAssetDao.getLinksWithLengthFromVVH, PostGISLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
+    */
+  def fetchByLinkIds(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    queryByMultipleValues(linkIds, withLinkIdFilter)
+  }
+
+  def fetchByLinkIdsF(linkIds: Set[Long]) = {
+    Future(fetchByLinkIds(linkIds))
+  }
+
+  def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = {
+    Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
+  }
+
+  /**
+    * Returns VVH road link by mml id.
+    * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
+    */
+  def fetchByMmlId(mmlId: Long): Option[VVHRoadlink] = fetchByMmlIds(Set(mmlId)).headOption
+
+  /**
+    * Returns VVH road links by mml ids.
+    * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
+    */
+  def fetchByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
+    queryByMultipleValues(mmlIds, withMmlIdFilter)
+  }
+
+  def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
+    queryByMunicipality(municipality)
+  }
+
+  def fetchByMunicipalityF(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipality(municipality))
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
+    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
+    */
+  def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
+    queryByMunicipalitiesAndBounds(bounds, municipalities)
+  }
+
+  def fetchByBounds(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
+    queryByMunicipalitiesAndBounds(bounds, Set[Int]())
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
+    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
+    */
+  def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
+  }
+
+  def fetchByPolygon(polygon: Polygon): Seq[VVHRoadlink] = {
+    queryByPolygons(polygon)
+  }
+
+  def fetchByPolygonF(polygon: Polygon): Future[Seq[VVHRoadlink]] = {
+    Future(queryByPolygons(polygon))
+  }
+
+  def fetchLinkIdsByPolygonF(polygon: Polygon): Future[Seq[Long]] = {
+    Future(queryLinksIdByPolygons(polygon))
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    */
+  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
+                                                 includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads))
+  }
+
+  /**
+    * Returns a sequence of VVH Road Links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumbers).
+    */
+  def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
+  }
+
+  def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
+    queryByRoadNumbersAndMunicipality(municipality, roadNumbers)
+  }
+
+  /**
+    * Returns VVH road links by finnish names.
+    * Used by VVHClient.fetchByLinkId,
+    */
+  def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[VVHRoadlink] = {
+    queryByMultipleValues(roadNames, withFinNameFilter(roadNamePublicId))
+  }
+
+  /**
+    * Returns VVH road links.
+    * Used by RoadLinkService.fetchVVHRoadlinks (called from CsvGenerator)
+    */
+  def fetchVVHRoadlinks[T](linkIds: Set[Long],
+                           fieldSelection: Option[String],
+                           fetchGeometry: Boolean,
+                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
+    queryByMultipleValues(linkIds, withLinkIdFilter)
+
+}
+
 class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
   override type VVHType = ChangeInfo
 
@@ -1146,7 +1454,7 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
   }
 }
 
-class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
+class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_complimentary"
@@ -1218,7 +1526,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   }
 }
 
-class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
+class VVHHistoryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_data_history"
@@ -1289,7 +1597,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
   }
 }
 
-class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
+class VVHSuravageClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_suravage"
