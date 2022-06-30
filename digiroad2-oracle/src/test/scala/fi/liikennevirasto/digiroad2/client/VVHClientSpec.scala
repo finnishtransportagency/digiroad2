@@ -26,7 +26,10 @@ class VVHClientSpec extends FunSuite with Matchers{
     result.size should be >1
   }
 
-  test("Fetch roadlinks with polygon string ") {
+  /**
+   * Ignore test because links are currently fetched from digiroad db which is empty by default
+   */
+  ignore("Fetch roadlinks with polygon string ") {
     val vvhClient= new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result= vvhClient.roadLinkData.fetchByPolygon(geomBuilder.polygon(564000,6930000,566000,6931000,567000,6933000))
     result.size should be >1

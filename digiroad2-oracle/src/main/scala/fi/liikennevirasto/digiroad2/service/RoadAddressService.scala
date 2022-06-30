@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkOverrideDAO, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
