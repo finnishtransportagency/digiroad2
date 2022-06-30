@@ -523,8 +523,11 @@ trait LaneOperations {
     val twoDigitOldPersistedLanes = pieceWiseLanesToPersistedLane(twoDigitOldPwLanes)
 
     laneChanges.flatMap(laneChange => {
-      val twoDigitExistingPersistedLane = twoDigitExistingPersistedLanes.find(_.id == laneChange.lane.id)
-      val twoDigitOldPersistedLane = twoDigitOldPersistedLanes.find(_.id == laneChange.lane.id)
+      val twoDigitExistingPersistedLane = twoDigitExistingPersistedLanes.find(lane => lane.id == laneChange.lane.id && lane.modifiedDateTime == laneChange.lane.modifiedDateTime)
+      val twoDigitOldPersistedLane = laneChange.oldLane match {
+        case Some(oldLane) => twoDigitOldPersistedLanes.find(lane => lane.id == oldLane.id && lane.modifiedDateTime == oldLane.modifiedDateTime)
+        case _ => None
+      }
 
       twoDigitExistingPersistedLane match {
         case Some(twoDigitExistingLane) =>
@@ -1212,7 +1215,8 @@ trait LaneOperations {
           else {
             val oldLaneCode = lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.toString
             val newLaneCode = firstDigit.get.toString.concat(oldLaneCode).toInt
-            val newLaneAttributes = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(newLaneCode))))
+            val newLaneCodeProperty = LaneProperty("lane_code", Seq(LanePropertyValue(newLaneCode)))
+            val newLaneAttributes = lane.laneAttributes.filterNot(_.publicId == "lane_code") ++ Seq(newLaneCodeProperty)
             Option(lane.copy(laneAttributes = newLaneAttributes))
           }
 

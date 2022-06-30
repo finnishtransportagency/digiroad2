@@ -637,9 +637,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
             val oldLane = laneChange.oldLane.get
+            val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
 
             Seq(Map("OldId" -> oldLane.id,
               "OldLaneNumber" -> laneChange.oldLane.get.laneCode,
+              "OldlaneType" -> oldLaneType,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
               "NewlaneType" -> laneType)
