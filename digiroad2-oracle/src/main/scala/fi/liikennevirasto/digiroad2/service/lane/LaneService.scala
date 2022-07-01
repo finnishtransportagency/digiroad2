@@ -372,7 +372,7 @@ trait LaneOperations {
     * @param token  interval of records
     * @return lanes modified between the dates
     */
-  def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[LaneChange] = {
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None, twoDigitLaneCodesInResult: Boolean = false): Seq[LaneChange] = {
     //Sort changes by id and their created/modified/expired times
     //With this we get a unique ordering with the same values position so the token can be effective
     def customSort(laneChanges: Seq[LaneChange]): Seq[LaneChange] = {
@@ -408,10 +408,7 @@ trait LaneOperations {
             history.newId == historyLane.oldId && historyLane.newId == 0 &&
               (historyLane.historyCreatedDate.isAfter(history.historyCreatedDate) || historyLane.historyCreatedDate.isEqual(history.historyCreatedDate)))
 
-          if (uptoDateLastModification.nonEmpty && upToDate.laneCode != uptoDateLastModification.minBy(_.historyCreatedDate.getMillis).laneCode)
-            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification.minBy(_.historyCreatedDate.getMillis))), LaneChangeType.LaneCodeTransfer, roadLink))
-
-          else if (historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) >= 2)
+          if (historyLanesWithRoadAddress.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) >= 2)
             Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink))
 
           else if (upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure)
@@ -432,7 +429,10 @@ trait LaneOperations {
           if(historyRelatedLanes.nonEmpty){
             val historyLane = historyLaneToPersistedLane(historyRelatedLanes.maxBy(_.historyCreatedDate.getMillis))
 
-            if (isSomePropertyDifferent(historyLane, upToDate.attributes))
+            if (upToDate.laneCode != historyLane.laneCode)
+              Some(LaneChange(upToDate, Some(historyLane), LaneChangeType.LaneCodeTransfer, roadLink))
+
+            else if (isSomePropertyDifferent(historyLane, upToDate.attributes))
               Some(LaneChange(upToDate, Some(historyLane), LaneChangeType.AttributesChanged, roadLink))
             else
               None
@@ -505,8 +505,11 @@ trait LaneOperations {
         sortedLanesChanged.slice(start - 1, end)
       case _ => sortedLanesChanged
     }
+    if(twoDigitLaneCodesInResult){
+      laneChangesToTwoDigitLaneCode(lanesChangedResult, roadLinks)
+    }
+    else lanesChangedResult
 
-    laneChangesToTwoDigitLaneCode(lanesChangedResult, roadLinks)
   }
 
   def laneChangesToTwoDigitLaneCode(laneChanges: Seq[LaneChange], roadLinks: Seq[RoadLink]): Seq[LaneChange] = {
@@ -714,9 +717,6 @@ trait LaneOperations {
               }
               val persistedLaneToUpdate = PersistedLane(oldLane.id, linkId, sideCodeForLink, laneCode, oldLane.municipalityCode,
                 oldLane.startMeasure, oldLane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
-
-              if (oldLane.laneCode != laneToUpdateOriginalLaneCode)
-                moveToHistory(laneRelatedByLaneCode.id, Some(oldLane.id), true, true, username)
 
               moveToHistory(oldLane.id, None, false, false, username)
               dao.updateEntryLane(persistedLaneToUpdate, username)

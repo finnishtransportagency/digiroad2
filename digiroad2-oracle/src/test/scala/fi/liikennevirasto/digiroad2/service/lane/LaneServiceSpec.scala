@@ -30,6 +30,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockLaneHistoryDao = MockitoSugar.mock[LaneHistoryDao]
   val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val mockLaneService = MockitoSugar.mock[LaneService]
 
   val laneDao = new LaneDao(mockVVHClient, mockRoadLinkService)
   val laneHistoryDao = new LaneHistoryDao(mockVVHClient, mockRoadLinkService)
@@ -710,7 +711,9 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Delete sub lane in middle of lanes") {
+  // Deleting inner lanes not supported currently in Lane Modelling tool at the moment
+  // TODO fix inner lane deletion unit tests if / when feature is added to Lane Modelling tool
+  ignore("Delete sub lane in middle of lanes") {
     runWithRollback {
       val lanePropertiesValues4To2 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
@@ -975,7 +978,9 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Expire a inner sub lane in various links") {
+  // Deleting inner lanes not supported currently in Lane Modelling tool at the moment
+  // TODO fix inner lane deletion unit tests if / when feature is added to Lane Modelling tool
+  ignore("Expire a inner sub lane in various links") {
     runWithRollback {
       val lanePropertiesValues4To2 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
@@ -1315,6 +1320,48 @@ class LaneServiceSpec extends LaneTestSupporter {
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Divided, LaneChangeType.Divided))
       val lanesDivides = lanesChanged.filter(_.changeType == LaneChangeType.Divided)
       lanesDivides.map(_.oldLane.get.id) should be(Seq(lane2Id, lane2Id))
+    }
+  }
+
+  test("Show 2 add and 2 laneCodeTransfer"){
+    runWithRollback {
+
+      val lanePropertiesValues1 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("1"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+      )
+
+      val lanePropertiesValues2 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(2))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+      )
+
+      val newLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val newLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
+
+      val lane1Id = ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest).head
+      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest).head
+
+      val lane1toLaneCode2 = newLane1.copy(id = lane1Id, newLaneCode = Some(2), properties = lanePropertiesValues2)
+      val lane2toLaneCode1 = newLane2.copy(id = lane2Id, newLaneCode = Some(1), properties = lanePropertiesValues1)
+
+      val sideCodesForLinkIds = SideCodesForLinkIds(100L, 2)
+
+      val updatedIds = ServiceWithDao.update(Seq(lane1toLaneCode2, lane2toLaneCode1), Set(100L), 2,usernameTest, Seq(sideCodesForLinkIds))
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+          "MUNICIPALITYCODE" -> BigInt(745),
+          "ROADNUMBER" -> 100,
+          "ROADNAME_FI" -> "Testitie",
+          "VIITE_ROAD_PART_NUMBER" -> 7,
+          "VIITE_ROAD_NUMBER" -> 100,
+          "VIITE_END_ADDR" -> 2000
+        )))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.LaneCodeTransfer, LaneChangeType.LaneCodeTransfer))
     }
   }
 
