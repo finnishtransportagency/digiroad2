@@ -502,6 +502,54 @@
         GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
+      var promoteToMainLane = $('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
+        var laneToPromote = selectedAsset.getLane(currentLaneNumber);
+        var selectedLaneGroup = selectedAsset.selection;
+        var passedValidations = validatePromotion(laneToPromote, selectedLaneGroup);
+        if (!passedValidations) {
+          var validationAlertPopUpOptions = {
+            type: "alert",
+            yesButtonLbl: 'Ok',
+          };
+          var alertMessage = "Lisäkaistaa ei voida muuttaa pääkaistaksi, koska lisäkaista ei ole koko tielinkin pituinen, tai kaistojen lukumäärä ei salli kyseisen kaistan muuttamista pääkaistaksi";
+
+          GenericConfirmPopup(alertMessage, validationAlertPopUpOptions);
+        }
+        else{
+          selectedAsset.promoteToMainLane(currentLaneNumber);
+          currentLaneNumber = 1;
+          prepareLanesStructure();
+          reloadForm($('#feature-attributes'));
+        }
+      });
+
+      function validatePromotion(laneToPromote, laneGroup) {
+        var currentMainLane = selectedAsset.getLane(1);
+        var isFullLength = laneToPromote.startMeasure === currentMainLane.startMeasure && laneToPromote.endMeasure === currentMainLane.endMeasure;
+
+        var lanesWithOrderNumbers = selectedAsset.getOrderingNumbers(laneGroup);
+        var laneToPromoteWithOrderNo = _.find(lanesWithOrderNumbers, function (lane){
+          var laneToPromoteLaneCode = getLaneCodeValue(laneToPromote);
+          var laneCodeAux = getLaneCodeValue(lane);
+          return laneToPromoteLaneCode === laneCodeAux;
+        });
+
+        var maxOrderNumber = _.maxBy(lanesWithOrderNumbers, function (lane) {
+          return lane.orderNo;
+        }).orderNo;
+
+        var minOrderNumber = 1;
+        var maxAmountOfLanesOnOneSide = 4;
+        var notTooManyLanesOnEitherSide = Math.abs(laneToPromoteWithOrderNo.orderNo - minOrderNumber) <= maxAmountOfLanesOnOneSide &&
+            Math.abs(laneToPromoteWithOrderNo.orderNo - maxOrderNumber) <= maxAmountOfLanesOnOneSide;
+
+        return notTooManyLanesOnEitherSide && isFullLength;
+      }
+
+      function getLaneCodeValue(lane) {
+        return _.head(_.find(lane.properties, {'publicId': 'lane_code'}).values).value;
+      }
+
       var prepareLanesStructure = function () {
         if(_.isUndefined(selectedAsset.getLane(currentLaneNumber))){
           if(currentLaneNumber == "2"){
@@ -523,9 +571,10 @@
 
       expireLane.prop('disabled', lane.id === 0);
       deleteLane.prop('disabled', lane.id !== 0);
+      promoteToMainLane.prop('disabled', selectedAsset.isDirty());
 
       if(currentLaneNumber !== 1)
-        body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
+        body.find('.form').append($('<div class="lane-buttons">').append(promoteToMainLane).append(expireLane).append(deleteLane));
     }
 
     function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled, body) {
