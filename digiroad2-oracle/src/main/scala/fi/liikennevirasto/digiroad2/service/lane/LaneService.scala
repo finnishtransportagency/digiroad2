@@ -507,7 +507,7 @@ trait LaneOperations {
     }
   }
 
-  def pieceWiseLanestoPersistedLane(pwLanes: Seq[PieceWiseLane]): Seq[PersistedLane] = {
+  def pieceWiseLanesToPersistedLane(pwLanes: Seq[PieceWiseLane]): Seq[PersistedLane] = {
     pwLanes.map { pwLane =>
       val municipalityCode = pwLane.attributes.getOrElse("municipality", 99).asInstanceOf[Long]
       val laneCode = getLaneCode(pwLane)
