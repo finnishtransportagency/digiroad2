@@ -4,6 +4,7 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -85,7 +86,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
 
       VVHRoadlink(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
         extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
-        ConstructionType.apply(constructionType), LinkGeomSource.apply(sourceInfo), length)
+        ConstructionType.apply(constructionType), ComplimentaryLinkInterface, length)
     }
   }
 
