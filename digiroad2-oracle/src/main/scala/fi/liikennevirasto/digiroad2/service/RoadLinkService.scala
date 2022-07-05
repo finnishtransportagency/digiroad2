@@ -744,7 +744,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def checkMMLId(vvhRoadLink: VVHRoadlink) : Option[Long] = {
     vvhRoadLink.attributes.contains("MTKID") match {
-      case true => Some(vvhRoadLink.attributes("MTKID").asInstanceOf[BigInt].longValue())
+      case true => Some(vvhRoadLink.attributes("MTKID").asInstanceOf[Long])
       case false => None
     }
   }
