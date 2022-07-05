@@ -1363,31 +1363,38 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   }
 
   def fetchByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[ChangeInfo] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities)
+    Seq()
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: queryByMunicipalitiesAndBounds(bounds, municipalities)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[ChangeInfo] = {
-    queryByMunicipality(municipality)
+    Seq()
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: queryByMunicipality(municipality)
   }
 
   def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
+    Future(Seq())
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
   }
 
   def fetchByMunicipalityF(municipality: Int): Future[Seq[ChangeInfo]] = {
-    Future(queryByMunicipality(municipality))
+    Future(Seq())
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: Future(queryByMunicipality(municipality))
   }
 
   def fetchByPolygon(polygon: Polygon): Seq[ChangeInfo] = {
-    queryByPolygons(polygon)
+    Seq()
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: queryByPolygons(polygon)
   }
 
   def fetchByPolygonF(polygon: Polygon): Future[Seq[ChangeInfo]] = {
-    Future(queryByPolygons(polygon))
+    Future(Seq())
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: Future(queryByPolygons(polygon))
   }
 
   def fetchByLinkIdsF(linkIds: Set[Long]): Future[Seq[ChangeInfo]] = {
-    Future(fetchByLinkIds(linkIds))
+    Future(Seq())
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: Future(fetchByLinkIds(linkIds))
   }
 
   /**
@@ -1397,7 +1404,8 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     * @return ChangeInfo for given links
     */
   def fetchByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
-    queryByLinkIds(linkIds)
+    Seq()
+    //disabled due to DROTH-3311, enable this when changes can be fetched again: queryByLinkIds(linkIds)
   }
 
   protected def queryByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
