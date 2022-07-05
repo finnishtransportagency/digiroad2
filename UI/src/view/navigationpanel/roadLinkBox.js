@@ -190,7 +190,7 @@
 
         linkPropertiesModel.setDataset(datasetName);
 
-        bindEventHandlers(legendContainer);
+        bindEventHandlers(elements.expanded);
       });
     };
 
