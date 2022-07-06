@@ -104,7 +104,7 @@ class RoadLinkDAO {
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
                  geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
           from roadlink
-          where #$filter
+          where #$filter and constructiontype in (0,1,3)
           """.as[VVHRoadlink].list
   }
 
