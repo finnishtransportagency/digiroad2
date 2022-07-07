@@ -104,7 +104,7 @@ trait LinearAssetOperations {
   }
 
   def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)._1
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
@@ -165,12 +165,12 @@ trait LinearAssetOperations {
     * @return
     */
   def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipality)
     getByRoadLinks(typeId, roadLinks)
   }
 
   def getByMunicipalityAndRoadLinks(typeId: Int, municipality: Int): Seq[(PieceWiseLinearAsset, RoadLink)] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)._1
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipality)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     linearAssets.map{ asset => (asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new NoSuchElementException))}
   }
