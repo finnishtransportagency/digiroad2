@@ -35,6 +35,15 @@ else
          echo "assetForValidation env is not defined"
          exit 1
         fi
+      elif [ "$batchRunType" = "LinearAssetUpdater" ]; then
+
+        echo "LinearAssetUpdater"
+        if [[ ! -z "$assetToUpdate" ]]; then
+          java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.LinearAssetUpdater "$assetToUpdate"
+        else
+          echo "assetToUpdate env is not defined"
+          exit 1
+        fi
       else
         echo "Wrong mode"
         exit 1
