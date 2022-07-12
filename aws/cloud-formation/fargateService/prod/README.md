@@ -187,7 +187,7 @@ aws batch register-job-definition \
 
 ## Vanhan imagen laittaminen takaisin
 Muokkaa aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :prod -> :digest siihen docker digest jonka kehitystiimi on toimittanut. 
-Luo uusi task definition versio tästä.
+Luo uusi task definition versio tästä:
 ```
 aws cloudformation update-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
@@ -206,7 +206,7 @@ aws ecs update-service \
 
 Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :digest -> :prod . Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}:prod'
 
-Luo uusi task definition versio tästä
+Luo uusi task definition versio tästä:
 ```
 aws cloudformation update-stack \
 --stack-name [esim. digiroad-prod-taskdefinition] \
