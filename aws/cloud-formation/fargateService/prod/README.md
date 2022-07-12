@@ -186,7 +186,7 @@ aws batch register-job-definition \
 ```
 
 ## Vanhan imagen laittaminen takaisin
-Muokkaa aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :prod -> :digest siihen docker digest jonka kehitystiimi on toimittanut. 
+Muokkaa aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :prod -> @digest siihen docker digest(esim sha256:b1ff5c8586) jonka kehitystiimi on toimittanut. Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}@sha256:b1ff5c8586esimerkki'.
 Luo uusi task definition versio tästä:
 ```
 aws cloudformation update-stack \
@@ -204,7 +204,7 @@ aws ecs update-service \
 --force-new-deployment
 ```
 
-Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :digest -> :prod . Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}:prod'
+Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda @digest -> :prod . Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}:prod'
 
 Luo uusi task definition versio tästä:
 ```
@@ -223,8 +223,7 @@ aws ecs update-service \
 --force-new-deployment
 ```
 
-JobDefinition kohdalla
-muokkaa aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json containerProperties kohtaa image. Vaihda "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod" -> "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:digest",
+JobDefinition kohdalla muokkaa aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json containerProperties kohtaa image. Vaihda "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod" -> "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2@sha256:b1ff5c8586esimerkki"
 siihen docker digest jonka kehitystiimi on toimittanut.
 
 ```
@@ -234,7 +233,7 @@ aws batch register-job-definition \
 --cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
 ```
 
-Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json containerProperties kohtaa image. Vaihda "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:digest" -> "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod"
+Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json containerProperties kohtaa image. Vaihda "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2@sha256:b1ff5c8586esimerkki" -> "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod"
 
 ```
 aws batch register-job-definition \
