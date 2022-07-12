@@ -800,7 +800,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
     def showOldTrafficCode(trafficSign: PersistedTrafficSign): String = {
       if (trafficSignService.getProperty(trafficSign, "old_traffic_code").get.propertyValue == "1" ||  trafficSign.createdAt.get.isBefore(trafficSignService.newTrafficCodeStartDate)){
-        TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).TRvalue.toString
+        TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).OldLawCode
       }
       else ""
     }
