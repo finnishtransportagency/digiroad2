@@ -727,7 +727,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
         "validityPeriodMinutes" -> manoeuvre.validityPeriods.map(toTimeDomainWithMinutes),
         "additionalInfo" -> manoeuvre.additionalInfo,
-        "modifiedDateTime" -> manoeuvre.modifiedDateTime.getOrElse(manoeuvre.createdDateTime),
+        "modifiedDateTime" -> manoeuvre.modifiedDateTime.getOrElse(manoeuvre.createdDateTime).toString,
         lastModifiedBy(Some(manoeuvre.createdBy), manoeuvre.modifiedBy))
     }
   }
