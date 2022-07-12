@@ -267,7 +267,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var renderAssets = function(assetDatas) {
     assetLayer.setVisible(true);
     showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
-    _.each(massTransitStopsCollection.getComplementaryAssets(), removeAssetFromMap);
     _.each(assetDatas, function(assetGroup) {
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
