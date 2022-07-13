@@ -665,7 +665,8 @@ trait LaneOperations {
     * @param username Username of the user is doing the changes
     * @return
     */
-  def update(updateNewLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds], allExistingLanes: Seq[PersistedLane]): Seq[Long] = {
+  def update(updateNewLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String,
+             sideCodesForLinks: Seq[SideCodesForLinkIds], allExistingLanes: Seq[PersistedLane]): Seq[Long] = {
     if (updateNewLane.isEmpty || linkIds.isEmpty)
       return Seq()
 
@@ -1004,7 +1005,8 @@ trait LaneOperations {
     }
   }
 
-  def separateNewLanesInActions(newLanes: Set[NewLane], linkIds: Set[Long], sideCode: Int, allExistingLanes: Seq[PersistedLane], sideCodesForLinkIds: Seq[SideCodesForLinkIds]): ActionsPerLanes = {
+  def separateNewLanesInActions(newLanes: Set[NewLane], linkIds: Set[Long], sideCode: Int,
+                                allExistingLanes: Seq[PersistedLane], sideCodesForLinkIds: Seq[SideCodesForLinkIds]): ActionsPerLanes = {
 
     val lanesOnLinksBySideCodes = sideCodesForLinkIds.flatMap(sideCodeForLink => {
       allExistingLanes.filter(lane => lane.linkId == sideCodeForLink.linkId && lane.sideCode == sideCodeForLink.sideCode)
