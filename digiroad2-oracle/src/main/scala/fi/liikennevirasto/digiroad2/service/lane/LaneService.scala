@@ -80,7 +80,13 @@ trait LaneOperations {
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
     val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets.map(Seq(_))))
     val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
-    val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct
+    val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct.map {lane =>
+      val linkType = roadLinks.find(_.linkId == lane.linkId).headOption match {
+        case Some(roadLink) => roadLink.linkType.value
+        case _ => UnknownLinkType.value
+      }
+      lane.copy(attributes = lane.attributes + ("linkType" -> linkType))
+    }
 
     val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithRoadAddress, roadLinks.groupBy(_.linkId).mapValues(_.head)))
     (partitionedLanes, roadLinksWithoutLanes)
@@ -90,14 +96,14 @@ trait LaneOperations {
    * Returns lanes for Digiroad2Api /lanes/viewOnlyLanes GET endpoint.
    * This is only to be used for visualization purposes after the getByBoundingBox ran first
    */
-  def getViewOnlyByBoundingBox (bounds :BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): Seq[ViewOnlyLane] = {
+  def getViewOnlyByBoundingBox (bounds :BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): (Seq[ViewOnlyLane], Seq[RoadLink]) = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,asyncMode = false)
     val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
 
     val linkIds = filteredRoadLinks.map(_.linkId)
     val allLanes = fetchExistingLanesByLinkIds(linkIds)
 
-    getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks)
+    (getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks), filteredRoadLinks)
   }
 
   /**
