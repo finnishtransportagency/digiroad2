@@ -2341,10 +2341,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "points" -> lane.geometry,
           "lanes" -> lane.lanes,
           "isViewOnly" -> true,
-          roadLinks.find(_.linkId == lane.linkId).headOption match {
-            case Some(roadLink) => "linkType" -> roadLink.linkType.value
-            case _ => "linkType" -> 99
-          }
+          "linkType" -> lane.linkType
         )
       }
     } getOrElse {
