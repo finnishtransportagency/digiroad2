@@ -665,11 +665,9 @@ trait LaneOperations {
     * @param username Username of the user is doing the changes
     * @return
     */
-  def update(updateNewLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
+  def update(updateNewLane: Seq[NewLane], linkIds: Set[Long], sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds], allExistingLanes: Seq[PersistedLane]): Seq[Long] = {
     if (updateNewLane.isEmpty || linkIds.isEmpty)
       return Seq()
-
-    val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
 
     updateNewLane.flatMap { laneToUpdate =>
       val originalSelectedLane = allExistingLanes.find(_.id == laneToUpdate.id)
@@ -947,11 +945,12 @@ trait LaneOperations {
   def processNewLanes(newLanes: Set[NewLane], linkIds: Set[Long],
                       sideCode: Int, username: String, sideCodesForLinks: Seq[SideCodesForLinkIds]): Seq[Long] = {
     withDynTransaction {
-      val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode)
+      val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
+      val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode, allExistingLanes, sideCodesForLinks)
       val laneIdsToBeDeleted = actionsLanes.lanesToDelete.map(_.id)
 
       create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
-      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
+      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
       deleteMultipleLanes(laneIdsToBeDeleted, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
     }
@@ -1005,9 +1004,11 @@ trait LaneOperations {
     }
   }
 
-  def separateNewLanesInActions(newLanes: Set[NewLane], linkIds: Set[Long], sideCode: Int): ActionsPerLanes = {
-    //Get Current Lanes for sended linkIds
-    val allExistingLanes: Seq[PersistedLane] = dao.fetchLanesByLinkIdAndSideCode(linkIds.head, sideCode)
+  def separateNewLanesInActions(newLanes: Set[NewLane], linkIds: Set[Long], sideCode: Int, allExistingLanes: Seq[PersistedLane], sideCodesForLinkIds: Seq[SideCodesForLinkIds]): ActionsPerLanes = {
+
+    val lanesOnLinksBySideCodes = sideCodesForLinkIds.flatMap(sideCodeForLink => {
+      allExistingLanes.filter(lane => lane.linkId == sideCodeForLink.linkId && lane.sideCode == sideCodeForLink.sideCode)
+    })
 
     //Get Lanes to be deleted
     val resultWithDeleteActions = newLanes.foldLeft(ActionsPerLanes()) {
@@ -1023,7 +1024,7 @@ trait LaneOperations {
       (result, newLane) =>
         val newLaneCode: Int = getPropertyValue(newLane.properties, "lane_code").toString.toInt
 
-        val numberOfOldLanesByCode = allExistingLanes.count(_.laneCode == newLaneCode)
+        val numberOfOldLanesByCode = lanesOnLinksBySideCodes.count(_.laneCode == newLaneCode)
         val numberOfFutureLanesByCode = newLanes.filter(_.isExpired != true).count { newLane => getLaneCode(newLane).toInt == newLaneCode }
 
         if ((numberOfFutureLanesByCode >= 2 && numberOfOldLanesByCode >= 1) || (numberOfFutureLanesByCode < numberOfOldLanesByCode))
@@ -1040,7 +1041,7 @@ trait LaneOperations {
             val laneCode = getPropertyValue(lane.properties, "lane_code")
 
             // If new Lane already exist at data base will be marked to be updated
-            if (allExistingLanes.exists(_.laneCode == laneCode)) {
+            if (lanesOnLinksBySideCodes.exists(_.laneCode == laneCode)) {
               result.copy(lanesToUpdate = Set(lane) ++ result.lanesToUpdate)
             } else {
               // If new Lane doesnt exist at data base will be marked to be created
