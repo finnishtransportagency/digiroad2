@@ -96,14 +96,14 @@ trait LaneOperations {
    * Returns lanes for Digiroad2Api /lanes/viewOnlyLanes GET endpoint.
    * This is only to be used for visualization purposes after the getByBoundingBox ran first
    */
-  def getViewOnlyByBoundingBox (bounds :BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): (Seq[ViewOnlyLane], Seq[RoadLink]) = {
+  def getViewOnlyByBoundingBox (bounds :BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): Seq[ViewOnlyLane] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,asyncMode = false)
     val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
 
     val linkIds = filteredRoadLinks.map(_.linkId)
     val allLanes = fetchExistingLanesByLinkIds(linkIds)
 
-    (getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks), filteredRoadLinks)
+    getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks)
   }
 
   /**

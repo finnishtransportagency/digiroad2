@@ -2330,7 +2330,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val (viewOnlyLanes, roadLinks) = laneService.getViewOnlyByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
+      val viewOnlyLanes = laneService.getViewOnlyByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
       viewOnlyLanes.map { lane =>
         Map (
           "linkId" -> lane.linkId,
