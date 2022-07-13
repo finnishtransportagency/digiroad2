@@ -35,6 +35,12 @@
     var questionMarkerStyleRules = [
       new StyleRule().where('suggested').is(true).use({icon: {src: 'images/icons/questionMarker.png', scale: 0.7, anchor: [0.45, 1]}})
     ];
+
+    var linkTypeSizeRules = [
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).use({ stroke: { width: 6 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: { width: 2 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 4 } })
+    ];
     
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
@@ -43,11 +49,13 @@
     me.browsingStyleProvider.addRules(oneWayRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
     me.browsingStyleProvider.addRules(questionMarkerStyleRules);
+    me.browsingStyleProvider.addRules(linkTypeSizeRules);
 
     me.browsingStyleProviderReadOnly =  new StyleRuleProvider({ stroke : { opacity: 0.7 , color: '#439232'}});
     me.browsingStyleProviderReadOnly.addRules(zoomLevelRules);
     me.browsingStyleProviderReadOnly.addRules(oneWayRules);
-    me.browsingStyleProvider.addRules(questionMarkerStyleRules);
+    me.browsingStyleProviderReadOnly.addRules(questionMarkerStyleRules);
+    me.browsingStyleProviderReadOnly.addRules(linkTypeSizeRules);
   };
 })(this);
 
