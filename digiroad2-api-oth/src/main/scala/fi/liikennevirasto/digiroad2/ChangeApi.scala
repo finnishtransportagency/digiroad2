@@ -97,7 +97,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         case "obstacles" => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
         case "warning_signs_group" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
         case "stop_sign" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
-        case "lane_information" => laneChangesToGeoJson(laneService.getChanged(since, until, withAdjust, token).flatMap(laneChange => laneChangeLaneToTwoDigitLaneCode(laneChange)), withGeometry)
+        case "lane_information" => laneChangesToGeoJson(laneService.getChanged(since, until, withAdjust, token, twoDigitLaneCodesInResult = true), withGeometry)
       }
     }
   }
@@ -534,19 +534,6 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         }
     )
 
-  def laneChangeLaneToTwoDigitLaneCode(laneChange: LaneChange): Option[LaneChange] = {
-    val twoDigitLane = laneService.persistedLaneToTwoDigitLaneCode(laneChange.lane)
-    twoDigitLane match {
-      case Some(_) => laneChange.oldLane match {
-        case Some(_) =>
-          val twoDigitOldLane = laneService.persistedLaneToTwoDigitLaneCode(laneChange.oldLane.get)
-          Some(laneChange.copy(lane = twoDigitLane.get, oldLane = twoDigitOldLane))
-        case _ => Some(laneChange.copy(lane = twoDigitLane.get))
-      }
-      case _ => None
-    }
-  }
-
   def laneChangesToGeoJson(laneChanges: Seq[LaneChange], withGeometry: Boolean = false): Map[String, Any] = {
     def decodePropertyValue(value: Any): String = {
       value match {
@@ -650,9 +637,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
             val oldLane = laneChange.oldLane.get
+            val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
 
             Seq(Map("OldId" -> oldLane.id,
               "OldLaneNumber" -> laneChange.oldLane.get.laneCode,
+              "OldlaneType" -> oldLaneType,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
               "NewlaneType" -> laneType)
