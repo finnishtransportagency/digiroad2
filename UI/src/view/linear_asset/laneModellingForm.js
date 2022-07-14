@@ -502,7 +502,7 @@
         GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
-      var promoteToMainLane = $('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
+      var promoteToMainLaneButton = $('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
         var laneToPromote = selectedAsset.getLane(currentLaneNumber);
         var selectedLaneGroup = selectedAsset.selection;
         var passedValidations = validatePromotion(laneToPromote, selectedLaneGroup);
@@ -571,10 +571,10 @@
 
       expireLane.prop('disabled', lane.id === 0);
       deleteLane.prop('disabled', lane.id !== 0);
-      promoteToMainLane.prop('disabled', selectedAsset.isDirty());
+      promoteToMainLaneButton.prop('disabled', selectedAsset.isDirty());
 
       if(currentLaneNumber !== 1)
-        body.find('.form').append($('<div class="lane-buttons">').append(promoteToMainLane).append(expireLane).append(deleteLane));
+        body.find('.form').append($('<div class="lane-buttons">').append(promoteToMainLaneButton).append(expireLane).append(deleteLane));
     }
 
     function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled, body) {
