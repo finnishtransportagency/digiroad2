@@ -58,10 +58,16 @@
       new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
     ];
 
+    var linkTypeSizeRules = [
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).use({ stroke: { width: 6 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: { width: 2 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 4 } })
+    ];
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(roadDamagedByThawStyleRules);
     me.browsingStyleProvider.addRules(roadDamagedByThawSizeRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
+    me.browsingStyleProvider.addRules(linkTypeSizeRules);
   };
 })(this);
