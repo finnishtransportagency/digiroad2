@@ -16,3 +16,4 @@ project/project/
 /viite.html
 yarn.lock
 *.sc
+tempSQL.sql
