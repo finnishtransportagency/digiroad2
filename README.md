@@ -127,7 +127,7 @@ Jotta skripti toimisi PostgreSql pitää olla asennettu ja C:\'Program Files'\Po
 Mahdollisesti voi tulla viesti "cannot be loaded because the execution of scripts is disabled on this system". 
 
 Käynnistä Powershell terminaali admin oikeuksilla ja aja Set-ExecutionPolicy Unrestricted -Scope LocalMachine
-
+Lisää tietoa: https://www.sqlshack.com/choosing-and-setting-a-powershell-execution-policy/
 Avaa ssh yhteys bastion koneeseen ja ohjaa tietokanta johonkin lokaaliin porttiin. Tarvittavat ohjeet löytyy wiki sivulta https://extranet.vayla.fi/wiki/display/DROTH/AWS+Ohjeita
 Ajo Powershell terminaalissa skripti projektin juuressa.
 ```
