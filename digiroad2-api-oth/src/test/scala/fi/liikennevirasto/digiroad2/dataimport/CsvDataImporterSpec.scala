@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.middleware.UpdateOnlyStartDates
@@ -240,11 +240,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
       val link_id = 1000
       val functionalClassValue = 3
-      RoadLinkDAO.insert(RoadLinkDAO.FunctionalClass, link_id, Some("unit_test"), 2)
+      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.FunctionalClass, link_id, Some("unit_test"), 2)
 
       val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "toiminnallinen luokka" -> functionalClassValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkDAO.get(RoadLinkDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
+      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
     }
   }
 
@@ -267,7 +267,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
       val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "toiminnallinen luokka" -> functionalClassValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkDAO.get(RoadLinkDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
+      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
     }
   }
 
@@ -286,11 +286,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
-      RoadLinkDAO.insert(RoadLinkDAO.LinkType, link_id, Some("unit_test"), 2)
+      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.LinkType, link_id, Some("unit_test"), 2)
 
       val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" ->linkTypeValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkDAO.get(RoadLinkDAO.LinkType, link_id) should equal (Some(linkTypeValue))
+      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.LinkType, link_id) should equal (Some(linkTypeValue))
     }
   }
 
@@ -312,7 +312,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
       val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" -> linkTypeValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkDAO.get(RoadLinkDAO.LinkType, link_id) should equal (Some(linkTypeValue))
+      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.LinkType, link_id) should equal (Some(linkTypeValue))
     }
   }
 
@@ -332,11 +332,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
       when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1611388
-      RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, link_id, Some("unit_test"), 1)
+      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, link_id, Some("unit_test"), 1)
       val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "liikennevirran suunta" -> 3)))
 
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkDAO.get(RoadLinkDAO.TrafficDirection, link_id) should equal (None)
+      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.TrafficDirection, link_id) should equal (None)
     }
   }
 
@@ -357,12 +357,12 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
-      RoadLinkDAO.insert(RoadLinkDAO.LinkType, link_id, Some("unit_test"), 2)
+      RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.LinkType, link_id, Some("unit_test"), 2)
 
       val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" -> linkTypeValue, "kuntanumero" -> 2,
         "liikennevirran suunta" -> 1, "hallinnollinen luokka" -> 2)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
-      RoadLinkDAO.get(RoadLinkDAO.LinkType, link_id) should equal(Some(linkTypeValue))
+      RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.LinkType, link_id) should equal(Some(linkTypeValue))
     }
   }
 

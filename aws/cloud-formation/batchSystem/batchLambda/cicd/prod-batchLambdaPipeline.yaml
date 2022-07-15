@@ -24,39 +24,32 @@ Resources:
       Name: 'prod-batch-lambda-pipeline'
       RoleArn: !GetAtt PipelineRole.Arn
       Stages:
-        -
-          Name: Source
+        - Name: Source
           Actions:
-            -
-              Name: SourceAction
+            - Name: SourceAction
               ActionTypeId:
                 Category: Source
                 Owner: AWS
                 Provider: S3
                 Version: 1
               OutputArtifacts:
-                -
-                  Name: SourceOutput
+                - Name: SourceOutput
               Configuration:
                 S3Bucket: !Ref DevBucketName
                 S3ObjectKey: !Ref LambdaCodeS3Key
                 PollForSourceChanges: 'true'
               RunOrder: 1
-        -
-          Name: Accept
+        - Name: Accept
           Actions:
-            -
-              Name: Approve_Lambda_zip_For_Production
+            - Name: Approve_Lambda_zip_For_Production
               ActionTypeId:
                 Category: Approval
                 Owner: AWS
                 Version: 1
                 Provider: Manual
-        -
-          Name: Build
+        - Name: Build
           Actions:
-            -
-              Name: BuildAction
+            - Name: BuildAction
               InputArtifacts:
                 - Name: SourceOutput
               ActionTypeId:
@@ -91,6 +84,11 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
+              - Effect: Allow
+                Action:
+                  - 'codebuild:BatchGetBuilds'
+                  - 'codebuild:StartBuild'
+                Resource: !GetAtt CodeBuild.Arn
               - Effect: Allow
                 Action:
                   - 's3:*'
@@ -154,3 +152,10 @@ Resources:
                   - "s3:GetObject"
                   - "s3:GetObjectVersion"
                   - "s3:PutObject"
+                  - "s3:PutObjectAcl"
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"

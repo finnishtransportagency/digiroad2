@@ -33,6 +33,7 @@ ScalatraBootstrap extends LifeCycle {
     ), "/api/*")
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new UserConfigurationApi, "/api/userconfig/*")
+    context.mount(new DebugApi, "/api/debug/*")
     context.mount(new PingApi, "/api/ping/*")
     context.mount(new ImportDataApi(Digiroad2Context.roadLinkService), "/api/import/*")
     context.mount(new ExportDataApi(Digiroad2Context.roadLinkService), "/api/export/*")
