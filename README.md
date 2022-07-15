@@ -134,7 +134,7 @@ Ajo skripti projektin juuressa.
  -sourceDB digiroad2 
  -sourcePort 9999 
  -destinationPastword digiroad2
- -truncateBoolean 1 # 1 tyhjennetään taulu ennen tuon luodaan uudet linkit, 0 kantaa ei tyhjennetä
+ -truncateBoolean 1 # 1 tyhjennetään taulu ennen kuin tuodaan uudet linkit, 0 kantaa ei tyhjennetä
 ```
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
