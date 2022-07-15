@@ -24,7 +24,7 @@ param(
 # Before running this script set your postgress installation bin(C:\'Program Files'\PostgreSQL\13\bin\) folder into PATH env
 
 $absolutePath = Get-Location
-# .\importRoadlink.ps1 -municipalities  "20,10" -sourceUser digiroad2dbuser -sourcePasstword password  -sourceDB digiroad2 -sourcePort 9999 -destinationPastword digiroad2 -truncateBoolean 1
+# .\importRoadlink.ps1 -municipalities  "20,10" -sourceUser digiroad2dbuser -sourcePassword password  -sourceDB digiroad2 -sourcePort 9999 -destinationPassword digiroad2 -truncateBoolean 1
 $datasource = "postgresql://${sourceUser}:${sourcePassword}@localhost:${sourcePort}/${sourceDB}"
 $destinationpoint = "postgresql://digiroad2:${destinationPassword}@localhost:5432/digiroad2"
 

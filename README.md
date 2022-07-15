@@ -134,15 +134,15 @@ Ajo Powershell terminaalissa skripti projektin juuressa.
  .\importRoadlink.ps1 
  -municipalities "20,10" # kunnat jotka haluat tuoda
  -sourceUser digiroad2dbuser 
- -sourcePasstword password 
+ -sourcePassword password 
  -sourceDB digiroad2 
  -sourcePort 9999 
- -destinationPastword digiroad2
+ -destinationPassword digiroad2
  -truncateBoolean 1 # 1 tyhjennetään taulu ennen kuin tuodaan uudet linkit, 0 kantaa ei tyhjennetä
 ```
 
 ```
- .\importRoadlink.ps1 -municipalities "20,10" -sourceUser digiroad2dbuser -sourcePasstword password  -sourceDB digiroad2  -sourcePort 9999  -destinationPastword digiroad2 -truncateBoolean 1
+ .\importRoadlink.ps1 -municipalities "20,10" -sourceUser digiroad2dbuser -sourcePassword password  -sourceDB digiroad2  -sourcePort 9999  -destinationPassword digiroad2 -truncateBoolean 1
 ```
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
