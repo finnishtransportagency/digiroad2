@@ -124,8 +124,12 @@ Tielinkiverkon lataaminen.
 
 Jotta skripti toimisi PostgreSql pitää olla asennettu ja C:\'Program Files'\PostgreSQL\13\bin\ pitää olla lisätty path env.
 
+Mahdollisesti voi tulla viesti "cannot be loaded because the execution of scripts is disabled on this system". 
+
+Käynnistä Powershell terminaali admin oikeuksilla ja aja Set-ExecutionPolicy Unrestricted -Scope LocalMachine
+
 Avaa ssh yhteys bastion koneeseen ja ohjaa tietokanta johonkin lokaaliin porttiin. Tarvittavat ohjeet löytyy wiki sivulta https://extranet.vayla.fi/wiki/display/DROTH/AWS+Ohjeita
-Ajo skripti projektin juuressa.
+Ajo Powershell terminaalissa skripti projektin juuressa.
 ```
  .\importRoadlink.ps1 
  -municipalities "20,10" # kunnat jotka haluat tuoda
@@ -135,6 +139,10 @@ Ajo skripti projektin juuressa.
  -sourcePort 9999 
  -destinationPastword digiroad2
  -truncateBoolean 1 # 1 tyhjennetään taulu ennen kuin tuodaan uudet linkit, 0 kantaa ei tyhjennetä
+```
+
+```
+ .\importRoadlink.ps1 -municipalities "20,10" -sourceUser digiroad2dbuser -sourcePasstword password  -sourceDB digiroad2  -sourcePort 9999  -destinationPastword digiroad2 -truncateBoolean 1
 ```
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
