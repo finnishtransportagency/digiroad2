@@ -17,3 +17,4 @@ project/project/
 yarn.lock
 *.sc
 tempSQL.sql
+tempSQL2.sql
