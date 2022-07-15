@@ -42,9 +42,16 @@ Lokaali tietokannan alustus
 
 Backend palvelimen käynistäminen edellyttää, että paikallinen tietokanta on päälä ja alustettu.
 
-Laita aws/local-dev/postgis/docker-compose.yaml pääle.
+Laita aws/local-dev/postgis/docker-compose.yaml pääle ja luo ympäristöt unittest ja lokaaliin kehitykseen.
 
-Alusta kanta ajamalla DataFixture init configuraatio. Sitten aja DataFixture reset configuraatio.
+docker-compose -p "localtest" -f .\aws\local-dev\postgis\docker-compose.yaml create
+docker-compose -p "unittest" -f .\aws\local-dev\postgis\docker-compose.yaml create
+
+Käynnistä joko terminaalissa tai Docker Desktop.
+docker-compose -p "localtest" -f .\aws\local-dev\postgis\docker-compose.yaml start
+docker-compose -p "unittest" -f .\aws\local-dev\postgis\docker-compose.yaml start
+
+Alusta kanta ajamalla DataFixture init configuraatio. Sitten aja DataFixture reset tai migrate configuraatio.
 
 Ajaminen
 ========
