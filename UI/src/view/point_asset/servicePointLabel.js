@@ -98,7 +98,6 @@
       [ {type: 5, text: 'Rajanylityspaikka', colorText: '#ffffff'},
         {type: 13, text: 'Lastausterminaali', colorText: '#000000'},
         {type: 14, text: 'Pysäköintialue', colorText: '#000000'},
-        {type: 17, text: 'Latauspiste', colorText: '#ffffff'},
         {type: 18, text: 'E18 rekkaparkki', colorText: '#000000'}];
 
     function getDefaultColorText(type) {
