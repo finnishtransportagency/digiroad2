@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.update
 import fi.liikennevirasto.digiroad2.util.LaneUtils.getRoadAddressToProcess
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, RoadAddressException, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import java.io.{InputStream, InputStreamReader}
@@ -182,7 +183,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     s"<ul> notImportedData: ${notImportedData.mkString.replaceAll("[(|)]{1}", "")}</ul>"
   }
 
-  def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
+  def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData, fileName: String): ImportResultData = {
+    logger.info("Started mapping start dates from file: " + fileName + " on " + DateTime.now().toString())
       val lanesToUpdateAndMissingLanes = laneAssetProperties.map(props => {
         val roadNumber = getPropertyValue(props, "road number").toLong
         val roadPartNumber = getPropertyValue(props, "road part").toLong
@@ -240,8 +242,9 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val lanesToUpdate = lanesToUpdateAndMissingLanes.flatMap(_._1)
     val notUpdatedLanes = lanesToUpdateAndMissingLanes.flatMap(_._2).toSet
     val failedRows = lanesToUpdateAndMissingLanes.flatMap(_._3)
-    laneService.updateMultipleLaneAttributes(lanesToUpdate, user.username)
-
+    LogUtils.time(logger, "Update start date on " + lanesToUpdate.size + " lanes from file : " + fileName){
+      laneService.updateMultipleLaneAttributes(lanesToUpdate, user.username)
+    }
 
     notUpdatedLanes.isEmpty match {
       case true => result
@@ -290,7 +293,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, updateOnlyStartDates: AdditionalImportValue): Unit = {
     try {
-      val result = processing(inputStream, user, updateOnlyStartDates.asInstanceOf[UpdateOnlyStartDates])
+      val result = processing(inputStream, user, updateOnlyStartDates.asInstanceOf[UpdateOnlyStartDates], fileName)
       result match {
         case ImportResultLaneAsset(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
@@ -305,7 +308,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  def processing(inputStream: InputStream, user: User, updateOnlyStartDates: UpdateOnlyStartDates): ImportResultData = {
+  def processing(inputStream: InputStream, user: User, updateOnlyStartDates: UpdateOnlyStartDates, fileName: String): ImportResultData = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -342,7 +345,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       }
 
       updateOnlyStartDates.onlyStartDates match {
-        case true => giveMainlanesStartDates(result.createdData, user, result)
+        case true => giveMainlanesStartDates(result.createdData, user, result, fileName)
         case false =>
           // Expire all additional lanes IF exists some data to create new lanes
           if (result.createdData.nonEmpty) {
