@@ -24,22 +24,16 @@ $roadlink2 = "psql -c '\COPY roadlink FROM ''${absolutePath}\tempSQL.sql'';' ${d
 $complimentary1 = "psql -c '\COPY (SELECT * FROM roadlinkex WHERE municipalitycode in (${municipalities})) TO ''${absolutePath}\tempSQL2.sql'' (ENCODING ''UTF8'');' ${datasource}"
 $complimentary2 = "psql -c '\COPY roadlinkex FROM ''${absolutePath}\tempSQL2.sql'';' ${destinationpoint}"
 
-if ($truncateBoolean){
+if ($truncateBoolean)
+{
     Write-Output "truncate"
     Invoke-expression $truncateroadlink
     Invoke-expression $truncatecomplimentary
-    Write-Output "importing ${municipalities}"
-    Invoke-expression $roadlink1
-    Invoke-expression $roadlink2
-    Invoke-expression $complimentary1
-    Invoke-expression $complimentary2
-    Write-Output "finish"
-}else{
-    Write-Output "importing ${municipalities}"
-    Invoke-expression $roadlink1
-    Invoke-expression $roadlink2
-
-    Invoke-expression $complimentary1
-    Invoke-expression $complimentary2
-    Write-Output "finish"
 }
+Write-Output "importing ${municipalities}"
+Invoke-expression $roadlink1
+Invoke-expression $roadlink2
+
+Invoke-expression $complimentary1
+Invoke-expression $complimentary2
+Write-Output "finish"
