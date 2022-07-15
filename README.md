@@ -111,6 +111,25 @@ run fi.liikennevirasto.digiroad2.ProductionServer
 Avaa käyttöliittymä osoitteessa <http://localhost:9001/login.html>.
 Kirjaudut sisään käyttäen lokaalia testi käyttäjää nimeltään silari.
 
+
+Tielinkiverkon lataaminen.
+======================================================
+
+Jotta skripti toimisi PostgreSql pitää olla asennettu ja C:\'Program Files'\PostgreSQL\13\bin\ pitää olla lisätty path env.
+
+Avaa ssh yhteys bastion koneeseen ja ohjaa tietokanta johonkin lokaaliin porttiin. Tarvittavat ohjeet löytyy wiki sivulta https://extranet.vayla.fi/wiki/display/DROTH/AWS+Ohjeita
+Ajo skripti projektin juuressa.
+```
+ .\importRoadlink.ps1 
+ -municipalities "20,10" # kunnat jotka haluat tuoda
+ -sourceUser digiroad2dbuser 
+ -sourcePasstword password 
+ -sourceDB digiroad2 
+ -sourcePort 9999 
+ -destinationPastword digiroad2
+ -truncateBoolean 1 # 1 tyhjennetään taulu ennen tuon luodaan uudet linkit, 0 kantaa ei tyhjennetä
+```
+
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================
 
