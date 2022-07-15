@@ -1,24 +1,11 @@
 param(
-
-    [Parameter()]
-    [string]$sourcePassword,
-    [Parameter()]
-    [string]$sourceUser,
-
-    [Parameter()]
-    [string]$sourceDB,
-
-    [Parameter()]
-    [string]$sourcePort,
-
-    [Parameter()]
-    [string]$destinationPassword,
-
-    [Parameter()]
-    [string]$municipalities,
-
-    [Parameter()]
-    [Boolean]$truncateBoolean
+    [Parameter()][string]$sourcePassword,
+    [Parameter()][string]$sourceUser,
+    [Parameter()][string]$sourceDB,
+    [Parameter()][string]$sourcePort,
+    [Parameter()][string]$destinationPassword,
+    [Parameter()][string]$municipalities,
+    [Parameter()][Boolean]$truncateBoolean
 )
 
 # Before running this script set your postgress installation bin(C:\'Program Files'\PostgreSQL\13\bin\) folder into PATH env
