@@ -128,8 +128,10 @@ Mahdollisesti voi tulla viesti "cannot be loaded because the execution of script
 
 Käynnistä Powershell terminaali admin oikeuksilla ja aja Set-ExecutionPolicy Unrestricted -Scope LocalMachine
 Lisää tietoa: https://www.sqlshack.com/choosing-and-setting-a-powershell-execution-policy/
+
 Avaa ssh yhteys bastion koneeseen ja ohjaa tietokanta johonkin lokaaliin porttiin. Tarvittavat ohjeet löytyy wiki sivulta https://extranet.vayla.fi/wiki/display/DROTH/AWS+Ohjeita
-Ajo Powershell terminaalissa skripti projektin juuressa.
+
+Aja Powershell terminaalissa skripti projektin juuressa.
 ```
  .\importRoadlink.ps1 
  -municipalities "20,10" # kunnat jotka haluat tuoda
