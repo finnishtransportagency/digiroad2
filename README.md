@@ -122,7 +122,7 @@ Kirjaudut sisään käyttäen lokaalia testi käyttäjää nimeltään silari.
 Tielinkiverkon lataaminen.
 ======================================================
 
-Jotta skripti toimisi PostgreSql pitää olla asennettu ja C:\'Program Files'\PostgreSQL\13\bin\ pitää olla lisätty path env.
+Jotta skripti toimisi PostgreSql pitää olla asennettu ja C:\{polku sinne minne asennettu}\PostgreSQL\13\bin\ pitää olla lisätty path env.
 
 Mahdollisesti voi tulla viesti "cannot be loaded because the execution of scripts is disabled on this system". 
 
