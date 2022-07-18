@@ -1122,16 +1122,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
       case (false,false) => s"$filter1 AND $filter2"
     }
   }
-
-  /**
-    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
-    */
-  def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
-    withDbConnection {
-      dao.getLinksWithFilter(withLastEditedDateFilter(lowerDate, higherDate))
-    }
-  }
-
+  
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     queryByMunicipality(municipality)
   }
@@ -1147,10 +1138,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     */
   def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities)
-  }
-
-  def fetchByBounds(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
-    queryByMunicipalitiesAndBounds(bounds, Set[Int]())
   }
 
   /**

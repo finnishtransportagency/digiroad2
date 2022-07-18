@@ -422,7 +422,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def fetchChangedVVHRoadlinksBetweenDates(since: DateTime, until: DateTime): Seq[VVHRoadlink] = {
-    if ((since != null) || (until != null))withDbConnection { vvhClient.roadLinkData.fetchByChangesDates(since, until)}
+    if ((since != null) || (until != null))withDbConnection { roadLinkDAO.fetchByChangesDates(since, until)}
     else Seq.empty[VVHRoadlink]
   }
 
@@ -530,6 +530,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     Future(getLinkIdsFromVVHWithComplementaryByPolygon(polygon))
   }
 
+
+  def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
+    withDbConnection { roadLinkDAO.getByMunicipality(municipality, None)}
+  }
+
+  def fetchByBounds(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
+    withDbConnection {roadLinkDAO.getByMunicipalitiesAndBounds(bounds, Set[Int](),None)}
+  }
+  
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.
     *

@@ -207,6 +207,15 @@ class RoadLinkDAO {
   }
 
   /**
+    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    */
+  def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
+    withDbConnection {
+      getLinksWithFilter(withLastEditedDateFilter(lowerDate, higherDate))
+    }
+  }
+
+  /**
     * Returns VVH road links.
     */
   protected def queryByMultipleValues[T, A](values: Set[A],
