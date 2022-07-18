@@ -184,3 +184,60 @@ aws batch register-job-definition \
 --region eu-west-1 \
 --cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
 ```
+
+## Vanhan imagen laittaminen takaisin
+Muokkaa aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :prod -> @digest siihen docker digest(esim sha256:b1ff5c8586) jonka kehitystiimi on toimittanut. Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}@sha256:b1ff5c8586esimerkki'.
+Luo uusi task definition versio tästä:
+```
+aws cloudformation update-stack \
+--stack-name [esim. digiroad-prod-taskdefinition] \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml \
+--parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
+```
+Päivitä palvelu:
+```
+aws ecs update-service \
+--cluster prod-digiroad2-ECS-Cluster-Private \
+--service prod-digiroad2-ECS-Service-Private \
+--task-definition digiroad2-prod[:VERSION] \
+--force-new-deployment
+```
+
+Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda @digest -> :prod . Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}:prod'
+
+Luo uusi task definition versio tästä:
+```
+aws cloudformation update-stack \
+--stack-name [esim. digiroad-prod-taskdefinition] \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml \
+--parameters file://aws/cloud-formation/task-definition/prod-taskdefinition-parameter.json
+```
+Päivitä palvelu:
+```
+aws ecs update-service \
+--cluster prod-digiroad2-ECS-Cluster-Private \
+--service prod-digiroad2-ECS-Service-Private \
+--task-definition digiroad2-prod[:VERSION] \
+--force-new-deployment
+```
+
+JobDefinition kohdalla muokkaa aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json containerProperties kohtaa image. Vaihda "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod" -> "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2@sha256:b1ff5c8586esimerkki"
+siihen docker digest jonka kehitystiimi on toimittanut.
+
+```
+aws batch register-job-definition \
+--profile vaylaapp \
+--region eu-west-1 \
+--cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
+```
+
+Sitten kun kehitystiimi ilmoittaa haluavansa palata normaaliin systeemiin muuta aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json containerProperties kohtaa image. Vaihda "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2@sha256:b1ff5c8586esimerkki" -> "920408837790.dkr.ecr.eu-west-1.amazonaws.com/digiroad2:prod"
+
+```
+aws batch register-job-definition \
+--profile vaylaapp \
+--region eu-west-1 \
+--cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
+```
