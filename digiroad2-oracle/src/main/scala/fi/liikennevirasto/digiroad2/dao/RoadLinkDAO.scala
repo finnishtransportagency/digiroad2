@@ -353,11 +353,11 @@ class RoadLinkDAO {
     * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
     */
   def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
-    getByMunicipalitiesAndBounds(bounds, municipalities)
+    getByMunicipalitiesAndBounds(bounds, municipalities,None)
   }
 
   def fetchByBounds(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
-    getByMunicipalitiesAndBounds(bounds, Set[Int]())
+    getByMunicipalitiesAndBounds(bounds, Set[Int](),None)
   }
 
   /**
