@@ -323,9 +323,9 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         CareClass.typeId, "test", 0)
       val linearAssetFromApi = integrationApi.linearAssetsToApi(CareClass.typeId, 235).head
       val (assetSideCode, assetValue) = (linearAssetFromApi.get("side_code").get, linearAssetFromApi.get("value").get)
-      assetSideCode.getClass.getTypeName should be("java.lang.Integer")
+      assetSideCode.isInstanceOf[Int] should be(true)
       assetValue match {
-        case Some(value) => value.getClass.getTypeName should be("java.lang.Integer")
+        case Some(value) => value.isInstanceOf[Int] should be(true)
         case _ => throw new NoSuchElementException("value parameter not found")
       }
     }
@@ -339,7 +339,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     runWithRollback {
       testBogieWeightLimitService.create(Seq(NewLinearAsset(5000L, 0, 150, bogieWeightValue, SideCode.AgainstDigitizing.value, 0, None)), BogieWeightLimit.typeId, "test", 0)
       val bogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("twoAxelValue").get
-      bogieWeightLimit.getClass.getTypeName should be("java.lang.Integer")
+      bogieWeightLimit.isInstanceOf[Int] should be(true)
     }
   }
 
@@ -353,8 +353,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       testDamagedByThawService.create(Seq(NewLinearAsset(5000L, 0, 150, damagedByThawValues, SideCode.AgainstDigitizing.value, 0, None)), DamagedByThaw.typeId, "test", 0)
       val damagedByThawFromApi = integrationApi.damagedByThawToApi(235).head
       val (annualRepetition, value) = (damagedByThawFromApi.get("annual_repetition").get, damagedByThawFromApi.get("value").get)
-      annualRepetition.getClass.getTypeName should be("java.lang.Integer")
-      value.getClass.getTypeName should be("java.lang.Integer")
+      annualRepetition.isInstanceOf[Int] should be(true)
+      value.isInstanceOf[Int] should be(true)
     }
   }
 
@@ -391,22 +391,22 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       None, None, 1, Some(1), LinkGeomSource.Unknown, false)
 
     val trafficSignValuesFromApi = integrationApi.trafficSignsToApi(Seq(trafficSignForApi)).head
-    trafficSignValuesFromApi.get("typeOfDamage").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("oldTrafficCode").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("size").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("height").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("lane").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("structure").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("condition").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("coatingType").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("urgencyOfRepair").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("lifespanLeft").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("laneType").get.getClass.getTypeName should be("java.lang.Integer")
-    trafficSignValuesFromApi.get("signMaterial").get.getClass.getTypeName should be("java.lang.Integer")
+    trafficSignValuesFromApi.get("typeOfDamage").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("oldTrafficCode").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("size").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("height").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("lane").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("structure").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("condition").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("coatingType").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("urgencyOfRepair").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("lifespanLeft").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("laneType").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("signMaterial").get.isInstanceOf[Int] should be(true)
     val additionalPanel = trafficSignValuesFromApi.get("additionalPanels").get.asInstanceOf[List[Map[String, Any]]].head
-    additionalPanel.get("additionalPanelSize").get.getClass.getTypeName should be("java.lang.Integer")
-    additionalPanel.get("additionalPanelCoatingType").get.getClass.getTypeName should be("java.lang.Integer")
-    additionalPanel.get("additionalPanelColor").get.getClass.getTypeName should be("java.lang.Integer")
+    additionalPanel.get("additionalPanelSize").get.isInstanceOf[Int] should be(true)
+    additionalPanel.get("additionalPanelCoatingType").get.isInstanceOf[Int] should be(true)
+    additionalPanel.get("additionalPanelColor").get.isInstanceOf[Int] should be(true)
   }
 
   test("traffic sign api conversion does not crash with invalid data") {
