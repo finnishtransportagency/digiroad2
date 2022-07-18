@@ -322,6 +322,22 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     createdLanes
   }
 
+  def updateLaneStartDateForMultipleLanes(lanes: Seq[PersistedLane]): Unit = {
+    val updateAttribute =
+      s"""UPDATE LANE_ATTRIBUTE SET VALUE = (?) WHERE LANE_ID = (?) AND NAME = 'start_date'""".stripMargin
+
+    MassQuery.executeBatch(updateAttribute) { statement =>
+      lanes.foreach(lane => {
+        val startDate = lane.attributes.find(_.publicId == "start_date").get
+        val startDateValue = startDate.values.head.value.toString
+        statement.setString(1, startDateValue)
+        statement.setLong(2, lane.id)
+        statement.addBatch()
+      })
+
+    }
+  }
+
   def updateLaneAttributesForMultipleLanes(lanes: Seq[PersistedLane], username: String): Unit = {
     val updateAttribute =
       s"""UPDATE LANE_ATTRIBUTE SET VALUE = (?), MODIFIED_BY = (?),

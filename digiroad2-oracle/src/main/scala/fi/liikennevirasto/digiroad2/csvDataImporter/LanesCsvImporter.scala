@@ -185,65 +185,67 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData, fileName: String): ImportResultData = {
     logger.info("Started mapping start dates from file: " + fileName + " on " + DateTime.now().toString())
-      val lanesToUpdateAndMissingLanes = laneAssetProperties.map(props => {
-        val roadNumber = getPropertyValue(props, "road number").toLong
-        val roadPartNumber = getPropertyValue(props, "road part").toLong
-        val laneCode = getPropertyValue(props, "lane")
+      val lanesToUpdateAndMissingLanes = LogUtils.time(logger, "Get lanes to update") {
+        laneAssetProperties.map(props => {
+          val roadNumber = getPropertyValue(props, "road number").toLong
+          val roadPartNumber = getPropertyValue(props, "road part").toLong
+          val laneCode = getPropertyValue(props, "lane")
 
-        val initialDistance = getPropertyValue(props, "initial distance").toLong
-        val endDistance = getPropertyValue(props, "end distance").toLong
-        val track = getPropertyValue(props, "track").toInt
-        val startDate = getPropertyValueOption(props, "start date").getOrElse("")
+          val initialDistance = getPropertyValue(props, "initial distance").toLong
+          val endDistance = getPropertyValue(props, "end distance").toLong
+          val track = getPropertyValue(props, "track").toInt
+          val startDate = getPropertyValueOption(props, "start date").getOrElse("")
 
-        val laneProps = Seq(LaneProperty("start_date", Seq(LanePropertyValue(startDate))))
+          val laneProps = Seq(LaneProperty("start_date", Seq(LanePropertyValue(startDate))))
 
-        val laneRoadAddressInfo = LaneRoadAddressInfo(roadNumber, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
-        val roadAddresses = LogUtils.time(logger, "Get roadAddresses for road: " + roadNumber + "part: " + roadPartNumber){
-          getRoadAddressToProcess(laneRoadAddressInfo).flatMap(_.addresses)
-        }
-
-        val roadLinksFullyInsideRoadAddressRange = roadAddresses.filter(address =>
-          address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance)
-        val roadLinksPartiallyInsideRoadAddressRange = roadAddresses.filter(address =>
-          (address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance) ||
-           address.endAddressM <= laneRoadAddressInfo.endDistance && address.endAddressM >= laneRoadAddressInfo.startDistance)
-        val filteredRoadAddresses = (roadLinksFullyInsideRoadAddressRange ++ roadLinksPartiallyInsideRoadAddressRange)
-
-        val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(filteredRoadAddresses.map(_.linkId), false)
-        val lanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
-        val lanesAndRoadLink = lanes.flatMap(lane => {
-          val roadLink = roadLinks.find(_.linkId == lane.linkId)
-          roadLink match {
-            case Some(rl) => Some((lane, rl))
-            case _ => None
+          val laneRoadAddressInfo = LaneRoadAddressInfo(roadNumber, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
+          val roadAddresses = LogUtils.time(logger, "Get roadAddresses for road: " + roadNumber + "part: " + roadPartNumber) {
+            getRoadAddressToProcess(laneRoadAddressInfo).flatMap(_.addresses)
           }
-        })
-        val pwLanes = lanesAndRoadLink.flatMap(pair => {
-          val lane = pair._1
-          val roadLink = pair._2
-          laneFiller.toLPieceWiseLane(Seq(lane), roadLink)
 
-        })
+          val roadLinksFullyInsideRoadAddressRange = roadAddresses.filter(address =>
+            address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance)
+          val roadLinksPartiallyInsideRoadAddressRange = roadAddresses.filter(address =>
+            (address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance) ||
+              address.endAddressM <= laneRoadAddressInfo.endDistance && address.endAddressM >= laneRoadAddressInfo.startDistance)
+          val filteredRoadAddresses = (roadLinksFullyInsideRoadAddressRange ++ roadLinksPartiallyInsideRoadAddressRange)
 
-        val twoDigitPwLanes = LogUtils.time(logger, "Transform " + pwLanes.size + " lanes to two digit lanes with mass query"){
+          val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(filteredRoadAddresses.map(_.linkId), false)
+          val lanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
+          val lanesAndRoadLink = lanes.flatMap(lane => {
+            val roadLink = roadLinks.find(_.linkId == lane.linkId)
+            roadLink match {
+              case Some(rl) => Some((lane, rl))
+              case _ => None
+            }
+          })
+          val pwLanes = lanesAndRoadLink.flatMap(pair => {
+            val lane = pair._1
+            val roadLink = pair._2
+            laneFiller.toLPieceWiseLane(Seq(lane), roadLink)
+
+          })
+
+          val twoDigitPwLanes = LogUtils.time(logger, "Transform " + pwLanes.size + " lanes to two digit lanes with mass query") {
             laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes)
-        }
-        val twoDigitLanes = laneService.pieceWiseLanesToPersistedLane(twoDigitPwLanes.flatten)
-        //Lanes where VKM failed to transform coordinates to road addresses
-        val missingLanes = lanes.map(_.id).diff(twoDigitLanes.map(_.id))
+          }
+          val twoDigitLanes = laneService.pieceWiseLanesToPersistedLane(twoDigitPwLanes.flatten)
+          //Lanes where VKM failed to transform coordinates to road addresses
+          val missingLanes = lanes.map(_.id).diff(twoDigitLanes.map(_.id))
 
-        val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
-        if (missingLanes.nonEmpty){
-          (correctLanes.map(_.copy(attributes = laneProps)), missingLanes, Some(props))
-        }
-        else (correctLanes.map(_.copy(attributes = laneProps)), missingLanes, None)
-      })
+          val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
+          if (missingLanes.nonEmpty) {
+            (correctLanes.map(_.copy(attributes = laneProps)), missingLanes, Some(props))
+          }
+          else (correctLanes.map(_.copy(attributes = laneProps)), missingLanes, None)
+        })
+      }
 
     val lanesToUpdate = lanesToUpdateAndMissingLanes.flatMap(_._1)
     val notUpdatedLanes = lanesToUpdateAndMissingLanes.flatMap(_._2).toSet
     val failedRows = lanesToUpdateAndMissingLanes.flatMap(_._3)
     LogUtils.time(logger, "Update start date on " + lanesToUpdate.size + " lanes from file : " + fileName){
-      laneService.updateMultipleLaneAttributes(lanesToUpdate, user.username)
+      laneService.updateLaneStartDates(lanesToUpdate)
     }
 
     notUpdatedLanes.isEmpty match {

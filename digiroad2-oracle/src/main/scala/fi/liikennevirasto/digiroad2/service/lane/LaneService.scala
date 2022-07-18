@@ -866,6 +866,13 @@ trait LaneOperations {
     }
   }
 
+  def updateLaneStartDates(lanesToUpdate: Seq[PersistedLane], newTransaction: Boolean = false): Unit = {
+    if(newTransaction){
+      withDynTransaction(dao.updateLaneStartDateForMultipleLanes(lanesToUpdate))
+    }
+    else dao.updateLaneStartDateForMultipleLanes(lanesToUpdate)
+  }
+
   /**
     * Delete lanes with specified laneCodes on linkIds given
     * @param laneCodes  lanes codes to delete
