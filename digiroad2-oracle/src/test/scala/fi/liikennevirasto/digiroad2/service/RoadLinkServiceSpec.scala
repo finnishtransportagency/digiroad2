@@ -40,7 +40,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-  
+
   val logger = LoggerFactory.getLogger(getClass)
 
   private def simulateQuery[T](f: => T): T = {

@@ -62,14 +62,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+    when(mockRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
@@ -77,7 +77,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
 
   private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
-    val geometry = vvhClient.roadLinkData.fetchByLinkId(linkId).get.geometry
+    val geometry = mockRoadLinkService.fetchRoadLinkOrComplimentaryByLinkId(linkId).get.geometry
     GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
   }
 
@@ -1579,7 +1579,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
+    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq())
 
     val oldLinkId = 5000
     val municipalityCode = 235
