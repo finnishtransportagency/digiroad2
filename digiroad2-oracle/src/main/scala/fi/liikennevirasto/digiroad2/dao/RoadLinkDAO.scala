@@ -343,6 +343,42 @@ class RoadLinkDAO {
     getLinksWithFilter(s"municipalitycode = $municipality $queryFilter")
   }
 
+  def fetchByMunicipalityF(municipality: Int): Future[Seq[VVHRoadlink]] = {
+    Future(getByMunicipality(municipality))
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
+    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
+    */
+  def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
+    getByMunicipalitiesAndBounds(bounds, municipalities)
+  }
+
+  def fetchByBounds(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
+    getByMunicipalitiesAndBounds(bounds, Set[Int]())
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
+    * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
+    */
+  def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(getByMunicipalitiesAndBounds(bounds, municipalities))
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    */
+  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
+                                                 includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
+    Future(getByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads))
+  }
+  
+
   def getByPolygon(polygon: Polygon): Seq[VVHRoadlink] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
 

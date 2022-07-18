@@ -231,7 +231,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case None => complementaryData.fetchByLinkId(linkId)
     }
   }*/
-
+  
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     VVHClient.createVVHTimeStamp(offsetHours)
   }
@@ -992,7 +992,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
 
   override protected def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = ???
   override protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = ???
-
 
   protected override def defaultOutFields(): String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE,GEOMETRYLENGTH"

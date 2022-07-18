@@ -5,13 +5,16 @@ import Database.dynamicSession
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.MassTransitStopValidityPeriod.Future
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult}
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class ComplementaryLinkDAO extends RoadLinkDAO {
 
@@ -93,8 +96,14 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
   def fetchWalkwaysByMunicipalities(municipality:Int): Seq[VVHRoadlink] = {
     getByMunicipality(municipality, Some(withMtkClassFilter(Set(12314))))
   }
-  
+  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(getByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
+  }
 
+  def fetchWalkwaysByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
+    getByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314))))
+  }
+  
   override def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
     sql"""select linkid, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,
                  roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
