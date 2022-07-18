@@ -366,18 +366,8 @@ class RoadLinkDAO {
     * RoadLinkService.getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads).
     */
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
-    Future(getByMunicipalitiesAndBounds(bounds, municipalities))
+    Future(getByMunicipalitiesAndBounds(bounds, municipalities,None))
   }
-
-  /**
-    * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
-    */
-  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
-                                                 includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
-    Future(getByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads))
-  }
-  
 
   def getByPolygon(polygon: Polygon): Seq[VVHRoadlink] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
