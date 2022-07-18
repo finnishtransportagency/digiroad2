@@ -273,6 +273,35 @@ class RoadLinkDAO {
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
     queryByMultipleValues(linkIds, withLinkIdFilter)
+
+  def fetchByPolygon(polygon : Polygon): Seq[VVHRoadlink] = {
+    queryByPolygons(polygon)
+  }
+
+  def fetchByPolygonF(polygon : Polygon): Future[Seq[VVHRoadlink]] = {
+    Future(queryByPolygons(polygon))
+  }
+
+  def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[Long]] = {
+    Future(queryLinksIdByPolygons(polygon))
+  }
+  
+  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
+    if (polygon.getCoordinates.isEmpty) {
+      return Seq.empty[Long]
+    }
+   getLinksIdByPolygons(polygon)
+  }
+
+  /**
+    * Returns VVH road links in polygon area.
+    */
+  protected def queryByPolygons(polygon: Polygon): Seq[VVHRoadlink] = {
+    if(polygon.getCoordinates.isEmpty)
+      return Seq[VVHRoadlink]()
+
+    withDbConnection { getByPolygon(polygon) }
+  }
   
   def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,

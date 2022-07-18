@@ -938,18 +938,6 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
   }
 
-  def fetchByPolygon(polygon : Polygon): Seq[VVHRoadlink] = {
-    queryByPolygons(polygon)
-  }
-
-  def fetchByPolygonF(polygon : Polygon): Future[Seq[VVHRoadlink]] = {
-    Future(queryByPolygons(polygon))
-  }
-
-  def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[Long]] = {
-    Future(queryLinksIdByPolygons(polygon))
-  }
-
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
@@ -1052,23 +1040,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
     withDbConnection {
       dao.getByMunicipalitiesAndBounds(bounds, municipalities, filter)
     }
-  }
-
-  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
-    if (polygon.getCoordinates.isEmpty) {
-      return Seq.empty[Long]
-    }
-    withDbConnection { dao.getLinksIdByPolygons(polygon) }
-  }
-
-  /**
-   * Returns VVH road links in polygon area.
-   */
-  protected override def queryByPolygons(polygon: Polygon): Seq[VVHType] = {
-    if(polygon.getCoordinates.isEmpty)
-      return Seq[VVHType]()
-
-    withDbConnection { dao.getByPolygon(polygon) }
   }
 
   // Query filters methods
@@ -1190,19 +1161,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
   }
-
-  def fetchByPolygon(polygon: Polygon): Seq[VVHRoadlink] = {
-    queryByPolygons(polygon)
-  }
-
-  def fetchByPolygonF(polygon: Polygon): Future[Seq[VVHRoadlink]] = {
-    Future(queryByPolygons(polygon))
-  }
-
-  def fetchLinkIdsByPolygonF(polygon: Polygon): Future[Seq[Long]] = {
-    Future(queryLinksIdByPolygons(polygon))
-  }
-
+  
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).

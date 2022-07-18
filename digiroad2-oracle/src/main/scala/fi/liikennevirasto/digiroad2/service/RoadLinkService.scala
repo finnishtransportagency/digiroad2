@@ -478,7 +478,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) = Await.result(vvhClient.roadLinkChangeInfo.fetchByPolygonF(polygon).zip(vvhClient.roadLinkData.fetchByPolygonF(polygon)), atMost = Duration.Inf)
+    val (changes, links) = Await.result(vvhClient.roadLinkChangeInfo.fetchByPolygonF(polygon).zip(withDbConnection {roadLinkDAO.fetchByPolygonF(polygon)}), atMost = Duration.Inf)
     withDynTransaction {
       (enrichRoadLinksFromVVH(links), changes)
     }
@@ -486,9 +486,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
     val futures = for{
-      roadLinkResult <- vvhClient.roadLinkData.fetchByPolygonF(polygon)
+      roadLinkResult <-withDbConnection { roadLinkDAO.fetchByPolygonF(polygon)}
       changesResult <- vvhClient.roadLinkChangeInfo.fetchByPolygonF(polygon)
-      complementaryResult <- vvhClient.complementaryData.fetchByPolygonF(polygon)
+      complementaryResult <-withDbConnection { complementaryLinkDAO.fetchByPolygonF(polygon)}
     } yield (roadLinkResult, changesResult, complementaryResult)
 
     val (complementaryLinks, changes, links) = Await.result(futures, Duration.Inf)
@@ -518,8 +518,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :Polygon): Seq[Long] = {
 
     val fut = for {
-      f1Result <- vvhClient.roadLinkData.fetchLinkIdsByPolygonF(polygon)
-      f2Result <- vvhClient.complementaryData.fetchLinkIdsByPolygonF(polygon)
+      f1Result <- withDbConnection {roadLinkDAO.fetchLinkIdsByPolygonF(polygon)}
+      f2Result <-withDbConnection { complementaryLinkDAO.fetchLinkIdsByPolygonF(polygon)}
     } yield (f1Result, f2Result)
 
     val (complementaryResult, result) = Await.result(fut, Duration.Inf)
