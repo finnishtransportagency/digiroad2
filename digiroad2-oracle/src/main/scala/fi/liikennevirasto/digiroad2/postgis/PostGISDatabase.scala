@@ -25,10 +25,7 @@ object PostGISDatabase {
     * Opens new dynSession only if there is not connection open change location
     */
   def withDbConnection[T](f: => T): T = {
-    if (PostGISDatabase.isTransactionOpen)
-      f
-    else
-      PostGISDatabase.withDynSession{ f }
+    if (isTransactionOpen) f else withDynSession{ f }
   }
   
   def withDynTransaction[T](f: => T): T = {
