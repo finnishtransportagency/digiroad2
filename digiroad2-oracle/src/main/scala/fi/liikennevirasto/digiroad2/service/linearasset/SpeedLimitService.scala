@@ -193,7 +193,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Removes speed limit from unknown speed limits list if speed limit exists. Used by SpeedLimitUpdater actor.
     */
   def purgeUnknown(linkIds: Set[Long], expiredLinkIds: Seq[Long]): Unit = {
-    val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(linkIds)
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(linkIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
         dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))

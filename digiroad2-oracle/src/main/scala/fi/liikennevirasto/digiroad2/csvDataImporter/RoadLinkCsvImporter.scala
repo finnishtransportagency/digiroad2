@@ -173,7 +173,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
       override val delimiter: Char = ';'
     })
     def getCompletaryVVHInfo(linkId: Long) = {
-      vvhClient.complementaryData.fetchByLinkId(linkId) match {
+      roadLinkService.fetchByLinkIdComplimentary(linkId) match {
         case Some(vvhRoadLink) => (vvhRoadLink.attributes.get("OBJECTID"), vvhRoadLink.administrativeClass.value)
         case _ => None
       }

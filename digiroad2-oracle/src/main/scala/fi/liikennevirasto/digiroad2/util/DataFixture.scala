@@ -449,7 +449,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
 
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -478,7 +478,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -539,7 +539,7 @@ object DataFixture {
 
     if (assets.nonEmpty) {
 
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {

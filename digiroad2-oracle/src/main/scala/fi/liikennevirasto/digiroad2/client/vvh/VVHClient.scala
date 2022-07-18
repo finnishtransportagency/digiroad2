@@ -225,12 +225,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
   lazy val suravageData: VVHSuravageClient = new VVHSuravageClient(vvhRestApiEndPoint)
 
-  def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
+/*  def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
     roadLinkData.fetchByLinkId(linkId) match {
       case Some(vvhRoadLink) => Some(vvhRoadLink)
       case None => complementaryData.fetchByLinkId(linkId)
     }
-  }
+  }*/
 
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     VVHClient.createVVHTimeStamp(offsetHours)
