@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkDAO, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -31,6 +31,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   private val CommonAttributes = Seq("MUNICIPALITYCODE" -> BigInt(853), "VERTICALLEVEL" -> 0.0).toMap;
 
+  val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]
+  
   test("Batch drivers chunck size") {
     assetDataImporter.getBatchDrivers(1, 10000, 1000)
       .map( chunk => (chunk._2 - chunk._1) + 1)
@@ -413,7 +415,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -454,7 +456,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
@@ -492,7 +494,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -531,7 +533,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
@@ -571,7 +573,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -619,7 +621,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0),Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -650,7 +652,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
@@ -680,7 +682,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
@@ -719,7 +721,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
+    when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0),Point(30.0,30.0)))).thenReturn(roadLinks)
 

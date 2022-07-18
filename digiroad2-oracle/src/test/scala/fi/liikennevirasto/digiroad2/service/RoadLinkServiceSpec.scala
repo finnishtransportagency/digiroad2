@@ -371,7 +371,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink = VVHRoadlink(newLinkId, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockRoadLinkDao = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]
     val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
     val service = new TestService(mockVVHClient)
 
@@ -549,8 +549,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val vvhRoadLink4 = VVHRoadlink(4, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
       
       when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryDataClient)
-      when(mockVVHComplementaryDataClient.fetchWalkwaysByMunicipalitiesF(91)).thenReturn(Promise.successful(Seq()).future)
+      when(mockRoadLinkComplimentaryDao.fetchWalkwaysByMunicipalitiesF(91)).thenReturn(Promise.successful(Seq()).future)
       when(mockRoadLinkDao.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4)).future)
       when(mockVVHChangeInfoClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
       val service = new TestService(mockVVHClient, mockEventBus)
@@ -585,7 +584,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       
       when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryDataClient)
-      when(mockVVHComplementaryDataClient.fetchWalkwaysByMunicipalitiesF(91)).thenReturn(Promise.successful(Seq()).future)
+      when(mockRoadLinkComplimentaryDao.fetchWalkwaysByMunicipalitiesF(91)).thenReturn(Promise.successful(Seq()).future)
       when(mockRoadLinkDao.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4, vvhRoadLink5, vvhRoadLink6)).future)
       when(mockVVHChangeInfoClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
       val service = new TestService(mockVVHClient, mockEventBus)
