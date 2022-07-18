@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, OAGAuthPropertyReader}
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
@@ -1007,16 +1008,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations 
 
   protected override def defaultOutFields(): String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
-  }
-
-  /**
-   * Opens new dynSession only if there is not connection open
-   */
-  protected def withDbConnection[T](f: => T): T = {
-    if (PostGISDatabase.isTransactionOpen)
-      f
-    else
-      PostGISDatabase.withDynSession{ f }
   }
 
   /**

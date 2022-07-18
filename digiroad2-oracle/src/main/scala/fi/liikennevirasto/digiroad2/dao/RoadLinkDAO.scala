@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangl
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
 import slick.jdbc.{GetResult, PositionedResult}
@@ -18,6 +19,107 @@ import scala.collection.mutable.ListBuffer
 class RoadLinkDAO {
   protected val geometryColumn: String = "shape"
 
+  protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
+    val filter =
+      if (ids.isEmpty) {
+        ""
+      } else {
+        val query = ids.mkString(",")
+        s""""where":"$attributeName IN ($query)","""
+      }
+    filter
+  }
+
+  protected def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
+    val filter =
+      if (low < 0 || high < 0 || low > high) {
+        ""
+      } else {
+        if (includeAllPublicRoads) {
+          //TODO check if we can remove the adminclass in the future
+          s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
+        } else {
+          s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
+        }
+      }
+    filter
+  }
+
+  protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
+    withFilter("MUNICIPALITYCODE", municipalities)
+  }
+
+  protected def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
+    val filter =
+      if (names.isEmpty) {
+        ""
+      } else {
+        val query = names.mkString("','")
+        s""""where":"$attributeName IN ('$query')","""
+      }
+    filter
+  }
+
+  protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
+
+    (filter1.isEmpty, filter2.isEmpty) match {
+      case (true,true) => ""
+      case (true,false) => filter2
+      case (false,true) => filter1
+      case (false,false) => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
+    }
+  }
+
+  protected def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
+    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
+  }
+  // Query filters methods
+  protected def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
+    withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
+  }
+
+  protected def withLinkIdFilter(linkIds: Set[Long]): String = {
+    withFilter("LINKID", linkIds)
+  }
+
+  protected def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
+    withRoadNameFilter(roadNameSource, roadNames)
+  }
+
+  protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
+    withFilter("MTKID", mmlIds)
+  }
+
+  protected def withMtkClassFilter(ids: Set[Long]): String = {
+    withFilter("MTKCLASS", ids)
+  }
+
+  protected  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
+  }
+
+  protected def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+  }
+
+
+  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
+    if (roadNumbers.isEmpty)
+      return s""""where":"($filter)","""
+    if (includeAllPublicRoads)
+      return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
+    val limit = roadNumbers.head
+    val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
+  }
+  
   implicit val getRoadLink: GetResult[VVHRoadlink] = new GetResult[VVHRoadlink] {
     def apply(r: PositionedResult): VVHRoadlink = {
       val linkId = r.nextLong()
@@ -54,6 +156,7 @@ class RoadLinkDAO {
       val length  = r.nextDouble()
 
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
+      // change where this is generated
       val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
       val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
       val featureClass = extractFeatureClass(mtkClass)
@@ -180,7 +283,7 @@ class RoadLinkDAO {
     }
     lastModification.orElse(Option(validFromTime)).map(modified => new DateTime(modified))
   }
-
+// add it into postGistDatabase
   protected def extractGeometry(data: Object): List[List[Double]] = {
     val geometry = data.asInstanceOf[PGobject]
     if (geometry == null) Nil

@@ -89,6 +89,11 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
         ConstructionType.apply(constructionType), ComplimentaryLinkInterface, length)
     }
   }
+  
+  def fetchWalkwaysByMunicipalities(municipality:Int): Seq[VVHRoadlink] = {
+    getByMunicipality(municipality, Some(withMtkClassFilter(Set(12314))))
+  }
+  
 
   override def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
     sql"""select linkid, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,

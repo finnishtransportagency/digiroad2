@@ -21,6 +21,16 @@ object PostGISDatabase {
 
   def isTransactionOpen: Boolean = transactionOpen.get()
 
+  /**
+    * Opens new dynSession only if there is not connection open change location
+    */
+  def withDbConnection[T](f: => T): T = {
+    if (PostGISDatabase.isTransactionOpen)
+      f
+    else
+      PostGISDatabase.withDynSession{ f }
+  }
+  
   def withDynTransaction[T](f: => T): T = {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
