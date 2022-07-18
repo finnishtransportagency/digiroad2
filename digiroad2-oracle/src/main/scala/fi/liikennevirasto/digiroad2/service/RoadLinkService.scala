@@ -463,13 +463,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return Road links and change data
     */
   def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(),asyncMode: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo]) = {
-    val changes = if (!asyncMode){
-      vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(bounds, municipalities)
+    val (changes, links) = if (!asyncMode){
+      (vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(bounds, municipalities),
+        withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)})
     }else LogUtils.time(logger, "TEST LOG VVH fetch by boundingBox")(
-      Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities), atMost = Duration.Inf)
+      Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
+        .zip(withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)}), atMost = Duration.Inf)
     )
-
-    val links = withDbConnection {roadLinkDAO.getByMunicipalitiesAndBounds(bounds, municipalities,None)}
         withDynTransaction {
           LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH from boundingBox request, link count: " + links.size)(
       (enrichRoadLinksFromVVH(links), changes)
@@ -566,17 +566,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction:Boolean = true,asyncMode: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo])= {
 
-    val changes = if (!asyncMode) {
-       vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(bounds, municipalities)
+    val (complementaryLinks, changes, links) = if (!asyncMode) {
+      val changes = vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(bounds, municipalities)
+      val complementaryLinks = withDbConnection {complementaryLinkDAO.fetchWalkwaysByBoundsAndMunicipalities(bounds, municipalities)}
+      val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
+      (complementaryLinks, changes, links)
     } else {
       val fut = for {
+        f1Result <- withDbConnection {complementaryLinkDAO.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities)}
         f2Result <- vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
-      } yield  f2Result
+        f3Result <-withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)}
+      } yield (f1Result, f2Result, f3Result)
       Await.result(fut, Duration.Inf)
     }
-
-    val links = withDbConnection {roadLinkDAO.getByMunicipalitiesAndBounds(bounds,municipalities,None)}
-    val complementaryLinks = withDbConnection {complementaryLinkDAO.getByMunicipalitiesAndBounds(bounds,municipalities,None)}
     
     if(newTransaction){
       withDynTransaction {
@@ -627,11 +629,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     val fut = for {
+      f1Result <- withDbConnection {complementaryLinkDAO.fetchWalkwaysByMunicipalitiesF(municipalities)}
       f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipalities)
-    } yield f2Result
-    val changes = Await.result(fut, Duration.Inf)
-    val links = withDbConnection {roadLinkDAO.getByMunicipality(municipalities)}
-    val complementaryLinks = withDbConnection {complementaryLinkDAO.fetchWalkwaysByMunicipalities(municipalities)}
+      f3Result <- withDbConnection {roadLinkDAO.fetchByMunicipalityF(municipalities)}
+    } yield (f1Result, f2Result, f3Result)
+
+    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
     withDynTransaction {
       (enrichRoadLinksFromVVH(links), changes, enrichRoadLinksFromVVH(complementaryLinks))
     }
@@ -683,11 +686,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksAndChangesByBoundsFromVVH(bounds: BoundingRectangle, bounds2: BoundingRectangle, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val links1F = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBoundsF(bounds, Set())}
+    val links2F =withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBoundsF(bounds2, Set())}
     val changeF = vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, Set())
-    val changes = Await.result(changeF, atMost = Duration.apply(120, TimeUnit.SECONDS))
+    val ((links, links2), changes) = Await.result(links1F.zip(links2F).zip(changeF), atMost = Duration.apply(120, TimeUnit.SECONDS))
     
-    val links = withDbConnection {roadLinkDAO.getByMunicipalitiesAndBounds(bounds, Set(),None)}
-    val links2 = withDbConnection {roadLinkDAO.getByMunicipalitiesAndBounds(bounds2, Set(),None)}
     if(newTransaction)
       withDynTransaction {
         (enrichRoadLinksFromVVH(links ++ links2), changes)
@@ -703,7 +706,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def getVVHRoadLinksF(municipality: Int) : Seq[VVHRoadlink] = {
-  withDbConnection {roadLinkDAO.getByMunicipality(municipality)}
+    Await.result(withDbConnection {roadLinkDAO.fetchByMunicipalityF(municipality)}, atMost = Duration.Inf)
   }
 
   /**
@@ -972,9 +975,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
-    val historyRoadLinks = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities), atMost = Duration.Inf)
-    val roadlinks = withDbConnection {roadLinkDAO.getByMunicipalitiesAndBounds(bounds, municipalities,None)}
-    
+    val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)
+      .zip(withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)}), atMost = Duration.Inf)
+
     val linkprocessor = new VVHRoadLinkHistoryProcessor()
     // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
