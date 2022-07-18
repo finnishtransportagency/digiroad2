@@ -341,7 +341,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def fetchVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled:Boolean = false): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else vvhClient.roadLinkData.fetchByLinkIds(linkIds) }
+    if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else roadLinkDAO.fetchByLinkIds(linkIds) }
     else Seq.empty[VVHRoadlink]
   }
 
@@ -353,7 +353,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def fetchVVHRoadlinks(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[VVHRoadlink] = {
-      vvhClient.roadLinkData.fetchByRoadNames(roadNamePublicIds, roadNameSource)
+      roadLinkDAO.fetchByRoadNames(roadNamePublicIds, roadNameSource)
   }
 
   def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
@@ -434,7 +434,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    vvhClient.roadLinkData.fetchByMunicipalitiesAndBounds(bounds, municipalities)
+    withDbConnection{roadLinkDAO.getByMunicipalitiesAndBounds(bounds, municipalities,None)}
   }
 
   /**
