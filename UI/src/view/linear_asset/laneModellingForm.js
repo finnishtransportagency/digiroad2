@@ -532,7 +532,7 @@
             }
           };
 
-          var confirmationMessage = "Olet muuttamassa pääkaistan paikkaa. Kaistatieto lähetetään Tievelhoon.";
+          var confirmationMessage = "Olet muuttamassa pääkaistan paikkaa. Tämä muutos vaikuttaa kaikkiin valittujen tielinkkien kaistoihin.";
           GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
         }
       });
