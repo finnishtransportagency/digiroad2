@@ -390,8 +390,8 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Should apply pavement on whole segment") {
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    val timeStamp = VVHClient.createVVHTimeStamp(-5)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -503,7 +503,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadLinkService.getVVHRoadLinksF(municipalityCode)).thenReturn(List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4))
-      when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
+      when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
 
       service.expireImportRoadLinksVVHtoOTH(assetTypeId)
       val assetListAfterChanges = ServiceWithDao.dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(assetTypeId, Seq(newLinkId1, newLinkId2, newLinkId3, newLinkId4))
@@ -591,10 +591,9 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Adjust projected asset with creation"){
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    val timeStamp = VVHClient.createVVHTimeStamp(-5)
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {

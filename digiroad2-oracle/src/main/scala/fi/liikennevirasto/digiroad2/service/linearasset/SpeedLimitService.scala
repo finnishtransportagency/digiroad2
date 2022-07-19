@@ -603,7 +603,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * This method was created for municipalityAPI, in future could be merge with the other create method.
     */
-  def createMultiple(newLimits: Seq[NewLinearAsset], username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp(), municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+  def createMultiple(newLimits: Seq[NewLinearAsset], username: String, vvhTimeStamp: Long = vvhClient.createVVHTimeStamp(), municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     val createdIds = newLimits.flatMap { limit =>
       limit.value match {
         case SpeedLimitValue(suggestion, intValue) => dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.apply(limit.sideCode), SpeedLimitValue(suggestion, intValue), vvhTimeStamp, municipalityValidation)
@@ -621,7 +621,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def create(newLimits: Seq[NewLimit], value: SpeedLimitValue, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
-        dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.roadLinkData.createVVHTimeStamp(), municipalityValidation)
+        dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.createVVHTimeStamp(), municipalityValidation)
       }
       eventbus.publish("speedLimits:purgeUnknownLimits", (newLimits.map(_.linkId).toSet, Seq()))
       createdIds
@@ -630,7 +630,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   protected def createWithoutTransaction(newLimits: Seq[NewLimit], value: SpeedLimitValue, username: String, sideCode: SideCode): Seq[Long] = {
     newLimits.flatMap { limit =>
-      dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, vvhClient.roadLinkData.createVVHTimeStamp(), (_,_) => Unit)
+      dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, vvhClient.createVVHTimeStamp(), (_,_) => Unit)
     }
   }
 

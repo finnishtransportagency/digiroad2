@@ -334,10 +334,10 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create prohibitions on actor update when exist sideCode adjustment") {
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    val timeStamp = VVHClient.createVVHTimeStamp(-5)
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f

@@ -210,11 +210,9 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(5000)).thenReturn(Some(newVVHroadLink))
-
-
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    
+    val timeStamp = VVHClient.createVVHTimeStamp()
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[Long]] = List(List(5000))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -256,9 +254,9 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockVVHClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    val timeStamp = VVHClient.createVVHTimeStamp()
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[Long]] = List(List(5000))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -307,9 +305,9 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockVVHClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    val timeStamp = VVHClient.createVVHTimeStamp()
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[Long]] = List(List(5000))
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonPointFeature))

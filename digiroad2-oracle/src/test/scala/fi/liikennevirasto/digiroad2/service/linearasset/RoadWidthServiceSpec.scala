@@ -32,8 +32,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
-  val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
-  when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+  val timeStamp = VVHClient.createVVHTimeStamp(5)
+  when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 
   val roadLinkWithLinkSource = RoadLink(
