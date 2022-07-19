@@ -23,61 +23,33 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class RoadLinkDAO {
   protected val geometryColumn: String = "shape"
 
+  // Query filters methods
   protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
-    val filter =
-      if (ids.isEmpty) {
-        ""
-      } else {
-        val query = ids.mkString(",")
-        s""""where":"$attributeName IN ($query)","""
-      }
-    filter
-  }
-
-  protected def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
-    val filter =
-      if (low < 0 || high < 0 || low > high) {
-        ""
-      } else {
-        if (includeAllPublicRoads) {
-          //TODO check if we can remove the adminclass in the future
-          s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
-        } else {
-          s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
-        }
-      }
-    filter
-  }
-
-  protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
-    withFilter("MUNICIPALITYCODE", municipalities)
+    if (ids.nonEmpty)
+      s"$attributeName in (${ids.mkString(",")})"
+    else ""
   }
 
   protected def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
-    val filter =
-      if (names.isEmpty) {
-        ""
-      } else {
-        val query = names.mkString("','")
-        s""""where":"$attributeName IN ('$query')","""
-      }
-    filter
+    if (names.nonEmpty) {
+      val nameString = names.map(name => s"'$name'")
+      s"$attributeName in (${nameString.mkString(",")})"
+    } else ""
   }
 
-  protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
-
-    (filter1.isEmpty, filter2.isEmpty) match {
-      case (true,true) => ""
-      case (true,false) => filter2
-      case (false,true) => filter1
-      case (false,false) => "%s AND %s".format(filter1.dropRight(2), filter2.replace("\"where\":\"", ""))
+  protected def withLimitFilter(attributeName: String, low: Int, high: Int,
+                                          includeAllPublicRoads: Boolean = false): String = {
+    if (low < 0 || high < 0 || low > high) {
+      ""
+    } else {
+      if (includeAllPublicRoads) {
+        s"ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high)"
+      } else {
+        s"( $attributeName >= $low and $attributeName <= $high )"
+      }
     }
   }
 
-  protected def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
-    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
-  }
-  // Query filters methods
   protected def withRoadNumberFilter(roadNumbers: (Int, Int), includeAllPublicRoads: Boolean): String = {
     withLimitFilter("ROADNUMBER", roadNumbers._1, roadNumbers._2, includeAllPublicRoads)
   }
@@ -107,21 +79,33 @@ class RoadLinkDAO {
     val since = formatter.print(lowerDate)
     val until = formatter.print(higherDate)
 
-    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+    s"( $attributeName >= date '$since' and $attributeName <=date '$until' )"
   }
 
 
   protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
-    if (roadNumbers.isEmpty)
-      return s""""where":"($filter)","""
+    if (roadNumbers.isEmpty) return s"($filter)"
     if (includeAllPublicRoads)
       return withRoadNumbersFilter(roadNumbers, false, "ADMINCLASS = 1")
     val limit = roadNumbers.head
-    val filterAdd = s"""(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"""
+    val filterAdd = s"(ROADNUMBER >= ${limit._1} and ROADNUMBER <= ${limit._2})"
     if (filter == "")
       withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, filterAdd)
     else
       withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
+  }
+
+  protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
+    (filter1.isEmpty, filter2.isEmpty) match {
+      case (true,true) => ""
+      case (true,false) => filter2
+      case (false,true) => filter1
+      case (false,false) => s"$filter1 AND $filter2"
+    }
+  }
+  
+  protected def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = {
+    combineFiltersWithAnd(filter2.getOrElse(""), filter1)
   }
   
   implicit val getRoadLink: GetResult[VVHRoadlink] = new GetResult[VVHRoadlink] {
