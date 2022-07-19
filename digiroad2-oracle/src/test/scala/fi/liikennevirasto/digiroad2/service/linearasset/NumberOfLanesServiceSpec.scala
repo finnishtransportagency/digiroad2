@@ -22,7 +22,6 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
 
   val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
   when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
   val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {

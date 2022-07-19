@@ -42,8 +42,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val propertyData2 = DynamicValue(multiTypePropSeq2)
   val propertyData3 = DynamicValue(multiTypePropSeq3)
   val propertyData4 = DynamicValue(multiTypePropSeq4)
-
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  
   when(mockRoadLinkService.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchRoadLinkOrComplimentaryByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -392,7 +391,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Should apply pavement on whole segment") {
     val timeStamp = VVHClient.createVVHTimeStamp(-5)
     when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -500,8 +498,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetId3 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId3, 0, 20, propertyData, 1, 0, None)), assetTypeId, "testuser")
       val newAsset3 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId3.toSet)
       val newAssetList = List(newAsset1.head, newAsset2.head,newAsset3.head)
-
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      
       when(mockRoadLinkService.getVVHRoadLinksF(municipalityCode)).thenReturn(List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4))
       when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
 

@@ -34,7 +34,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   val timeStamp = VVHClient.createVVHTimeStamp(5)
   when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 
   val roadLinkWithLinkSource = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,

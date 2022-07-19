@@ -59,7 +59,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
   before {
     // Reset the mocks here so individual tests don't have to
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockRoadLinkDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
     vvhRoadLinks.foreach(rl =>
       when(mockRoadLinkService.fetchRoadLinkOrComplimentaryByLinkId(rl.linkId))
