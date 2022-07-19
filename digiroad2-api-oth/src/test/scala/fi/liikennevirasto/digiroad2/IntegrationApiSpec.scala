@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, Formats}
@@ -20,6 +19,18 @@ import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatra.test.scalatest.ScalatraSuite
 
 import java.util.NoSuchElementException
+import javax.sql.DataSource
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
+object integrationApiTestTransactions {
+  def runWithRollback(ds: DataSource = PostGISDatabase.ds)(f: => Unit): Unit = {
+    Database.forDataSource(ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
+    }
+  }
+}
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -37,7 +48,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   val testBogieWeightLimitService = new LinearBogieWeightLimitService(mockRoadLinkService, mockEventBus)
   val testDamagedByThawService = new DamagedByThawService(mockRoadLinkService, mockEventBus)
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
+  def runWithRollback(test: => Unit): Unit = integrationApiTestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   private val integrationApi = new IntegrationApi(mockMassTransitStopService, new OthSwagger) {
     override def getLinearAssetService(typeId: Int): LinearAssetOperations = {
