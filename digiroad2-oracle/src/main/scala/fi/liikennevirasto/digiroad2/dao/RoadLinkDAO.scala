@@ -144,7 +144,10 @@ class RoadLinkDAO {
       val sourceInfo = r.nextInt()
       val length  = r.nextDouble()
 
-      val geometry = path.map(point => Point(point(0), point(1), point(2),point(3)))
+      val geometry = path.map(point => Point(point(0), point(1), point(2)))
+      // change where this is generated
+      val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
+      val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
       val featureClass = extractFeatureClass(mtkClass)
       val modifiedAt = extractModifiedDate(validFrom, lastEditedDate, geometryEdited)
 
@@ -174,9 +177,9 @@ class RoadLinkDAO {
         "SUBTYPE" -> subType,
         "OBJECTID" -> objectId,
         "STARTNODE" -> startNode,
-        "ENDNODE" -> endNode
-        //"points" -> geometryForApi,
-        //"geometryWKT" -> geometryWKT
+        "ENDNODE" -> endNode,
+        "points" -> geometryForApi,
+        "geometryWKT" -> geometryWKT
       ).collect {
         case (key, Some(value)) => key -> value
         case (key, value) if value != None => key -> value

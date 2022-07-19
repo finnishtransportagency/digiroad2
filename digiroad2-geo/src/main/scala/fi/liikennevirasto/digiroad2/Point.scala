@@ -99,7 +99,7 @@ case class Vector3d(x: Double, y: Double, z: Double) {
   }
 }
 
-case class Point(x: Double, y: Double, z: Double = 0.0, m:Double = 0.0) {
+case class Point(x: Double, y: Double, z: Double = 0.0) {
 
   // using match.ceil to round up because it works better for finding equal points from different roadLinks or lanes.
   // Points in DigiRoad often have some differences in decimals.
