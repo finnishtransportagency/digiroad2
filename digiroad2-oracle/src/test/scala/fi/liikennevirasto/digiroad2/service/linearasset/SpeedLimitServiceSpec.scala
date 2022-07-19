@@ -69,7 +69,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockRoadLinkService.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchRoadLinkOrComplimentaryByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)

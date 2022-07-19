@@ -159,7 +159,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     stops.foreach { case(id, administrativeClass) =>
-      when(mockRoadLinkDAO.fetchByLinkId(ArgumentMatchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      when(mockRoadLinkService.fetchByLinkId(ArgumentMatchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
