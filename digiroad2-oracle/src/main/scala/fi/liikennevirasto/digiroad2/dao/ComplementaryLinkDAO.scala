@@ -50,9 +50,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
       val length  = r.nextDouble()
       val custOwner = r.nextLongOption()
 
-      val geometry = path.map(point => Point(point(0), point(1), point(2)))
-      val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
-      val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
+      val geometry = path.map(point => Point(point(0), point(1), point(2),point(3)))
       val featureClass = extractFeatureClass(mtkClass)
       val modifiedAt = extractModifiedDate(validFrom, lastEditedDate, geometryEdited)
 
@@ -79,8 +77,6 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
         "SURFACETYPE" -> BigInt(surfaceType),
         "SUBTYPE" -> subType,
         "OBJECTID" -> objectId,
-        "points" -> geometryForApi,
-        "geometryWKT" -> geometryWKT,
         "CUST_OWNER" -> custOwner
       ).collect {
         case (key, Some(value)) => key -> value

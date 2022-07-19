@@ -197,6 +197,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map { roadLink =>
+      val geometryForApi = roadLink.geometry.map(point => Map("x" -> point.x, "y" -> point.y, "z" -> point.z, "m" -> point.m))
+      val geometryWKT = "LINESTRING ZM (" + roadLink.geometry.map(point => s"${point.x} ${point.y} ${point.z} ${point.m}").mkString(", ") + ")"
       Map("linkId" -> roadLink.linkId,
         "mmlId" -> roadLink.attributes.get("MTKID"),
         "administrativeClass" -> roadLink.administrativeClass.value,
@@ -211,7 +213,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
         "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+        "linkSource" -> roadLink.linkSource.value,
+        "points" -> geometryForApi,
+        "geometryWKT" -> geometryWKT) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
                                                                                               .filterNot(_._1 == "ROADNUMBER")
                                                                                               .filterNot(_._1 == "ROADPARTNUMBER")
                                                                                               .filterNot(_._1 == "STARTNODE")
