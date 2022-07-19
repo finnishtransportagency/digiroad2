@@ -35,6 +35,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]
   
   test("Batch drivers chunck size") {
     assetDataImporter.getBatchDrivers(1, 10000, 1000)
