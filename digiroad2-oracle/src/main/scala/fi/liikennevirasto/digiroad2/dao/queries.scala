@@ -19,7 +19,9 @@ import Q._
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
+
 import java.util.Locale
+import scala.collection.mutable.ListBuffer
 
 
 object Queries {
@@ -40,6 +42,21 @@ object Queries {
     val geom = PGgeometry.geomFromString(pgObject.getValue)
     val point =geom.getFirstPoint
     Point(point.x, point.y)
+  }
+
+  def extractGeometry(data: Object): List[List[Double]] = {
+    val geometry = data.asInstanceOf[PGobject]
+    if (geometry == null) Nil
+    else {
+      val geomValue = geometry.getValue
+      val geom = PGgeometry.geomFromString(geomValue)
+      val listOfPoint= ListBuffer[List[Double]]()
+      for (i <- 0 until geom.numPoints() ){
+        val point =geom.getPoint(i)
+        listOfPoint += List(point.x, point.y, point.z, point.m)
+      }
+      listOfPoint.toList
+    }
   }
 
   implicit val getPoint = new GetResult[Point] {

@@ -6,6 +6,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.dao.Queries.extractGeometry
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import org.joda.time.DateTime
@@ -404,19 +405,5 @@ class RoadLinkDAO {
     }
     lastModification.orElse(Option(validFromTime)).map(modified => new DateTime(modified))
   }
-// add it into postGistDatabase
-  protected def extractGeometry(data: Object): List[List[Double]] = {
-    val geometry = data.asInstanceOf[PGobject]
-    if (geometry == null) Nil
-    else {
-      val geomValue = geometry.getValue
-      val geom = PGgeometry.geomFromString(geomValue)
-      val listOfPoint= ListBuffer[List[Double]]()
-      for (i <- 0 until geom.numPoints() ){
-        val point =geom.getPoint(i)
-        listOfPoint += List(point.x, point.y, point.z, point.m)
-      }
-      listOfPoint.toList
-    }
-  }
+  
 }
