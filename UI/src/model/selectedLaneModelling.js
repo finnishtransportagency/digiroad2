@@ -1,6 +1,7 @@
 (function(root) {
   root.SelectedLaneModelling = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
     SelectedLinearAsset.call(this, backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType);
+    this.promotionDirty = false;
     var lanesFetched = [];
     var selectedRoadlink = null;
     var assetsToBeExpired = [];
@@ -34,6 +35,8 @@
     };
 
     this.getCurrentLane = function () { return currentLane; };
+
+    this.isPromotionDirty = function () { return this.promotionDirty; };
 
     this.setCurrentLane = function (lane) { currentLane = self.getLane(lane); };
 
@@ -298,6 +301,7 @@
 
       backendOperation(payload, function() {
         self.dirty = false;
+        self.promotionDirty = false;
         self.close();
         eventbus.trigger(self.singleElementEvent('saved'));
       }, function(error) {
@@ -309,6 +313,7 @@
     var cancelExisting = function() {
       self.selection = lanesFetched;
       self.dirty = false;
+      self.promotionDirty = false;
       eventbus.trigger(self.singleElementEvent('valueChanged'), self);
     };
 
@@ -405,9 +410,14 @@
         return getLaneCodeValue(lane) === laneNumber;
       });
 
-      self.selection = laneCodesAfterPromotion(lanesWithOrderNumbers, newMainLane);
+      var lanesAfterPromotion = laneCodesAfterPromotion(lanesWithOrderNumbers, newMainLane);
+      _.forEach(lanesAfterPromotion, function (lane) {
+        setPropertyByPublicId(lane, 'lane_type', null);
+      });
+      self.selection = lanesAfterPromotion;
       reorganizeLanes(laneNumber);
       self.dirty = true;
+      self.promotionDirty = true;
     };
 
     var laneCodesAfterPromotion = function (lanesWithOrderNumbers, newMainLane) {
