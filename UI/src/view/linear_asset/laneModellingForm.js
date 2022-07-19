@@ -397,7 +397,7 @@
         newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
-      }).prop("disabled", !_.isEmpty(even) && _.max(even) == 8));
+      }).prop("disabled", !_.isEmpty(even) && _.max(even) == 8 || selectedAsset.isPromotionDirty()));
 
       var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
@@ -406,7 +406,7 @@
         newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
-      }).prop("disabled", !_.isEmpty(odd) && _.max(odd) == 9));
+      }).prop("disabled", !_.isEmpty(odd) && _.max(odd) == 9 || selectedAsset.isPromotionDirty()));
 
       var selectedRoadLink = selectedAsset.getSelectedRoadlink();
       var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary">Lisää kaista tieosoitteen avulla</button>').click(function() {
@@ -502,7 +502,7 @@
         GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
-      var promoteToMainLane = $('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
+      var promoteToMainLaneButton = $('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
         var laneToPromote = selectedAsset.getLane(currentLaneNumber);
         var selectedLaneGroup = selectedAsset.selection;
         var passedValidations = validatePromotion(laneToPromote, selectedLaneGroup);
@@ -516,10 +516,24 @@
           GenericConfirmPopup(alertMessage, validationAlertPopUpOptions);
         }
         else{
-          selectedAsset.promoteToMainLane(currentLaneNumber);
-          currentLaneNumber = 1;
-          prepareLanesStructure();
-          reloadForm($('#feature-attributes'));
+          var confirmationPopUpOptions = {
+            type: "confirm",
+            yesButtonLbl: 'OK',
+            noButtonLbl: 'Peruuta',
+            successCallback: function() {
+              selectedAsset.promoteToMainLane(currentLaneNumber);
+              currentLaneNumber = 1;
+              prepareLanesStructure();
+              reloadForm($('#feature-attributes'));
+            },
+            closeCallback: function() {
+              prepareLanesStructure();
+              reloadForm($('#feature-attributes'));
+            }
+          };
+
+          var confirmationMessage = "Olet muuttamassa pääkaistan paikkaa. Tämä muutos vaikuttaa kaikkiin valittujen tielinkkien kaistoihin.";
+          GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
         }
       });
 
@@ -571,10 +585,10 @@
 
       expireLane.prop('disabled', lane.id === 0);
       deleteLane.prop('disabled', lane.id !== 0);
-      promoteToMainLane.prop('disabled', selectedAsset.isDirty());
+      promoteToMainLaneButton.prop('disabled', selectedAsset.isDirty());
 
       if(currentLaneNumber !== 1)
-        body.find('.form').append($('<div class="lane-buttons">').append(promoteToMainLane).append(expireLane).append(deleteLane));
+        body.find('.form').append($('<div class="lane-buttons">').append(promoteToMainLaneButton).append(expireLane).append(deleteLane));
     }
 
     function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled, body) {
@@ -629,9 +643,20 @@
         return self._assetTypeConfiguration.saveCondition(selectedLanesAsset.get());
       };
 
+      var laneTypesDefined = function() {
+        var lanes = self._assetTypeConfiguration.selectedLinearAsset.selection;
+        return _.every(lanes, function(lane) {
+          var laneTypeProp = _.find(lane.properties, function(prop) {
+            return prop.publicId == 'lane_type';
+          });
+          return laneTypeProp.values[0].value !== null;
+        });
+
+      };
+
       return _.every(forms.getAllFields(), function(field){
         return field.isValid();
-      }) && otherSaveCondition();
+      }) && otherSaveCondition() && laneTypesDefined();
     };
 
     self.saveButton = function(assetTypeConfiguration) {
