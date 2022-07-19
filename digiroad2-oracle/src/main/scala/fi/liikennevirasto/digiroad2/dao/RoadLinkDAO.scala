@@ -145,7 +145,6 @@ class RoadLinkDAO {
       val length  = r.nextDouble()
 
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
-      // change where this is generated
       val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
       val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
       val featureClass = extractFeatureClass(mtkClass)
