@@ -340,6 +340,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param linkIds
     * @return VVHRoadLinks
     */
+  def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    fetchVVHRoadlinks(linkIds,false)
+  }
+  
+  /**
+    * This method returns VVH road links by link ids.
+    *
+    * @param linkIds
+    * @return VVHRoadLinks
+    */
   def fetchVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled:Boolean = false): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else roadLinkDAO.fetchByLinkIds(linkIds) }
     else Seq.empty[VVHRoadlink]
