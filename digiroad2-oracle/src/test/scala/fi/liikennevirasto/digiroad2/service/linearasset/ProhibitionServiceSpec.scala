@@ -334,9 +334,6 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create prohibitions on actor update when exist sideCode adjustment") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)

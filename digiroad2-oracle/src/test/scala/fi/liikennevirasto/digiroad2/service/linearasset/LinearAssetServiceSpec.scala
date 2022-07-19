@@ -571,9 +571,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   test("Create new assets on update when exist sideCode adjustmen") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -730,10 +727,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   test("Should extend traffic count on segment") {
-
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -792,9 +785,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   test("Get Municipality Code By Asset Id") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenCallRealMethod()
     val timeStamp = mockVVHRoadLinkClient.createVVHTimeStamp(-5)
@@ -887,9 +877,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   test("Adjust projected asset with creation"){
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
