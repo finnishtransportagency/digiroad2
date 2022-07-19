@@ -32,11 +32,15 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(vvhClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
+    override def roadLinkDAO: RoadLinkDAO = mockRoadLinkDao
+    override def complementaryLinkDAO: ComplementaryLinkDAO = mockRoadLinkComplimentaryDao
   }
 
   class RoadLinkTestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus, vvhSerializer: VVHSerializer = new DummySerializer) extends RoadLinkService(vvhClient, eventBus, vvhSerializer) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
+    override def roadLinkDAO: RoadLinkDAO = mockRoadLinkDao
+    override def complementaryLinkDAO: ComplementaryLinkDAO = mockRoadLinkComplimentaryDao
   }
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -128,6 +132,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val lastEditedDate = DateTime.now()
       val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TrafficDirection.TowardsDigitizing, AllOthers, Some(lastEditedDate)))
+      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
       when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(roadLinks).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
 
@@ -369,10 +374,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       VVHRoadlink(oldLinkId1, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))),
       VVHRoadlink(oldLinkId2, 235, Nil, Municipality, TrafficDirection.AgainstDigitizing, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235))))
     val newRoadLink = VVHRoadlink(newLinkId, 235, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]
-    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
+    
     val service = new TestService(mockVVHClient)
 
     PostGISDatabase.withDynTransaction {
@@ -1085,7 +1087,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val linkIds = vvhRoadLinks.map(_.linkId)
 
-      val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+      val service = new TestService(mockVVHClient)
       
       when(mockRoadLinkComplimentaryDao.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(Seq()))
       when(mockRoadLinkDao.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
@@ -1126,7 +1128,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       val linkIds = vvhRoadLinks.map(_.linkId)
 
-      val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+      val service = new TestService(mockVVHClient)
       
       when(mockRoadLinkComplimentaryDao.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(Seq()))
       when(mockRoadLinkDao.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
