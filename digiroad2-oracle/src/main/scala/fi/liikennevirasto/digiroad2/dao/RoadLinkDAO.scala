@@ -6,7 +6,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.Queries.extractGeometry
+import fi.liikennevirasto.digiroad2.dao.Queries.objectToGeometry
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import org.joda.time.DateTime
@@ -115,7 +115,7 @@ class RoadLinkDAO {
       val mtkId = r.nextLong()
       val mtkHereFlip = r.nextInt()
       val municipality = r.nextInt()
-      val path = r.nextObjectOption().map(extractGeometry).get
+      val path = r.nextObjectOption().map(objectToGeometry).get
       val administrativeClass = r.nextInt()
       val directionType = r.nextIntOption()
       val mtkClass = r.nextInt()

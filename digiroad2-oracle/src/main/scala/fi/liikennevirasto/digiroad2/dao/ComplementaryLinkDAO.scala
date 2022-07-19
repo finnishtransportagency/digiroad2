@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.Queries.extractGeometry
+import fi.liikennevirasto.digiroad2.dao.Queries.objectToGeometry
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
@@ -22,7 +22,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
     def apply(r: PositionedResult): VVHRoadlink = {
       val linkId = r.nextLong()
       val municipality = r.nextInt()
-      val path = r.nextObjectOption().map(extractGeometry).get
+      val path = r.nextObjectOption().map(objectToGeometry).get
       val administrativeClass = r.nextInt()
       val directionType = r.nextIntOption()
       val mtkClass = r.nextInt()

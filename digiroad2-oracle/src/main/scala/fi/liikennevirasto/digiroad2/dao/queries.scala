@@ -44,7 +44,7 @@ object Queries {
     Point(point.x, point.y)
   }
 
-  def extractGeometry(data: Object): List[List[Double]] = {
+  def objectToGeometry(data: Object): List[List[Double]] = {
     val geometry = data.asInstanceOf[PGobject]
     if (geometry == null) Nil
     else {
