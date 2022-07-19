@@ -175,8 +175,6 @@ class RoadLinkDAO {
         "OBJECTID" -> objectId,
         "STARTNODE" -> startNode,
         "ENDNODE" -> endNode
-        //"points" -> geometryForApi,
-        //"geometryWKT" -> geometryWKT
       ).collect {
         case (key, Some(value)) => key -> value
         case (key, value) if value != None => key -> value
