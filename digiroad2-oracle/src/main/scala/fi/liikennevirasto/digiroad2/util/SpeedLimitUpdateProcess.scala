@@ -56,36 +56,6 @@ class SpeedLimitUpdateProcess(eventbusImpl: DigiroadEventBus, roadLinkClient: Ro
     persistUnknown(unknownLimits)
   }
 
-  override def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    dao.floatLinearAssets(changeSet.droppedAssetIds)
-
-    if (changeSet.adjustedMValues.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedMValues.foreach { adjustment =>
-      dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-    }
-
-    if (changeSet.adjustedVVHChanges.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedVVHChanges.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-    }
-
-    //NOTE the order between expire and sideCode adjustment can't be changed
-    if (changeSet.expiredAssetIds.toSeq.nonEmpty)
-      logger.info("Expiring ids " + changeSet.expiredAssetIds.toSeq.mkString(", "))
-    changeSet.expiredAssetIds.toSeq.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
-
-    if (changeSet.adjustedSideCodes.nonEmpty)
-      logger.info("Side Code adjustments ids " + changeSet.adjustedSideCodes.map(a => "" + a.assetId + "/" + a.sideCode).mkString(", "))
-
-    changeSet.adjustedSideCodes.foreach { adjustment =>
-      adjustedSideCode(adjustment)
-    }
-  }
-
   override def persistProjectedLimit(limits: Seq[SpeedLimit]): Unit = {
     val (newlimits, changedlimits) = limits.partition(_.id <= 0)
     newlimits.foreach { limit =>

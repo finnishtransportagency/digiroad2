@@ -100,33 +100,32 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
 
   override def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    withDynTransaction {
-      dao.floatLinearAssets(changeSet.droppedAssetIds)
+    dao.floatLinearAssets(changeSet.droppedAssetIds)
 
-      if (changeSet.adjustedMValues.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+    if (changeSet.adjustedMValues.nonEmpty)
+      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
-      changeSet.adjustedMValues.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
-
-//      //This changes only should be apply if the asset created_by or modified_by are different of "vvh_mtkclass_default"
-      if (changeSet.adjustedVVHChanges.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-      changeSet.adjustedVVHChanges.foreach { adjustment =>
-        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-      }
-
-      changeSet.adjustedSideCodes.foreach { adjustment =>
-        adjustedSideCode(adjustment)
-      }
-
-      val ids = changeSet.expiredAssetIds.toSeq
-      if (ids.nonEmpty)
-        logger.info("Expiring ids " + ids.mkString(", "))
-      ids.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
+    changeSet.adjustedMValues.foreach { adjustment =>
+      dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
     }
+
+    //      //This changes only should be apply if the asset created_by or modified_by are different of "vvh_mtkclass_default"
+    if (changeSet.adjustedVVHChanges.nonEmpty)
+      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+
+    changeSet.adjustedVVHChanges.foreach { adjustment =>
+      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
+    }
+
+    changeSet.adjustedSideCodes.foreach { adjustment =>
+      adjustedSideCode(adjustment)
+    }
+
+    val ids = changeSet.expiredAssetIds.toSeq
+    if (ids.nonEmpty)
+      logger.info("Expiring ids " + ids.mkString(", "))
+    ids.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
+
   }
 
   override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {

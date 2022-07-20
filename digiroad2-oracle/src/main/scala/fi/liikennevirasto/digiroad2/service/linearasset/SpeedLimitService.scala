@@ -644,34 +644,32 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
   }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    withDynTransaction {
-      dao.floatLinearAssets(changeSet.droppedAssetIds)
+    dao.floatLinearAssets(changeSet.droppedAssetIds)
 
-      if (changeSet.adjustedMValues.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+    if (changeSet.adjustedMValues.nonEmpty)
+      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
-      changeSet.adjustedMValues.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
+    changeSet.adjustedMValues.foreach { adjustment =>
+      dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+    }
 
-      if (changeSet.adjustedVVHChanges.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+    if (changeSet.adjustedVVHChanges.nonEmpty)
+      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
-      changeSet.adjustedVVHChanges.foreach { adjustment =>
-        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-      }
+    changeSet.adjustedVVHChanges.foreach { adjustment =>
+      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
+    }
 
-      //NOTE the order between expire and sideCode adjustment cant be changed
-      if (changeSet.expiredAssetIds.toSeq.nonEmpty)
-        logger.info("Expiring ids " + changeSet.expiredAssetIds.toSeq.mkString(", "))
-      changeSet.expiredAssetIds.toSeq.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
+    //NOTE the order between expire and sideCode adjustment cant be changed
+    if (changeSet.expiredAssetIds.toSeq.nonEmpty)
+      logger.info("Expiring ids " + changeSet.expiredAssetIds.toSeq.mkString(", "))
+    changeSet.expiredAssetIds.toSeq.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
 
-      if (changeSet.adjustedSideCodes.nonEmpty)
-        logger.info("Side Code adjustments ids " + changeSet.adjustedSideCodes.map(a => "" + a.assetId + "/" + a.sideCode).mkString(", "))
+    if (changeSet.adjustedSideCodes.nonEmpty)
+      logger.info("Side Code adjustments ids " + changeSet.adjustedSideCodes.map(a => "" + a.assetId + "/" + a.sideCode).mkString(", "))
 
-      changeSet.adjustedSideCodes.foreach { adjustment =>
-        adjustedSideCode(adjustment)
-      }
+    changeSet.adjustedSideCodes.foreach { adjustment =>
+      adjustedSideCode(adjustment)
     }
   }
 

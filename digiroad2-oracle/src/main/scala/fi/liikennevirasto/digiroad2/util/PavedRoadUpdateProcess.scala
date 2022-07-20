@@ -59,41 +59,6 @@ class PavedRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  override def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    dao.floatLinearAssets(changeSet.droppedAssetIds)
-
-    if (changeSet.adjustedMValues.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedMValues.foreach { adjustment =>
-      dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-    }
-
-    if (changeSet.adjustedVVHChanges.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedVVHChanges.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-    }
-    val ids = changeSet.expiredAssetIds.toSeq
-    if (ids.nonEmpty)
-      logger.info("Expiring ids " + ids.mkString(", "))
-    ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
-
-    if (changeSet.adjustedSideCodes.nonEmpty)
-      logger.info("Saving SideCode adjustments for asset/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.assetId).mkString(", "))
-
-    changeSet.adjustedSideCodes.foreach { adjustment =>
-      adjustedSideCode(adjustment)
-    }
-
-    if (changeSet.valueAdjustments.nonEmpty)
-      logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
-    changeSet.valueAdjustments.foreach { adjustment =>
-      updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
-    }
-  }
-
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)

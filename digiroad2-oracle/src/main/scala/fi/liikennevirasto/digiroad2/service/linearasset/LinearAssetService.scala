@@ -649,40 +649,38 @@ trait LinearAssetOperations {
   }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    withDynTransaction {
-      dao.floatLinearAssets(changeSet.droppedAssetIds)
+    dao.floatLinearAssets(changeSet.droppedAssetIds)
 
-      if (changeSet.adjustedMValues.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+    if (changeSet.adjustedMValues.nonEmpty)
+      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
-      changeSet.adjustedMValues.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
+    changeSet.adjustedMValues.foreach { adjustment =>
+      dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+    }
 
-      if (changeSet.adjustedVVHChanges.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+    if (changeSet.adjustedVVHChanges.nonEmpty)
+      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
-      changeSet.adjustedVVHChanges.foreach { adjustment =>
-        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-      }
-      val ids = changeSet.expiredAssetIds.toSeq
-      if (ids.nonEmpty)
-        logger.info("Expiring ids " + ids.mkString(", "))
-      ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
+    changeSet.adjustedVVHChanges.foreach { adjustment =>
+      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
+    }
+    val ids = changeSet.expiredAssetIds.toSeq
+    if (ids.nonEmpty)
+      logger.info("Expiring ids " + ids.mkString(", "))
+    ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
 
-      if (changeSet.adjustedSideCodes.nonEmpty)
-        logger.info("Saving SideCode adjustments for asset/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.assetId).mkString(", "))
+    if (changeSet.adjustedSideCodes.nonEmpty)
+      logger.info("Saving SideCode adjustments for asset/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.assetId).mkString(", "))
 
-      changeSet.adjustedSideCodes.foreach { adjustment =>
-        adjustedSideCode(adjustment)
-      }
+    changeSet.adjustedSideCodes.foreach { adjustment =>
+      adjustedSideCode(adjustment)
+    }
 
-      if (changeSet.valueAdjustments.nonEmpty)
-        logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
-      changeSet.valueAdjustments.foreach { adjustment =>
-        updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
+    if (changeSet.valueAdjustments.nonEmpty)
+      logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
+    changeSet.valueAdjustments.foreach { adjustment =>
+      updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
 
-      }
     }
   }
 

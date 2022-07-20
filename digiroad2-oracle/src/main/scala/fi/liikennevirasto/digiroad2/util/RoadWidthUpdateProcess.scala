@@ -62,35 +62,6 @@ class RoadWidthUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  override def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    dao.floatLinearAssets(changeSet.droppedAssetIds)
-
-    if (changeSet.adjustedMValues.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedMValues.foreach { adjustment =>
-      dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-    }
-
-    //These changes should only apply if the created_by or modified_by attributes differ from "vvh_mtkclass_default"
-    if (changeSet.adjustedVVHChanges.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedVVHChanges.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-    }
-
-    changeSet.adjustedSideCodes.foreach { adjustment =>
-      adjustedSideCode(adjustment)
-    }
-
-
-    val ids = changeSet.expiredAssetIds.toSeq
-    if (ids.nonEmpty)
-      logger.info("Expiring ids " + ids.mkString(", "))
-    ids.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
-  }
-
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
