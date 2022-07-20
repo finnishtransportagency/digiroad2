@@ -22,7 +22,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
 
   val timeStamp = new VVHClient("http://localhost:6080").createVVHTimeStamp(-5)
   when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
-  when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp) //TODO change this lines
+  when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
   val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
