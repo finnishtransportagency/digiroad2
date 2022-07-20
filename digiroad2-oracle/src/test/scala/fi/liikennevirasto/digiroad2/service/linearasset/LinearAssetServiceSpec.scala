@@ -25,7 +25,6 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
 
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools: PolygonTools = MockitoSugar.mock[PolygonTools]
   
   when(mockRoadLinkService.fetchByLinkId(388562360L)).thenReturn(Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
