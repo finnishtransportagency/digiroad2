@@ -58,7 +58,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   before {
     // Reset the mocks here so individual tests don't have to
     vvhRoadLinks.foreach(rl =>
-      when(mockRoadLinkService.fetchRoadLinkOrComplimentaryByLinkId(rl.linkId))
+      when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(rl.linkId))
         .thenReturn(Some(rl)))
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
     vvhRoadLinks.foreach(rl =>

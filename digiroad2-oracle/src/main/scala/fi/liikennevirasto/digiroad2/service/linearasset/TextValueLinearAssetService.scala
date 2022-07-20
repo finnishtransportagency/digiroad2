@@ -116,7 +116,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       val oldLinearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.getValuePropertyId(typeId)).head
       val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
       val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
-      val roadLink = roadLinkService.fetchRoadLinkOrComplimentaryByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
       value match {
         case TextualValue(textValue) =>
@@ -151,7 +151,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
       val linearAsset = dao.fetchAssetsWithTextualValuesByIds(Set(id), LinearAssetTypes.getValuePropertyId(assetTypeById(id))).head
-      val roadLink = roadLinkService.fetchRoadLinkOrComplimentaryByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
@@ -170,7 +170,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
 
       val existing =  dao.fetchAssetsWithTextualValuesByIds(Set(id), LinearAssetTypes.getValuePropertyId(assetTypeById(id))).head
-      val roadLink = roadLinkService.fetchRoadLinkOrComplimentaryByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       dao.updateExpiration(id, expired = true, username)

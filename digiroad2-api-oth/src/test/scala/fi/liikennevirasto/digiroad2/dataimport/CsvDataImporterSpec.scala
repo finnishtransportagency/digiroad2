@@ -175,7 +175,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     
-    when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+    when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
     val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 2)
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
@@ -191,7 +191,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
     val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-    when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+    when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
     val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
@@ -208,7 +208,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     
-    when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+    when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
     val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
@@ -226,7 +226,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
     
     runWithRollback {
-      when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
       val link_id = 1000
       val functionalClassValue = 3
@@ -248,7 +248,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
 
     runWithRollback {
-      when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
       val link_id = 1000
       val functionalClassValue = 3
@@ -269,7 +269,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
 
     runWithRollback {
-      when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
       RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.LinkType, link_id, Some("unit_test"), 2)
@@ -290,7 +290,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
 
     runWithRollback {
-      when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
 
@@ -313,7 +313,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     runWithRollback {
       when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
-      when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1611388
       RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, link_id, Some("unit_test"), 1)
       val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "liikennevirran suunta" -> 3)))
@@ -336,7 +336,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     runWithRollback {
       when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
-      when(mockRoadLinkService.fetchByLinkIdComplimentary(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockRoadLinkService.fetchComplimentaryByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
       RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.LinkType, link_id, Some("unit_test"), 2)

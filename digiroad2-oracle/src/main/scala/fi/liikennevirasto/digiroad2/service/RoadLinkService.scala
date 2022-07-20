@@ -544,7 +544,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     withDbConnection {roadLinkDAO.fetchByBounds(bounds)}
   }
 
-  def fetchRoadLinkOrComplimentaryByLinkId(linkId: Long): Option[VVHRoadlink] = {
+  def fetchNormalOrComplimentaryRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
     withDbConnection {
       roadLinkDAO.fetchByLinkId(linkId) match {
         case Some(vvhRoadLink) => Some(vvhRoadLink)
@@ -556,7 +556,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def fetchByLinkId(linkId: Long): Option[VVHRoadlink] = {
     withDbConnection { roadLinkDAO.fetchByLinkId(linkId)}
   }
-  def fetchByLinkIdComplimentary(linkId: Long): Option[VVHRoadlink] = {
+  def fetchComplimentaryByLinkId(linkId: Long): Option[VVHRoadlink] = {
     withDbConnection { complementaryLinkDAO.fetchByLinkId(linkId)}
   }
 

@@ -719,7 +719,7 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = roadLinkService.fetchRoadLinkOrComplimentaryByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
@@ -803,7 +803,7 @@ trait LinearAssetOperations {
   def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = roadLinkService.fetchRoadLinkOrComplimentaryByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       dao.updateExpiration(id)
@@ -824,7 +824,7 @@ trait LinearAssetOperations {
       val oldLinearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
       val newMeasures = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
       val newSideCode = sideCode.getOrElse(oldLinearAsset.sideCode)
-      val roadLink = roadLinkService.fetchRoadLinkOrComplimentaryByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
       value match {
         case NumericValue(intValue) =>
