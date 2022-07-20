@@ -22,7 +22,7 @@ object PostGISDatabase {
   def isTransactionOpen: Boolean = transactionOpen.get()
 
   /**
-    * Opens new dynSession only if there is not connection open change location
+    * Opens new dynSession only if there is not connection open
     */
   def withDbConnection[T](f: => T): T = {
     if (isTransactionOpen) f else withDynSession{ f }
