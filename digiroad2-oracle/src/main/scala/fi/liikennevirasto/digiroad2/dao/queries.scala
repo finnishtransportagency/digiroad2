@@ -19,9 +19,7 @@ import Q._
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
-
 import java.util.Locale
-import scala.collection.mutable.ListBuffer
 
 
 object Queries {
