@@ -428,8 +428,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Should expire the assets if vvh gives change informations and the roadlink surface type is equal to 1") {
-
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
