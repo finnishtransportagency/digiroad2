@@ -220,9 +220,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     } yield changeInfos
 
     val changeInfos = Await.result(fut, Duration.Inf)
-    
-    val vvhRoadLinks = withDbConnection {roadLinkDAO.fetchByMunicipality(municipality)}
-    val complementaryLinks = withDbConnection {complementaryLinkDAO.fetchByMunicipality(municipality)}
+    val (vvhRoadLinks,complementaryLinks) = withDbConnection{
+      (roadLinkDAO.fetchByMunicipality(municipality),complementaryLinkDAO.fetchByMunicipality(municipality))
+    }
     
     if (newTransaction)
       withDynTransaction {
@@ -742,7 +742,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     *
     */
   def getRoadLinkMiddlePointByLinkId(linkId: Long): Option[(Long, Point, LinkGeomSource)] = {
-    val middlePoint: Option[Point] =withDbConnection { roadLinkDAO.fetchByLinkId(linkId)}
+    val middlePoint: Option[Point] = withDbConnection { roadLinkDAO.fetchByLinkId(linkId)}
       .flatMap { vvhRoadLink =>
         GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
       }
@@ -750,7 +750,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getComplementaryLinkMiddlePointByLinkId(linkId: Long): Option[Point] = {
-    val middlePoint: Option[Point] =withDbConnection { complementaryLinkDAO.fetchByLinkIds(Set(linkId)).headOption}
+    val middlePoint: Option[Point] = withDbConnection { complementaryLinkDAO.fetchByLinkIds(Set(linkId)).headOption}
       .flatMap { vvhRoadLink =>
         GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
       }
@@ -764,13 +764,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getRoadLinkMiddlePointByMmlId(mmlId: Long): Option[(Long, Point)] = {
     withDbConnection {
-    roadLinkDAO.fetchByMmlId(mmlId).flatMap { vvhRoadLink =>
+      roadLinkDAO.fetchByMmlId(mmlId)
+    }.flatMap { vvhRoadLink =>
       val point = GeometryUtils.calculatePointFromLinearReference(vvhRoadLink.geometry, GeometryUtils.geometryLength(vvhRoadLink.geometry) / 2.0)
       point match {
         case Some(point) => Some(vvhRoadLink.linkId, point)
         case None => None
       }
-    }
     }
   }
 
@@ -785,7 +785,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Saves road link property data from UI.
     */
   def updateLinkProperties(linkProperty: LinkProperties, username: Option[String], municipalityValidation: (Int, AdministrativeClass) => Unit): Option[RoadLink] = {
-    val vvhRoadLink =withDbConnection { roadLinkDAO.fetchByLinkId(linkProperty.linkId) match {
+    val vvhRoadLink = withDbConnection { roadLinkDAO.fetchByLinkId(linkProperty.linkId) match {
       case Some(vvhRoadLink) => Some(vvhRoadLink)
       case None => complementaryLinkDAO.fetchByLinkId(linkProperty.linkId)
     }}
@@ -811,7 +811,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Returns road link geometry by link id. Used by RoadLinkService.getAdjacent.
     */
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
-    withDbConnection {   roadLinkDAO.fetchByLinkId(id).map(_.geometry)}
+    withDbConnection {roadLinkDAO.fetchByLinkId(id).map(_.geometry)}
   }
 
   protected def setLinkProperty(propertyName: String, linkProperty: LinkProperties, username: Option[String],
