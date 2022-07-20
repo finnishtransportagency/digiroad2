@@ -8,10 +8,12 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangl
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.postgis.PGgeometry
 import org.postgresql.util.PGobject
+import org.slf4j.LoggerFactory
 import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
@@ -19,9 +21,10 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 class RoadLinkDAO {
   protected val geometryColumn: String = "shape"
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   // Query filters methods
   protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
@@ -327,13 +330,15 @@ class RoadLinkDAO {
   }
   
  protected def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
-    sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+   LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
+     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
                  geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
           from roadlink
           where #$filter and constructiontype in (0,1,3)
           """.as[VVHRoadlink].list
+   }
   }
 
   private def getByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
@@ -369,11 +374,12 @@ class RoadLinkDAO {
     if (polygon.getCoordinates.isEmpty) return Seq.empty[Long]
     
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
-
-    sql"""select linkid
+    LogUtils.time(logger,"TEST LOG Getting roadlinks by polygon" ){
+      sql"""select linkid
           from roadlink
           where #$polygonFilter
        """.as[Long].list
+    }
   }
 
   protected def extractFeatureClass(code: Int): FeatureClass = {

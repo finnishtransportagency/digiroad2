@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterf
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult}
@@ -90,21 +91,24 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
   }
   
   override def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
-    sql"""select linkid, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,
+    LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
+      sql"""select linkid, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,
                  roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
                  geometry_edited_date, surfacetype, subtype, objectid, sourceinfo, geometrylength, cust_owner
           from roadlinkex
           where subtype = 3 and #$filter
           """.as[VVHRoadlink].list
+    }
   }
 
   override def getLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
-
-    sql"""select linkid
+    LogUtils.time(logger,"TEST LOG Getting roadlinks by polygon" ){
+      sql"""select linkid
           from roadlinkex
           where subtype = 3 and #$polygonFilter
        """.as[Long].list
+    }
   }
 }
