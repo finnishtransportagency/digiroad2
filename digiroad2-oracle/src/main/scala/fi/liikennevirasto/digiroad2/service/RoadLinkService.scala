@@ -480,10 +480,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     )
     
     val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
-        withDynTransaction {
-          LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH from boundingBox request, link count: " + links.size)(
-      (enrichRoadLinksFromVVH(links), changes)
-          )
+    withDynTransaction {
+      LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH from boundingBox request, link count: " + links.size)(
+        (enrichRoadLinksFromVVH(links), changes)
+      )
     }
   }
 
@@ -595,7 +595,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   }
 
-  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction:Boolean = true,asyncMode: Boolean = true): Seq[RoadLink] = {
+  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction:Boolean = true): Seq[RoadLink] = {
     val  (complementaryLinks, links) = withDbConnection {
       (complementaryLinkDAO.fetchByLinkIds(linkIds),roadLinkDAO.fetchByLinkIds(linkIds))
     }
@@ -682,10 +682,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getRoadLinksAndChangesByBoundsFromVVH(bounds: BoundingRectangle, bounds2: BoundingRectangle, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, Set())}
-    val links2 =withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds2, Set())}
+    val (links,links2) = withDbConnection{
+      (roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, Set()),roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds2, Set()))
+    }
+    
     val changeF = vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, Set())
-    val ( changes) = Await.result(changeF, atMost = Duration.apply(120, TimeUnit.SECONDS))
+    val changes = Await.result(changeF, atMost = Duration.apply(120, TimeUnit.SECONDS))
     
     if(newTransaction)
       withDynTransaction {
