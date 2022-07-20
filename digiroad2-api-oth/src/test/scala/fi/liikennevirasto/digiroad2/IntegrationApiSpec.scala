@@ -47,6 +47,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   val testDynamicLinearAssetService = new DynamicLinearAssetService(mockRoadLinkService, mockEventBus)
   val testBogieWeightLimitService = new LinearBogieWeightLimitService(mockRoadLinkService, mockEventBus)
   val testDamagedByThawService = new DamagedByThawService(mockRoadLinkService, mockEventBus)
+  val testParkingProhibitionService = new ParkingProhibitionService(mockRoadLinkService, mockEventBus)
 
   def runWithRollback(test: => Unit): Unit = integrationApiTestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
@@ -69,7 +70,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
         case NumberOfLanes.typeId => numberOfLanesService
         case DamagedByThaw.typeId => testDamagedByThawService
         case RoadWorksAsset.typeId => roadWorkService
-        case ParkingProhibition.typeId => parkingProhibitionService
+        case ParkingProhibition.typeId => testParkingProhibitionService
         case CyclingAndWalking.typeId => cyclingAndWalkingService
         case _ => linearAssetService
       }
@@ -344,13 +345,16 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("bogie weight value is returned as integer") {
     val bogieWeightValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("bogie_weight_2_axel", "number", false, Seq(DynamicPropertyValue(2000)))
+      DynamicProperty("bogie_weight_2_axel", "number", false, Seq(DynamicPropertyValue(2000))),
+      DynamicProperty("bogie_weight_3_axel", "number", false, Seq(DynamicPropertyValue(3000)))
     )))
 
     runWithRollback {
       testBogieWeightLimitService.create(Seq(NewLinearAsset(5000L, 0, 150, bogieWeightValue, SideCode.AgainstDigitizing.value, 0, None)), BogieWeightLimit.typeId, "test", 0)
-      val bogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("twoAxelValue").get
-      bogieWeightLimit.isInstanceOf[Int] should be(true)
+      val twoAxelBogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("twoAxelValue").get
+      twoAxelBogieWeightLimit.isInstanceOf[Int] should be(true)
+      val threeAxelBogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("threeAxelValue").get
+      threeAxelBogieWeightLimit.isInstanceOf[Int] should be(true)
     }
   }
 
@@ -369,13 +373,26 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
+  test("parking prohibition type is returned as integer") {
+    val parkingProhibitionValues = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("parking_prohibition", "number", false, Seq(DynamicPropertyValue(1)))
+    )))
+
+    runWithRollback {
+      testParkingProhibitionService.create(Seq(NewLinearAsset(5000L, 0, 150, parkingProhibitionValues, SideCode.AgainstDigitizing.value, 0, None)), ParkingProhibition.typeId, "test", 0)
+      val parkingProhibitionsFromApi = integrationApi.parkingProhibitionsToApi(235).head
+      val parkingProhibitionType = parkingProhibitionsFromApi.get("parking_prohibition").get
+      parkingProhibitionType.isInstanceOf[Int] should be(true)
+    }
+  }
+
   test("certain traffic sign values are returned as integer") {
     val properties = Seq(
       Property(1L, "trafficSigns_type", "", false, Seq(PropertyValue("2"))),
       Property(1L, "old_traffic_code", "", false, Seq(PropertyValue("1"))),
       Property(1L, "trafficSigns_value", "", false, Seq(PropertyValue("50"))),
       Property(1L, "trafficSigns_info", "", false, Seq(PropertyValue("test"))),
-      Property(1L, "municipality_id", "", false, Seq(PropertyValue("235"))),
+      Property(1L, "municipality_id", "", false, Seq(PropertyValue("1", propertyDisplayValue = Some("235")))),
       Property(1L, "main_sign_text", "", false, Seq(PropertyValue("test"))),
       Property(1L, "structure", "", false, Seq(PropertyValue("1"))),
       Property(1L, "condition", "", false, Seq(PropertyValue("1"))),
@@ -384,8 +401,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       Property(1L, "coating_type", "", false, Seq(PropertyValue("1"))),
       Property(1L, "sign_material", "", false, Seq(PropertyValue("2"))),
       Property(1L, "location_specifier", "", false, Seq(PropertyValue("11"))),
-      Property(1L, "terrain_coordinates_x", "", false, Seq(PropertyValue("1"))),
-      Property(1L, "terrain_coordinates_y", "", false, Seq(PropertyValue("2"))),
+      Property(1L, "terrain_coordinates_x", "", false, Seq(PropertyValue("1", propertyDisplayValue = Some("1,23")))),
+      Property(1L, "terrain_coordinates_y", "", false, Seq(PropertyValue("2", propertyDisplayValue = Some("4,56")))),
       Property(1L, "lane_type", "", false, Seq(PropertyValue("1"))),
       Property(1L, "lane", "", false, Seq(PropertyValue("1", propertyDisplayValue = Some("1")))),
       Property(1L, "main_sign_text", "", false, Seq(PropertyValue("test"))),
@@ -414,13 +431,17 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     trafficSignValuesFromApi.get("lifespanLeft").get.isInstanceOf[Int] should be(true)
     trafficSignValuesFromApi.get("laneType").get.isInstanceOf[Int] should be(true)
     trafficSignValuesFromApi.get("signMaterial").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("municipalityId").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("lifeCycle").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("terrainCoordinatesX").get.isInstanceOf[Float] should be(true)
+    trafficSignValuesFromApi.get("terrainCoordinatesY").get.isInstanceOf[Float] should be(true)
     val additionalPanel = trafficSignValuesFromApi.get("additionalPanels").get.asInstanceOf[List[Map[String, Any]]].head
     additionalPanel.get("additionalPanelSize").get.isInstanceOf[Int] should be(true)
     additionalPanel.get("additionalPanelCoatingType").get.isInstanceOf[Int] should be(true)
     additionalPanel.get("additionalPanelColor").get.isInstanceOf[Int] should be(true)
   }
 
-  test("traffic sign api conversion does not crash with invalid data") {
+  test("traffic sign api conversion returns default value on invalid data") {
 
     val properties = Seq(
       Property(1L, "trafficSigns_type", "", false, Seq(PropertyValue("a"))),
@@ -453,6 +474,22 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     val trafficSignForApi = PersistedTrafficSign(1L, 100L, 11.11, 22.22, 33.33, false, 0L, 235, properties, None, None,
       None, None, 1, Some(1), LinkGeomSource.Unknown, false)
 
-    integrationApi.trafficSignsToApi(Seq(trafficSignForApi))
+    val trafficSignValuesFromApi = integrationApi.trafficSignsToApi(Seq(trafficSignForApi)).head
+    trafficSignValuesFromApi.get("typeOfDamage").get should be("")
+    trafficSignValuesFromApi.get("oldTrafficCode").get should be("")
+    trafficSignValuesFromApi.get("size").get should be("")
+    trafficSignValuesFromApi.get("height").get should be("")
+    trafficSignValuesFromApi.get("lane").get should be("")
+    trafficSignValuesFromApi.get("structure").get should be("")
+    trafficSignValuesFromApi.get("condition").get should be("")
+    trafficSignValuesFromApi.get("coatingType").get should be("")
+    trafficSignValuesFromApi.get("urgencyOfRepair").get should be("")
+    trafficSignValuesFromApi.get("lifespanLeft").get should be("")
+    trafficSignValuesFromApi.get("laneType").get should be("")
+    trafficSignValuesFromApi.get("signMaterial").get should be("")
+    trafficSignValuesFromApi.get("municipalityId").get should be("")
+    trafficSignValuesFromApi.get("lifeCycle").get should be("")
+    trafficSignValuesFromApi.get("terrainCoordinatesX").get should be("")
+    trafficSignValuesFromApi.get("terrainCoordinatesY").get should be("")
   }
 }
