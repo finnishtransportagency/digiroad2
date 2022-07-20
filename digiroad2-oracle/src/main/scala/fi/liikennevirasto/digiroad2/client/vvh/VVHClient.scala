@@ -5,11 +5,8 @@ import java.util.ArrayList
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, OAGAuthPropertyReader}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -224,6 +221,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
   lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
   lazy val suravageData: VVHSuravageClient = new VVHSuravageClient(vvhRestApiEndPoint)
+
+  def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
+    roadLinkData.fetchByLinkId(linkId) match {
+      case Some(vvhRoadLink) => Some(vvhRoadLink)
+      case None => complementaryData.fetchByLinkId(linkId)
+    }
+  }
   
   def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     VVHClient.createVVHTimeStamp(offsetHours)
@@ -929,15 +933,6 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
   }
-
-  /**
-    * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
-    */
-  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
-                                                 includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads))
-  }
   
   def fetchByPolygon(polygon : Polygon): Seq[VVHRoadlink] = {
     queryByPolygons(polygon)
@@ -949,6 +944,15 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
 
   def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[Long]] = {
     Future(queryLinksIdByPolygons(polygon))
+  }
+
+  /**
+    * Returns VVH road links. Uses Scala Future for concurrent operations.
+    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
+    */
+  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
+                                                 includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads))
   }
   
   /**
