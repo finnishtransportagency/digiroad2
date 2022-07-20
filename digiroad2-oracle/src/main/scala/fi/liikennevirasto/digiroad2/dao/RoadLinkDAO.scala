@@ -273,6 +273,10 @@ class RoadLinkDAO {
    getLinksIdByPolygons(polygon)
   }
 
+  def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
+    getByMunicipality(municipality)
+  }
+
   def fetchByMunicipalityF(municipality: Int): Future[Seq[VVHRoadlink]] = {
     Future(getByMunicipality(municipality))
   }
@@ -299,6 +303,20 @@ class RoadLinkDAO {
     Future(getByMunicipalitiesAndBounds(bounds, municipalities,None))
   }
 
+  def fetchWalkwaysByMunicipalities(municipality:Int): Seq[VVHRoadlink] = {
+    getByMunicipality(municipality, Some(withMtkClassFilter(Set(12314))))
+  }
+  def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[VVHRoadlink]] =
+    Future(getByMunicipality(municipality, Some(withMtkClassFilter(Set(12314)))))
+
+  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(getByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
+  }
+
+  def fetchWalkwaysByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
+    getByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314))))
+  }
+  
   /**
     * Returns VVH road links.
     */
@@ -332,7 +350,7 @@ class RoadLinkDAO {
     getLinksWithFilter(s"$bboxFilter $withFilter")
   }
 
-  protected def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHRoadlink] = {
+  private def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHRoadlink] = {
     val queryFilter =
       if (filter.nonEmpty) s"and ${filter.get}"
       else ""
