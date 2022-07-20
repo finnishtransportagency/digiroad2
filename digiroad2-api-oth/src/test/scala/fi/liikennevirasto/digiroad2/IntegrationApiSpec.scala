@@ -379,7 +379,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testDamagedByThawService.create(Seq(NewLinearAsset(5000L, 0, 150, parkingProhibitionValues, SideCode.AgainstDigitizing.value, 0, None)), ParkingProhibition.typeId, "test", 0)
+      testParkingProhibitionService.create(Seq(NewLinearAsset(5000L, 0, 150, parkingProhibitionValues, SideCode.AgainstDigitizing.value, 0, None)), ParkingProhibition.typeId, "test", 0)
       val parkingProhibitionsFromApi = integrationApi.parkingProhibitionsToApi(235).head
       val parkingProhibitionType = parkingProhibitionsFromApi.get("parking_prohibition").get
       parkingProhibitionType.isInstanceOf[Int] should be(true)
