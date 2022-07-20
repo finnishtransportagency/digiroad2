@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.routing.RoundRobinPool
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -30,7 +29,6 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.FiniteDuration
-
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
   val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
@@ -317,7 +315,7 @@ object Digiroad2Context {
   val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
   eventbus.subscribe(valluTerminal, "terminal:saved")
 
-  val importCSVDataUpdater = system.actorOf(RoundRobinPool(5).props(Props(classOf[DataImporter], dataImportManager)), name = "importCSVDataUpdater")
+  val importCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "importCSVDataUpdater")
   eventbus.subscribe(importCSVDataUpdater, "importCSVData")
 
   val exportCSVDataUpdater = system.actorOf(Props(classOf[DataExporter], dataExportManager), name = "exportCSVDataUpdater")
