@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService

@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MunicipalityInfo, RoadLinkDAO, Sequences, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}

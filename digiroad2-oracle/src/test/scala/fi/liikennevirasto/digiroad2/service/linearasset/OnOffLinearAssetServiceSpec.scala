@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, RoadLink}

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase

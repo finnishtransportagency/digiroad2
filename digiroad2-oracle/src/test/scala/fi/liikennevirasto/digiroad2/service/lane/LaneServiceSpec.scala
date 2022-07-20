@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
