@@ -198,16 +198,6 @@ class RoadLinkDAO {
       getLinksWithFilter(withLastEditedDateFilter(lowerDate, higherDate))
     }
   }
-
-  /**
-    * Returns VVH road links.
-    */
-  protected def queryByMultipleValues[T, A](values: Set[A],
-                                            filter: Set[A] => String): Seq[T] = {
-    if (values.nonEmpty) {
-      getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
-    } else Seq.empty[T]
-  }
   
   /**
     * Returns VVH road link by mml id.
@@ -220,7 +210,7 @@ class RoadLinkDAO {
     * Used by VVHClient.fetchByMmlId, LinkIdImporter.updateTable and AssetDataImporter.importRoadAddressData.
     */
   def fetchByMmlIds(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
-    queryByMultipleValues(mmlIds, withMmlIdFilter)
+    getByMultipleValues(mmlIds, withMmlIdFilter)
   }
 
   /**
@@ -228,7 +218,7 @@ class RoadLinkDAO {
     * Used by VVHClient.fetchByLinkId,
     */
   def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[VVHRoadlink] = {
-    queryByMultipleValues(roadNames, withFinNameFilter(roadNamePublicId))
+    getByMultipleValues(roadNames, withFinNameFilter(roadNamePublicId))
   }
 
   /**
@@ -246,7 +236,7 @@ class RoadLinkDAO {
     * PostGISLinearAssetDao.getLinksWithLengthFromVVH, PostGISLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
     */
   def fetchByLinkIds(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    queryByMultipleValues(linkIds, withLinkIdFilter)
+    getByMultipleValues(linkIds, withLinkIdFilter)
   }
 
   def fetchByLinkIdsF(linkIds: Set[Long]) = {
@@ -264,71 +254,23 @@ class RoadLinkDAO {
   def fetchVVHRoadlinks[T](linkIds: Set[Long],
                            fieldSelection: Option[String],
                            fetchGeometry: Boolean,
-                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
-    queryByMultipleValues(linkIds, withLinkIdFilter)
+                           resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = 
+    getByMultipleValues(linkIds, withLinkIdFilter)
 
   def fetchByPolygon(polygon : Polygon): Seq[VVHRoadlink] = {
-    queryByPolygons(polygon)
+    withDbConnection {getByPolygon(polygon)}
   }
 
   def fetchByPolygonF(polygon : Polygon): Future[Seq[VVHRoadlink]] = {
-    Future(queryByPolygons(polygon))
+    Future(fetchByPolygon(polygon))
   }
 
   def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[Long]] = {
-    Future(queryLinksIdByPolygons(polygon))
+    Future(getLinksIdByPolygons(polygon))
   }
 
   def fetchLinkIdsByPolygon(polygon : Polygon): Seq[Long] = {
-   queryLinksIdByPolygons(polygon)
-  }
-  
-  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
-    if (polygon.getCoordinates.isEmpty) {
-      return Seq.empty[Long]
-    }
    getLinksIdByPolygons(polygon)
-  }
-
-  /**
-    * Returns VVH road links in polygon area.
-    */
-  protected def queryByPolygons(polygon: Polygon): Seq[VVHRoadlink] = {
-    if(polygon.getCoordinates.isEmpty)
-      return Seq[VVHRoadlink]()
-
-    withDbConnection { getByPolygon(polygon) }
-  }
-  
-  def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
-    sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
-                 roadname_se, roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
-                 verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
-                 geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
-          from roadlink
-          where #$filter and constructiontype in (0,1,3)
-          """.as[VVHRoadlink].list
-  }
-
-  def getByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
-                                   filter: Option[String]): Seq[VVHRoadlink] = {
-    val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, geometryColumn)
-    val withFilter = (municipalities.nonEmpty, filter.nonEmpty) match {
-      case (true, true) =>  s"and municipalitycode in (${municipalities.mkString(",")}) and ${filter.get}"
-      case (true, false) => s"and municipalitycode in (${municipalities.mkString(",")})"
-      case (false, true) => s"and ${filter.get}"
-      case _ => ""
-    }
-
-    getLinksWithFilter(s"$bboxFilter $withFilter")
-  }
-
-  def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHRoadlink] = {
-    val queryFilter =
-      if (filter.nonEmpty) s"and ${filter.get}"
-      else ""
-
-    getLinksWithFilter(s"municipalitycode = $municipality $queryFilter")
   }
 
   def fetchByMunicipalityF(municipality: Int): Future[Seq[VVHRoadlink]] = {
@@ -357,13 +299,58 @@ class RoadLinkDAO {
     Future(getByMunicipalitiesAndBounds(bounds, municipalities,None))
   }
 
-  def getByPolygon(polygon: Polygon): Seq[VVHRoadlink] = {
+  /**
+    * Returns VVH road links.
+    */
+  private def getByMultipleValues[T, A](values: Set[A],
+                                        filter: Set[A] => String): Seq[T] = {
+    if (values.nonEmpty) {
+      getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
+    } else Seq.empty[T]
+  }
+  
+ protected def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
+    sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+                 roadname_se, roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+                 verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
+                 geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
+          from roadlink
+          where #$filter and constructiontype in (0,1,3)
+          """.as[VVHRoadlink].list
+  }
+
+  private def getByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
+                                   filter: Option[String]): Seq[VVHRoadlink] = {
+    val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, geometryColumn)
+    val withFilter = (municipalities.nonEmpty, filter.nonEmpty) match {
+      case (true, true) =>  s"and municipalitycode in (${municipalities.mkString(",")}) and ${filter.get}"
+      case (true, false) => s"and municipalitycode in (${municipalities.mkString(",")})"
+      case (false, true) => s"and ${filter.get}"
+      case _ => ""
+    }
+
+    getLinksWithFilter(s"$bboxFilter $withFilter")
+  }
+
+  protected def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHRoadlink] = {
+    val queryFilter =
+      if (filter.nonEmpty) s"and ${filter.get}"
+      else ""
+
+    getLinksWithFilter(s"municipalitycode = $municipality $queryFilter")
+  }
+
+  private def getByPolygon(polygon: Polygon): Seq[VVHRoadlink] = {
+    if(polygon.getCoordinates.isEmpty) return Seq[VVHRoadlink]()
+    
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
 
     getLinksWithFilter(polygonFilter)
   }
 
-  def getLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
+  protected def getLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
+    if (polygon.getCoordinates.isEmpty) return Seq.empty[Long]
+    
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
 
     sql"""select linkid
