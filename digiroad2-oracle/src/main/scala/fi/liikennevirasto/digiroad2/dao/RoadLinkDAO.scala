@@ -278,6 +278,10 @@ class RoadLinkDAO {
   def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[Long]] = {
     Future(queryLinksIdByPolygons(polygon))
   }
+
+  def fetchLinkIdsByPolygon(polygon : Polygon): Seq[Long] = {
+   queryLinksIdByPolygons(polygon)
+  }
   
   protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
     if (polygon.getCoordinates.isEmpty) {
