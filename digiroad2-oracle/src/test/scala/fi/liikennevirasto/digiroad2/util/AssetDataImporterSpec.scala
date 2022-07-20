@@ -32,7 +32,6 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   private val CommonAttributes = Seq("MUNICIPALITYCODE" -> BigInt(853), "VERTICALLEVEL" -> 0.0).toMap;
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]

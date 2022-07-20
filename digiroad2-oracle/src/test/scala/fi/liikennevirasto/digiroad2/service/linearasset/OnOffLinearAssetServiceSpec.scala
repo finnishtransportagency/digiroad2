@@ -19,7 +19,6 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockLinearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)

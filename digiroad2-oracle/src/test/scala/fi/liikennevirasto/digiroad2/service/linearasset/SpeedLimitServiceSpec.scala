@@ -26,7 +26,6 @@ import scala.language.implicitConversions
 class SpeedLimitServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val provider = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
   }
@@ -58,7 +57,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): PostGISSpeedLimitDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     
     when(mockRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)

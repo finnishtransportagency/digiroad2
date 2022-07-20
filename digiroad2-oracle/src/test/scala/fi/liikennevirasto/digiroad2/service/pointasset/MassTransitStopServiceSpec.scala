@@ -48,7 +48,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       "ROADNAME_FI" -> "roadname_fi")))
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]

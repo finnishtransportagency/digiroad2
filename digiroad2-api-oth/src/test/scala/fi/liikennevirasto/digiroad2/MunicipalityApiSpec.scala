@@ -40,7 +40,6 @@ object sTestTransactions {
 class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val obstacleService = new ObstacleService(mockRoadLinkService)
   val speedLimitService = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
