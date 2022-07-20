@@ -44,21 +44,6 @@ object Queries {
     Point(point.x, point.y)
   }
 
-  def objectToGeometry(data: Object): List[List[Double]] = {
-    val geometry = data.asInstanceOf[PGobject]
-    if (geometry == null) Nil
-    else {
-      val geomValue = geometry.getValue
-      val geom = PGgeometry.geomFromString(geomValue)
-      val listOfPoint= ListBuffer[List[Double]]()
-      for (i <- 0 until geom.numPoints() ){
-        val point =geom.getPoint(i)
-        listOfPoint += List(point.x, point.y, point.z, point.m)
-      }
-      listOfPoint.toList
-    }
-  }
-
   implicit val getPoint = new GetResult[Point] {
     def apply(r: PositionedResult) = {
       objectToPoint(r.nextObject())

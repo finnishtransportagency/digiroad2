@@ -115,7 +115,7 @@ class RoadLinkDAO {
       val mtkId = r.nextLong()
       val mtkHereFlip = r.nextInt()
       val municipality = r.nextInt()
-      val path = r.nextObjectOption().map(objectToGeometry).get
+      val path = r.nextObjectOption().map(extractGeometry).get
       val administrativeClass = r.nextInt()
       val directionType = r.nextIntOption()
       val mtkClass = r.nextInt()
@@ -413,5 +413,18 @@ class RoadLinkDAO {
     }
     lastModification.orElse(Option(validFromTime)).map(modified => new DateTime(modified))
   }
-  
+  protected def extractGeometry(data: Object): List[List[Double]] = {
+    val geometry = data.asInstanceOf[PGobject]
+    if (geometry == null) Nil
+    else {
+      val geomValue = geometry.getValue
+      val geom = PGgeometry.geomFromString(geomValue)
+      val listOfPoint= ListBuffer[List[Double]]()
+      for (i <- 0 until geom.numPoints() ){
+        val point =geom.getPoint(i)
+        listOfPoint += List(point.x, point.y, point.z, point.m)
+      }
+      listOfPoint.toList
+    }
+  }
 }
