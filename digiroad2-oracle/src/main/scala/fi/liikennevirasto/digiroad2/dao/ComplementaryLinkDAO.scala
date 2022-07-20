@@ -5,15 +5,12 @@ import Database.dynamicSession
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult}
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ComplementaryLinkDAO extends RoadLinkDAO {
 
