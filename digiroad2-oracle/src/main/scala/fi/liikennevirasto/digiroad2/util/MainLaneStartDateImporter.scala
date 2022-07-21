@@ -16,10 +16,7 @@ object MainLaneStartDateImporter {
   lazy val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
   lazy val lanesCsvImporter: LanesCsvImporter = new LanesCsvImporter(roadLinkService, new DummyEventBus)
   val logger = LoggerFactory.getLogger(getClass)
-  val s3: S3Client = Digiroad2Properties.awsConnectionEnabled match {
-    case true => S3Client.builder().credentialsProvider(InstanceProfileCredentialsProvider.create()).build()
-    case false => S3Client.builder().credentialsProvider(ProfileCredentialsProvider.create()).build()
-  }
+  val s3: S3Client = S3Client.create()
 
   def main(args: Array[String]): Unit = {
 
