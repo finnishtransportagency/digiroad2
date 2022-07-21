@@ -27,8 +27,8 @@ import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
-
 import scala.concurrent.duration.FiniteDuration
+
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
   val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
