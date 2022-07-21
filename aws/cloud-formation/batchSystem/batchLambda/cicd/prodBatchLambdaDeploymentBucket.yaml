@@ -40,6 +40,7 @@ Resources:
         Statement:
           - Action:
               - 's3:PutObject'
+              - 's3:PutObjectAcl'
             Effect: Allow
             Principal:
               AWS: !Ref AccountID
@@ -47,6 +48,12 @@ Resources:
             Condition: {
               "StringEquals": {"s3:x-amz-acl":"bucket-owner-full-control"}
             }
+          - Action:
+              - 's3:ListBucket'
+            Effect: Allow
+            Principal:
+              AWS: !Ref AccountID
+            Resource: "arn:aws:s3:::prod-batch-lambda-deployment-bucket"
 
 Outputs:
   BucketOutput:

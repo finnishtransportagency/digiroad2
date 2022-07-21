@@ -51,7 +51,7 @@ Resources:
       Scheme: internal
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
-          Value: 30
+          Value: 120
         - Key: routing.http2.enabled
           Value: true
       Subnets:

@@ -200,13 +200,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       }).toSeq
 
 
-      val connectedGroups = lanesWithContinuing.flatMap(laneGroup => {
-        val startingLanes = getStartingLanes(laneGroup)
-        val connectedLanes = startingLanes.map(startingLane => {
-          getConnectedLanes(Seq(startingLane), laneGroup).sortBy(_.lane.id)
-        }).distinct
-        connectedLanes.map(_.map(_.lane))
-      })
+      val connectedGroups = lanesWithContinuing.flatMap(LanePartitioner.getConnectedGroups)
 
       val lanes = connectedGroups.map(group => {
         val laneCode = group.head.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]

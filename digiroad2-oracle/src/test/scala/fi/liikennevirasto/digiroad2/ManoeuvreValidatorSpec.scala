@@ -45,7 +45,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       when(mockTrafficSignService.getTrafficSign(Seq("1003l"))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1001l", "1002l"))).thenReturn(Seq(roadLink1, roadLink2))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink2, Seq(roadLink3))).thenReturn(roadLink3)
 
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(Seq(roadLink1,roadLink2, roadLink3).map(_.linkId))).thenReturn(Seq())
@@ -73,7 +73,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val trafficSign = PersistedTrafficSign(1, "1001l", 10, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l"))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -99,7 +99,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val trafficSign = PersistedTrafficSign(1, "1001l", 2, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l"))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -128,7 +128,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l", "1005l"))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l"))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -156,7 +156,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l", "1005l"))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l"))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -184,7 +184,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val trafficSign = PersistedTrafficSign(1, "1001l", 10, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l"))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       when(mockRoadLinkService.pickRightMost(roadLink1, Seq(roadLink2, roadLink5) )).thenReturn(roadLink2)
@@ -213,7 +213,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val trafficSign = PersistedTrafficSign(1, "1001l", 2, 10, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1003l", "1004l"))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       when(mockRoadLinkService.pickRightMost(roadLink1, Seq(roadLink2))).thenReturn(roadLink2)

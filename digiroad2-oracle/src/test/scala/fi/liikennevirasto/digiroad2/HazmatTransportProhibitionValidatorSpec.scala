@@ -44,7 +44,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
 
       when(mockTrafficSignService.getTrafficSign(Seq("1003l"))).thenReturn(Seq(trafficSign))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set("1001l", "1002l"))).thenReturn(Seq(roadLink1, roadLink2))
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(prohibitionValidator.dao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, Seq("1001l", "1002l", "1003l"), false))
         .thenReturn(Seq())
 
@@ -66,7 +66,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
       val propHazmatProhibitionA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(HazmatProhibitionA.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, "1002l", 2, 2, 2, false, 0, 235, propHazmatProhibitionA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
 
       val value = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null), ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))
       when(prohibitionValidator.dao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, Seq("1001l", "1002l", "1003l", "1004l"), false))
@@ -89,7 +89,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
       val propHazmatProhibitionA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(HazmatProhibitionA.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, "1001l", 2, 2, 2, false, 0, 235, propHazmatProhibitionA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(prohibitionValidator.dao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, Seq("1003l"), false)).thenReturn(Seq())
 
       val value = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null), ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))

@@ -6,7 +6,7 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, State}
 import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.apache.commons.lang3.StringUtils.isBlank
@@ -70,19 +70,19 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): Option[String] = {
     try {
       if (hasTrafficDirectionChange) {
-        RoadLinkDAO.get(RoadLinkDAO.TrafficDirection, roadLinkAttribute.linkId) match {
-          case Some(value) => RoadLinkDAO.delete(RoadLinkDAO.TrafficDirection, roadLinkAttribute.linkId)
+        RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.TrafficDirection, roadLinkAttribute.linkId) match {
+          case Some(value) => RoadLinkOverrideDAO.delete(RoadLinkOverrideDAO.TrafficDirection, roadLinkAttribute.linkId)
           case _ => None
         }
       }
 
       roadLinkAttribute.properties.foreach { prop =>
-        val optionalLinkTypeValue: Option[Int] = RoadLinkDAO.get(prop.columnName, roadLinkAttribute.linkId)
+        val optionalLinkTypeValue: Option[Int] = RoadLinkOverrideDAO.get(prop.columnName, roadLinkAttribute.linkId)
         optionalLinkTypeValue match {
           case Some(existingValue) =>
-            RoadLinkDAO.update(prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt, existingValue)
+            RoadLinkOverrideDAO.update(prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt, existingValue)
           case None =>
-            RoadLinkDAO.insert(prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt)
+            RoadLinkOverrideDAO.insert(prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt)
         }
       }
       None

@@ -74,28 +74,29 @@
         return numberOfLanesByLaneCode[key] > 1;
       });
 
-      var lanesSortedByLaneCode = _.sortBy(lanes, getLaneCodeValue);
+      var lanesSortedByEndMeasure = _.sortBy(lanes, function(lane) {
+        return lane.endMeasure;
+      });
 
-      var duplicateLaneCounter = 0;
-      return _.map(lanesSortedByLaneCode, function (lane) {
-        if(_.includes(laneCodesToPutMarkers, getLaneCodeValue(lane).toString())) {
-          if (duplicateLaneCounter === 0){
-            lane.marker = 'A';
-            duplicateLaneCounter++;
-          }else{
-            lane.marker = 'B';
-            duplicateLaneCounter--;
+      _.forEach(laneCodesToPutMarkers, function (laneCode) {
+        var characterCounterForLaneMarker = 0;
+        for (var i = 0; i < lanesSortedByEndMeasure.length; i++) {
+          if (laneCode == getLaneCodeValue(lanesSortedByEndMeasure[i]).toString()) {
+            //The integer value of 'A' is 65, so every increment in the counter gives the next letter of the alphabet.
+            lanesSortedByEndMeasure[i].marker = String.fromCharCode(characterCounterForLaneMarker + 65);
+            characterCounterForLaneMarker += 1;
           }
         }
-        return lane;
       });
+
+      return lanesSortedByEndMeasure;
     };
 
     //Outer lanes that are expired are to be considered, the other are updates so we need to take those out
     //Here a outer lane is a lane with lane code that existed in the original but not in the modified configuration
     function omitIrrelevantExpiredLanes() {
       var lanesToBeRemovedFromExpire = _.filter(assetsToBeExpired, function (lane) {
-        return !_.isUndefined(self.getLane(getLaneCodeValue(lane)));
+        return !self.isOuterLane(getLaneCodeValue(lane));
       });
 
       _.forEach(lanesToBeRemovedFromExpire, function (lane) {
@@ -103,15 +104,12 @@
       });
     }
 
-    self.splitLinearAsset = function(laneNumber, split) {
-      collection.splitLinearAsset(self.getLane(laneNumber), split, function(splitLinearAssets) {
-        if (self.getLane(laneNumber).id === 0) {
-          self.removeLane(laneNumber);
-        } else {
-          self.expireLane(laneNumber);
-        }
-
+    self.splitLinearAsset = function(laneNumber, split, laneMarker) {
+      collection.splitLinearAsset(self.getLane(laneNumber, laneMarker), split, function(splitLinearAssets) {
+        var laneIndex = getLaneIndex(laneNumber, laneMarker);
+        self.selection.splice(laneIndex,1);
         self.selection.push(splitLinearAssets.created, splitLinearAssets.existing);
+        self.selection = giveSplitMarkers(self.selection);
         self.dirty = true;
         eventbus.trigger('laneModellingForm: reload');
       });
@@ -198,18 +196,25 @@
 
     self.lanesCutAreEqual = function() {
       var laneNumbers = _.map(self.selection, getLaneCodeValue);
-      var cuttedLaneNumbers = _.transform(_.countBy(laneNumbers), function(result, count, value) {
+      var cutLaneNumbers = _.transform(_.countBy(laneNumbers), function(result, count, value) {
         if (count > 1) result.push(value);
       }, []);
 
-      return _.some(cuttedLaneNumbers, function (laneNumber){
+      return _.some(cutLaneNumbers, function (laneNumber){
         var lanes = _.filter(self.selection, function (lane){
           return _.find(lane.properties, function (property) {
             return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
           });
         });
-
-        return _.isEqual(lanes[0].properties, lanes[1].properties);
+        var sortedLanes = _.sortBy(lanes, function (lane) {
+          return lane.endMeasure;
+        });
+        for (var i = 1; i < sortedLanes.length; i++) {
+          if (_.isEqual(sortedLanes[i - 1].properties, sortedLanes[i].properties)) {
+            return true;
+          }
+        }
+        return false;
       });
     };
 
@@ -255,9 +260,9 @@
           sideCode: sideCode,
           laneRoadAddressInfo:{
             roadNumber: roadNumber,
-            initialRoadPartNumber: parseInt(startRoadPartNumber),
-            initialDistance: parseInt(startDistance),
-            endRoadPartNumber: parseInt(endRoadPartNumber),
+            startRoadPart: parseInt(startRoadPartNumber),
+            startDistance: parseInt(startDistance),
+            endRoadPart: parseInt(endRoadPartNumber),
             endDistance: parseInt(endDistance),
             track: track
           },
@@ -382,7 +387,7 @@
 
       //expiredLane could be modified by the user so we need to fetch the original
       var originalExpiredLane = _.find(lanesFetched, {'id': expiredLane.id});
-      if (linksSelected.length > 1) {
+      if (linksSelected.length > 1 && _.isUndefined(marker)) {
         var expiredGroup = collection.getGroup(originalExpiredLane);
         expiredGroup.forEach(function (lane) {
           lane.isExpired = true;
