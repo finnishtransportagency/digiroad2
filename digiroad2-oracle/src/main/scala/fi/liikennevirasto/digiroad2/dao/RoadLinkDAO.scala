@@ -5,7 +5,7 @@ import Database.dynamicSession
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, ConstructionType, LinkGeomSource, TrafficDirection}
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import org.postgis.PGgeometry
@@ -18,8 +18,8 @@ import scala.collection.mutable.ListBuffer
 class RoadLinkDAO {
   protected val geometryColumn: String = "shape"
 
-  implicit val getRoadLink: GetResult[VVHRoadlink] = new GetResult[VVHRoadlink] {
-    def apply(r: PositionedResult): VVHRoadlink = {
+  implicit val getRoadLink: GetResult[RoadLinkFetched] = new GetResult[RoadLinkFetched] {
+    def apply(r: PositionedResult): RoadLinkFetched = {
       val linkId = r.nextLong()
       val mtkId = r.nextLong()
       val mtkHereFlip = r.nextInt()
@@ -93,23 +93,23 @@ class RoadLinkDAO {
         case (key, value) if value != None => key -> value
       }
 
-      VVHRoadlink(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
+      RoadLinkFetched(linkId.toString, municipality, geometry, AdministrativeClass.apply(administrativeClass),
         extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
         ConstructionType.apply(constructionType), LinkGeomSource.apply(sourceInfo), length)
     }
   }
-  def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
+  def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
                  geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
           from roadlink
           where #$filter and constructiontype in (0,1,3)
-          """.as[VVHRoadlink].list
+          """.as[RoadLinkFetched].list
   }
 
   def getByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
-                                   filter: Option[String]): Seq[VVHRoadlink] = {
+                                   filter: Option[String]): Seq[RoadLinkFetched] = {
     val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, geometryColumn)
     val withFilter = (municipalities.nonEmpty, filter.nonEmpty) match {
       case (true, true) =>  s"and municipalitycode in (${municipalities.mkString(",")}) and ${filter.get}"
@@ -121,7 +121,7 @@ class RoadLinkDAO {
     getLinksWithFilter(s"$bboxFilter $withFilter")
   }
 
-  def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHRoadlink] = {
+  def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[RoadLinkFetched] = {
     val queryFilter =
       if (filter.nonEmpty) s"and ${filter.get}"
       else ""
@@ -129,19 +129,19 @@ class RoadLinkDAO {
     getLinksWithFilter(s"municipalitycode = $municipality $queryFilter")
   }
 
-  def getByPolygon(polygon: Polygon): Seq[VVHRoadlink] = {
+  def getByPolygon(polygon: Polygon): Seq[RoadLinkFetched] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
 
     getLinksWithFilter(polygonFilter)
   }
 
-  def getLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
+  def getLinksIdByPolygons(polygon: Polygon): Seq[String] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
 
     sql"""select linkid
           from roadlink
           where #$polygonFilter
-       """.as[Long].list
+       """.as[String].list
   }
 
   protected def extractFeatureClass(code: Int): FeatureClass = {

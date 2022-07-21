@@ -4,7 +4,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneRoadAddressInfo, NewLane, PersistedLane}
@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
-case class RoadLinkWithAddresses(linkId: Long, link: VVHRoadlink, addresses: Set[RoadAddressTEMP])
+case class RoadLinkWithAddresses(linkId: String, link: RoadLinkFetched, addresses: Set[RoadAddressTEMP])
 
 case class LaneUtils(){
   // DROTH-3057: Remove after lanes csv import is disabled

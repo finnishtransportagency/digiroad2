@@ -39,7 +39,7 @@ object ChangeLanesAccordingToVvhChanges {
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
     val historyLinks = getHistoryDataLinksFromVVH(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
-    val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.vvhTimeStamp)).toSeq
+    val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.timeStamp)).toSeq
 
     val (changeSet, modifiedLanes) = handleChanges(roadLinks,latestHistoryRoadLinks, changes, existingAssets)
     val onlyNewModifiedLanes = modifiedLanes.filter(lane => lane.id == 0)
