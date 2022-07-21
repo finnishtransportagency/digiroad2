@@ -1137,8 +1137,11 @@ trait LaneOperations {
       MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long], lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
     })
 
-    val vkmParametesSplit = vkmParameters.grouped(1000).toSeq
-    val roadAddressesSplit = vkmParametesSplit.map(parameterGroup => vkmClient.coordToAddressMassQuery(parameterGroup))
+    val vkmParametersSplit = vkmParameters.grouped(1000).toSeq
+    val roadAddressesSplit = vkmParametersSplit.map(parameterGroup => {
+      LogUtils.time(logger, "VKM transformation for " + parameterGroup.size + " coordinates") {
+        vkmClient.coordToAddressMassQuery(parameterGroup)}
+    })
     val roadAddresses = roadAddressesSplit.foldLeft(Map.empty[String, RoadAddress])(_ ++ _)
 
     pwLanes.map(lane => {

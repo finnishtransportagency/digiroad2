@@ -47,9 +47,5 @@ object MainLaneStartDateImporter {
       case Some(importResultData) => logger.info("Failed rows: " + importResultData.notImportedData)
       case _ => logger.error("Failed to extract bucket name and key from env variables")
     }
-
-
-
-
   }
 }
