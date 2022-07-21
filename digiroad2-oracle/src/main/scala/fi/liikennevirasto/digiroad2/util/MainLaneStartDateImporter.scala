@@ -21,31 +21,26 @@ object MainLaneStartDateImporter {
     case false => S3Client.builder().credentialsProvider(ProfileCredentialsProvider.create()).build()
   }
 
+  def main(args: Array[String]): Unit = {
 
-  def getObjectFromS3(s3bucket: String, key: String) = {
-    val getObjectRequest = GetObjectRequest.builder().bucket(s3bucket).key(key).build()
-    s3.getObject(getObjectRequest)
-  }
+    val s3bucket = args(0)
+    val objectKey = args(1)
+    processStartDates(s3bucket, objectKey)
 
-  def processStartDates() = {
-    val s3bucket = sys.env.get("bucketname")
-    val objectKey = sys.env.get("key")
-    val user = User(0, "start_date_importer", Configuration())
-    val onlyStartDates = UpdateOnlyStartDates(true)
-
-    val result = (s3bucket, objectKey) match {
-      case (Some(bucket), Some(key)) =>
-        val s3Object = getObjectFromS3(bucket, key)
-        val fileName = key
-        Some(lanesCsvImporter.processing(s3Object, user, onlyStartDates, fileName))
-
-      case _ =>
-        None
+    def getObjectFromS3(s3bucket: String, key: String) = {
+      val getObjectRequest = GetObjectRequest.builder().bucket(s3bucket).key(key).build()
+      s3.getObject(getObjectRequest)
     }
 
-    result match {
-      case Some(importResultData) => logger.info("Failed rows: " + importResultData.notImportedData)
-      case _ => logger.error("Failed to extract bucket name and key from env variables")
+    def processStartDates(s3bucket: String, objectKey: String) = {
+      val user = User(0, "start_date_importer", Configuration())
+      val onlyStartDates = UpdateOnlyStartDates(true)
+
+      val s3Object = getObjectFromS3(s3bucket, objectKey)
+      val fileName = objectKey
+      val result = lanesCsvImporter.processing(s3Object, user, onlyStartDates, fileName)
+
+      logger.info("Failed rows: " + result.notImportedData)
     }
   }
 }
