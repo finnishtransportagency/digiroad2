@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.sql.{BatchUpdateException, SQLSyntaxErrorException}
-
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
@@ -45,6 +46,7 @@ object LinkIdImporter {
 
   def updateTable(tableName: String, vvhHost: String): Unit = {
     val vvhClient = new VVHClient(vvhHost)
+    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
 
     withDynTransaction {
       sqlu"""delete from mml_id_to_link_id""".execute
@@ -72,7 +74,7 @@ object LinkIdImporter {
                       limit $max
                 ) derivedMml where rnum >= $min
           """.as[Long].list
-        val links = vvhClient.roadLinkData.fetchByMmlIds(mmlIds.toSet)
+        val links = roadLinkService.fetchByMmlIds(mmlIds.toSet)
         links.foreach { link =>
           val mmlId = link.attributes("MTKID").asInstanceOf[BigInt].longValue()
           tempPS.setLong(1, mmlId)

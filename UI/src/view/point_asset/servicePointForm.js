@@ -27,7 +27,6 @@
       { value: 5,  label: 'Rajanylityspaikka' },
       { value: 13, label: 'Autojen lastausterminaali' },
       { value: 14, label: 'Linja- ja kuorma-autojen pysäköintialue' },
-      { value: 17, label: 'Sähköautojen latauspiste'},
       { value: 18, label: 'E18 rekkaparkki' },
       { value: 19, label: 'Tierumpu' }
     ];

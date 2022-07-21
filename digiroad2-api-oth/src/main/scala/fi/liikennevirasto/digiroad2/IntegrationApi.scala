@@ -266,7 +266,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
-      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty => dynamicTypeProperty.values.map { v => v.value } }.headOption
+      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty => dynamicTypeProperty.values.map { v =>
+        Try(v.value.toString.toInt).getOrElse(v.value.toString) } }.headOption
       case _ => value.map(_.toJson)
     }
   }
@@ -384,7 +385,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
      val dynamicMultiValueLinearAssetMap = parkingProhibition.value match {
        case Some(DynamicValue(value)) =>
          Map(
-           "parking_prohibition" -> value.properties.find(_.publicId ==  "parking_prohibition").get.values.head.value,
+           "parking_prohibition" -> Try(value.properties.find(_.publicId ==  "parking_prohibition").get.values.head.value.toString.toInt).getOrElse(""),
            "parking_validity_period" -> value.properties.find(_.publicId == "parking_validity_period").get.values.map(_.value).map { timePeriod =>
              timePeriod.asInstanceOf[Map[String, Any]]
            }.map(ValidityPeriodValue.fromMap).map(a => toTimeDomain(a))
@@ -429,9 +430,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             Map("spring_thaw_period" -> roadDamagedByThawProps.find(_.publicId == "spring_thaw_period").map(_.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).map {
               period => Map("startDate" -> period.startDate, "endDate" -> period.endDate )
             }),
-              "annual_repetition" -> roadDamagedByThawProps.find(_.publicId == "annual_repetition").map(_.values.map(_.value.toString.toInt)),
-              "value" -> roadDamagedByThawProps.find(_.publicId == "kelirikko").map(_.values.map(_.value.toString.toInt)
-              ))
+              "annual_repetition" -> Try(roadDamagedByThawProps.find(_.publicId == "annual_repetition")
+                .map(_.values.map(_.value.toString.toInt)).head.head).getOrElse(""),
+              "value" -> Try(roadDamagedByThawProps.find(_.publicId == "kelirikko")
+                .map(_.values.map(_.value.toString.toInt)).head.head).getOrElse("")
+              )
           case _ => Map()
         }
       defaultMultiValueLinearAssetsMap(roadDamagedByThaw) ++ dynamicMultiValueLinearAssetsMap
@@ -463,7 +466,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  private def bogieWeightLimitsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+  def bogieWeightLimitsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
     val bogieWeightLimits = getMultiValueLinearAssetByMunicipality(BogieWeightLimit.typeId, municipalityNumber)
 
     bogieWeightLimits.map { bogieWeightLimit =>
@@ -473,11 +476,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             bogieWeightAxel.publicId match {
               case "bogie_weight_2_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "twoAxelValue" -> v.value
+                  "twoAxelValue" -> Try(v.value.toString.toInt).getOrElse("")
                 }
               case "bogie_weight_3_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "threeAxelValue" -> v.value
+                  "threeAxelValue" -> Try(v.value.toString.toInt).getOrElse("")
                 }
               case _ => None
             }
@@ -727,7 +730,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
         "validityPeriodMinutes" -> manoeuvre.validityPeriods.map(toTimeDomainWithMinutes),
         "additionalInfo" -> manoeuvre.additionalInfo,
-        "modifiedDateTime" -> manoeuvre.modifiedDateTime.getOrElse(manoeuvre.createdDateTime),
+        "modifiedDateTime" -> manoeuvre.modifiedDateTime.getOrElse(manoeuvre.createdDateTime).toString,
         lastModifiedBy(Some(manoeuvre.createdBy), manoeuvre.modifiedBy))
     }
   }
@@ -800,7 +803,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
     def showOldTrafficCode(trafficSign: PersistedTrafficSign): String = {
       if (trafficSignService.getProperty(trafficSign, "old_traffic_code").get.propertyValue == "1" ||  trafficSign.createdAt.get.isBefore(trafficSignService.newTrafficCodeStartDate)){
-        TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).TRvalue.toString
+        TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).OldLawCode
       }
       else ""
     }
@@ -814,30 +817,30 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           latestModificationTime(trafficSign.createdAt, trafficSign.modifiedAt),
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
-          "type" -> TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).NewLawCode,
-          "oldTrafficCode" -> showOldTrafficCode(trafficSign),
+          "type" -> Try(TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).NewLawCode).getOrElse(""),
+          "oldTrafficCode" -> Try(showOldTrafficCode(trafficSign).toInt).getOrElse(""),
           "value" -> trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
           "municipalityId" -> trafficSignService.getProperty(trafficSign, "municipality_id").map(_.propertyDisplayValue.getOrElse("")),
           "mainSignText" -> trafficSignService.getProperty(trafficSign, "main_sign_text").map(_.propertyDisplayValue.getOrElse("")),
-          "structure" -> trafficSignService.getProperty(trafficSign, "structure").map(_.propertyValue),
-          "condition" -> trafficSignService.getProperty(trafficSign, "condition").map(_.propertyValue),
-          "size" -> trafficSignService.getProperty(trafficSign, "size").map(_.propertyValue),
-          "height" -> trafficSignService.getProperty(trafficSign, "height").map(_.propertyDisplayValue.getOrElse("")),
-          "coatingType" -> trafficSignService.getProperty(trafficSign, "coating_type").map(_.propertyValue),
-          "signMaterial" -> trafficSignService.getProperty(trafficSign, "sign_material").map(_.propertyValue),
+          "structure" -> Try(trafficSignService.getProperty(trafficSign, "structure").map(_.propertyValue.toInt).get).getOrElse(""),
+          "condition" -> Try(trafficSignService.getProperty(trafficSign, "condition").map(_.propertyValue.toInt).get).getOrElse(""),
+          "size" -> Try(trafficSignService.getProperty(trafficSign, "size").map(_.propertyValue.toInt).get).getOrElse(""),
+          "height" -> Try(trafficSignService.getProperty(trafficSign, "height").map(_.propertyValue.toInt).get).getOrElse(""),
+          "coatingType" -> Try(trafficSignService.getProperty(trafficSign, "coating_type").map(_.propertyValue.toInt).get).getOrElse(""),
+          "signMaterial" -> Try(trafficSignService.getProperty(trafficSign, "sign_material").map(_.propertyValue.toInt).get).getOrElse(""),
           "locationSpecifier" -> trafficSignService.getProperty(trafficSign, "location_specifier").map(item=>
             Try(item.propertyValue.toInt).getOrElse("")),
-          "terrainCoordinatesX" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_x").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
-          "terrainCoordinatesY" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_y").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
-          "laneType" -> trafficSignService.getProperty(trafficSign, "lane_type").map(_.propertyValue),
-          "lane" -> trafficSignService.getProperty(trafficSign, "lane").map(_.propertyDisplayValue.getOrElse("")),
-          "lifeCycle" -> trafficSignService.getProperty(trafficSign, "life_cycle").map(_.propertyValue),
+          "terrainCoordinatesX" -> Try(trafficSignService.getProperty(trafficSign, "terrain_coordinates_x").map(_.propertyDisplayValue.get.replace(",", ".").toFloat).get).getOrElse(""),
+          "terrainCoordinatesY" -> Try(trafficSignService.getProperty(trafficSign, "terrain_coordinates_y").map(_.propertyDisplayValue.get.replace(",", ".").toFloat).get).getOrElse(""),
+          "laneType" -> Try(trafficSignService.getProperty(trafficSign, "lane_type").map(_.propertyValue.toInt).get).getOrElse(""),
+          "lane" -> Try(trafficSignService.getProperty(trafficSign, "lane").map(_.propertyDisplayValue.get.toInt).get).getOrElse(""),
+          "lifeCycle" -> Try(trafficSignService.getProperty(trafficSign, "life_cycle").map(_.propertyValue.toInt).get).getOrElse(""),
           "start_date" -> trafficSignService.getProperty(trafficSign, "trafficSign_start_date").map(_.propertyDisplayValue.getOrElse("")),
           "end_date" -> trafficSignService.getProperty(trafficSign, "trafficSign_end_date").map(_.propertyDisplayValue.getOrElse("")),
-          "typeOfDamage" -> trafficSignService.getProperty(trafficSign, "type_of_damage").map(_.propertyValue),
-          "urgencyOfRepair" -> trafficSignService.getProperty(trafficSign, "urgency_of_repair").map(_.propertyValue),
-          "lifespanLeft" -> trafficSignService.getProperty(trafficSign, "lifespan_left").map(_.propertyDisplayValue.getOrElse("")),
+          "typeOfDamage" -> Try(trafficSignService.getProperty(trafficSign, "type_of_damage").map(_.propertyValue.toInt).get).getOrElse(""),
+          "urgencyOfRepair" -> Try(trafficSignService.getProperty(trafficSign, "urgency_of_repair").map(_.propertyValue.toInt).get).getOrElse(""),
+          "lifespanLeft" -> Try(trafficSignService.getProperty(trafficSign, "lifespan_left").map(_.propertyDisplayValue.get.toInt).get).getOrElse(""),
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
           "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
      )}
@@ -850,9 +853,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "additionalPanelValue" -> panel.panelValue,
         "additionalPanelInformation" -> panel.panelInfo,
         "additionalPanelText" -> panel.text,
-        "additionalPanelSize" -> AdditionalPanelSize.apply(panel.size).getOrElse(SizeOption99).propertyDisplayValue,
-        "additionalPanelCoatingType" -> AdditionalPanelCoatingType.apply(panel.coating_type).getOrElse(CoatingTypeOption99).propertyDisplayValue,
-        "additionalPanelColor" -> AdditionalPanelColor.apply(panel.additional_panel_color).getOrElse(ColorOption99).propertyDisplayValue
+        "additionalPanelSize" -> Try(AdditionalPanelSize.apply(panel.size).getOrElse(SizeOption99).value).getOrElse(""),
+        "additionalPanelCoatingType" -> Try(AdditionalPanelCoatingType.apply(panel.coating_type).getOrElse(CoatingTypeOption99).value).getOrElse(""),
+        "additionalPanelColor" -> Try(AdditionalPanelColor.apply(panel.additional_panel_color).getOrElse(ColorOption99).value).getOrElse("")
       )
     }
   }
