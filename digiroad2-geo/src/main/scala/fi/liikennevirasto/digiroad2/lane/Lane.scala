@@ -38,9 +38,9 @@ case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Long
                                 historyCreatedDate: DateTime, historyCreatedBy: String)
 
 case class NewLane(id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
-                   isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None )
+                   isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None, newLaneCode: Option[Int] = None )
 
-case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, trafficDirection: TrafficDirection, geometry: Seq[Point], lanes: Seq[Int])
+case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, trafficDirection: TrafficDirection, geometry: Seq[Point], lanes: Seq[Int], linkType: Int)
 
 case class SideCodesForLinkIds(linkId: Long, sideCode: Int)
 

@@ -27,7 +27,6 @@
         {signValue: [5], image: 'images/service_points/borderCrossingPoint.png', validation: validateText, height: 25},
         {signValue: [13], image: 'images/service_points/loadingTerminalForCars.png', validation: validateText, height: 25},
         {signValue: [14], image: 'images/service_points/parkingAreaBusesAndTrucks.png', validation: validateText, height: 25},
-        {signValue: [17], image: 'images/service_points/chargingPointElectricCars.png', validation: validateText, height: 25},
         {signValue: [11], typeExtension: 5, image: 'images/service_points/railwayStation2.png'},
         {signValue: [11], typeExtension: 6, image: 'images/service_points/railwayStation.png'},
         {signValue: [11], typeExtension: 7, image: 'images/service_points/subwayStation.png'},
@@ -99,7 +98,6 @@
       [ {type: 5, text: 'Rajanylityspaikka', colorText: '#ffffff'},
         {type: 13, text: 'Lastausterminaali', colorText: '#000000'},
         {type: 14, text: 'Pysäköintialue', colorText: '#000000'},
-        {type: 17, text: 'Latauspiste', colorText: '#ffffff'},
         {type: 18, text: 'E18 rekkaparkki', colorText: '#000000'}];
 
     function getDefaultColorText(type) {

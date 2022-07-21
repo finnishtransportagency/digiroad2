@@ -45,7 +45,7 @@ object MainLanePopulationProcess {
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def addMainLane(roadLink: RoadLink): PersistedLane = {
-    val createdVVHTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+    val createdVVHTimeStamp = vvhClient.createVVHTimeStamp()
     val sideCode = toSideCode(roadLink.trafficDirection).value
     val laneCode = 1
     val startMeasure = 0.0

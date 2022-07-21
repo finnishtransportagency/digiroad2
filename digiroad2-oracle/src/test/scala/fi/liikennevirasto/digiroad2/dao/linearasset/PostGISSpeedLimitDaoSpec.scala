@@ -12,7 +12,7 @@ import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -24,17 +24,15 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): PostGISSpeedLimitDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-
-    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+    
+    when(mockRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new PostGISSpeedLimitDao(mockVVHClient, mockRoadLinkService)
