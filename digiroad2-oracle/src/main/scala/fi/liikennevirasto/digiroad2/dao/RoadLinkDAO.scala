@@ -259,7 +259,7 @@ class RoadLinkDAO {
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = 
     getByMultipleValues(linkIds, withLinkIdFilter)
 
-  def fetchByPolygon(polygon : Polygon): Seq[VVHRoadlink] = {
+  def fetchByPolygon(polygon : Polygon): Seq[RoadLinkFetched] = {
     withDbConnection {getByPolygon(polygon)}
   }
 

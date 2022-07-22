@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.Filter.withMtkClassFilter
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.commons.codec.binary.Base64
@@ -755,6 +756,8 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
       }
     }.toList
   }
+  
+  
 
   //Extract attributes methods
   protected override def extractFeature(feature: Map[String, Any]): RoadLinkFetched = {
@@ -968,28 +971,7 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
   def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[String]] = {
     Future(queryLinksIdByPolygons(polygon))
   }
-
-  /**
-    * Returns VVH road links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities).
-    */
-  def fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int], roadNumbers: Seq[(Int, Int)],
-                                                 includeAllPublicRoads: Boolean = false): Future[Seq[VVHRoadlink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, roadNumbers, municipalities, includeAllPublicRoads))
-  }
   
-  /**
-    * Returns a sequence of VVH Road Links. Uses Scala Future for concurrent operations.
-    * Used by RoadLinkService.getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality, roadNumbers).
-    */
-  def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[VVHRoadlink]] = {
-    Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
-  }
-
-  def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
-    queryByRoadNumbersAndMunicipality(municipality, roadNumbers)
-  }
-
   /**
     * Returns VVH road links by finnish names.
     * Used by VVHClient.fetchByLinkId,

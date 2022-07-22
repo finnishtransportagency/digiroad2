@@ -113,10 +113,10 @@ class AssetDataImporter {
 
     val roadsByLinkId = roads.foldLeft(Map.empty[String, (String, String)]) { (m, road) => m + (road._1 -> road) }
 
-    val vvhClient = new VVHClient(vvhHost)
-    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
+    val roadLinkClient = new RoadLinkClient(vvhHost)
+    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     val vvhLinks = roadLinkService.fetchVVHRoadlinks(roadsByLinkId.keySet)
-    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
+    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
@@ -172,7 +172,7 @@ class AssetDataImporter {
     val conversionTypeId = 29
     val exceptionTypeId = 1
     val roadLinkClient = new RoadLinkClient(vvhServiceHost)
-    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     val typeId = 190
 
     println("*** Fetching prohibitions from conversion database")
@@ -493,7 +493,7 @@ class AssetDataImporter {
 
   def adjustToNewDigitization(vvhHost: String) = {
     val roadLinkClient = new RoadLinkClient(vvhHost)
-    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     val municipalities = PostGISDatabase.withDynSession { Queries.getMunicipalities }
     val processedLinkIds = mutable.Set[String]()
 
@@ -921,7 +921,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     */
   def getMassTransitStopAddressesFromVVH(vvhRestApiEndPoint: String) = {
     val roadLinkClient = new RoadLinkClient(vvhRestApiEndPoint)
-    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     withDynTransaction {
       val idAddressFi = sql"""select p.id from property p where p.public_id = 'osoite_suomeksi'""".as[Int].list.head
       val idAddressSe = sql"""select p.id from property p where p.public_id = 'osoite_ruotsiksi'""".as[Int].list.head

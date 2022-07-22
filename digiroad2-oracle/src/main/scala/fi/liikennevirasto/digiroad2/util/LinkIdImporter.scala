@@ -46,7 +46,7 @@ object LinkIdImporter {
 
   def updateTable(tableName: String, vvhHost: String): Unit = {
     val roadLinkClient = new RoadLinkClient(vvhHost)
-    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
+    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
 
     withDynTransaction {
       sqlu"""delete from mml_id_to_link_id""".execute
