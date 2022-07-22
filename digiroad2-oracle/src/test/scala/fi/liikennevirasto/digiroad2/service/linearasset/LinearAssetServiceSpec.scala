@@ -32,7 +32,7 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
   
   when(mockRoadLinkService.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[Long])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource: RoadLink = RoadLink(
     linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -783,9 +783,9 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   test("Get Municipality Code By Asset Id") {
-    when(mockRoadLinkClient.createVVHTimeStamp(any[String])).thenCallRealMethod()
+    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenCallRealMethod()
     val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
-    when(mockRoadLinkClient.createVVHTimeStamp(any[String])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
