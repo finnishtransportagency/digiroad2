@@ -10,9 +10,9 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 
-class PavedRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PavedRoadService(roadLinkServiceImpl, eventBusImpl){
+class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
 
-  def updatePavedRoads() = {
+ def updatePavedRoads() = {
     withDynTransaction {
       val municipalities = Queries.getMunicipalities
       municipalities.foreach { municipality =>
@@ -22,7 +22,7 @@ class PavedRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
+  override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
     try {
       val linkIds = roadLinks.map(_.linkId)
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
@@ -32,7 +32,7 @@ class PavedRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
       val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-      val (expiredIds, newAndUpdatedPavedRoadAssets) = getPavedRoadAssetChanges(existingAssets, roadLinks, changes, PavedRoad.typeId)
+      val (expiredIds, newAndUpdatedPavedRoadAssets) = service.getPavedRoadAssetChanges(existingAssets, roadLinks, changes, PavedRoad.typeId)
 
       val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
         expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds,
@@ -59,32 +59,4 @@ class PavedRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
-    val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-
-    if (toUpdate.nonEmpty) {
-      val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
-      updateProjected(toUpdate, persisted, roadLinks)
-
-      if (newLinearAssets.nonEmpty)
-        logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-    }
-
-    toInsert.foreach { linearAsset =>
-      val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-
-      val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-        Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLink), informationSource = Some(MmlNls.value))
-      linearAsset.value match {
-        case Some(DynamicValue(multiTypeProps)) =>
-          val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
-          validateRequiredProperties(linearAsset.typeId, props)
-          dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
-        case _ => None
-      }
-    }
-    if (newLinearAssets.nonEmpty)
-      logger.info("Added assets for linkids " + toInsert.map(_.linkId))
-  }
 }

@@ -5,14 +5,15 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{CombinedRemovedPart, 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, NumericValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-class MaintenanceRoadUpdateProcessSpec extends FunSuite with Matchers{
+class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
@@ -23,7 +24,7 @@ class MaintenanceRoadUpdateProcessSpec extends FunSuite with Matchers{
   when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set.empty[String])).thenReturn(Seq())
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
-  val mockMaintenanceDao = MockitoSugar.mock[PostGISMaintenanceDao]
+ val mockMaintenanceDao = MockitoSugar.mock[PostGISMaintenanceDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
@@ -32,18 +33,21 @@ class MaintenanceRoadUpdateProcessSpec extends FunSuite with Matchers{
   val maintenanceDao = new PostGISMaintenanceDao(mockRoadLinkClient, mockRoadLinkService)
   val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
-  object TestMaintenanceRoadUpdateProcess extends MaintenanceRoadUpdateProcess(mockRoadLinkService, mockEventBus) {
-    override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: PostGISLinearAssetDao = linearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
+  object Service extends MaintenanceService(mockRoadLinkService, mockEventBus) {
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: PostGISMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: PostGISAssetDao = new PostGISAssetDao
     override def dynamicLinearAssetDao: DynamicLinearAssetDao = dynamicLinearAssetDAO
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
+  }
+
+  object TestMaintenanceRoadUpdater extends MaintenanceRoadUpdater(Service) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: PostGISLinearAssetDao = linearAssetDao
+    override def eventBus: DigiroadEventBus = mockEventBus
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
@@ -65,17 +69,18 @@ class MaintenanceRoadUpdateProcessSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
-      val linearAssetId = TestMaintenanceRoadUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId, 0, 20, maintenanceRoadIns, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      //val linearAssetId = TestMaintenanceRoadUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId, 0, 20, maintenanceRoadIns, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val id = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId, NumericValue(1), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink))
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
-      val assetsBefore = TestMaintenanceRoadUpdateProcess.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(linearAssetId.toSet)
+      val assetsBefore = Service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))
       assetsBefore.head.expired should be(false)
-      TestMaintenanceRoadUpdateProcess.updateByRoadLinks(MaintenanceRoadAsset.typeId, 1, Seq(), Seq(change))
-      val assetsAfter = TestMaintenanceRoadUpdateProcess.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, linearAssetId.toSet, false)
+      TestMaintenanceRoadUpdater.updateByRoadLinks(MaintenanceRoadAsset.typeId, 1, Seq(), Seq(change))
+      val assetsAfter = Service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))
       assetsAfter.head.expired should be(true)
     }
   }
 
-  test("Assets should be mapped to a new road link combined from two smaller links") {
+  /*test("Assets should be mapped to a new road link combined from two smaller links") {
     val oldRoadLinkId1 = "160L"
     val oldRoadLinkId2 = "170L"
     val newRoadLinkId = "310L"
@@ -118,5 +123,5 @@ class MaintenanceRoadUpdateProcessSpec extends FunSuite with Matchers{
       validAssets.size should be(2)
       validAssets.map(_.linkId) should be(List(newRoadLinkId, newRoadLinkId))
     }
-  }
+  }*/
 }

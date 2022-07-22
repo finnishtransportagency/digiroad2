@@ -1,15 +1,13 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset.{MaintenanceRoadAsset, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PersistedLinearAsset, RoadLink}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, MaintenanceService, Measures}
 
-class MaintenanceRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventbusImpl: DigiroadEventBus) extends MaintenanceService(roadLinkServiceImpl, eventbusImpl) {
+class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
   def updateMaintenanceRoads() = {
     withDynTransaction {
@@ -21,7 +19,7 @@ class MaintenanceRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventbu
     }
   }
 
-  def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
+  override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
     try {
       val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
@@ -68,13 +66,13 @@ class MaintenanceRoadUpdateProcess(roadLinkServiceImpl: RoadLinkService, eventbu
     }
     toInsert.foreach { linearAsset =>
       val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-      val area = getAssetArea(roadLinks.find(_.linkId == linearAsset.linkId), Measures(linearAsset.startMeasure, linearAsset.endMeasure))
-      val id = maintenanceDAO.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-        Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLink), area = area)
+      val area = service.getAssetArea(roadLinks.find(_.linkId == linearAsset.linkId), Measures(linearAsset.startMeasure, linearAsset.endMeasure))
+      val id = service.maintenanceDAO.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+        Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, service.getLinkSource(roadLink), area = area)
       linearAsset.value match {
         case Some(DynamicValue(multiTypeProps)) =>
           val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
-          validateRequiredProperties(linearAsset.typeId, props)
+          service.validateRequiredProperties(linearAsset.typeId, props)
           dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
         case _ => None
       }

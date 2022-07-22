@@ -67,7 +67,7 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def getLinkSource(roadLink: Option[RoadLinkLike]): Option[Int] = {
+  def getLinkSource(roadLink: Option[RoadLinkLike]): Option[Int] = {
     roadLink match {
       case Some(road) =>
         Some(road.linkSource.value)
@@ -75,7 +75,7 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def getGeometry(roadLink: Option[RoadLinkLike]): Seq[Point] = {
+  def getGeometry(roadLink: Option[RoadLinkLike]): Seq[Point] = {
     roadLink match {
       case Some(road) => road.geometry
       case _ => Seq()
@@ -225,12 +225,15 @@ trait LinearAssetOperations {
     if (!notVerifiedUser.contains(userName) && verifiableAssetType.contains(assetType)) Some(userName) else None
   }
 
-  protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[String]): Seq[PersistedLinearAsset] = {
+  def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
-    val existingAssets =
+    val existingAssets = if (newTransaction) {
       withDynTransaction {
         dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
       }.filterNot(_.expired)
+    } else {
+      dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+    }
     existingAssets
   }
 
@@ -712,7 +715,7 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
+  def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -735,7 +738,7 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+  def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,

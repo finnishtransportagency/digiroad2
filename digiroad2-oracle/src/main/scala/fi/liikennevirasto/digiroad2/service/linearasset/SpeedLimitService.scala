@@ -601,7 +601,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     }
   }
 
-  protected def createWithoutTransaction(newLimits: Seq[NewLimit], value: SpeedLimitValue, username: String, sideCode: SideCode): Seq[Long] = {
+  def createWithoutTransaction(newLimits: Seq[NewLimit], value: SpeedLimitValue, username: String, sideCode: SideCode): Seq[Long] = {
     newLimits.flatMap { limit =>
       dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, roadLinkClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
     }
