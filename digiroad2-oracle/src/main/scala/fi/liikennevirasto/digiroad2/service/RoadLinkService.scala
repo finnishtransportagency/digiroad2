@@ -340,7 +340,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param linkIds
     * @return VVHRoadLinks
     */
-  def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[RoadLinkFetched] = {
+  def fetchVVHRoadlinks(linkIds: Set[String]): Seq[RoadLinkFetched] = {
     fetchVVHRoadlinks(linkIds,false)
   }
   
@@ -544,7 +544,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     withDbConnection {roadLinkDAO.fetchByBounds(bounds)}
   }
 
-  def fetchNormalOrComplimentaryRoadLinkByLinkId(linkId: Long): Option[RoadLinkFetched] = {
+  def fetchNormalOrComplimentaryRoadLinkByLinkId(linkId: String): Option[RoadLinkFetched] = {
     withDbConnection {
       roadLinkDAO.fetchByLinkId(linkId) match {
         case Some(vvhRoadLink) => Some(vvhRoadLink)
@@ -553,10 +553,10 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def fetchByLinkId(linkId: Long): Option[RoadLinkFetched] = {
+  def fetchByLinkId(linkId: String): Option[RoadLinkFetched] = {
     withDbConnection { roadLinkDAO.fetchByLinkId(linkId)}
   }
-  def fetchComplimentaryByLinkId(linkId: Long): Option[RoadLinkFetched] = {
+  def fetchComplimentaryByLinkId(linkId: String): Option[RoadLinkFetched] = {
     withDbConnection { complementaryLinkDAO.fetchByLinkId(linkId)}
   }
 

@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SpeedLimit, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase

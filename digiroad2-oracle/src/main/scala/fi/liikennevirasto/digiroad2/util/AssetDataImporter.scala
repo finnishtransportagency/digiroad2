@@ -116,7 +116,7 @@ class AssetDataImporter {
     val roadLinkClient = new RoadLinkClient(vvhHost)
     val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
     val vvhLinks = roadLinkService.fetchVVHRoadlinks(roadsByLinkId.keySet)
-    val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
+    val linksByLinkId = vvhLinks.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
 
