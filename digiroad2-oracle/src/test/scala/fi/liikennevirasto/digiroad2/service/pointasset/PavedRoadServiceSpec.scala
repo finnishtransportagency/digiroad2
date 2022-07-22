@@ -497,7 +497,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetList = List(newAsset1.head, newAsset2.head,newAsset3.head)
       
       when(mockRoadLinkService.getVVHRoadLinksF(municipalityCode)).thenReturn(List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4))
-      when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
+      when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
 
       service.expireImportRoadLinksVVHtoOTH(assetTypeId)
       val assetListAfterChanges = ServiceWithDao.dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(assetTypeId, Seq(newLinkId1, newLinkId2, newLinkId3, newLinkId4))
