@@ -39,8 +39,7 @@ object MainLanePopulationProcess {
   lazy val username = "auto_generated_lane"
 
   lazy val twoWayLanes: Seq[LinkType] = Seq(
-      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess,
-      TractorRoad, CycleOrPedestrianPath)
+      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess, CycleOrPedestrianPath)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
