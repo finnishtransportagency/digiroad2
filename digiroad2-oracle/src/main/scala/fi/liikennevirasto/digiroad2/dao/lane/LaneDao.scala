@@ -478,7 +478,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
     """.execute
   }
 
-  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = roadLinkClient.roadLinkData.createVVHTimeStamp()): Unit = {
+  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = roadLinkClient.createVVHTimeStamp()): Unit = {
     sqlu"""UPDATE LANE_POSITION
            SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $vvhTimestamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )

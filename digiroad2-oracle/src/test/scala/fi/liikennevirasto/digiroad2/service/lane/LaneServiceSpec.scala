@@ -22,7 +22,6 @@ import org.scalatest.{FunSuite, Matchers}
 class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
@@ -39,7 +38,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 
 
   val lanePropertiesValues1 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),

@@ -737,7 +737,7 @@ trait LaneOperations {
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def create(newLanes: Seq[NewLane], linkIds: Set[String], sideCode: Int, username: String, sideCodesForLinkIds: Seq[SideCodesForLinkIds] = Seq(), vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  def create(newLanes: Seq[NewLane], linkIds: Set[String], sideCode: Int, username: String, sideCodesForLinkIds: Seq[SideCodesForLinkIds] = Seq(), vvhTimeStamp: Long = roadLinkClient.createVVHTimeStamp()): Seq[Long] = {
 
     if (newLanes.isEmpty || linkIds.isEmpty)
       return Seq()
@@ -918,7 +918,7 @@ trait LaneOperations {
       val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
 
       val allLanesToCreate = linksWithAddresses.flatMap { link =>
-        val vvhTimeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
+        val vvhTimeStamp = roadLinkClient.createVVHTimeStamp()
 
         lanesToInsert.flatMap { lane =>
           val laneCode = getLaneCode(lane).toInt

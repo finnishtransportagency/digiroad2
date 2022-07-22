@@ -20,7 +20,7 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
   val roadLinkWithRedundantTrafficDirection: RoadLinkFetched = RoadLinkFetched("1", 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
   val roadLinkWithValidTrafficDirection: RoadLinkFetched = RoadLinkFetched("2", 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
 
-  when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
+  when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
 
   test("A redundant traffic direction is removed, but a valid is not") {
     val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set("1", "2"))

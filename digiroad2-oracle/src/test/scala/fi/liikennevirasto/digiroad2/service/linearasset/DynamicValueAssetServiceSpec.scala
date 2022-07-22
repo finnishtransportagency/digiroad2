@@ -13,7 +13,6 @@ import org.scalatest.mockito.MockitoSugar
 class DynamicValueAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]

@@ -11,7 +11,6 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 class MunicipalityApiRequestSpec extends FunSuite with Matchers with BeforeAndAfter with AuthenticatedApiSpec {
 
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockPavedRoadService = MockitoSugar.mock[PavedRoadService]
   val mockObstacleService = MockitoSugar.mock[ObstacleService]

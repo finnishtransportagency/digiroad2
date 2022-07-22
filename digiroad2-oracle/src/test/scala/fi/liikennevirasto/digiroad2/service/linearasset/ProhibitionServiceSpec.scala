@@ -31,11 +31,10 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
   val linkId = "388562360"
-
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  
+  when(mockRoadLinkService.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(
     "1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -163,7 +162,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Update prohibition") {
     val linkId = "1610349"
-    when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
     runWithRollback {
       val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
       val asset = ServiceWithDao.create(Seq(NewLinearAsset(linkId, 0, 20, prohibition, 1, 0, None)), 190, "testUser")
@@ -337,13 +336,9 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   }
 
   test("Create prohibitions on actor update when exist sideCode adjustment") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-    when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f

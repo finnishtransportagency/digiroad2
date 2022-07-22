@@ -191,7 +191,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
   private def updateLinearAssets(properties: Map[String, String], links: Seq[RoadLink]) = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
-    val timeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
+    val timeStamp = roadLinkClient.createVVHTimeStamp()
 
     links.foreach { link =>
       speedLimit match {
