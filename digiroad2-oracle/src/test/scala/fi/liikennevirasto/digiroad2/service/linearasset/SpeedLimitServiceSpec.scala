@@ -58,7 +58,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     
-    when(mockRoadLinkService.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+    when(mockRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
@@ -1560,7 +1560,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
     }
     
-    when(mockRoadLinkService.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
+    when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq())
 
     val oldLinkId = "5000"
     val municipalityCode = 235

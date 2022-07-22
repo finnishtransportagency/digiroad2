@@ -43,7 +43,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val propertyData4 = DynamicValue(multiTypePropSeq4)
   
   when(mockRoadLinkService.fetchByLinkId("388562360")).thenReturn(Some(RoadLinkFetched("388562360", 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched("388562360", 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched("388562360", 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("388562360", 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = Seq(RoadLink("1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
