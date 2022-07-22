@@ -195,7 +195,7 @@ Resources:
                 Resource: '*'
       Tags:
         - Key: Name
-          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchTaskRole' ] ]
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchJobRole' ] ]
         - Key: Environment
           Value: !Ref EnvironmentName
         - Key: Owner
