@@ -23,6 +23,7 @@
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/DEV-batchSystem-BatchTaskRole-VGL42N9TANTI",
+    "jobRoleArn": "arn:aws:iam::475079312496:role/DEV-batchSystem-BatchJobRole-EZGAXBVXWXO8",
     "environment": [
       {
         "name": "containerCPU",

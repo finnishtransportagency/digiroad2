@@ -163,6 +163,33 @@ Resources:
                   - 'ssm:GetParameters'
                   - 'ssm:GetParametersByPath'
 
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'batchTaskRole' ] ]
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  BatchJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName,'BatchJobRole' ] ]
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
                   # Allow batch to get objects from S3, used for main lane start date import
                   - 's3:GetObject'
                 Resource: '*'
@@ -175,6 +202,7 @@ Resources:
           Value: !Ref Owner
         - Key: Project
           Value: !Ref Project
+
 
   BatchServiceRole:
     Type: AWS::IAM::Role
