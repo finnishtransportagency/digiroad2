@@ -1,5 +1,5 @@
 package fi.liikennevirasto.digiroad2
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
