@@ -230,7 +230,14 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           })
 
           val twoDigitPwLanes = LogUtils.time(logger, "Transform " + pwLanes.size + " lanes to two digit lanes with mass query") {
-            laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes)
+            try {
+              laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes)
+            }
+            catch {
+              case rae: RoadAddressException =>
+                logger.error(rae.getMessage)
+                Seq()
+            }
           }
           val twoDigitLanes = laneService.pieceWiseLanesToPersistedLane(twoDigitPwLanes.flatten)
           //Lanes where VKM failed to transform coordinates to road addresses
