@@ -310,7 +310,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
 
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-    when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+    when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     runWithRollback {
       when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
       when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))

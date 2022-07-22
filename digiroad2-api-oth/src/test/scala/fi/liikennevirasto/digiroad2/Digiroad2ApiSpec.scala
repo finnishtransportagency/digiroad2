@@ -64,14 +64,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val linkId7 = "1611069"
   val linkId8 = "1611070"
 
-  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
-  when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-  when(mockRoadLinkService.fetchByLinkId(1l))
-    .thenReturn(Some(RoadLinkFetched(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchByLinkId(2l))
-    .thenReturn(Some(RoadLinkFetched(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchByLinkId(7478l))
-    .thenReturn(Some(RoadLinkFetched(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
+  when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+  when(mockRoadLinkService.fetchByLinkId(linkId1))
+    .thenReturn(Some(RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkId(linkId2))
+    .thenReturn(Some(RoadLinkFetched(linkId2, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkId(linkId3))
+    .thenReturn(Some(RoadLinkFetched(linkId3, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   private val vvhRoadlinksForBoundingBox = List(
     RoadLinkFetched(linkId3, 235, Seq(Point(0, 0), Point(0, 10)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))

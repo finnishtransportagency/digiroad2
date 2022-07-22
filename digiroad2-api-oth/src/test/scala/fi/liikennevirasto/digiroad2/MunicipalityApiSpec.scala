@@ -312,8 +312,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
     
     val timeStamp = RoadLinkClient.createVVHTimeStamp()
-    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonPointFeature))
