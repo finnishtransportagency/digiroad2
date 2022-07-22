@@ -351,7 +351,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def fetchVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled:Boolean = false): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else roadLinkDAO.fetchByLinkIds(linkIds) }
+    if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else  withDbConnection {roadLinkDAO.fetchByLinkIds(linkIds) }}
     else Seq.empty[VVHRoadlink]
   }
 
@@ -363,7 +363,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def fetchVVHRoadlinks(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[VVHRoadlink] = {
-      roadLinkDAO.fetchByRoadNames(roadNamePublicIds, roadNameSource)
+    withDbConnection {roadLinkDAO.fetchByRoadNames(roadNamePublicIds, roadNameSource)}
   }
 
   def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
