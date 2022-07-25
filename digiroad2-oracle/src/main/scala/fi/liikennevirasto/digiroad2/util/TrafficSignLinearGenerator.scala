@@ -755,7 +755,7 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
     if (debbuger) println("createLinearAsset")
     prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink))
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -836,7 +836,7 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
     if (debbuger) println("createLinearAsset")
     hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink))
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
@@ -1003,7 +1003,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
     if (debbuger) println("createLinearAsset")
     parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink))
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -1209,7 +1209,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     if (debbuger) println("createLinearAsset")
     roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink) )
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink) )
   }
 
   override def getStopCondition(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int, result : Seq[TrafficSignToLinear]): Option[Double] = {

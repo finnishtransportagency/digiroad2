@@ -35,6 +35,10 @@
       return me.isUser('operator');
     };
 
+    this.isLaneMaintainer = function(){
+      return me.isUser('laneMaintainer');
+    };
+
     this.isServiceRoadMaintainer = function(){
       return me.isUser('serviceRoadMaintainer');
     };
@@ -55,7 +59,7 @@
     };
 
     this.editModeAccess = function() {
-      return (!me.isUser('viewer') && !me.isOnlyUser('serviceRoadMaintainer'));
+      return (!me.isUser('viewer') && !me.isUser('laneMaintainer') && !me.isOnlyUser('serviceRoadMaintainer'));
     };
 
     this.editModeTool = function(toolType, asset, roadLink) {};

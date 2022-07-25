@@ -322,6 +322,30 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
     createdLanes
   }
 
+  def updateLaneAttributesForMultipleLanes(lanes: Seq[PersistedLane], username: String): Unit = {
+    val updateAttribute =
+      s"""UPDATE LANE_ATTRIBUTE SET VALUE = (?), MODIFIED_BY = (?),
+         | MODIFIED_DATE = current_timestamp WHERE LANE_ID = (?) AND NAME = (?)""".stripMargin
+
+    MassQuery.executeBatch(updateAttribute) { statement =>
+      lanes.foreach( lane => {
+        lane.attributes match {
+          case props: Seq[LaneProperty] =>
+            props.filterNot(_.publicId == "lane_code")
+              .foreach(attr => {
+                val attrValue = if (attr.values.nonEmpty) attr.values.head.value.toString else ""
+                statement.setString(1, attrValue)
+                statement.setString(2, username)
+                statement.setLong(3, lane.id)
+                statement.setString(4, attr.publicId)
+                statement.addBatch()
+              })
+        }
+      })
+    }
+
+  }
+
   def insertLaneAttributesForMultipleLanes(newLanes: Seq[PersistedLane], username: String): Unit = {
     val insertAttribute =
       s"""insert into lane_attribute (id, lane_id, name, value, created_date, created_by)
@@ -454,7 +478,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
     """.execute
   }
 
-  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = roadLinkClient.roadLinkData.createVVHTimeStamp()): Unit = {
+  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = roadLinkClient.createVVHTimeStamp()): Unit = {
     sqlu"""UPDATE LANE_POSITION
            SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $vvhTimestamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )

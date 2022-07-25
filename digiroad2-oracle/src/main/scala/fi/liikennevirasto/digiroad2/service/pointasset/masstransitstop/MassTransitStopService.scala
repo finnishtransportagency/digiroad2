@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LogUtils}
 import org.joda.time.{DateTime, LocalDate}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -216,8 +216,12 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedMassTransitStop] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
-    super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
+    val roadLinks = LogUtils.time(logger, "TEST LOG Get and enrich roadlinks and complementaries"){
+      roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds,asyncMode=false)
+    }
+    LogUtils.time(logger, "TEST LOG Get massTransitStop assets by bounding box") {
+      super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
+    }
   }
 
   override def getNormalAndComplementaryById(id: Long, roadLink: RoadLink): Option[PersistedAsset] = {

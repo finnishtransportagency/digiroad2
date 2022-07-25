@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkOverrideDAO, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -320,4 +320,18 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }.toSeq
   }
 
+  def groupRoadAddressTEMP(roadAddresses: Set[RoadAddressTEMP]): Set[RoadAddressTEMP] = {
+    roadAddresses
+      .groupBy(address => (address.linkId, address.road, address.roadPart))
+      .mapValues(addresses => (addresses.minBy(_.startAddressM),addresses.maxBy(_.endAddressM)))
+      .map {
+        case (_, (startRoadAddress, endRoadAddress)) =>
+          val (adjustedStart, adjustedEnd) =
+            if (startRoadAddress.startMValue > endRoadAddress.startMValue)
+              (endRoadAddress.startMValue, startRoadAddress.endMValue)
+            else
+              (startRoadAddress.startMValue, endRoadAddress.endMValue)
+          startRoadAddress.copy(endAddressM = endRoadAddress.endAddressM, startMValue = adjustedStart, endMValue = adjustedEnd)
+    }.toSet
+  }
 }
