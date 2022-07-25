@@ -17,7 +17,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
 
   implicit override val getRoadLink: GetResult[RoadLinkFetched] = new GetResult[RoadLinkFetched] {
     def apply(r: PositionedResult): RoadLinkFetched = {
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val municipality = r.nextInt()
       val path = r.nextObjectOption().map(extractGeometry).get
       val administrativeClass = r.nextInt()
@@ -92,7 +92,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
   
   override def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
     LogUtils.time(logger,"TEST LOG Getting complementery roadlinks" ){
-      sql"""select linkid, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,
+      sql"""select linkid_UUID, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,
                  roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
                  geometry_edited_date, surfacetype, subtype, objectid, sourceinfo, geometrylength, cust_owner
@@ -105,7 +105,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
   override def getLinksIdByPolygons(polygon: Polygon): Seq[String] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger,"TEST LOG Getting complementery roadlinks by polygon" ){
-      sql"""select linkid
+      sql"""select linkid_UUID
           from roadlinkex
           where subtype = 3 and #$polygonFilter
        """.as[String].list
