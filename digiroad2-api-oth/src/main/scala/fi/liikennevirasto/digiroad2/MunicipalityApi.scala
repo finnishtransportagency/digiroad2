@@ -191,7 +191,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   private def updateLinearAssets(properties: Map[String, String], links: Seq[RoadLink]) = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
-    val timeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+    val timeStamp = vvhClient.createVVHTimeStamp()
 
     links.foreach { link =>
       speedLimit match {
