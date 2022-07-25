@@ -113,7 +113,7 @@ class RoadLinkDAO {
   
   implicit val getRoadLink: GetResult[RoadLinkFetched] = new GetResult[RoadLinkFetched] {
     def apply(r: PositionedResult): RoadLinkFetched = {
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val mtkId = r.nextLong()
       val mtkHereFlip = r.nextInt()
       val municipality = r.nextInt()
@@ -186,7 +186,7 @@ class RoadLinkDAO {
         case (key, value) if value != None => key -> value
       }
 
-      RoadLinkFetched(linkId.toString, municipality, geometry, AdministrativeClass.apply(administrativeClass),
+      RoadLinkFetched(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
         extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
         ConstructionType.apply(constructionType), LinkGeomSource.apply(sourceInfo), length)
     }
@@ -331,7 +331,7 @@ class RoadLinkDAO {
   
  protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
    LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
-     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+     sql"""select kmtkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
                  geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
@@ -377,7 +377,7 @@ class RoadLinkDAO {
     
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger,"TEST LOG Getting roadlinks by polygon" ){
-      sql"""select linkid
+      sql"""select kmtkid
           from roadlink
           where #$polygonFilter
        """.as[String].list
