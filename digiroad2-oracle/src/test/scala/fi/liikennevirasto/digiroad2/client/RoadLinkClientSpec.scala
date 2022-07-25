@@ -22,7 +22,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     result.size should be >1
   }
 
-  test("Fetch roadlinks with polygon string ") {
+  ignore("Fetch roadlinks with polygon string ") {
     val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result= roadLinkClient.roadLinkData.fetchByPolygon(geomBuilder.polygon(564000,6930000,566000,6931000,567000,6933000))
     result.size should be >1
@@ -41,12 +41,14 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     val result = roadLinkClient.historyData.fetchVVHRoadLinkByLinkIds(Set("440484","440606","440405","440489"))
     result.nonEmpty should be (true)
   }
-  test("Fetch changes with polygon string ") {
+  //Ignored due to DROTH-3311, enable again when change info is fetched
+  ignore("Fetch changes with polygon string ") {
     val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result= roadLinkClient.roadLinkChangeInfo.fetchByPolygon(geomBuilder.polygon(528428,6977212,543648,6977212,543648,7002668,528428,7002668))
     result.size should be >1
   }
-  test("Fetch changes with empty polygon string") {
+  //Ignored due to DROTH-3311, enable again when change info is fetched
+  ignore("Fetch changes with by bounding box and municipalities") {
     val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result= roadLinkClient.roadLinkChangeInfo.fetchByPolygon(geomBuilder.polygon())
     result.size should be (0)
@@ -70,7 +72,8 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Test Change Info fetch by LinkId") {
+  //Ignored due to DROTH-3311, enable again when change info is fetched
+  ignore("Test Change Info fetch by LinkId") {
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result = roadLinkClient.roadLinkChangeInfo.fetchByLinkIds(Set("5176799"))
     result.nonEmpty should be (true)

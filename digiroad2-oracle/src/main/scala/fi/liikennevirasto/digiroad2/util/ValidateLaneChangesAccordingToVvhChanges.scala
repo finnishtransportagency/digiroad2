@@ -13,6 +13,8 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+import scala.math.abs
+
 object ValidateLaneChangesAccordingToVvhChanges {
 
   lazy val roadLinkClient: RoadLinkClient = {
@@ -56,8 +58,9 @@ object ValidateLaneChangesAccordingToVvhChanges {
     roadLink.trafficDirection match {
 
       case BothDirections => roadLink.linkType match {
-        case MotorwayServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad
-          if mainLanes.size != 1 => Some(roadLink)
+        case MotorwayServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad  =>
+          if (mainLanes.size != 1)  Some(roadLink)
+          else None
         case _ => if (mainLanes.size != 2) Some(roadLink)
         else None
       }
@@ -76,10 +79,16 @@ object ValidateLaneChangesAccordingToVvhChanges {
   }
 
   def validateMainLaneAmount(roadLinks: Seq[RoadLink], mainLanesOnRoadLinks: Seq[PersistedLane]): Seq[RoadLink] = {
-    val roadLinksWithInvalidAmount = for (roadLink <- roadLinks) yield
-      checkLinksMainLanes(roadLink, mainLanesOnRoadLinks.filter(mainLane => mainLane.linkId == roadLink.linkId))
+    val lanesMapped = mainLanesOnRoadLinks.groupBy(_.linkId)
+    val roadLinksWithoutMainLanes = roadLinks.filterNot(rl => lanesMapped.keys.toSeq.contains(rl.linkId))
+    lanesMapped.flatMap(pair => {
+      val roadLink = roadLinks.find(_.linkId == pair._1)
+      val lanesOnLink = pair._2
+      roadLink match {
+        case Some(rl) => checkLinksMainLanes(rl, lanesOnLink)
+      }
+    }).toSeq ++ roadLinksWithoutMainLanes
 
-    roadLinksWithInvalidAmount.flatten
   }
 
   def validateLaneSideCodeConsistency(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
@@ -89,8 +98,22 @@ object ValidateLaneChangesAccordingToVvhChanges {
   }
 
   def validateForDuplicateLanes(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
-    val DuplicateLanes = for (roadLink <- roadLinks) yield checkForDuplicateLanes(lanes.filter(_.linkId == roadLink.linkId))
-    DuplicateLanes.filterNot(_.isEmpty).flatten
+    val duplicateLanes = for (roadLink <- roadLinks) yield checkForDuplicateLanes(lanes.filter(_.linkId == roadLink.linkId))
+    duplicateLanes.filterNot(_.isEmpty).flatten
+  }
+
+  def validateMainLaneLengths(roadLinks: Seq[RoadLink], lanes: Seq[PersistedLane]): Seq[PersistedLane] = {
+    lanes.filter(lane => {
+      val roadLink = roadLinks.find(_.linkId == lane.linkId)
+      roadLink match {
+        case Some(rl) =>
+          val laneLength = lane.endMeasure - lane.startMeasure
+          val difference = abs(rl.length - laneLength)
+          difference > 1
+
+        case _ => false
+      }
+    })
   }
 
   //Process to find any errors on lanes caused by ChangeLanesAccordingToVVHChanges.
@@ -114,9 +137,11 @@ object ValidateLaneChangesAccordingToVvhChanges {
     val duplicateLanes = validateForDuplicateLanes(roadLinks, allLanesOnRoadLinks)
     val roadLinksWithInvalidAmountOfMl = validateMainLaneAmount(roadLinks, mainLanesOnRoadLinks)
     val lanesWithInconsistentSideCodes = validateLaneSideCodeConsistency(roadLinks, allLanesOnRoadLinks)
+    val mainLanesWithInvalidLength = validateMainLaneLengths(roadLinks, mainLanesOnRoadLinks)
 
     logger.info("Duplicate lanes: " + duplicateLanes.map(_.id) + "\n" +
       "Roadlinks with invalid amount of main lanes: " + roadLinksWithInvalidAmountOfMl.map(_.linkId) + "\n" +
-      "Lanes with inconsistent side codes: " + lanesWithInconsistentSideCodes.map(_.id))
+      "Lanes with inconsistent side codes: " + lanesWithInconsistentSideCodes.map(_.id)+ "\n" +
+      "Main lanes with invalid length: " + mainLanesWithInvalidLength.map(_.id))
   }
 }

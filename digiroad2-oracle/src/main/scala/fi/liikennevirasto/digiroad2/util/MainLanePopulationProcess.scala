@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, lane}
 import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, LaneType, PersistedLane}
@@ -14,6 +14,8 @@ import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
+import java.text.SimpleDateFormat
 
 object MainLanePopulationProcess {
 
@@ -43,16 +45,19 @@ object MainLanePopulationProcess {
   private val logger = LoggerFactory.getLogger(getClass)
 
   private def addMainLane(roadLink: RoadLink): PersistedLane = {
-    val createdVVHTimeStamp = roadLinkClient.roadLinkData.createVVHTimeStamp()
+    val createdVVHTimeStamp = roadLinkClient.createVVHTimeStamp()
     val sideCode = toSideCode(roadLink.trafficDirection).value
     val laneCode = 1
     val startMeasure = 0.0
     // Use three decimals
     val endMeasure = Math.round(roadLink.length * 1000).toDouble / 1000
+    val dateFormat = new SimpleDateFormat("dd.M.yyyy")
+    val startDate = dateFormat.format(DateTime.now().toDate)
 
     val laneProperties = Seq(
       LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
-      LaneProperty("lane_type", Seq(LanePropertyValue(LaneType.Main.value)))
+      LaneProperty("lane_type", Seq(LanePropertyValue(LaneType.Main.value))),
+      LaneProperty("start_date", Seq(LanePropertyValue(startDate)))
     )
 
     PersistedLane(0, roadLink.linkId, sideCode, laneCode, roadLink.municipalityCode, startMeasure, endMeasure,

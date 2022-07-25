@@ -1006,13 +1006,13 @@
         title: 'Kaistan mallinnustyökalu',
         newTitle: 'Uusi kaistan mallinnustyökalu',
         className: 'lane-modelling-tool',
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LaneAssetAuthorizationPolicy(),
         editControlLabels: {
           title: 'Kaistan mallinnustyökalu'
         },
         isSeparable: false,
         allowMapViewOnly: true,
-        allowComplementaryLinks: true,
+        allowComplementaryLinks: false,
         allowWalkingCyclingLinks: true,
         isVerifiable: false,
         showValidationErrorLabel: true,

@@ -42,9 +42,16 @@ Lokaali tietokannan alustus
 
 Backend palvelimen käynistäminen edellyttää, että paikallinen tietokanta on päälä ja alustettu.
 
-Laita aws/local-dev/postgis/docker-compose.yaml pääle.
+Laita aws/local-dev/postgis/docker-compose.yaml pääle ja luo ympäristöt unittest ja lokaaliin kehitykseen.
 
-Alusta kanta ajamalla DataFixture init configuraatio. Sitten aja DataFixture reset configuraatio.
+docker-compose -p "localtest" -f .\aws\local-dev\postgis\docker-compose.yaml create
+docker-compose -p "unittest" -f .\aws\local-dev\postgis\docker-compose.yaml create
+
+Käynnistä joko terminaalissa tai Docker Desktop.
+docker-compose -p "localtest" -f .\aws\local-dev\postgis\docker-compose.yaml start
+docker-compose -p "unittest" -f .\aws\local-dev\postgis\docker-compose.yaml start
+
+Alusta kanta ajamalla DataFixture init configuraatio. Sitten aja DataFixture reset tai migrate configuraatio.
 
 Ajaminen
 ========
@@ -111,6 +118,35 @@ run fi.liikennevirasto.digiroad2.ProductionServer
 
 Avaa käyttöliittymä osoitteessa <http://localhost:9001/login.html>.
 Kirjaudut sisään käyttäen lokaalia testi käyttäjää nimeltään silari.
+
+
+Tielinkiverkon lataaminen.
+======================================================
+
+Jotta skripti toimisi PostgreSql pitää olla asennettu ja C:\{polku sinne minne asennettu}\PostgreSQL\13\bin\ pitää olla lisätty path env.
+
+Mahdollisesti voi tulla viesti "cannot be loaded because the execution of scripts is disabled on this system". 
+
+Käynnistä Powershell terminaali admin oikeuksilla ja aja Set-ExecutionPolicy Unrestricted -Scope LocalMachine
+Lisää tietoa: https://www.sqlshack.com/choosing-and-setting-a-powershell-execution-policy/
+
+Avaa ssh yhteys bastion koneeseen ja ohjaa tietokanta johonkin lokaaliin porttiin. Tarvittavat ohjeet löytyy wiki sivulta https://extranet.vayla.fi/wiki/display/DROTH/AWS+Ohjeita
+
+Aja Powershell terminaalissa skripti projektin juuressa.
+```
+ .\importRoadlink.ps1 
+ -municipalities "20,10" # kunnat jotka haluat tuoda
+ -sourceUser digiroad2dbuser 
+ -sourcePassword password 
+ -sourceDB digiroad2 
+ -sourcePort 9999 
+ -destinationPassword digiroad2
+ -truncateBoolean 1 # 1 tyhjennetään taulu ennen kuin tuodaan uudet linkit, 0 kantaa ei tyhjennetä
+```
+
+```
+ .\importRoadlink.ps1 -municipalities "20,10" -sourceUser digiroad2dbuser -sourcePassword password  -sourceDB digiroad2  -sourcePort 9999  -destinationPassword digiroad2 -truncateBoolean 1
+```
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================

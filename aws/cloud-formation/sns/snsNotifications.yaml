@@ -13,6 +13,12 @@ Parameters:
   ApplicationName:
     Description: Name of the application (no whitespace or special characters)
     Type: String
+  BatchFailInputPathExitCode:
+    Description: "Input path for failing batch exit code"
+    Type: String
+  BatchFailInputPathLogStream:
+    Description: "Input path for failing batch log stream"
+    Type: String
 
 Resources:
   BatchSNSTopic:
@@ -46,8 +52,8 @@ Resources:
             InputTemplate: |
               "Batch named <name> in queue <queue> failed. Reason was <reason> with exit code <code>. Log Stream is <log>"
             InputPathsMap:
-              code: "$.detail.container.exitCode"
-              log: "$.detail.container.logStreamName"
+              code: !Ref BatchFailInputPathExitCode
+              log: !Ref BatchFailInputPathLogStream
               name: "$.detail.jobName"
               queue: "$.detail.jobQueue"
               reason: "$.detail.statusReason"

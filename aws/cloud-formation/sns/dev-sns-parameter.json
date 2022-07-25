@@ -14,5 +14,13 @@
   {
     "ParameterKey": "ApplicationName",
     "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "BatchFailInputPathExitCode",
+    "ParameterValue": "$.detail.container.exitCode"
+  },
+  {
+    "ParameterKey": "BatchFailInputPathLogStream",
+    "ParameterValue": "$.detail.container.logStreamName"
   }
 ]

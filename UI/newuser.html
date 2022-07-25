@@ -10,6 +10,7 @@
     <script type="text/javascript">
 
         var operatorCheckbox = "input[id='operatorCheckbox']";
+        var laneMaintainerCheckbox = "input[id='laneMaintainerCheckbox']";
         var municipalityCheckbox = "input[id='municipalitiesCheckbox']";
         var elysCheckbox = "input[id='elysCheckbox']";
         var areasCheckbox = "input[id='areasCheckbox']";
@@ -27,11 +28,12 @@
                      {name: "Kaakkois-Suomi", id: 8},
                      {name: "Uusimaa", id: 9}];
 
-        var userSpecs =[{ role: "municipality", enabledCheckbox: [ municipalityCheckbox ], disabledCheckbox: [ operatorCheckbox, elysCheckbox, areasCheckbox]   },
-                        { role: "ely", enabledCheckbox: [ elysCheckbox, areasCheckbox ], disabledCheckbox: [operatorCheckbox,  municipalityCheckbox]  },
-                        { role: "operator" ,  enabledCheckbox: [operatorCheckbox], disabledCheckbox: [ elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
-                        { role: "areas",  enabledCheckbox: [ areasCheckbox, elysCheckbox ], disabledCheckbox: [ municipalityCheckbox, operatorCheckbox ] },
-                        { role: "default", enabledCheckbox: [ areasCheckbox, elysCheckbox, operatorCheckbox, municipalityCheckbox], disabledCheckbox: [] }];
+        var userSpecs =[{ role: "municipality", enabledCheckbox: [ municipalityCheckbox ], disabledCheckbox: [ laneMaintainerCheckbox,operatorCheckbox, elysCheckbox, areasCheckbox]   },
+            { role: "ely", enabledCheckbox: [ elysCheckbox, areasCheckbox ], disabledCheckbox: [laneMaintainerCheckbox,operatorCheckbox,  municipalityCheckbox]  },
+            { role: "operator" ,  enabledCheckbox: [operatorCheckbox,laneMaintainerCheckbox], disabledCheckbox: [ laneMaintainerCheckbox,elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
+            { role: "laneMaintainer" ,  enabledCheckbox: [laneMaintainerCheckbox], disabledCheckbox: [operatorCheckbox, elysCheckbox,  municipalityCheckbox, areasCheckbox ] },
+            { role: "areas",  enabledCheckbox: [ areasCheckbox, elysCheckbox ], disabledCheckbox: [laneMaintainerCheckbox, municipalityCheckbox, operatorCheckbox ] },
+            { role: "default", enabledCheckbox: [ laneMaintainerCheckbox,areasCheckbox, elysCheckbox, operatorCheckbox, municipalityCheckbox], disabledCheckbox: [] }];
 
 
         function onChangeEvent() {
@@ -44,7 +46,10 @@
             } else {
               if ($(operatorCheckbox).is(':checked')) {
                 specs = _.find(userSpecs, function (spec) {return spec.role === "operator"});
-              } else {
+              } else if (($(laneMaintainerCheckbox).is(':checked'))) {
+                  specs = _.find(userSpecs, function (spec) {return spec.role === "laneMaintainer"});
+              }
+                else {
                 if ($(areasCheckbox).is(':checked')) {
                   specs = _.find(userSpecs, function (spec) {return spec.role === "areas"});
                 } else {
@@ -99,6 +104,14 @@
             roleName.push('operator');
           else
             delete roleName['operator'];
+
+        }
+
+        function isLaneMaintainer() {
+            if($(laneMaintainerCheckbox).is(':checked'))
+                roleName.push('laneMaintainer');
+            else
+                delete roleName['laneMaintainer'];
 
         }
 
@@ -214,7 +227,7 @@
         }
 
         function anyBoxChecked() {
-          return _.some([operatorCheckbox, municipalityCheckbox, elysCheckbox, areasCheckbox], function(checkbox){return $(checkbox).is(':checked');});
+          return _.some([operatorCheckbox,laneMaintainerCheckbox, municipalityCheckbox, elysCheckbox, areasCheckbox], function(checkbox){return $(checkbox).is(':checked');});
         }
 
         jQuery(document).ready(function($) {
@@ -331,6 +344,10 @@
                 <div class="checkbox">
                     <input type="checkbox" name="roleName" id = "operatorCheckbox" class="form-control" value="operator"  onchange="onChangeEvent(), isOperator()">
                     <label class="control-label" id="labelCheckboxOperator">Operaattori</label>
+                </div>
+                <div class="checkbox">
+                    <input type="checkbox" name="roleName" id = "laneMaintainerCheckbox" class="form-control" value="laneMaintainer"  onchange="onChangeEvent(), isLaneMaintainer()">
+                    <label class="control-label" id="labelCheckboxLaneMaintainer">Kaistat</label>
                 </div>
 
                 <div class="checkbox">

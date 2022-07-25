@@ -19,7 +19,7 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: PostGISAssetDao = new PostGISAssetDao
 
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.createVVHTimeStamp()): Seq[Long] = {
     withDynTransaction {
       val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.flatMap{ newAsset =>
@@ -38,7 +38,7 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
 
     val updatedAssets = ids.flatMap { id =>
       val oldLinearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = roadLinkClient.fetchRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(oldLinearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       val measure = measures.getOrElse(Measures(oldLinearAsset.startMeasure, oldLinearAsset.endMeasure))
 
       value match {
@@ -49,14 +49,14 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
             Seq(Measures(oldLinearAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldLinearAsset.endMeasure)).flatMap {
               m =>
                 if (m.endMeasure - m.startMeasure > 0.01)
-                  Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue(1), sideCode.getOrElse(oldLinearAsset.sideCode), m, username, vvhTimeStamp.getOrElse(roadLinkClient.roadLinkData.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), verifiedBy = oldLinearAsset.verifiedBy, informationSource = None))
+                  Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue(1), sideCode.getOrElse(oldLinearAsset.sideCode), m, username, vvhTimeStamp.getOrElse(roadLinkClient.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), verifiedBy = oldLinearAsset.verifiedBy, informationSource = None))
                 else
                   None
             }
           }
           else  {
             Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, value, sideCode.getOrElse(oldLinearAsset.sideCode),
-             measure, username, vvhTimeStamp.getOrElse(roadLinkClient.roadLinkData.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = None))
+             measure, username, vvhTimeStamp.getOrElse(roadLinkClient.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = None))
           }
         case _ => Some(id)
       }

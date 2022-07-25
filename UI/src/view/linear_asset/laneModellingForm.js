@@ -92,6 +92,12 @@
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
+      },
+      {
+        label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13, required: true
+      },
+      {
+        label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 14
       }
     ]
   };
@@ -443,23 +449,20 @@
         });
       });
 
+      asset = _.sortBy(asset, function (lane) {
+        return lane.marker;
+      });
+
       var body = createBodyElement(selectedAsset.getCurrentLane());
 
       if(selectedAsset.isSplit()) {
-        //Render form A
-        renderFormElements(_.find(asset,{'marker': 'A'}), isReadOnly, 'A', selectedAsset.setValue, selectedAsset.getValue, false, body);
 
-        if(!isReadOnly)
-          renderExpireAndDeleteButtonsElement(selectedAsset, body, 'A');
+        _.forEach(asset, function (lane) {
+          renderFormElements(lane, isReadOnly, lane.marker, selectedAsset.setValue, selectedAsset.getValue, false, body);
+          if(!isReadOnly) renderExpireAndDeleteButtonsElement(selectedAsset, body, lane.marker);
+          body.find('.form').append('<hr class="form-break">');
+        });
 
-        body.find('.form').append('<hr class="form-break">');
-        //Render form B
-        renderFormElements(_.find(asset,{'marker': 'B'}), isReadOnly, 'B', selectedAsset.setValue, selectedAsset.getValue, false, body);
-
-        if(!isReadOnly)
-          renderExpireAndDeleteButtonsElement(selectedAsset, body, 'B');
-
-        body.find('.form').append('<hr class="form-break">');
       }else{
         renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, isDisabled, body);
 
