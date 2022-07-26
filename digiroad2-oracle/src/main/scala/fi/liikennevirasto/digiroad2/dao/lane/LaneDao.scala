@@ -405,6 +405,17 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     }
   }
 
+  //Deletes all lane info, only to be used in MainLanePopulation initial process
+  def truncateLaneTables(): Unit = {
+    sqlu"""TRUNCATE TABLE LANE""".execute
+    sqlu"""TRUNCATE TABLE LANE_ATTRIBUTE""".execute
+    sqlu"""TRUNCATE TABLE LANE_LINK""".execute
+    sqlu"""TRUNCATE TABLE LANE_POSITION""".execute
+    sqlu"""TRUNCATE TABLE LANE_HISTORY""".execute
+    sqlu"""TRUNCATE TABLE LANE_HISTORY_ATTRIBUTE""".execute
+    sqlu"""TRUNCATE TABLE LANE_HISTORY_LINK""".execute
+    sqlu"""TRUNCATE TABLE LANE_HISTORY_POSITION""".execute
+  }
 
   def updateEntryLane( lane: PersistedLane, username: String ): Long = {
 
