@@ -1169,6 +1169,11 @@ trait LaneOperations {
     }
   }
 
+  //Deletes all lane info, only to be used in MainLanePopulation initial process
+  def deleteAllPreviousLaneData(): Unit = {
+    dao.truncateLaneTables()
+  }
+
   def persistedLaneToTwoDigitLaneCode(lane: PersistedLane, newTransaction: Boolean = true): Option[PersistedLane] = {
     val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId), newTransaction).head
     val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
