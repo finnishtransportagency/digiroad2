@@ -16,6 +16,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import java.io.{InputStream, InputStreamReader}
+import java.lang.management.ManagementFactory
 import scala.util.{Success, Try}
 
 
@@ -185,6 +186,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData, fileName: String): ImportResultData = {
     logger.info("Started mapping start dates from file: " + fileName + " on " + DateTime.now().toString() + " in thread ID: " + Thread.currentThread().getId)
+    logger.info(s"Total number of threads in instance: ${ManagementFactory.getThreadMXBean.getThreadCount}")
       val missingLanesAndFailedRows = LogUtils.time(logger, "Get lanes to update") {
         laneAssetProperties.map(props => {
           logger.info("Processing row: " + (laneAssetProperties.indexOf(props) + 1) + " of " + laneAssetProperties.size)
