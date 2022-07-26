@@ -184,7 +184,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData, fileName: String): ImportResultData = {
-    logger.info("Started mapping start dates from file: " + fileName + " on " + DateTime.now().toString())
+    logger.info("Started mapping start dates from file: " + fileName + " on " + DateTime.now().toString() + " in thread ID: " + Thread.currentThread().getId)
       val missingLanesAndFailedRows = LogUtils.time(logger, "Get lanes to update") {
         laneAssetProperties.map(props => {
           logger.info("Processing row: " + (laneAssetProperties.indexOf(props) + 1) + " of " + laneAssetProperties.size)
@@ -328,7 +328,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    val numberOfRowsToPartition = 10000
+    val numberOfRowsToPartition = 1000
 
     val groupedRows = csvReader.allWithHeaders().grouped(numberOfRowsToPartition).toSeq
     val results = groupedRows.map(rowGroup => rowGroup.foldLeft(ImportResultLaneAsset()) {
@@ -360,6 +360,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         }
     })
 
+    logger.info("Number of detected cores " + Runtime.getRuntime.availableProcessors)
     val resultsSplit = results.par.map(result => {
       withDynTransaction {
         updateOnlyStartDates.onlyStartDates match {

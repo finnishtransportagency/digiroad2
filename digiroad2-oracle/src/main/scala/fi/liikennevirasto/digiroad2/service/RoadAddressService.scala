@@ -47,7 +47,9 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddress] = {
-    viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
+    viiteClient.retry(2){
+      viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
+    }
   }
 
   /**
