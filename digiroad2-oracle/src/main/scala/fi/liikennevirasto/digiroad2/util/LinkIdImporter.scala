@@ -30,7 +30,7 @@ object Parallel {
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position", "lrm_position_history",
@@ -43,31 +43,31 @@ object LinkIdImporter {
     }
   }
 
-  def page(tableName: String, min: Int, max: Int): SQLInterpolationResult = {
+  private def page(tableName: String, min: Int, max: Int): SQLInterpolationResult = {
     sql"""select * from (select a.*, row_number() OVER() rnum 
             from (select distinct vvh_id from #$tableName) a limit #$max ) 
             derivedMml where rnum >= #$min"""
   }
 
-  def flipColumns(tableName: String, columnName: String): Unit = {
+  private def flipColumns(tableName: String, columnName: String): Unit = {
     sqlu"""ALTER TABLE #${tableName} DROP COLUMN vvh_id""".execute
     sqlu"""ALTER TABLE #${tableName} RENAME COLUMN #${columnName} to vvh_id""".execute
     sqlu"""ALTER TABLE #${tableName} ADD COLUMN #${columnName} NUMERIC(38)""".execute
   }
 
-  def prepare(tableName: String): (List[(Int, Int)], Int) = {
+  private def prepare(tableName: String): (List[(Int, Int)], Int) = {
     val count = sql"""select count(distinct vvh_id) from #$tableName""".as[Int].first
     val batches = getBatchDrivers(0, count, 20000)
     val total = batches.size
     (batches, total)
   }
 
-  def updateCommand(columnName: String): String = {
+  private def updateCommand(columnName: String): String = {
     s"""update ? SET ${columnName} = (select id from frozenlinks_vastintaulu_csv 
                 where vvh_linkid = ? ) where vvh_id = ? """
   }
 
-  def createRow(statement: PreparedStatement, id: Int, tableName: String): Unit = {
+  private def createRow(statement: PreparedStatement, id: Int, tableName: String): Unit = {
     statement.setString(1, tableName)
     statement.setInt(2, id)
     statement.setInt(3, id)
@@ -104,7 +104,7 @@ object LinkIdImporter {
     }
   }
 
-  def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
+  private def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
     if ((m - n) < step) {
       List((n, m))
     } else {
