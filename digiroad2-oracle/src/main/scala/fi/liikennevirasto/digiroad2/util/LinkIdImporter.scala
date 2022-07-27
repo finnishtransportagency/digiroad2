@@ -24,7 +24,7 @@ object LinkIdImporter {
     )
     val tableNamesPar = tableNames.par
     tableNamesPar.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
-    tableNames.par.foreach { table =>
+    tableNamesPar.foreach { table =>
       updateTable(table)
     }
 
