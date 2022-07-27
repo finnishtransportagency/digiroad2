@@ -124,16 +124,11 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get assets Latests Modifications with one municipality") {
     runWithRollback {
-
-      val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
-      when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
-
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (1000, 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (3000, 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (5000, 235)""".execute
       val municipalities = Set(235)
-      val tinyRoadLink = municipalities.flatMap { municipality =>
-        mockRoadLinkService.getTinyRoadLinkFromVVH(municipality)
-      }
-
-      val latestModificationInfoMunicipality = ServiceWithDao.dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
+      val latestModificationInfoMunicipality = ServiceWithDao.dao.getModifiedAssetTypes(municipalities)
       latestModificationInfoMunicipality should have size 3
       latestModificationInfoMunicipality.head.assetTypeCode should be(70)
       latestModificationInfoMunicipality.last.assetTypeCode should be(100)
@@ -142,18 +137,16 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get assets Latests Modifications for Ely user with two municipalities"){
     runWithRollback {
-      val tinyRoadLinkMunicipality100 = Seq( TinyRoadLink(2000), TinyRoadLink(4000), TinyRoadLink(6000))
-      val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (2000, 100)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (4000, 100)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (6000, 100)""".execute
 
-      when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
-      when(mockRoadLinkService.getTinyRoadLinkFromVVH(100)).thenReturn(tinyRoadLinkMunicipality100)
-
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (1000, 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (3000, 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values (5000, 235)""".execute
+      
       val municipalities = Set(100, 235)
-      val tinyRoadLink = municipalities.flatMap { municipality =>
-        mockRoadLinkService.getTinyRoadLinkFromVVH(municipality)
-      }
-
-      val latestModificationInfo = ServiceWithDao.dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
+      val latestModificationInfo = ServiceWithDao.dao.getModifiedAssetTypes(municipalities)
       latestModificationInfo should have size 4
       latestModificationInfo.head.assetTypeCode should be (90)
       latestModificationInfo.last.assetTypeCode should be (30)

@@ -1968,9 +1968,8 @@ object DataFixture {
       PostGISDatabase.withDynTransaction {
         counter += 1
         println(s"Working on municipality $municipality ($counter/${municipalities.size})")
-        val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
         val modifiedAssetTypes = LogUtils.time(logger, "BATCH LOG get modified asset types")(
-          verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
+          verificationService.dao.getModifiedAssetTypes(Set(municipality))
         )
 
         LogUtils.time(logger, "BATCH LOG insert modified asset types")(
