@@ -4,32 +4,43 @@ import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.util.DataFixture.getClass
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
-import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.{ForkJoinTaskSupport, ParIterable}
 import scala.concurrent.forkjoin.ForkJoinPool
+import scala.language.higherKinds
+
+object Parallel {
+  private var parallelismLevel: Int = 1
+  private var forkJoinPool: ForkJoinPool = null
+  private def prepare[T](list: ParIterable[T]): ParIterable[T] = {
+    forkJoinPool = new ForkJoinPool(parallelismLevel)
+    list.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
+    list
+  }
+  def runOperation[T, U](list: ParIterable[T], parallelism: Int = 1)(f: ParIterable[T] => U): Unit = {
+    parallelismLevel = parallelism
+    f(prepare[T](list))
+    forkJoinPool.shutdown()
+  }
+}
 
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   val logger = LoggerFactory.getLogger(getClass)
   def changeLinkIdIntoKMTKVersion(): Unit = {
-    val forkJoinPool = new ForkJoinPool(20)
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position", "lrm_position_history",
       "temp_road_address_info", "road_link_attributes", "administrative_class",
       "traffic_direction", "monouvre_element_history", "monouvre_element", "inaccurate_asset"
     )
-    val tableNamesPar = tableNames.par
-    tableNamesPar.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
     LogUtils.time(logger,s"Changing vvh id into kmtk id "){
-      tableNamesPar.foreach { table =>updateTable(table)}
+      Parallel.runOperation(tableNames.par,20){ p=>p.foreach(updateTable)}
       updateTableRoadLink("roadlink")
     }
-
   }
 
   def page(tableName: String, min: Int, max: Int) = {
