@@ -36,8 +36,8 @@ object LinkIdImporter {
       "temp_road_address_info", "road_link_attributes", "administrative_class",
       "traffic_direction", "monouvre_element_history", "monouvre_element", "inaccurate_asset"
     )
-    LogUtils.time(logger,s"Changing vvh id into kmtk id "){
-      Parallel.runOperation(tableNames.par,20){ p=>p.foreach(updateTable)}
+    LogUtils.time(logger, s"Changing vvh id into kmtk id ") {
+      Parallel.runOperation(tableNames.par, 20) { p => p.foreach(updateTable) }
       updateTableRoadLink("roadlink")
     }
   }
@@ -76,26 +76,30 @@ object LinkIdImporter {
   def updateTableRoadLink(tableName: String): Unit = {
     withDynTransaction {
       val (batches, total) = prepare(tableName)
-      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted"){
+      LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
         flipColumns(tableName, "linkid")
         batches.foreach { case (min, max) =>
           val ids = page(tableName, min, max).as[Int].list
-          MassQuery.executeBatch(updateCommand("linkid")) {
-            statement => {ids.foreach(i => {createRow(statement, i, tableName)})}}
-        }}
+          MassQuery.executeBatch(updateCommand("linkid")) { statement => {
+            ids.foreach(i => {createRow(statement, i, tableName)})
+          }}
+        }
+      }
     }
   }
 
   def updateTable(tableName: String): Unit = {
     withDynTransaction {
       val (batches, total) = prepare(tableName)
-      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted"){
+      LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
         flipColumns(tableName, "link_id")
         batches.foreach { case (min, max) =>
           val ids = page(tableName, min, max).as[Int].list
-          MassQuery.executeBatch(updateCommand("link_id")) {
-            statement => {ids.foreach(i => {createRow(statement, i, tableName)})}}
-        }}
+          MassQuery.executeBatch(updateCommand("link_id")) { statement => {
+            ids.foreach(i => {createRow(statement, i, tableName)})
+          }}
+        }
+      }
     }
   }
 
