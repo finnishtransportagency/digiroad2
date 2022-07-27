@@ -33,14 +33,14 @@ object LinkIdImporter {
 
   def page(tableName: String, min: Int, max: Int) = {
     sql"""select * from (select a.*, row_number() OVER() rnum 
-            from (select distinct vvh_id from #$tableName) a limit $max ) 
-            derivedMml where rnum >= $min"""
+            from (select distinct vvh_id from #$tableName) a limit #$max ) 
+            derivedMml where rnum >= #$min"""
   }
 
   def flipColumns(tableName: String, columnName: String): Unit = {
-    sqlu"""ALTER TABLE ${tableName} DROP COLUMN vvh_id""".execute
-    sqlu"""ALTER TABLE ${tableName} RENAME COLUMN ${columnName} to vvh_id""".execute
-    sqlu"""ALTER TABLE ${tableName} ADD COLUMN ${columnName} NUMERIC(38)""".execute
+    sqlu"""ALTER TABLE #${tableName} DROP COLUMN vvh_id""".execute
+    sqlu"""ALTER TABLE #${tableName} RENAME COLUMN #${columnName} to vvh_id""".execute
+    sqlu"""ALTER TABLE #${tableName} ADD COLUMN #${columnName} NUMERIC(38)""".execute
   }
 
   def prepare(tableName: String) = {
