@@ -10,7 +10,6 @@ import slick.jdbc.StaticQuery.interpolation
 import java.sql.PreparedStatement
 import scala.collection.parallel.{ForkJoinTaskSupport, ParIterable}
 import scala.concurrent.forkjoin.ForkJoinPool
-import scala.language.higherKinds
 
 object Parallel {
   private var parallelismLevel: Int = 1
@@ -77,7 +76,7 @@ object LinkIdImporter {
   def updateTableRoadLink(tableName: String): Unit = {
     withDynTransaction {
       val (batches, total) = prepare(tableName)
-      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links"){
+      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted"){
         flipColumns(tableName, "linkid")
         batches.foreach { case (min, max) =>
           val ids = page(tableName, min, max).as[Int].list
@@ -90,7 +89,7 @@ object LinkIdImporter {
   def updateTable(tableName: String): Unit = {
     withDynTransaction {
       val (batches, total) = prepare(tableName)
-      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links"){
+      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted"){
         flipColumns(tableName, "link_id")
         batches.foreach { case (min, max) =>
           val ids = page(tableName, min, max).as[Int].list
