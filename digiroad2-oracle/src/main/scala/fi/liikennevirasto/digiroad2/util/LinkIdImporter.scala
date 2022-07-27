@@ -4,6 +4,8 @@ import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.DataFixture.getClass
+import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
@@ -13,10 +15,9 @@ import scala.concurrent.forkjoin.ForkJoinPool
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
+  val logger = LoggerFactory.getLogger(getClass)
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val forkJoinPool = new ForkJoinPool(20)
-    // what todo when doing historia tables
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position", "lrm_position_history",
       "temp_road_address_info", "road_link_attributes", "administrative_class",
@@ -24,11 +25,11 @@ object LinkIdImporter {
     )
     val tableNamesPar = tableNames.par
     tableNamesPar.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
-    tableNamesPar.foreach { table =>
-      updateTable(table)
+    LogUtils.time(logger,s"Changing vvh id into kmtk id "){
+      tableNamesPar.foreach { table =>updateTable(table)}
+      updateTableRoadLink("roadlink")
     }
 
-    updateTableRoadLink("roadlink")
   }
 
   def page(tableName: String, min: Int, max: Int) = {
@@ -64,32 +65,27 @@ object LinkIdImporter {
 
   def updateTableRoadLink(tableName: String): Unit = {
     withDynTransaction {
-      val startTime = DateTime.now()
       val (batches, total) = prepare(tableName)
-
-      print(s"[${DateTime.now}] Table $tableName: Fetching $total batches of links… ")
-      flipColumns(tableName, "linkid")
-      batches.foreach { case (min, max) =>
-        val ids = page(tableName, min, max).as[Int].list
-        MassQuery.executeBatch(updateCommand("linkid")) {
-          statement => {ids.foreach(i => {createRow(statement, i, tableName)})}}
-      }
-      println(s"done in ${AssetDataImporter.humanReadableDurationSince(startTime)}.")
+      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links"){
+        flipColumns(tableName, "linkid")
+        batches.foreach { case (min, max) =>
+          val ids = page(tableName, min, max).as[Int].list
+          MassQuery.executeBatch(updateCommand("linkid")) {
+            statement => {ids.foreach(i => {createRow(statement, i, tableName)})}}
+        }}
     }
   }
 
   def updateTable(tableName: String): Unit = {
     withDynTransaction {
-      val startTime = DateTime.now()
       val (batches, total) = prepare(tableName)
-      print(s"[${DateTime.now}] Table $tableName: Fetching $total batches of links… ")
-      flipColumns(tableName, "link_id")
-      batches.foreach { case (min, max) =>
-        val ids = page(tableName, min, max).as[Int].list
-        MassQuery.executeBatch(updateCommand("link_id")) { 
-          statement => {ids.foreach(i => {createRow(statement, i, tableName)})}}
-      }
-      println(s"done in ${AssetDataImporter.humanReadableDurationSince(startTime)}.")
+      LogUtils.time(logger,s"[${DateTime.now}] Table $tableName: Fetching $total batches of links"){
+        flipColumns(tableName, "link_id")
+        batches.foreach { case (min, max) =>
+          val ids = page(tableName, min, max).as[Int].list
+          MassQuery.executeBatch(updateCommand("link_id")) {
+            statement => {ids.foreach(i => {createRow(statement, i, tableName)})}}
+        }}
     }
   }
 
