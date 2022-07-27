@@ -5,6 +5,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.slf4j.LoggerFactory
+import slick.jdbc.SQLInterpolationResult
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
@@ -42,7 +43,7 @@ object LinkIdImporter {
     }
   }
 
-  def page(tableName: String, min: Int, max: Int) = {
+  def page(tableName: String, min: Int, max: Int): SQLInterpolationResult = {
     sql"""select * from (select a.*, row_number() OVER() rnum 
             from (select distinct vvh_id from #$tableName) a limit #$max ) 
             derivedMml where rnum >= #$min"""
@@ -54,7 +55,7 @@ object LinkIdImporter {
     sqlu"""ALTER TABLE #${tableName} ADD COLUMN #${columnName} NUMERIC(38)""".execute
   }
 
-  def prepare(tableName: String) = {
+  def prepare(tableName: String): (List[(Int, Int)], Int) = {
     val count = sql"""select count(distinct vvh_id) from #$tableName""".as[Int].first
     val batches = getBatchDrivers(0, count, 20000)
     val total = batches.size
