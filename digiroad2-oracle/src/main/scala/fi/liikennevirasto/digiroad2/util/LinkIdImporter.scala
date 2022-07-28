@@ -5,7 +5,6 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.slf4j.LoggerFactory
-import slick.jdbc.SQLInterpolationResult
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
@@ -18,164 +17,116 @@ object LinkIdImporter {
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position", "lrm_position_history",
       "temp_road_address_info", "road_link_attributes", "administrative_class",
-      "traffic_direction", "inaccurate_asset","functional_class",
-      "incomplete_link","link_type","unknown_speed_limit"
+      "traffic_direction", "inaccurate_asset", "functional_class",
+      "incomplete_link", "link_type", "unknown_speed_limit", "roadlink",
+      "manoeuvre_element_history", "manoeuvre_element"
     )
     LogUtils.time(logger, s"Changing vvh id into kmtk id ") {
-      withDynTransaction {
-        dropIndex()
-        tableNames.foreach(tableName=>flipColumns(tableName, "linkid"))
-        createIndex()
-      }
-      Parallel.operation(tableNames.par, 20) { p => p.foreach(updateTable) }
-      updateTableRoadLink("roadlink")
-      updateTableManoeuvre("manoeuvre_element_history")
-      updateTableManoeuvre("manoeuvre_element")
+      Parallel.operation(tableNames.par, tableNames.size+1) { p => p.foreach(updateTable) }
     }
   }
 
-  private def page(tableName: String, min: Int, max: Int): SQLInterpolationResult = {
-    sql"""select * from (select a.*, row_number() OVER() rnum 
-            from (select distinct vvh_id from #$tableName) a limit #$max ) 
-            derivedMml where rnum >= #$min"""
+  def updateTable(tableName: String): Unit = {
+    tableName match {
+      case "roadlink" => updateTableRoadLink(tableName)
+      case "manoeuvre_element_history" => updateTableManoeuvre(tableName)
+      case "manoeuvre_element" => updateTableManoeuvre(tableName)
+      case _ => regularTable(tableName)
+    }
   }
 
-  private def flipColumns(tableName: String, columnName: String): Unit = {
-    sqlu"""ALTER TABLE #${tableName} DROP COLUMN vvh_id""".execute
-    sqlu"""ALTER TABLE #${tableName} RENAME COLUMN #${columnName} to vvh_id""".execute
-    sqlu"""ALTER TABLE #${tableName} ADD COLUMN #${columnName} NUMERIC(38)""".execute
+  private def copyIntoVVHIDAndUpdateNewID(linkIdColumn: String, tableName: String): String = {
+    s"""UPDATE ${tableName} SET
+       | vvh_id = ?,
+       | ${linkIdColumn} = (select id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? )
+       | WHERE ${linkIdColumn} = ? """.stripMargin
   }
 
-  private def dropIndex(): Unit = {
-    sqlu"""DROP INDEX lane_history_pos_link_id_idx""".execute
-    sqlu"""DROP INDEX lane_hist_pos_linkid_sidec_idx""".execute
-    sqlu"""DROP INDEX lane_position_link_id_idx""".execute
-    sqlu"""DROP INDEX lane_pos_linkid_side_code_idx""".execute
-    sqlu"""DROP INDEX lrm_position_link_id_idx""".execute
-    sqlu"""DROP INDEX hist_lrm_position_link_id_idx""".execute
-    sqlu"""DROP INDEX link_id_temp_address""".execute
-    sqlu"""DROP INDEX traffic_dir_link_idx""".execute
-    sqlu"""DROP INDEX funct_class_idx""".execute
-    sqlu"""DROP INDEX incomp_linkid_idx""".execute
-    sqlu"""DROP INDEX link_type_idx""".execute
+  // what about null values ?
+  private def copyIntoVVHIDAndUpdateNewIDManouvre(linkIdColumn: String, tableName: String): String = {
+    s"""UPDATE ${tableName} SET
+       | vvh_id = ?,
+       | ${linkIdColumn} = (SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? ),
+       | dest_vvh_id = ?,
+       | dest_link_id =  COALESCE((SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ?),? ) 
+       | WHERE ${linkIdColumn} = ? """.stripMargin
   }
-
-  private def createIndex(): Unit = {
-    sqlu"""CREATE INDEX lane_history_pos_link_id_idx ON lane_history_position (link_id)""".execute
-    sqlu"""CREATE INDEX lane_hist_pos_linkid_sidec_idx ON lane_history_position (link_id, side_code)""".execute
-    sqlu"""CREATE INDEX lane_position_link_id_idx ON lane_position (link_id)""".execute
-    sqlu"""CREATE INDEX lane_pos_linkid_side_code_idx ON lane_position (link_id, side_code)""".execute
-    sqlu"""CREATE INDEX lrm_position_link_id_idx ON lrm_position (link_id)""".execute
-    sqlu"""CREATE INDEX hist_lrm_position_link_id_idx ON lrm_position_history (link_id)""".execute
-    sqlu"""CREATE INDEX link_id_temp_address ON temp_road_address_info (link_id)""".execute
-    sqlu"""CREATE UNIQUE INDEX traffic_dir_link_idx ON traffic_direction (link_id)""".execute
-    sqlu"""CREATE UNIQUE INDEX funct_class_idx ON functional_class (link_id)""".execute
-    sqlu"""CREATE UNIQUE INDEX incomp_linkid_idx ON incomplete_link (link_id)""".execute
-    sqlu"""CREATE UNIQUE INDEX link_type_idx ON link_type (link_id)""".execute
+  private def copyIntoVVHIDRowManouvre(statement: PreparedStatement, ids: (Int, Int)): Unit = {
+    statement.setInt(1, ids._1)
+    statement.setInt(2, ids._1)
+    statement.setInt(3, ids._2)
+    statement.setInt(4, ids._2)
+    statement.setString(5, ids._2.toString)
+    statement.setString(6, ids._1.toString)
+    statement.addBatch()
   }
-
-  private def prepare(tableName: String): (List[(Int, Int)], Int) = {
-    val count = sql"""select count(distinct vvh_id) from #$tableName""".as[Int].first
-    val batches = getBatchDrivers(0, count, 20000)
-    val total = batches.size
-    (batches, total)
-  }
-
-  private def updateCommand(columnName: String,columnName2: String): String = {
-    s"""update ? SET ${columnName} = (select id from frozenlinks_vastintaulu_csv 
-                where vvh_linkid = ? ) where ${columnName2} = ? """
-  }
-
-  private def createRow(statement: PreparedStatement, id: Int, tableName: String): Unit = {
-    statement.setString(1, tableName)
+  private def copyIntoVVHIDRow(statement: PreparedStatement, id: Int): Unit = {
+    statement.setInt(1, id)
     statement.setInt(2, id)
-    statement.setInt(3, id)
+    statement.setString(3, id.toString)
     statement.addBatch()
   }
 
+
   def updateTableRoadLink(tableName: String): Unit = {
-    logger.info(s"Thread ID: ${Thread.currentThread().getId}")
+    logger.info(s"Table $tableName Thread ID: ${Thread.currentThread().getId}")
     withDynTransaction {
-      val (batches, total) = prepare(tableName)
+
+      LogUtils.time(logger, s"Table $tableName : drop constrain ") {
+        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_pkey".execute
+        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_linkid".execute
+        sqlu"ALTER TABLE roadlink ALTER COLUMN linkid DROP NOT NULL".execute
+      }
+      val ids = sql"select linkid from #${tableName}".as[Int].list
+      val total = ids.size
       LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
-        sqlu"""DROP index linkid_index""".execute
-        sqlu"""DROP index linkid_mtkc_index""".execute
-        flipColumns(tableName, "linkid")
-        sqlu"""create index linkid_index on roadlink (linkid)""".execute
-        sqlu"""create index linkid_mtkc_index on roadlink (linkid,mtkclass)""".execute
-        batches.foreach { case (min, max) =>
-          val ids = page(tableName, min, max).as[Int].list
-          MassQuery.executeBatch(updateCommand("linkid","vvh_id")) { statement => {
-            ids.foreach(i => {createRow(statement, i, tableName)})
-          }}
+        ids.grouped(20000).foreach { ids =>
+          MassQuery.executeBatch(copyIntoVVHIDAndUpdateNewID("linkid", tableName)) { statement => {
+            ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
+        }
+        LogUtils.time(logger, s"Table $tableName : create constrain ") {
+          sqlu"ALTER TABLE roadlink ADD CONSTRAINT roadlink_linkid UNIQUE (linkid) DEFERRABLE INITIALLY DEFERRED".execute
+          sqlu"ALTER TABLE roadlink ADD PRIMARY KEY (linkid)".execute
+          sqlu"ALTER TABLE roadlink ALTER COLUMN linkid SET NOT NULL".execute
         }
       }
     }
   }
 
   def updateTableManoeuvre(tableName: String): Unit = {
-    logger.info(s"Thread ID: ${Thread.currentThread().getId}")
+    logger.info(s"Table $tableName Thread ID: ${Thread.currentThread().getId}")
     withDynTransaction {
-      val (batches, total) = prepare(tableName)
-
-      val countD = sql"""select count(distinct vvh_id) from #$tableName""".as[Int].first
-      val batchesD = getBatchDrivers(0, countD, 20000)
-      val totalD = batches.size
-      
-      LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
-        sqlu"""DROP INDEX hist_element_source_link_idx""".execute
-        sqlu"""DROP INDEX element_manoeuvre_idx""".execute
-        
-        sqlu"""ALTER TABLE #${tableName} DROP COLUMN vvh_id""".execute
-        sqlu"""ALTER TABLE #${tableName} RENAME COLUMN link_id to vvh_id""".execute
-        sqlu"""ALTER TABLE #${tableName} ADD COLUMN link_id NUMERIC(38)""".execute
-
-        sqlu"""ALTER TABLE #${tableName} DROP COLUMN dest_vvh_id""".execute
-        sqlu"""ALTER TABLE #${tableName} RENAME COLUMN dest_link_id to dest_vvh_id""".execute
-        sqlu"""ALTER TABLE #${tableName} ADD COLUMN dest_link_id NUMERIC(38)""".execute
-
-        sqlu"""CREATE INDEX hist_element_source_link_idx ON manoeuvre_element_history (link_id, element_type)""".execute
-        sqlu"""CREATE INDEX element_manoeuvre_idx ON manoeuvre_element (manoeuvre_id)""".execute
-        
-        batches.foreach { case (min, max) =>
-          val ids = page(tableName, min, max).as[Int].list
-          MassQuery.executeBatch(updateCommand("link_id","vvh_id")) { statement => {
-            ids.foreach(i => {createRow(statement, i, tableName)})
-          }}
-        }
-        batchesD.foreach { case (min, max) =>
-          val ids = page(tableName, min, max).as[Int].list
-          MassQuery.executeBatch(updateCommand("dest_link_id","dest_vvh_id")) { statement => {
-            ids.foreach(i => {createRow(statement, i, tableName)})
-          }}
-        }
-
-        
+      LogUtils.time(logger, s"Table $tableName :drop constrain ") {
+        sqlu"ALTER TABLE manoeuvre_element DROP CONSTRAINT non_final_has_destination".execute
+        sqlu"ALTER TABLE manoeuvre_element_history DROP CONSTRAINT hist_non_final_has_destination".execute
       }
-    }
-  }
-
-  def updateTable(tableName: String): Unit = {
-    logger.info(s"Thread ID: ${Thread.currentThread().getId}")
-    withDynTransaction {
-      val (batches, total) = prepare(tableName)
+      val ids = sql"select link_id,dest_link_id from #${tableName}".as[(Int, Int)].list
+      val total = ids.size
       LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
-        batches.foreach { case (min, max) =>
-          val ids = page(tableName, min, max).as[Int].list
-          MassQuery.executeBatch(updateCommand("link_id","vvh_id")) { statement => {
-            ids.foreach(i => {createRow(statement, i, tableName)})
+        ids.grouped(20000).foreach { ids =>
+          MassQuery.executeBatch(copyIntoVVHIDAndUpdateNewIDManouvre("link_id", tableName)) { statement => {
+            ids.foreach(i => {copyIntoVVHIDRowManouvre(statement, i)})
           }}
         }
       }
+      LogUtils.time(logger, s"Table $tableName : create constrain ") {
+        sqlu"ALTER TABLE manoeuvre_element ADD CONSTRAINT non_final_has_destination CHECK (element_type = 3 OR dest_link_id IS NOT NULL)".execute
+        sqlu"ALTER TABLE manoeuvre_element_history ADD CONSTRAINT hist_non_final_has_destination CHECK (element_type = 3 OR dest_link_id IS NOT NULL)".execute
+      }
     }
   }
-
-  private def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
-    if ((m - n) < step) {
-      List((n, m))
-    } else {
-      val x = (n to m by step).sliding(2).map(x => (x(0), x(1) - 1)).toList
-      x :+ (x.last._2 + 1, m)
+  
+  def regularTable(tableName: String): Unit = {
+    logger.info(s"Table $tableName Thread ID: ${Thread.currentThread().getId}")
+    withDynTransaction {
+      val ids = sql"select link_id from #${tableName}".as[Int].list
+      val total = ids.length
+      LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
+        ids.grouped(20000).foreach { ids =>
+          MassQuery.executeBatch(copyIntoVVHIDAndUpdateNewID("link_id", tableName)) { statement => {
+            ids.foreach(i => {copyIntoVVHIDRow(statement, i)})
+          }}}
+      }
     }
   }
 }
