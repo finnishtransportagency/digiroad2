@@ -8,7 +8,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
-import scala.collection.parallel.ParIterable
 
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
@@ -27,7 +26,7 @@ object LinkIdImporter {
       "manoeuvre_element"
     )
     time(logger, s"Changing vvh id into kmtk id ") {
-      Parallel.operation(tableNames.par, tableNames.size+1) { p => p.foreach(updateTable) }
+      Parallel.operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable) }
     }
   }
 
@@ -82,8 +81,8 @@ object LinkIdImporter {
       }
       val ids = sql"select linkid from #$tableName".as[Int].list
       val total = ids.size
-      logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
-      time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
+      logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
+      time(logger, s"Table $tableName: Fetching $total batches of links converted") {
         ids.grouped(20000).foreach { ids => executeBatch(updateTableSQL("linkid", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
         }
@@ -98,13 +97,13 @@ object LinkIdImporter {
 
   def updateTableManoeuvre(tableName: String): Unit = {
     withDynTransaction {
-      time(logger, s"Table $tableName :drop constrain ") {
+      time(logger, s"Table $tableName : drop constrain ") {
         sqlu"ALTER TABLE manoeuvre_element DROP CONSTRAINT non_final_has_destination".execute
         sqlu"ALTER TABLE manoeuvre_element_history DROP CONSTRAINT hist_non_final_has_destination".execute
       }
       val ids = sql"select link_id,dest_link_id from #${tableName}".as[(Int, Int)].list
       val total = ids.size
-      logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
+      logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
         ids.grouped(20000).foreach { ids =>executeBatch(updateTableManouvreSQL("link_id", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRowManouvre(statement, i)})
@@ -121,11 +120,11 @@ object LinkIdImporter {
   def regularTable(tableName: String): Unit = {
     val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list)
     val total = ids.length
-    logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
+    logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
     time(logger, s"Table $tableName: Fetching $total batches of links converted") {
       val groups = ids.grouped(20000).toSeq
       logger.info(s"Table $tableName, groups: ${groups.size}")
-      Parallel.operation(groups.par, 3){ _.foreach { ids =>
+      Parallel.operation(groups.par, 15){ _.foreach { ids =>
           withDynTransaction {
             executeBatch(updateTableSQL("link_id", tableName)) {
               statement => {ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
