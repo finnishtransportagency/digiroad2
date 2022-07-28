@@ -12,14 +12,16 @@ import java.sql.PreparedStatement
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
+  def executeBatch[T](query: String)(f: PreparedStatement => T): T = MassQuery.executeBatch(query)(f)
   private val logger = LoggerFactory.getLogger(getClass)
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
-      "lane_history_position", "lane_position", "lrm_position", "lrm_position_history",
-      "temp_road_address_info", "road_link_attributes", "administrative_class",
-      "traffic_direction", "inaccurate_asset", "functional_class",
-      "incomplete_link", "link_type", "unknown_speed_limit", "roadlink",
-      "manoeuvre_element_history", "manoeuvre_element"
+      "lane_history_position", "lane_position", "lrm_position", 
+      "lrm_position_history", "temp_road_address_info", "road_link_attributes", 
+      "administrative_class", "traffic_direction", "inaccurate_asset", 
+      "functional_class", "incomplete_link", "link_type", 
+      "unknown_speed_limit", "roadlink", "manoeuvre_element_history",
+      "manoeuvre_element"
     )
     LogUtils.time(logger, s"Changing vvh id into kmtk id ") {
       Parallel.operation(tableNames.par, tableNames.size+1) { p => p.foreach(updateTable) }
@@ -80,7 +82,7 @@ object LinkIdImporter {
       logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
       LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
         ids.grouped(20000).foreach { ids =>
-          MassQuery.executeBatch(copyIntoVVHIDAndUpdateNewID("linkid", tableName)) { statement => {
+          executeBatch(copyIntoVVHIDAndUpdateNewID("linkid", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
         }
         LogUtils.time(logger, s"Table $tableName : create constrain ") {
@@ -103,7 +105,7 @@ object LinkIdImporter {
       logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
       LogUtils.time(logger, s"Table $tableName: Fetching $total batches of links converted") {
         ids.grouped(20000).foreach { ids =>
-          MassQuery.executeBatch(copyIntoVVHIDAndUpdateNewIDManouvre("link_id", tableName)) { statement => {
+          executeBatch(copyIntoVVHIDAndUpdateNewIDManouvre("link_id", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRowManouvre(statement, i)})
           }}
         }
@@ -114,17 +116,18 @@ object LinkIdImporter {
       }
     }
   }
-  
+
   def regularTable(tableName: String): Unit = {
-    withDynTransaction {
-      val ids = sql"select link_id from #${tableName}".as[Int].list
-      val total = ids.length
-      logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
-      LogUtils.time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        ids.grouped(20000).foreach { ids =>
-          MassQuery.executeBatch(copyIntoVVHIDAndUpdateNewID("link_id", tableName)) { statement => {
+    val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list)
+    val total = ids.length
+    logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
+    LogUtils.time(logger, s"Table $tableName: Fetching $total batches of links converted") {
+      ids.grouped(20000).foreach { ids =>
+        withDynTransaction {
+          executeBatch(copyIntoVVHIDAndUpdateNewID("link_id", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRow(statement, i)})
-          }}}
+          }}
+        }
       }
     }
   }
