@@ -4,16 +4,19 @@ import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
+import scala.collection.parallel.ParIterable
 
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def executeBatch[T](query: String)(f: PreparedStatement => T): T = MassQuery.executeBatch(query)(f)
+  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false)(f: => R): R = LogUtils.time(logger,operationName,noFilter)(f)
   private val logger = LoggerFactory.getLogger(getClass)
+  
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position", 
@@ -23,7 +26,7 @@ object LinkIdImporter {
       "unknown_speed_limit", "roadlink", "manoeuvre_element_history",
       "manoeuvre_element"
     )
-    LogUtils.time(logger, s"Changing vvh id into kmtk id ") {
+    time(logger, s"Changing vvh id into kmtk id ") {
       Parallel.operation(tableNames.par, tableNames.size+1) { p => p.foreach(updateTable) }
     }
   }
@@ -37,21 +40,21 @@ object LinkIdImporter {
     }
   }
 
-  private def copyIntoVVHIDAndUpdateNewID(linkIdColumn: String, tableName: String): String = {
-    s"""UPDATE ${tableName} SET
+  private def updateTableSQL(linkIdColumn: String, tableName: String): String = {
+    s"""UPDATE $tableName SET
        | vvh_id = ?,
-       | ${linkIdColumn} = (select id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? )
-       | WHERE ${linkIdColumn} = ? """.stripMargin
+       | $linkIdColumn = (select id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? )
+       | WHERE $linkIdColumn = ? """.stripMargin
   }
 
   // what about null values ?
-  private def copyIntoVVHIDAndUpdateNewIDManouvre(linkIdColumn: String, tableName: String): String = {
-    s"""UPDATE ${tableName} SET
+  private def updateTableManouvreSQL(linkIdColumn: String, tableName: String): String = {
+    s"""UPDATE $tableName SET
        | vvh_id = ?,
-       | ${linkIdColumn} = (SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? ),
+       | $linkIdColumn = (SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? ),
        | dest_vvh_id = ?,
        | dest_link_id =  COALESCE((SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ?),? ) 
-       | WHERE ${linkIdColumn} = ? """.stripMargin
+       | WHERE $linkIdColumn = ? """.stripMargin
   }
   private def copyIntoVVHIDRowManouvre(statement: PreparedStatement, ids: (Int, Int)): Unit = {
     statement.setInt(1, ids._1)
@@ -72,20 +75,19 @@ object LinkIdImporter {
 
   def updateTableRoadLink(tableName: String): Unit = {
     withDynTransaction {
-      LogUtils.time(logger, s"Table $tableName : drop constrain ") {
+      time(logger, s"Table $tableName : drop constrain ") {
         sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_pkey".execute
         sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_linkid".execute
         sqlu"ALTER TABLE roadlink ALTER COLUMN linkid DROP NOT NULL".execute
       }
-      val ids = sql"select linkid from #${tableName}".as[Int].list
+      val ids = sql"select linkid from #$tableName".as[Int].list
       val total = ids.size
       logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
-      LogUtils.time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
-        ids.grouped(20000).foreach { ids =>
-          executeBatch(copyIntoVVHIDAndUpdateNewID("linkid", tableName)) { statement => {
+      time(logger, s"[${DateTime.now}] Table $tableName: Fetching $total batches of links converted") {
+        ids.grouped(20000).foreach { ids => executeBatch(updateTableSQL("linkid", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
         }
-        LogUtils.time(logger, s"Table $tableName : create constrain ") {
+        time(logger, s"Table $tableName : create constrain ") {
           sqlu"ALTER TABLE roadlink ADD CONSTRAINT roadlink_linkid UNIQUE (linkid) DEFERRABLE INITIALLY DEFERRED".execute
           sqlu"ALTER TABLE roadlink ADD PRIMARY KEY (linkid)".execute
           sqlu"ALTER TABLE roadlink ALTER COLUMN linkid SET NOT NULL".execute
@@ -96,21 +98,20 @@ object LinkIdImporter {
 
   def updateTableManoeuvre(tableName: String): Unit = {
     withDynTransaction {
-      LogUtils.time(logger, s"Table $tableName :drop constrain ") {
+      time(logger, s"Table $tableName :drop constrain ") {
         sqlu"ALTER TABLE manoeuvre_element DROP CONSTRAINT non_final_has_destination".execute
         sqlu"ALTER TABLE manoeuvre_element_history DROP CONSTRAINT hist_non_final_has_destination".execute
       }
       val ids = sql"select link_id,dest_link_id from #${tableName}".as[(Int, Int)].list
       val total = ids.size
       logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
-      LogUtils.time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        ids.grouped(20000).foreach { ids =>
-          executeBatch(copyIntoVVHIDAndUpdateNewIDManouvre("link_id", tableName)) { statement => {
+      time(logger, s"Table $tableName: Fetching $total batches of links converted") {
+        ids.grouped(20000).foreach { ids =>executeBatch(updateTableManouvreSQL("link_id", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRowManouvre(statement, i)})
           }}
         }
       }
-      LogUtils.time(logger, s"Table $tableName : create constrain ") {
+      time(logger, s"Table $tableName : create constrain ") {
         sqlu"ALTER TABLE manoeuvre_element ADD CONSTRAINT non_final_has_destination CHECK (element_type = 3 OR dest_link_id IS NOT NULL)".execute
         sqlu"ALTER TABLE manoeuvre_element_history ADD CONSTRAINT hist_non_final_has_destination CHECK (element_type = 3 OR dest_link_id IS NOT NULL)".execute
       }
@@ -121,12 +122,14 @@ object LinkIdImporter {
     val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list)
     val total = ids.length
     logger.info(s"Table $tableName, size: $total  Thread ID: ${Thread.currentThread().getId}")
-    LogUtils.time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-      ids.grouped(20000).foreach { ids =>
-        withDynTransaction {
-          executeBatch(copyIntoVVHIDAndUpdateNewID("link_id", tableName)) { statement => {
-            ids.foreach(i => {copyIntoVVHIDRow(statement, i)})
-          }}
+    time(logger, s"Table $tableName: Fetching $total batches of links converted") {
+      val groups = ids.grouped(20000).toSeq
+      logger.info(s"Table $tableName, groups: ${groups.size}")
+      Parallel.operation(groups.par, 3){ _.foreach { ids =>
+          withDynTransaction {
+            executeBatch(updateTableSQL("link_id", tableName)) {
+              statement => {ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
+          }
         }
       }
     }
