@@ -9,23 +9,6 @@ import slick.jdbc.SQLInterpolationResult
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
-import scala.collection.parallel.{ForkJoinTaskSupport, ParIterable}
-import scala.concurrent.forkjoin.ForkJoinPool
-
-object Parallel {
-  private var parallelismLevel: Int = 1
-  private var forkJoinPool: ForkJoinPool = null
-  private def prepare[T](list: ParIterable[T]): ParIterable[T] = {
-    forkJoinPool = new ForkJoinPool(parallelismLevel)
-    list.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
-    list
-  }
-  def runOperation[T, U](list: ParIterable[T], parallelism: Int = 1)(f: ParIterable[T] => U): Unit = {
-    parallelismLevel = parallelism
-    f(prepare[T](list))
-    forkJoinPool.shutdown()
-  }
-}
 
 object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
@@ -44,7 +27,7 @@ object LinkIdImporter {
         tableNames.foreach(tableName=>flipColumns(tableName, "linkid"))
         createIndex()
       }
-      Parallel.runOperation(tableNames.par, 20) { p => p.foreach(updateTable) }
+      Parallel.operation(tableNames.par, 20) { p => p.foreach(updateTable) }
       updateTableRoadLink("roadlink")
       updateTableManoeuvre("manoeuvre_element_history")
       updateTableManoeuvre("manoeuvre_element")
