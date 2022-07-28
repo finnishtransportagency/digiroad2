@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
-import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.slf4j.{Logger, LoggerFactory}
@@ -13,15 +12,16 @@ object LinkIdImporter {
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def executeBatch[T](query: String)(f: PreparedStatement => T): T = MassQuery.executeBatch(query)(f)
-  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false)(f: => R): R = LogUtils.time(logger,operationName,noFilter)(f)
-  private val logger = LoggerFactory.getLogger(getClass)
+  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false)(f: => R): R = LogUtils.time(logger, operationName, noFilter)(f)
   
+  private val logger = LoggerFactory.getLogger(getClass)
+
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
-      "lane_history_position", "lane_position", "lrm_position", 
-      "lrm_position_history", "temp_road_address_info", "road_link_attributes", 
-      "administrative_class", "traffic_direction", "inaccurate_asset", 
-      "functional_class", "incomplete_link", "link_type", 
+      "lane_history_position", "lane_position", "lrm_position",
+      "lrm_position_history", "temp_road_address_info", "road_link_attributes",
+      "administrative_class", "traffic_direction", "inaccurate_asset",
+      "functional_class", "incomplete_link", "link_type",
       "unknown_speed_limit", "roadlink", "manoeuvre_element_history",
       "manoeuvre_element"
     )
@@ -70,8 +70,7 @@ object LinkIdImporter {
     statement.setString(3, id.toString)
     statement.addBatch()
   }
-
-
+  
   def updateTableRoadLink(tableName: String): Unit = {
     withDynTransaction {
       time(logger, s"Table $tableName : drop constrain ") {
