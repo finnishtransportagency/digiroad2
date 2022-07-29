@@ -27,19 +27,19 @@ object LinkIdImporter {
       "manoeuvre_element"
     )
     
-    val complimentarylinks = sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list
+    val complementaryLinks = sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list
     time(logger, s"Changing vvh id into kmtk id ") {
-      new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable(_,complimentarylinks)) }
+      new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable(_,complementaryLinks)) }
     }
   }
 
-  def updateTable(tableName: String,complimentarylinks:List[Int] ): Unit = {
+  def updateTable(tableName: String,complementaryLinks:List[Int] ): Unit = {
     tableName match {
       case "roadlink" => updateTableRoadLink(tableName)
       case "manoeuvre_element_history" => updateTableManoeuvre(tableName)
       case "manoeuvre_element" => updateTableManoeuvre(tableName)
       case "lrm_position" => lrmTable(tableName)
-      case _ => regularTable(tableName,complimentarylinks)
+      case _ => regularTable(tableName,complementaryLinks)
     }
   }
 
@@ -112,8 +112,8 @@ object LinkIdImporter {
     }
   }
 
-  def regularTable(tableName: String,complimentarylinks:List[Int]): Unit = {
-    val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list).toSet.diff(complimentarylinks.toSet)
+  def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
+    val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list).toSet.diff(complementaryLinks.toSet)
     val total = ids.size
     logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
     time(logger, s"Table $tableName: Fetching $total batches of links converted") {
