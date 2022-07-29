@@ -37,7 +37,10 @@ object MainLaneStartDateImporter {
       val fileName = objectKey
       val result = lanesCsvImporter.processing(s3Object, user, onlyStartDates, fileName)
 
-      logger.info("Not imported rows: " + result.notImportedData.map(row => row.reason + " " + row.csvRow))
+      logger.info("Not imported data: " + result.notImportedData.map(row => row.reason + " on row: " + row.csvRow))
+      logger.info("Excluded rows: " + result.excludedRows)
+      logger.info("Malformed rows: "+ result.malformedRows)
+      logger.info("Incomplete rows: " + result.incompleteRows)
     }
   }
 }
