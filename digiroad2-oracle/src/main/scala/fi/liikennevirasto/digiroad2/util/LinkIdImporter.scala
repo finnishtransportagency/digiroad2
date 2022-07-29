@@ -15,7 +15,7 @@ object LinkIdImporter {
   def time[R](logger: Logger, operationName: String, noFilter: Boolean = false)(f: => R): R = LogUtils.time(logger, operationName, noFilter)(f)
   
   private val logger = LoggerFactory.getLogger(getClass)
-
+  //Resource used 3-4GB 40 thread
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position",
@@ -26,7 +26,7 @@ object LinkIdImporter {
       "manoeuvre_element"
     )
     time(logger, s"Changing vvh id into kmtk id ") {
-      Parallel.operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable) }
+      new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable) }
     }
   }
 
@@ -82,7 +82,7 @@ object LinkIdImporter {
       val total = ids.size
       logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        ids.grouped(20000).foreach { ids => executeBatch(updateTableSQL("linkid", tableName)) { statement => {
+        ids.toSet.grouped(20000).foreach { ids => executeBatch(updateTableSQL("linkid", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
         }
         time(logger, s"Table $tableName : create constrain ") {
@@ -104,7 +104,7 @@ object LinkIdImporter {
       val total = ids.size
       logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        ids.grouped(20000).foreach { ids =>executeBatch(updateTableManouvreSQL("link_id", tableName)) { statement => {
+        ids.toSet.grouped(20000).foreach { ids =>executeBatch(updateTableManouvreSQL("link_id", tableName)) { statement => {
             ids.foreach(i => {copyIntoVVHIDRowManouvre(statement, i)})
           }}
         }
@@ -121,9 +121,9 @@ object LinkIdImporter {
     val total = ids.length
     logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
     time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-      val groups = ids.grouped(20000).toSeq
+      val groups = ids.toSet.grouped(20000).toSeq
       logger.info(s"Table $tableName, groups: ${groups.size}")
-      Parallel.operation(groups.par, 15){ _.foreach { ids =>
+      new Parallel().operation(groups.par, 15){ _.foreach { ids =>
           withDynTransaction {
             executeBatch(updateTableSQL("link_id", tableName)) {
               statement => {ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
