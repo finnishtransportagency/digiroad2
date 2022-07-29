@@ -51,7 +51,7 @@ object LinkIdImporter {
   }
 
   // what about null values ?
-  private def updateTableManouvreSQL(linkIdColumn: String, tableName: String): String = {
+  private def updateTableManoeuvreSQL(linkIdColumn: String, tableName: String): String = {
     s"""UPDATE $tableName SET
        | vvh_id = ?,
        | $linkIdColumn = (SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? ),
@@ -59,7 +59,7 @@ object LinkIdImporter {
        | dest_link_id =  COALESCE((SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ?),? ) 
        | WHERE $linkIdColumn = ? """.stripMargin
   }
-  private def copyIntoVVHIDRowManouvre(statement: PreparedStatement, ids: (Int, Int)): Unit = {
+  private def updateTableManoeuvreRow(statement: PreparedStatement, ids: (Int, Int)): Unit = {
     statement.setInt(1, ids._1)
     statement.setInt(2, ids._1)
     statement.setInt(3, ids._2)
@@ -68,7 +68,7 @@ object LinkIdImporter {
     statement.setString(6, ids._1.toString)
     statement.addBatch()
   }
-  private def copyIntoVVHIDRow(statement: PreparedStatement, id: Int): Unit = {
+  private def updateTableRow(statement: PreparedStatement, id: Int): Unit = {
     statement.setInt(1, id)
     statement.setInt(2, id)
     statement.setString(3, id.toString)
@@ -87,7 +87,7 @@ object LinkIdImporter {
       logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
         ids.toSet.grouped(20000).foreach { ids => executeBatch(updateTableSQL("linkid", tableName)) { statement => {
-            ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
+            ids.foreach(i => {updateTableRow(statement, i)})}}
         }
         time(logger, s"Table $tableName : create constrain ") {
           sqlu"ALTER TABLE roadlink ADD CONSTRAINT roadlink_linkid UNIQUE (linkid) DEFERRABLE INITIALLY DEFERRED".execute
@@ -104,8 +104,8 @@ object LinkIdImporter {
       val total = ids.size
       logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        ids.grouped(20000).foreach { ids =>executeBatch(updateTableManouvreSQL("link_id", tableName)) { statement => {
-            ids.foreach(i => {copyIntoVVHIDRowManouvre(statement, i)})
+        ids.grouped(20000).foreach { ids =>executeBatch(updateTableManoeuvreSQL("link_id", tableName)) { statement => {
+            ids.foreach(i => {updateTableManoeuvreRow(statement, i)})
           }}
         }
       }
@@ -122,14 +122,17 @@ object LinkIdImporter {
       new Parallel().operation(groups.par, 15){ _.foreach { ids =>
           withDynTransaction {
             executeBatch(updateTableSQL("link_id", tableName)) {
-              statement => {ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
+              statement => {ids.foreach(i => {updateTableRow(statement, i)})}}
           }
         }
       }
     }
   }
   def lrmTable(tableName: String): Unit = {
-    val ids = withDynSession(sql"select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value}) ".as[Int].list).toSet
+    val ids = withDynSession(
+      sql"""select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value})
+           """.as[Int].list).toSet
+    
     val total = ids.size
     logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
     time(logger, s"Table $tableName: Fetching $total batches of links converted") {
@@ -138,7 +141,7 @@ object LinkIdImporter {
       new Parallel().operation(groups.par, 15){ _.foreach { ids =>
         withDynTransaction {
           executeBatch(updateTableSQL("link_id", tableName)) {
-            statement => {ids.foreach(i => {copyIntoVVHIDRow(statement, i)})}}
+            statement => {ids.foreach(i => {updateTableRow(statement, i)})}}
         }
       }}
     }
