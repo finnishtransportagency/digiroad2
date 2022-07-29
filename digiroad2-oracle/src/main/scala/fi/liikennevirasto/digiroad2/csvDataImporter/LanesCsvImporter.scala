@@ -2,7 +2,9 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode}
+import fi.liikennevirasto.digiroad2.lane.LaneNumberOneDigit.MainLane
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.middleware.{AdditionalImportValue, UpdateOnlyStartDates}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -10,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.getRoadAddressToProcess
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, Parallel, RoadAddressException, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -212,67 +214,41 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             startInside || endInside
           })
 
+        val mainLanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
+          .filter(_.laneCode == MainLane.laneCode)
 
+        val correctLanes = filteredRoadAddresses.flatMap(roadAddress => {
+          val lanesOnLink = mainLanes.filter(_.linkId == roadAddress.linkId)
+          val addressSideCode = roadAddress.sideCode.get
+          val correctLaneSideCode = (addressSideCode, laneCode.toInt) match {
+            case (TowardsDigitizing, 11) => TowardsDigitizing
+            case (TowardsDigitizing, 21) => AgainstDigitizing
+            case (AgainstDigitizing, 11) => AgainstDigitizing
+            case (AgainstDigitizing, 21) => TowardsDigitizing
+            case (_, 31) => BothDirections
+          }
+          lanesOnLink.find(lane => lane.sideCode == correctLaneSideCode.value)
+        }).toSeq
+        val linkIdsMissingLanes = filteredRoadAddresses.map(_.linkId).diff(correctLanes.map(_.linkId).toSet)
+        val correctLanesWithStartDates = correctLanes.map(_.copy(attributes = laneProps))
 
-
-          val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(filteredRoadAddresses.map(_.linkId), false)
-          val lanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
-          val lanesAndRoadLink = lanes.flatMap(lane => {
-            val roadLink = roadLinks.find(_.linkId == lane.linkId)
-            roadLink match {
-              case Some(rl) => Some((lane, rl))
-              case _ => None
-            }
+        LogUtils.time(logger, "update lane start dates for " + correctLanesWithStartDates.size + " lanes") {
+          correctLanesWithStartDates.map(lane => {
+            laneService.updatePersistedLaneAttributes(lane.id, laneProps, user.username)
           })
-          val pwLanes = lanesAndRoadLink.flatMap(pair => {
-            val lane = pair._1
-            val roadLink = pair._2
-            laneFiller.toLPieceWiseLane(Seq(lane), roadLink)
+        }
 
-          })
-
-          val twoDigitPwLanes = LogUtils.time(logger, "Transform " + pwLanes.size + " lanes to two digit lanes with mass query") {
-            try {
-              laneService.pieceWiseLanesToTwoDigitWithMassQuery(pwLanes)
-            }
-            catch {
-              case rae: RoadAddressException =>
-                logger.error(rae.getMessage)
-                Seq()
-            }
-          }
-          val twoDigitLanes = laneService.pieceWiseLanesToPersistedLane(twoDigitPwLanes.flatten)
-          //Lanes where VKM failed to transform coordinates to road addresses
-          val missingLanes = lanes.map(_.id).diff(twoDigitLanes.map(_.id))
-
-          val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
-          val correctLanesWithStartDates = correctLanes.map(_.copy(attributes = laneProps))
-
-          LogUtils.time(logger, "update lane start dates for " + correctLanesWithStartDates.size + " lanes") {
-            correctLanesWithStartDates.map(lane =>{
-              laneService.updatePersistedLaneAttributes(lane.id, laneProps, user.username)
-            })
-          }
-
-          if (missingLanes.nonEmpty) {
-            (missingLanes, Some(props))
-          }
-          else (missingLanes, None)
-        })
-      }
-
-
-    val notUpdatedLanes = missingLanesAndFailedRows.flatMap(_._1).toSet
-    val failedRows = missingLanesAndFailedRows.flatMap(_._2)
-
-    notUpdatedLanes.isEmpty match {
-      case true => result
-      case false =>
-        val notImported = failedRows.map(row => {
-          NotImportedData("Something went wrong on row: ", row.toString())
-        }).toList
-        result.copy(notImportedData = notImported)
+        if (linkIdsMissingLanes.nonEmpty) {
+          (linkIdsMissingLanes, Some(props))
+        }
+        else (linkIdsMissingLanes, None)
+      })
     }
+
+    val linkIDsNotUpdated = missingLanesAndFailedRows.flatMap(_._1)
+    if (missingLanesAndFailedRows.nonEmpty) logger.error("Could not update start date on link IDs: " + linkIDsNotUpdated)
+
+    result
   }
 
   def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): (ImportResultData, Set[Long]) = {
@@ -363,7 +339,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     })
 
     logger.info("Number of detected cores " + Runtime.getRuntime.availableProcessors)
-    val resultsSplit = results.par.map(result => {
+    logger.info("Rows partitioned into " + results.size + " collections")
+    Parallel.operation(results.par, results.size) { p => p.map(result => {
       withDynTransaction {
         updateOnlyStartDates.onlyStartDates match {
           case true => try {
@@ -418,9 +395,10 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             else result
         }
       }
-    }).toList
+    })
+  }
 
-    resultsSplit.foldLeft(ImportResultLaneAsset()) {
+    results.foldLeft(ImportResultLaneAsset()) {
       (result, row) =>
         result.copy(
           incompleteRows = row.incompleteRows ++ result.incompleteRows,
