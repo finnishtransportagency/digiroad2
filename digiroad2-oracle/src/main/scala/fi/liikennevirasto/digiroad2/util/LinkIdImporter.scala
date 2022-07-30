@@ -29,21 +29,7 @@ object LinkIdImporter {
     
     val complementaryLinks = withDynSession(sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list)
     time(logger, s"Changing vvh id into kmtk id ") {
-      withDynSession( time(logger, s"Table $tableName : drop constrain ") {
-        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_pkey".execute
-        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_linkid".execute
-        sqlu"ALTER TABLE roadlink ALTER COLUMN linkid DROP NOT NULL".execute
-        sqlu"ALTER TABLE unknown_speed_limit ALTER COLUMN link_id DROP NOT NULL".execute
-        sqlu"ALTER TABLE unknown_speed_limit DROP CONSTRAINT unknown_speed_limit_pkey".execute
-      })
       new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable(_,complementaryLinks)) }
-      withDynSession( time(logger, s"Table $tableName : create constrain ") {
-        sqlu"ALTER TABLE roadlink ADD CONSTRAINT roadlink_linkid UNIQUE (linkid) DEFERRABLE INITIALLY DEFERRED".execute
-        sqlu"ALTER TABLE roadlink ADD PRIMARY KEY (linkid)".execute
-        sqlu"ALTER TABLE roadlink ALTER COLUMN linkid SET NOT NULL".execute
-        sqlu"ALTER TABLE unknown_speed_limit ALTER COLUMN link_id SET NOT NULL".execute
-        sqlu"ALTER TABLE unknown_speed_limit ADD PRIMARY KEY (link_id);".execute
-      })
     }
   }
 
@@ -88,6 +74,19 @@ object LinkIdImporter {
     statement.setString(3, id.toString)
     statement.addBatch()
   }
+
+  protected def updateOperation(tableName: String, ids: Set[Int],linkIdColumn:String): Unit = {
+    val groups = ids.grouped(20000).toSeq
+    new Parallel().operation(groups.par, 15) {_.foreach { ids =>
+      withDynTransaction {
+        time(logger, s"Table $tableName, updating: ${ids.size}, Thread ID: ${Thread.currentThread().getId}") {
+          executeBatch(updateTableSQL(linkIdColumn, tableName)) { statement => {ids.foreach(
+            id => {updateTableRow(statement, id)})}
+          }
+        }}
+    }}
+  }
+  
   def updateTableRoadLink(tableName: String): Unit = {
     withDynTransaction {
       val ids = sql"select linkid from #$tableName".as[Int].list.toSet
@@ -97,18 +96,6 @@ object LinkIdImporter {
         updateOperation(tableName,ids, "linkid")
       }
     }
-  }
-  
-  protected def updateOperation(tableName: String, ids: Set[Int],linkIdColumn:String): Unit = {
-    val groups = ids.grouped(20000).toSeq
-    new Parallel().operation(groups.par, 15) {_.foreach { ids =>
-        withDynTransaction {
-          time(logger, s"Table $tableName, updating: ${ids.size}, Thread ID: ${Thread.currentThread().getId}") {
-            executeBatch(updateTableSQL(linkIdColumn, tableName)) { statement => {ids.foreach(
-              id => {updateTableRow(statement, id)})}
-            }
-          }}
-    }}
   }
   
   def updateTableManoeuvre(tableName: String): Unit = {
