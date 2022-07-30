@@ -16,7 +16,7 @@ object LinkIdImporter {
   def time[R](logger: Logger, operationName: String, noFilter: Boolean = false)(f: => R): R = LogUtils.time(logger, operationName, noFilter)(f)
   
   private val logger = LoggerFactory.getLogger(getClass)
-  //Resource used 3-4GB 40 thread
+  //Resource used 3-6GB 40 thread
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position",
@@ -27,9 +27,23 @@ object LinkIdImporter {
       "manoeuvre_element"
     )
     
-    val complementaryLinks = sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list
+    val complementaryLinks = withDynSession(sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list)
     time(logger, s"Changing vvh id into kmtk id ") {
+      withDynSession( time(logger, s"Table $tableName : drop constrain ") {
+        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_pkey".execute
+        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_linkid".execute
+        sqlu"ALTER TABLE roadlink ALTER COLUMN linkid DROP NOT NULL".execute
+        sqlu"ALTER TABLE unknown_speed_limit ALTER COLUMN link_id DROP NOT NULL".execute
+        sqlu"ALTER TABLE unknown_speed_limit DROP CONSTRAINT unknown_speed_limit_pkey".execute
+      })
       new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable(_,complementaryLinks)) }
+      withDynSession( time(logger, s"Table $tableName : create constrain ") {
+        sqlu"ALTER TABLE roadlink ADD CONSTRAINT roadlink_linkid UNIQUE (linkid) DEFERRABLE INITIALLY DEFERRED".execute
+        sqlu"ALTER TABLE roadlink ADD PRIMARY KEY (linkid)".execute
+        sqlu"ALTER TABLE roadlink ALTER COLUMN linkid SET NOT NULL".execute
+        sqlu"ALTER TABLE unknown_speed_limit ALTER COLUMN link_id SET NOT NULL".execute
+        sqlu"ALTER TABLE unknown_speed_limit ADD PRIMARY KEY (link_id);".execute
+      })
     }
   }
 
@@ -74,30 +88,29 @@ object LinkIdImporter {
     statement.setString(3, id.toString)
     statement.addBatch()
   }
-  
   def updateTableRoadLink(tableName: String): Unit = {
     withDynTransaction {
-      time(logger, s"Table $tableName : drop constrain ") {
-        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_pkey".execute
-        sqlu"ALTER TABLE roadlink DROP CONSTRAINT roadlink_linkid".execute
-        sqlu"ALTER TABLE roadlink ALTER COLUMN linkid DROP NOT NULL".execute
-      }
-      val ids = sql"select linkid from #$tableName".as[Int].list
+      val ids = sql"select linkid from #$tableName".as[Int].list.toSet
       val total = ids.size
       logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        ids.toSet.grouped(20000).foreach { ids => executeBatch(updateTableSQL("linkid", tableName)) { statement => {
-            ids.foreach(i => {updateTableRow(statement, i)})}}
-        }
-        time(logger, s"Table $tableName : create constrain ") {
-          sqlu"ALTER TABLE roadlink ADD CONSTRAINT roadlink_linkid UNIQUE (linkid) DEFERRABLE INITIALLY DEFERRED".execute
-          sqlu"ALTER TABLE roadlink ADD PRIMARY KEY (linkid)".execute
-          sqlu"ALTER TABLE roadlink ALTER COLUMN linkid SET NOT NULL".execute
-        }
+        updateOperation(tableName,ids, "linkid")
       }
     }
   }
-
+  
+  protected def updateOperation(tableName: String, ids: Set[Int],linkIdColumn:String): Unit = {
+    val groups = ids.grouped(20000).toSeq
+    new Parallel().operation(groups.par, 15) {_.foreach { ids =>
+        withDynTransaction {
+          time(logger, s"Table $tableName, updating: ${ids.size}, Thread ID: ${Thread.currentThread().getId}") {
+            executeBatch(updateTableSQL(linkIdColumn, tableName)) { statement => {ids.foreach(
+              id => {updateTableRow(statement, id)})}
+            }
+          }}
+    }}
+  }
+  
   def updateTableManoeuvre(tableName: String): Unit = {
     withDynTransaction {
       val ids = sql"select link_id,dest_link_id from #${tableName}".as[(Int, Int)].list.toSet
@@ -106,44 +119,28 @@ object LinkIdImporter {
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
         ids.grouped(20000).foreach { ids =>executeBatch(updateTableManoeuvreSQL("link_id", tableName)) { statement => {
             ids.foreach(i => {updateTableManoeuvreRow(statement, i)})
-          }}
-        }
+          }}}
       }
     }
   }
-
+  
   def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
     val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list).toSet.diff(complementaryLinks.toSet)
     val total = ids.size
     logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
     time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-      val groups = ids.grouped(20000).toSeq
-      logger.info(s"Table $tableName, groups: ${groups.size}")
-      new Parallel().operation(groups.par, 15){ _.foreach { ids =>
-          withDynTransaction {
-            executeBatch(updateTableSQL("link_id", tableName)) {
-              statement => {ids.foreach(i => {updateTableRow(statement, i)})}}
-          }
-        }
-      }
+      updateOperation(tableName,ids, "link_id")
     }
   }
+  
   def lrmTable(tableName: String): Unit = {
     val ids = withDynSession(
       sql"""select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value})
            """.as[Int].list).toSet
-    
     val total = ids.size
     logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
     time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-      val groups = ids.grouped(20000).toSeq
-      logger.info(s"Table $tableName, groups: ${groups.size}")
-      new Parallel().operation(groups.par, 15){ _.foreach { ids =>
-        withDynTransaction {
-          executeBatch(updateTableSQL("link_id", tableName)) {
-            statement => {ids.foreach(i => {updateTableRow(statement, i)})}}
-        }
-      }}
+      updateOperation(tableName,ids, "link_id")
     }
   }
 }
