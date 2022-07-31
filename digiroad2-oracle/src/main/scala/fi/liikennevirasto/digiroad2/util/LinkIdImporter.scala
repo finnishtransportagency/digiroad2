@@ -15,6 +15,8 @@ object LinkIdImporter {
   def executeBatch[T](query: String)(f: PreparedStatement => T): T = MassQuery.executeBatch(query)(f)
   def time[R](logger: Logger, operationName: String, noFilter: Boolean = false)(f: => R): R = LogUtils.time(logger, operationName, noFilter)(f)
   
+  val groupingSize = 20000
+  
   private val logger = LoggerFactory.getLogger(getClass)
   //Resource used 3-6GB 40 thread
   def changeLinkIdIntoKMTKVersion(): Unit = {
@@ -76,25 +78,18 @@ object LinkIdImporter {
   }
 
   protected def updateOperation(tableName: String, ids: Set[Int],linkIdColumn:String): Unit = {
-    val groups = ids.grouped(20000).toSeq
-    new Parallel().operation(groups.par, 15) {_.foreach { ids =>
-      withDynTransaction {
-        time(logger, s"Table $tableName, updating: ${ids.size}, Thread ID: ${Thread.currentThread().getId}") {
-          executeBatch(updateTableSQL(linkIdColumn, tableName)) { statement => {ids.foreach(
-            id => {updateTableRow(statement, id)})}
-          }
-        }}
-    }}
-  }
-  
-  def updateTableRoadLink(tableName: String): Unit = {
-    withDynTransaction {
-      val ids = sql"select linkid from #$tableName".as[Int].list.toSet
-      val total = ids.size
-      logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
-      time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        updateOperation(tableName,ids, "linkid")
-      }
+    val total = ids.size
+    logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
+    time(logger, s"Table $tableName: $total links converted") {
+      val groups = ids.grouped(groupingSize).toSeq
+      new Parallel().operation(groups.par, 15) {_.foreach { ids =>
+        withDynTransaction {
+          time(logger, s"Table $tableName, updating: ${ids.size}, Thread ID: ${Thread.currentThread().getId}") {
+            executeBatch(updateTableSQL(linkIdColumn, tableName)) { statement => {ids.foreach(
+              id => {updateTableRow(statement, id)})}
+            }
+          }}
+      }}
     }
   }
   
@@ -104,30 +99,27 @@ object LinkIdImporter {
       val total = ids.size
       logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-        ids.grouped(20000).foreach { ids =>executeBatch(updateTableManoeuvreSQL("link_id", tableName)) { statement => {
+        ids.grouped(groupingSize).foreach { ids =>executeBatch(updateTableManoeuvreSQL("link_id", tableName)) { statement => {
             ids.foreach(i => {updateTableManoeuvreRow(statement, i)})
           }}}
       }
     }
   }
+
+  def updateTableRoadLink(tableName: String): Unit = {
+    val ids = withDynSession(sql"select linkid from #$tableName".as[Int].list.toSet)
+    updateOperation(tableName,ids, "linkid")
+  }
   
   def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
     val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list).toSet.diff(complementaryLinks.toSet)
-    val total = ids.size
-    logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
-    time(logger, s"Table $tableName: Fetching $total batches of links converted") {
-      updateOperation(tableName,ids, "link_id")
-    }
+    updateOperation(tableName,ids, "link_id")
   }
   
   def lrmTable(tableName: String): Unit = {
     val ids = withDynSession(
       sql"""select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value})
            """.as[Int].list).toSet
-    val total = ids.size
-    logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
-    time(logger, s"Table $tableName: Fetching $total batches of links converted") {
       updateOperation(tableName,ids, "link_id")
-    }
   }
 }
