@@ -8,8 +8,35 @@ import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 
 import java.sql.PreparedStatement
+import scala.collection.TraversableLike
+import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 object LinkIdImporter {
+  sealed implicit class SplitByConversion(val list: TraversableLike[String, Any]) {
+    def partitionByConversion(): (Seq[Int], Seq[String]) = {
+      val (intList, stringList) = (new ListBuffer[Int], new ListBuffer[String])
+      for (element <- list) {
+        if (Try(element.toInt).isSuccess)
+          intList.append(element.toInt)
+        else stringList.append(element)
+      }
+      (intList.toList, stringList.toList)
+    }
+  }
+
+  sealed implicit class SplitByConversionTuple(val list: TraversableLike[(String, String), Any]) {
+    def partitionByConversion(): (Seq[(Int, Int)], Seq[(String, String)]) = {
+      val (intList, stringList) = (new ListBuffer[(Int, Int)], new ListBuffer[(String, String)])
+      for (element <- list) {
+        if (Try(element._1.toInt).isSuccess && Try(element._2.toInt).isSuccess)
+          intList.append((element._1.toInt, element._2.toInt))
+        else stringList.append(element)
+      }
+      (intList.toList, stringList.toList)
+    }
+  }
+  
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def executeBatch[T](query: String)(f: PreparedStatement => T): T = MassQuery.executeBatch(query)(f)
@@ -51,8 +78,7 @@ object LinkIdImporter {
        | $linkIdColumn = (select id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? )
        | WHERE $linkIdColumn = ? """.stripMargin
   }
-
-  // what about null values ?
+  
   private def updateTableManoeuvreSQL(linkIdColumn: String, tableName: String): String = {
     s"""UPDATE $tableName SET
        | vvh_id = ?,
@@ -70,6 +96,7 @@ object LinkIdImporter {
     statement.setString(6, ids._1.toString)
     statement.addBatch()
   }
+  
   private def updateTableRow(statement: PreparedStatement, id: Int): Unit = {
     statement.setInt(1, id)
     statement.setInt(2, id)
@@ -96,7 +123,7 @@ object LinkIdImporter {
   
  private def updateTableManoeuvre(tableName: String): Unit = {
     withDynTransaction {
-      val ids = sql"select link_id,dest_link_id from #${tableName}".as[(Int, Int)].list.toSet
+      val ids = sql"select link_id,dest_link_id from #${tableName}".as[(String, String)].list.partitionByConversion()._1
       val total = ids.size
       logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
       time(logger, s"Table $tableName: Fetching $total batches of links converted") {
@@ -108,19 +135,19 @@ object LinkIdImporter {
   }
 
   private def updateTableRoadLink(tableName: String): Unit = {
-    val ids = withDynSession(sql"select linkid from #$tableName".as[Int].list.toSet)
+    val ids = withDynSession(sql"select linkid from #$tableName".as[String].list).partitionByConversion()._1.toSet
     updateOperation(tableName,ids, "linkid")
   }
 
   private def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
-    val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list).toSet.diff(complementaryLinks.toSet)
+    val ids = withDynSession(sql"select link_id from #${tableName}".as[String].list).partitionByConversion()._1.toSet.diff(complementaryLinks.toSet)
     updateOperation(tableName,ids, "link_id")
   }
-
+  
   private def lrmTable(tableName: String): Unit = {
     val ids = withDynSession(
       sql"""select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value})
-           """.as[Int].list).toSet
+           """.as[String].list).partitionByConversion()._1.toSet
       updateOperation(tableName,ids, "link_id")
   }
 }
