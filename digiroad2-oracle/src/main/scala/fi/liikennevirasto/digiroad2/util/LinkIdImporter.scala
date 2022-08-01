@@ -35,7 +35,7 @@ object LinkIdImporter {
     }
   }
 
-  def updateTable(tableName: String,complementaryLinks:List[Int] ): Unit = {
+  private def updateTable(tableName: String,complementaryLinks:List[Int] ): Unit = {
     tableName match {
       case "roadlink" => updateTableRoadLink(tableName)
       case "manoeuvre_element_history" => updateTableManoeuvre(tableName)
@@ -77,14 +77,15 @@ object LinkIdImporter {
     statement.addBatch()
   }
 
-  protected def updateOperation(tableName: String, ids: Set[Int],linkIdColumn:String): Unit = {
+  private def updateOperation(tableName: String, ids: Set[Int],linkIdColumn:String): Unit = {
     val total = ids.size
-    logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
+    val groups = ids.grouped(groupingSize).toSeq
+    logger.info(s"Table $tableName, size: $total in ${groups.size} groups, Thread ID: ${Thread.currentThread().getId}")
     time(logger, s"Table $tableName: $total links converted") {
-      val groups = ids.grouped(groupingSize).toSeq
       new Parallel().operation(groups.par, 15) {_.foreach { ids =>
         withDynTransaction {
-          time(logger, s"Table $tableName, updating: ${ids.size}, Thread ID: ${Thread.currentThread().getId}") {
+          val updating = if(ids.size < groupingSize ){s", updating: ${ids.size}"} else ""
+          time(logger, s"Table ${tableName}${updating}, Thread ID: ${Thread.currentThread().getId}") {
             executeBatch(updateTableSQL(linkIdColumn, tableName)) { statement => {ids.foreach(
               id => {updateTableRow(statement, id)})}
             }
@@ -93,7 +94,7 @@ object LinkIdImporter {
     }
   }
   
-  def updateTableManoeuvre(tableName: String): Unit = {
+ private def updateTableManoeuvre(tableName: String): Unit = {
     withDynTransaction {
       val ids = sql"select link_id,dest_link_id from #${tableName}".as[(Int, Int)].list.toSet
       val total = ids.size
@@ -106,17 +107,17 @@ object LinkIdImporter {
     }
   }
 
-  def updateTableRoadLink(tableName: String): Unit = {
+  private def updateTableRoadLink(tableName: String): Unit = {
     val ids = withDynSession(sql"select linkid from #$tableName".as[Int].list.toSet)
     updateOperation(tableName,ids, "linkid")
   }
-  
-  def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
+
+  private def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
     val ids = withDynSession(sql"select link_id from #${tableName}".as[Int].list).toSet.diff(complementaryLinks.toSet)
     updateOperation(tableName,ids, "link_id")
   }
-  
-  def lrmTable(tableName: String): Unit = {
+
+  private def lrmTable(tableName: String): Unit = {
     val ids = withDynSession(
       sql"""select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value})
            """.as[Int].list).toSet
