@@ -5,7 +5,7 @@ ALTER TABLE unknown_speed_limit DROP CONSTRAINT unknown_speed_limit_pkey;
 ALTER TABLE unknown_speed_limit ALTER COLUMN link_id DROP NOT NULL;
 
 CREATE INDEX unknown_speed_limit_link_id_idx ON unknown_speed_limit (link_id);
-CREATE INDEX unknown_speed_limit_link_id_idx ON unknown_speed_limit (vvh_id);
+CREATE INDEX unknown_speed_limit_vvh_id_idx ON unknown_speed_limit (vvh_id);
 CREATE INDEX lane_history_position_vvh_id_idx ON lane_history_position (vvh_id);
 CREATE INDEX lane_position_vvh_id_idx ON lane_position (vvh_id);
 CREATE INDEX lrm_position_vvh_id_idx ON lrm_position (vvh_id);
@@ -21,8 +21,8 @@ CREATE INDEX roadlink_vvh_id_idx ON roadlink (vvh_id);
 CREATE INDEX manoeuvre_element_history_vvh_id_idx ON manoeuvre_element_history (vvh_id);
 CREATE INDEX manoeuvre_element_vvh_id_idx ON manoeuvre_element (vvh_id);
 
-CREATE INDEX manoeuvre_element_history_vvh_id_idx ON manoeuvre_element_history (dest_vvh_id);
-CREATE INDEX manoeuvre_element_vvh_id_idx ON manoeuvre_element (dest_vvh_id);
+CREATE INDEX manoeuvre_element_history_dest_vvh_id_idx ON manoeuvre_element_history (dest_vvh_id);
+CREATE INDEX manoeuvre_element_dest_vvh_id_idx ON manoeuvre_element (dest_vvh_id);
 
 
 
