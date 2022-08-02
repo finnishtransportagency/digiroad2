@@ -151,7 +151,7 @@ object Extractor {
   }
   
   private def extractAttributes(attributesMap: Map[String, Any],validFromDate:BigInt,lastEditedDate:BigInt,starttime:BigInt): Map[String, Any] = {
-    def numberConversio(field:String): BigInt = {
+    def numberConversion(field:String): BigInt = {
       try {
         toBigInt(attributesMap(field).toString.toInt)
       } catch {
@@ -162,24 +162,24 @@ object Extractor {
     }
     
     Map(
-      "ROADNUMBER"            -> numberConversio("roadnumber"),
-      "ROADPARTNUMBER"        -> numberConversio("roadpartnumber"),
-      "MUNICIPALITYCODE"      -> numberConversio("municipalitycode"),
-      "SURFACETYPE"           -> numberConversio("surfacetype"),
+      "ROADNUMBER"            -> numberConversion("roadnumber"),
+      "ROADPARTNUMBER"        -> numberConversion("roadpartnumber"),
+      "MUNICIPALITYCODE"      -> numberConversion("municipalitycode"),
+      "SURFACETYPE"           -> numberConversion("surfacetype"),
 
-      "MTKID"                 -> numberConversio("sourceid"),
-      "MTKCLASS"              -> numberConversio("roadclass"),
+      "MTKID"                 -> numberConversion("sourceid"),
+      "MTKCLASS"              -> numberConversion("roadclass"),
       "HORIZONTALACCURACY"    -> anyToDouble(attributesMap("xyaccuracy")),
       "VERTICALACCURACY"      -> anyToDouble(attributesMap("zaccuracy")),
-      "VERTICALLEVEL"         -> numberConversio("surfacerelation"),
-      "CONSTRUCTIONTYPE"      -> numberConversio("lifecyclestatus"),
+      "VERTICALLEVEL"         -> numberConversion("surfacerelation"),
+      "CONSTRUCTIONTYPE"      -> numberConversion("lifecyclestatus"),
       "ROADNAME_FI"           -> attributesMap("roadnamefin"),
       "ROADNAME_SE"           -> attributesMap("roadnameswe"),
 
-      "FROM_RIGHT"            -> numberConversio("addressfromright"),
-      "TO_RIGHT"              -> numberConversio("addresstoright"),
-      "FROM_LEFT"             -> numberConversio("addressfromleft"),
-      "TO_LEFT"               -> numberConversio("addresstoleft"),
+      "FROM_RIGHT"            -> numberConversion("addressfromright"),
+      "TO_RIGHT"              -> numberConversion("addresstoright"),
+      "FROM_LEFT"             -> numberConversion("addressfromleft"),
+      "TO_LEFT"               -> numberConversion("addresstoleft"),
       
       "MTKHEREFLIP"           -> attributesMap("geometryflip"),
       "CREATED_DATE"          -> starttime,
