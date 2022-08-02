@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{ RoadLink, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
@@ -20,7 +20,6 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.Caching
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
-import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.roadLinkClient
 import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -1002,11 +1001,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  def fetchHistoryDataLinks(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+  def fetchHistoryDataLinks(linkIds: Set[String]): Seq[HistoryRoadLink] = {
     if (linkIds.nonEmpty)
       roadLinkClient.historyData.fetchByLinkIds(linkIds)
     else
-      Seq.empty[RoadLinkFetched]
+      Seq.empty[HistoryRoadLink]
   }
 
 
@@ -1390,7 +1389,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
 
-  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[RoadLinkFetched]): Seq[RoadLink] = {
+  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[InterfaceRoadLinkFetched]): Seq[RoadLink] = {
     val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + vvhRoadLinks.size){getRoadLinkDataByLinkIds(vvhRoadLinks)}
   }
@@ -1420,11 +1419,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   /**
     * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
-  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[RoadLinkFetched]): Seq[RoadLink] = {
+  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[InterfaceRoadLinkFetched]): Seq[RoadLink] = {
     adjustedRoadLinks(vvhRoadLinks)
   }
 
-  private def adjustedRoadLinks(vvhRoadlinks: Seq[RoadLinkFetched]): Seq[RoadLink] = {
+  private def adjustedRoadLinks(vvhRoadlinks: Seq[InterfaceRoadLinkFetched]): Seq[RoadLink] = {
     val propertyRows = fetchRoadLinkPropertyRows(vvhRoadlinks.map(_.linkId).toSet)
 
     vvhRoadlinks.map { link =>
