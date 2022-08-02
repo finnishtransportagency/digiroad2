@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
+import fi.liikennevirasto.digiroad2.client.vvh.{HistoryRoadLink, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.geotools.filter.function.GeometryTransformation
 
@@ -25,11 +26,11 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     * @param roadLinks Current road links
     * @return Filtered history links
     */
-  def process(historyRoadLinks:Seq[RoadLinkFetched], roadLinks :Seq[RoadLinkFetched]) : Seq[RoadLinkFetched] ={
-    def endDate(roadLinkFetched: RoadLinkFetched) =
+  def process(historyRoadLinks:Seq[HistoryRoadLink], roadLinks :Seq[RoadLinkFetched]) : Seq[HistoryRoadLink] ={
+    def endDate(roadLinkFetched: RoadLinkLike) =
       roadLinkFetched.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
 
-    def newLinkId(roadLinkFetched: RoadLinkFetched) : Option[String] = {
+    def newLinkId(roadLinkFetched: RoadLinkLike) : Option[String] = {
       roadLinkFetched.attributes.get("LINKID_NEW") match {
         case Some(linkId) =>
           Some(linkId.asInstanceOf[BigInt].toString)
@@ -38,7 +39,7 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
       }
     }
 
-    def hasNewLinkId(roadLinkFetched: RoadLinkFetched) = newLinkId(roadLinkFetched).isEmpty
+    def hasNewLinkId(roadLinkFetched: RoadLinkLike) = newLinkId(roadLinkFetched).isEmpty
 
     // If several history link items have the same linkId, pick the one with latest endDate
     val latestHistory = historyRoadLinks.groupBy(_.linkId).mapValues(rl => rl.maxBy(endDate)).values
