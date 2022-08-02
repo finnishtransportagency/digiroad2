@@ -33,7 +33,7 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     def newLinkId(roadLinkFetched: RoadLinkLike) : Option[String] = {
       roadLinkFetched.attributes.get("LINKID_NEW") match {
         case Some(linkId) =>
-          Some(linkId.asInstanceOf[BigInt].toString)
+          Some(linkId.toString)
         case _ =>
           None
       }

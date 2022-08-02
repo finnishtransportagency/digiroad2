@@ -135,7 +135,7 @@ class ExtractorBase {
     else Unknown
   }
 
-  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+  def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
     if (attributes("lifecyclestatus").asInstanceOf[String] != null)
       Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
         .map(ConstructionType.apply)
@@ -253,13 +253,12 @@ class Extractor extends ExtractorBase {
   }
 }
 
-trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
+abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
   
   protected val linkGeomSource: LinkGeomSource
   protected def serviceName: String
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): extractor.LinkType = extractor.extractFeature(feature, path, linkGeomSource)
   private val cqlLang = "cql-text"
   private val bboxCrsType = "EPSG%3A3067"
   private val crs = "EPSG%3A3067"
@@ -297,7 +296,7 @@ trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
     */
   protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("properties").asInstanceOf[Map[String, Any]]
-    val linkStatus = Extractor.extractConstructionType(attributes)
+    val linkStatus = extractor.extractConstructionType(attributes)
     linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
   }
   
@@ -403,7 +402,7 @@ trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
     val items2 = Await.result(fut2, atMost = Duration.Inf)
     val items3 = Await.result(fut3, atMost = Duration.Inf)
     (items1 ++ items2 ++ items3).flatMap(_.features.par.map(feature=>
-      Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
+      extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
@@ -417,7 +416,7 @@ trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
     fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
     match {
       case Left(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -433,7 +432,7 @@ trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Left(features) =>features.get.features.map(t=>extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -452,7 +451,7 @@ trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
   protected def queryByLinkId[LinkType](linkId: String): Seq[LinkType] = {
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
       case Left(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -471,8 +470,8 @@ trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
     if(!pagination){
       fetchFeatures(url)
       match {
-        case Left(features) =>features.get.features.map(feature=> 
-          Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        case Left(features) =>features.get.features.map(feature=>
+          extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
         case Right(error) => throw new ClientException(error.toString)
       }
     }else {

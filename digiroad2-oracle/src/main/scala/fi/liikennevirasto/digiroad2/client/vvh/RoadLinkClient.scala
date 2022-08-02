@@ -433,8 +433,8 @@ class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSo
 
   override type LinkType
   override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
-  override protected val serviceName = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
-  override protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
+  protected val serviceName:String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
+  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
   val filter:Filter = FilterOgc
 
   def createVVHTimeStamp(offsetHours: Int = 5): Long =  RoadLinkClient.createVVHTimeStamp(offsetHours)
@@ -1316,7 +1316,7 @@ class ExtractHistory extends ExtractorBase {
     val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> anyToDouble(point(0)).get, "y" -> anyToDouble(point(1)).get, "z" -> anyToDouble(point(2)).get, "m" -> anyToDouble(point(3)).get)))
     val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => anyToDouble(point(0)).get + " " + anyToDouble(point(1)).get + " " + anyToDouble(point(2)).get + " " + anyToDouble(point(3)).get).mkString(", ")})"))
     
-    val endTime = Option(BigInteger.valueOf(new DateTime(attributes("END_DATE").asInstanceOf[String]).getMillis))
+    val endTime = Some(BigInt(1))  //Option(BigInteger.valueOf(new DateTime(attributes("END_DATE").asInstanceOf[String]).getMillis))
     
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
@@ -1324,13 +1324,12 @@ class ExtractHistory extends ExtractorBase {
     val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
     HistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), roadClass, createdDate = startTime.get,endDate = endTime,
-      attributes = extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)++ Map("END_DATE"->endTime) ++ Map("LINKID_NEW"->"")
+      extractTrafficDirection(attributes), roadClass, createdDate = startTime.get,endDate = endTime.get,
+      attributes = extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)++ Map("END_DATE"->endTime.get) ++ Map("LINKID_NEW"->"")
         ++ linkGeometryForApi ++ linkGeometryWKTForApi)
   }
 }
-class RoadLinkHistoryClient extends KgvRoadLinkClientBase(extractor = new ExtractHistory) {
-  override protected val serviceName = KgvCollection.LinkVersios.value
-  protected override val linkGeomSource = LinkGeomSource.HistoryLinkInterface
+class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersios, linkGeomSource:LinkGeomSource=LinkGeomSource.HistoryLinkInterface)
+  extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractHistory) {
   override type LinkType = HistoryRoadLink
 }
