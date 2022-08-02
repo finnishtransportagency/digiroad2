@@ -72,11 +72,12 @@
             var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
             var unit = field.unit ? ' ' + field.unit : '';
             var _value = value ? value.value + unit: '-';
+            var cssClass = field.cssClass ? ' ' + field.cssClass : '';
 
             return $('' +
                 '<div class="form-group">' +
                 '   <label class="control-label">' + field.label + '</label>' +
-                '   <p class="form-control-static">' + _value  + '</p>' +
+                '   <p class="form-control-static' + cssClass +'">' + _value  + '</p>' +
                 '</div>'
             );
         };
@@ -193,10 +194,11 @@
         me.editModeRender = function (fieldValue) {
             var value = _.head(fieldValue, function(values) { return values.value ; });
             var _value = value ? value.value : '-';
+            var cssClass = field.cssClass ? ' ' + field.cssClass : '';
             return $('' +
                 '<div class="form-group">' +
                 '   <label class="control-label">' + field.label + '</label>' +
-                '   <p class="form-control-readOnly">' + _value + '</p>' +
+                '   <p class="form-control-readOnly' + cssClass + '">' + _value + '</p>' +
                 '</div>'
             );
         };
@@ -262,7 +264,7 @@
                 var selected = value.id.toString() === selectedValue ? " selected" : "";
                 var disabled = value.disabled ?  'disabled' : '';
                 var hidden = _.isUndefined(value.hidden) ? false : value.hidden(assetTypeConfiguration.selectedLinearAsset.get(), value.id);
-                return  hidden ? '' : '<option value="' + value.id + '" ' + selected + ' '+ disabled +'>' + value.label + '</option>';
+                return  hidden ? '' : '<option value="' + value.id + '" data-value="' + value.label + '" ' + selected + ' '+ disabled +'>' + value.label + '</option>';
             }).join('');
 
             me.element = $(template({className: className, optionTags: optionTags, disabled: me.disabled(), name: field.publicId, fieldType: field.type, required: me.required()}));
