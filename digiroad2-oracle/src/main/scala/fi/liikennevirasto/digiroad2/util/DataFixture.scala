@@ -2228,7 +2228,7 @@ object DataFixture {
       case Some("adjust_digitization") =>
         adjustToNewDigitization()
       case Some("import_link_ids") =>
-        LinkIdImporter.importLinkIdsFromVVH(Digiroad2Properties.vvhRestApiEndPoint)
+        LinkIdImporter.changeLinkIdIntoKMTKVersion()
       case Some("generate_floating_obstacles") =>
         FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
       case Some("get_addresses_to_masstransitstops_from_vvh") =>
