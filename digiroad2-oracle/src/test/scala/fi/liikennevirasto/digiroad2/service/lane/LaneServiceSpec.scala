@@ -500,7 +500,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Update two lanes in one roadlink to only one lane") {
+  test("Replace two old split lanes with new full length additional lane") {
     runWithRollback {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(2))),
@@ -551,7 +551,10 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and one sublane not splitted
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      val expiredSubLane2A = subLane2SplitA.copy(id = newSubLane2SplitAId, isExpired = true)
+      val expiredSubLane2B = subLane2SplitB.copy(id = newSubLane2SplitBId, isExpired = true)
+
+      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2, expiredSubLane2A, expiredSubLane2B ), Set(100L), 1, usernameTest, sideCodesForLinkIds)
 
       val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
       lanesAfterSplit.size should be(2)
@@ -576,7 +579,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historyLanes.size should be(2)
 
       val historylane2A = historyLanes.filter(_.oldId == newSubLane2SplitAId).head
-      historylane2A.newId should not be 0
+      historylane2A.newId should be (0)
       historylane2A.newId should not be mainLane1Id
       historylane2A.startMeasure should be(0)
       historylane2A.endMeasure should be(250.0)
@@ -586,7 +589,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       val historylane2B = historyLanes.filter(_.oldId == newSubLane2SplitBId).head
-      historylane2B.newId should not be 0
+      historylane2B.newId should be (0)
       historylane2B.newId should not be mainLane1Id
       historylane2B.startMeasure should be(250.0)
       historylane2B.endMeasure should be(500.0)
