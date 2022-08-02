@@ -106,9 +106,12 @@ object FilterOgc extends Filter {
   
 }
 
-object Extractor {
+
+class ExtractorBase {
   lazy val logger = LoggerFactory.getLogger(getClass)
-  private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+  type LinkType
+
+  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath,
@@ -119,12 +122,12 @@ object Extractor {
     12132 -> FeatureClass.CarRoad_IIIb
   )
 
-  private val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+  protected val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
 
-  private  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
+  protected  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     if (attributes("adminclass").asInstanceOf[String] != null)
       Option(attributes("adminclass").asInstanceOf[String].toInt)
         .map(AdministrativeClass.apply)
@@ -132,33 +135,62 @@ object Extractor {
     else Unknown
   }
 
-  def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
+  protected def extractConstructionType(attributes: Map[String, Any]): ConstructionType = {
     if (attributes("lifecyclestatus").asInstanceOf[String] != null)
       Option(attributes("lifecyclestatus").asInstanceOf[String].toInt)
         .map(ConstructionType.apply)
         .getOrElse(ConstructionType.InUse)
     else ConstructionType.InUse
   }
-  
-  private  def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
+
+  protected def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
     if (attributes("directiontype").asInstanceOf[String] != null)
       Option(attributes("directiontype").asInstanceOf[String].toInt)
         .map(trafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
         .getOrElse(TrafficDirection.UnknownDirection)
     else TrafficDirection.UnknownDirection
   }
-  
-  private def extractAttributes(attributesMap: Map[String, Any],validFromDate:BigInt,lastEditedDate:BigInt,starttime:BigInt): Map[String, Any] = {
+
+
+  /**
+    * Extract double value from data. Used for change info start and end measures.
+    */
+  protected def anyToDouble(value: Any): Option[Double] = {
+    value match {
+      case null => None
+      case _ => {
+        val doubleValue = Try(value.toString.toDouble).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}") )
+        Some(doubleValue)
+      }
+    }
+  }
+
+  def toBigInt(value: Int): BigInt = {
+    Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
+  }
+
+  protected def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
+    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
+    var lastEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("versionstarttime")){
+      lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
+    }
+
+    lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
+  }
+
+  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
+  protected def extractAttributes(attributesMap: Map[String, Any], validFromDate:BigInt, lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
     def numberConversion(field:String): BigInt = {
       try {
         toBigInt(attributesMap(field).toString.toInt)
       } catch {
         case _: Exception =>
           logger.warn(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
-         0
+          0
       }
     }
-    
+
     Map(
       "ROADNUMBER"            -> numberConversion("roadnumber"),
       "ROADPARTNUMBER"        -> numberConversion("roadpartnumber"),
@@ -178,48 +210,24 @@ object Extractor {
       "TO_RIGHT"              -> numberConversion("addresstoright"),
       "FROM_LEFT"             -> numberConversion("addressfromleft"),
       "TO_LEFT"               -> numberConversion("addresstoleft"),
-      
+
       "MTKHEREFLIP"           -> attributesMap("geometryflip"),
       "CREATED_DATE"          -> starttime,
       "LAST_EDITED_DATE"      -> lastEditedDate,
       "VALIDFROM"             -> validFromDate
     )
   }
-  
-  /**
-    * Extract double value from data. Used for change info start and end measures.
-    */
-  private def anyToDouble(value: Any): Option[Double] = {
-    value match {
-      case null => None
-      case _ => {
-        val doubleValue = Try(value.toString.toDouble).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}") )
-        Some(doubleValue)
-      }
-    }
-  }
 
-  def toBigInt(value: Int): BigInt = {
-    Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
-  }
-
- private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
-    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
-    var lastEditedDate : Option[Long] = Option(0)
-    if(attributes.contains("versionstarttime")){
-      lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
-    }
-   
-   lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
-  }
-  
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLinkFetched = {
+}
+class Extractor extends ExtractorBase {
+  override type LinkType = RoadLinkFetched
+  override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = {
     val attributes = feature.properties
-    
+
     val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
     val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
     val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
-    
+
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
@@ -228,11 +236,11 @@ object Extractor {
 
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
-    
+
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
 
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-   
+
     val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
     RoadLinkFetched(linkId, municipalityCode,
@@ -245,13 +253,13 @@ object Extractor {
   }
 }
 
-trait KgvOperation extends LinkOperationsAbstract{
+trait KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
   
   protected val linkGeomSource: LinkGeomSource
   protected def serviceName: String
-  
+  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): extractor.LinkType = extractor.extractFeature(feature, path, linkGeomSource)
   private val cqlLang = "cql-text"
   private val bboxCrsType = "EPSG%3A3067"
   private val crs = "EPSG%3A3067"
