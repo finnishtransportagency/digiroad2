@@ -80,13 +80,13 @@
 
   var mainLaneFormStructure = {
     fields : [
-      {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1},
-      {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2},
-      {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3},
-      {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
-      {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
-      {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6},
-      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11},
+      {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1, cssClass: 'road-number'},
+      {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2, cssClass: 'road-part-number'},
+      {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3, cssClass: 'track'},
+      {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4, cssClass: 'start-addr-m'},
+      {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5, cssClass: 'end-addr-m'},
+      {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6, cssClass: 'admin-class'},
+      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11, cssClass: 'lane-code'},
       {
         label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 12,
         values: [
@@ -385,7 +385,7 @@
       var odd = _.last(numbersPartitioned);
       var even = _.head(numbersPartitioned);
 
-      var addLeftLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button>').click(function() {
+      var addLeftLane = $('<li>').append($('<button class="btn btn-secondary add-to-left">Lisää kaista vasemmalle puolelle</button>').click(function() {
         var nextLaneNumber;
         if(_.isEmpty(even)){
           nextLaneNumber = 2;
@@ -399,7 +399,7 @@
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(even) && _.max(even) == 8 || selectedAsset.isPromotionDirty()));
 
-      var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
+      var addRightLane = $('<li>').append($('<button class="btn btn-secondary add-to-right">Lisää kaista oikealle puolelle</button>').click(function() {
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
@@ -409,7 +409,7 @@
       }).prop("disabled", !_.isEmpty(odd) && _.max(odd) == 9 || selectedAsset.isPromotionDirty()));
 
       var selectedRoadLink = selectedAsset.getSelectedRoadlink();
-      var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary">Lisää kaista tieosoitteen avulla</button>').click(function() {
+      var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary add-by-road-address">Lisää kaista tieosoitteen avulla</button>').click(function() {
         isAddByRoadAddressActive = true;
         selectedAsset.setInitialRoadFields();
 
@@ -480,13 +480,13 @@
     function renderExpireAndDeleteButtonsElement(selectedAsset, body, sidecode){
       var currentLaneNumber = selectedAsset.getCurrentLaneNumber();
 
-      var deleteLane = $('<button class="btn btn-secondary lane-button">Poista kaista</button>').click(function() {
+      var deleteLane = $('<button class="btn btn-secondary lane-button delete-lane">Poista kaista</button>').click(function() {
         selectedAsset.removeLane(currentLaneNumber, sidecode);
         prepareLanesStructure();
         reloadForm($('#feature-attributes'));
       });
 
-      var expireLane = $('<button class="btn btn-secondary lane-button">Päätä Kaista</button>').click(function() {
+      var expireLane = $('<button class="btn btn-secondary lane-button expire-lane">Päätä Kaista</button>').click(function() {
         var confirmationPopUpOptions = {
           type: "confirm",
           yesButtonLbl: 'Tallenna',
@@ -502,7 +502,7 @@
         GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
-      var promoteToMainLaneButton = $('<button class="btn btn-secondary">Muuta kaista pääkaistaksi</button>').click(function() {
+      var promoteToMainLaneButton = $('<button class="btn btn-secondary turn-into-main-lane">Muuta kaista pääkaistaksi</button>').click(function() {
         var laneToPromote = selectedAsset.getLane(currentLaneNumber);
         var selectedLaneGroup = selectedAsset.selection;
         var passedValidations = validatePromotion(laneToPromote, selectedLaneGroup);
