@@ -39,8 +39,7 @@ object MainLanePopulationProcess {
   lazy val username = "auto_generated_lane"
 
   lazy val twoWayLanes: Seq[LinkType] = Seq(
-      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess,
-      TractorRoad, CycleOrPedestrianPath)
+      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess, CycleOrPedestrianPath)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -83,7 +82,7 @@ object MainLanePopulationProcess {
   private def mainLanesForMunicipality(municipality: Int, initialProcessing: Boolean): Unit = {
     logger.info("Working on municipality -> " + municipality)
 
-    val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+    val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filterNot(_.linkType == TractorRoad)
 
     // If not initial process, filter out roadLinks that already have main lanes
     val roadLinksWithoutMainLanes =
