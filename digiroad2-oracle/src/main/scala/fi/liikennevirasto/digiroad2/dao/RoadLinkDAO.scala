@@ -29,7 +29,7 @@ class RoadLinkDAO {
   // Query filters methods
   protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
     if (ids.nonEmpty)
-      s"$attributeName in (${ids.mkString(",")})"
+      s"$attributeName in (${ids.asInstanceOf[Set[String]].map(t=>s"'$t'").mkString(",")})"
     else ""
   }
 
