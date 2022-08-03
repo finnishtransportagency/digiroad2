@@ -1019,14 +1019,14 @@
         style: new LaneModellingStyle(),
         form: new LaneModellingForm({
           fields : [
-            {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1},
-            {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2},
-            {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3},
-            {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
-            {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
-            {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6},
+            {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1, cssClass: 'road-number'},
+            {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2, cssClass: 'road-part-number'},
+            {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3, cssClass: 'track'},
+            {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4, cssClass: 'start-addr-m'},
+            {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5, cssClass: 'end-addr-m'},
+            {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6, cssClass: 'admin-class'},
             {
-              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11
+              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11, cssClass: 'lane-code'
             },
             {
               label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
