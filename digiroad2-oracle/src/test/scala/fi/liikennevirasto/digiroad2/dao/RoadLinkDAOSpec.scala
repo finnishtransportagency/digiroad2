@@ -10,7 +10,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class RoadLinkDAOSpec extends FunSuite {
   
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-  test("testFetchByRoadNames") {
+  test("Fetch link where roadnames has hyphen symbol in middle of word") {
     runWithRollback  {
       val dao = new RoadLinkDAO
       sqlu"""INSERT INTO roadlink (linkid, municipalitycode, roadname_fi, roadname_se, roadname_sm,constructiontype,shape) VALUES('1', 853, 'Tarkk''ampujankatu', 'Skarpskyttegatan', NULL,0,'SRID=3067;LINESTRING ZM(385935.666 6671107.833 19.858 0, 386028.217 6671112.363 20.596 92.661)'::geometry)""".execute
