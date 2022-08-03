@@ -23,7 +23,7 @@
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/QA-batchSystem-BatchTaskRole-1QO0VDAJOYS45",
-    "jobRoleArn": "arn:aws:iam::475079312496:role/QA-batchSystem-BatchJobRole-38BJCSXZBNR9",
+    "jobRoleArn": "arn:aws:iam::475079312496:role/QA-digiroad2-JobRole",
     "environment": [
       {
         "name": "containerCPU",

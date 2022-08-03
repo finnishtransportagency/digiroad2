@@ -177,6 +177,7 @@ Resources:
   BatchJobRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Join [ '-', [ !Ref EnvironmentName, !Ref ApplicationName, 'JobRole']]
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
