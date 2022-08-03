@@ -967,7 +967,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
           case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
           case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-          case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
+          case "road_nodes" => roadNodesToApi(
+            //roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber)
+            Seq()
+          )
           case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
           case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
           case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))
