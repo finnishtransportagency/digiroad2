@@ -1089,13 +1089,14 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   }
 
   def fetchByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
-    val definition = layerDefinition(withCreatedDateFilter(since, until))
+    /*val definition = layerDefinition(withCreatedDateFilter(since, until))
     val url = serviceUrl(definition, queryParameters())
 
     fetchVVHFeatures(url) match {
       case Left(features) => features.map(extractFeature)
       case Right(error) => throw new ClientException(error.toString)
-    }
+    }*/
+    Seq()  //disabled due to DROTH-3254
   }
 
   protected  def withCreatedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
