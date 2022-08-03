@@ -1052,7 +1052,7 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
   // TODO: Temporary parsing from string to long. Remove after not needed anymore
     queryByLinkIds(parseLinkIdsToLong(linkIds), fieldSelection, fetchGeometry, resultTransition, Filter.withLinkIdFilter)
 }
-
+//Replace with new tiekamu client in future
 class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
   override type LinkType = ChangeInfo
   override type Content = Map[String, Any]
