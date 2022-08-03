@@ -36,7 +36,7 @@ class RoadLinkDAO {
     } else ""
   }
 
-  protected def withRoadNameFilter[T](attributeName: String, names: Set[String]): String = {
+  protected def withRoadNameFilter(attributeName: String, names: Set[String]): String = {
     if (names.nonEmpty) {
       val nameString = names.map(name =>
       {
