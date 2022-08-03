@@ -530,14 +530,8 @@ trait TrafficSignLinearGenerator {
 
     //RoadLink with the same Finnish/Swedish name
     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
-      "[\']".r.findFirstMatchIn(roadNameSource) match {
-        case Some(_) =>
-          logger.warn("Vvh can not handle ' symbol, requested road : " + roadNameSource);
-          Seq()
-        case None =>
-          roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(
-            roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
-      }
+      roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false)
+        .filter(_.administrativeClass != State)
     }.getOrElse(Seq(signRoadLink))
   }
 

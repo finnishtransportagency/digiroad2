@@ -35,7 +35,14 @@ class RoadLinkDAO {
 
   protected def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
     if (names.nonEmpty) {
-      val nameString = names.map(name => s"'$name'")
+      val nameString = names.map(name =>
+      {
+        val nameString = name.asInstanceOf[String]
+        "[\']".r.findFirstMatchIn(nameString) match {
+          case Some(_) => s"'${nameString.replaceAll("\'","\'\'")}'"
+          case None => s"'$name'"
+        }
+      })
       s"$attributeName in (${nameString.mkString(",")})"
     } else ""
   }
