@@ -28,18 +28,20 @@ class RoadLinkDAO {
 
   // Query filters methods
   protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
-    if (ids.nonEmpty)
-      s"$attributeName in (${ids.asInstanceOf[Set[String]].map(t=>s"'$t'").mkString(",")})"
-    else ""
+    if (ids.nonEmpty) {
+      attributeName match {
+        case "LINKID" => s"$attributeName in (${ids.asInstanceOf[Set[String]].map(t=>s"'$t'").mkString(",")})"
+        case _ => s"$attributeName in (${ids.mkString(",")})"
+      }
+    } else ""
   }
 
-  protected def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
+  protected def withRoadNameFilter[T](attributeName: String, names: Set[String]): String = {
     if (names.nonEmpty) {
       val nameString = names.map(name =>
       {
-        val nameString = name.asInstanceOf[String]
-        "[\']".r.findFirstMatchIn(nameString) match {
-          case Some(_) => s"'${nameString.replaceAll("\'","\'\'")}'"
+        "[\']".r.findFirstMatchIn(name) match {
+          case Some(_) => s"'${name.replaceAll("\'","\'\'")}'"
           case None => s"'$name'"
         }
       })
