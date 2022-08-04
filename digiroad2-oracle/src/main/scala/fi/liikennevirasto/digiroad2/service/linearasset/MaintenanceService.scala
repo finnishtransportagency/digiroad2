@@ -98,11 +98,11 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.createVVHTimeStamp()): Seq[Long] = {
     val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlink.find(_.linkId == newAsset.linkId))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhClient.createVVHTimeStamp(), roadlink.find(_.linkId == newAsset.linkId))
       }
     }
   }
@@ -130,7 +130,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   def createWithHistory(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, roadLink: Option[RoadLinkLike]): Long = {
     withDynTransaction {
       maintenanceDAO.expireMaintenanceAssetsByLinkids(Seq(linkId), typeId)
-      createWithoutTransaction(typeId, linkId, value, sideCode, measures, username, vvhClient.roadLinkData.createVVHTimeStamp(), roadLink)
+      createWithoutTransaction(typeId, linkId, value, sideCode, measures, username, vvhClient.createVVHTimeStamp(), roadLink)
     }
   }
 

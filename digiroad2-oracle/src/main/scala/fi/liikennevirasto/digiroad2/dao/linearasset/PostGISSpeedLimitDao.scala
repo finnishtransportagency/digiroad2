@@ -398,7 +398,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val remainders = existingLrmPositions.map {speedLimit =>
       (speedLimit.startMeasure, speedLimit.endMeasure) }.foldLeft(Seq((linkMeasures.startMeasure, linkMeasures.endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01 }
     if (remainders.length == 1) {
-      Some(forceCreateSpeedLimit(creator, SpeedLimitAsset.typeId, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertProperties(id, value), Some(vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp())), createdDate, modifiedBy, modifiedAt, linkSource))
+      Some(forceCreateSpeedLimit(creator, SpeedLimitAsset.typeId, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertProperties(id, value), Some(vvhTimeStamp.getOrElse(vvhClient.createVVHTimeStamp())), createdDate, modifiedBy, modifiedAt, linkSource))
     } else {
       None
     }
@@ -506,7 +506,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     val adjusted_timestamp =  vvhTimeStamp match {
       case Some(timeStamp) => timeStamp
-      case _ => vvhClient.roadLinkData.createVVHTimeStamp()
+      case _ => vvhClient.createVVHTimeStamp()
     }
 
     sqlu"""
