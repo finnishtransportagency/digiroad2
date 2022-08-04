@@ -27,6 +27,12 @@
       new StyleRule().where('type').is('pointer').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
     ];
 
+    var linkTypeSizeRules = [
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).use({ stroke: { width: 6 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: { width: 2 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 4 } })
+    ];
+
 
     var administrativeClassDefaultStyleProvider = new StyleRuleProvider({stroke : { color: "#a4a4a2", opacity: 0.7, width: 5 } });
 
@@ -34,6 +40,7 @@
     administrativeClassDefaultStyleProvider.addRules(zoomLevelRules);
     administrativeClassDefaultStyleProvider.addRules(linkStatusRules);
     administrativeClassDefaultStyleProvider.addRules(featureTypeRules);
+    administrativeClassDefaultStyleProvider.addRules(linkTypeSizeRules);
 
     var administrativeClassSelectStyleProvider = new StyleRuleProvider({stroke : { color: "#5eaedf", opacity: 1, width: 6 } });
 

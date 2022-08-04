@@ -80,7 +80,13 @@ trait LaneOperations {
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
     val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets.map(Seq(_))))
     val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
-    val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct
+    val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct.map {lane =>
+      val linkType = roadLinks.find(_.linkId == lane.linkId).headOption match {
+        case Some(roadLink) => roadLink.linkType.value
+        case _ => UnknownLinkType.value
+      }
+      lane.copy(attributes = lane.attributes + ("linkType" -> linkType))
+    }
 
     val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithRoadAddress, roadLinks.groupBy(_.linkId).mapValues(_.head)))
     (partitionedLanes, roadLinksWithoutLanes)
@@ -124,7 +130,7 @@ trait LaneOperations {
           val consideredLanes = lanes.filter(lane => lane.startMeasure <= startMeasure && lane.endMeasure >= endMeasure).map(_.laneCode)
           val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
 
-          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, roadLink.trafficDirection, geometry, consideredLanes)
+          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, roadLink.trafficDirection, geometry, consideredLanes, roadLink.linkType.value)
         }
     }.toSeq
   }
