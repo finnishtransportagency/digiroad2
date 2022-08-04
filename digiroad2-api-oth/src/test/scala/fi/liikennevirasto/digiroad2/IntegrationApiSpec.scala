@@ -318,11 +318,11 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   val roadLink = RoadLink(
-    5000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    "5000", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((Seq(roadLink), Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink))
 
   test("care class value is returned from api as integer") {
     val careClassValue = DynamicValue(DynamicAssetValue(Seq(
@@ -331,7 +331,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testDynamicLinearAssetService.create(Seq(NewLinearAsset(5000L, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None)),
+      testDynamicLinearAssetService.create(Seq(NewLinearAsset("5000L", 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None)),
         CareClass.typeId, "test", 0)
       val linearAssetFromApi = integrationApi.linearAssetsToApi(CareClass.typeId, 235).head
       val (assetSideCode, assetValue) = (linearAssetFromApi.get("side_code").get, linearAssetFromApi.get("value").get)
@@ -350,7 +350,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testBogieWeightLimitService.create(Seq(NewLinearAsset(5000L, 0, 150, bogieWeightValue, SideCode.AgainstDigitizing.value, 0, None)), BogieWeightLimit.typeId, "test", 0)
+      testBogieWeightLimitService.create(Seq(NewLinearAsset("5000L", 0, 150, bogieWeightValue, SideCode.AgainstDigitizing.value, 0, None)), BogieWeightLimit.typeId, "test", 0)
       val twoAxelBogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("twoAxelValue").get
       twoAxelBogieWeightLimit.isInstanceOf[Int] should be(true)
       val threeAxelBogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("threeAxelValue").get
@@ -365,7 +365,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testDamagedByThawService.create(Seq(NewLinearAsset(5000L, 0, 150, damagedByThawValues, SideCode.AgainstDigitizing.value, 0, None)), DamagedByThaw.typeId, "test", 0)
+      testDamagedByThawService.create(Seq(NewLinearAsset("5000L", 0, 150, damagedByThawValues, SideCode.AgainstDigitizing.value, 0, None)), DamagedByThaw.typeId, "test", 0)
       val damagedByThawFromApi = integrationApi.damagedByThawToApi(235).head
       val (annualRepetition, value) = (damagedByThawFromApi.get("annual_repetition").get, damagedByThawFromApi.get("value").get)
       annualRepetition.isInstanceOf[Int] should be(true)
@@ -379,7 +379,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testParkingProhibitionService.create(Seq(NewLinearAsset(5000L, 0, 150, parkingProhibitionValues, SideCode.AgainstDigitizing.value, 0, None)), ParkingProhibition.typeId, "test", 0)
+      testParkingProhibitionService.create(Seq(NewLinearAsset("5000L", 0, 150, parkingProhibitionValues, SideCode.AgainstDigitizing.value, 0, None)), ParkingProhibition.typeId, "test", 0)
       val parkingProhibitionsFromApi = integrationApi.parkingProhibitionsToApi(235).head
       val parkingProhibitionType = parkingProhibitionsFromApi.get("parking_prohibition").get
       parkingProhibitionType.isInstanceOf[Int] should be(true)
@@ -415,7 +415,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       Property(1L, "additional_panel", "", false, Seq(AdditionalPanel(1, "testInfo", "testValue", 1, "testText", 1, 1, 1)))
     )
 
-    val trafficSignForApi = PersistedTrafficSign(1L, 100L, 11.11, 22.22, 33.33, false, 0L, 235, properties, None, None,
+    val trafficSignForApi = PersistedTrafficSign(1L, "100L", 11.11, 22.22, 33.33, false, 0L, 235, properties, None, None,
       None, None, 1, Some(1), LinkGeomSource.Unknown, false)
 
     val trafficSignValuesFromApi = integrationApi.trafficSignsToApi(Seq(trafficSignForApi)).head
@@ -470,7 +470,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       Property(1L, "additional_panel", "", false, Seq(AdditionalPanel(1, "testInfo", "testValue", 1, "testText", 1, 1, 1)))
     )
 
-    val trafficSignForApi = PersistedTrafficSign(1L, 100L, 11.11, 22.22, 33.33, false, 0L, 235, properties, None, None,
+    val trafficSignForApi = PersistedTrafficSign(1L, "100L", 11.11, 22.22, 33.33, false, 0L, 235, properties, None, None,
       None, None, 1, Some(1), LinkGeomSource.Unknown, false)
 
     val trafficSignValuesFromApi = integrationApi.trafficSignsToApi(Seq(trafficSignForApi)).head
