@@ -34,12 +34,12 @@ object integrationApiTestTransactions {
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
-  def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
+  def stopWithLinkId(linkId: String): PersistedMassTransitStop = {
     PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, 0, Modification(None, None), Modification(None, None), Seq(), NormalLinkInterface)
   }
   val mockLinearLengthLimitService = MockitoSugar.mock[LinearLengthLimitService]
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
-  when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
+  when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId("123"), stopWithLinkId("321")))
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val testLinearTotalWeightLimitService = new LinearTotalWeightLimitService(mockRoadLinkService, new DummyEventBus)
@@ -117,13 +117,13 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("Returns mml id of the road link that the stop refers to") {
     get("/mass_transit_stops?municipality=235") {
-      val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[Long]]
-      linkIds should be(Seq(123L, 321L))
+      val linkIds = (((parse(body) \ "features") \ "properties") \ "link_id").extract[Seq[String]]
+      linkIds should be(Seq("123", "321"))
     }
   }
 
   test("encode speed limit") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, None, None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, "2", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, None, None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -131,7 +131,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
-      "linkId" -> 2,
+      "linkId" -> "2",
       "muokattu_viimeksi" -> "",
       "generatedValue" -> false,
       "linkSource" -> 1
@@ -139,7 +139,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is real user and modifier is automatically generated") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("dr1conversion"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, "2", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("dr1conversion"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -147,7 +147,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
-      "linkId" -> 2,
+      "linkId" -> "2",
       "muokattu_viimeksi" -> "",
       "generatedValue" -> true,
       "linkSource" -> 1
@@ -155,7 +155,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is real user and modifier is automatically generated (contains fixed part of auto-generated value)") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("split_speedlimit_1234"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, "2", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("split_speedlimit_1234"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -163,7 +163,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
-      "linkId" -> 2,
+      "linkId" -> "2",
       "muokattu_viimeksi" -> "",
       "generatedValue" -> true,
       "linkSource" -> 1
@@ -171,7 +171,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is automatically generated") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, "2", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -179,7 +179,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
-      "linkId" -> 2,
+      "linkId" -> "2",
       "muokattu_viimeksi" -> "",
       "generatedValue" -> true,
       "linkSource" -> 1
@@ -187,7 +187,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is automatically generated (contains fixed part of auto-generated value)") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, Some("split_speedlimit_1234"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, "2", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, Some("split_speedlimit_1234"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -195,7 +195,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
-      "linkId" -> 2,
+      "linkId" -> "2",
       "muokattu_viimeksi" -> "",
       "generatedValue" -> true,
       "linkSource" -> 1
@@ -203,7 +203,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns false if creator is automatically generated and modifier is real user") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("K123456"), None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, "2", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("K123456"), None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -211,7 +211,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "value" -> 80,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
-      "linkId" -> 2,
+      "linkId" -> "2",
       "muokattu_viimeksi" -> "",
       "generatedValue" -> false,
       "linkSource" -> 1
@@ -220,8 +220,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("changeType validation returns 'add' if asset is create before the actual date") {
     val changedSpeedLimits = ChangedSpeedLimit(
-      speedLimit = SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("modifiedByUser"), None, Some("createdByUser"), Some(DateTime.parse("2017-05-07T12:00Z")), 0, None, linkSource = NormalLinkInterface),
-      link = RoadLink(12345, Seq(), 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None))
+      speedLimit = SpeedLimit(1, "2", SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("modifiedByUser"), None, Some("createdByUser"), Some(DateTime.parse("2017-05-07T12:00Z")), 0, None, linkSource = NormalLinkInterface),
+      link = RoadLink("12345", Seq(), 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None))
 
     integrationApi.speedLimitsChangesToApi(DateTime.parse("2017-05-06T12:00Z"), Seq(changedSpeedLimits)) should be(Seq(Map(
       "id" -> 1,
@@ -231,7 +231,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "value" -> 80,
       "startMeasure" -> 0.0,
       "endMeasure" -> 1.0,
-      "linkId" -> 2,
+      "linkId" -> "2",
       "muokattu_viimeksi" -> "07.05.2017 12:00:00",
       "generatedValue" -> false,
       "changeType" -> "Add",
@@ -281,19 +281,19 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("encode manouvre") {
     val manoeuvre = Manoeuvre(1,
-        Seq(ManoeuvreElement(1, 1, 2, ElementTypes.FirstElement),
-            ManoeuvreElement(1, 2, 3, ElementTypes.IntermediateElement),
-            ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement),
-            ManoeuvreElement(1, 4, 5, ElementTypes.IntermediateElement),
-            ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)),
+        Seq(ManoeuvreElement(1, "1", "2", ElementTypes.FirstElement),
+            ManoeuvreElement(1, "2", "3", ElementTypes.IntermediateElement),
+            ManoeuvreElement(1, "3", "4", ElementTypes.IntermediateElement),
+            ManoeuvreElement(1, "4", "5", ElementTypes.IntermediateElement),
+            ManoeuvreElement(1, "5", "", ElementTypes.LastElement)),
         Set.empty,Nil, None, None, "", DateTime.now, "", false)
 
       val result = integrationApi.manouvresToApi(Seq(manoeuvre))
 
       result.length should be(1)
-      result.head.get("elements") should be(Some(Seq(1,2,3,4,5)))
-      result.head.get("sourceLinkId") should equal(Some(1))
-      result.head.get("destLinkId") should equal(Some(5))
+      result.head.get("elements") should be(Some(Seq("1","2","3","4","5")))
+      result.head.get("sourceLinkId") should equal(Some("1"))
+      result.head.get("destLinkId") should equal(Some("5"))
   }
 
   test("geometryWKTForLinearAssets provides proper geometry") {
@@ -305,7 +305,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("Validate if sevenRestriction JSON generator return all required keys"){
-    val roadLinkFromDb = RoadLink(5361922,List(Point(148500.251,6682412.563,4.914999999993597), Point(148500.277,6682419.949,4.911999999996624), Point(148498.659,6682436.121,5.232999999992899), Point(148500.32,6682450.942,5.095000000001164), Point(148505.67,6682461.014,4.81699999999546), Point(148515.38,6682471.428,4.838000000003376), Point(148524.065,6682480.948,4.811000000001513), Point(148528.798,6682486.726,4.876000000003842), Point(148536.287,6682495.204,5.297999999995227), Point(148545.1,6682504.235,5.349000000001979), Point(148554.27,6682511.474,5.100999999995111), Point(148559.451,6682514.659,5.039000000004307)),126.24650466596506,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("16.12.2016 14:34:56"),Some("vvh_modified"),Map("LAST_EDITED_DATE" -> BigInt(1481891696000L), "MTKHEREFLIP" -> 1, "MTKID" -> 67439354, "STARTNODE" -> 9616160, "VERTICALACCURACY" -> 201, "ENDNODE" -> 9616163, "VALIDFROM" -> 1434844800000L, "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 1, "MTKCLASS" -> 12141, "points" -> List(Map("x" -> 148500.251, "y" -> 6682412.563, "z" -> 4.914999999993597, "m" -> 0), Map("x" -> 148500.277, "y" -> 6682419.949, "z" -> 4.911999999996624, "m" -> 7.385999999998603), Map("x" -> 148498.659, "y" -> 6682436.121, "z" -> 5.232999999992899, "m" -> 23.63880000000063), Map("x" -> 148500.32, "y" -> 6682450.942, "z" -> 5.095000000001164, "m" -> 38.55259999999544), Map("x" -> 148505.67, "y" -> 6682461.014, "z" -> 4.81699999999546, "m" -> 49.957299999994575), Map("x" -> 148515.38, "y" -> 6682471.428, "z" -> 4.838000000003376, "m" -> 64.19580000000133), Map("x" -> 148524.065, "y" -> 6682480.948, "z" -> 4.811000000001513, "m" -> 77.08220000000438), Map("x" -> 148528.798, "y" -> 6682486.726, "z" -> 4.876000000003842, "m" -> 84.55130000000645), Map("x" -> 148536.287, "y" -> 6682495.204, "z" -> 5.297999999995227, "m" -> 95.86329999999725), Map("x" -> 148545.1, "y" -> 6682504.235, "z" -> 5.349000000001979, "m" -> 108.48179999999411), Map("x" -> 148554.27, "y" -> 6682511.474, "z" -> 5.100999999995111, "m" -> 120.16479999999865), Map("x" -> 148559.451, "y" -> 6682514.659, "z" -> 5.039000000004307, "m" -> 126.24649999999383)), "geometryWKT" -> "LINESTRING ZM (148500.251 6682412.563 4.914999999993597 0, 148500.277 6682419.949 4.911999999996624 7.385999999998603, 148498.659 6682436.121 5.232999999992899 23.63880000000063, 148500.32 6682450.942 5.095000000001164 38.55259999999544, 148505.67 6682461.014 4.81699999999546 49.957299999994575, 148515.38 6682471.428 4.838000000003376 64.19580000000133, 148524.065 6682480.948 4.811000000001513 77.08220000000438, 148528.798 6682486.726 4.876000000003842 84.55130000000645, 148536.287 6682495.204 5.297999999995227 95.86329999999725, 148545.1 6682504.235 5.349000000001979 108.48179999999411, 148554.27 6682511.474 5.100999999995111 120.16479999999865, 148559.451 6682514.659 5.039000000004307 126.24649999999383)", "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 766, "CREATED_DATE" -> 1446398762000L, "GEOMETRY_EDITED_DATE" -> 1481891696000L, "HORIZONTALACCURACY" -> 3000),ConstructionType.InUse,NormalLinkInterface,List())
+    val roadLinkFromDb = RoadLink(5361922.toString,List(Point(148500.251,6682412.563,4.914999999993597), Point(148500.277,6682419.949,4.911999999996624), Point(148498.659,6682436.121,5.232999999992899), Point(148500.32,6682450.942,5.095000000001164), Point(148505.67,6682461.014,4.81699999999546), Point(148515.38,6682471.428,4.838000000003376), Point(148524.065,6682480.948,4.811000000001513), Point(148528.798,6682486.726,4.876000000003842), Point(148536.287,6682495.204,5.297999999995227), Point(148545.1,6682504.235,5.349000000001979), Point(148554.27,6682511.474,5.100999999995111), Point(148559.451,6682514.659,5.039000000004307)),126.24650466596506,Private,99,TrafficDirection.BothDirections,UnknownLinkType,Some("16.12.2016 14:34:56"),Some("vvh_modified"),Map("LAST_EDITED_DATE" -> BigInt(1481891696000L), "MTKHEREFLIP" -> 1, "MTKID" -> 67439354, "STARTNODE" -> 9616160, "VERTICALACCURACY" -> 201, "ENDNODE" -> 9616163, "VALIDFROM" -> 1434844800000L, "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 1, "MTKCLASS" -> 12141, "points" -> List(Map("x" -> 148500.251, "y" -> 6682412.563, "z" -> 4.914999999993597, "m" -> 0), Map("x" -> 148500.277, "y" -> 6682419.949, "z" -> 4.911999999996624, "m" -> 7.385999999998603), Map("x" -> 148498.659, "y" -> 6682436.121, "z" -> 5.232999999992899, "m" -> 23.63880000000063), Map("x" -> 148500.32, "y" -> 6682450.942, "z" -> 5.095000000001164, "m" -> 38.55259999999544), Map("x" -> 148505.67, "y" -> 6682461.014, "z" -> 4.81699999999546, "m" -> 49.957299999994575), Map("x" -> 148515.38, "y" -> 6682471.428, "z" -> 4.838000000003376, "m" -> 64.19580000000133), Map("x" -> 148524.065, "y" -> 6682480.948, "z" -> 4.811000000001513, "m" -> 77.08220000000438), Map("x" -> 148528.798, "y" -> 6682486.726, "z" -> 4.876000000003842, "m" -> 84.55130000000645), Map("x" -> 148536.287, "y" -> 6682495.204, "z" -> 5.297999999995227, "m" -> 95.86329999999725), Map("x" -> 148545.1, "y" -> 6682504.235, "z" -> 5.349000000001979, "m" -> 108.48179999999411), Map("x" -> 148554.27, "y" -> 6682511.474, "z" -> 5.100999999995111, "m" -> 120.16479999999865), Map("x" -> 148559.451, "y" -> 6682514.659, "z" -> 5.039000000004307, "m" -> 126.24649999999383)), "geometryWKT" -> "LINESTRING ZM (148500.251 6682412.563 4.914999999993597 0, 148500.277 6682419.949 4.911999999996624 7.385999999998603, 148498.659 6682436.121 5.232999999992899 23.63880000000063, 148500.32 6682450.942 5.095000000001164 38.55259999999544, 148505.67 6682461.014 4.81699999999546 49.957299999994575, 148515.38 6682471.428 4.838000000003376 64.19580000000133, 148524.065 6682480.948 4.811000000001513 77.08220000000438, 148528.798 6682486.726 4.876000000003842 84.55130000000645, 148536.287 6682495.204 5.297999999995227 95.86329999999725, 148545.1 6682504.235 5.349000000001979 108.48179999999411, 148554.27 6682511.474 5.100999999995111 120.16479999999865, 148559.451 6682514.659 5.039000000004307 126.24649999999383)", "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 766, "CREATED_DATE" -> 1446398762000L, "GEOMETRY_EDITED_DATE" -> 1481891696000L, "HORIZONTALACCURACY" -> 3000),ConstructionType.InUse,NormalLinkInterface,List())
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(766)).thenReturn((Seq(roadLinkFromDb), Seq()))
     val requiredKeys = Set("linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value","id")
     val jsonResult = integrationApi.sevenRestrictionToApi(30, 766)

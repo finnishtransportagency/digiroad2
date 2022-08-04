@@ -22,26 +22,28 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 class DynamicLinearTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
+  val linkId = "388562360"
+  val (linkId1, linkId2, linkId3) = ("1", "2", "3")
   
-  when(mockRoadLinkService.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(
-    1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
-  when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus", false))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(linkId1), "mittarajoitus", false))
+    .thenReturn(Seq(PersistedLinearAsset(1, linkId1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val mVLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
@@ -93,7 +95,7 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: PostGISAssetDao = mockAssetDao
@@ -112,7 +114,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: PostGISAssetDao = mockAssetDao
@@ -136,12 +138,12 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
            VALUES ($propId2, 30, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
 
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
       val asset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
-      mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360l), newTransaction = false).head.linkSource.value should be (1)
+      mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), newTransaction = false).head.linkSource.value should be (1)
     }
   }
 
@@ -157,7 +159,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 30, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId, 0, 40, propertyData, 1, 0, None)), 30, "testuser")
       newAssets.length should be(1)
       val asset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
@@ -180,7 +182,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newLimit = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = propertyData1, sideCode = 1, 0, None)
+      val newLimit = NewLinearAsset(linkId = linkId, startMeasure = 0, endMeasure = 10, value = propertyData1, sideCode = 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -193,18 +195,18 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.last)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
-      oldLimit.linkId should be (388562360)
+      oldLimit.linkId should be (linkId)
       oldLimit.sideCode should be (SideCode.BothDirections.value)
       oldLimit.expired should be (true)
       oldLimit.modifiedBy should be (None)
 
-      createdLimit.linkId should be (388562360)
+      createdLimit.linkId should be (linkId)
       createdLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       createdLimit.value should be (Some(propertyData2))
       createdLimit.createdBy should be (Some("test"))
       createdLimit.modifiedBy should be (Some("unittest"))
 
-      createdLimit1.linkId should be (388562360)
+      createdLimit1.linkId should be (linkId)
       createdLimit1.sideCode should be (SideCode.AgainstDigitizing.value)
       createdLimit1.value should be (Some(propertyData3))
       createdLimit1.createdBy should be (Some("test"))
@@ -224,7 +226,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -235,12 +237,12 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(createdId.head)).head
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(assetId)).head
 
-      oldLimit.linkId should be (388562360)
+      oldLimit.linkId should be (linkId)
       oldLimit.sideCode should be (SideCode.BothDirections.value)
       oldLimit.expired should be (true)
       oldLimit.modifiedBy should be (None)
 
-      createdLimit.linkId should be (388562360)
+      createdLimit.linkId should be (linkId)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing.value)
       createdLimit.value should be (Some(propertyData3))
       createdLimit.expired should be (false)
@@ -261,7 +263,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), typeId, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -271,7 +273,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       val oldLimit = ServiceWithDao.getPersistedAssetsByIds(typeId, Set(newAssetIdAfterUpdate.head)).head
 
-      oldLimit.linkId should be (388562360)
+      oldLimit.linkId should be (linkId)
       oldLimit.sideCode should be (SideCode.TowardsDigitizing.value)
       oldLimit.value should be (Some(propertyData2))
       oldLimit.expired should be (false)
@@ -293,7 +295,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, $typeId, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, typeId)))
@@ -305,14 +307,14 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       val createdLimit = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.head)).head
       val createdLimit1 = ServiceWithDao.getPersistedAssetsByIds(140, Set(ids.last)).head
 
-      createdLimit.linkId should be (388562360)
+      createdLimit.linkId should be (linkId)
       createdLimit.sideCode should be (SideCode.BothDirections.value)
       createdLimit.value should be (Some(propertyData2))
       createdLimit.modifiedBy should be (Some("unittest"))
       createdLimit.startMeasure should be (2.0)
       createdLimit.endMeasure should be (10.0)
 
-      createdLimit1.linkId should be (388562360)
+      createdLimit1.linkId should be (linkId)
       createdLimit1.sideCode should be (SideCode.BothDirections.value)
       createdLimit1.value should be (Some(propertyData3))
       createdLimit1.createdBy should be (Some("test"))
@@ -334,7 +336,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 140, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newLimit = NewLinearAsset(388562360, 0, 10, propertyData1, 1, 0, None)
+      val newLimit = NewLinearAsset(linkId, 0, 10, propertyData1, 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), 140, "test").head
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, 140)))
@@ -358,8 +360,8 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
         sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 40, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, propertyData5, 1, 0, None)), 40, "testuser")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 30, 60, propertyData5, 1, 0, None)), 40, "testuser")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set())
       unVerifiedAssets.keys.head should be ("Kauniainen")
@@ -369,13 +371,13 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
   }
 
   test("get unVerified linear assets only for specific municipalities") {
-    val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    val roadLink = Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
-      RoadLink(2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(92)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
-      RoadLink(3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(roadLink)
 
     val municipalitiesInfo = List(MunicipalityInfo(91, 9, "Helsinki"), MunicipalityInfo(92, 9, "Vantaa"))
     when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfo)
@@ -391,9 +393,9 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 40, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(2, 0, 60, propertyData5, 1, 0, None)), 40, "dr1_conversion")
-      val newAssets3 = ServiceWithDao.create(Seq(NewLinearAsset(3, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(linkId2, 0, 60, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets3 = ServiceWithDao.create(Seq(NewLinearAsset(linkId3, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91,92))
       unVerifiedAssets.keys.size should be (2)
@@ -406,10 +408,10 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
   }
 
   test("should not get administrative class 'State'") {
-    val roadLink = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State,
+    val roadLink = Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
     when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLink)
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(roadLink)
 
     runWithRollback {
       val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
@@ -422,7 +424,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 40, 'long_text', '0', 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91))
       unVerifiedAssets should be(empty)
@@ -460,11 +462,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
     )))
 
     val assetsInfo = Seq(
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, pavedRoadValue, SideCode.AgainstDigitizing.value, 0, None), PavedRoad.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
-      TestAssetInfo(NewLinearAsset(1l, 0, 10, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId))
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, pavedRoadValue, SideCode.AgainstDigitizing.value, 0, None), PavedRoad.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
+      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId))
 
     runWithRollback {
       assetsInfo.foreach(testSideCodeAdjustment)
@@ -472,7 +474,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
   }
 
   def testSideCodeAdjustment(assetInfo: TestAssetInfo) {
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
     val id = ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "sideCode_adjust").head
     val original = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
 
@@ -530,10 +532,10 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
     )))
 
     val assetsInfo = Seq(
-      TestAssetInfo(NewLinearAsset(5000l, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 150, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 150, roadWorksValue, SideCode.AgainstDigitizing.value, 0, None), RoadWorksAsset.typeId)
+      TestAssetInfo(NewLinearAsset("5000", 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
+      TestAssetInfo(NewLinearAsset("5000", 0, 150, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
+      TestAssetInfo(NewLinearAsset("5000", 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId),
+      TestAssetInfo(NewLinearAsset("5000", 0, 150, roadWorksValue, SideCode.AgainstDigitizing.value, 0, None), RoadWorksAsset.typeId)
         )
 
       assetsInfo.zipWithIndex.foreach(adjustProjectedAssetWithCreation)
@@ -542,8 +544,8 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
   def adjustProjectedAssetWithCreation(assetInfoCount: (TestAssetInfo, Int)) : Unit = {
     val assetInfo = assetInfoCount._1
     val count = assetInfoCount._2 + 1
-    val oldLinkId = 5000
-    val newLinkId = 6000
+    val oldLinkId = "5000"
+    val newLinkId = "6000"
     val municipalityCode = 444
     val functionalClass = 1
     val geom = List(Point(0, 0), Point(300, 0))
@@ -569,11 +571,11 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
         verify(mockEventBus, times(count)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())
 
         val toBeComparedProperties = assetInfo.newLinearAsset.value.asInstanceOf[DynamicValue].value.properties
-        val projectedAssets = captor.getValue
+        val projectedAssets = captor.getValue.asInstanceOf[Seq[PersistedLinearAsset]]
         projectedAssets.length should be(1)
         val projectedAsset = projectedAssets.head
         projectedAsset.id should be(0)
-        projectedAsset.linkId should be(6000)
+        projectedAsset.linkId should be("6000")
         projectedAsset.value.get.asInstanceOf[DynamicValue].value.properties.foreach { property =>
           val existingProperty = toBeComparedProperties.find(p => p.publicId == property.publicId)
           existingProperty.get.values.forall { value =>

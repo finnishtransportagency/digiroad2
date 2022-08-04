@@ -3,15 +3,15 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SimplePointAssetProperty}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISRailwayCrossingDao, RailwayCrossing}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
-case class IncomingRailwayCrossingtAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
+case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingRailwayCrossingtAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
 class RailwayCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingRailwayCrossing
@@ -68,7 +68,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   def createFromCoordinates(incomingRailwayCrossing: IncomingRailwayCrossing, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
     if(isFloating)
-      createFloatingWithoutTransaction(incomingRailwayCrossing.copy(linkId = 0), username, roadLink)
+      createFloatingWithoutTransaction(incomingRailwayCrossing.copy(linkId = LinkId.Unknown.value), username, roadLink)
     else {
       checkDuplicates(incomingRailwayCrossing) match {
         case Some(existingAsset) =>
@@ -100,17 +100,17 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   def createFloatingWithoutTransaction(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
   }
 
   override def create(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     if(newTransaction) {
       withDynTransaction {
-        PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
       }
     } else {
-      PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      PostGISRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 
@@ -125,9 +125,9 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon=>
         expireWithoutTransaction(id)
-        PostGISRailwayCrossingDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISRailwayCrossingDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        PostGISRailwayCrossingDao.update(id, setAssetPosition(updatedAsset,roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        PostGISRailwayCrossingDao.update(id, setAssetPosition(updatedAsset,roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp())), roadLink.linkSource)
     }
   }
 

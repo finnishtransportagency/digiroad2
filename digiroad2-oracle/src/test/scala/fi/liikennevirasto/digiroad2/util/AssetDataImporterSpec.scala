@@ -30,8 +30,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   private val CommonAttributes = Seq("MUNICIPALITYCODE" -> BigInt(853), "VERTICALLEVEL" -> 0.0).toMap;
+  private val (linkId1, linkId2, linkId3, linkId4) = ("1", "2", "3", "4")
 
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]
@@ -44,7 +45,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   test("Split multi-link speed limit assets") {
     TestTransactions.runWithRollback() {
-      val originalId = createMultiLinkLinearAsset(20, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
+      val originalId = createMultiLinkLinearAsset(20, Seq(LinearAssetSegment(Some(linkId1), 0, 50), LinearAssetSegment(Some(linkId2), 0, 50)))
       insertSpeedLimitValue(originalId, 60)
 
       assetDataImporter.splitMultiLinkSpeedLimitsToSingleLinkLimits()
@@ -55,7 +56,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       splitSegments(0)._1 shouldNot be(splitSegments(1)._1)
       splitSegments(0)._6 should be(60)
       splitSegments(1)._6 should be(60)
-      splitSegments.map(_._3).toSet should be(Set(1, 2))
+      splitSegments.map(_._3).toSet should be(Set(linkId1, linkId2))
       splitSegments(0)._7 should be(false)
       splitSegments(1)._7 should be(false)
 
@@ -71,8 +72,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   test("Split multi-link total weight limit assets") {
     TestTransactions.runWithRollback() {
-      val originalId1 = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
-      val originalId2 = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(3), 0, 50), LinearAssetSegment(Some(4), 0, 50)))
+      val originalId1 = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(linkId1), 0, 50), LinearAssetSegment(Some(linkId2), 0, 50)))
+      val originalId2 = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(linkId3), 0, 50), LinearAssetSegment(Some(linkId4), 0, 50)))
       insertNumericalLimitValue(originalId1, 40000)
       insertNumericalLimitValue(originalId2, 50000)
 
@@ -81,7 +82,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val splitSegments = (fetchNumericalLimitSegments(s"split_linearasset_$originalId1") ++
                            fetchNumericalLimitSegments(s"split_linearasset_$originalId2")).sortBy(_._3)
 
-      splitSegments.map(_._3).toSet should be(Set(1, 2, 3, 4))
+      splitSegments.map(_._3).toSet should be(Set(linkId1, linkId2, linkId3, linkId4))
       splitSegments.length shouldBe 4
       splitSegments.map(_._1).toSet.size should be(4)
       splitSegments(0)._6 should be(Some(40000))
@@ -105,7 +106,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   ignore("Split multi-link lit road assets - mostly expired link ids") {
     TestTransactions.runWithRollback() {
-      val originalId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
+      val originalId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(linkId1), 0, 50), LinearAssetSegment(Some(linkId2), 0, 50)))
 
       assetDataImporter.splitMultiLinkAssetsToSingleLinkAssets(100)
 
@@ -115,7 +116,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       splitSegments(0)._1 shouldNot be(splitSegments(1)._1)
       splitSegments(0)._6 should be(None)
       splitSegments(1)._6 should be(None)
-      splitSegments.map(_._3).toSet should be(Set(1, 2))
+      splitSegments.map(_._3).toSet should be(Set(linkId1, linkId2))
       splitSegments(0)._7 should be(false)
       splitSegments(1)._7 should be(false)
 
@@ -132,8 +133,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   ignore("Assign values to lit road properties - mostly expired link ids") {
     TestTransactions.runWithRollback() {
-      val litRoadId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(1), 0, 50)))
-      val numericalLimitId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 0, 50)))
+      val litRoadId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(linkId1), 0, 50)))
+      val numericalLimitId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(linkId1), 0, 50)))
       insertNumericalLimitValue(numericalLimitId, 40000)
 
       assetDataImporter.generateValuesForLitRoads()
@@ -148,7 +149,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Expire split linear asset without mml id") {
     TestTransactions.runWithRollback() {
       val expireAssetId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(None, 1, 10)), "split_linearasset_1")
-      val assetWithLinkId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 1, 10)), "split_linearasset_1")
+      val assetWithLinkId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(linkId1), 1, 10)), "split_linearasset_1")
       val expiredAssetId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(None, 1, 10)), "split_linearasset_1", true)
       val differentAssetTypeId = createMultiLinkLinearAsset(40, Seq(LinearAssetSegment(None, 1, 10)), "split_linearasset_1")
 
@@ -185,14 +186,14 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   private def prohibitionSegment(id: Long = 1l,
-                                 linkId: Long = 1l,
+                                 linkId: String = linkId1,
                                  startMeasure: Double = 0.0,
                                  endMeasure: Double = 1.0,
                                  municipality: Int = 235,
                                  value: Int = 2,
                                  sideCode: Int = 1,
                                  validityPeriod: Option[String] = None):
-  (Long, Long, Double, Double, Int, Int, Int, Option[String]) = {
+  (Long, String, Double, Double, Int, Int, Int, Option[String]) = {
     (id, linkId, startMeasure, endMeasure, municipality, value, sideCode, validityPeriod)
   }
 
@@ -200,26 +201,26 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment()
     val segment2 = prohibitionSegment(id = 2l, value = 4)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Seq[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil)
 
     val expectedValue = Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty))))
-    result should be(Seq(Right(PersistedLinearAsset(0l, 1l, 1, expectedValue, 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))))
+    result should be(Seq(Right(PersistedLinearAsset(0l, linkId1, 1, expectedValue, 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))))
   }
 
   test("Two prohibition segments on the same link with different side codes produces two assets with one prohibition value") {
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, linkId1, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -227,20 +228,20 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment()
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, linkId1, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Segment without associated road link from VVH is dropped") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLinks: Seq[VVHRoadlink] = Nil
+    val roadLinks: Seq[RoadLinkFetched] = Nil
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -251,8 +252,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment(value = 21)
     val segment2 = prohibitionSegment(id = 2l, value = 22)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -262,38 +263,38 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Adjust segment measurements to road link") {
     val segment1 = prohibitionSegment(endMeasure = 0.5)
     val prohibitionSegments = Seq(segment1)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1))
   }
 
   test("Include exception in prohibition value") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
-    val exceptions = Seq((1l, 1l, 8, 1))
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
+    val exceptions = Seq((1l, linkId1, 8, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1))
   }
 
   test("Exceptions that do not relate to prohibition are not included") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
-    val exceptions = Seq((1l, 2l, 8, 1))
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
+    val exceptions = Seq((1l, linkId2, 8, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     val conversionResult2 = Left("No prohibition found on mml id 2. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
@@ -301,13 +302,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Filter out exceptions that allow all traffic") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
-    val exceptions = Seq((1l, 1l, 1, 1))
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
+    val exceptions = Seq((1l, linkId1, 1, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     val conversionResult2 = Left("Invalid exception. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
@@ -315,13 +316,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   test("Filter out exceptions with exception codes not supported") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
-    val exceptions = Seq((1l, 1l, 20, 1))
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
+    val exceptions = Seq((1l, linkId1, 20, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     val conversionResult2 = Left("Invalid exception. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
@@ -330,28 +331,28 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
-    val exceptions = Seq((1l, 1l, 8, 2))
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
+    val exceptions = Seq((1l, linkId1, 8, 2))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, linkId1, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("One sided exception splits two sided prohibition") {
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
-    val exceptions = Seq((1l, 1l, 8, 2), (1l, 1l, 9, 3))
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
+    val exceptions = Seq((1l, linkId1, 8, 2), (1l, linkId1, 9, 3))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(9))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, linkId1, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(9))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -359,35 +360,35 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
-    val exceptions = Seq((1l, 1l, 8, 1))
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
+    val exceptions = Seq((1l, linkId1, 8, 1))
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, linkId1, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Parse validity period into prohibition") {
     val segment = prohibitionSegment(validityPeriod = Some("[[(h8){h7}]*[(t2){d5}]]"))
     val prohibitionSegments = Seq(segment)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
     val expectedValidityPeriods = Set(ValidityPeriod(8, 15, ValidityPeriodDayOfWeek.Weekday))
-    val expectedConversionResult = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, expectedValidityPeriods, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val expectedConversionResult = Right(PersistedLinearAsset(0l, linkId1, 1, Some(Prohibitions(Seq(ProhibitionValue(2, expectedValidityPeriods, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(expectedConversionResult))
   }
 
   test("Report parse error from time domain parsing") {
     val segment = prohibitionSegment(validityPeriod = Some("[[(h8){h7"))
     val prohibitionSegments = Seq(segment)
-    val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
-    val roadLinks: Seq[VVHRoadlink] = Seq(roadLink)
+    val roadLink = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
+    val roadLinks: Seq[RoadLinkFetched] = Seq(roadLink)
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
@@ -401,16 +402,16 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 1
   test("Should unfloat the obstacle when exists just one roadlink inside a radius of 10 meters"){
-    val oldLinkId = 521232
-    val linkId = 5170455
+    val oldLinkId = "521232"
+    val linkId = "5170455"
     val municipality = 853
     val obstaclePoint = Point(20, 20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
-    val roadLinks = Seq(RoadLink(5170455, Seq(Point(15,0), Point(15,20), Point(15,40)), 40 ,Municipality, 7,  TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
+    val roadLinks = Seq(RoadLink(linkId, Seq(Point(15,0), Point(15,20), Point(15,40)), 40 ,Municipality, 7,  TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -432,7 +433,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 2
   test("Should not unfloat the obstacle when exists multiple roadlinks inside a radius of 10 meters and outside a radius of 0.5 meters"){
-    val oldLinkId = 521232
+    val oldLinkId = "521232"
     val municipality = 853
     val obstaclePoint = Point(20, 20)
 
@@ -440,18 +441,18 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      VVHRoadlink(5170455, municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      VVHRoadlink(5170459, municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      VVHRoadlink(5170458, municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched("5170455", municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched("5170459", municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched("5170458", municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockRoadLinkDao.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -460,20 +461,20 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 3
   test("Should unfloat the obstacle when exists one roadlink inside a radius of 10 meters and one inside a radius of 0.5 meters but with more than 5th the shorter distance"){
-    val oldLinkId = 521232
-    val linkId = 5170458
+    val oldLinkId = "521232"
+    val linkId = "5170458"
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     
-    val roadLinks = Seq(RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
+    val roadLinks = Seq(RoadLink("5170455", Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
                           TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-                        RoadLink(5170458, Seq(Point(20.333, 0), Point(20.333, 20), Point(20.333, 20)), 20, Municipality, 8, TrafficDirection.BothDirections,
+                        RoadLink(linkId, Seq(Point(20.333, 0), Point(20.333, 20), Point(20.333, 20)), 20, Municipality, 8, TrafficDirection.BothDirections,
                           CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -495,23 +496,23 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 4
   test("Should not unfloat the obstacle when exists one or more roadlinks outside a radius of 10 meters"){
-    val oldLinkId = 521232
+    val oldLinkId = "521232"
     val municipality = 853
     val obstaclePoint = Point(20, 20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      VVHRoadlink(5170455, municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      VVHRoadlink(5170458, municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched("5170455", municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched("5170458", municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -520,8 +521,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 5
   test("Should unfloat the obstacle when exists one roadlink inside a radius of 0.5 meters and one or more with more than 5th the shorter distance"){
-    val oldLinkId = 521232
-    val linkId = 5170458
+    val oldLinkId = "521232"
+    val linkId = "5170458"
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
@@ -529,14 +530,14 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val mValue = 10
     
     val roadLinks = Seq(
-      RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
+      RoadLink("5170455", Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
       TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink(5170458, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
+      RoadLink(linkId, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
         CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink(5170456, Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)), 20, Municipality, 6, TrafficDirection.BothDirections,
+      RoadLink("5170456", Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)), 20, Municipality, 6, TrafficDirection.BothDirections,
         SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0), Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -558,7 +559,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 6
   test("Should unfloat the obstacle when two roadlinks inside a radius of 0.5 meters and they extend one another"){
-    val oldLinkId = 521232
+    val oldLinkId = "521232"
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
@@ -566,14 +567,14 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val mValue = 10
 
     val roadLinks = Seq(
-      RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
+      RoadLink("5170455", Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
         TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink(5170458, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
+      RoadLink("5170458", Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
         CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink(5170456, Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)), 10, Municipality, 6, TrafficDirection.BothDirections,
+      RoadLink("5170456", Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)), 10, Municipality, 6, TrafficDirection.BothDirections,
         SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0),Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -588,25 +589,25 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 7
   test("Should not unfloat the obstacle when exists one roadlink when in the limit of a radius of 10 meters and one in the limit of 0.5 meters"){
-    val oldLinkId = 521232
+    val oldLinkId = "521232"
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      VVHRoadlink(5170458, municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
-      VVHRoadlink(5170456, municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched("5170458", municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
+      RoadLinkFetched("5170456", municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -615,24 +616,24 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 8
   test("Should not unfloat the obstacle when exists just one roadlink and it's in the limit a radius of 10 meters"){
-    val oldLinkId = 521232
+    val oldLinkId = "521232"
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      VVHRoadlink(5170458, municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
+      RoadLinkFetched("5170458", municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
     )
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockRoadLinkDao.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, pointAssetProperties, Some("unit_test"), linkSource = NormalLinkInterface)
 
     val beforeCallMethodDatetime = DateTime.now()
-    val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+    val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
     resultObstacle should === (floatingObstacle)
@@ -641,8 +642,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 9
   test("Should unfloat the obstacle when exists multiple roadlinks inside a radius of 10 meters and outside a radius of 0.5 meters but one have a feature class equals to AllOthers "){
-    val oldLinkId = 521232
-    val linkId = 5170455
+    val oldLinkId = "521232"
+    val linkId = "5170455"
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
@@ -650,12 +651,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val mValue = 10
 
     val roadLinks = Seq(
-      RoadLink(5170455, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
+      RoadLink(linkId, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
         TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink(5170458, Seq(Point(0,15), Point(20,15), Point(40,15)), 20, Municipality, 99, TrafficDirection.BothDirections,
+      RoadLink("5170458", Seq(Point(0,15), Point(20,15), Point(40,15)), 20, Municipality, 99, TrafficDirection.BothDirections,
         UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
-    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+    when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     when(mockRoadLinkService.getRoadLinksFromVVH(BoundingRectangle(Point(10.0,10.0),Point(30.0,30.0)))).thenReturn(roadLinks)
 
@@ -675,7 +676,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   }
 
-  case class LinearAssetSegment(linkId: Option[Long], startMeasure: Double, endMeasure: Double)
+  case class LinearAssetSegment(linkId: Option[String], startMeasure: Double, endMeasure: Double)
 
   private def createMultiLinkLinearAsset(typeId: Int,
                                          segments: Seq[LinearAssetSegment],
@@ -730,7 +731,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       """.execute
   }
 
-  private def fetchNumericalLimitSegments(creator: String): List[(Long, Long, Long, Double, Double, Option[Int], Boolean, Option[DateTime], String, Option[DateTime])] = {
+  private def fetchNumericalLimitSegments(creator: String): List[(Long, Long, String, Double, Double, Option[Int], Boolean, Option[DateTime], String, Option[DateTime])] = {
     sql"""
         select a.id, lrm.id, lrm.link_id, lrm.start_measure, lrm.end_measure,
                n.value, a.floating, a.valid_to, a.modified_by, a.modified_date
@@ -739,10 +740,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
         join lrm_position lrm on lrm.id = al.position_id
         left join number_property_value n on a.id = n.asset_id
         where a.created_by = $creator
-      """.as[(Long, Long, Long, Double, Double, Option[Int], Boolean, Option[DateTime], String, Option[DateTime])].list
+      """.as[(Long, Long, String, Double, Double, Option[Int], Boolean, Option[DateTime], String, Option[DateTime])].list
   }
 
-  private def fetchSpeedLimitSegments(creator: String): List[(Long, Long, Long, Double, Double, Int, Boolean)] = {
+  private def fetchSpeedLimitSegments(creator: String): List[(Long, Long, String, Double, Double, Int, Boolean)] = {
     sql"""
         select a.id, lrm.id, lrm.link_id, lrm.start_measure, lrm.end_measure, e.value, a.floating
         from asset a
@@ -751,7 +752,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
         join single_choice_value s on a.id = s.asset_id
         join enumerated_value e on e.id = s.enumerated_value_id
         where a.created_by = $creator
-      """.as[(Long, Long, Long, Double, Double, Int, Boolean)].list
+      """.as[(Long, Long, String, Double, Double, Int, Boolean)].list
   }
 
   private def getDateTimeNowFromDatabase() ={

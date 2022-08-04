@@ -697,7 +697,7 @@ object ProhibitionExceptionClass {
 
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
-  val linkId: Option[Long]
+  val linkId: Option[String]
   val mValue: Option[Double]
 }
 trait TimeStamps {
@@ -811,7 +811,7 @@ case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[Str
 case class DynamicPropertyValue(value: Any)
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue]) extends AbstractProperty
-case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
+case class Position(lon: Double, lat: Double, linkId: String, bearing: Option[Int])
 case class DatePeriodValue(startDate: String, endDate: String)
 object DatePeriodValue {
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")

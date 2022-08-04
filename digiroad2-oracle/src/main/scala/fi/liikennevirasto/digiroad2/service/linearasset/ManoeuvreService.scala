@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime],
                      modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String, isSuggested: Boolean)
-case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
-case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long], isSuggested: Boolean)
+case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: String, destLinkId: String, elementType: Int)
+case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[String], trafficSignId: Option[Long], isSuggested: Boolean)
 case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String],  isSuggested: Option[Boolean])
 
 sealed trait ManoeuvreTurnRestrictionType {
@@ -46,7 +46,7 @@ class ManoeuvreCreationException(val response: Set[String]) extends RuntimeExcep
 class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.vvhClient)
+  def dao: ManoeuvreDao = new ManoeuvreDao(roadLinkService.roadLinkClient)
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -80,7 +80,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       manoeuvreUpdates.exceptions.foreach(dao.setManoeuvreExceptions(manoeuvreId))
       manoeuvreUpdates.validityPeriods.foreach(dao.setManoeuvreValidityPeriods(manoeuvreId))
 
-      eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(oldManoeuvreId), Set(manoeuvreId)))
+      eventBus.publish("manoeuvre:Validator",AssetValidatorInfo(Set(oldManoeuvreId) ++ Set(manoeuvreId)))
       manoeuvreId
     }
   }
@@ -149,7 +149,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     val firstElement = ManoeuvreElement(0, startingElement._1, startingElement._2, ElementTypes.FirstElement)
 
     val destLinkId = newManoeuvre.linkIds.last
-    val lastElement = ManoeuvreElement(0, destLinkId, 0, ElementTypes.LastElement)
+    val lastElement = ManoeuvreElement(0, destLinkId, "", ElementTypes.LastElement)
 
     val intermediateLinkIds = linkPairs.tail
     val intermediateElements = intermediateLinkIds.map( linkPair =>
@@ -172,7 +172,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     * @param linkPairs sequence containing the start and end roadlinks for each pair
     * @return false if chain breaks the rules, otherwise true
     */
-  private def isValidLinkChain(linkPairs: Seq[(Long, Long)]) : Boolean = {
+  private def isValidLinkChain(linkPairs: Seq[(String, String)]) : Boolean = {
     for( i <- 0 until linkPairs.length - 1){
     if( linkPairs(i)._1 == linkPairs(i + 1)._2 || linkPairs(i)._1 == linkPairs(i)._2 || linkPairs(i+1)._1 == linkPairs(i+1)._2) return false
   }
@@ -187,7 +187,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     getByRoadLinks(roadLinks, dao.getByRoadLinks)
   }
 
-  private def getByRoadLinks(roadLinks: Seq[RoadLink], getDaoManoeuvres: Seq[Long] => Seq[Manoeuvre]): Seq[Manoeuvre] = {
+  private def getByRoadLinks(roadLinks: Seq[RoadLink], getDaoManoeuvres: Seq[String] => Seq[Manoeuvre]): Seq[Manoeuvre] = {
     val manoeuvres =
       withDynTransaction {
         getDaoManoeuvres(roadLinks.map(_.linkId)).map{ manoeuvre =>
@@ -202,19 +202,19 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     manoeuvres.filter(isValidManoeuvre(roadLinks))
   }
 
-  private def sourceLinkId(manoeuvre: Manoeuvre) : Option[Long] = {
+  private def sourceLinkId(manoeuvre: Manoeuvre) : Option[String] = {
     manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)
   }
 
-  private def destinationLinkId(manoeuvre: Manoeuvre) : Option[Long]  = {
+  private def destinationLinkId(manoeuvre: Manoeuvre) : Option[String]  = {
     manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId)
   }
 
-  private def intermediateLinkIds(manoeuvre: Manoeuvre) : Option[Long] = {
+  private def intermediateLinkIds(manoeuvre: Manoeuvre) : Option[String] = {
     manoeuvre.elements.find(_.elementType == ElementTypes.IntermediateElement).map(_.sourceLinkId)
   }
 
-  private def allLinkIds(manoeuvre: Manoeuvre): Seq[Long] = {
+  private def allLinkIds(manoeuvre: Manoeuvre): Seq[String] = {
     manoeuvre.elements.map(_.sourceLinkId)
   }
 
@@ -318,7 +318,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     query + s"and a.id in (${ids.mkString(",")})"
   }
 
-  def getSourceRoadLinkIdById(id: Long) : Long = {
+  def getSourceRoadLinkIdById(id: Long) : String = {
     withDynTransaction {
       dao.getSourceRoadLinkIdById(id)
     }
@@ -404,7 +404,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       headPoint
   }
 
-  private def recursiveGetAdjacent(linkId: Long, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Seq[RoadLink], Point) = {
+  private def recursiveGetAdjacent(linkId: String, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): (Seq[RoadLink], Seq[RoadLink], Point) = {
 
     val adjacents = roadLinkService.getAdjacent(linkId, Seq(point), newTransaction = false)
     if (adjacents.isEmpty)
@@ -420,11 +420,11 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     }
   }
 
-  private def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+  private def countExistings(sourceId: String, destId: String, elementType: Int): Long = {
     dao.countExistings(sourceId, destId, elementType)
   }
 
-  private def validateManoeuvre(sourceId: Long, destLinkId: Long, elementType: Int): Boolean  = {
+  private def validateManoeuvre(sourceId: String, destLinkId: String, elementType: Int): Boolean  = {
     countExistings(sourceId, destLinkId, elementType) == 0
   }
 }

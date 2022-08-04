@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.geotools.filter.function.GeometryTransformation
 
@@ -25,37 +25,37 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     * @param roadLinks Current road links
     * @return Filtered history links
     */
-  def process(historyRoadLinks:Seq[VVHRoadlink], roadLinks :Seq[VVHRoadlink]) : Seq[VVHRoadlink] ={
-    def endDate(vvhRoadlink: VVHRoadlink) =
-      vvhRoadlink.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
+  def process(historyRoadLinks:Seq[RoadLinkFetched], roadLinks :Seq[RoadLinkFetched]) : Seq[RoadLinkFetched] ={
+    def endDate(roadLinkFetched: RoadLinkFetched) =
+      roadLinkFetched.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
 
-    def newLinkId(vvhRoadlink: VVHRoadlink) : Option[BigInt] = {
-      vvhRoadlink.attributes.get("LINKID_NEW") match {
+    def newLinkId(roadLinkFetched: RoadLinkFetched) : Option[String] = {
+      roadLinkFetched.attributes.get("LINKID_NEW") match {
         case Some(linkId) =>
-          Some(linkId.asInstanceOf[BigInt].longValue())
+          Some(linkId.asInstanceOf[BigInt].toString)
         case _ =>
           None
       }
     }
 
-    def hasNewLinkId(vvhRoadlink: VVHRoadlink) = newLinkId(vvhRoadlink).isEmpty
+    def hasNewLinkId(roadLinkFetched: RoadLinkFetched) = newLinkId(roadLinkFetched).isEmpty
 
     // If several history link items have the same linkId, pick the one with latest endDate
     val latestHistory = historyRoadLinks.groupBy(_.linkId).mapValues(rl => rl.maxBy(endDate)).values
 
     // Deleted = history link has newLinkId and it's linkId is not found in current links
-    val deletedRoadlinks = latestHistory.filter(hasNewLinkId).filterNot(rl => roadLinks.exists(rl.linkId == _.linkId))
+    val deletedRoadLinks = latestHistory.filter(hasNewLinkId).filterNot(rl => roadLinks.exists(rl.linkId == _.linkId))
 
     // Changed = linkId of history link is found in current links
-    val changedRoadlinks = latestHistory.filter{
+    val changedRoadLinks = latestHistory.filter{
       rl =>
-        val roadlink = roadLinks.find(r => Some(r.linkId) == newLinkId(rl) || (r.linkId == rl.linkId && includeCurrentLinks))
-        roadlink.exists(r =>
+        val roadLink = roadLinks.find(r => Some(r.linkId) == newLinkId(rl) || (r.linkId == rl.linkId && includeCurrentLinks))
+        roadLink.exists(r =>
           compareGeometry(r.geometry, rl.geometry)
         )
     }
 
-    (changedRoadlinks ++ deletedRoadlinks).toSeq
+    (changedRoadLinks ++ deletedRoadLinks).toSeq
   }
 
   /**

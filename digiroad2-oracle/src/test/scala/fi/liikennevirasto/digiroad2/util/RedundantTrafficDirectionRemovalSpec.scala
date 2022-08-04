@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -17,13 +17,13 @@ class RedundantTrafficDirectionRemovalSpec extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
-  val roadLinkWithRedundantTrafficDirection: VVHRoadlink = VVHRoadlink(1, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
-  val roadLinkWithValidTrafficDirection: VVHRoadlink = VVHRoadlink(2, 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  val roadLinkWithRedundantTrafficDirection: RoadLinkFetched = RoadLinkFetched("1", 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+  val roadLinkWithValidTrafficDirection: RoadLinkFetched = RoadLinkFetched("2", 91, Nil, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)
 
-  when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
+  when(mockedRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(roadLinkWithRedundantTrafficDirection, roadLinkWithValidTrafficDirection))
 
   test("A redundant traffic direction is removed, but a valid is not") {
-    val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set(1L, 2L))
+    val linkSet = mockedRoadLinkService.fetchVVHRoadlinks(Set("1", "2"))
     runWithRollback {
       RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, linkSet.head.linkId, None, linkSet.head.trafficDirection.value)
       RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, linkSet.last.linkId, None, TrafficDirection.TowardsDigitizing.value)

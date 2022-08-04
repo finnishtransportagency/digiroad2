@@ -181,7 +181,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
 
   }
 
-  def lanesToApiFormat(twoDigitLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[ApiRoad] = {
+  def lanesToApiFormat(twoDigitLanes: Seq[PieceWiseLane], roadLinks: Map[String, RoadLink]): Seq[ApiRoad] = {
     val roadNumbers = twoDigitLanes.map(_.attributes("ROAD_NUMBER")).distinct.asInstanceOf[Seq[Long]]
     val lanesGroupedByRoadNumber = twoDigitLanes.groupBy(_.attributes("ROAD_NUMBER")).values
     val lanesGroupedByRoadNumberAndPartNumber = lanesGroupedByRoadNumber.flatMap(_.groupBy(_.attributes("ROAD_PART_NUMBER")).values)

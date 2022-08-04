@@ -6,7 +6,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.LogUtils
 import org.joda.time.DateTime
@@ -15,8 +15,8 @@ import slick.jdbc.{GetResult, PositionedResult}
 
 class ComplementaryLinkDAO extends RoadLinkDAO {
 
-  implicit override val getRoadLink: GetResult[VVHRoadlink] = new GetResult[VVHRoadlink] {
-    def apply(r: PositionedResult): VVHRoadlink = {
+  implicit override val getRoadLink: GetResult[RoadLinkFetched] = new GetResult[RoadLinkFetched] {
+    def apply(r: PositionedResult): RoadLinkFetched = {
       val linkId = r.nextLong()
       val municipality = r.nextInt()
       val path = r.nextObjectOption().map(extractGeometry).get
@@ -84,13 +84,13 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
         case (key, value) if value != None => key -> value
       }
 
-      VVHRoadlink(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
+      RoadLinkFetched(linkId.toString, municipality, geometry, AdministrativeClass.apply(administrativeClass),
         extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
         ConstructionType.apply(constructionType), ComplimentaryLinkInterface, length)
     }
   }
   
-  override def getLinksWithFilter(filter: String): Seq[VVHRoadlink] = {
+  override def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
     LogUtils.time(logger,"TEST LOG Getting complementery roadlinks" ){
       sql"""select linkid, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,
                  roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
@@ -98,17 +98,17 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
                  geometry_edited_date, surfacetype, subtype, objectid, sourceinfo, geometrylength, cust_owner
           from roadlinkex
           where subtype = 3 and #$filter
-          """.as[VVHRoadlink].list
+          """.as[RoadLinkFetched].list
     }
   }
 
-  override def getLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
+  override def getLinksIdByPolygons(polygon: Polygon): Seq[String] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger,"TEST LOG Getting complementery roadlinks by polygon" ){
       sql"""select linkid
           from roadlinkex
           where subtype = 3 and #$polygonFilter
-       """.as[Long].list
+       """.as[String].list
     }
   }
 }

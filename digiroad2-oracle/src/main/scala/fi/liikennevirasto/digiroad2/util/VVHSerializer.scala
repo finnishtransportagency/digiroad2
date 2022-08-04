@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.File
 
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHRoadNodes}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadNodesFetched}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
 
 /**
@@ -17,5 +17,5 @@ trait VVHSerializer {
 
   def writeCache(file: File, changes: Seq[Object]): Boolean
 
-  def readCachedNodes(file: File): Seq[VVHRoadNodes]
+  def readCachedNodes(file: File): Seq[RoadNodesFetched]
 }

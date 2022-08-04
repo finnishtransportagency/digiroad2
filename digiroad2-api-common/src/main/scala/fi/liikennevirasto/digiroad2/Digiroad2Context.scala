@@ -4,7 +4,7 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPointMassLimitationDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
@@ -173,7 +173,7 @@ class DynamicAssetSaveProjected[T](dynamicAssetProvider: DynamicLinearAssetServi
 
 class SpeedLimitUpdater[A, B, C](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
-    case (affectedLinkIds: Set[A], expiredLinkIds: Seq[A]) => speedLimitProvider.purgeUnknown(affectedLinkIds.asInstanceOf[Set[Long]], expiredLinkIds.asInstanceOf[Seq[Long]])
+    case (affectedLinkIds: Set[A], expiredLinkIds: Seq[A]) => speedLimitProvider.purgeUnknown(affectedLinkIds.asInstanceOf[Set[String]], expiredLinkIds.asInstanceOf[Seq[String]])
     case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
     case x: ChangeSet => speedLimitProvider.updateChangeSet(x)
     case _      => println("speedLimitFiller: Received unknown message")
@@ -417,7 +417,7 @@ object Digiroad2Context {
   }
 
   lazy val speedLimitService: SpeedLimitService = {
-    new SpeedLimitService(eventbus, vvhClient, roadLinkService)
+    new SpeedLimitService(eventbus, roadLinkClient, roadLinkService)
   }
 
   lazy val userProvider: UserProvider = {
@@ -432,8 +432,8 @@ object Digiroad2Context {
     Class.forName(Digiroad2Properties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val viiteClient: SearchViiteClient = {
@@ -441,11 +441,11 @@ object Digiroad2Context {
   }
 
   lazy val linearAssetDao: PostGISLinearAssetDao = {
-    new PostGISLinearAssetDao(vvhClient, roadLinkService)
+    new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
+    new RoadLinkService(roadLinkClient, eventbus, new JsonSerializer)
   }
 
   lazy val roadAddressService: RoadAddressService = {
@@ -524,7 +524,7 @@ object Digiroad2Context {
   }
 
   lazy val dataImportManager: DataImportManager = {
-    new DataImportManager(vvhClient, roadLinkService, eventbus)
+    new DataImportManager(roadLinkClient, roadLinkService, eventbus)
   }
 
   lazy val dataExportManager: DataExportManager = {

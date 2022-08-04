@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.jdbc.StaticQuery.interpolation
@@ -25,8 +25,8 @@ object ServicePointImporter {
     val groupSize = 3000
     val groupedServicePoints = servicePoints.grouped(groupSize).toList
     val totalGroupCount = groupedServicePoints.length
-    val vvhClient = new VVHClient(vvhServiceHost)
-    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
+    val roadLinkClient = new RoadLinkClient(vvhServiceHost)
+    val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
 
     PostGISDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, municipality_code, created_date, created_by) values (?, ?, ?, current_timestamp, 'dr1_conversion')")
@@ -52,9 +52,9 @@ object ServicePointImporter {
               0
             case 1 => municipalities.head.municipalityCode
             case default =>
-              val groups = municipalities.groupBy(roadlink => roadlink.municipalityCode)
-              val distance = groups.mapValues(links => links.map((roadlink:VVHRoadlink) => minimumDistance(point, roadlink.geometry)).min)
-              val retval = municipalities.min(Ordering.by((roadlink:VVHRoadlink) => minimumDistance(point, roadlink.geometry))).municipalityCode
+              val groups = municipalities.groupBy(roadLink => roadLink.municipalityCode)
+              val distance = groups.mapValues(links => links.map((roadLink:RoadLinkFetched) => minimumDistance(point, roadLink.geometry)).min)
+              val retval = municipalities.min(Ordering.by((roadLink:RoadLinkFetched) => minimumDistance(point, roadLink.geometry))).municipalityCode
               print("multiple choice for asset id " + assetId + ": municipality distances " + distance)
               println(" - picking closest one: " + retval)
               retval

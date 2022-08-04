@@ -1,109 +1,153 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.sql.{BatchUpdateException, SQLSyntaxErrorException}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
-import org.joda.time.DateTime
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
-import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import org.slf4j.{Logger, LoggerFactory}
+import slick.jdbc.StaticQuery.interpolation
+
+import java.sql.PreparedStatement
+import scala.collection.TraversableLike
+import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 object LinkIdImporter {
+  sealed implicit class SplitByConversion(val list: TraversableLike[String, Any]) {
+    def partitionByConversion(): (Seq[Int], Seq[String]) = {
+      val (intList, stringList) = (new ListBuffer[Int], new ListBuffer[String])
+      for (element <- list) {
+        if (Try(element.toInt).isSuccess)
+          intList.append(element.toInt)
+        else stringList.append(element)
+      }
+      (intList.toList, stringList.toList)
+    }
+  }
+
+  sealed implicit class SplitByConversionTuple(val list: TraversableLike[(String, String), Any]) {
+    def partitionByConversion(): (Seq[(Int, Int)], Seq[(String, String)]) = {
+      val (intList, stringList) = (new ListBuffer[(Int, Int)], new ListBuffer[(String, String)])
+      for (element <- list) {
+        if (Try(element._1.toInt).isSuccess && Try(element._2.toInt).isSuccess)
+          intList.append((element._1.toInt, element._2.toInt))
+        else stringList.append(element)
+      }
+      (intList.toList, stringList.toList)
+    }
+  }
+  
   def withDynTransaction(f: => Unit): Unit = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
-
-  case class TableSpec(name: String)
-
-  def importLinkIdsFromVVH(vvhHost: String): Unit = {
-    withDynTransaction {
-      try { sqlu"""drop table mml_id_to_link_id""".execute } catch {
-        case e: SQLSyntaxErrorException => // ok
-      }
-      sqlu"""create table mml_id_to_link_id (
-          mml_id number(38, 0),
-          link_id number(38, 0),
-          primary key (mml_id)
-        )""".execute
-    }
-
+  def executeBatch[T](query: String)(f: PreparedStatement => T): T = MassQuery.executeBatch(query)(f)
+  def time[R](logger: Logger, operationName: String, noFilter: Boolean = false)(f: => R): R = LogUtils.time(logger, operationName, noFilter)(f)
+  
+  val groupingSize = 20000
+  
+  private val logger = LoggerFactory.getLogger(getClass)
+  //Resource used 3-6GB 40 thread
+  def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
-      "lrm_position",
-      "traffic_direction",
-      "incomplete_link",
-      "functional_class",
-      "link_type",
-      "manoeuvre_element",
-      "unknown_speed_limit")
-
-    tableNames.foreach { table =>
-      updateTable(table, vvhHost)
+      "lane_history_position", "lane_position", "lrm_position",
+      "lrm_position_history", "temp_road_address_info", "road_link_attributes",
+      "administrative_class", "traffic_direction", "inaccurate_asset",
+      "functional_class", "incomplete_link", "link_type",
+      "unknown_speed_limit", "roadlink", "manoeuvre_element_history",
+      "manoeuvre_element"
+    )
+    
+    val complementaryLinks = withDynSession(sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list)
+    time(logger, s"Changing vvh id into kmtk id ") {
+      new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable(_,complementaryLinks)) }
     }
   }
 
-  def updateTable(tableName: String, vvhHost: String): Unit = {
-    val vvhClient = new VVHClient(vvhHost)
-    val roadLinkService = new RoadLinkService(vvhClient,new DummyEventBus,new DummySerializer)
+  private def updateTable(tableName: String,complementaryLinks:List[Int] ): Unit = {
+    tableName match {
+      case "roadlink" => updateTableRoadLink(tableName)
+      case "manoeuvre_element_history" => updateTableManoeuvre(tableName)
+      case "manoeuvre_element" => updateTableManoeuvre(tableName)
+      case "lrm_position" => lrmTable(tableName)
+      case _ => regularTable(tableName,complementaryLinks)
+    }
+  }
 
+  private def updateTableSQL(linkIdColumn: String, tableName: String): String = {
+    s"""UPDATE $tableName SET
+       | vvh_id = ?,
+       | $linkIdColumn = (select id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? )
+       | WHERE $linkIdColumn = ? """.stripMargin
+  }
+  
+  private def updateTableManoeuvreSQL(linkIdColumn: String, tableName: String): String = {
+    s"""UPDATE $tableName SET
+       | vvh_id = ?,
+       | $linkIdColumn = (SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? ),
+       | dest_vvh_id = ?,
+       | dest_link_id =  COALESCE((SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ?),? ) 
+       | WHERE $linkIdColumn = ? """.stripMargin
+  }
+  private def updateTableManoeuvreRow(statement: PreparedStatement, ids: (Int, Int)): Unit = {
+    statement.setInt(1, ids._1)
+    statement.setInt(2, ids._1)
+    statement.setInt(3, ids._2)
+    statement.setInt(4, ids._2)
+    statement.setString(5, ids._2.toString)
+    statement.setString(6, ids._1.toString)
+    statement.addBatch()
+  }
+  
+  private def updateTableRow(statement: PreparedStatement, id: Int): Unit = {
+    statement.setInt(1, id)
+    statement.setInt(2, id)
+    statement.setString(3, id.toString)
+    statement.addBatch()
+  }
+
+  private def updateOperation(tableName: String, ids: Set[Int],linkIdColumn:String): Unit = {
+    val total = ids.size
+    val groups = ids.grouped(groupingSize).toSeq
+    logger.info(s"Table $tableName, size: $total in ${groups.size} groups, Thread ID: ${Thread.currentThread().getId}")
+    time(logger, s"Table $tableName: $total links converted") {
+      new Parallel().operation(groups.par, 15) {_.foreach { ids =>
+        withDynTransaction {
+          val updating = if(ids.size < groupingSize ){s", updating: ${ids.size}"} else ""
+          time(logger, s"Table ${tableName}${updating}, Thread ID: ${Thread.currentThread().getId}") {
+            executeBatch(updateTableSQL(linkIdColumn, tableName)) { statement => {ids.foreach(
+              id => {updateTableRow(statement, id)})}
+            }
+          }}
+      }}
+    }
+  }
+  
+ private def updateTableManoeuvre(tableName: String): Unit = {
     withDynTransaction {
-      sqlu"""delete from mml_id_to_link_id""".execute
-
-      val tempPS = dynamicSession.prepareStatement(
-        """
-        insert into mml_id_to_link_id (mml_id, link_id) values (?, ?)
-        """)
-
-      val count = sql"""select count(distinct mml_id) from #$tableName""".as[Int].first
-
-      val batches = getBatchDrivers(0, count, 20000)
-      val total = batches.size
-
-      print(s"[${DateTime.now}] Table $tableName: Fetching $total batches of links… ")
-
-      val startTime = DateTime.now()
-
-      batches.foreach { case (min, max) =>
-        val mmlIds =
-          sql"""
-               select *
-               from (select a.*, row_number() OVER() rnum
-                      from (select distinct mml_id from #$tableName) a
-                      limit $max
-                ) derivedMml where rnum >= $min
-          """.as[Long].list
-        val links = roadLinkService.fetchByMmlIds(mmlIds.toSet)
-        links.foreach { link =>
-          val mmlId = link.attributes("MTKID").asInstanceOf[BigInt].longValue()
-          tempPS.setLong(1, mmlId)
-          tempPS.setLong(2, link.linkId)
-          tempPS.addBatch()
-        }
-        try {
-          tempPS.executeBatch()
-        }
-        catch {
-          case e: BatchUpdateException => // ok, assume it was a duplicate MML ID
-        }
+      val ids = sql"select link_id,dest_link_id from #${tableName}".as[(String, String)].list.partitionByConversion()._1
+      val total = ids.size
+      logger.info(s"Table $tableName, size: $total, Thread ID: ${Thread.currentThread().getId}")
+      time(logger, s"Table $tableName: Fetching $total batches of links converted") {
+        ids.grouped(groupingSize).foreach { ids =>executeBatch(updateTableManoeuvreSQL("link_id", tableName)) { statement => {
+            ids.foreach(i => {updateTableManoeuvreRow(statement, i)})
+          }}}
       }
-
-      sqlu"""
-        update #$tableName pos
-               set pos.link_id = (select t.link_id from mml_id_to_link_id t where t.mml_id = pos.mml_id)
-      """.execute
-
-      println(s"done in ${AssetDataImporter.humanReadableDurationSince(startTime)}.")
     }
   }
 
-  def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
-    if ((m - n) < step) {
-      List((n, m))
-    } else {
-      val x = (n to m by step).sliding(2).map(x => (x(0), x(1) - 1)).toList
-      x :+ (x.last._2 + 1, m)
-    }
+  private def updateTableRoadLink(tableName: String): Unit = {
+    val ids = withDynSession(sql"select linkid from #$tableName".as[String].list).partitionByConversion()._1.toSet
+    updateOperation(tableName,ids, "linkid")
+  }
+
+  private def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
+    val ids = withDynSession(sql"select link_id from #${tableName}".as[String].list).partitionByConversion()._1.toSet.diff(complementaryLinks.toSet)
+    updateOperation(tableName,ids, "link_id")
+  }
+  
+  private def lrmTable(tableName: String): Unit = {
+    val ids = withDynSession(
+      sql"""select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value})
+           """.as[String].list).partitionByConversion()._1.toSet
+      updateOperation(tableName,ids, "link_id")
   }
 }

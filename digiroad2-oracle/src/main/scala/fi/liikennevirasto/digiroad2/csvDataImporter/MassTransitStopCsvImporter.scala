@@ -4,7 +4,7 @@ import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -18,10 +18,10 @@ import org.apache.http.impl.client.HttpClientBuilder
 
 import scala.util.Try
 
-class MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-  lazy val propertyUpdater = new Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
-  lazy val positionUpdater = new PositionUpdater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
-  lazy val creator = new Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
+class MassTransitStopCsvOperation(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+  lazy val propertyUpdater = new Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
+  lazy val positionUpdater = new PositionUpdater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
+  lazy val creator = new Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
 
   private def getStrategies(): Seq[CsvOperations] = {
     Seq(propertyUpdater, creator, positionUpdater)
@@ -345,11 +345,11 @@ trait CsvOperations extends MassTransitStopCsvImporter {
   }
 }
 
-class Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
+class Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = vvhClientImpl
+  override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override def mandatoryFields: Set[String] = externalIdMapping.keySet
@@ -364,11 +364,11 @@ class Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
   }
 }
 
-class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
+class Creator(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = vvhClientImpl
+  override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override val decisionFieldsMapping = coordinateMappings
@@ -413,11 +413,11 @@ class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
   }
 }
 
-class PositionUpdater (vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
+class PositionUpdater (roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override val decisionFieldsMapping = coordinateMappings ++ externalIdMapping

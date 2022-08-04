@@ -5,7 +5,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -29,7 +29,7 @@ case class TrafficSignToLinear(roadLink: RoadLink, value: Value, sideCode: SideC
 trait TrafficSignLinearGenerator {
   def roadLinkService: RoadLinkService
 
-  def vvhClient: VVHClient
+  def roadLinkClient: RoadLinkClient
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -91,7 +91,7 @@ trait TrafficSignLinearGenerator {
     new TrafficSignService(roadLinkService, eventbus)
   }
 
-  lazy val postGisLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+  lazy val postGisLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkService.roadLinkClient, roadLinkService)
   lazy val dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
   def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Value]
@@ -530,14 +530,8 @@ trait TrafficSignLinearGenerator {
 
     //RoadLink with the same Finnish/Swedish name
     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
-      "[\']".r.findFirstMatchIn(roadNameSource) match {
-        case Some(_) =>
-          logger.warn("Vvh can not handle ' symbol, requested road : " + roadNameSource);
-          Seq()
-        case None =>
-          roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(
-            roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
-      }
+      roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false)
+        .filter(_.administrativeClass != State)
     }.getOrElse(Seq(signRoadLink))
   }
 
@@ -688,7 +682,7 @@ trait TrafficSignLinearGenerator {
 //Prohibition
 case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignLinearGenerator  {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
 
   override val assetType : Int = Prohibition.typeId
 
@@ -755,7 +749,7 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
     if (debbuger) println("createLinearAsset")
     prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      vvhClient.createVVHTimeStamp(), Some(newSegment.roadLink))
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -836,7 +830,7 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
     if (debbuger) println("createLinearAsset")
     hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      vvhClient.createVVHTimeStamp(), Some(newSegment.roadLink))
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
@@ -948,7 +942,7 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
 ***************************************************************/
 class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignDynamicAssetGenerator {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
 
   override val assetType : Int = ParkingProhibition.typeId
 
@@ -1003,7 +997,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
     if (debbuger) println("createLinearAsset")
     parkingProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      vvhClient.createVVHTimeStamp(), Some(newSegment.roadLink))
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
@@ -1107,7 +1101,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
   ***************************************************************/
 class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignDynamicAssetGenerator {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
 
   override val assetType: Int = RoadWorksAsset.typeId
   private val MAX_DISTANCE: Int = 1000
@@ -1209,7 +1203,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     if (debbuger) println("createLinearAsset")
     roadWorkService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
-      vvhClient.createVVHTimeStamp(), Some(newSegment.roadLink) )
+      roadLinkClient.createVVHTimeStamp(), Some(newSegment.roadLink) )
   }
 
   override def getStopCondition(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int, result : Seq[TrafficSignToLinear]): Option[Double] = {

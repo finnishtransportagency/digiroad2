@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PedestrianCrossing, PostGISPedestrianCrossingDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -21,7 +21,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
-  def toRoadLink(l: VVHRoadlink) = {
+  def toRoadLink(l: RoadLinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
@@ -30,10 +30,12 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
+  val linkId = "1611317"
+
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
   val service = new PedestrianCrossingService(mockRoadLinkService, mockEventBus) {
@@ -50,7 +52,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600029)
-      result.linkId should equal(1611317)
+      result.linkId should equal(linkId)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -69,16 +71,16 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       Point(374490.755,6677366.834),
       Point(374508.979,6677381.08))
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((Seq(
-      VVHRoadlink(1611317, 235, roadLinkGeom, Municipality,
+      RoadLinkFetched(linkId, 235, roadLinkGeom, Municipality,
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val values = Seq(PropertyValue("0"))
       val simpleProperty = SimplePointAssetProperty("suggest_box", values)
-      service.dao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, 1611317, Set(simpleProperty)), 31.550, "Hannu", 235, None, linkSource = NormalLinkInterface)
+      service.dao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, linkId, Set(simpleProperty)), 31.550, "Hannu", 235, None, linkSource = NormalLinkInterface)
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374406, 6677306.5), Point(374408.5, 6677309.5))).head
       result.id should equal(600029)
-      result.linkId should equal(1611317)
+      result.linkId should equal(linkId)
       result.mValue should be (31.549 +- 0.001)
       result.floating should be (false)
       GeometryUtils.minimumDistance(Point(result.lon, result.lat), roadLinkGeom) should be < 0.005
@@ -87,14 +89,14 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
-      VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections,
+      RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections,
         FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600029).get
 
       result.id should equal(600029)
-      result.linkId should equal(1611317)
+      result.linkId should equal(linkId)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -111,8 +113,9 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Create new") {
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingPedestrianCrossing(2, 0.0, 388553075, Set()), "jakke", roadLink )
+      val linkId = "388553075"
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingPedestrianCrossing(2, 0.0, linkId, Set()), "jakke", roadLink )
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -126,7 +129,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
       asset should be(PedestrianCrossing(
         id = id,
-        linkId = 388553075,
+        linkId = linkId,
         lon = 2,
         lat = 0,
         mValue = 2,
@@ -145,11 +148,12 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Update pedestrian crossing with geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
+      val linkId = "388553075"
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, linkId, Set()), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, 388553075, Set()), roadLink, "test")
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, linkId, Set()), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -166,11 +170,12 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Update pedestrian crossing without geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
+      val linkId = "388553075"
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, linkId, Set()), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, 388553075, Set()), roadLink, "test")
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, linkId, Set()), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
@@ -185,25 +190,25 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Should get asset changes") {
 
-    val roadLink1 = RoadLink(100, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
-    val roadLink2 = RoadLink(200, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
-    val roadLink3 = RoadLink(300, List(Point(20.0, 0.0), Point(30.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink1 = RoadLink("100", List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink2 = RoadLink("200", List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
+    val roadLink3 = RoadLink("300", List(Point(20.0, 0.0), Point(30.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345)))
 
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
-    when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+    when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq())
 
     runWithRollback {
       val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
       val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
-      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, '100')""".execute
       sqlu"""insert into asset (id, asset_type_id, created_date) values ($asset1, ${PedestrianCrossings.typeId}, TO_TIMESTAMP('2017-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset1, $lrm1)""".execute
       Queries.updateAssetGeometry(asset1, Point(5, 0))
-      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, 200)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, '200')""".execute
       sqlu"""insert into asset (id, asset_type_id, created_date, modified_date) values ($asset2,  ${PedestrianCrossings.typeId},  TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'), TO_TIMESTAMP('2017-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset2, $lrm2)""".execute
       Queries.updateAssetGeometry(asset2, Point(15, 0))
-      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, 300)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, '300')""".execute
       sqlu"""insert into asset (id, asset_type_id, valid_to) values ($asset3,  ${PedestrianCrossings.typeId}, TO_TIMESTAMP('2017-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset3, $lrm3)""".execute
       Queries.updateAssetGeometry(asset3, Point(25, 0))

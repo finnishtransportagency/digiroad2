@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{JWTAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.lane._
@@ -32,15 +32,15 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable
 import scala.util.Try
 
-case class ExistingLinearAsset(id: Long, linkId: Long)
+case class ExistingLinearAsset(id: Long, linkId: String)
 
-case class NewNumericValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+case class NewNumericValueAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
 
-case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
+case class NewTextualValueAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
 
-case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Prohibitions, sideCode: Int)
+case class NewProhibition(linkId: String, startMeasure: Double, endMeasure: Double, value: Prohibitions, sideCode: Int)
 
-case class NewDynamicLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
+case class NewDynamicLinearAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val roadAddressService: RoadAddressService,
@@ -49,7 +49,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
                    val directionalTrafficSignService: DirectionalTrafficSignService = Digiroad2Context.directionalTrafficSignService,
                    val servicePointService: ServicePointService = Digiroad2Context.servicePointService,
-                   val vvhClient: VVHClient,
+                   val roadLinkClient: RoadLinkClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
                    val linearMassLimitationService: LinearMassLimitationService = Digiroad2Context.linearMassLimitationService,
@@ -345,8 +345,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val assetId = (parsedBody \ "assetId").extractOpt[Int].get
     massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
-      a.linkId match {
-        case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
+      LinkId.isUnknown(a.linkId) match {
+        case true => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
         case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
       }
       massTransitStopService.deleteMassTransitStopData(assetId)
@@ -526,10 +526,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     assetPropertyService.getAssetTypeMetadata(params("assetTypeId").toLong)
   }
 
-  private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
+  private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[String], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
-    val roadLinkId = (parsedBody \ "linkId").extractOpt[Long]
+    val roadLinkId = (parsedBody \ "linkId").extractOpt[String]
     val bearing = (parsedBody \ "bearing").extractOpt[Int]
     (lon, lat, roadLinkId, bearing)
   }
@@ -797,7 +797,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/roadlinks/:linkId") {
-    val linkId = params("linkId").toLong
+    val linkId = params("linkId")
     roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
       case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
     }.getOrElse(Map("success:" ->false, "Reason"->"Link-id not found or invalid input"))
@@ -823,14 +823,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/roadlinks/adjacent/:id") {
     val user = userProvider.getCurrentUser()
-    val id = params("id").toLong
+    val id = params("id")
     val link =  roadLinkService.getAdjacent(id, true).filter(link => user.isAuthorizedToWrite(link.municipalityCode))
     roadLinkToApiWithLaneInfo(link)
   }
 
   get("/roadlinks/adjacents/:ids") {
     val user = userProvider.getCurrentUser()
-    val ids = params("ids").split(',').map(_.toLong)
+    val ids = params("ids").split(',')
     roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).mapValues(_.map(rl => roadLinkToApi(rl)))
   }
 
@@ -1550,7 +1550,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/speedlimits") {
     val user = userProvider.getCurrentUser()
-    val newLimit = NewLimit((parsedBody \ "linkId").extract[Long],
+    val newLimit = NewLimit((parsedBody \ "linkId").extract[String],
       (parsedBody \ "startMeasure").extract[Double],
       (parsedBody \ "endMeasure").extract[Double])
 
@@ -1587,12 +1587,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def validateMunicipalityAccessByLinkId(user: User, linkId: Long): Unit = {
+  private def validateMunicipalityAccessByLinkId(user: User, linkId: String): Unit = {
     val road = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
     validateUserMunicipalityAccessByMunicipality(user)(road.municipalityCode)
   }
 
-  private def validateUserMunicipalityAccessByLinkId(user: User, linkId: Long, municipality: Int): Unit = {
+  private def validateUserMunicipalityAccessByLinkId(user: User, linkId: String, municipality: Int): Unit = {
     roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId) match {
       case Some(road) =>
         if (!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
@@ -1628,7 +1628,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def validateUserRightsForLanes(linkIds: Set[Long], user: User) : Unit = {
+  private def validateUserRightsForLanes(linkIds: Set[String], user: User) : Unit = {
     if (!user.isOperator() && !user.isLaneMaintainer()) {
       halt(Unauthorized("User not authorized"))
     }
@@ -2000,8 +2000,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     service.getPersistedAssetsByIds(Set(id)).headOption.foreach{ a =>
-      a.linkId match {
-        case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
+      LinkId.isUnknown(a.linkId) match {
+        case true => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
         case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
       }
     }
@@ -2013,7 +2013,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
     roadLinkService.getRoadLinkAndComplementaryFromVVH(updatedAsset.linkId) match {
-      case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
+      case None => halt(NotFound(s"RoadLink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) =>
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
         service match {
@@ -2299,7 +2299,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   delete("/unknownSpeedLimit/delete") {
-    val unknownSpeedLimitIds = parsedBody.extractOpt[Set[Long]]
+    val unknownSpeedLimitIds = parsedBody.extractOpt[Set[String]]
 
     unknownSpeedLimitIds match {
       case Some(value) => speedLimitService.hideUnknownSpeedLimits(value)
@@ -2352,7 +2352,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/lanes") {
     val user = userProvider.getCurrentUser()
 
-    val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[Long]](halt(BadRequest("Malformed 'linkIds' parameter")))
+    val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[String]](halt(BadRequest("Malformed 'linkIds' parameter")))
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewLane]](halt(BadRequest("Malformed 'lanes' parameter")))
     val sideCodesForLinks = (parsedBody \ "sideCodesForLinks").extractOrElse[Seq[SideCodesForLinkIds]](halt(BadRequest("Malformed 'sideCodesForLinks' parameter")))
@@ -2379,7 +2379,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/lane/:linkId/:sideCode") {
-    val linkId = params("linkId").toLong
+    val linkId = params("linkId")
     val sideCode = params("sideCode").toInt
 
     laneService.fetchExistingLanesByLinksIdAndSideCode(linkId, sideCode).map { lane =>

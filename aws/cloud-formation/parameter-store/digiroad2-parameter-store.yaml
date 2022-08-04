@@ -71,3 +71,10 @@ Resources:
       Name: /prod/vvhRest.password
       Type: String
       Value: PlaceHolderValue
+  
+  KgvKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /prod/apikey/kgv.apikey
+      Type: String
+      Value: PlaceHolderValue

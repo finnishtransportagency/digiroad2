@@ -98,7 +98,7 @@ Nämä voidaan syöttään myös ympäristömuuttujina:
 viiteRestApiEndPoint=url
 viite.apikey=insertapikey
 vkm.apikey=insertapikey 
-Doag.username=svc_clouddigiroad
+oag.username=svc_clouddigiroad
 oag.password=svc_clouddigiroad 
 rasterService.apikey=insertapikey
 googlemapapi.client_id=XYZ123
@@ -109,6 +109,7 @@ bonecp.jdbcUrl=kantaurl
 bonecp.username=kantakäyttäjä
 bonecp.password=kantasalasana
 vvhRest.password=insertpassword
+kgv.apikey=insertkey
 ```
 Windowsissa toimii komento:
 ```

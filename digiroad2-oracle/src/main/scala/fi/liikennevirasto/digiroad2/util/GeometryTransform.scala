@@ -85,7 +85,7 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
     new VKMClient()
   }
 
-  def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
+  def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
     def againstDigitizing(addr: RoadAddressDTO) = {
       val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue

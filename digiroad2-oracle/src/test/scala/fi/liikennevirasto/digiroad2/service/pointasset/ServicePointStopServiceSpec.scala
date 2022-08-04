@@ -25,7 +25,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
     SimplePointAssetProperty("viranomaisdataa", List(PropertyValue("Kyllä")))
   )
   val dummyPoint = Point(532963.6175279296, 6995180.002037556)
-  val dummyNewMassTransitStop = NewMassTransitStop(dummyPoint.x, dummyPoint.y, 0, 0, dummyProperties)
+  val dummyNewMassTransitStop = NewMassTransitStop(dummyPoint.x, dummyPoint.y, "0", 0, dummyProperties)
 
   def getPropertyValueByPublicId(asset: ServicePoint, publicId: String): String = {
     asset.propertyData.filter(_.publicId == publicId).head.values.head.asInstanceOf[PropertyValue].propertyValue

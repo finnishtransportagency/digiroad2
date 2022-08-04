@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, baseAdjustment}
 import fi.liikennevirasto.digiroad2.lane.{NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -14,12 +14,12 @@ import org.slf4j.LoggerFactory
 
 object ChangeLanesAccordingToVvhChanges {
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   }
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -39,7 +39,7 @@ object ChangeLanesAccordingToVvhChanges {
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
     val historyLinks = getHistoryDataLinksFromVVH(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
-    val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.vvhTimeStamp)).toSeq
+    val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.timeStamp)).toSeq
 
     val (changeSet, modifiedLanes) = handleChanges(roadLinks,latestHistoryRoadLinks, changes, existingAssets)
     val onlyNewModifiedLanes = modifiedLanes.filter(lane => lane.id == 0)

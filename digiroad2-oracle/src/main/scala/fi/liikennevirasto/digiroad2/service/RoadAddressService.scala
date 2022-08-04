@@ -69,7 +69,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param linkId Road link ID
     * @param mValue Road geometry measure
     */
-  def getByLrmPosition(linkId: Long, mValue: Double): Option[RoadAddress] = {
+  def getByLrmPosition(linkId: String, mValue: Double): Option[RoadAddress] = {
     viiteClient.fetchByLrmPosition(linkId, mValue).headOption
   }
 
@@ -81,7 +81,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param endMeasure   End measure
     * @return
     */
-  def getAllByLrmPositions(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[RoadAddress] = {
+  def getAllByLrmPositions(linkId: String, startMeasure: Double, endMeasure: Double): Seq[RoadAddress] = {
     viiteClient.fetchByLrmPositions(linkId, startMeasure, endMeasure)
   }
 
@@ -93,7 +93,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   //resolving_frozen_links batch keeps crashing here because of Viite API GW limits, temporary fix implemented
   //TODO Rollback this grouping fix after Viite has implemented API GW limitation work-around
-  def getAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
+  def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddress] = {
     val linkIdsSplit = linkIds.grouped(1000).toSeq
     linkIdsSplit.flatMap(linkIdGroup => viiteClient.fetchAllByLinkIds(linkIdGroup))
   }

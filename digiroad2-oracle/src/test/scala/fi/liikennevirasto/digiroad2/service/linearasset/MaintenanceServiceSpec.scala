@@ -19,28 +19,30 @@ import org.scalatest.{FunSuite, Matchers}
 
 class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
-  
-  when(mockRoadLinkService.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388562361l))).thenReturn(Seq(RoadLink(388562361l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-    1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set.empty[Long])).thenReturn(Seq())
 
-  val roadLinkWithLinkSource = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+  val (linkId1, linkId2, linkId3) = ("388562360", "388562361", "388562362")
+  
+  when(mockRoadLinkService.fetchByLinkId(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId2))).thenReturn(Seq(RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set.empty[String])).thenReturn(Seq())
+
+  val roadLinkWithLinkSource = Seq(RoadLink("1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    ,RoadLink(388562360l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    ,RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    ,RoadLink(388562361l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    ,RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    ,RoadLink(388562362l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    ,RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
 
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinkWithLinkSource, Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinkWithLinkSource, Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
+  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
   when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(1)
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
@@ -48,11 +50,11 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
-  when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(1)))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, MaintenanceRoadAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq("1")))
+    .thenReturn(Seq(PersistedLinearAsset(1, "1", 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, MaintenanceRoadAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
-  val maintenanceDao = new PostGISMaintenanceDao(mockVVHClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
+  val maintenanceDao = new PostGISMaintenanceDao(mockRoadLinkClient, mockRoadLinkService)
   val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
@@ -60,7 +62,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: PostGISMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
@@ -74,7 +76,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: PostGISMaintenanceDao = mockMaintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
@@ -99,10 +101,10 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
 
     val maintenanceRoad = DynamicValue(DynamicAssetValue(propertiesSeq))
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, maintenanceRoad, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
 
-      val asset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(388562360l)).head
+      val asset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(linkId1)).head
       asset.value should be (Some(maintenanceRoad))
       asset.expired should be (false)
     }
@@ -130,13 +132,13 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val maintenanceRoadFetch = DynamicValue(DynamicAssetValue(propUpd))
 
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoadIns, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, maintenanceRoadIns, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
 
       val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintenanceRoadUpd, "testuser")
       updAssets.length should be(1)
 
-      val asset = ServiceWithDao.dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(388562360l)).filterNot(_.expired).head
+      val asset = ServiceWithDao.dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(linkId1)).filterNot(_.expired).head
       asset.value should be (Some(maintenanceRoadFetch))
       asset.expired should be (false)
     }
@@ -153,7 +155,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
 
     val maintenanceRoad = DynamicValue(DynamicAssetValue(propertiesSeq))
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, maintenanceRoad, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
       var asset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(maintenanceRoad))
@@ -174,16 +176,16 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
 
     when(mockPolygonTools.getAreaGeometry(any[Int])).thenReturn(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59))
-    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(any[Seq[Polygon]])).thenReturn(Seq(388562360l))
+    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(any[Seq[Polygon]])).thenReturn(Seq(linkId1))
 
     val maintenanceRoad = DynamicAssetValue(propertiesSeq)
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
 
       val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1)
       assets.map { asset =>
-        asset.linkId should be(388562360l)
+        asset.linkId should be(linkId1)
         asset.startMeasure should be(0)
         asset.endMeasure should be(20)
         asset.value.get.asInstanceOf[DynamicValue].value.properties.length should be(5)
@@ -192,7 +194,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   }
 
   test("Fetch Active Maintenance Road By Polygon, with an empty result") {
-    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(Seq(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59)))).thenReturn(Seq(388562360l))
+    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(Seq(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59)))).thenReturn(Seq(linkId1))
     PostGISDatabase.withDynTransaction {
       val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1)
       assets.length should be(0)
@@ -209,11 +211,11 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val maintenanceChecked = DynamicAssetValue(List(prop1, prop2, prop4))
     runWithRollback {
       //asset created on area 1
-      val uncheckedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceUnchecked), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
-      val checkedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(388562361l, 0, 20, DynamicValue(maintenanceChecked), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val uncheckedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, DynamicValue(maintenanceUnchecked), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val checkedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(linkId2, 0, 20, DynamicValue(maintenanceChecked), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       //asset created on area 2
       when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(2)
-      val uncheckedAsset2 = ServiceWithDao.create(Seq(NewLinearAsset(388562362l, 0, 20, DynamicValue(maintenanceUnchecked), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val uncheckedAsset2 = ServiceWithDao.create(Seq(NewLinearAsset(linkId3, 0, 20, DynamicValue(maintenanceUnchecked), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
 
       val assetArea1 = ServiceWithDao.getUncheckedLinearAssets(Some(Set(1)))
       assetArea1.flatMap(_._2).flatMap(_._2).toSeq.contains(uncheckedAsset1.head) should be (true)
@@ -236,21 +238,21 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
 
     val changeInfo = Seq(
-      ChangeInfo(Some(1), Some(2), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
-      ChangeInfo(Some(3), Some(4), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
+      ChangeInfo(Some("1"), Some("2"), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
+      ChangeInfo(Some("3"), Some("4"), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
     )
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((roadLinkWithLinkSource, changeInfo))
 
     val maintenanceRoad = DynamicAssetValue(propertiesSeq)
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
 
       val assets = ServiceWithDao.getAllByBoundingBox(BoundingRectangle(Point(1, 2), Point(3, 4)))
       assets.foreach {
         case (asset, _) =>
-        asset.linkId should be(388562360l)
+        asset.linkId should be(linkId1)
         asset.startMeasure should be(0)
         asset.endMeasure should be(20)
         asset.value.get.asInstanceOf[DynamicValue].value.properties.length should be(5)
@@ -276,13 +278,13 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val maintenanceRoad1 = DynamicAssetValue(propertiesSeq1)
 
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None),
-                                                NewLinearAsset(388562361l, 0, 20, DynamicValue(maintenanceRoad1), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None),
+                                                NewLinearAsset(linkId2, 0, 20, DynamicValue(maintenanceRoad1), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(2)
 
       val assets = ServiceWithDao.maintenanceDAO.fetchPotentialServiceRoads()
       assets.size should be(1)
-      assets.head.linkId should be(388562361l)
+      assets.head.linkId should be(linkId2)
       assets.head.startMeasure should be(0.0)
       assets.head.endMeasure should be(20.0)
       assets.head.value.get.asInstanceOf[DynamicValue].value.properties.find(_.publicId == "huoltotie_kayttooikeus").get.values.head.value should be ("9")
@@ -306,8 +308,8 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val maintenanceRoad1 = DynamicAssetValue(propertiesSeq1)
 
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None),
-          NewLinearAsset(388562361l, 0, 20, DynamicValue(maintenanceRoad1), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkId1, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None),
+          NewLinearAsset(linkId2, 0, 20, DynamicValue(maintenanceRoad1), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(2)
 
       val assets = ServiceWithDao.maintenanceDAO.fetchPotentialServiceRoads()
@@ -325,7 +327,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       when(mockMaintenanceDao.fetchPotentialServiceRoads()).thenReturn(Seq(
-        PersistedLinearAsset(0, 388562361l,1, Some(DynamicValue(maintenanceRoad)), 0.0, 20.0, Some("testuser"), None, None, None, false, 290, 0, None, NormalLinkInterface, None, None, None)
+        PersistedLinearAsset(0, linkId2,1, Some(DynamicValue(maintenanceRoad)), 0.0, 20.0, Some("testuser"), None, None, None, false, 290, 0, None, NormalLinkInterface, None, None, None)
       ))
 
       val assets = MaintenanceServiceWithDao.getByZoomLevel
