@@ -449,7 +449,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
 
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -478,7 +478,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -539,7 +539,7 @@ object DataFixture {
 
     if (assets.nonEmpty) {
 
-      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -1864,7 +1864,7 @@ object DataFixture {
     def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadlink: RoadLink): Unit = {
       //Create new SpeedLimits on gaps
       newSpeedLimits.foreach { speedLimit =>
-        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(vvhClient.roadLinkData.createVVHTimeStamp()), linkSource = roadlink.linkSource)
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(vvhClient.createVVHTimeStamp()), linkSource = roadlink.linkSource)
         println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value + " and sidecode: " + speedLimit.sideCode)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
@@ -1968,9 +1968,8 @@ object DataFixture {
       PostGISDatabase.withDynTransaction {
         counter += 1
         println(s"Working on municipality $municipality ($counter/${municipalities.size})")
-        val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
         val modifiedAssetTypes = LogUtils.time(logger, "BATCH LOG get modified asset types")(
-          verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
+          verificationService.dao.getModifiedAssetTypes(Set(municipality))
         )
 
         LogUtils.time(logger, "BATCH LOG insert modified asset types")(

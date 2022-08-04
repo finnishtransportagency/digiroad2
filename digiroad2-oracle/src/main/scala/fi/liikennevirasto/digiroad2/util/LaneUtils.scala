@@ -51,7 +51,7 @@ object LaneUtils {
 
 
       val allLanesToCreate = linksWithAddresses.flatMap { link =>
-        val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+        val vvhTimeStamp = vvhClient.createVVHTimeStamp()
 
         lanesToInsert.flatMap { lane =>
           val laneCode = laneService.getLaneCode(lane).toInt

@@ -427,11 +427,6 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
   def updateLane(lane: PersistedLane, username: String ): Unit = {
 
-    val oldLaneCode = sql"""SELECT lane_code FROM LANE WHERE id = ${lane.id}""".as[Int].first
-
-    if (LaneNumberOneDigit.isMainLane(oldLaneCode) && oldLaneCode != lane.laneCode)
-      throw new IllegalArgumentException("Cannot change the code of main lane!")
-
     sqlu"""UPDATE LANE
           SET LANE_CODE = ${lane.laneCode}, MODIFIED_BY = $username, MODIFIED_DATE = current_timestamp, MUNICIPALITY_CODE = ${lane.municipalityCode}
           WHERE id = ${lane.id}
@@ -478,7 +473,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     """.execute
   }
 
-  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = vvhClient.roadLinkData.createVVHTimeStamp()): Unit = {
+  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = vvhClient.createVVHTimeStamp()): Unit = {
     sqlu"""UPDATE LANE_POSITION
            SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $vvhTimestamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )
