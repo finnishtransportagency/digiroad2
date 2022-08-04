@@ -2,7 +2,9 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode}
+import fi.liikennevirasto.digiroad2.lane.LaneNumberOneDigit.MainLane
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.middleware.{AdditionalImportValue, UpdateOnlyStartDates}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -10,10 +12,13 @@ import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.getRoadAddressToProcess
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, Parallel, RoadAddressException, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 import java.io.{InputStream, InputStreamReader}
+import java.lang.management.ManagementFactory
 import scala.util.{Success, Try}
 
 
@@ -30,6 +35,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   lazy val laneService: LaneService = new LaneService(roadLinkServiceImpl, eventBusImpl, roadAddressService)
   lazy val laneFiller: LaneFiller = new LaneFiller
   private val csvImportUser = "csv_importer"
+  val logger = LoggerFactory.getLogger(getClass)
 
   private val nonMandatoryFieldsMapping: Map[String, String] = Map(
     "id" -> "id",
@@ -180,39 +186,68 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     s"<ul> notImportedData: ${notImportedData.mkString.replaceAll("[(|)]{1}", "")}</ul>"
   }
 
-  def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
-    val mappedByRoadNumber = laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).values
-    val lanesToUpdateForRoad = mappedByRoadNumber.flatMap(propsByRoad => {
-      propsByRoad.map(props => {
-        val roadNumber = getPropertyValue(props, "road number").toLong
-        val roadPartNumber = getPropertyValue(props, "road part").toLong
-        val laneCode = getPropertyValue(props, "lane")
+  def giveMainlanesStartDates(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData, fileName: String): ImportResultData = {
+    logger.info("Started mapping start dates from file: " + fileName + " on " + DateTime.now().toString() + " in thread ID: " + Thread.currentThread().getId)
+    logger.info(s"Total number of threads in instance: ${ManagementFactory.getThreadMXBean.getThreadCount}")
+      val missingLanesAndFailedRows = LogUtils.time(logger, "Get lanes to update") {
+        laneAssetProperties.map(props => {
+          logger.info("Processing row: " + (laneAssetProperties.indexOf(props) + 1) + " of " + laneAssetProperties.size)
+          val roadNumber = getPropertyValue(props, "road number").toLong
+          val roadPartNumber = getPropertyValue(props, "road part").toLong
+          val laneCode = getPropertyValue(props, "lane")
 
-        val initialDistance = getPropertyValue(props, "initial distance").toLong
-        val endDistance = getPropertyValue(props, "end distance").toLong
-        val track = getPropertyValue(props, "track").toInt
-        val startDate = getPropertyValueOption(props, "start date").getOrElse("")
+          val initialDistance = getPropertyValue(props, "initial distance").toLong
+          val endDistance = getPropertyValue(props, "end distance").toLong
+          val track = getPropertyValue(props, "track").toInt
+          val startDate = getPropertyValueOption(props, "start date").getOrElse("")
 
-        val laneProps = Seq(LaneProperty("start_date", Seq(LanePropertyValue(startDate))))
+          val laneProps = Seq(LaneProperty("start_date", Seq(LanePropertyValue(startDate))))
 
-        val laneRoadAddressInfo = LaneRoadAddressInfo(roadNumber, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
-        val roadAddresses = getRoadAddressToProcess(laneRoadAddressInfo).flatMap(_.addresses)
+          val laneRoadAddressInfo = LaneRoadAddressInfo(roadNumber, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
+          val roadAddresses = LogUtils.time(logger, "Get roadAddresses for road: " + roadNumber + " part: " + roadPartNumber) {
+            getRoadAddressToProcess(laneRoadAddressInfo).flatMap(_.addresses)
+          }
 
-        val roadLinksFullyInsideRoadAddressRange = roadAddresses.filter(address =>
-          address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance)
-        val roadLinksPartiallyInsideRoadAddressRange = roadAddresses.filter(address =>
-          (address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance) ||
-           address.endAddressM <= laneRoadAddressInfo.endDistance && address.endAddressM >= laneRoadAddressInfo.startDistance)
-        val filteredRoadAddresses = (roadLinksFullyInsideRoadAddressRange ++ roadLinksPartiallyInsideRoadAddressRange)
+          val filteredRoadAddresses = roadAddresses.filter(address =>{
+            val startInside = (address.startAddressM >= laneRoadAddressInfo.startDistance) && (address.startAddressM <= laneRoadAddressInfo.endDistance)
+            val endInside = (address.endAddressM <= laneRoadAddressInfo.endDistance) && (address.endAddressM >= laneRoadAddressInfo.startDistance)
+            startInside || endInside
+          })
 
-        val lanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
-        val twoDigitLanes = lanes.flatMap(lane => laneService.persistedLaneToTwoDigitLaneCode(lane, false))
-        val correctLanes = twoDigitLanes.filter(_.laneCode == laneCode.toInt)
+        val mainLanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
+          .filter(_.laneCode == MainLane.laneCode)
 
-        correctLanes.map(_.copy(attributes = laneProps))
+        val correctLanes = filteredRoadAddresses.flatMap(roadAddress => {
+          val lanesOnLink = mainLanes.filter(_.linkId == roadAddress.linkId)
+          val addressSideCode = roadAddress.sideCode.get
+          val correctLaneSideCode = (addressSideCode, laneCode.toInt) match {
+            case (TowardsDigitizing, 11) => TowardsDigitizing
+            case (TowardsDigitizing, 21) => AgainstDigitizing
+            case (AgainstDigitizing, 11) => AgainstDigitizing
+            case (AgainstDigitizing, 21) => TowardsDigitizing
+            case (_, 31) => BothDirections
+          }
+          lanesOnLink.find(lane => lane.sideCode == correctLaneSideCode.value)
+        }).toSeq
+        val linkIdsMissingLanes = filteredRoadAddresses.map(_.linkId).diff(correctLanes.map(_.linkId).toSet)
+        val correctLanesWithStartDates = correctLanes.map(_.copy(attributes = laneProps))
+
+        LogUtils.time(logger, "update lane start dates for " + correctLanesWithStartDates.size + " lanes") {
+          correctLanesWithStartDates.map(lane => {
+            laneService.updatePersistedLaneAttributes(lane.id, laneProps, user.username)
+          })
+        }
+
+        if (linkIdsMissingLanes.nonEmpty) {
+          (linkIdsMissingLanes, Some(props))
+        }
+        else (linkIdsMissingLanes, None)
       })
-    })
-    lanesToUpdateForRoad.foreach(lanes => laneService.updateMultipleLaneAttributes(lanes, user.username))
+    }
+
+    val linkIDsNotUpdated = missingLanesAndFailedRows.flatMap(_._1)
+    if (missingLanesAndFailedRows.nonEmpty) logger.error("Could not update start date on link IDs: " + linkIDsNotUpdated)
+
     result
   }
 
@@ -251,7 +286,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, updateOnlyStartDates: AdditionalImportValue): Unit = {
     try {
-      val result = processing(inputStream, user, updateOnlyStartDates.asInstanceOf[UpdateOnlyStartDates])
+      val result = processing(inputStream, user, updateOnlyStartDates.asInstanceOf[UpdateOnlyStartDates], fileName)
       result match {
         case ImportResultLaneAsset(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
@@ -266,81 +301,113 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  def processing(inputStream: InputStream, user: User, updateOnlyStartDates: UpdateOnlyStartDates): ImportResultData = {
+  def processing(inputStream: InputStream, user: User, updateOnlyStartDates: UpdateOnlyStartDates, fileName: String): ImportResultData = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
+    val numberOfRowsToPartition = 1000
 
-    withDynTransaction {
-      val result = csvReader.allWithHeaders().foldLeft(ImportResultLaneAsset()) {
-        (result, row) =>
-          val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
-          val missingParameters = findMissingParameters(csvRow)
-          val (malformedParameters, properties) = assetRowToAttributes(csvRow)
-          val (notImportedParameters, parsedRow) = verifyData(properties, updateOnlyStartDates.onlyStartDates)
+    val groupedRows = csvReader.allWithHeaders().grouped(numberOfRowsToPartition).toSeq
+    val results = groupedRows.map(rowGroup => rowGroup.foldLeft(ImportResultLaneAsset()) {
+      (result, row) =>
+        val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
+        val missingParameters = findMissingParameters(csvRow)
+        val (malformedParameters, properties) = assetRowToAttributes(csvRow)
+        val (notImportedParameters, parsedRow) = verifyData(properties, updateOnlyStartDates.onlyStartDates)
 
-          if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
-            result.copy(
-              incompleteRows = missingParameters match {
-                case Nil => result.incompleteRows
-                case parameters =>
-                  IncompleteRow(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteRows
-              },
-              malformedRows = malformedParameters match {
-                case Nil => result.malformedRows
-                case parameters =>
-                  MalformedRow(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedRows
-              },
-              notImportedData = notImportedParameters match {
-                case Nil => result.notImportedData
-                case parameters =>
-                  NotImportedData(reason = parameters.head, csvRow = rowToString(csvRow)) :: result.notImportedData
+        if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
+          result.copy(
+            incompleteRows = missingParameters match {
+              case Nil => result.incompleteRows
+              case parameters =>
+                IncompleteRow(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteRows
+            },
+            malformedRows = malformedParameters match {
+              case Nil => result.malformedRows
+              case parameters =>
+                MalformedRow(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedRows
+            },
+            notImportedData = notImportedParameters match {
+              case Nil => result.notImportedData
+              case parameters =>
+                NotImportedData(reason = parameters.head, csvRow = rowToString(csvRow)) :: result.notImportedData
+            })
+        } else {
+          result.copy(createdData = parsedRow ++ result.createdData)
+        }
+    })
+
+    logger.info("Number of detected cores " + Runtime.getRuntime.availableProcessors)
+    logger.info("Rows partitioned into " + results.size + " collections")
+    Parallel.operation(results.par, results.size) { p => p.map(result => {
+      withDynTransaction {
+        updateOnlyStartDates.onlyStartDates match {
+          case true => try {
+            giveMainlanesStartDates(result.createdData, user, result, fileName)
+          }
+          catch {
+            case e: Exception =>
+              val index = results.indexOf(result)
+              val rowIndexStart = index * numberOfRowsToPartition
+              val rowIndexEnd = rowIndexStart + numberOfRowsToPartition
+              logger.error("Rows from index " + rowIndexStart + " to " + rowIndexEnd + " failed to import due to " + e.getMessage)
+              val notImported = result.createdData.map(row => {
+                NotImportedData("Exception " + e.getMessage + " on row: ", row.toString())
               })
-          } else {
-            result.copy(createdData = parsedRow ++ result.createdData)
+              result.copy(notImportedData = notImported)
           }
-      }
-
-      updateOnlyStartDates.onlyStartDates match {
-        case true => giveMainlanesStartDates(result.createdData, user, result)
-        case false =>
-          // Expire all additional lanes IF exists some data to create new lanes
-          if (result.createdData.nonEmpty) {
-            laneService.expireAllAdditionalLanes(csvImportUser)
-          }
-
-          // Create the new lanes
-          val createdLaneIds = createAsset(result.createdData, user, result)._2
-
-
-          //Lanes created from CSV-import have to be processed through fill topology to combine overlapping lanes etc.
-          if (createdLaneIds.nonEmpty) {
-            val createdLanes = laneService.getPersistedLanesByIds(createdLaneIds)
-            val groupedLanes = createdLanes.groupBy(_.linkId)
-            if (groupedLanes.isEmpty) result
-            else {
-              val linkIds = createdLanes.map(_.linkId).toSet
-              val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
-              val changeSet = laneFiller.fillTopology(roadLinks, groupedLanes)._2
-
-              //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and
-              // tries to expire new lanes when used with lanes created by CSV-import, so we have to filter them out
-              val newLanesFilteredFromMValueAdj = changeSet.adjustedMValues.filterNot(_.laneId == 0)
-              val duplicatesFilteredFromMValueAdj = newLanesFilteredFromMValueAdj.groupBy(_.laneId).map(_._2.head).toSeq
-              val newLanesFilteredFromExpiredIds = changeSet.expiredLaneIds.filterNot(_ == 0)
-              val newLanesFilteredFromVVHAdj = changeSet.adjustedVVHChanges.filterNot(_.laneId == 0)
-              val newLanesFilteredFromSideCodeAdj = changeSet.adjustedSideCodes.filterNot(_.laneId == 0)
-              val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj,
-                expiredLaneIds = newLanesFilteredFromExpiredIds, adjustedVVHChanges = newLanesFilteredFromVVHAdj, adjustedSideCodes = newLanesFilteredFromSideCodeAdj)
-
-              updateChangeSet(changeSetFixed)
-              result
+          case false =>
+            // Expire all additional lanes IF exists some data to create new lanes
+            if (result.createdData.nonEmpty) {
+              laneService.expireAllAdditionalLanes(csvImportUser)
             }
 
-          }
-          else result
+            // Create the new lanes
+            val createdLaneIds = createAsset(result.createdData, user, result)._2
+
+
+            //Lanes created from CSV-import have to be processed through fill topology to combine overlapping lanes etc.
+            if (createdLaneIds.nonEmpty) {
+              val createdLanes = laneService.getPersistedLanesByIds(createdLaneIds, false)
+              val groupedLanes = createdLanes.groupBy(_.linkId)
+              if (groupedLanes.isEmpty) result
+              else {
+                val linkIds = createdLanes.map(_.linkId).toSet
+                val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, false)
+                val changeSet = laneFiller.fillTopology(roadLinks, groupedLanes)._2
+
+                //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and
+                // tries to expire new lanes when used with lanes created by CSV-import, so we have to filter them out
+                val newLanesFilteredFromMValueAdj = changeSet.adjustedMValues.filterNot(_.laneId == 0)
+                val duplicatesFilteredFromMValueAdj = newLanesFilteredFromMValueAdj.groupBy(_.laneId).map(_._2.head).toSeq
+                val newLanesFilteredFromExpiredIds = changeSet.expiredLaneIds.filterNot(_ == 0)
+                val newLanesFilteredFromVVHAdj = changeSet.adjustedVVHChanges.filterNot(_.laneId == 0)
+                val newLanesFilteredFromSideCodeAdj = changeSet.adjustedSideCodes.filterNot(_.laneId == 0)
+                val changeSetFixed = changeSet.copy(adjustedMValues = duplicatesFilteredFromMValueAdj,
+                  expiredLaneIds = newLanesFilteredFromExpiredIds, adjustedVVHChanges = newLanesFilteredFromVVHAdj, adjustedSideCodes = newLanesFilteredFromSideCodeAdj)
+
+                updateChangeSet(changeSetFixed)
+                result
+              }
+
+            }
+            else result
+        }
       }
+    })
+  }
+
+    results.foldLeft(ImportResultLaneAsset()) {
+      (result, row) =>
+        result.copy(
+          incompleteRows = row.incompleteRows ++ result.incompleteRows,
+          malformedRows = row.malformedRows ++ result.malformedRows,
+          excludedRows = row.excludedRows ++ result.excludedRows,
+          notImportedData = row.notImportedData ++ result.notImportedData,
+          createdData = row.createdData ++ result.createdData
+        )
     }
+
   }
 }
