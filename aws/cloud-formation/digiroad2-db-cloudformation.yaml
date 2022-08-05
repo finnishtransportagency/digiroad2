@@ -93,7 +93,7 @@ Resources:
       DBName: digiroad2
       DeletionProtection: !Ref DBDeletionProtection
       Engine: postgres
-      EngineVersion: 13.3
+      EngineVersion: 13.4
       AllocatedStorage: 100
       StorageType: gp2
       MasterUsername: digiroad2postgres
