@@ -184,7 +184,7 @@
             type: "alert",
             yesButtonLbl: 'Ok',
           };
-          var alertMessage = "Kaistan katkaisu ei ole sallittua kaistajoukon ollessa valittu";
+          var alertMessage = "Kaistan katkaisu ei ole sallittu, kun useamman kuin yhden tielinkin kaistat ovat valittu";
 
           GenericConfirmPopup(alertMessage, cutToolAlertPopUpOptions);
           return;
