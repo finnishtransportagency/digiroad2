@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
-import fi.liikennevirasto.digiroad2.client.vvh.RoadNodesFetched
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -743,17 +742,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def roadNodesToApi(roadNodes: Seq[RoadNodesFetched]) = {
-    roadNodes.map { roadNode =>
-      Map("nodeId" -> roadNode.nodeId,
-          "nodeType" -> roadNode.formOfNode.value,
-          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
-          "subtype" -> roadNode.subtype,
-          geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
-      )
-    }
-  }
-
   def trWeightLimitationsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
     weightLimits.filterNot(_.floating).map { weightLimit =>
       Map("id" -> weightLimit.id,
@@ -967,7 +955,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
           case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
           case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-          case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
           case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
           case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
           case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))

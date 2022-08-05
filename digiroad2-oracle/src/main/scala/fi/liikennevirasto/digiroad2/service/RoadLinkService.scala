@@ -282,18 +282,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     getCachedRoadLinksWithComplementaryAndChanges(municipality)._1
     )
   }
-
-  def getRoadNodesByMunicipality(municipality: Int): Seq[RoadNodesFetched] = {
-    LogUtils.time(logger,"Get roadlink node with cache")(
-      getCachedRoadNodes(municipality)
-    )
-  }
-
-  def getRoadNodesFromVVHFuture(municipality: Int): Future[Seq[RoadNodesFetched]] = {
-    Future(getRoadNodesByMunicipality(municipality))
-  }
-
-
+  
   def getTinyRoadLinkFromVVH(municipality: Int): Seq[TinyRoadLink] = {
     val (roadLinks, _, complementaryRoadLink) = getCachedRoadLinks(municipality)
     (roadLinks ++ complementaryRoadLink).map { roadLink =>
@@ -986,10 +975,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def reloadRoadNodesFromVVH(municipality: Int): Seq[RoadNodesFetched] = {
-    roadLinkClient.roadNodesData.fetchByMunicipality(municipality)
-  }
-
   def getHistoryDataLinkFromVVH(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getHistoryDataLinksFromVVH(Set(linkId), newTransaction).headOption
 
   def getHistoryDataLinksFromVVH(linkId: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
@@ -1269,10 +1254,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       getCachedRoadLinks(municipality)
     )
     roadLinks ++ complementaries
-  }
-
-  def getRoadNodesFromVVHByMunicipality(municipality: Int): Seq[RoadNodesFetched] = {
-    Await.result(getRoadNodesFromVVHFuture(municipality), Duration.Inf)
   }
 
   /**
@@ -1750,15 +1731,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     Caching.cache[(Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])](
       reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
     )("links:" + municipalityCode)
-  }
-
-  /**
-    *  Call reloadRoadNodesFromVVH
-    */
-  private def getCachedRoadNodes(municipalityCode: Int): Seq[RoadNodesFetched] = {
-    Caching.cache[Seq[RoadNodesFetched]](
-      reloadRoadNodesFromVVH(municipalityCode)
-    )("nodes:"+municipalityCode)
   }
 
   /**
