@@ -110,7 +110,10 @@ object LanePartitioner {
           case Some(laneWithContinuing) =>
             val checkedLane = checkLane(sortedLanes.last, laneWithContinuing.lane, allLanes)
             val nextPoint = checkedLane.endpoints.find(_.round() != continuingPoint.round())
-            getSortedLanes(nextPoint.get, sortedLanes ++ Seq(checkedLane))
+            nextPoint match {
+              case Some(point) => getSortedLanes(point, sortedLanes ++ Seq(checkedLane))
+              case _ => sortedLanes
+            }
           case _ => sortedLanes
         }
       }
