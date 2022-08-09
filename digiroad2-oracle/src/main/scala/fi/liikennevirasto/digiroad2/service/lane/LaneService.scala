@@ -78,17 +78,16 @@ trait LaneOperations {
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
-    val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets.map(Seq(_))))
-    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
-    val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct.map {lane =>
-      val linkType = roadLinks.find(_.linkId == lane.linkId).headOption match {
+    val lanesWithRoadAddress = getRoadAddressForLanes(linearAssets)
+    val lanesWithLinkType = lanesWithRoadAddress.map { lane =>
+      val linkType = roadLinks.find(_.linkId == lane.linkId) match {
         case Some(roadLink) => roadLink.linkType.value
         case _ => UnknownLinkType.value
       }
       lane.copy(attributes = lane.attributes + ("linkType" -> linkType))
     }
 
-    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithRoadAddress, roadLinks.groupBy(_.linkId).mapValues(_.head)))
+    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithLinkType, roadLinks.groupBy(_.linkId).mapValues(_.head)))
     (partitionedLanes, roadLinksWithoutLanes)
   }
 
@@ -518,6 +517,16 @@ trait LaneOperations {
 
   }
 
+  def getRoadAddressForLanes(lanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
+    val (lanesWithUpdatedInfo, lanesMissingUpdatedInfo) = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes") {
+      roadAddressService.laneWithRoadAddress(lanes).partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
+    }
+    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ") {
+      roadAddressService.experimentalLaneWithRoadAddress(lanesMissingUpdatedInfo)
+    }
+    (lanesWithUpdatedInfo ++ frozenInfo).distinct
+  }
+
   def laneChangesToTwoDigitLaneCode(laneChanges: Seq[LaneChange], roadLinks: Seq[RoadLink]): Seq[LaneChange] = {
     val existingPersistedLanes = laneChanges.map(_.lane)
     val oldPersistedLanes = laneChanges.flatMap(_.oldLane)
@@ -555,9 +564,7 @@ trait LaneOperations {
     val lanesWithRoadLinks = roadLinks.map(roadLink => (lanes.filter(_.linkId == roadLink.linkId), roadLink))
     val pwLanes = lanesWithRoadLinks.flatMap(pair => laneFiller.toLPieceWiseLane(pair._1, pair._2))
 
-    val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(Seq(pwLanes)))
-    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
-    (updatedInfo.flatten ++ frozenInfo.flatten).distinct
+    getRoadAddressForLanes(pwLanes)
   }
 
   def pieceWiseLanesToPersistedLane(pwLanes: Seq[PieceWiseLane]): Seq[PersistedLane] = {

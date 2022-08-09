@@ -106,9 +106,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
     val lanes = laneService.getLanesByRoadLinks(roadLinks)
 
-    val (lanesWithViiteAddress, noRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanes)).flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
-    val lanesWithTempAddress = roadAddressService.experimentalLaneWithRoadAddress(Seq(noRoadAddress)).flatten.filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
-    val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
+    val lanesWithRoadAddress = laneService.getRoadAddressForLanes(lanes)
     val lanesWithNormalRoadAddress = lanesWithConsistentRoadAddress(lanesWithRoadAddress)
 
     val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
@@ -161,11 +159,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         && (roadPartRange contains roadLink.attributes("VIITE_ROAD_PART_NUMBER")) && roadLink.attributes("VIITE_TRACK") == params.track.value)
 
       val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
-      val (lanesWithViiteAddress, lanesWithoutRoadAddress) = roadAddressService.laneWithRoadAddress(Seq(lanesOnRoadLinks))
-        .flatten.partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
-      val lanesWithTempAddress = roadAddressService.experimentalLaneWithRoadAddress(Seq(lanesWithoutRoadAddress)).flatten
-        .filter(_.attributes.contains("TEMP_ROAD_NUMBER"))
-      val lanesWithRoadAddress = lanesWithViiteAddress ++ lanesWithTempAddress
+      val lanesWithRoadAddress = laneService.getRoadAddressForLanes(lanesOnRoadLinks)
 
       val lanesWithNormalRoadAddress = lanesWithConsistentRoadAddress(lanesWithRoadAddress)
       val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithNormalRoadAddress).flatten
