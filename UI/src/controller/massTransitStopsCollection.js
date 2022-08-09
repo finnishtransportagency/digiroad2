@@ -30,7 +30,6 @@
 
     var refreshAssets = function(mapMoveEvent, useOldRefresh) {
       var treatAssets = function (backendAssets) {
-        if (useOldRefresh){ backendAssets = filterComplementaries(backendAssets); }
 
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
@@ -83,9 +82,7 @@
         assets = _.omit(assets, ""+assetId);
       },
       getAssets: function() {
-        if(isComplementaryActive)
-            return assets;
-        return _.filter(assets, function(asset){ return asset.data.linkSource == 1;});
+        return assets;
       },
       getComplementaryAssets: function(){
         return _.reject(assets, function(asset){

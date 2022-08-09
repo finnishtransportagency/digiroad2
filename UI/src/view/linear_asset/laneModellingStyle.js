@@ -115,7 +115,9 @@
     var laneModellingStyleRules = [
       new StyleRule().where('hasAsset').is(false).use({ stroke : { opacity: 0.7, color: '#7f7f7c'}}),
       new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).use({ stroke : { opacity: 0.7, color: '#ff0000' }}),
-      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).use({ stroke : { opacity: 0.7, color: '#11bb00' }})
+      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).use({ stroke : { opacity: 0.7, color: '#11bb00' }}),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).use({ stroke : { opacity: 0.7, color: '#ff0000', width: 3 }}),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).use({ stroke : { opacity: 0.7, color: '#11bb00', width: 3 }})
     ];
 
     var laneModellingSizeRules = [
@@ -142,6 +144,15 @@
       new StyleRule().where('rotation').isDefined().and('isSelected').is(true).use({ icon: { src: 'images/link-properties/arrow-drop-red2.svg'}}),
     ];
 
+    var linkTypeSizeRules = [
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).use({ stroke: { width: 3 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: { width: 1 } }),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 2 } }),
+      new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).use({ stroke: {color: '#fff', lineCap: 'square', width: 3, lineDash: [1, 16] } }),
+      new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: {color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 8] } }),
+      new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 8] } })
+    ];
+
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.01, color: '#7f7f7c' }});
     me.browsingStyleProvider.addRules(laneModellingSizeRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
@@ -149,10 +160,12 @@
     me.browsingStyleProvider.addRules(laneModellingStyleRules);
     me.browsingStyleProvider.addRules(trafficDirectionRulesForUnselectedLanes);
     me.browsingStyleProvider.addRules(trafficDirectionRulesForSelectedLane);
+    me.browsingStyleProvider.addRules(linkTypeSizeRules);
 
     me.browsingStyleProviderViewOnly = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProviderViewOnly.addRules(viewOnlyLaneModellingStyleRules);
     me.browsingStyleProviderViewOnly.addRules(laneModellingSizeRules);
     me.browsingStyleProviderViewOnly.addRules(featureTypeRules);
+    me.browsingStyleProviderViewOnly.addRules(linkTypeSizeRules);
   };
 })(this);

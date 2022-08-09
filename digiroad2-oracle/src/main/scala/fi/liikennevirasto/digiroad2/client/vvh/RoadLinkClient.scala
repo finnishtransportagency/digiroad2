@@ -38,35 +38,10 @@ object FeatureClass {
   case object AllOthers extends FeatureClass
 }
 
-sealed trait NodeType {
-  def value: Int
-}
-
-object NodeType {
-  val values = Set[NodeType](ClosedTrafficArea, Intersection, RailwayCrossing, PseudoNode, EndOfTheRoad,
-    RoundaboutNodeType, TrafficedSquare, RoadServiceArea, LightTrafficJunction, UnknownNodeType)
-
-  def apply(value: Int): NodeType = {
-    values.find(_.value == value).getOrElse(UnknownNodeType)
-  }
-
-  case object ClosedTrafficArea extends NodeType { def value = 1 }
-  case object Intersection extends NodeType { def value = 2 }
-  case object RailwayCrossing extends NodeType { def value = 3 }
-  case object PseudoNode extends NodeType { def value = 4 }
-  case object EndOfTheRoad extends NodeType { def value = 5 }
-  case object RoundaboutNodeType extends NodeType { def value = 6 }
-  case object TrafficedSquare extends NodeType { def value = 7 }
-  case object RoadServiceArea extends NodeType { def value = 8 }
-  case object LightTrafficJunction extends NodeType { def value = 9 }
-  case object UnknownNodeType extends NodeType { def value = 99 }
-}
-
 trait InterfaceRoadLinkFetched extends RoadLinkLike {
   def featureClass: FeatureClass
   def modifiedAt: Option[DateTime]
 }
-
 case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[Point],
                            administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                            featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
@@ -93,8 +68,6 @@ case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
 }
-
-case class RoadNodesFetched(objectId: Long, geometry: Point, nodeId: Long, formOfNode: NodeType, municipalityCode: Int, subtype: Int)
 
 /**
   * Numerical values for change types from VVH ChangeInfo Api
@@ -360,7 +333,6 @@ class RoadLinkClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: RoadLinkHistoryClient = new RoadLinkHistoryClient()
-  lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
 
   def fetchRoadLinkByLinkId(linkId: String): Option[RoadLinkFetched] = {
     roadLinkData.fetchByLinkId(linkId) match {
@@ -1063,7 +1035,7 @@ class OldVVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperatio
   // TODO: Temporary parsing from string to long. Remove after not needed anymore
     queryByLinkIds(parseLinkIdsToLong(linkIds), fieldSelection, fetchGeometry, resultTransition, Filter.withLinkIdFilter)
 }
-
+//Replace with new tiekamu client in future
 class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
   override type LinkType = ChangeInfo
   override type Content = Map[String, Any]
@@ -1100,13 +1072,14 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   }
 
   def fetchByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
-    val definition = layerDefinition(withCreatedDateFilter(since, until))
+    /*val definition = layerDefinition(withCreatedDateFilter(since, until))
     val url = serviceUrl(definition, queryParameters())
 
     fetchVVHFeatures(url) match {
       case Left(features) => features.map(extractFeature)
       case Right(error) => throw new ClientException(error.toString)
-    }
+    }*/
+    Seq()  //disabled due to DROTH-3254
   }
 
   protected  def withCreatedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
@@ -1179,54 +1152,6 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
         case Right(error) => throw new ClientException(error.toString)
       }
     }.toList
-  }
-}
-
-class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
-
-  override type LinkType = RoadNodesFetched
-  override type Content = Map[String, Any]
-  protected override val restApiEndPoint = vvhRestApiEndPoint
-  protected override val serviceName = "Roadnode_data"
-  protected override val linkGeomSource = LinkGeomSource.Unknown
-  protected override val disableGeometry = false
-
-  protected override def defaultOutFields(): String = {
-    "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE,SUBTYPE"
-  }
-
-  protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], LinkOperationError] = {
-    val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
-    val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
-    val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-    optionalFeatures.map(Left(_)).getOrElse(Right(LinkOperationError(url+" : "+content.toString(),"")))
-  }
-
-  protected override def extractFeature(feature: Map[String, Any]) : RoadNodesFetched = {
-    val attributes = extractFeatureAttributes(feature)
-    val geometry = feature("geometry").asInstanceOf[Map[String, Double]]
-    val nodeGeometry: Point = Point(geometry.get("x").get, geometry.get("y").get)
-    val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
-    val objectId = attributes("OBJECTID").asInstanceOf[BigInt].longValue()
-    val nodeId = attributes("NODEID").asInstanceOf[BigInt].longValue()
-    val subtype = attributes("SUBTYPE").asInstanceOf[BigInt].toInt
-
-    RoadNodesFetched(objectId, nodeGeometry, nodeId, extractNodeType(attributes), municipalityCode, subtype)
-  }
-
-  protected def extractNodeType(attributes: Map[String, Any]): NodeType = {
-    Option(attributes("FORMOFNODE").asInstanceOf[BigInt])
-      .map(_.toInt)
-      .map(NodeType.apply)
-      .getOrElse(NodeType.UnknownNodeType)
-  }
-
-  def fetchByMunicipality(municipality: Int): Seq[RoadNodesFetched] = {
-    queryByMunicipality(municipality)
-  }
-
-  def fetchByMunicipalityF(municipality: Int): Future[Seq[RoadNodesFetched]] = {
-    Future(queryByMunicipality(municipality))
   }
 }
 

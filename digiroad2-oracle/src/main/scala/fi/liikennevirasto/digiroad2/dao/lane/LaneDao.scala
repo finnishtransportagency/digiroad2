@@ -427,11 +427,6 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
 
   def updateLane(lane: PersistedLane, username: String ): Unit = {
 
-    val oldLaneCode = sql"""SELECT lane_code FROM LANE WHERE id = ${lane.id}""".as[Int].first
-
-    if (LaneNumberOneDigit.isMainLane(oldLaneCode) && oldLaneCode != lane.laneCode)
-      throw new IllegalArgumentException("Cannot change the code of main lane!")
-
     sqlu"""UPDATE LANE
           SET LANE_CODE = ${lane.laneCode}, MODIFIED_BY = $username, MODIFIED_DATE = current_timestamp, MUNICIPALITY_CODE = ${lane.municipalityCode}
           WHERE id = ${lane.id}

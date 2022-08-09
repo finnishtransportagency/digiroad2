@@ -23,6 +23,7 @@
       }
     ],
     "executionRoleArn": "arn:aws:iam::920408837790:role/digiroad-batch-system-BatchTaskRole-NTGCBVRU7CCR",
+    "jobRoleArn": "arn:aws:iam::920408837790:role/Prod-digiroad2-JobRole",
     "environment": [
       {
         "name": "containerCPU",
