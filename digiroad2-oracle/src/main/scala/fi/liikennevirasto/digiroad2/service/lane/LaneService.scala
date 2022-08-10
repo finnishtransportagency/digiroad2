@@ -522,7 +522,7 @@ trait LaneOperations {
       roadAddressService.laneWithRoadAddress(lanes).partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
     }
     val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ") {
-      roadAddressService.LaneWithTempRoadAddress(lanesMissingUpdatedInfo)
+      roadAddressService.laneWithTempRoadAddress(lanesMissingUpdatedInfo)
     }
     (lanesWithUpdatedInfo ++ frozenInfo)
   }
