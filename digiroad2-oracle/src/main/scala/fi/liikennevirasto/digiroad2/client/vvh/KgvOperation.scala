@@ -182,12 +182,16 @@ class ExtractorBase {
   def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
   protected def extractAttributes(attributesMap: Map[String, Any], validFromDate:BigInt, lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
     def numberConversion(field:String): BigInt = {
-      try {
-        toBigInt(attributesMap(field).toString.toInt)
-      } catch {
-        case _: Exception =>
-          logger.warn(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
-          0
+      if (attributesMap(field) == null){
+        null
+      }else {
+        try {
+          toBigInt(attributesMap(field).toString.toInt)
+        } catch {
+          case _: Exception =>
+            logger.warn(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
+            0
+        }
       }
     }
 
