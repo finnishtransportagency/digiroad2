@@ -522,9 +522,9 @@ trait LaneOperations {
       roadAddressService.laneWithRoadAddress(lanes).partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
     }
     val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ") {
-      roadAddressService.experimentalLaneWithRoadAddress(lanesMissingUpdatedInfo)
+      roadAddressService.LaneWithTempRoadAddress(lanesMissingUpdatedInfo)
     }
-    (lanesWithUpdatedInfo ++ frozenInfo).distinct
+    (lanesWithUpdatedInfo ++ frozenInfo)
   }
 
   def laneChangesToTwoDigitLaneCode(laneChanges: Seq[LaneChange], roadLinks: Seq[RoadLink]): Seq[LaneChange] = {

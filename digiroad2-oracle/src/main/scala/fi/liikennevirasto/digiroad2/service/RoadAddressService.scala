@@ -266,7 +266,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   }
 
 
-  def experimentalLaneWithRoadAddress(pieceWiseLanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
+  def LaneWithTempRoadAddress(pieceWiseLanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
     if (pieceWiseLanes.nonEmpty) {
       try {
         val addressData = withDynTransaction(roadLinkTempDao.getByLinkIds(pieceWiseLanes.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
