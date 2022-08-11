@@ -82,6 +82,16 @@ object FilterOgc extends Filter {
       else ""
   }
 
+  override def withKmtkIdFilter(linkIds: Set[String]): String = {
+    if (linkIds.nonEmpty) withFilter("kmtkid",linkIds)
+    else ""
+  }
+
+  override def withOldkmtkidFilter(linkIds: Set[String]): String = {
+    if (linkIds.nonEmpty) withFilter("oldkmtkid",linkIds)
+    else ""
+  }
+  
   override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
       if (roadNames.nonEmpty) withFilter(roadNameSource,roadNames)
       else ""
@@ -268,8 +278,8 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   private val crs = "EPSG%3A3067"
   private val WARNING_LEVEL: Int = 10
   // This is way to bypass AWS API gateway 10MB limitation, tune it if item size increase or degrease 
-  private val BATCH_SIZE: Int = 4999
-  
+  protected val BATCH_SIZE: Int = 4999
+  protected val BATCH_SIZE_LINK_ID: Int = 150
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
   protected def convertToFeature(content: Map[String, Any]): Feature = {
@@ -350,7 +360,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
           }
           Left(resort)
         } else {
-          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString))
+          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
         }
       }
       catch {
@@ -461,7 +471,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   }
   
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
-      linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    linkIds.grouped(BATCH_SIZE_LINK_ID).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
   }
 
   protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {
