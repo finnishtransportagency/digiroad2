@@ -16,4 +16,10 @@ class Parallel {
     f(prepare[T](list))
     forkJoinPool.shutdown()
   }
+  def operationAndReturn[T, U](list: ParIterable[T], parallelism: Int = 1)(f: ParIterable[T] => U):U = {
+    parallelismLevel = parallelism
+    val function = f(prepare[T](list))
+    forkJoinPool.shutdown()
+    function
+  }
 }

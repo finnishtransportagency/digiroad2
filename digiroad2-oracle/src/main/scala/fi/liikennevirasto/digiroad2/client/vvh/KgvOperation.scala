@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, Parallel}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
@@ -463,11 +463,15 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   }
   
   override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
-    idSet.grouped(BATCH_SIZE_LINK_ID).toList.par.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
+    new Parallel().operationAndReturn(idSet.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
+      _.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
+    }
   }
   
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
-    linkIds.grouped(BATCH_SIZE_LINK_ID).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    new Parallel().operationAndReturn( linkIds.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
+      _.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    }
   }
 
   protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {
