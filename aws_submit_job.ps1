@@ -21,5 +21,5 @@ aws batch submit-job --profile vaylaapp --job-definition <definition>  --job-nam
 # AssetValidatorProcess
 aws batch submit-job --profile vaylaapp --job-definition <definition>  --job-name <name> --job-queue <name> --container-overrides "environment=[{name=batchRunType,value=AssetValidatorProcess},{name=assetForValidation,value=<asset>}]"
 
-# LinearAssetUpdater
-aws batch submit-job --profile vaylaapp --job-definition <definition>  --job-name <name> --job-queue <name> --container-overrides "environment=[{name=batchRunType,value=LinearAssetUpdater},{name=assetToUpdate,value=<asset>}]"
+# LinearAssetUpdateProcess
+aws batch submit-job --profile vaylaapp --job-definition <definition>  --job-name <name> --job-queue <name> --container-overrides "environment=[{name=batchRunType,value=LinearAssetUpdateProcess},{name=assetToUpdate,value=<asset>}]"
