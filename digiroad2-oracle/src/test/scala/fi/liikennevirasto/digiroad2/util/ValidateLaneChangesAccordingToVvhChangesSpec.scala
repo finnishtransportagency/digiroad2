@@ -56,7 +56,7 @@ class ValidateLaneChangesAccordingToVvhChangesSpec extends FunSuite with Matcher
     val lanes = createLanes()
 
     val roadLinksWithInvalidAmountOfMl = validateMainLaneAmount(roadLinks, lanes)
-    roadLinksWithInvalidAmountOfMl.size should equal(4)
+    roadLinksWithInvalidAmountOfMl.size should equal(3)
   }
 
   test("One inconsistent lane should be found"){

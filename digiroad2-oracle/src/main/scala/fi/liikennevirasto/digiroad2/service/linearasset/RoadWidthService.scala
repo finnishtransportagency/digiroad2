@@ -100,7 +100,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
 
 
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = roadLinkClient.createVVHTimeStamp()): Seq[Long] = {
     withDynTransaction {
       val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.map { newAsset =>
@@ -121,7 +121,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))).head
-      val roadLink = roadLinkClient.fetchRoadLinkByLinkId(linearAsset.linkId).
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linearAsset.linkId).
         getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 

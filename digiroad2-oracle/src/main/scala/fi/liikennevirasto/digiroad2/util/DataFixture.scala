@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, _}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
@@ -449,7 +449,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
 
-      val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -478,7 +478,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -539,7 +539,7 @@ object DataFixture {
 
     if (assets.nonEmpty) {
 
-      val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -1025,7 +1025,7 @@ object DataFixture {
                 roadLinkWithTrafficDirection.find(_.linkId == trafficChange.linkId) match {
                   case Some(roadLink) =>
                     println("")
-                    val actualTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
+                    val actualTrafficDirection = RoadLinkOverrideDAO.get("traffic_direction", roadLink.linkId)
                     println(s"Before -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(actualTrafficDirection)}")
 
                     println(s"roadLink Processed ->linkId: ${roadLink.linkId} trafficDirection ${roadLink.trafficDirection}, linkType: ${roadLink.linkType.value}")
@@ -1033,11 +1033,11 @@ object DataFixture {
                     val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass)
 
                     actualTrafficDirection match {
-                      case Some(traffic) => RoadLinkDAO.update("traffic_direction", linkProperty, Some("batch_roundabout"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
-                      case _ => RoadLinkDAO.insert("traffic_direction", linkProperty, Some("batch_roundabout"))
+                      case Some(traffic) => RoadLinkOverrideDAO.update("traffic_direction", linkProperty, Some("batch_roundabout"), actualTrafficDirection.getOrElse(TrafficDirection.UnknownDirection.value))
+                      case _ => RoadLinkOverrideDAO.insert("traffic_direction", linkProperty, Some("batch_roundabout"))
                     }
 
-                    val updateTrafficDirection = RoadLinkDAO.get("traffic_direction", roadLink.linkId)
+                    val updateTrafficDirection = RoadLinkOverrideDAO.get("traffic_direction", roadLink.linkId)
                     println(s"After -> linkId: ${roadLink.linkId}, trafficDirection: ${TrafficDirection.apply(updateTrafficDirection)}")
 
                   case _ => println("No roadlinks to process")
@@ -1864,7 +1864,7 @@ object DataFixture {
     def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadLink: RoadLink): Unit = {
       //Create new SpeedLimits on gaps
       newSpeedLimits.foreach { speedLimit =>
-        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(roadLinkClient.roadLinkData.createVVHTimeStamp()), linkSource = roadLink.linkSource)
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(roadLinkClient.createVVHTimeStamp()), linkSource = roadLink.linkSource)
         println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value + " and sidecode: " + speedLimit.sideCode)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
@@ -1968,9 +1968,8 @@ object DataFixture {
       PostGISDatabase.withDynTransaction {
         counter += 1
         println(s"Working on municipality $municipality ($counter/${municipalities.size})")
-        val municipalityRoadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
         val modifiedAssetTypes = LogUtils.time(logger, "BATCH LOG get modified asset types")(
-          verificationService.dao.getModifiedAssetTypes(municipalityRoadLinkIds.toSet)
+          verificationService.dao.getModifiedAssetTypes(Set(municipality))
         )
 
         LogUtils.time(logger, "BATCH LOG insert modified asset types")(
@@ -2228,7 +2227,7 @@ object DataFixture {
       case Some("adjust_digitization") =>
         adjustToNewDigitization()
       case Some("import_link_ids") =>
-        LinkIdImporter.importLinkIdsFromVVH(Digiroad2Properties.vvhRestApiEndPoint)
+        LinkIdImporter.changeLinkIdIntoKMTKVersion()
       case Some("generate_floating_obstacles") =>
         FloatingObstacleTestData.generateTestData.foreach(createAndFloat)
       case Some("get_addresses_to_masstransitstops_from_vvh") =>

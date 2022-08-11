@@ -23,6 +23,7 @@
       }
     ],
     "executionRoleArn": "arn:aws:iam::475079312496:role/QA-batchSystem-BatchTaskRole-1QO0VDAJOYS45",
+    "jobRoleArn": "arn:aws:iam::475079312496:role/QA-digiroad2-JobRole",
     "environment": [
       {
         "name": "containerCPU",
@@ -63,6 +64,10 @@
       {
         "name": "vvhRoadlink.frozen",
         "value": "false"
+      },
+      {
+        "name": "kgv.endpoint",
+        "value": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
       },
       {
         "name": "viiteRestApiEndPoint",
@@ -139,6 +144,10 @@
       {
         "name": "vvhRest.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/qa/vvhRest.password"
+      },
+      {
+        "name": "kgv.apikey",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/qa/apikey/kgv.apikey"
       },
       {
         "name": "oag.password",

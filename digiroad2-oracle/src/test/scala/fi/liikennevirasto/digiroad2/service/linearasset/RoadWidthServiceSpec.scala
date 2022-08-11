@@ -24,7 +24,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
@@ -32,9 +31,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
-  val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
-  when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  val timeStamp = RoadLinkClient.createVVHTimeStamp(5)
+  when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
   val roadLinkWithLinkSource = RoadLink(
     "1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -134,7 +132,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[String]], any[String], any[Boolean])).thenReturn(List())
 
       val existingAssets = service.getByBoundingBox(RoadWidthAssetTypeId, boundingBox).toList.flatten
@@ -278,7 +276,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     )
 
     PostGISDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(roadLinks)
       val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
       val id1 = service.create(Seq(newAsset1), RoadWidthAssetTypeId, "KX2")
@@ -316,7 +314,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
     PostGISDatabase.withDynTransaction {
       when(mockMunicipalityDao.getMunicipalityNameByCode(235)).thenReturn("Kauniainen")
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, Nil))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(roadLinks)
 
       val newAssets1 = service.create(Seq(NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)), RoadWidthAssetTypeId, "dr1_conversion")
@@ -378,7 +376,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val roadWidthIns2 = DynamicValue(DynamicAssetValue(propIns2))
     val roadWidthUpd = DynamicValue(DynamicAssetValue(propUpd))
 
-    when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("5000", 235, Seq(Point(0, 0), Point(100, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("5000", 235, Seq(Point(0, 0), Point(100, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     val service = createService()
     val toInsert = Seq(NewLinearAsset("5000", 0, 50, roadWidthIns1, BothDirections.value, 0, None), NewLinearAsset("5001", 0, 50, roadWidthIns2, BothDirections.value, 0, None))

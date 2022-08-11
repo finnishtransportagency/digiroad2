@@ -37,6 +37,8 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   def isOperator(): Boolean = configuration.roles(Role.Operator)
 
   def isELYMaintainer(): Boolean = configuration.roles(Role.ElyMaintainer)
+  
+  def isLaneMaintainer(): Boolean = configuration.roles(Role.LaneMaintainer)
 
   def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty && configuration.authorizedMunicipalities.nonEmpty
 
@@ -65,7 +67,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
     val isMunicipalityMaintainerAndIsAuthorized = isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)
     val isElyMaintainerAndIsAuthorized = isELYMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)
 
-    isElyException || isMunicipalityMaintainerAndIsAuthorized  || isElyMaintainerAndIsAuthorized  || isOperator()
+    isElyException || isMunicipalityMaintainerAndIsAuthorized  || isElyMaintainerAndIsAuthorized  || isLaneMaintainer() || isOperator()
   }
 
   private def isAuthorizedForArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean =
@@ -77,4 +79,5 @@ object Role {
   val Viewer = "viewer"
   val ElyMaintainer = "elyMaintainer"
   val ServiceRoadMaintainer = "serviceRoadMaintainer"
+  val LaneMaintainer = "laneMaintainer"
 }

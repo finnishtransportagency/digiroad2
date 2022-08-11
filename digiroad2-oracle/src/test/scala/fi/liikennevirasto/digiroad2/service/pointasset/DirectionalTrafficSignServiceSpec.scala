@@ -27,7 +27,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   val linkId = "1611317"
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(
+  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(
     Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))

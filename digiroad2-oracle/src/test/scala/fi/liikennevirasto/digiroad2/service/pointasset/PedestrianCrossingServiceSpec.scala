@@ -34,7 +34,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
@@ -47,7 +47,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
@@ -70,7 +70,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       Point(374476.866,6677355.235),
       Point(374490.755,6677366.834),
       Point(374508.979,6677381.08))
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((Seq(
       RoadLinkFetched(linkId, 235, roadLinkGeom, Municipality,
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 

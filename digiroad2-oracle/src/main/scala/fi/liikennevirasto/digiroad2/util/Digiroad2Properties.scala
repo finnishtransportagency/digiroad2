@@ -13,6 +13,8 @@ trait Digiroad2Properties {
   val vvhServiceHost: String
   val vvhRestApiEndPoint: String
   val vvhRoadlinkFrozen: Boolean
+  val kgvEndpoint:String
+  val kgvApiKey:String
   val vvhRestUsername: String
   val vvhRestPassword: String
   val viiteRestApiEndPoint: String
@@ -68,6 +70,8 @@ class Digiroad2PropertiesFromEnv extends Digiroad2Properties {
   val vvhRoadlinkFrozen: Boolean = scala.util.Properties.envOrElse("vvhRoadlink.frozen", "false").toBoolean
  
   val viiteRestApiEndPoint: String = scala.util.Properties.envOrElse("viiteRestApiEndPoint", null)
+  val kgvEndpoint: String = scala.util.Properties.envOrElse("kgv.endpoint", null)
+  val kgvApiKey: String = scala.util.Properties.envOrElse("kgv.apikey", null)
   val viiteApiKey: String = scala.util.Properties.envOrElse("viite.apikey", null)
   val sesUsername: String = scala.util.Properties.envOrElse("ses.username", null)
   val sesPassword: String = scala.util.Properties.envOrElse("ses.password", null)
@@ -151,6 +155,8 @@ class Digiroad2PropertiesFromFile extends Digiroad2Properties {
   override val vvhRestUsername: String = envOrProperties("vvhRest.username")
   override val vvhRestPassword: String = envOrProperties("vvhRest.password")
   override val vvhRoadlinkFrozen: Boolean = envProps.getProperty("vvhRoadlink.frozen", "false").toBoolean
+  override val kgvEndpoint: String = envProps.getProperty("kgv.endpoint", null)
+  override val kgvApiKey: String = envOrProperties("kgv.apikey")
   override val viiteRestApiEndPoint: String =  envOrProperties("viiteRestApiEndPoint")
   override val vkmUrl: String = envProps.getProperty("vkmUrl")
   override val vkmApiKey: String = envOrProperties("vkm.apikey")
@@ -235,6 +241,8 @@ object Digiroad2Properties {
   lazy val vvhRoadlinkFrozen: Boolean = properties.vvhRoadlinkFrozen
   lazy val vvhRestUsername: String = properties.vvhRestUsername
   lazy val vvhRestPassword: String = properties.vvhRestPassword
+  lazy val kgvEndpoint: String = properties.kgvEndpoint
+  lazy val kgvApiKey: String = properties.kgvApiKey
   lazy val viiteRestApiEndPoint: String = properties.viiteRestApiEndPoint
   lazy val vkmUrl: String = properties.vkmUrl
   lazy val vkmApiKey: String = properties.vkmApiKey

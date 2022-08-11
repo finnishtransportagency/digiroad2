@@ -101,7 +101,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     * Returns speed limits for Digiroad2Api /speedlimits GET endpoint.
     */
   def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
-    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
+    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities,asyncMode = false)
     withDynTransaction {
       val (filledTopology,roadLinksByLinkId) = getByRoadLinks(roadLinks, change, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad})
       LinearAssetPartitioner.partition(enrichSpeedLimitAttributes(filledTopology, roadLinksByLinkId), roadLinksByLinkId)
@@ -193,7 +193,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     * Removes speed limit from unknown speed limits list if speed limit exists. Used by SpeedLimitUpdater actor.
     */
   def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
-    val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(linkIds)
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(linkIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
         dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
@@ -439,7 +439,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
   /**
     * This method was created for municipalityAPI, in future could be merge with the other create method.
     */
-  def createMultiple(newLimits: Seq[NewLinearAsset], username: String, vvhTimeStamp: Long = roadLinkClient.roadLinkData.createVVHTimeStamp(), municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+  def createMultiple(newLimits: Seq[NewLinearAsset], username: String, vvhTimeStamp: Long = roadLinkClient.createVVHTimeStamp(), municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     val createdIds = newLimits.flatMap { limit =>
       limit.value match {
         case SpeedLimitValue(suggestion, intValue) => dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.apply(limit.sideCode), SpeedLimitValue(suggestion, intValue), vvhTimeStamp, municipalityValidation)
@@ -457,7 +457,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
   def create(newLimits: Seq[NewLimit], value: SpeedLimitValue, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
-        dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, roadLinkClient.roadLinkData.createVVHTimeStamp(), municipalityValidation)
+        dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, roadLinkClient.createVVHTimeStamp(), municipalityValidation)
       }
       eventbus.publish("speedLimits:purgeUnknownLimits", (newLimits.map(_.linkId).toSet, Seq()))
       createdIds
@@ -466,7 +466,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
 
   def createWithoutTransaction(newLimits: Seq[NewLimit], value: SpeedLimitValue, username: String, sideCode: SideCode): Seq[Long] = {
     newLimits.flatMap { limit =>
-      dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, roadLinkClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+      dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, roadLinkClient.createVVHTimeStamp(), (_, _) => Unit)
     }
   }
 

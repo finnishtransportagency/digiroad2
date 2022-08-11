@@ -1,6 +1,7 @@
 (function(root) {
   root.SelectedLaneModelling = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
     SelectedLinearAsset.call(this, backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType);
+    this.promotionDirty = false;
     var lanesFetched = [];
     var selectedRoadLink = null;
     var assetsToBeExpired = [];
@@ -34,6 +35,8 @@
     };
 
     this.getCurrentLane = function () { return currentLane; };
+
+    this.isPromotionDirty = function () { return this.promotionDirty; };
 
     this.setCurrentLane = function (lane) { currentLane = self.getLane(lane); };
 
@@ -74,28 +77,29 @@
         return numberOfLanesByLaneCode[key] > 1;
       });
 
-      var lanesSortedByLaneCode = _.sortBy(lanes, getLaneCodeValue);
+      var lanesSortedByEndMeasure = _.sortBy(lanes, function(lane) {
+        return lane.endMeasure;
+      });
 
-      var duplicateLaneCounter = 0;
-      return _.map(lanesSortedByLaneCode, function (lane) {
-        if(_.includes(laneCodesToPutMarkers, getLaneCodeValue(lane).toString())) {
-          if (duplicateLaneCounter === 0){
-            lane.marker = 'A';
-            duplicateLaneCounter++;
-          }else{
-            lane.marker = 'B';
-            duplicateLaneCounter--;
+      _.forEach(laneCodesToPutMarkers, function (laneCode) {
+        var characterCounterForLaneMarker = 0;
+        for (var i = 0; i < lanesSortedByEndMeasure.length; i++) {
+          if (laneCode == getLaneCodeValue(lanesSortedByEndMeasure[i]).toString()) {
+            //The integer value of 'A' is 65, so every increment in the counter gives the next letter of the alphabet.
+            lanesSortedByEndMeasure[i].marker = String.fromCharCode(characterCounterForLaneMarker + 65);
+            characterCounterForLaneMarker += 1;
           }
         }
-        return lane;
       });
+
+      return lanesSortedByEndMeasure;
     };
 
     //Outer lanes that are expired are to be considered, the other are updates so we need to take those out
     //Here a outer lane is a lane with lane code that existed in the original but not in the modified configuration
     function omitIrrelevantExpiredLanes() {
       var lanesToBeRemovedFromExpire = _.filter(assetsToBeExpired, function (lane) {
-        return !_.isUndefined(self.getLane(getLaneCodeValue(lane)));
+        return !self.isOuterLane(getLaneCodeValue(lane));
       });
 
       _.forEach(lanesToBeRemovedFromExpire, function (lane) {
@@ -103,18 +107,19 @@
       });
     }
 
-    self.splitLinearAsset = function(laneNumber, split) {
-      collection.splitLinearAsset(self.getLane(laneNumber), split, function(splitLinearAssets) {
-        if (self.getLane(laneNumber).id === 0) {
-          self.removeLane(laneNumber);
-        } else {
-          self.expireLane(laneNumber);
-        }
-
+    self.splitLinearAsset = function(laneNumber, split, laneMarker) {
+      collection.splitLinearAsset(self.getLane(laneNumber, laneMarker), split, function(splitLinearAssets) {
+        var laneIndex = getLaneIndex(laneNumber, laneMarker);
+        self.selection.splice(laneIndex,1);
         self.selection.push(splitLinearAssets.created, splitLinearAssets.existing);
+        self.selection = giveSplitMarkers(self.selection);
         self.dirty = true;
         eventbus.trigger('laneModellingForm: reload');
       });
+    };
+
+    self.getSelectedLanes = function (lane){
+      return collection.getGroup(lane);
     };
 
     self.open = function(linearAsset, singleLinkSelect) {
@@ -198,18 +203,25 @@
 
     self.lanesCutAreEqual = function() {
       var laneNumbers = _.map(self.selection, getLaneCodeValue);
-      var cuttedLaneNumbers = _.transform(_.countBy(laneNumbers), function(result, count, value) {
+      var cutLaneNumbers = _.transform(_.countBy(laneNumbers), function(result, count, value) {
         if (count > 1) result.push(value);
       }, []);
 
-      return _.some(cuttedLaneNumbers, function (laneNumber){
+      return _.some(cutLaneNumbers, function (laneNumber){
         var lanes = _.filter(self.selection, function (lane){
           return _.find(lane.properties, function (property) {
             return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
           });
         });
-
-        return _.isEqual(lanes[0].properties, lanes[1].properties);
+        var sortedLanes = _.sortBy(lanes, function (lane) {
+          return lane.endMeasure;
+        });
+        for (var i = 1; i < sortedLanes.length; i++) {
+          if (_.isEqual(sortedLanes[i - 1].properties, sortedLanes[i].properties)) {
+            return true;
+          }
+        }
+        return false;
       });
     };
 
@@ -239,6 +251,18 @@
       return sideCodesMapped;
     }
 
+    function useOriginalLaneCode(lanes) {
+      return _.map(lanes, function(lane){
+        if(lane.originalLaneCode) {
+          lane.newLaneCode = getLaneCodeValue(lane);
+          setPropertyByPublicId(lane, "lane_code", lane.originalLaneCode);
+          return lane;
+        }
+          else return lane;
+      });
+
+    }
+
     self.save = function(isAddByRoadAddressActive) {
       eventbus.trigger(self.singleElementEvent('saving'));
       omitIrrelevantExpiredLanes();
@@ -247,7 +271,8 @@
       var sideCode = _.head(self.selection).sideCode;
       var sideCodesForLinks = getSideCodesForLinks();
 
-      var lanes = omitUnrelevantProperties(self.selection);
+      var lanesWithOriginalLaneCode = useOriginalLaneCode(self.selection);
+      var lanes = omitUnrelevantProperties(lanesWithOriginalLaneCode);
 
       var payload;
       if(isAddByRoadAddressActive) {
@@ -255,9 +280,9 @@
           sideCode: sideCode,
           laneRoadAddressInfo:{
             roadNumber: roadNumber,
-            initialRoadPartNumber: parseInt(startRoadPartNumber),
-            initialDistance: parseInt(startDistance),
-            endRoadPartNumber: parseInt(endRoadPartNumber),
+            startRoadPart: parseInt(startRoadPartNumber),
+            startDistance: parseInt(startDistance),
+            endRoadPart: parseInt(endRoadPartNumber),
             endDistance: parseInt(endDistance),
             track: track
           },
@@ -276,6 +301,7 @@
 
       backendOperation(payload, function() {
         self.dirty = false;
+        self.promotionDirty = false;
         self.close();
         eventbus.trigger(self.singleElementEvent('saved'));
       }, function(error) {
@@ -287,6 +313,7 @@
     var cancelExisting = function() {
       self.selection = lanesFetched;
       self.dirty = false;
+      self.promotionDirty = false;
       eventbus.trigger(self.singleElementEvent('valueChanged'), self);
     };
 
@@ -376,13 +403,91 @@
       self.dirty = true;
     };
 
+    this.promoteToMainLane = function(laneNumber) {
+      var lanesOnLink = self.selection;
+      var lanesWithOrderNumbers = self.getOrderingNumbers(lanesOnLink);
+      var newMainLane = _.find(lanesWithOrderNumbers, function(lane) {
+        return getLaneCodeValue(lane) === laneNumber;
+      });
+
+      var lanesAfterPromotion = laneCodesAfterPromotion(lanesWithOrderNumbers, newMainLane);
+      _.forEach(lanesAfterPromotion, function (lane) {
+        setPropertyByPublicId(lane, 'lane_type', null);
+      });
+      self.selection = lanesAfterPromotion;
+      reorganizeLanes(laneNumber);
+      self.dirty = true;
+      self.promotionDirty = true;
+    };
+
+    var laneCodesAfterPromotion = function (lanesWithOrderNumbers, newMainLane) {
+      var newMainLaneOrderNo = newMainLane.orderNo;
+      lanesWithOrderNumbers.forEach(function (lane) {
+        lane.originalLaneCode = getLaneCodeValue(lane);
+        var difference = newMainLaneOrderNo - lane.orderNo;
+        if (difference > 0) {
+          setPropertyByPublicId(lane, 'lane_code', difference * 2);
+        } else {
+          setPropertyByPublicId(lane, 'lane_code', Math.abs(difference) * 2 + 1);
+        }
+      });
+
+      return lanesWithOrderNumbers;
+    };
+
+    function setPropertyByPublicId(lane, propertyPublicId, propertyValue) {
+      _.map(lane.properties, function (prop) {
+        if (prop.publicId === propertyPublicId) {
+          prop.values[0] = {value: propertyValue};
+        }
+      });
+    }
+
+    this.getOrderingNumbers = function(lanesOnLink) {
+      var leftAndRightLanesPartitioned = _.partition(lanesOnLink, function(lane) {
+        var laneCode = getLaneCodeValue(lane);
+        return laneCode % 2 === 0;
+      });
+
+      var leftLanes = _.head(leftAndRightLanesPartitioned);
+      var rightLanes = _.last(leftAndRightLanesPartitioned);
+
+      var leftLanesOrdered = _.orderBy(leftLanes, function(lane) {
+        return getLaneCodeValue(lane);
+      }, 'desc');
+
+      var rightLanesOrdered = _.orderBy(rightLanes, function(lane) {
+        return getLaneCodeValue(lane);
+      }, 'asc');
+      var lanesLeftToRight = leftLanesOrdered.concat(rightLanesOrdered);
+
+      var orderNumberCounter = 0;
+      lanesLeftToRight.forEach(function (lane) {
+        var laneCode = getLaneCodeValue(lane);
+        var previousLane = lanesLeftToRight[lanesLeftToRight.indexOf(lane) - 1];
+        if(previousLane){
+          if(getLaneCodeValue(previousLane) == laneCode) {
+            lane.orderNo = orderNumberCounter;
+          }
+          else {
+            lane.orderNo = orderNumberCounter += 1;
+          }
+        }
+        else {
+          lane.orderNo = orderNumberCounter += 1;
+        }
+      });
+
+      return lanesLeftToRight;
+    };
+
     this.expireLane = function(laneNumber, marker) {
       var laneIndex = getLaneIndex(laneNumber, marker);
       var expiredLane = self.selection.splice(laneIndex,1)[0];
 
       //expiredLane could be modified by the user so we need to fetch the original
       var originalExpiredLane = _.find(lanesFetched, {'id': expiredLane.id});
-      if (linksSelected.length > 1) {
+      if (linksSelected.length > 1 && _.isUndefined(marker)) {
         var expiredGroup = collection.getGroup(originalExpiredLane);
         expiredGroup.forEach(function (lane) {
           lane.isExpired = true;

@@ -23,6 +23,7 @@
       }
     ],
     "executionRoleArn": "arn:aws:iam::920408837790:role/digiroad-batch-system-BatchTaskRole-NTGCBVRU7CCR",
+    "jobRoleArn": "arn:aws:iam::920408837790:role/Prod-digiroad2-JobRole",
     "environment": [
       {
         "name": "containerCPU",
@@ -63,6 +64,10 @@
       {
         "name": "vvhRoadlink.frozen",
         "value": "false"
+      },
+      {
+        "name": "kgv.endpoint",
+        "value": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
       },
       {
         "name": "viiteRestApiEndPoint",
@@ -139,6 +144,10 @@
       {
         "name": "vvhRest.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/vvhRest.password"
+      },
+      {
+        "name": "kgv.apikey",
+        "valueFrom": "arn:aws:ssm:eu-west-1:920408837790:parameter/prod/apikey/kgv.apikey"
       },
       {
         "name": "oag.password",

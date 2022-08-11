@@ -121,7 +121,7 @@ trait  PointAssetOperations{
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
+    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds,asyncMode=false)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
   }
 

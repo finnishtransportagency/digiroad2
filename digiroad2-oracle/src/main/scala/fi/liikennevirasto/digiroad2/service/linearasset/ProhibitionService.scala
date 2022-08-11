@@ -83,13 +83,13 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       val oldAsset = dao.fetchProhibitionsByIds(typeId, Set(id)).head
       val newMeasures = measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure))
       val newSideCode = sideCode.getOrElse(oldAsset.sideCode)
-      val roadLink = roadLinkClient.fetchRoadLinkByLinkId(oldAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(oldAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
       value match {
         case prohibitions: Prohibitions =>
           if ((validateMinDistance(newMeasures.startMeasure, oldAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldAsset.endMeasure)) || newSideCode != oldAsset.sideCode) {
             dao.updateExpiration(id)
-            Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, newSideCode, newMeasures, username, roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), verifiedBy = getVerifiedBy(username, oldAsset.typeId)))
+            Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, newSideCode, newMeasures, username, roadLinkClient.createVVHTimeStamp(), Some(roadLink), verifiedBy = getVerifiedBy(username, oldAsset.typeId)))
           }
           else {
             dao.updateVerifiedInfo(Set(id), username)
@@ -113,7 +113,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
           val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
           //Create New Asset
           createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, sideCode.getOrElse(oldAsset.sideCode),
-            measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(roadLinkClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
+            measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(roadLinkClient.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
         }
     }
   }
@@ -137,7 +137,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
 
       val linearAsset = dao.fetchProhibitionsByIds(assetTypeById(id), Set(id)).head
-      val roadLink = roadLinkClient.fetchRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
@@ -156,7 +156,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
 
       val existing = dao.fetchProhibitionsByIds(assetTypeById(id), Set(id)).head
-      val roadLink = roadLinkClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
       dao.updateExpiration(id, expired = true, username)

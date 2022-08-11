@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkClient, VVHRoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -17,20 +17,18 @@ import org.scalatest.mockito.MockitoSugar
 class NumericValueLinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val linkId = "388562360l"
-
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkClient.fetchRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  
+  when(mockRoadLinkService.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(
     "1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
+  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
