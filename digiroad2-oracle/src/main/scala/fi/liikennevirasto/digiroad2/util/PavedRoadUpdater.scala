@@ -12,16 +12,6 @@ import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
 
- def updatePavedRoads() = {
-    withDynTransaction {
-      val municipalities = Queries.getMunicipalities
-      municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
-        updateByRoadLinks(PavedRoad.typeId, municipality, roadLinks, changes)
-      }
-    }
-  }
-
   override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
     try {
       val linkIds = roadLinks.map(_.linkId)
