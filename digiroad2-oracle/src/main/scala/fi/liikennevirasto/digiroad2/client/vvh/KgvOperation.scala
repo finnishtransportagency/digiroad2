@@ -463,13 +463,13 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   }
   
   override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
-    new Parallel().operationAndReturn(idSet.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
+    new Parallel().operation(idSet.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
       _.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
     }
   }
   
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
-    new Parallel().operationAndReturn( linkIds.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
+    new Parallel().operation( linkIds.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
       _.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
     }
   }

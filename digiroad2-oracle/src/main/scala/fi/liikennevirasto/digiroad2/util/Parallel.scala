@@ -11,12 +11,7 @@ class Parallel {
     list.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
     list
   }
-  def operation[T, U](list: ParIterable[T], parallelism: Int = 1)(f: ParIterable[T] => U): Unit = {
-    parallelismLevel = parallelism
-    f(prepare[T](list))
-    forkJoinPool.shutdown()
-  }
-  def operationAndReturn[T, U](list: ParIterable[T], parallelism: Int = 1)(f: ParIterable[T] => U):U = {
+  def operation[T, U](list: ParIterable[T], parallelism: Int = 1)(f: ParIterable[T] => U):U = {
     parallelismLevel = parallelism
     val function = f(prepare[T](list))
     forkJoinPool.shutdown()
