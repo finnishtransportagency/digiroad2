@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{EuropeanRoads, ExitNumbers, UnknownLinkType}
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{isExtensionChange, isReplacementChange}
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{New, isExtensionChange, isReplacementChange}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, GeometryUtils, Point}
 import org.slf4j.LoggerFactory
 
 class LinearAssetUpdater(service: LinearAssetOperations) {
@@ -23,8 +23,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val logger = LoggerFactory.getLogger(getClass)
-
-
 
   def updateLinearAssets(typeId: Int) = {
     withDynTransaction {
@@ -334,9 +332,61 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, LinearAssetTypes.VvhGenerated)
+          case Some(TextualValue(textValue)) =>
+            dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
     }
+  }
+
+  def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]): Seq[PersistedLinearAsset] = {
+    def getAdjacentAssetByPoint(assets: Seq[(Point, PersistedLinearAsset)], point: Point) : Seq[PersistedLinearAsset] = {
+      assets.filter{case (assetPt, _) => GeometryUtils.areAdjacent(assetPt, point)}.map(_._2)
+    }
+
+    def getAssetsAndPoints(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, PersistedLinearAsset)] = {
+      existingAssets.flatMap { asset =>
+        val roadLink = roadLinks.find(_.linkId == asset.linkId)
+        if (roadLink.nonEmpty && roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
+          GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++
+            (if (asset.startMeasure == 0)
+              GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.startMeasure).map(point => (point, asset))
+            else
+              Seq())
+        } else
+          Seq()
+      }
+    }
+
+    val changesNew = changes.filter(_.changeType == New.value)
+    val linksWithExpiredAssets = withDynTransaction {
+      dao.getLinksWithExpiredAssets(changesNew.flatMap(_.newId.map(x => x)), existingAssets.head.typeId)
+    }
+
+    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get) || linksWithExpiredAssets.contains(chg.newId.get)).flatMap { change =>
+      roadLinks.find(_.linkId == change.newId.get).map { changeRoadLink =>
+        val assetAndPoints : Seq[(Point, PersistedLinearAsset)] = getAssetsAndPoints(existingAssets, roadLinks, (change, changeRoadLink))
+        val (first, last) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
+
+        if (assetAndPoints.nonEmpty) {
+          val assetAdjFirst = getAdjacentAssetByPoint(assetAndPoints, first)
+          val assetAdjLast = getAdjacentAssetByPoint(assetAndPoints, last)
+
+          val groupBySideCodeFirst = assetAdjFirst.groupBy(_.sideCode)
+          val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
+
+          if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
+            groupBySideCodeFirst.keys.flatMap { sideCode =>
+              groupBySideCodeFirst(sideCode).find(asset => groupBySideCodeLast(sideCode).exists(_.value.equals(asset.value))).map { asset =>
+                asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+              }
+            }
+          } else
+            Seq()
+        } else
+          Seq()
+      }
+    }.flatten
   }
 }

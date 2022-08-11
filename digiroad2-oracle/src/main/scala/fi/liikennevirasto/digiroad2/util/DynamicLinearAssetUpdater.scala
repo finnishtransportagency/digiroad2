@@ -10,17 +10,6 @@ class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends Line
 
   def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
-  def updateDynamicLinearAssets(typeId: Int) = {
-    withDynTransaction {
-      val municipalities = Queries.getMunicipalities
-      municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
-        updateByRoadLinks(typeId, municipality, roadLinks, changes)
-      }
-    }
-  }
-
-
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)

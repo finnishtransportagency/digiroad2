@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.UnknownLinkType
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
@@ -221,5 +222,55 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     service.updateByExpiration(oldSpeedLimit.id, true, LinearAssetTypes.VvhGenerated, false)
     val newId = service.createWithoutTransaction(Seq(NewLimit(oldSpeedLimit.linkId, oldSpeedLimit.startMeasure, oldSpeedLimit.endMeasure)), SpeedLimitValue(oldSpeedLimit.value.get.value, oldSpeedLimit.value.get.isSuggested), LinearAssetTypes.VvhGenerated, adjustment.sideCode)
     logger.info("SideCodeAdjustment newID" + newId)
+  }
+
+  def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[SpeedLimit], changes: Seq[ChangeInfo]): Seq[SpeedLimit] = {
+    val changesNew = changes.filter(_.changeType == New.value)
+    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get)).flatMap { change =>
+      roadLinks.find(_.linkId == change.newId.get).map { changeRoadLink =>
+        val assetAndPoints : Seq[(Point, SpeedLimit)] = getAssetsAndPoints(existingAssets, roadLinks, (change, changeRoadLink))
+        val (first, last) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
+
+        if (assetAndPoints.nonEmpty) {
+          val assetAdjFirst = getAdjacentAssetByPoint(assetAndPoints, first)
+          val assetAdjLast = getAdjacentAssetByPoint(assetAndPoints, last)
+
+          val groupBySideCodeFirst = assetAdjFirst.groupBy(_.sideCode)
+          val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
+
+          if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
+            groupBySideCodeFirst.keys.flatMap { sideCode =>
+              groupBySideCodeFirst(sideCode).find{asset =>
+                val lastAdjsWithFirstSideCode = groupBySideCodeLast.get(sideCode)
+                lastAdjsWithFirstSideCode.isDefined && lastAdjsWithFirstSideCode.get.exists(_.value.equals(asset.value))
+              }.map { asset =>
+                asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+              }
+            }
+          } else
+            Seq()
+        } else
+          Seq()
+      }
+    }.flatten
+  }
+
+  def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
+    existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.vvhTimeStamp)}
+      .flatMap { asset =>
+        val roadLink = roadLinks.find(_.linkId == asset.linkId)
+        if (roadLink.nonEmpty && roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
+          GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++
+            (if (asset.startMeasure == 0)
+              GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.startMeasure).map(point => (point, asset))
+            else
+              Seq())
+        } else
+          Seq()
+      }
+  }
+
+  def getAdjacentAssetByPoint(assets: Seq[(Point, SpeedLimit)], point: Point) : Seq[SpeedLimit] = {
+    assets.filter{case (assetPt, _) => GeometryUtils.areAdjacent(assetPt, point)}.map(_._2)
   }
 }

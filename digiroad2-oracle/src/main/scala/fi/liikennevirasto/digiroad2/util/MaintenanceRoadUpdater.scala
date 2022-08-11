@@ -9,16 +9,6 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Maint
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
-  def updateMaintenanceRoads() = {
-    withDynTransaction {
-      val municipalities = Queries.getMunicipalities
-      municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
-        updateByRoadLinks(MaintenanceRoadAsset.typeId, municipality, roadLinks, changes)
-      }
-    }
-  }
-
   override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
     try {
       val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)

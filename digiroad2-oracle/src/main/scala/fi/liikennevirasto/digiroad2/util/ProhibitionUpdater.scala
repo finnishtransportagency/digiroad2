@@ -9,22 +9,12 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measu
 
 class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater(service) {
 
-  def updateProhibitions(typeId: Int) = {
-    withDynTransaction {
-      val municipalities = Queries.getMunicipalities
-      municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
-        updateByRoadLinks(typeId, municipality, roadLinks, changes)
-      }
-    }
-  }
-
   override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
     try {
       val linkIds = roadLinks.map(_.linkId)
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
       val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-      val existingAssets = dao.fetchProhibitionsByLinkIds(Prohibition.typeId, linkIds ++ removedLinkIds, includeFloating = false).filterNot(_.expired)
+      val existingAssets = dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false).filterNot(_.expired)
 
       val timing = System.currentTimeMillis
 
@@ -98,4 +88,23 @@ class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater
     service.expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
     service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
+
+  override protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
+    def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
+      !persistedLinearAsset.exists(_.value == assetToPersist.value)
+    }
+
+    toUpdate.foreach { linearAsset =>
+      val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
+      val id = linearAsset.id
+      if (valueChanged(linearAsset, persistedLinearAsset)) {
+        linearAsset.value match {
+          case Some(prohibitions: Prohibitions) =>
+            dao.updateProhibitionValue(id, linearAsset.typeId, prohibitions, LinearAssetTypes.VvhGenerated)
+          case _ => None
+        }
+      }
+    }
+  }
+
 }

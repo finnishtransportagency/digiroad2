@@ -11,16 +11,6 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measu
 
 class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpdater(service) {
 
-  def updateRoadWidth() = {
-    withDynTransaction {
-      val municipalities = Queries.getMunicipalities
-      municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
-        updateByRoadLinks(RoadWidth.typeId, municipality, roadLinks, changes)
-      }
-    }
-  }
-
   override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
 
     try {
