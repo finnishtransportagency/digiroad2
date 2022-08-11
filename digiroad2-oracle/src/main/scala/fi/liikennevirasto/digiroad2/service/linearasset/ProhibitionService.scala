@@ -71,24 +71,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     filledTopology
   }
 
-  override protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
-    def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.value == assetToPersist.value)
-    }
-
-    toUpdate.foreach { linearAsset =>
-      val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
-      val id = linearAsset.id
-      if (valueChanged(linearAsset, persistedLinearAsset)) {
-        linearAsset.value match {
-          case Some(prohibitions: Prohibitions) =>
-            dao.updateProhibitionValue(id, linearAsset.typeId, prohibitions, LinearAssetTypes.VvhGenerated)
-          case _ => None
-        }
-      }
-    }
-  }
-
   override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
@@ -197,13 +179,5 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   }
 
-  override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
-    val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).headOption
-      .getOrElse(throw new IllegalStateException("Prohibition: Old asset " + adjustment.assetId + " no longer available"))
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-      .getOrElse(throw new IllegalStateException("Road link " + oldAsset.linkId + " no longer available"))
-    expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
-    createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
-  }
 
 }

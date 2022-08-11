@@ -32,30 +32,6 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(ids))
   }
 
-  protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]], roadLinks: Seq[RoadLink]) : Unit = {
-    def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.value == assetToPersist.value)
-    }
-
-    toUpdate.foreach { linearAsset =>
-      val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-      val persistedLinearAsset = persisted.getOrElse(linearAsset.id, Seq()).headOption
-      val id = linearAsset.id
-      if (valueChanged(linearAsset, persistedLinearAsset)) {
-        linearAsset.value match {
-          case Some(DynamicValue(multiTypeProps)) =>
-            dynamicLinearAssetDao.updateAssetLastModified(id, LinearAssetTypes.VvhGenerated) match {
-              case Some(id) =>
-                val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
-                validateRequiredProperties(linearAsset.typeId, props)
-                dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
-              case _ => None
-            }
-          case _ => None
-        }
-      }
-    }
-  }
 
   override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     if(newTransaction)
@@ -259,16 +235,6 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         }
     }.toSeq
   }
-
-  override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
-        val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction =  false).headOption
-          .getOrElse(throw new IllegalStateException("Old asset " + adjustment.assetId + " of type " + adjustment.typeId + " no longer available"))
-        val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-          .getOrElse(throw new IllegalStateException("Road link " + oldAsset.linkId + " no longer available"))
-        expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
-        createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure),
-          LinearAssetTypes.VvhGenerated, roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
-    }
 
   /**
     * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.

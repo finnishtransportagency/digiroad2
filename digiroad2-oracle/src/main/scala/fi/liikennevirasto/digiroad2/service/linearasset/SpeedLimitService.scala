@@ -236,34 +236,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     (filledTopology, roadLinksByLinkId)
   }
 
-  /**
-    * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
-    */
-  protected def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo],
-                                                         changeSet: ChangeSet, existingSpeedLimit: Seq[SpeedLimit]) : (Seq[SpeedLimit], ChangeSet) = {
-
-    val speedLimitsAndChanges = mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes).flatMap {
-      case (asset, (Some(roadLink), Some(projection))) =>
-        val (speedLimit, changes) = SpeedLimitFiller.projectSpeedLimit(asset, roadLink, projection, changeSet)
-        if (Math.abs(speedLimit.startMeasure - speedLimit.endMeasure) > 0)
-          Some((speedLimit, changes))
-        else
-          None
-      case _ =>
-        None
-    }
-
-    val speedLimits = speedLimitsAndChanges.map(_._1)
-    val generatedChangeSet = speedLimitsAndChanges.map(_._2)
-    val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
-
-    val newLinearAsset = if((speedLimits ++ existingSpeedLimit).nonEmpty) {
-//      newChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes) //Temporarily disabled according to DROTH-2327
-      Seq()
-    } else Seq()
-
-    (speedLimits ++ newLinearAsset, changeSetF)
-  }
 
   def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
     existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.vvhTimeStamp)}
@@ -284,120 +256,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     assets.filter{case (assetPt, _) => GeometryUtils.areAdjacent(assetPt, point)}.map(_._2)
   }
 
-  def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[SpeedLimit], changes: Seq[ChangeInfo]): Seq[SpeedLimit] = {
-    val changesNew = changes.filter(_.changeType == New.value)
-    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get)).flatMap { change =>
-      roadLinks.find(_.linkId == change.newId.get).map { changeRoadLink =>
-        val assetAndPoints : Seq[(Point, SpeedLimit)] = getAssetsAndPoints(existingAssets, roadLinks, (change, changeRoadLink))
-        val (first, last) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
 
-        if (assetAndPoints.nonEmpty) {
-          val assetAdjFirst = getAdjacentAssetByPoint(assetAndPoints, first)
-          val assetAdjLast = getAdjacentAssetByPoint(assetAndPoints, last)
 
-          val groupBySideCodeFirst = assetAdjFirst.groupBy(_.sideCode)
-          val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
 
-          if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
-            groupBySideCodeFirst.keys.flatMap { sideCode =>
-              groupBySideCodeFirst(sideCode).find{asset =>
-                val lastAdjsWithFirstSideCode = groupBySideCodeLast.get(sideCode)
-                lastAdjsWithFirstSideCode.isDefined && lastAdjsWithFirstSideCode.get.exists(_.value.equals(asset.value))
-              }.map { asset =>
-                asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
-              }
-            }
-          } else
-            Seq()
-        } else
-          Seq()
-      }
-    }.flatten
-  }
 
-  private def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], roadLinks: Seq[RoadLink],
-                                changes: Seq[ChangeInfo]) : Seq[(SpeedLimit, (Option[RoadLink], Option[Projection]))] = {
-    val targetLinks = changes.flatMap(_.newId).toSet
-    val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId)).groupBy(_.linkId)
-    val changeMap = changes.filterNot(c => c.newId.isEmpty || c.oldId.isEmpty).map(c => (c.oldId.get, c.newId.get)).groupBy(_._1)
-    val targetRoadLinks = changeMap.mapValues(a => a.flatMap(b => newRoadLinks.getOrElse(b._2, Seq())))
-    oldSpeedLimits.flatMap{limit =>
-      targetRoadLinks.getOrElse(limit.linkId, Seq()).map(newRoadLink =>
-        (limit,
-          getRoadLinkAndProjection(roadLinks, changes, limit.linkId, newRoadLink.linkId, oldSpeedLimits, currentSpeedLimits))
-      )}
-  }
 
-  private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: String, newId: String,
-                               speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit]) = {
-    val roadLink = roadLinks.find(rl => newId == rl.linkId)
-    val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
-    val projection = changeInfo match {
-      case Some(info) =>
-        // ChangeInfo object related speed limits; either mentioned in oldId or in newId
-        val speedLimits = speedLimitsToUpdate.filter(_.linkId == info.oldId.getOrElse(0L)) ++
-          currentSpeedLimits.filter(_.linkId == info.newId.getOrElse(0L))
-        mapChangeToProjection(info, speedLimits)
-      case _ => None
-    }
-    (roadLink,projection)
-  }
-
-  private def mapChangeToProjection(change: ChangeInfo, speedLimits: Seq[SpeedLimit]): Option[Projection] = {
-    val typed = ChangeType.apply(change.changeType)
-    typed match {
-        // cases 5, 6, 1, 2
-      case ChangeType.DividedModifiedPart  | ChangeType.DividedNewPart | ChangeType.CombinedModifiedPart |
-           ChangeType.CombinedRemovedPart => projectSpeedLimitConditionally(change, speedLimits, testNoSpeedLimitExists)
-        // cases 3, 7, 13, 14
-      case ChangeType.LengthenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
-           ChangeType.ReplacedNewPart =>
-        projectSpeedLimitConditionally(change, speedLimits, testSpeedLimitOutdated)
-      case _ => None
-    }
-  }
-
-  private def testNoSpeedLimitExists(speedLimits: Seq[SpeedLimit], linkId: String, mStart: Double, mEnd: Double, vvhTimeStamp: Long) = {
-    !speedLimits.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
-  }
-
-  private def testSpeedLimitOutdated(speedLimits: Seq[SpeedLimit], linkId: String, mStart: Double, mEnd: Double, vvhTimeStamp: Long) = {
-    val targetLimits = speedLimits.filter(l => l.linkId == linkId)
-    targetLimits.nonEmpty && !targetLimits.exists(l => l.vvhTimeStamp >= vvhTimeStamp)
-  }
-
-  private def projectSpeedLimitConditionally(change: ChangeInfo, limits: Seq[SpeedLimit], condition: (Seq[SpeedLimit], String, Double, Double, Long) => Boolean) = {
-    (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
-      case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
-      Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        condition(limits, newId, newStart, newEnd, vvhTimeStamp) match {
-          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
-          case false => None
-        }
-      case _ => None
-    }
-  }
-
-  /**
-    * Adds speed limits to unknown speed limits list. Used by SpeedLimitUpdater actor.
-    * Links to unknown speed limits are shown on UI Worklist page.
-    */
-  def persistUnknown(limits: Seq[UnknownSpeedLimit]): Unit = {
-    withDynTransaction {
-      dao.persistUnknownSpeedLimits(limits)
-    }
-  }
-
-  def persistProjectedLimit(limits: Seq[SpeedLimit]): Unit = {
-    withDynTransaction {
-      val (newlimits, changedlimits) = limits.partition(_.id <= 0)
-      newlimits.foreach { limit =>
-        dao.createSpeedLimit(limit.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), limit.linkId, Measures(limit.startMeasure, limit.endMeasure),
-          limit.sideCode, SpeedLimitValue(limit.value.get.value, limit.value.get.isSuggested), Some(limit.vvhTimeStamp), limit.createdDateTime, limit.modifiedBy,
-          limit.modifiedDateTime, limit.linkSource)
-      }
-    }
-  }
 
   /**
     * Saves speed limit value changes received from UI. Used by Digiroad2Api /speedlimits PUT endpoint.
@@ -641,43 +504,5 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
             .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
         }
     }
-  }
-
-  def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    dao.floatLinearAssets(changeSet.droppedAssetIds)
-
-    if (changeSet.adjustedMValues.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedMValues.foreach { adjustment =>
-      dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-    }
-
-    if (changeSet.adjustedVVHChanges.nonEmpty)
-      logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedVVHChanges.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-    }
-
-    //NOTE the order between expire and sideCode adjustment cant be changed
-    if (changeSet.expiredAssetIds.toSeq.nonEmpty)
-      logger.info("Expiring ids " + changeSet.expiredAssetIds.toSeq.mkString(", "))
-    changeSet.expiredAssetIds.toSeq.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
-
-    if (changeSet.adjustedSideCodes.nonEmpty)
-      logger.info("Side Code adjustments ids " + changeSet.adjustedSideCodes.map(a => "" + a.assetId + "/" + a.sideCode).mkString(", "))
-
-    changeSet.adjustedSideCodes.foreach { adjustment =>
-      adjustedSideCode(adjustment)
-    }
-  }
-
-  def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
-    val oldSpeedLimit = getPersistedSpeedLimitById(adjustment.assetId, newTransaction = false).getOrElse(throw new IllegalStateException("Asset no longer available"))
-
-    updateByExpiration(oldSpeedLimit.id, true, LinearAssetTypes.VvhGenerated, false)
-   val newId = createWithoutTransaction(Seq(NewLimit(oldSpeedLimit.linkId, oldSpeedLimit.startMeasure, oldSpeedLimit.endMeasure)), SpeedLimitValue(oldSpeedLimit.value.get.value, oldSpeedLimit.value.get.isSuggested), LinearAssetTypes.VvhGenerated, adjustment.sideCode)
-  logger.info("SideCodeAdjustment newID" + newId)
   }
 }
