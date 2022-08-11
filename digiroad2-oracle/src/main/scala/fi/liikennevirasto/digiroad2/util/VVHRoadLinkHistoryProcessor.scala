@@ -27,8 +27,7 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     * @return Filtered history links
     */
   def process(historyRoadLinks:Seq[HistoryRoadLink], roadLinks :Seq[RoadLinkFetched]) : Seq[HistoryRoadLink] ={
-    def getVersion(roadLinkFetched: RoadLinkLike) =
-      roadLinkFetched.attributes.getOrElse("VERSION", 0L).asInstanceOf[Long]
+    def getVersion(roadLinkFetched: HistoryRoadLink) = roadLinkFetched.version
 
     def newLinkId(roadLinkFetched: RoadLinkLike) : Option[String] = {
       roadLinkFetched.attributes.get("LINKID_NEW") match {

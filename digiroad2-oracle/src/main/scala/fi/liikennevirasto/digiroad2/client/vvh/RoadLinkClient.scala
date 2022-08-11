@@ -65,8 +65,8 @@ case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long,
   }
 }
 
-case class HistoryRoadLink(linkId: String,kmtkid:String,versio:Int, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
-                           trafficDirection: TrafficDirection, featureClass: FeatureClass,modifiedAt: Option[DateTime] = None, createdDate:BigInt = 0, endDate: BigInt = 0, attributes: Map[String, Any] = Map(),
+case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
+                           trafficDirection: TrafficDirection, featureClass: FeatureClass,modifiedAt: Option[DateTime] = None, createdDate:BigInt = 0, endDate: BigInt = 0, attributes: Map[String, Any] = Map(),kmtkid:String="",version:Int=0,
                            constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends InterfaceRoadLinkFetched {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
@@ -1255,11 +1255,11 @@ class ExtractHistory extends ExtractorBase {
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
     val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
     val kmtkId = linkId.split(":")(0)
-    val versio = linkId.split(":")(1).toInt
-    HistoryRoadLink(linkId,kmtkId,versio, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
+    val version = linkId.split(":")(1).toInt
+    HistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, createdDate = startTime.get,
-      attributes = extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)++ Map("VERSION"->attributes("version").toString.toLong)
-        ++ linkGeometryForApi ++ linkGeometryWKTForApi)
+      attributes = extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
+        ++ linkGeometryForApi ++ linkGeometryWKTForApi, kmtkid = kmtkId, version = version)
   }
 }
 class ExtractKgvChange extends ExtractorBase {
@@ -1280,7 +1280,7 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
     val changesLinkInfo = new RoadLinkChangeKGvClient().fetchByOldKmtkId(response.map(_.kmtkid).toSet)
     response.map(r => {
       val newId = Try {
-        val link = changesLinkInfo.find(f => r.kmtkid == f.oldKmtkId && r.versio == f.oldVersion).get
+        val link = changesLinkInfo.find(f => r.kmtkid == f.oldKmtkId && r.version == f.oldVersion).get
         s"${link.oldKmtkId}:${link.oldVersion}"
       }.getOrElse(None)
       r.copy(attributes = r.attributes ++ Map("LINKID_NEW" -> newId))
