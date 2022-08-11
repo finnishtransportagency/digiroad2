@@ -27,8 +27,8 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     * @return Filtered history links
     */
   def process(historyRoadLinks:Seq[HistoryRoadLink], roadLinks :Seq[RoadLinkFetched]) : Seq[HistoryRoadLink] ={
-    def endDate(roadLinkFetched: RoadLinkLike) =
-      roadLinkFetched.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
+    def getVersion(roadLinkFetched: RoadLinkLike) =
+      roadLinkFetched.attributes.getOrElse("VERSION", 0L).asInstanceOf[Long]
 
     def newLinkId(roadLinkFetched: RoadLinkLike) : Option[String] = {
       roadLinkFetched.attributes.get("LINKID_NEW") match {
@@ -41,8 +41,8 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
 
     def hasNewLinkId(roadLinkFetched: RoadLinkLike) = newLinkId(roadLinkFetched).isEmpty
 
-    // If several history link items have the same linkId, pick the one with latest endDate
-    val latestHistory = historyRoadLinks.groupBy(_.linkId).mapValues(rl => rl.maxBy(endDate)).values
+    // If several history link items have the same kmtkid, pick the one with latest version
+    val latestHistory = historyRoadLinks.groupBy(_.kmtkid).mapValues(rl => rl.maxBy(getVersion)).values
 
     // Deleted = history link has newLinkId and it's linkId is not found in current links
     val deletedRoadLinks = latestHistory.filter(hasNewLinkId).filterNot(rl => roadLinks.exists(rl.linkId == _.linkId))
@@ -55,7 +55,7 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
           compareGeometry(r.geometry, rl.geometry)
         )
     }
-
+    
     (changedRoadLinks ++ deletedRoadLinks).toSeq
   }
 
