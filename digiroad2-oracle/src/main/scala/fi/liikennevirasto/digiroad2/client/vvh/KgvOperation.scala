@@ -278,8 +278,8 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   private val crs = "EPSG%3A3067"
   private val WARNING_LEVEL: Int = 10
   // This is way to bypass AWS API gateway 10MB limitation, tune it if item size increase or degrease 
-  protected val BATCH_SIZE: Int = 4999
-  protected val BATCH_SIZE_LINK_ID: Int = 150
+  private val BATCH_SIZE: Int = 4999
+  private val BATCH_SIZE_LINK_ID: Int = 150
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
   protected def convertToFeature(content: Map[String, Any]): Feature = {
@@ -461,13 +461,9 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
       case Right(error) => throw new ClientException(error.toString)
     }
   }
-
-  protected def queryByLinkId[LinkType](linkId: String): Seq[LinkType] = {
-    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
-      case Left(features) =>features.get.features.map(feature=>
-        extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
-    }
+  
+  override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
+    idSet.grouped(BATCH_SIZE_LINK_ID).toList.par.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
   }
   
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {

@@ -379,7 +379,7 @@ trait LinkOperationsAbstract {
   protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = ???
 
   protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = ???
-
+  protected def queryByIds[LinkType](idSet: Set[String],filter:(Set[String])=>String): Seq[LinkType] = ???
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
   }
@@ -1302,7 +1302,7 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
 class RoadLinkChangeKGvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
   extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractKgvChange) {
   override type LinkType = ChangeKgv
-  def fetchByOldKmtkId(toSet: Set[String]): Seq[LinkType] = {
-    toSet.grouped(BATCH_SIZE_LINK_ID).toList.par.flatMap(ids=>queryByFilter(Some(filter.withOldkmtkidFilter(ids)))).toList.asInstanceOf[Seq[LinkType]]
+  def fetchByOldKmtkId(ids: Set[String]): Seq[LinkType] = {
+    queryByIds(ids,filter.withOldkmtkidFilter).asInstanceOf[Seq[LinkType]]
   }
 }
