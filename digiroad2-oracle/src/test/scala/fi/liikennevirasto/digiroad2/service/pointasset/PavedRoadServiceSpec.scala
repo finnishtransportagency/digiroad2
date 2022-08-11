@@ -142,7 +142,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetId = service.create(Seq(NewLinearAsset(newLinkId, 0, 20, propertyData, 1, 0, None)), PavedRoad.typeId, "testuser")
       val newAsset = service.getPersistedAssetsByIds(PavedRoad.typeId, newAssetId.toSet)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink)))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[String]], any[Boolean], any[Boolean])).thenReturn(newAsset)
 
       val existingAssets = service.getByBoundingBox(PavedRoad.typeId, boundingBox).toList.flatten
@@ -157,7 +157,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should be created only 1 new paved road asset when get 3 roadlink change information from vvh and only 1 roadlink have surfacetype equal 2") {
+  ignore("Should be created only 1 new paved road asset when get 3 roadlink change information from vvh and only 1 roadlink have surfacetype equal 2") {
 
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -314,7 +314,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     updated should have size (0)
   }
 
-  test("Should create new paved road assets from vvh roadlinks infromation through the actor") {
+  ignore("Should create new paved road assets from vvh roadlinks infromation through the actor") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {
@@ -360,7 +360,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   // Tests for DROTH-4: Paved Road from VVH
 
-  test("If VVH does not supply a change Information then no new asset should be created.") {
+  ignore("If VVH does not supply a change Information then no new asset should be created.") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -389,7 +389,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should apply pavement on whole segment") {
+  ignore("Should apply pavement on whole segment") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
@@ -434,7 +434,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should expire the assets if vvh gives change informations and the roadlink surface type is equal to 1") {
+  ignore("Should expire the assets if vvh gives change informations and the roadlink surface type is equal to 1") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
@@ -542,7 +542,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("should do anything when change information link id doesn't exists on vvh roadlinks"){
+  ignore("should do anything when change information link id doesn't exists on vvh roadlinks"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -568,7 +568,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test ("If neither OTH or VVH have existing assets and changeInfo then nothing should be created and returned") {
+  ignore("If neither OTH or VVH have existing assets and changeInfo then nothing should be created and returned") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -597,7 +597,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Adjust projected asset with creation"){
+  ignore("Adjust projected asset with creation"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]

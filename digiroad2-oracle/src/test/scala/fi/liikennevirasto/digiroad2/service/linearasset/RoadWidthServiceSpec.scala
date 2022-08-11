@@ -396,46 +396,5 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
-    val propWidth = DynamicProperty("width", "integer", true, Seq(DynamicPropertyValue("2")))
-    val propSuggestBox = DynamicProperty("suggest_box", "checkbox", false, List(DynamicPropertyValue(0)))
-    val propertiesSeq: Seq[DynamicProperty] = List(propWidth, propSuggestBox)
-    val roadWidthValues = DynamicValue(DynamicAssetValue(propertiesSeq))
-
-    val newLinearAsset = NewLinearAsset("1", 0, 10, roadWidthValues, SideCode.AgainstDigitizing.value, 0, None)
-
-    PostGISDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-      val id = ServiceWithDao.create(Seq(newLinearAsset), RoadWidth.typeId, "sideCode_adjust").head
-      val original = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
-
-      val changeSet =
-        ChangeSet(droppedAssetIds = Set.empty[Long],
-          expiredAssetIds = Set.empty[Long],
-          adjustedMValues = Seq.empty[MValueAdjustment],
-          adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-          adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)),
-          valueAdjustments = Seq.empty[ValueAdjustment])
-
-      ServiceWithDao.updateChangeSet(changeSet)
-      val expiredAsset = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
-      val newAsset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByLinkIds(RoadWidth.typeId, Seq(original.linkId))
-
-        newAsset.size should be(1)
-        val asset = newAsset.head
-        asset.startMeasure should be(original.startMeasure)
-        asset.endMeasure should be(original.endMeasure)
-        asset.createdBy should not be original.createdBy
-        asset.startMeasure should be(original.startMeasure)
-        asset.sideCode should be(SideCode.BothDirections.value)
-        asset.value should be(original.value)
-        asset.expired should be(false)
-        expiredAsset.expired should be(true)
-
-      dynamicSession.rollback()
-    }
-  }
-
-
 }
 
