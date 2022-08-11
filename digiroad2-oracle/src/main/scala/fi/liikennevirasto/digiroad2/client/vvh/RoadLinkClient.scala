@@ -1299,7 +1299,7 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
   
 }
 
-class RoadLinkChangeKGvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.ChangeKgv)
+class RoadLinkChangeKGvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
   extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractKgvChange) {
   override type LinkType = ChangeKgv
   def fetchByOldKmtkId(toSet: Set[String]): Seq[LinkType] = {

@@ -25,6 +25,7 @@ object LinkGeomSource{
   case object SuravageLinkInterface extends LinkGeomSource {def value = 3;}
   case object FrozenLinkInterface extends LinkGeomSource {def value = 4;}
   case object HistoryLinkInterface extends LinkGeomSource {def value = 5;}
+  case object ChangeKgv extends LinkGeomSource {def value = 6;}
   case object Unknown extends LinkGeomSource { def value = 99 }
 }
 
