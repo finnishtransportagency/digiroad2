@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{LengthenedCommonPart, Removed, ReplacedCommonPart, ReplacedRemovedPart}
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.Removed
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, RoadLink, TextualValue}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -44,7 +44,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
-      //val ids = service.create(Seq(NewLinearAsset(oldRoadLinkId, 0, 10, NumericValue(3), 1, 1L, None)), NumberOfLanes.typeId, "testuser", 0L).head
       val id = service.createWithoutTransaction(NumberOfLanes.typeId, oldRoadLinkId, NumericValue(3), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val assetsBefore = service.getPersistedAssetsByIds(NumberOfLanes.typeId, Set(id), false)
       assetsBefore.size should be(1)
@@ -57,7 +56,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  /*test("Should map winter speed limits of two old links to one new link") {
+  test("Should map winter speed limits of two old links to one new link") {
     val oldLinkId1 = "5001"
     val oldLinkId2 = "5002"
     val newLinkId = "6000"
@@ -68,24 +67,24 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
     val linkType = Freeway
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
-    val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(oldLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
-    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLink1 = RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLink2 = RoadLink(oldLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLinks = Seq(oldRoadLink1, oldRoadLink2)
+    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     val change = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), 144000000),
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(10), Some(20), Some(10), Some(20), 144000000))
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldLinkId1, oldLinkId2), false)).thenReturn(oldRoadLinks)
-      val linearAssetIds = TestLinearAssetUpdateProcess.create(Seq(NewLinearAsset(oldLinkId1, 0, 10, TextualValue("mittarajoitus"), 1, 0, None),
-        NewLinearAsset(oldLinkId2, 10, 20, TextualValue("mittarjoitus"), 1, 0, None)), WinterSpeedLimit.typeId, "testuser")
-      val assetsBefore = TestLinearAssetUpdateProcess.getPersistedAssetsByIds(WinterSpeedLimit.typeId, linearAssetIds.toSet, false)
+      val id1 = service.createWithoutTransaction(WinterSpeedLimit.typeId, oldLinkId1, NumericValue(80), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false)
+      val id2 = service.createWithoutTransaction(WinterSpeedLimit.typeId, oldLinkId2, NumericValue(80), 1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink1), false)
+      val assetsBefore = service.getPersistedAssetsByIds(WinterSpeedLimit.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.foreach(asset => asset.expired should be(false))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newLinkId), false)).thenReturn(Seq(newRoadLink))
-      TestLinearAssetUpdateProcess.updateByRoadLinks(WinterSpeedLimit.typeId, 1, Seq(newRoadLink), change)
-      val assetsAfter = TestLinearAssetUpdateProcess.dao.fetchLinearAssetsByLinkIds(WinterSpeedLimit.typeId, Seq(oldLinkId1, oldLinkId2, newLinkId), "mittarajoitus", true)
+      TestLinearAssetUpdater.updateByRoadLinks(WinterSpeedLimit.typeId, 1, Seq(newRoadLink), change)
+      val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(WinterSpeedLimit.typeId, Seq(oldLinkId1, oldLinkId2, newLinkId), "mittarajoitus", true)
       val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)
       expiredAssets.size should be(2)
       val expiredLinkIds = expiredAssets.map(_.linkId)
@@ -93,10 +92,16 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
       expiredLinkIds should contain(oldLinkId2)
       validAssets.size should be(2)
       validAssets.map(_.linkId) should be(List(newLinkId, newLinkId))
+      validAssets.foreach(asset => asset.value.get should be(NumericValue(80)))
+      val sortedValidAssets = validAssets.sortBy(_.startMeasure)
+      sortedValidAssets.head.startMeasure should be(0)
+      sortedValidAssets.head.endMeasure should be(10)
+      sortedValidAssets.last.startMeasure should be(10)
+      sortedValidAssets.last.endMeasure should be(20)
     }
   }
 
-  test("Should map linear assets (lit road) of old link to three new road links, asset covers part of road link") {
+  test("Should map winter speed limits of old link to three new road links, asset covers part of road link") {
     val oldLinkId = "5000"
     val newLinkId1 = "6001"
     val newLinkId2 = "6002"
@@ -106,34 +111,39 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
     val trafficDirection = TrafficDirection.BothDirections
     val functionalClass = 1
     val linkType = Freeway
-    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val assetTypeId = 100
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
     val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
+      RoadLink(newLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
+      RoadLink(newLinkId3, List(Point(20.0, 0.0), Point(25.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
 
     val change = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
+      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 5, Some(10), Some(20), Some(0), Some(10), 144000000),
+      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 5, Some(20), Some(25), Some(0), Some(5), 144000000))
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldLinkId), false)).thenReturn(Seq(oldRoadLink))
-      val linearAssetIds = TestLinearAssetUpdateProcess.create(Seq(NewLinearAsset(oldLinkId, 0, 10, TextualValue("mittarajoitus"), 1, 0, None)), LitRoad.typeId, "testuser")
-      val assetsBefore = TestLinearAssetUpdateProcess.getPersistedAssetsByIds(LitRoad.typeId, linearAssetIds.toSet, false)
+      val id = service.createWithoutTransaction(WinterSpeedLimit.typeId, oldRoadLink.linkId, NumericValue(80), 1, Measures(0, 25), "testuser", 0L, Some(oldRoadLink), false)
+      val assetsBefore = service.getPersistedAssetsByIds(WinterSpeedLimit.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.foreach(asset => asset.expired should be(false))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newLinkId1, newLinkId2, newLinkId3), false)).thenReturn(newRoadLinks)
-      TestLinearAssetUpdateProcess.updateByRoadLinks(LitRoad.typeId, 1, newRoadLinks, change)
-      val assetsAfter = TestLinearAssetUpdateProcess.dao.fetchLinearAssetsByLinkIds(LitRoad.typeId, Seq(oldLinkId, newLinkId1, newLinkId2, newLinkId3), "mittarajoitus", true)
+      TestLinearAssetUpdater.updateByRoadLinks(WinterSpeedLimit.typeId, 1, newRoadLinks, change)
+      val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(WinterSpeedLimit.typeId, Seq(oldLinkId, newLinkId1, newLinkId2, newLinkId3), "mittarajoitus", true)
       val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)
       expiredAssets.size should be(1)
       expiredAssets.head.linkId should be(oldLinkId)
       validAssets.size should be(3)
       validAssets.sortBy(_.linkId).map(_.linkId) should be(List(newLinkId1, newLinkId2, newLinkId3))
+      val sortedValidAssets = validAssets.sortBy(_.startMeasure)
+      sortedValidAssets.head.startMeasure should be(0)
+      sortedValidAssets.head.endMeasure should be(10)
+      sortedValidAssets(1).startMeasure should be(0)
+      sortedValidAssets(1).endMeasure should be(10)
+      sortedValidAssets.last.startMeasure should be(0)
+      sortedValidAssets.last.endMeasure should be(5)
     }
   }
 
@@ -146,13 +156,13 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
-      TestLinearAssetUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId, 0, 10, TextualValue("mittarajoitus"), 1, 1L, None)), LitRoad.typeId, "testuser").head
+      val id = service.createWithoutTransaction(WinterSpeedLimit.typeId, oldRoadLink.linkId, NumericValue(80), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
       val newLinkId = "160L"
       val newRoadLink = oldRoadLink.copy(linkId = newLinkId, geometry = Seq(Point(0.0, 0.0), Point(15, 0.0)), length = 15)
       val change = ChangeInfo(Some(oldRoadLinkId), Some(newLinkId), 123L, 2, Some(0), Some(10), Some(0), Some(15), 99L)
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newLinkId), false)).thenReturn(Seq(newRoadLink))
-      TestLinearAssetUpdateProcess.updateByRoadLinks(LitRoad.typeId, 1, Seq(newRoadLink), Seq(change))
-      val assets = TestLinearAssetUpdateProcess.dao.fetchLinearAssetsByLinkIds(LitRoad.typeId, Seq(oldRoadLinkId, newLinkId), "mittarajoitus", true)
+      TestLinearAssetUpdater.updateByRoadLinks(WinterSpeedLimit.typeId, 1, Seq(newRoadLink), Seq(change))
+      val assets = service.dao.fetchLinearAssetsByLinkIds(WinterSpeedLimit.typeId, Seq(oldRoadLinkId, newLinkId), "mittarajoitus", true)
       val (expiredAssets, validAssets) = assets.partition(_.expired)
       expiredAssets.size should be(1)
       expiredAssets.head.linkId should be(oldRoadLinkId)
@@ -161,5 +171,5 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
       validAssets.head.linkId should be(newLinkId)
       validAssets.head.endMeasure should be(15.0)
     }
-  }*/
+  }
 }

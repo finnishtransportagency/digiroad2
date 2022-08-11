@@ -1,14 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, DamagedByThaw, Freeway, LinkGeomSource, Motorway, Municipality, RoadWidth, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{CombinedRemovedPart, Removed}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, RoadLink, TextualValue}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, RoadWidthService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -44,8 +44,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
-      //val linearAssetId = TestRoadWidthUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId, 0, 10, TextualValue(""), 1, 1L, None)), RoadWidth.typeId, "testuser")
-      val linearAssetId = service.createWithoutTransaction(RoadWidth.typeId, oldRoadLinkId, TextualValue(""), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
+      val linearAssetId = service.createWithoutTransaction(RoadWidth.typeId, oldRoadLinkId, NumericValue(300), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(linearAssetId))
       assetsBefore.head.expired should be(false)
@@ -55,7 +54,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  /*test("Road width assets should be mapped to a new road link combined from two shorter links") {
+  test("Road width assets should be mapped to a new road link combined from two shorter links") {
     val oldRoadLinkId1 = "160L"
     val oldRoadLinkId2 = "170L"
     val newRoadLinkId = "310L"
@@ -66,9 +65,9 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
     val linkType = Freeway
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
-    val oldRoadLinks = Seq(RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
+    val oldRoadLink1 = RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLink2 = RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLinks = Seq(oldRoadLink1, oldRoadLink2)
     val newRoadLink = RoadLink(newRoadLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     val change = Seq(ChangeInfo(Some(oldRoadLinkId1), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(0), Some(10), Some(0), Some(10), 144000000),
@@ -76,19 +75,19 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
-      val linearAssetIds = TestRoadWidthUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId1, 0, 10, TextualValue("width"), 1, 0, None),
-        NewLinearAsset(oldRoadLinkId2, 10, 20, TextualValue("width"), 1, 0, None)), RoadWidth.typeId, "testuser")
-      val assetsBefore = TestRoadWidthUpdateProcess.getPersistedAssetsByIds(RoadWidth.typeId, linearAssetIds.toSet, false)
+      val id1 = service.createWithoutTransaction(RoadWidth.typeId, oldRoadLinkId1, NumericValue(300), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false)
+      val id2 = service.createWithoutTransaction(RoadWidth.typeId, oldRoadLinkId2, NumericValue(300), 1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink2), false)
+      val assetsBefore = service.getPersistedAssetsByIds(RoadWidth.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.foreach(asset => asset.expired should be(false))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
-      TestRoadWidthUpdateProcess.updateByRoadLinks(RoadWidth.typeId, 1, Seq(newRoadLink), change)
-      val expiredAssets = TestRoadWidthUpdateProcess.getPersistedAssetsByIds(RoadWidth.typeId, linearAssetIds.toSet, false)
+      TestRoadWidthUpdater.updateByRoadLinks(RoadWidth.typeId, 1, Seq(newRoadLink), change)
+      val expiredAssets = service.getPersistedAssetsByIds(RoadWidth.typeId, Set(id1, id2), false)
       expiredAssets.size should be(2)
       expiredAssets.sortBy(_.linkId).map(_.linkId) should be(List(oldRoadLinkId1, oldRoadLinkId2))
-      val validAssets = TestRoadWidthUpdateProcess.dao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, Seq(newRoadLinkId), "width")
+      val validAssets = service.dao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, Seq(newRoadLinkId), "width")
       validAssets.size should be(2)
       validAssets.map(_.linkId) should be(List(newRoadLinkId, newRoadLinkId))
     }
-  }*/
+  }
 }

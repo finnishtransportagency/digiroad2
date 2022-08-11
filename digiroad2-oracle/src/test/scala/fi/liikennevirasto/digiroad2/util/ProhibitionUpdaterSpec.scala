@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{CombinedRemovedPart, Removed}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, ProhibitionValue, Prohibitions, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, ProhibitionService}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -40,7 +40,7 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
-      val linearAssetId = service.createWithoutTransaction(Prohibition.typeId, oldRoadLinkId, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val linearAssetId = service.createWithoutTransaction(Prohibition.typeId, oldRoadLinkId, Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty))), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = service.getPersistedAssetsByIds(Prohibition.typeId, Set(linearAssetId), false)
       assetsBefore.head.expired should be(false)
@@ -50,7 +50,7 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  /*test("Prohibition assets should be mapped to a new road link combined from two shorter links") {
+  test("Prohibition assets should be mapped to a new road link combined from two shorter links") {
     val oldRoadLinkId1 = "160L"
     val oldRoadLinkId2 = "170L"
     val newRoadLinkId = "310L"
@@ -61,9 +61,9 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
     val linkType = Freeway
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
-    val oldRoadLinks = Seq(RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
+    val oldRoadLink1 = RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLink2 = RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLinks = Seq(oldRoadLink1, oldRoadLink2)
     val newRoadLink = RoadLink(newRoadLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     val change = Seq(ChangeInfo(Some(oldRoadLinkId1), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(0), Some(10), Some(0), Some(10), 144000000),
@@ -71,21 +71,26 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
-      val linearAssetIds = TestProhibitionUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId1, 0, 10,
-        Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None), NewLinearAsset(oldRoadLinkId2, 10, 20,
-        Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)), Prohibition.typeId, "testuser")
-      val assetsBefore = TestProhibitionUpdateProcess.getPersistedAssetsByIds(Prohibition.typeId, linearAssetIds.toSet, false)
+      val id1 = service.createWithoutTransaction(Prohibition.typeId, oldRoadLinkId1, Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty))),
+        1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false, None, None)
+      val id2 = service.createWithoutTransaction(Prohibition.typeId, oldRoadLinkId2, Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty))),
+        1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+      val assetsBefore = service.getPersistedAssetsByIds(Prohibition.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.foreach(asset => asset.expired should be(false))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
-      TestProhibitionUpdateProcess.updateByRoadLinks(Prohibition.typeId, 1, Seq(newRoadLink), change)
-      val expiredAssets = TestProhibitionUpdateProcess.dao.fetchAssetsByLinkIds(Set(Prohibition.typeId), Seq(oldRoadLinkId1, oldRoadLinkId2), true)
+      TestProhibitionUpdater.updateByRoadLinks(Prohibition.typeId, 1, Seq(newRoadLink), change)
+      val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(Prohibition.typeId, Seq(oldRoadLinkId1, oldRoadLinkId2, newRoadLinkId), "parking_prohibition", true)
+      val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)
       expiredAssets.size should be(2)
-      val validAssets = TestProhibitionUpdateProcess.dao.fetchAssetsByLinkIds(Set(Prohibition.typeId), Seq(newRoadLinkId))
+      expiredAssets.sortBy(_.linkId).map(_.linkId) should be(List(oldRoadLinkId1, oldRoadLinkId2))
       validAssets.size should be(2)
-      validAssets.foreach { asset =>
-        asset.linkId should be(newRoadLinkId)
-      }
+      validAssets.map(_.linkId) should be(List(newRoadLinkId, newRoadLinkId))
+      val sortedValidAssets = validAssets.sortBy(_.startMeasure)
+      sortedValidAssets.head.startMeasure should be(0)
+      sortedValidAssets.head.endMeasure should be(10)
+      sortedValidAssets.last.startMeasure should be(10)
+      sortedValidAssets.last.endMeasure should be(20)
     }
-  }*/
+  }
 }

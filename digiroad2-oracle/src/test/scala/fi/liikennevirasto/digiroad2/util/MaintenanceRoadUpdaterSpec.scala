@@ -50,6 +50,14 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
     override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
+  val prop1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue( "1")))
+  val prop2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue( "2")))
+  val prop3 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue( "text")))
+  val prop4 = DynamicProperty("suggest_box", "checkbox",  false, Seq())
+  val prop5 = DynamicProperty("huoltotie_tarkistettu", "checkbox",  false, Seq())
+
+  val props :Seq[DynamicProperty] = List(prop1, prop2, prop3, prop4, prop5)
+  val assetValues = DynamicValue(DynamicAssetValue(props))
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("Maintenance road asset on a removed road link should be expired") {
@@ -58,19 +66,9 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
       oldRoadLinkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
-    val propIns1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue( "1")))
-    val propIns2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue( "2")))
-    val propIns3 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue( "text")))
-    val propIns4 = DynamicProperty("suggest_box", "checkbox",  false, Seq())
-    val propIns5 = DynamicProperty("huoltotie_tarkistettu", "checkbox",  false, Seq())
-
-    val propIns :Seq[DynamicProperty] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
-    val maintenanceRoadIns = DynamicValue(DynamicAssetValue(propIns))
-
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
-      //val linearAssetId = TestMaintenanceRoadUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId, 0, 20, maintenanceRoadIns, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
-      val id = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId, NumericValue(1), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink))
+      val id = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId, assetValues, 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink))
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = Service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))
       assetsBefore.head.expired should be(false)
@@ -80,7 +78,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  /*test("Assets should be mapped to a new road link combined from two smaller links") {
+  test("Assets should be mapped to a new road link combined from two smaller links") {
     val oldRoadLinkId1 = "160L"
     val oldRoadLinkId2 = "170L"
     val newRoadLinkId = "310L"
@@ -91,37 +89,29 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
     val linkType = Freeway
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
-    val oldRoadLinks = Seq(RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
+    val oldRoadLink1 = RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLink2 = RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLinks = Seq(oldRoadLink1, oldRoadLink2)
 
     val newRoadLink = RoadLink(newRoadLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     val change = Seq(ChangeInfo(Some(oldRoadLinkId1), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldRoadLinkId2), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(0), Some(10), Some(10), Some(20), 1L))
-
-    val propIns1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue( "1")))
-    val propIns2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue( "2")))
-    val propIns3 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue( "text")))
-    val propIns4 = DynamicProperty("suggest_box", "checkbox",  false, Seq())
-    val propIns5 = DynamicProperty("huoltotie_tarkistettu", "checkbox",  false, Seq())
-
-    val propIns :Seq[DynamicProperty] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
-    val maintenanceRoadIns = DynamicValue(DynamicAssetValue(propIns))
+      ChangeInfo(Some(oldRoadLinkId2), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(10), Some(20), Some(10), Some(20), 1L))
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
-      val linearAssetIds = TestMaintenanceRoadUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId1, 0, 10, maintenanceRoadIns, 1, 0, None),
-        NewLinearAsset(oldRoadLinkId2, 10, 20, maintenanceRoadIns, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
-      val assetsBefore = TestMaintenanceRoadUpdateProcess.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, linearAssetIds.toSet, false)
+      val id1 = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId1, assetValues, 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false)
+      val id2 = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId2, assetValues, 1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink2), false)
+      val assetsBefore = Service.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, Set(id1, id2), false)
       assetsBefore.foreach(asset => asset.expired should be(false))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
-      TestMaintenanceRoadUpdateProcess.updateByRoadLinks(MaintenanceRoadAsset.typeId, 1, Seq(newRoadLink), change)
-      val expiredAssets = TestMaintenanceRoadUpdateProcess.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, linearAssetIds.toSet, false)
+      TestMaintenanceRoadUpdater.updateByRoadLinks(MaintenanceRoadAsset.typeId, 1, Seq(newRoadLink), change)
+      val expiredAssets = Service.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, Set(id1, id2), false)
       expiredAssets.size should be(2)
       expiredAssets.sortBy(_.linkId).map(_.linkId) should be(List(oldRoadLinkId1, oldRoadLinkId2))
-      val validAssets = TestMaintenanceRoadUpdateProcess.dao.fetchAssetsByLinkIds(Set(MaintenanceRoadAsset.typeId), Seq(newRoadLinkId))
+      val validAssets = Service.dao.fetchAssetsByLinkIds(Set(MaintenanceRoadAsset.typeId), Seq(newRoadLinkId))
       validAssets.size should be(2)
       validAssets.map(_.linkId) should be(List(newRoadLinkId, newRoadLinkId))
     }
-  }*/
+  }
 }

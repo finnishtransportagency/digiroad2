@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, Road
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -68,7 +68,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  /*test("Should map the speed limit of three old links to one new link") {
+  test("Should map the speed limit of three old links to one new link") {
     val oldLinkId1 = "5001"
     val oldLinkId2 = "5002"
     val oldLinkId3 = "5003"
@@ -80,8 +80,8 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
     val linkType = Freeway
 
     val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(oldLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(oldLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+      RoadLink(oldLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(oldLinkId3, List(Point(20.0, 0.0), Point(25.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
 
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
@@ -97,16 +97,16 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 10)))
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId3)).thenReturn(Some(RoadLinkFetched(oldLinkId3, oldRoadLinks(2).municipalityCode, oldRoadLinks(2).geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 5)))
-      TestSpeedLimitUpdateProcess.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId1, 0.0, 10.0),
-        NewLimit(oldLinkId1, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
+      service.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId2, 0.0, 10.0),
+        NewLimit(oldLinkId2, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
       when(mockRoadLinkClient.roadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
-      TestSpeedLimitUpdateProcess.updateByRoadLinks(municipalityCode, Seq(newRoadLink), changeInfo)
-      val newAsset = TestSpeedLimitUpdateProcess.getExistingAssetByRoadLink(newRoadLink, false).head
+      TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, Seq(newRoadLink), changeInfo)
+      val newAsset = service.getExistingAssetByRoadLink(newRoadLink, false).head
       newAsset.linkId should be(newRoadLink.linkId)
       newAsset.expired should be(false)
       newAsset.value.get should be(SpeedLimitValue(30))
       newAsset.startMeasure should be(0.0)
       newAsset.endMeasure should be(25.0)
     }
-  }*/
+  }
 }

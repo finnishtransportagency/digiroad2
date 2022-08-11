@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{CombinedRemovedPart, 
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, RoadLink, TextualValue}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, NumericValue, RoadLink, TextualValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -35,6 +35,13 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
     override def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   }
 
+  val assetValues = DynamicValue(DynamicAssetValue(Seq(
+    DynamicProperty("kelirikko", "number", false, Seq(DynamicPropertyValue(10))),
+    DynamicProperty("spring_thaw_period", "number", false, Seq()),
+    DynamicProperty("annual_repetition", "number", false, Seq()),
+    DynamicProperty("suggest_box", "checkbox", false, List())
+  )))
+
   test("Asset on a removed road link should be expired") {
     val oldRoadLinkId = "1505L"
     val oldRoadLink = RoadLink(
@@ -44,8 +51,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
-      //val linearAssetId = TestDynamicLinearAssetUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId, 0, 10, TextualValue("kelirikko"), 1, 1L, None)), DamagedByThaw.typeId, "testuser").head
-      val id = service.createWithoutTransaction(DamagedByThaw.typeId, oldRoadLinkId, TextualValue("kelirikko"), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
+      val id = service.createWithoutTransaction(DamagedByThaw.typeId, oldRoadLinkId, assetValues, 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))
       assetsBefore.head.expired should be(false)
@@ -55,7 +61,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
     }
   }
 
-  /*test("Assets should be mapped to a new road link combined from two smaller links") {
+  test("Assets should be mapped to a new road link combined from two smaller links") {
     val oldRoadLinkId1 = "160L"
     val oldRoadLinkId2 = "170L"
     val newRoadLinkId = "310L"
@@ -66,8 +72,9 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
     val linkType = Freeway
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
-    val oldRoadLinks = Seq(RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
+    val oldRoadLink1 = RoadLink(oldRoadLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLink2 = RoadLink(oldRoadLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
+    val oldRoadLinks = Seq(oldRoadLink1, oldRoadLink2)
 
     val newRoadLink = RoadLink(newRoadLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
@@ -76,13 +83,13 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
-      val linearAssetIds = TestDynamicLinearAssetUpdateProcess.create(Seq(NewLinearAsset(oldRoadLinkId1, 0, 10, TextualValue("kelirikko"), 1, 0, None),
-        NewLinearAsset(oldRoadLinkId2, 10, 20, TextualValue("kelirikko"), 1, 0, None)), DamagedByThaw.typeId, "testuser")
-      val assetsBefore = TestDynamicLinearAssetUpdateProcess.getPersistedAssetsByIds(DamagedByThaw.typeId, linearAssetIds.toSet, false)
+      val id1 = service.createWithoutTransaction(DamagedByThaw.typeId, oldRoadLinkId1, assetValues, 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false)
+      val id2 = service.createWithoutTransaction(DamagedByThaw.typeId, oldRoadLinkId2, assetValues, 1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink2), false)
+      val assetsBefore = service.getPersistedAssetsByIds(DamagedByThaw.typeId, Set(id1, id2), false)
       assetsBefore.foreach(asset => asset.expired should be(false))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
-      TestDynamicLinearAssetUpdateProcess.updateByRoadLinks(DamagedByThaw.typeId, 1, Seq(newRoadLink), change)
-      val assetsAfter = TestDynamicLinearAssetUpdateProcess.dao.fetchLinearAssetsByLinkIds(DamagedByThaw.typeId, Seq(oldRoadLinkId1, oldRoadLinkId2, newRoadLinkId), "kelirikko", true)
+      TestDynamicLinearAssetUpdater.updateByRoadLinks(DamagedByThaw.typeId, 1, Seq(newRoadLink), change)
+      val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(DamagedByThaw.typeId, Seq(oldRoadLinkId1, oldRoadLinkId2, newRoadLinkId), "kelirikko", true)
       val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)
       expiredAssets.size should be(2)
       val expiredLinkIds = expiredAssets.map(_.linkId)
@@ -90,6 +97,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
       expiredLinkIds should contain(oldRoadLinkId2)
       validAssets.size should be(2)
       validAssets.map(_.linkId) should be(List(newRoadLinkId, newRoadLinkId))
+      validAssets.map(_.value) should be(List(Some(NumericValue(10)), Some(NumericValue(10))))
     }
-  }*/
+  }
 }
