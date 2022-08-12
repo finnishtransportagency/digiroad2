@@ -818,7 +818,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
           "type" -> Try(TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).NewLawCode).getOrElse(""),
-          "oldTrafficCode" -> Try(showOldTrafficCode(trafficSign).toInt).getOrElse(""),
+          "oldTrafficCode" -> showOldTrafficCode(trafficSign),
           "value" -> trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
           "municipalityId" -> trafficSignService.getProperty(trafficSign, "municipality_id").map(_.propertyDisplayValue.getOrElse("")),
