@@ -142,7 +142,7 @@ trait  PointAssetOperations{
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
-    val historicRoadLink = roadLinkService.getHistoryDataLinksFromVVH(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
+    val historicRoadLink = roadLinkService.getHistoryDataLinks(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
     assets.flatMap { asset =>
       val link = roadLinks.find(_.linkId == asset.linkId)

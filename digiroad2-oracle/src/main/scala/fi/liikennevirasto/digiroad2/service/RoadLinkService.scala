@@ -974,9 +974,9 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def getHistoryDataLinkFromVVH(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getHistoryDataLinksFromVVH(Set(linkId), newTransaction).headOption
+  def getHistoryDataLink(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getHistoryDataLinks(Set(linkId), newTransaction).headOption
 
-  def getHistoryDataLinksFromVVH(linkId: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
+  def getHistoryDataLinks(linkId: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
     val vvhRoadLinks = fetchHistoryDataLinks(linkId)
     if (newTransaction)
       withDynTransaction {

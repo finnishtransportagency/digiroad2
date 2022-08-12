@@ -43,7 +43,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     RoadLinkFetched("1191950690", 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
-  when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq())
+  when(mockRoadLinkService.getHistoryDataLinks(any[Set[String]], any[Boolean])).thenReturn(Seq())
 
   val service = new ObstacleService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
