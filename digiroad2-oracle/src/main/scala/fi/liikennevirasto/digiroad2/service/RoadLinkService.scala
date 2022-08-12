@@ -1400,14 +1400,14 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   /**
     * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
-  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
-    adjustedRoadLinks(vvhRoadLinks)
+  def getRoadLinkDataByLinkIds(roadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
+    adjustedRoadLinks(roadLinks)
   }
 
-  private def adjustedRoadLinks(vvhRoadlinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
-    val propertyRows = fetchRoadLinkPropertyRows(vvhRoadlinks.map(_.linkId).toSet)
+  private def adjustedRoadLinks(roadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
+    val propertyRows = fetchRoadLinkPropertyRows(roadLinks.map(_.linkId).toSet)
 
-    vvhRoadlinks.map { link =>
+    roadLinks.map { link =>
       val latestModification = propertyRows.latestModifications(link.linkId, link.modifiedAt.map(at => (at, "vvh_modified")))
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
 
