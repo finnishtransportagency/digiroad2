@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
 /**
-  * This class is used to filter history road links from VVH. Filtered history links are used to show history information on map (DROTH-10).
+  * This class is used to filter history road links. Filtered history links are used to show history information on map.
   *
   * @param includeCurrentLinks If true, compare history with current road links within tolerance
   * @param minimumChange Tolerance minimum value
