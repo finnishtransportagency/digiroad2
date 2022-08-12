@@ -191,6 +191,7 @@ class ExtractorBase {
 
   def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
   protected def extractAttributes(attributesMap: Map[String, Any], validFromDate:BigInt, lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
+    case class NumberConversionFailed(msg:String)extends Exception(msg)
     def numberConversion(field:String): BigInt = {
       if (attributesMap(field) == null){
         null
@@ -199,8 +200,7 @@ class ExtractorBase {
           toBigInt(attributesMap(field).toString.toInt)
         } catch {
           case _: Exception =>
-            logger.warn(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
-            0
+            throw NumberConversionFailed(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
         }
       }
     }
@@ -282,7 +282,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   private val BATCH_SIZE_LINK_ID: Int = 150
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
-  protected def convertToFeature(content: Map[String, Any]): Feature = {
+  private def convertToFeature(content: Map[String, Any]): Feature = {
     val geometry = Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
       coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]]
     )
@@ -308,13 +308,13 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     * Under Construction - 1
     * Planned - 3
     */
-  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
+  private def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("properties").asInstanceOf[Map[String, Any]]
     val linkStatus = extractor.extractConstructionType(attributes)
     linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
   }
-  
-  protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
+
+  private def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
     val request = new HttpGet(url)
     addHeaders(request)
     
@@ -373,13 +373,13 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
       }
     }
   }
-  
-  def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
+
+  private def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
     if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
     else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
   }
   
-  def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
+  private def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
     val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
 
     @tailrec
