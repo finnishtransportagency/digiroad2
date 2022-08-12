@@ -6,12 +6,12 @@ import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, HistoryRoadLink, R
 import org.scalatest.{FunSuite, Matchers}
 
 
-class VVHRoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
+class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
   def id() = LinkIdGenerator.generateRandom();
   def id(linkId:String,version:Int) = s"${linkId.split(":")(0)}:$version"
   
-  val linkProcessorDeletedOnly = new VVHRoadLinkHistoryProcessor() // only returns deleted links
-  val linkProcessorShowCurrentlyChanged = new VVHRoadLinkHistoryProcessor(true,1.0,50.0) // returns also links which have current history in tolerance min 1 max 50
+  val linkProcessorDeletedOnly = new RoadLinkHistoryProcessor() // only returns deleted links
+  val linkProcessorShowCurrentlyChanged = new RoadLinkHistoryProcessor(true,1.0,50.0) // returns also links which have current history in tolerance min 1 max 50
   val emptyVVHLinkSeq = Seq.empty[RoadLinkFetched]
   val (linkId1, linkId2, linkId3, linkId4, linkId5) = (id(), id(), id(), id(), id())
   case class KmtkIdAndVersion(Kmtkid:String,Version:Int)

@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
   * @param minimumChange Tolerance minimum value
   * @param maximumChange Tolerance maximum value
   */
-class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChange: Double = 1.0, maximumChange: Double = 50.0) {
+class RoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChange: Double = 1.0, maximumChange: Double = 50.0) {
 
   /**
     * This method returns the latest history links that:

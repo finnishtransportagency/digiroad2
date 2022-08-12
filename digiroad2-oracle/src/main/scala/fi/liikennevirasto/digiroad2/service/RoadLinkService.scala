@@ -965,7 +965,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
     val roadlinks = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
     
-    val linkprocessor = new VVHRoadLinkHistoryProcessor()
+    val linkprocessor = new RoadLinkHistoryProcessor()
     // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
 
