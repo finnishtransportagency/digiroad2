@@ -197,7 +197,7 @@ trait Filter {
   def combineFiltersWithAnd(filter1: String, filter2: String): String = ???
 
   def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = ???
-  def withKmtkIdFilter(linkIds: Set[String]): String = ???
+
   def withOldkmtkidFilter(linkIds: Set[String]): String = ???
   /**
     *
@@ -1285,11 +1285,6 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
       }.getOrElse(None)
       r.copy(attributes = r.attributes ++ Map("LINKID_NEW" -> newId))
     })
-  }
-   
-  def fetchByKmtkId(toSet: Set[String]): Seq[LinkType] = {
-   val response = queryByFilter(Some(filter.withKmtkIdFilter(toSet))).asInstanceOf[Seq[LinkType]]
-    enrichWithChangeInfo(response)
   }
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {

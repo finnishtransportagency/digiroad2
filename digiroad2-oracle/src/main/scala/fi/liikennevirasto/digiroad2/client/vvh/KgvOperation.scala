@@ -82,11 +82,6 @@ object FilterOgc extends Filter {
       else ""
   }
 
-  override def withKmtkIdFilter(linkIds: Set[String]): String = {
-    if (linkIds.nonEmpty) withFilter("kmtkid",linkIds)
-    else ""
-  }
-
   override def withOldkmtkidFilter(linkIds: Set[String]): String = {
     if (linkIds.nonEmpty) withFilter("oldkmtkid",linkIds)
     else ""
