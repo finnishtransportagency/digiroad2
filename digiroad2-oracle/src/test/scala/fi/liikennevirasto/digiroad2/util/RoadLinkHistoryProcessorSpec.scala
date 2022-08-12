@@ -83,7 +83,7 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     filtteredHistoryLinks.size should be(2)
   }
 
-  test("Picks newest verson of link when multiple history links have same link-id ") {
+  test("Picks newest version of link when multiple history links have same link-id ") {
     val versionOfOne1 = id(linkId1, 1)
     val versionOfOne5 = id(linkId1, 5)
     val versionOfOne3 = id(linkId1, 3)
