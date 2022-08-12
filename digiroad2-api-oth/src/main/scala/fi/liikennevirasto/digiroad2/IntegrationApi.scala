@@ -802,10 +802,19 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
 
     def showOldTrafficCode(trafficSign: PersistedTrafficSign): String = {
-      if (trafficSignService.getProperty(trafficSign, "old_traffic_code").get.propertyValue == "1" ||  trafficSign.createdAt.get.isBefore(trafficSignService.newTrafficCodeStartDate)){
-        TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).OldLawCode
+      val oldTrafficCodeProperty = trafficSignService.getProperty(trafficSign, "old_traffic_code")
+      val trafficSignTypeProperty = trafficSignService.getProperty(trafficSign, "trafficSigns_type")
+
+      (oldTrafficCodeProperty, trafficSign.createdAt, trafficSignTypeProperty) match {
+        case (Some(oldCodeProp), Some(createdAt), Some(signTypeProp)) =>
+          if (oldCodeProp.propertyValue == "1" ||  createdAt.isBefore(trafficSignService.newTrafficCodeStartDate)){
+            TrafficSignType.applyOTHValue(signTypeProp.propertyValue.toInt).OldLawCode
+          }
+          else ""
+        case _ => ""
       }
-      else ""
+
+
     }
 
     trafficSigns.filterNot(x => x.floating | isSuggested(x)).map{ trafficSign =>
