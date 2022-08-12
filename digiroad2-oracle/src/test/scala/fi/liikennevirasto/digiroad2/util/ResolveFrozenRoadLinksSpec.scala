@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.util.Track.{Combined, LeftSide, RightSide}
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO, RoadAddressForLink => ViiteRoadAddress}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentMatchers.any

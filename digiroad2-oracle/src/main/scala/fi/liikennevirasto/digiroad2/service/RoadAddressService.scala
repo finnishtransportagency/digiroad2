@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkOverrideDAO, RoadLinkTempDAO}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressForLink, RoadLinkOverrideDAO}
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -17,8 +17,6 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-
-  def roadLinkTempDao = new RoadLinkTempDAO
 
   /**
     * Return all the current existing road numbers
@@ -35,7 +33,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param roadNumber The road number
     * @return
     */
-  def getAllByRoadNumber(roadNumber: Long): Seq[RoadAddress] = {
+  def getAllByRoadNumber(roadNumber: Long): Seq[RoadAddressForLink] = {
     viiteClient.fetchAllByRoadNumber(roadNumber, Seq())
   }
 
@@ -46,7 +44,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param roadParts  All the road number parts
     * @return
     */
-  def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddress] = {
+  def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddressForLink] = {
     viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
   }
 
@@ -59,7 +57,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param addrMeasure Road address measure
     * @return
     */
-  def getByRoadSection(road: Long, roadPart: Long, track: Track, addrMeasure: Long): Option[RoadAddress] = {
+  def getByRoadSection(road: Long, roadPart: Long, track: Track, addrMeasure: Long): Option[RoadAddressForLink] = {
     viiteClient.fetchAllBySection(road, roadPart, addrMeasure, Seq(track)).headOption
   }
 
@@ -69,7 +67,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param linkId Road link ID
     * @param mValue Road geometry measure
     */
-  def getByLrmPosition(linkId: Long, mValue: Double): Option[RoadAddress] = {
+  def getByLrmPosition(linkId: Long, mValue: Double): Option[RoadAddressForLink] = {
     viiteClient.fetchByLrmPosition(linkId, mValue).headOption
   }
 
@@ -81,7 +79,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param endMeasure   End measure
     * @return
     */
-  def getAllByLrmPositions(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[RoadAddress] = {
+  def getAllByLrmPositions(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[RoadAddressForLink] = {
     viiteClient.fetchByLrmPositions(linkId, startMeasure, endMeasure)
   }
 
@@ -93,7 +91,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   //resolving_frozen_links batch keeps crashing here because of Viite API GW limits, temporary fix implemented
   //TODO Rollback this grouping fix after Viite has implemented API GW limitation work-around
-  def getAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddress] = {
+  def getAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddressForLink] = {
     val linkIdsSplit = linkIds.grouped(1000).toSeq
     linkIdsSplit.flatMap(linkIdGroup => viiteClient.fetchAllByLinkIds(linkIdGroup))
   }
@@ -225,113 +223,21 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }
   }
 
-  def roadLinkWithRoadAddressTemp(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
-    try {
-      val roadAddressLinks = withDynTransaction(roadLinkTempDao.getByLinkIds(roadLinks.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
-      logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
-
-      roadLinks.map(rl =>
-        if (roadAddressLinks.contains(rl.linkId))
-          rl.copy(attributes = rl.attributes ++ roadAddressAttributesTemp(roadAddressLinks(rl.linkId)))
-        else
-          rl)
-    } catch {
-      case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
-        roadLinks
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
-        roadLinks
-    }
-  }
-
-  def experimentalLinearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] = {
-    try {
-      val addressData = withDynTransaction(roadLinkTempDao.getByLinkIds(pieceWiseLinearAssets.head.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
-
-      pieceWiseLinearAssets.map(
-        _.map(pwa =>
-          if (addressData.contains(pwa.linkId))
-            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributesTemp(addressData(pwa.linkId)))
-          else
-            pwa
-        ))
-    } catch {
-      case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
-        pieceWiseLinearAssets
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
-        pieceWiseLinearAssets
-    }
-  }
-
-
-  def experimentalLaneWithRoadAddress(pieceWiseLanes: Seq[Seq[PieceWiseLane]]): Seq[Seq[PieceWiseLane]] = {
-    if (pieceWiseLanes.nonEmpty) {
-      try {
-        val addressData = withDynTransaction(roadLinkTempDao.getByLinkIds(pieceWiseLanes.head.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
-
-        pieceWiseLanes.map(
-          _.map(pwa =>
-            if (addressData.contains(pwa.linkId))
-              pwa.copy(attributes = pwa.attributes ++ roadAddressAttributesTemp(addressData(pwa.linkId)))
-            else
-              pwa
-          ))
-      } catch {
-        case hhce: HttpHostConnectException =>
-          logger.error(s"Viite connection failing with message ${hhce.getMessage}")
-          pieceWiseLanes
-        case vce: ViiteClientException =>
-          logger.error(s"Viite error with message ${vce.getMessage}")
-          pieceWiseLanes
-      }
-    }else{
-      pieceWiseLanes
-    }
-  }
-
-  private def roadAddressAttributes(roadAddress: RoadAddress) = {
+  private def roadAddressAttributes(roadAddress: RoadAddressForLink) = {
     Map(
-      "VIITE_ROAD_NUMBER" -> roadAddress.roadNumber,
-      "VIITE_ROAD_PART_NUMBER" -> roadAddress.roadPartNumber,
-      "VIITE_TRACK" -> roadAddress.track.value,
-      "VIITE_SIDECODE" -> roadAddress.sideCode.value,
-      "VIITE_START_ADDR" -> roadAddress.startAddrMValue,
-      "VIITE_END_ADDR" -> roadAddress.endAddrMValue
+      "ROAD_NUMBER" -> roadAddress.roadNumber,
+      "ROAD_PART_NUMBER" -> roadAddress.roadPartNumber,
+      "TRACK" -> roadAddress.track.value,
+      "SIDECODE" -> roadAddress.sideCode.value,
+      "START_ADDR" -> roadAddress.startAddrMValue,
+      "END_ADDR" -> roadAddress.endAddrMValue
     )
   }
 
-  private def roadAddressAttributesTemp(roadAddress: RoadAddressTEMP) = {
-    Map(
-      "TEMP_ROAD_NUMBER" -> roadAddress.road,
-      "TEMP_ROAD_PART_NUMBER" -> roadAddress.roadPart,
-      "TEMP_TRACK" -> roadAddress.track.value,
-      "TEMP_START_ADDR" -> roadAddress.startAddressM,
-      "TEMP_END_ADDR" -> roadAddress.endAddressM,
-      "TEMP_SIDECODE" -> roadAddress.sideCode.map(_.value)
-    )
-  }
-
-  private def groupRoadAddress(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] ={
-    roadAddresses.groupBy(ra => (ra.linkId, ra.roadNumber, ra.roadPartNumber)).mapValues(ras => (ras.minBy(_.startAddrMValue),ras.maxBy(_.endAddrMValue))).map{
+  def groupRoadAddress(roadAddresses: Seq[RoadAddressForLink]): Seq[RoadAddressForLink] = {
+    roadAddresses.groupBy(ra => (ra.linkId, ra.roadNumber, ra.roadPartNumber)).mapValues(ras => (ras.minBy(_.startAddrMValue), ras.maxBy(_.endAddrMValue))).map {
       case (key, (startRoadAddress, endRoadAddress)) => startRoadAddress.copy(endAddrMValue = endRoadAddress.endAddrMValue)
     }.toSeq
   }
 
-  def groupRoadAddressTEMP(roadAddresses: Set[RoadAddressTEMP]): Set[RoadAddressTEMP] = {
-    roadAddresses
-      .groupBy(address => (address.linkId, address.road, address.roadPart))
-      .mapValues(addresses => (addresses.minBy(_.startAddressM),addresses.maxBy(_.endAddressM)))
-      .map {
-        case (_, (startRoadAddress, endRoadAddress)) =>
-          val (adjustedStart, adjustedEnd) =
-            if (startRoadAddress.startMValue > endRoadAddress.startMValue)
-              (endRoadAddress.startMValue, startRoadAddress.endMValue)
-            else
-              (startRoadAddress.startMValue, endRoadAddress.endMValue)
-          startRoadAddress.copy(endAddressM = endRoadAddress.endAddressM, startMValue = adjustedStart, endMValue = adjustedEnd)
-    }.toSet
-  }
 }

@@ -4,7 +4,7 @@ import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
-import fi.liikennevirasto.digiroad2.dao.RoadAddress
+import fi.liikennevirasto.digiroad2.dao.RoadAddressForLink
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, Track}
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}

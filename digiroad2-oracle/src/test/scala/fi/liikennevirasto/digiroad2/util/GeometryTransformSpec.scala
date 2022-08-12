@@ -3,7 +3,7 @@
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressForLink => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when

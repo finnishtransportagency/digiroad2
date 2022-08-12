@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressForLink => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
 import fi.liikennevirasto.digiroad2.{ Point }
 /**

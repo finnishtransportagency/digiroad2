@@ -1803,7 +1803,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def roadLinksWithConsistentAddress(roadLinksWithRoadAddress: Seq[RoadLink]): Seq[RoadLink] = {
     roadLinksWithRoadAddress.map(roadLink => {
-      val roadNumber = roadLink.attributes.getOrElse("VIITE_ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER"))
+      val roadNumber = roadLink.attributes.getOrElse("ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER"))
       val roadPartNumber = roadLink.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", roadLink.attributes.get("TEMP_ROAD_PART_NUMBER"))
       val startAddr = roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes.get("TEMP_START_ADDR"))
       val endAddr = roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR"))

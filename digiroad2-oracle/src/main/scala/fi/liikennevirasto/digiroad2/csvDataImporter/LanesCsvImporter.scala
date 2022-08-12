@@ -199,10 +199,10 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val roadAddresses = getRoadAddressToProcess(laneRoadAddressInfo).flatMap(_.addresses)
 
         val roadLinksFullyInsideRoadAddressRange = roadAddresses.filter(address =>
-          address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance)
+          address.startAddrMValue >= laneRoadAddressInfo.startDistance && address.endAddrMValue <= laneRoadAddressInfo.endDistance)
         val roadLinksPartiallyInsideRoadAddressRange = roadAddresses.filter(address =>
-          (address.startAddressM >= laneRoadAddressInfo.startDistance && address.endAddressM <= laneRoadAddressInfo.endDistance) ||
-           address.endAddressM <= laneRoadAddressInfo.endDistance && address.endAddressM >= laneRoadAddressInfo.startDistance)
+          (address.startAddrMValue >= laneRoadAddressInfo.startDistance && address.startAddrMValue <= laneRoadAddressInfo.endDistance) ||
+           address.endAddrMValue <= laneRoadAddressInfo.endDistance && address.endAddrMValue >= laneRoadAddressInfo.startDistance)
         val filteredRoadAddresses = (roadLinksFullyInsideRoadAddressRange ++ roadLinksPartiallyInsideRoadAddressRange)
 
         val lanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)

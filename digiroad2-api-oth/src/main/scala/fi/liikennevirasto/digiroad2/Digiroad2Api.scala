@@ -666,15 +666,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH  with boundingBox"){
         roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities,asyncMode = false)
       }
-      val roadLinks = if(withRoadAddress) {
-        val viiteInformation = LogUtils.time(logger, "TEST LOG Get Viite road address for links, link count: " + roadLinkSeq.size){
+      val roadLinks = if (withRoadAddress) {
+        val roadLinksWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for links, link count: " + roadLinkSeq.size) {
           roadAddressService.roadLinkWithRoadAddress(roadLinkSeq)
         }
-        val missingViiteAddress = viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))
-        val vkmInformation = LogUtils.time(logger, "TEST LOG Get Temp road address for links, link count: " + missingViiteAddress.size){
-          roadAddressService.roadLinkWithRoadAddressTemp(missingViiteAddress)
-        }
-        viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
+        roadLinksWithRoadAddress
       } else roadLinkSeq
       LogUtils.time(logger, "TEST LOG Partition roadLinks, link count: " + roadLinks.size)(partitionRoadLinks(roadLinks,withLaneInfo = withLaneInfo))
     }
@@ -685,9 +681,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities,asyncMode = false)
     val roadLinks = if(withRoadAddress) {
-      val viiteInformation = roadAddressService.roadLinkWithRoadAddress(roadLinkSeq)
-      val vkmInformation = roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))
-      viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
+      val roadLinksWithRoadAddress = roadAddressService.roadLinkWithRoadAddress(roadLinkSeq)
+      roadLinksWithRoadAddress
     } else roadLinkSeq
     partitionRoadLinks(roadLinks,withLaneInfo=withLaneInfo)
   }
@@ -745,13 +740,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
       "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
-      "roadPartNumber" -> roadLink.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", roadLink.attributes.get("TEMP_ROAD_PART_NUMBER")),
-      "roadNumber" -> roadLink.attributes.getOrElse("VIITE_ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER")),
+      "roadPartNumber" -> roadLink.attributes.getOrElse("ROAD_PART_NUMBER", roadLink.attributes.get("TEMP_ROAD_PART_NUMBER")),
+      "roadNumber" -> roadLink.attributes.getOrElse("ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER")),
       "constructionType" -> roadLink.constructionType.value,
       "linkSource" -> roadLink.linkSource.value,
-      "track" -> roadLink.attributes.getOrElse("VIITE_TRACK", roadLink.attributes.get("TEMP_TRACK")),
-      "startAddrMValue" -> roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes.get("TEMP_START_ADDR")),
-      "endAddrMValue" ->  roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR")),
+      "track" -> roadLink.attributes.getOrElse("TRACK", roadLink.attributes.get("TEMP_TRACK")),
+      "startAddrMValue" -> roadLink.attributes.getOrElse("START_ADDR", roadLink.attributes.get("TEMP_START_ADDR")),
+      "endAddrMValue" ->  roadLink.attributes.getOrElse("END_ADDR", roadLink.attributes.get("TEMP_END_ADDR")),
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
@@ -945,9 +940,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean) {
-            val updatedInfo = roadAddressService.linearAssetWithRoadAddress(assets)
-            val frozenInfo = roadAddressService.experimentalLinearAssetWithRoadAddress(updatedInfo.map(_.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty)))
-            mapLinearAssets(updatedInfo ++ frozenInfo)
+            val linearAssetsWithRoadAddress = roadAddressService.linearAssetWithRoadAddress(assets)
+            mapLinearAssets(linearAssetsWithRoadAddress)
           } else
             mapLinearAssets(assets)
       }
@@ -972,9 +966,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean) {
-            val updatedInfo = roadAddressService.linearAssetWithRoadAddress(assets)
-            val frozenInfo = roadAddressService.experimentalLinearAssetWithRoadAddress(updatedInfo.map(_.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty)))
-            mapLinearAssets(updatedInfo ++ frozenInfo)
+            val linearAssetsWithRoadAddress = roadAddressService.linearAssetWithRoadAddress(assets)
+            mapLinearAssets(linearAssetsWithRoadAddress)
           } else
             mapLinearAssets(assets)
           }
@@ -1108,11 +1101,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "area" -> extractIntValue(link.attributes, "area"),
           "municipalityCode" -> extractIntValue(link.attributes, "municipality"),
           "informationSource" -> link.informationSource,
-          "roadPartNumber" -> link.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", link.attributes.get("TEMP_ROAD_PART_NUMBER")),
-          "roadNumber" -> link.attributes.getOrElse("VIITE_ROAD_NUMBER", link.attributes.get("TEMP_ROAD_NUMBER")),
-          "track" -> link.attributes.getOrElse("VIITE_TRACK",  link.attributes.get("TEMP_TRACK")),
-          "startAddrMValue" -> link.attributes.getOrElse("VIITE_START_ADDR", link.attributes.get("TEMP_START_ADDR")),
-          "endAddrMValue" ->  link.attributes.getOrElse("VIITE_END_ADDR", link.attributes.get("TEMP_END_ADDR")),
+          "roadPartNumber" -> link.attributes.getOrElse("ROAD_PART_NUMBER", link.attributes.get("TEMP_ROAD_PART_NUMBER")),
+          "roadNumber" -> link.attributes.getOrElse("ROAD_NUMBER", link.attributes.get("TEMP_ROAD_NUMBER")),
+          "track" -> link.attributes.getOrElse("TRACK",  link.attributes.get("TEMP_TRACK")),
+          "startAddrMValue" -> link.attributes.getOrElse("START_ADDR", link.attributes.get("TEMP_START_ADDR")),
+          "endAddrMValue" ->  link.attributes.getOrElse("END_ADDR", link.attributes.get("TEMP_END_ADDR")),
           "administrativeClass" -> link.administrativeClass.value,
           "constructionType" -> extractIntValue(link.attributes, "constructionType"),
           "linkType" -> (if (extractIntValue(link.attributes, "linkType") != None) LinkType(extractIntValue(link.attributes, "linkType").asInstanceOf[Int]) else UnknownLinkType.value),
@@ -1144,11 +1137,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "createdBy" -> lane.createdBy,
           "createdAt" -> lane.createdDateTime,
           "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
-          "roadPartNumber" -> lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")),
-          "roadNumber" -> lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")),
-          "track" -> lane.attributes.getOrElse("VIITE_TRACK",  lane.attributes.get("TEMP_TRACK")),
-          "startAddrMValue" -> lane.attributes.getOrElse("VIITE_START_ADDR", lane.attributes.get("TEMP_START_ADDR")),
-          "endAddrMValue" ->  lane.attributes.getOrElse("VIITE_END_ADDR", lane.attributes.get("TEMP_END_ADDR")),
+          "roadPartNumber" -> lane.attributes.getOrElse("ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")),
+          "roadNumber" -> lane.attributes.getOrElse("ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")),
+          "track" -> lane.attributes.getOrElse("TRACK",  lane.attributes.get("TEMP_TRACK")),
+          "startAddrMValue" -> lane.attributes.getOrElse("START_ADDR", lane.attributes.get("TEMP_START_ADDR")),
+          "endAddrMValue" ->  lane.attributes.getOrElse("END_ADDR", lane.attributes.get("TEMP_END_ADDR")),
           "administrativeClass" -> lane.administrativeClass.value,
           "linkType" -> lane.attributes.getOrElse("linkType", 99)
         )
@@ -1188,11 +1181,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "points" -> link.geometry,
           "sideCode" -> link.sideCode,
           "values" -> link.value.map(_.toJson),
-          "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
-          "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
-          "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
-          "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
-          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
+          "roadPartNumber" -> extractLongValue(link.attributes, "ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link.attributes, "ROAD_NUMBER"),
+          "track" -> extractIntValue(link.attributes, "TRACK"),
+          "startAddrMValue" -> extractLongValue(link.attributes, "START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link.attributes, "END_ADDR"),
           "administrativeClass" -> link.administrativeClass.value
         )
       }
@@ -1389,11 +1382,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "createdBy" -> link.createdBy,
             "createdAt" -> link.createdDateTime,
             "linkSource" -> link.linkSource.value,
-            "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
-            "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
-            "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
-            "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
-            "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
+            "roadPartNumber" -> extractLongValue(link.attributes, "ROAD_PART_NUMBER"),
+            "roadNumber" -> extractLongValue(link.attributes, "ROAD_NUMBER"),
+            "track" -> extractIntValue(link.attributes, "TRACK"),
+            "startAddrMValue" -> extractLongValue(link.attributes, "START_ADDR"),
+            "endAddrMValue" ->  extractLongValue(link.attributes, "END_ADDR"),
             "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS"),
             "municipalityCode" -> extractIntValue(link.attributes, "municipalityCode")
           )
