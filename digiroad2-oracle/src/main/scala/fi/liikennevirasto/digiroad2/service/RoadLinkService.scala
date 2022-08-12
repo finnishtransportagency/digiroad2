@@ -1370,7 +1370,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
 
-  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[InterfaceRoadLinkFetched]): Seq[RoadLink] = {
+  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
     val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + vvhRoadLinks.size){getRoadLinkDataByLinkIds(vvhRoadLinks)}
   }
@@ -1400,11 +1400,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   /**
     * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
-  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[InterfaceRoadLinkFetched]): Seq[RoadLink] = {
+  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
     adjustedRoadLinks(vvhRoadLinks)
   }
 
-  private def adjustedRoadLinks(vvhRoadlinks: Seq[InterfaceRoadLinkFetched]): Seq[RoadLink] = {
+  private def adjustedRoadLinks(vvhRoadlinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
     val propertyRows = fetchRoadLinkPropertyRows(vvhRoadlinks.map(_.linkId).toSet)
 
     vvhRoadlinks.map { link =>
