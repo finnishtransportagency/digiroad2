@@ -1255,8 +1255,10 @@ class ExtractHistory extends ExtractorBase {
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
     val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
+    
     val kmtkId = linkId.split(":")(0)
     val version = linkId.split(":")(1).toInt
+    
     HistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, createdDate = startTime.get,
       attributes = extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
@@ -1269,9 +1271,19 @@ class ExtractKgvChange extends ExtractorBase {
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
     val attributes = feature.properties
 
-    ChangeKgv(attributes("id").toString.toInt,attributes("oldkmtkid").toString,attributes("oldversion").toString.toInt,attributes("newkmtkid").toString,
-      attributes("newversion").toString.toInt,attributes("type").toString,attributes("ruleid").toString,new DateTime(attributes("ctime").asInstanceOf[String]),
-      attributes("mfromold").toString,attributes("mtoold").toString.toInt,attributes("mfromnew").toString.toInt,attributes("mtonew").toString.toInt,
+    ChangeKgv(
+      attributes("id").toString.toInt,
+      attributes("oldkmtkid").toString,
+      attributes("oldversion").toString.toInt,
+      attributes("newkmtkid").toString,
+      attributes("newversion").toString.toInt,
+      attributes("type").toString,
+      attributes("ruleid").toString,
+      new DateTime(attributes("ctime").asInstanceOf[String]),
+      attributes("mfromold").toString,
+      attributes("mtoold").toString.toInt,
+      attributes("mfromnew").toString.toInt,
+      attributes("mtonew").toString.toInt,
       attributes("taskid").toString)
   }
 }
