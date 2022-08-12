@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{CombinedRemovedPart, Removed}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, OldVVHRoadLinkClient, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, RoadLink}
@@ -18,13 +18,13 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockRoadLinkData = MockitoSugar.mock[OldVVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockRoadLinkData)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -36,7 +36,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
-  object TestPavedRoadUpdater extends DynamicLinearAssetUpdater(Service) {
+  object TestPavedRoadUpdater extends PavedRoadUpdater(Service) {
     override def withDynTransaction[T](f: => T): T = f
     override def dao: PostGISLinearAssetDao = linearAssetDao
   }

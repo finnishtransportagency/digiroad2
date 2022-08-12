@@ -242,7 +242,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some("3"), Some("4"), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
     )
 
-    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(roadLinkWithLinkSource)
 
     val maintenanceRoad = DynamicAssetValue(propertiesSeq)
     runWithRollback {

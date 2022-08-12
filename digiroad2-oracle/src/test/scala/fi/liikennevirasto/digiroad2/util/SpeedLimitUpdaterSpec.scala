@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.CarRoad_IIIa
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, RoadLinkFetched, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, OldVVHRoadLinkClient, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -18,9 +18,9 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockRoadLinkData = MockitoSugar.mock[OldVVHRoadLinkClient]
   val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockRoadLinkClient.roadLinkData).thenReturn(mockRoadLinkData)
   val service = new SpeedLimitService(mockEventBus, mockRoadLinkClient, mockRoadLinkService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 

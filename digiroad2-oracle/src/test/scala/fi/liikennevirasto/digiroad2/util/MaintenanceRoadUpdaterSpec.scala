@@ -2,10 +2,10 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{CombinedRemovedPart, Removed}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient, VVHRoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, NumericValue, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -17,14 +17,11 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
-
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set.empty[String])).thenReturn(Seq())
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
- val mockMaintenanceDao = MockitoSugar.mock[PostGISMaintenanceDao]
+  val mockMaintenanceDao = MockitoSugar.mock[PostGISMaintenanceDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]

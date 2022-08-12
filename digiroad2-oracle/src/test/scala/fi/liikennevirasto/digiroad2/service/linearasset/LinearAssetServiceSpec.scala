@@ -584,7 +584,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     (yesterday + 24*60*60*1000L) should be (today)
   }
 
-  test("Should extend traffic count on segment") {
+  ignore("Should extend traffic count on segment") {
     val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
     when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
@@ -732,7 +732,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     }
   }
 
-  test("Adjust projected asset with creation"){
+  ignore("Adjust projected asset with creation"){
     val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
     when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
