@@ -4,7 +4,6 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.withMtkClassFilter
-import fi.liikennevirasto.digiroad2.client.vvh.FilterOgc.withFilter
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.commons.codec.binary.Base64
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory
 import java.math.BigInteger
 import java.net.URLEncoder
 import java.util.ArrayList
-import scala.collection.Seq
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
@@ -45,6 +43,7 @@ sealed trait IRoadLinkFetched extends RoadLinkLike {
   def featureClass: FeatureClass
   def modifiedAt: Option[DateTime]
 }
+
 case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[Point],
                            administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                            featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
@@ -1238,7 +1237,9 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkC
 
 
 class ExtractHistory extends ExtractorBase {
+  
   override type LinkType = HistoryRoadLink
+  
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
     val attributes = feature.properties
     val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
@@ -1264,6 +1265,7 @@ class ExtractHistory extends ExtractorBase {
 }
 class ExtractKgvChange extends ExtractorBase {
   override type LinkType = ChangeKgv
+  
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
     val attributes = feature.properties
 
@@ -1275,7 +1277,9 @@ class ExtractKgvChange extends ExtractorBase {
 }
 class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersios, linkGeomSource:LinkGeomSource=LinkGeomSource.HistoryLinkInterface)
   extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractHistory) {
+  
   override type LinkType = HistoryRoadLink
+  
   private def enrichWithChangeInfo(response: Seq[HistoryRoadLink]): Seq[HistoryRoadLink] = {
     val changesLinkInfo = new RoadLinkChangeKGvClient().fetchByOldKmtkId(response.map(_.kmtkid).toSet)
     response.map(r => {
@@ -1296,7 +1300,9 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
 
 class RoadLinkChangeKGvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
   extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractKgvChange) {
+  
   override type LinkType = ChangeKgv
+  
   def fetchByOldKmtkId(ids: Set[String]): Seq[LinkType] = {
     queryByIds(ids,filter.withOldkmtkidFilter).asInstanceOf[Seq[LinkType]]
   }

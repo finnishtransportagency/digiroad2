@@ -116,6 +116,8 @@ class ExtractorBase {
   lazy val logger = LoggerFactory.getLogger(getClass)
   type LinkType
 
+  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
+  
   protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
@@ -183,8 +185,7 @@ class ExtractorBase {
 
     lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
-
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
+  
   protected def extractAttributes(attributesMap: Map[String, Any], validFromDate:BigInt, lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
     case class NumberConversionFailed(msg:String)extends Exception(msg)
     def numberConversion(field:String): BigInt = {
@@ -229,7 +230,9 @@ class ExtractorBase {
 
 }
 class Extractor extends ExtractorBase {
+  
   override type LinkType = RoadLinkFetched
+  
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = {
     val attributes = feature.properties
 
@@ -272,9 +275,12 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   private val bboxCrsType = "EPSG%3A3067"
   private val crs = "EPSG%3A3067"
   private val WARNING_LEVEL: Int = 10
+  
   // This is way to bypass AWS API gateway 10MB limitation, tune it if item size increase or degrease 
   private val BATCH_SIZE: Int = 4999
-  private val BATCH_SIZE_LINK_ID: Int = 150
+  // Limit size of url query, Too big query string result error 414
+  private val BATCH_SIZE_FOR_SELECT_IN_QUERY: Int = 150
+  
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
   private def convertToFeature(content: Map[String, Any]): Feature = {
@@ -458,13 +464,13 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   }
   
   override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
-    new Parallel().operation(idSet.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
+    new Parallel().operation(idSet.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
       _.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
     }
   }
   
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
-    new Parallel().operation( linkIds.grouped(BATCH_SIZE_LINK_ID).toList.par,2){
+    new Parallel().operation( linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
       _.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
     }
   }

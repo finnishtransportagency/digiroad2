@@ -7,6 +7,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 
 class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
+  
   def id() = LinkIdGenerator.generateRandom();
   def id(linkId: String, version: Int) = s"${linkId.split(":")(0)}:$version"
 
