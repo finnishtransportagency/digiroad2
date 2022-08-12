@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.dao.RoadAddressTEMP
+import fi.liikennevirasto.digiroad2.dao.RoadAddressForLink
 import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneRoadAddressInfo}
 import org.scalatest.{FunSuite, Matchers}
 
@@ -13,7 +13,7 @@ class LaneUtilsSpec extends FunSuite with Matchers {
   test("Return None for link with road addresses outside of scope") {
     val linkLength = 50.214
     val addressesOnLink1 = Set( // At same road part but start after selection ends
-      RoadAddressTEMP(1234567, 1, 1, Track.RightSide, 120, 320, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 120, 320, None, None, 1234567, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink2 = Set( // At same road part but ends before selection starts
       RoadAddressTEMP(1234567, 1, 1, Track.RightSide, 0, 10, 0.0, 49.281, Seq(), None, None, None)

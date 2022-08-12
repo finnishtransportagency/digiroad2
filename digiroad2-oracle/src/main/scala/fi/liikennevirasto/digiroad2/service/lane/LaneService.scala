@@ -519,11 +519,11 @@ trait LaneOperations {
     val existingPersistedLanes = laneChanges.map(_.lane)
     val oldPersistedLanes = laneChanges.flatMap(_.oldLane)
 
-    val existingLanesWithConsistentAddress = lanesWithConsistentRoadAddress(pwLanesToPersistedLanesWithAddress(existingPersistedLanes, roadLinks))
-    val oldLanesWithConsistentAddress = lanesWithConsistentRoadAddress(pwLanesToPersistedLanesWithAddress(oldPersistedLanes, roadLinks))
+    val existingLanesWithRoadAddress = pwLanesToPersistedLanesWithAddress(existingPersistedLanes, roadLinks)
+    val oldLanesWithRoadAddress = pwLanesToPersistedLanesWithAddress(oldPersistedLanes, roadLinks)
 
-    val twoDigitExistingPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(existingLanesWithConsistentAddress).flatten
-    val twoDigitOldPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(oldLanesWithConsistentAddress).flatten
+    val twoDigitExistingPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(existingLanesWithRoadAddress).flatten
+    val twoDigitOldPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(oldLanesWithRoadAddress).flatten
 
     val twoDigitExistingPersistedLanes = pieceWiseLanesToPersistedLane(twoDigitExistingPwLanes)
     val twoDigitOldPersistedLanes = pieceWiseLanesToPersistedLane(twoDigitOldPwLanes)

@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.Digiroad2Context.laneService.lanesWithConsistentRoadAddress
-import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesFromVVHWithPolygon, roadLinksWithConsistentAddress}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesFromVVHWithPolygon}
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{laneService, roadAddressService, roadLinkService}
 import fi.liikennevirasto.digiroad2.client.{AddrWithIdentifier, VKMClient}
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getLaneRoadIdentifierByUsingViiteRoadNumber, getStartingLanes}
@@ -149,9 +148,8 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
 
       val roadLinks = getRoadLinksAndChangesFromVVHWithPolygon(polygon)._1
       val roadLinksWithRoadAddress = roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
-      val roadLinksWithConsistentRoadAddress = roadLinksWithConsistentAddress(roadLinksWithRoadAddress)
 
-      val correctLinks = roadLinksWithConsistentRoadAddress.filter(roadLink => roadLink.attributes("ROAD_NUMBER") == params.roadNumber
+      val correctLinks = roadLinksWithRoadAddress.filter(roadLink => roadLink.attributes("ROAD_NUMBER") == params.roadNumber
         && (roadPartRange contains roadLink.attributes("ROAD_PART_NUMBER")) && roadLink.attributes("TRACK") == params.track.value)
 
       val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
