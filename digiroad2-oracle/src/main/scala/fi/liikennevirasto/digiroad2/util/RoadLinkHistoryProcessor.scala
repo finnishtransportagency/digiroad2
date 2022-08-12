@@ -3,10 +3,6 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.client.vvh.{HistoryRoadLink, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import org.geotools.filter.function.GeometryTransformation
-
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * This class is used to filter history road links from VVH. Filtered history links are used to show history information on map (DROTH-10).
@@ -27,10 +23,10 @@ class RoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChan
     * @return Filtered history links
     */
   def process(historyRoadLinks:Seq[HistoryRoadLink], roadLinks :Seq[RoadLinkFetched]) : Seq[HistoryRoadLink] ={
-    def getVersion(roadLinkFetched: HistoryRoadLink) = roadLinkFetched.version
+    def getVersion(historyRoadLink: HistoryRoadLink) = historyRoadLink.version
 
-    def newLinkId(roadLinkFetched: RoadLinkLike) : Option[String] = {
-      roadLinkFetched.attributes.get("LINKID_NEW") match {
+    def newLinkId(roadLink: RoadLinkLike) : Option[String] = {
+      roadLink.attributes.get("LINKID_NEW") match {
         case Some(linkId) =>
           Some(linkId.toString)
         case _ =>
@@ -38,7 +34,7 @@ class RoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChan
       }
     }
 
-    def hasNewLinkId(roadLinkFetched: RoadLinkLike) = newLinkId(roadLinkFetched).isEmpty
+    def hasNewLinkId(roadLink: RoadLinkLike) = newLinkId(roadLink).isEmpty
 
     // If several history link items have the same kmtkid, pick the one with latest version
     val latestHistory = historyRoadLinks.groupBy(_.kmtkid).mapValues(rl => rl.maxBy(getVersion)).values
