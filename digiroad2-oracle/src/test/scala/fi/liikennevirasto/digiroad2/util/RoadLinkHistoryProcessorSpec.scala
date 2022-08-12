@@ -15,15 +15,15 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
   val roadLinkFetchedEmpty = Seq.empty[RoadLinkFetched]
   val (linkId1, linkId2, linkId3, linkId4, linkId5) = (id(), id(), id(), id(), id())
   case class KmtkIdAndVersion(kmtkid:String, version:Int)
-  def getVersion (linkId:String) = KmtkIdAndVersion(linkId.split(":")(0),linkId.split(":")(1).toInt)
+  def splitLinkId(linkId:String) = KmtkIdAndVersion(linkId.split(":")(0),linkId.split(":")(1).toInt)
 
   test("Chain one roadlink has 3  history links from one deleted link. Should return only one") {
     val attributes1 = Map(("LINKID_NEW", id()))
     val attributes2 = Map(("LINKID_NEW", id()))
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1, version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1, version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes2,version = getVersion(linkId2).version,kmtkid = getVersion(linkId3).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes2,version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId3).kmtkid)
     val roadLink3 = HistoryRoadLink(linkId3, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val roadLinksSeq = Seq(roadLink1, roadLink2,roadLink3)
@@ -33,7 +33,7 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
 
   test("History link has currentlink that is outside the tolerance") {
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val roadLinksSeq = Seq(roadLink1)
@@ -59,15 +59,15 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val attributes2 = Map(("LINKID_NEW", id()))
     val attributes3 = Map(("LINKID_NEW", id()))
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes1,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes1,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes2,version = getVersion(linkId2).version,kmtkid = getVersion(linkId2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes2,version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId2).kmtkid)
     val roadLink3 = HistoryRoadLink(linkId3, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(linkId3).version,kmtkid = getVersion(linkId3).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(linkId3).version,kmtkid = splitLinkId(linkId3).kmtkid)
     val roadLink4 = HistoryRoadLink(linkId4, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes3,version = getVersion(linkId4).version,kmtkid = getVersion(linkId4).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= attributes3,version = splitLinkId(linkId4).version,kmtkid = splitLinkId(linkId4).kmtkid)
     val roadLink5 = HistoryRoadLink(linkId5, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(linkId5).version,kmtkid = getVersion(linkId5).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(linkId5).version,kmtkid = splitLinkId(linkId5).kmtkid)
     val roadLinksSeq = Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5)
     val filtteredHistoryLinks = linkProcessorDeletedOnly.process(roadLinksSeq, roadLinkFetchedEmpty)
     filtteredHistoryLinks.size should be(2)
@@ -80,13 +80,13 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val versionOfOne3 =id(linkId1,3)
     
     val roadLink1 = HistoryRoadLink(versionOfOne1, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(versionOfOne1).version,kmtkid = getVersion(versionOfOne1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(versionOfOne1).version,kmtkid = splitLinkId(versionOfOne1).kmtkid)
     val roadLink2 = HistoryRoadLink(versionOfOne5, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(versionOfOne5).version,kmtkid = getVersion(versionOfOne5).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(versionOfOne5).version,kmtkid = splitLinkId(versionOfOne5).kmtkid)
     val roadLink3 = HistoryRoadLink(versionOfOne1, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(versionOfOne1).version,kmtkid = getVersion(versionOfOne1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(versionOfOne1).version,kmtkid = splitLinkId(versionOfOne1).kmtkid)
     val roadLink4 = HistoryRoadLink(versionOfOne3, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(versionOfOne3).version,kmtkid = getVersion(versionOfOne3).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(versionOfOne3).version,kmtkid = splitLinkId(versionOfOne3).kmtkid)
     val roadLinksSeq = Seq(roadLink1, roadLink2, roadLink3, roadLink4)
     val filtteredHistoryLinks = linkProcessorDeletedOnly.process(roadLinksSeq, roadLinkFetchedEmpty)
     filtteredHistoryLinks.size should be(1)
@@ -111,13 +111,13 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val roadLink3 = HistoryRoadLink(linkId3, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=attributes3)
     val roadLink4 = HistoryRoadLink(versioOfFour2, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(versioOfFour2).version,kmtkid = getVersion(versioOfFour2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(versioOfFour2).version,kmtkid = splitLinkId(versioOfFour2).kmtkid)
     val roadLink5 = HistoryRoadLink(versioOfFour5, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,0,version = getVersion(versioOfFour5).version,kmtkid = getVersion(versioOfFour5).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,0,version = splitLinkId(versioOfFour5).version,kmtkid = splitLinkId(versioOfFour5).kmtkid)
     val roadLink6 = HistoryRoadLink(versioOfFour3, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(versioOfFour3).version,kmtkid = getVersion(versioOfFour3).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(versioOfFour3).version,kmtkid = splitLinkId(versioOfFour3).kmtkid)
     val roadLink7 = HistoryRoadLink(versioOfFour1, 235, Seq(Point(0.0, 0.0), Point(1.1, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(versioOfFour1).version,kmtkid = getVersion(versioOfFour1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(versioOfFour1).version,kmtkid = splitLinkId(versioOfFour1).kmtkid)
     val roadLinksSeq = Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5, roadLink6, roadLink7)
     val filtteredHistoryLinks = linkProcessorDeletedOnly.process(roadLinksSeq, roadLinkFetchedEmpty)
     filtteredHistoryLinks.size should be(1)
@@ -129,7 +129,7 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
   {
     val attributes1 = Map(("LINKID_NEW", linkId2))
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(10.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes=attributes1,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes=attributes1,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = RoadLinkFetched(linkId2, 235, Seq(Point(0.00005, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1)
@@ -144,11 +144,11 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val attributes2 = Map(("LINKID_NEW", id()))
     val attributes3 = Map(("LINKID_NEW", linkId4))
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes = attributes1,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes = attributes1,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.00005, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes2,version = getVersion(linkId2).version,kmtkid = getVersion(linkId2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes2,version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId2).kmtkid)
     val roadLink3 = HistoryRoadLink(linkId3, 235, Seq(Point(10.00005, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes3,version = getVersion(linkId3).version,kmtkid = getVersion(linkId4).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes3,version = splitLinkId(linkId3).version,kmtkid = splitLinkId(linkId4).kmtkid)
     val roadLink4 = RoadLinkFetched(linkId4, 235, Seq(Point(0.00005, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1,roadLink2,roadLink3)
@@ -163,11 +163,11 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
     val attributes2 = Map(("LINKID_NEW", id()))
     val attributes3 = Map(("LINKID_NEW", id()))
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.00005, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes2,version = getVersion(linkId2).version,kmtkid = getVersion(linkId2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes2,version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId2).kmtkid)
     val roadLink3 = HistoryRoadLink(linkId3, 235, Seq(Point(0.00005, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes3,version = getVersion(linkId3).version,kmtkid = getVersion(linkId3).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes3,version = splitLinkId(linkId3).version,kmtkid = splitLinkId(linkId3).kmtkid)
     val roadLink4 = RoadLinkFetched(linkId4, 235, Seq(Point(0.00005, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1,roadLink2,roadLink3)
@@ -180,7 +180,7 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
 
     val attributes1 = Map(("LINKID_NEW", id()))
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = RoadLinkFetched(linkId2, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1)
@@ -192,7 +192,7 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
   test("Should ignore link which has current link with same id when only deleted links are requested") {
     
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = RoadLinkFetched(linkId1, 235, Seq(Point(10.00001, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1)
@@ -205,9 +205,9 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
 
     val attributes1 = Map(("LINKID_NEW", id()))
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1,version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,attributes= attributes1,version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(linkId2).version,kmtkid = getVersion(linkId2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId2).kmtkid)
     val roadLink3 = RoadLinkFetched(linkId2, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1,roadLink2)
@@ -218,11 +218,11 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
   
   test("Iignore link which has current link with same id inside even deeper recursion") {
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = getVersion(linkId2).version,kmtkid = getVersion(linkId2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId2).kmtkid)
     val roadLink3 = HistoryRoadLink(linkId4, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(linkId4).version,kmtkid = getVersion(linkId4).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(linkId4).version,kmtkid = splitLinkId(linkId4).kmtkid)
     val roadLink4 = RoadLinkFetched(linkId4, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1,roadLink2,roadLink3)
@@ -233,13 +233,13 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
 
   test("ignores link inside even deeper recursion when comparison to current links is enabled, but change is not inside the tolerance" ) {
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = getVersion(linkId2).version,kmtkid = getVersion(linkId2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId2).kmtkid)
     val roadLink3 = HistoryRoadLink(linkId3, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = getVersion(linkId3).version,kmtkid = getVersion(linkId3).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes=Map(("LINKID_NEW", id())),version = splitLinkId(linkId3).version,kmtkid = splitLinkId(linkId3).kmtkid)
     val roadLink4 = HistoryRoadLink(linkId4, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = getVersion(linkId4).version,kmtkid = getVersion(linkId4).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None,version = splitLinkId(linkId4).version,kmtkid = splitLinkId(linkId4).kmtkid)
     val roadLink5 = RoadLinkFetched(linkId4, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val historyRoadLinksSeq = Seq(roadLink1,roadLink2,roadLink3,roadLink4)
@@ -251,9 +251,9 @@ class RoadLinkHistoryProcessorSpec extends FunSuite with Matchers {
 
   test("Finds link inside even deeper recursion when comparison to current links is enabled" ) {
     val roadLink1 = HistoryRoadLink(linkId1, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= Map(("LINKID_NEW", id())),version = getVersion(linkId1).version,kmtkid = getVersion(linkId1).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= Map(("LINKID_NEW", id())),version = splitLinkId(linkId1).version,kmtkid = splitLinkId(linkId1).kmtkid)
     val roadLink2 = HistoryRoadLink(linkId2, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
-      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= Map(("LINKID_NEW", id())),version = getVersion(linkId2).version,kmtkid = getVersion(linkId2).kmtkid)
+      Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, attributes= Map(("LINKID_NEW", id())),version = splitLinkId(linkId2).version,kmtkid = splitLinkId(linkId2).kmtkid)
     val roadLink3 = HistoryRoadLink(linkId4, 235, Seq(Point(0.00001, 0.0), Point(1.0, 0.0)),
       Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, None)
     val roadLink4 = RoadLinkFetched(linkId4, 235, Seq(Point(10.00001, 0.0), Point(1.0, 0.0)),
