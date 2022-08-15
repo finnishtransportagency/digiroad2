@@ -1,13 +1,11 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue, MmlNls, RoadWidth, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue, MmlNls, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
-import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, PersistedLinearAsset, RoadLink}
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, RoadWidthService}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpdater(service) {
 

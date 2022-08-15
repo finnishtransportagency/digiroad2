@@ -1,11 +1,11 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.{MaintenanceRoadAsset, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
-import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, MaintenanceService, Measures}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 

@@ -1,10 +1,11 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.asset.{AnimalWarnings, AxleWeightLimit, BogieWeightLimit, CareClass, CarryingCapacity, CyclingAndWalking, DamagedByThaw, EuropeanRoads, ExitNumbers, HazmatTransportProhibition, HeightLimit, LengthLimit, LitRoad, MaintenanceRoadAsset, MassTransitLane, NumberOfLanes, ParkingProhibition, PavedRoad, Prohibition, RoadWidth, RoadWorksAsset, TotalWeightLimit, TrafficVolume, TrailerTruckWeightLimit, WidthLimit, WinterSpeedLimit}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{CyclingAndWalkingService, DamagedByThawService, DynamicLinearAssetService, HazmatTransportProhibitionService, LinearAssetOperations, LinearAssetService, LinearAxleWeightLimitService, LinearBogieWeightLimitService, LinearHeightLimitService, LinearLengthLimitService, LinearTotalWeightLimitService, LinearTrailerTruckWeightLimitService, LinearWidthLimitService, MaintenanceService, MassTransitLaneService, NumberOfLanesService, ParkingProhibitionService, ProhibitionService, RoadWidthService, RoadWorkService, SpeedLimitService, TextValueLinearAssetService}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
+import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 
 import scala.sys.exit
@@ -108,4 +109,3 @@ object LinearAssetUpdateProcess {
     }
   }
 }
-

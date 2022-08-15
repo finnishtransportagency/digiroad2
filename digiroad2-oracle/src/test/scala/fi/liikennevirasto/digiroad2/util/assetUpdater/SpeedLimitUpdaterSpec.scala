@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.CarRoad_IIIa
@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, Post
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when

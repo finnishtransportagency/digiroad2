@@ -1,11 +1,11 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.{Prohibition, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
-import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, ProhibitionService}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater(service) {
 

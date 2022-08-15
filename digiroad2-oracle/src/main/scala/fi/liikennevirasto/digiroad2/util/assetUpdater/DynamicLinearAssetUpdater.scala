@@ -1,10 +1,10 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, MmlNls}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, PersistedLinearAsset, RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, LinearAssetOperations, LinearAssetTypes, Measures}
+import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, LinearAssetTypes, Measures}
 
 class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends LinearAssetUpdater(service) {
 
