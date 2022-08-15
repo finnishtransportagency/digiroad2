@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MV
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers._
@@ -42,25 +42,35 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val propertyData3 = DynamicValue(multiTypePropSeq3)
   val propertyData4 = DynamicValue(multiTypePropSeq4)
   
-  when(mockRoadLinkService.fetchByLinkId("388562360")).thenReturn(Some(RoadLinkFetched("388562360", 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched("388562360", 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("388562360", 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  val linkId1: String = LinkIdGenerator.generateRandom()
+  val linkId2: String = LinkIdGenerator.generateRandom()
+  val linkId3: String = LinkIdGenerator.generateRandom()
+  val linkId4: String = LinkIdGenerator.generateRandom()
 
-  val roadLinkWithLinkSource = Seq(RoadLink("1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+  val randomLinkId1: String = LinkIdGenerator.generateRandom()
+  val randomLinkId2: String = LinkIdGenerator.generateRandom()
+  val randomLinkId3: String = LinkIdGenerator.generateRandom()
+  val randomLinkId4: String = LinkIdGenerator.generateRandom()
+  
+  when(mockRoadLinkService.fetchByLinkId(linkId2)).thenReturn(Some(RoadLinkFetched(linkId2, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId2, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId2, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+  val roadLinkWithLinkSource = Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    ,RoadLink("388562360", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    ,RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    ,RoadLink("388562361", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    ,RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    ,RoadLink("388562362", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    ,RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
 
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinkWithLinkSource, Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(roadLinkWithLinkSource.headOption)
 
-  when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(30, Seq("1")))
-    .thenReturn(Seq(PersistedLinearAsset(1, "1", 1, Some(propertyData), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(30, Seq(linkId1)))
+    .thenReturn(Seq(PersistedLinearAsset(1, linkId1, 1, Some(propertyData), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
   object ServiceWithDao extends PavedRoadService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -90,10 +100,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   private def createRoadLinks(municipalityCode: Int) = {
-    val newLinkId1 = "5000f"
-    val newLinkId2 = "5001f"
-    val newLinkId3 = "5002f"
-    val newLinkId4 = "5003f"
+    val newLinkId1 = randomLinkId1
+    val newLinkId2 = randomLinkId2
+    val newLinkId3 = randomLinkId3
+    val newLinkId4 = randomLinkId4
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
     val functionalClass = 1
@@ -124,7 +134,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val newLinkId = "5001"
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -161,9 +171,9 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val newLinkId2 = "5002f"
-    val newLinkId1 = "5001f"
-    val newLinkId0 = "5000f"
+    val newLinkId2 = LinkIdGenerator.generateRandom()
+    val newLinkId1 = LinkIdGenerator.generateRandom()
+    val newLinkId0 = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -222,10 +232,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val roadLinks = createRoadLinks(municipalityCode)
     val service = createService()
 
-    val newLinkId1 = "5000f"
-    val newLinkId2 = "5001f"
-    val newLinkId3 = "5002f"
-    val newLinkId4 = "5003f"
+    val newLinkId1 = randomLinkId1
+    val newLinkId2 = randomLinkId2
+    val newLinkId3 = randomLinkId3
+    val newLinkId4 = randomLinkId4
     val unpaved1 = createPavedRoad(1, newLinkId1, Some(propertyData4), 10L)
     val unpaved2 = createPavedRoad(2, newLinkId2, Some(propertyData4), 10L)
     val unpaved3 = createPavedRoad(3, newLinkId3, Some(propertyData4), 10L)
@@ -257,10 +267,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val roadLinks = createRoadLinks(municipalityCode)
     val service = createService()
 
-    val newLinkId1 = "5000f"
-    val newLinkId2 = "5001f"
-    val newLinkId3 = "5002f"
-    val newLinkId4 = "5003f"
+    val newLinkId1 = randomLinkId1
+    val newLinkId2 = randomLinkId2
+    val newLinkId3 = randomLinkId3
+    val newLinkId4 = randomLinkId4
     val unpaved1 = createPavedRoad(1, newLinkId1, None, 12L)
     val unpaved2 = createPavedRoad(2, newLinkId2, None, 12L)
     val unpaved3 = createPavedRoad(3, newLinkId3, None, 12L)
@@ -289,10 +299,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val roadLinks = createRoadLinks(municipalityCode)
     val service = createService()
 
-    val newLinkId1 = "5000f"
-    val newLinkId2 = "5001f"
-    val newLinkId3 = "5002f"
-    val newLinkId4 = "5003f"
+    val newLinkId1 = randomLinkId1
+    val newLinkId2 = randomLinkId2
+    val newLinkId3 = randomLinkId3
+    val newLinkId4 = randomLinkId4
     val unpaved1 = createPavedRoad(1, newLinkId1, None, 11L)
     val unpaved2 = createPavedRoad(2, newLinkId2, None, 11L)
     val unpaved3 = createPavedRoad(3, newLinkId3, None, 11L)
@@ -319,7 +329,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val linkId = "5001"
+    val linkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -364,7 +374,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val newLinkId = "5001"
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -394,7 +404,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val oldLinkId1 = "4393233"
+    val oldLinkId1 = LinkIdGenerator.generateRandom()
     val municipalityCode = 444
     val administrativeClass = State
     val trafficDirection = TrafficDirection.BothDirections
@@ -431,7 +441,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
-    val newLinkId = "5001"
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -467,10 +477,10 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
     val assetTypeId = 110
     val municipalityCode = 564
-    val newLinkId1 = "5000"
-    val newLinkId2 = "5001"
-    val newLinkId3 = "5002"
-    val newLinkId4 = "5003"
+    val newLinkId1 = LinkIdGenerator.generateRandom()
+    val newLinkId2 = LinkIdGenerator.generateRandom()
+    val newLinkId3 = LinkIdGenerator.generateRandom()
+    val newLinkId4 = LinkIdGenerator.generateRandom()
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
     val functionalClass = 1
@@ -535,7 +545,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
     }
 
-    val newLinkId = "5001"
+    val newLinkId = LinkIdGenerator.generateRandom()
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val assetTypeId = 110
     val vvhTimeStamp = 11121
@@ -560,7 +570,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
-    val newLinkId = "5001"
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -595,8 +605,8 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       override def withDynSession[T](f: => T): T = f
     }
 
-    val oldLinkId = "5000"
-    val newLinkId = "6000"
+    val oldLinkId = LinkIdGenerator.generateRandom()
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 444
     val functionalClass = 1
     val assetTypeId = 110
@@ -641,7 +651,8 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("create pavedRoad and check if informationSource is Municipality Maintainer ") {
     val service = createService()
 
-    val toInsert = Seq(NewLinearAsset("5001", 0, 20, propertyData, 1, 0, None), NewLinearAsset("5002", 0, 20, propertyData, 1, 0, None))
+    val toInsert = Seq(NewLinearAsset(LinkIdGenerator.generateRandom(), 0, 20, propertyData, 1, 0, None),
+      NewLinearAsset(LinkIdGenerator.generateRandom(), 0, 20, propertyData, 1, 0, None))
     runWithRollback {
       val assetsIds = ServiceWithDao.create(toInsert, PavedRoad.typeId, "test")
       val assetsCreated = service.getPersistedAssetsByIds(PavedRoad.typeId, assetsIds.toSet)
@@ -658,7 +669,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val roadLinks = createRoadLinks(municipalityCode)
     val service = createService()
 
-    val assets = Seq(PersistedLinearAsset(1, "5000", 1, Some(propertyData), 0, 5, None, None, None, None, false, PavedRoad.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val assets = Seq(PersistedLinearAsset(1, LinkIdGenerator.generateRandom(), 1, Some(propertyData), 0, 5, None, None, None, None, false, PavedRoad.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     runWithRollback {
       val changeInfo = createChangeInfo(roadLinks, 11L)
       val (expiredIds, updated) = service.getPavedRoadAssetChanges(assets, roadLinks, changeInfo, PavedRoad.typeId.toLong)
@@ -673,7 +684,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("update pavedRoad and check if informationSource is Municipality Maintainer "){
 
     val service = createService()
-    val toInsert = Seq(NewLinearAsset("5001", 0, 20, propertyData1, BothDirections.value, 0, None), NewLinearAsset("5002", 0, 20, propertyData2, BothDirections.value, 0, None))
+    val toInsert = Seq(NewLinearAsset(LinkIdGenerator.generateRandom(), 0, 20, propertyData1, BothDirections.value, 0, None), NewLinearAsset(LinkIdGenerator.generateRandom(), 0, 20, propertyData2, BothDirections.value, 0, None))
     runWithRollback {
       val assetsIds = ServiceWithDao.create(toInsert, PavedRoad.typeId, "test")
       val updated = ServiceWithDao.update(assetsIds, propertyData, "userTest")
@@ -690,7 +701,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Timestamp of the asset is bigger than the vvhChange, should not update asset"){
-    val linkId = "1000"
+    val linkId = LinkIdGenerator.generateRandom()
     val roadLinks = Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2))))
     val service = createService()
@@ -705,7 +716,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   test("Timestamp of the asset is lower than the vvhChange, should not update asset"){
-    val linkId = "1000"
+    val linkId = LinkIdGenerator.generateRandom()
     val roadLinks = Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2))))
     val service = createService()

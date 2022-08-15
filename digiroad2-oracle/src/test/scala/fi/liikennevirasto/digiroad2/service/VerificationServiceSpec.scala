@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.dao.{Sequences, VerificationDao}
 import fi.liikennevirasto.digiroad2.linearasset.TinyRoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -28,7 +28,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get last linear asset modification") {
     runWithRollback {
-      val (linkId1, linkId2, linkId3) = ("1100", "3100", "5100")
+      val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
       val tinyRoadLinkMunicipality90 = Seq(TinyRoadLink(linkId1), TinyRoadLink(linkId2), TinyRoadLink(linkId3))
       when(mockRoadLinkService.getTinyRoadLinkFromVVH(90)).thenReturn(tinyRoadLinkMunicipality90)
 
@@ -125,9 +125,9 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get assets Latests Modifications with one municipality") {
     runWithRollback {
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('1000', 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('3000', 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('5000', 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('da2a39b3-82fc-48f1-a1f9-0e63ca09d454:1', 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('76e9fdef-d743-416d-b1d8-1529e98cbb21:3', 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('ae2ffef1-353d-4c82-8246-108bb89809e1:5', 235)""".execute
       val municipalities = Set(235)
       val latestModificationInfoMunicipality = ServiceWithDao.dao.getModifiedAssetTypes(municipalities)
       latestModificationInfoMunicipality should have size 3
@@ -138,13 +138,13 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get assets Latests Modifications for Ely user with two municipalities"){
     runWithRollback {
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('2000', 100)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('4000', 100)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('6000', 100)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('703cdc6d-61f4-4e40-9da8-0efc51e9943d:2', 100)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('c9f4c80d-a0c8-4ede-977b-9b048cd7099c:4', 100)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('4e339ea7-0d1c-4b83-ac34-d8cfeebe4066:6', 100)""".execute
 
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('1000', 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('3000', 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values ('5000', 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('da2a39b3-82fc-48f1-a1f9-0e63ca09d454:1', 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('76e9fdef-d743-416d-b1d8-1529e98cbb21:3', 235)""".execute
+      sqlu"""insert into roadlink (linkId, municipalitycode) values ('ae2ffef1-353d-4c82-8246-108bb89809e1:5', 235)""".execute
       
       val municipalities = Set(100, 235)
       val latestModificationInfo = ServiceWithDao.dao.getModifiedAssetTypes(municipalities)
