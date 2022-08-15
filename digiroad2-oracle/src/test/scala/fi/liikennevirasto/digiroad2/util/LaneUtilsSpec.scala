@@ -92,12 +92,12 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkLength = 50.214
     val addressesOnLink1a = Set( // TowardsDigitizing
 //      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 0, 120, 0.0, 49.281, Seq(), Some(SideCode.TowardsDigitizing), None, None)
-      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 0, 120, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
 
     )
     val addressesOnLink1b = Set( // AgainstDigitizing
 //      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 0, 120, 0.0, 49.281, Seq(), Some(SideCode.AgainstDigitizing), None, None)
-      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 0, 120, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     )
 
     val endPoints1a = LaneUtils.calculateStartAndEndPoint(addLaneToAddress1, addressesOnLink1a, linkLength)
