@@ -398,7 +398,7 @@ trait LaneOperations {
     val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
 
-    val roadLinksWithRoadAddressInfo = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks)
+    val roadLinksWithRoadAddressInfo = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
     val historyLanesWithRoadAddress = historyLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
 
     val upToDateLaneChanges = upToDateLanes.flatMap{ upToDate =>
@@ -1179,10 +1179,10 @@ trait LaneOperations {
     val vkmParameters =
       pwLanes.map(lane => {
         MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long],
-          lane.attributes("VIITE_ROAD_PART_NUMBER").asInstanceOf[Long])
+          lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
       }) ++ pwLanes.map(lane => {
         MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long],
-          lane.attributes("VIITE_ROAD_PART_NUMBER").asInstanceOf[Long])
+          lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
       })
 
     val vkmParametesSplit = vkmParameters.grouped(1000).toSeq
