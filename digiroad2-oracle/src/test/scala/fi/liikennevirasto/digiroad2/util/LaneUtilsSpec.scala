@@ -68,12 +68,8 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkId = 1234567
     val linkLength = 50.214
     val addressesOnLink1a = Set( // TowardsDigitizing
-//      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 130, 0.0, 49.281, Seq(), Some(SideCode.TowardsDigitizing), None, None)
-      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 130, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
-
-    )
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 130, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None))
     val addressesOnLink1b = Set( // AgainstDigitizing
-//      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 130, 0.0, 49.281, Seq(), Some(SideCode.AgainstDigitizing), None, None)
       RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 130, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     )
 
@@ -91,12 +87,9 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkId = 1234567
     val linkLength = 50.214
     val addressesOnLink1a = Set( // TowardsDigitizing
-//      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 0, 120, 0.0, 49.281, Seq(), Some(SideCode.TowardsDigitizing), None, None)
       RoadAddressForLink(0, 1, 1, Track.RightSide, 0, 120, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
-
     )
     val addressesOnLink1b = Set( // AgainstDigitizing
-//      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 0, 120, 0.0, 49.281, Seq(), Some(SideCode.AgainstDigitizing), None, None)
       RoadAddressForLink(0, 1, 1, Track.RightSide, 0, 120, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     )
 
@@ -114,24 +107,15 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkId = 1234567
     val linkLength = 150.214
     val addressesOnLink1a = Set( // TowardsDigitizing
-//      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 50, 0.0, 49.281, Seq(), Some(SideCode.TowardsDigitizing), None, None),
       RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 50, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None),
-
-      //      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 50, 120, 49.281, 182.984, Seq(), Some(SideCode.TowardsDigitizing), None, None)
       RoadAddressForLink(0, 1, 1, Track.RightSide, 50, 120, None, None, linkId, 49.281, 182.984, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
     )
     val addressesOnLink1b = Set( // AgainstDigitizing
-//      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 50, 49.281, 182.984, Seq(), Some(SideCode.AgainstDigitizing), None, None),
       RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 50, None, None, linkId, 49.281, 182.984, SideCode.AgainstDigitizing, Seq(), false, None, None, None),
-
-      //      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 50, 120, 0.0, 49.281, Seq(), Some(SideCode.AgainstDigitizing), None, None)
       RoadAddressForLink(0, 1, 1, Track.RightSide, 50, 120, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     )
     val addressesOnLink2 = Set( // Road part changes during link
-//      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 50, 0.0, 49.281, Seq(), None, None, None),
       RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 50, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None),
-
-      //      RoadAddressTEMP(linkId, 1, 2, Track.RightSide, 0, 70, 49.281, 182.984, Seq(), None, None, None)
       RoadAddressForLink(0, 1, 2, Track.RightSide, 0, 70, None, None, linkId, 49.281, 182.984, SideCode.Unknown, Seq(), false, None, None, None)
     )
 
