@@ -318,7 +318,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
       .getOrElse(throw new IllegalStateException("Road link " + oldAsset.linkId + " no longer available"))
     service.expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
-    service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.getOrElse(throw new IllegalStateException("Value of the old asset " + oldAsset.id + " of type " + oldAsset.typeId + " is not available")), adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
+    service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.getOrElse(throw new IllegalStateException(
+      "Value of the old asset " + oldAsset.id + " of type " + oldAsset.typeId + " is not available")), adjustment.sideCode.value,
+      Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, roadLinkClient.roadLinkData.createVVHTimeStamp(),
+      Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 
   protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
