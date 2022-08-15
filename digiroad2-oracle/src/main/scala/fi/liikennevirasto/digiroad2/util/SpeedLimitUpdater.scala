@@ -161,12 +161,12 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
   private def getRoadLinkAndProjection(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], oldId: String, newId: String,
                                        speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit]) = {
     val roadLink = roadLinks.find(rl => newId == rl.linkId)
-    val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
+    val changeInfo = changes.find(c => c.oldId.getOrElse("") == oldId && c.newId.getOrElse("") == newId)
     val projection = changeInfo match {
       case Some(info) =>
         // ChangeInfo object related speed limits; either mentioned in oldId or in newId
-        val speedLimits = speedLimitsToUpdate.filter(_.linkId == info.oldId.getOrElse(0L)) ++
-          currentSpeedLimits.filter(_.linkId == info.newId.getOrElse(0L))
+        val speedLimits = speedLimitsToUpdate.filter(_.linkId == info.oldId.getOrElse("")) ++
+          currentSpeedLimits.filter(_.linkId == info.newId.getOrElse(""))
         mapChangeToProjection(info, speedLimits)
       case _ => None
     }

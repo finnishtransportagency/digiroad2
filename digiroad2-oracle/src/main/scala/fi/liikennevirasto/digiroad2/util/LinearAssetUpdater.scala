@@ -244,7 +244,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                        linearAssetsToUpdate: Map[String, Seq[PersistedLinearAsset]],
                                        currentLinearAssets: Map[String, Seq[PersistedLinearAsset]]): (Option[RoadLink], Option[Projection]) = {
     val roadLink = roadLinks.find(rl => newId == rl.linkId)
-    val changeInfo = changes.find(c => c.oldId.getOrElse(0) == oldId && c.newId.getOrElse(0) == newId)
+    val changeInfo = changes.find(c => c.oldId.getOrElse("") == oldId && c.newId.getOrElse("") == newId)
     val projection = changeInfo match {
       case Some(changedPart) =>
         // ChangeInfo object related assets; either mentioned in oldId or in newId
