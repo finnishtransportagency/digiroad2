@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -24,7 +24,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val linkId = "1611317"
+  val linkId = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(
@@ -95,7 +95,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
 
   test("Update directional traffic sign with geometry changes") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
-    val linkId1 = "123"
+    val linkId1 = LinkIdGenerator.generateRandom()
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
@@ -143,7 +143,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
 
   test("Update directional traffic sign without geometry changes") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
-    val linkId = "388553075"
+    val linkId = LinkIdGenerator.generateRandom()
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
     when(mockRoadLinkService.getRoadLinkFromVVH(linkId)).thenReturn(Seq(

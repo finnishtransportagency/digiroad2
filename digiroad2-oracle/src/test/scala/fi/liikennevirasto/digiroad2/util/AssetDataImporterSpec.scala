@@ -30,7 +30,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   private val CommonAttributes = Seq("MUNICIPALITYCODE" -> BigInt(853), "VERTICALLEVEL" -> 0.0).toMap;
-  private val (linkId1, linkId2, linkId3, linkId4) = ("1", "2", "3", "4")
+  private val (linkId1, linkId2, linkId3, linkId4) =
+    (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
 
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
@@ -79,8 +80,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
       assetDataImporter.splitMultiLinkAssetsToSingleLinkAssets(30)
 
-      val splitSegments = (fetchNumericalLimitSegments(s"split_linearasset_$originalId1") ++
-                           fetchNumericalLimitSegments(s"split_linearasset_$originalId2")).sortBy(_._3)
+      val splitSegments = fetchNumericalLimitSegments(s"split_linearasset_$originalId1") ++
+                           fetchNumericalLimitSegments(s"split_linearasset_$originalId2")
 
       splitSegments.map(_._3).toSet should be(Set(linkId1, linkId2, linkId3, linkId4))
       splitSegments.length shouldBe 4
@@ -91,7 +92,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       splitSegments(3)._6 should be(Some(50000))
       splitSegments.foreach(segment => segment._7 should be (false))
 
-      val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec").sortBy(_._3)
+      val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec")
 
       originalSpeedLimitSegments.length should be(4)
       originalSpeedLimitSegments.map(_._1).toSet should be(Set(originalId1, originalId2))
@@ -245,7 +246,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    result should be(Set(Left("No VVH road link found for mml id 1. 1 dropped.")))
+    result should be(Set(Left(s"No VVH road link found for mml id $linkId1. 1 dropped.")))
   }
 
   test("Drop prohibition segments of type maintenance drive and drive to plot") {
@@ -295,7 +296,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
     val conversionResult1 = Right(PersistedLinearAsset(0l, linkId1, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Left("No prohibition found on mml id 2. Dropped exception 1.")
+    val conversionResult2 = Left(s"No prohibition found on mml id $linkId2. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -402,8 +403,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 1
   test("Should unfloat the obstacle when exists just one roadlink inside a radius of 10 meters"){
-    val oldLinkId = "521232"
-    val linkId = "5170455"
+    val oldLinkId = LinkIdGenerator.generateRandom()
+    val linkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20, 20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
@@ -433,7 +434,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 2
   test("Should not unfloat the obstacle when exists multiple roadlinks inside a radius of 10 meters and outside a radius of 0.5 meters"){
-    val oldLinkId = "521232"
+    val oldLinkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20, 20)
 
@@ -441,9 +442,9 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadLinkFetched("5170455", municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadLinkFetched("5170459", municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadLinkFetched("5170458", municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(15,0), Point(15,20), Point(15,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(15,0), Point(16,21), Point(17,42)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(0,15), Point(20,15), Point(40,15)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
     when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
@@ -461,15 +462,15 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 3
   test("Should unfloat the obstacle when exists one roadlink inside a radius of 10 meters and one inside a radius of 0.5 meters but with more than 5th the shorter distance"){
-    val oldLinkId = "521232"
-    val linkId = "5170458"
+    val oldLinkId = LinkIdGenerator.generateRandom()
+    val linkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     
-    val roadLinks = Seq(RoadLink("5170455", Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
+    val roadLinks = Seq(RoadLink(LinkIdGenerator.generateRandom(), Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
                           TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
                         RoadLink(linkId, Seq(Point(20.333, 0), Point(20.333, 20), Point(20.333, 20)), 20, Municipality, 8, TrafficDirection.BothDirections,
                           CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
@@ -496,15 +497,15 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 4
   test("Should not unfloat the obstacle when exists one or more roadlinks outside a radius of 10 meters"){
-    val oldLinkId = "521232"
+    val oldLinkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20, 20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadLinkFetched("5170455", municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
-      RoadLinkFetched("5170458", municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(0,0), Point(0,20), Point(0,40)),Municipality, TrafficDirection.BothDirections, FeatureClass.TractorRoad, attributes = CommonAttributes),
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(0,0), Point(20,0), Point(40,0)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
     when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
@@ -521,8 +522,10 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 5
   test("Should unfloat the obstacle when exists one roadlink inside a radius of 0.5 meters and one or more with more than 5th the shorter distance"){
-    val oldLinkId = "521232"
-    val linkId = "5170458"
+    val oldLinkId = LinkIdGenerator.generateRandom()
+    val linkId1 = LinkIdGenerator.generateRandom()
+    val linkId2 = LinkIdGenerator.generateRandom()
+    val linkId3 = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
@@ -530,11 +533,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val mValue = 10
     
     val roadLinks = Seq(
-      RoadLink("5170455", Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
+      RoadLink(linkId2, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
       TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink(linkId, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
+      RoadLink(linkId1, Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
         CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink("5170456", Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)), 20, Municipality, 6, TrafficDirection.BothDirections,
+      RoadLink(linkId3, Seq(Point(20.1,0), Point(20.1,20), Point(20.1,20)), 20, Municipality, 6, TrafficDirection.BothDirections,
         SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
     when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
@@ -547,7 +550,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, mockRoadLinkService)
 
     resultObstacle.floating should be (false)
-    resultObstacle.linkId should be (linkId)
+    resultObstacle.linkId should be (linkId1)
     resultObstacle.lat should be (20)
     resultObstacle.lon should be (20.02)
     resultObstacle.municipalityCode should be (municipality)
@@ -559,7 +562,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 6
   test("Should unfloat the obstacle when two roadlinks inside a radius of 0.5 meters and they extend one another"){
-    val oldLinkId = "521232"
+    val oldLinkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
@@ -567,11 +570,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val mValue = 10
 
     val roadLinks = Seq(
-      RoadLink("5170455", Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
+      RoadLink(LinkIdGenerator.generateRandom(), Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
         TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink("5170458", Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
+      RoadLink(LinkIdGenerator.generateRandom(), Seq(Point(20.02,0), Point(20.02,20), Point(20.02,20)), 20, Municipality, 8, TrafficDirection.BothDirections,
         CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink("5170456", Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)), 10, Municipality, 6, TrafficDirection.BothDirections,
+      RoadLink(LinkIdGenerator.generateRandom(), Seq(Point(20.02,20), Point(20.09,20), Point(20.09,30)), 10, Municipality, 6, TrafficDirection.BothDirections,
         SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
     when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
@@ -589,15 +592,15 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 7
   test("Should not unfloat the obstacle when exists one roadlink when in the limit of a radius of 10 meters and one in the limit of 0.5 meters"){
-    val oldLinkId = "521232"
+    val oldLinkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadLinkFetched("5170458", municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
-      RoadLinkFetched("5170456", municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(20.501,0), Point(20.501,20), Point(20.501,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes),
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(30,0), Point(30,20), Point(30,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.DrivePath, attributes = CommonAttributes)
     )
     
     when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
@@ -616,14 +619,14 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 8
   test("Should not unfloat the obstacle when exists just one roadlink and it's in the limit a radius of 10 meters"){
-    val oldLinkId = "521232"
+    val oldLinkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
                                     Property(2222, "esterakennelma", "single_choice", false, Seq(PropertyValue("2", None))))
     val mValue = 10
     val vvhRoadLinks = Seq(
-      RoadLinkFetched("5170458", municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), municipality, Seq(Point(30.001,0), Point(30.001,20), Point(30.001,20)),Municipality, TrafficDirection.BothDirections, FeatureClass.CycleOrPedestrianPath, attributes = CommonAttributes)
     )
     
     when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
@@ -642,8 +645,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
   //case 9
   test("Should unfloat the obstacle when exists multiple roadlinks inside a radius of 10 meters and outside a radius of 0.5 meters but one have a feature class equals to AllOthers "){
-    val oldLinkId = "521232"
-    val linkId = "5170455"
+    val oldLinkId = LinkIdGenerator.generateRandom()
+    val linkId = LinkIdGenerator.generateRandom()
     val municipality = 853
     val obstaclePoint = Point(20,20)
     val pointAssetProperties = Seq(Property(1111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None))),
@@ -653,7 +656,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val roadLinks = Seq(
       RoadLink(linkId, Seq(Point(15, 0), Point(15, 20), Point(15, 40)), 40, Municipality, 7,
         TrafficDirection.BothDirections, TractorRoad, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))),
-      RoadLink("5170458", Seq(Point(0,15), Point(20,15), Point(40,15)), 20, Municipality, 99, TrafficDirection.BothDirections,
+      RoadLink(LinkIdGenerator.generateRandom(), Seq(Point(0,15), Point(20,15), Point(40,15)), 20, Municipality, 99, TrafficDirection.BothDirections,
         UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(853))))
     
     when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)

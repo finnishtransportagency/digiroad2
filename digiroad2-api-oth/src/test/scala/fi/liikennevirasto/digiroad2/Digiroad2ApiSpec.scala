@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import java.util.Date
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.vvh._
@@ -12,7 +11,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddress, RoadSide, Track}
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -55,14 +54,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1)
-  val linkId1 = "1"
-  val linkId2 = "2"
-  val linkId3 = "7478"
-  val linkId4 = "1611374"
-  val linkId5 = "1611071"
-  val linkId6 = "1611353"
-  val linkId7 = "1611069"
-  val linkId8 = "1611070"
+  val linkId1: String = LinkIdGenerator.generateRandom()
+  val linkId2: String = LinkIdGenerator.generateRandom()
+  val linkId3: String = LinkIdGenerator.generateRandom()
+  val linkId4: String = "dd8bdb73-b8b4-4c81-a404-1126c4f4e714:1"
+  val linkId5: String = "fbb3c1bd-432d-46fd-9588-00dec41042dd:1"
+  val linkId6: String = "d06dbdc7-366a-4ee3-a41f-c1d5010859ae:1"
+  val linkId7: String = "7cf9e493-151c-4afd-96a4-8a6880cf18e5:1"
+  val linkId8: String = "ef043f17-dadc-435e-9e3f-50a19c3c84f3:1"
 
   when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
   when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
@@ -239,14 +238,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 7478014, "lat": 483655, "linkId": 2, "bearing": 0}"""
+    val requestPayload = s"""{"lon": 7478014, "lat": 483655, "linkId": "$linkId2", "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes, username = "silari") {
       status should equal(400)
     }
   }
 
   test("validate user rights when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 1, "bearing": 0}"""
+    val requestPayload = s"""{"lon": 0, "lat": 0, "linkId": "$linkId1", "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
       status should equal(401)
     }
