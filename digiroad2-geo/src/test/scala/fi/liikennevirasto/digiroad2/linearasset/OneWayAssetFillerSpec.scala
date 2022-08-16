@@ -6,15 +6,19 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirec
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
 import org.scalatest.{FunSuite, Matchers}
+import java.util.UUID
+import scala.util.Random
 
 
 class OneWayAssetFillerSpec extends FunSuite with Matchers {
 
   object oneWayAssetFiller extends OneWayAssetFiller
 
+  private def generateRandomLinkId(): String = s"${UUID.randomUUID()}:${Random.nextInt(100)}"
+
   test("transform one-sided asset to two-sided when its defined on one-way road link") {
-    val linkId1 = "1l"
-    val linkId2 = "2l"
+    val linkId1 = generateRandomLinkId()
+    val linkId2 = generateRandomLinkId()
     val topology = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.TowardsDigitizing, Motorway, None, None),
@@ -53,7 +57,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("generate one-sided asset when two-way road link is half-covered 1") {
-    val linkId = "1l"
+    val linkId = generateRandomLinkId()
     val topology = Seq(
       RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
