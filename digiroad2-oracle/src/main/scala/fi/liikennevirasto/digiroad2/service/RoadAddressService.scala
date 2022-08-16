@@ -177,16 +177,15 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param pieceWiseLanes The linear assets sequence
     * @return
     */
-  def laneWithRoadAddress(pieceWiseLanes: Seq[Seq[PieceWiseLane]]): Seq[Seq[PieceWiseLane]] = {
+  def laneWithRoadAddress(pieceWiseLanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
     try {
-      val addressData = groupRoadAddress(getAllByLinkIds(pieceWiseLanes.flatMap(pwl => pwl.map(_.linkId)))).map(a => (a.linkId, a)).toMap
-      pieceWiseLanes.map(
-        _.map(pwl =>
+      val addressData = groupRoadAddress(getAllByLinkIds(pieceWiseLanes.map(_.linkId))).map(a => (a.linkId, a)).toMap
+      pieceWiseLanes.map( pwl =>
           if (addressData.contains(pwl.linkId))
             pwl.copy(attributes = pwl.attributes ++ roadAddressAttributes(addressData(pwl.linkId)))
           else
             pwl
-        ))
+        )
     } catch {
       case hhce: HttpHostConnectException =>
         logger.error(s"Viite connection failing with message ${hhce.getMessage}")

@@ -32,7 +32,7 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
 
   when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(Seq(roadLink))
   when(mockRoadAddressService.getAllByRoadNumber(any())).thenReturn(Seq(roadAddress))
-  when(mockRoadAddressService.laneWithRoadAddress(any())).thenReturn(Seq(Seq(pieceWiseLane)))
+  when(mockRoadAddressService.laneWithRoadAddress(any())).thenReturn(Seq(pieceWiseLane))
 
   //Creates two road links geometrically next to each other
   def createRoadLinks(): Seq[RoadLink] = {
