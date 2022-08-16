@@ -575,6 +575,9 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         case nsee: NoSuchElementException =>
           logger.error(nsee.getMessage)
           Map()
+        case e: Exception =>
+          logger.error(e.getMessage)
+          Map()
       }
 
     }
