@@ -287,7 +287,7 @@ Kartalle voi valita tietolajivalikosta (1) Kaistan mallinnustyökalu -valinnan. 
 * Pääkaista
 * Lisäkaista
 * Tielinkillä 1 lisäkaista
-* Tielenkillä 2 lisäkaistaa
+* Tielinkillä 2 lisäkaistaa
 * Tielinkillä 3 lisäkaistaa
 * Tielinkillä 4 lisäkaistaa
 * Tielinkillä 5 lisäkaistaa
