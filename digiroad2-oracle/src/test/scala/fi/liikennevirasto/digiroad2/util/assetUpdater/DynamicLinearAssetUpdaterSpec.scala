@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -42,7 +42,7 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
   )))
 
   test("Asset on a removed road link should be expired") {
-    val oldRoadLinkId = "1505L"
+    val oldRoadLinkId = LinkIdGenerator.generateRandom()
     val oldRoadLink = RoadLink(
     oldRoadLinkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
@@ -61,9 +61,9 @@ class DynamicLinearAssetUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Assets should be mapped to a new road link combined from two smaller links") {
-    val oldRoadLinkId1 = "160L"
-    val oldRoadLinkId2 = "170L"
-    val newRoadLinkId = "310L"
+    val oldRoadLinkId1 = LinkIdGenerator.generateRandom()
+    val oldRoadLinkId2 = LinkIdGenerator.generateRandom()
+    val newRoadLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 1
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.TowardsDigitizing
