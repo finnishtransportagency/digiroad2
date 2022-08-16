@@ -5,12 +5,12 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressForLink}
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime

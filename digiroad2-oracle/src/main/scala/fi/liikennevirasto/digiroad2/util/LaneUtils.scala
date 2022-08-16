@@ -5,12 +5,11 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.RoadAddressForLink
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneRoadAddressInfo, NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime

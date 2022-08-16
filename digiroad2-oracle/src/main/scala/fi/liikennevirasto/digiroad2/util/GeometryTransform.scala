@@ -3,8 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.dao.RoadAddressForLink
-import fi.liikennevirasto.digiroad2.service.RoadAddressService
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
 import fi.liikennevirasto.digiroad2.Point
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
