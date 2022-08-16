@@ -1,19 +1,17 @@
 package fi.liikennevirasto.digiroad2.client.viite
 
-import java.text.{ParseException, SimpleDateFormat}
-import java.util.Date
-import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.ErrorMessageConverter
-import fi.liikennevirasto.digiroad2.dao.RoadAddressForLink
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, Track}
+import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}
-import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.CloseableHttpClient
 import org.json4s.jackson.JsonMethods.parse
-import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
 import org.slf4j.LoggerFactory
+
+import java.text.{ParseException, SimpleDateFormat}
+import java.util.Date
 
 case class ViiteError(content: Map[String, Any], url: String)
 class ViiteClientException(response: String) extends RuntimeException(response)
