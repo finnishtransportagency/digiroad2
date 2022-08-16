@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.viite
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.service
 import fi.liikennevirasto.digiroad2.service.RoadAddressForLink
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.entity.{ContentType, StringEntity}
@@ -89,7 +88,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     val sideCode = convertToInt(getMandatoryFieldValue(data, "sideCode")).get
     val endMValue = convertToDouble(getMandatoryFieldValue(data, "endMValue")).get
 
-    Some(service.RoadAddressForLink(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.apply(sideCode), Seq(), false, None, None, None ))
+    Some(RoadAddressForLink(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.apply(sideCode), Seq(), false, None, None, None ))
   }
   override protected def mapFields[A](data: A): Option[List[RoadAddressForLink]] = ???
 }

@@ -27,7 +27,7 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   val pieceWiseLane = PieceWiseLane(111, 1, 2, false, Seq(Point(0.0, 0.0), Point(1.0, 1.0)), 0, 1, Set(Point(0.0, 0.0), Point(1.0, 1.0)),
     None, None, None, None, 0L, None, State, Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))))
 
-  val roadAddress = service.RoadAddressForLink(0, 0, 0, Track(99), 0, 0, None, None, 0, 0, 0, SideCode(1), Seq(), false, None, None, None)
+  val roadAddress = RoadAddressForLink(0, 0, 0, Track(99), 0, 0, None, None, 0, 0, 0, SideCode(1), Seq(), false, None, None, None)
 
   when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(Seq(roadLink))
   when(mockRoadAddressService.getAllByRoadNumber(any())).thenReturn(Seq(roadAddress))
