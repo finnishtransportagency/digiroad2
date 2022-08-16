@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2.service
 
+
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{ClientUtils, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
@@ -79,7 +79,9 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddressForLink] = {
-    viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
+    ClientUtils.retry(2){
+      viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
+    }
   }
 
   /**
