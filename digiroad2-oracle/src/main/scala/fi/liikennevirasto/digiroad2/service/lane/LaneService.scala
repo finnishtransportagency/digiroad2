@@ -516,16 +516,6 @@ trait LaneOperations {
 
   }
 
-  def getRoadAddressForLanes(lanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
-    val (lanesWithUpdatedInfo, lanesMissingUpdatedInfo) = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes") {
-      roadAddressService.laneWithRoadAddress(lanes).partition(_.attributes.contains("VIITE_ROAD_NUMBER"))
-    }
-    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ") {
-      roadAddressService.laneWithTempRoadAddress(lanesMissingUpdatedInfo)
-    }
-    (lanesWithUpdatedInfo ++ frozenInfo)
-  }
-
   def laneChangesToTwoDigitLaneCode(laneChanges: Seq[LaneChange], roadLinks: Seq[RoadLink]): Seq[LaneChange] = {
     val existingPersistedLanes = laneChanges.map(_.lane)
     val oldPersistedLanes = laneChanges.flatMap(_.oldLane)
@@ -1163,11 +1153,11 @@ trait LaneOperations {
   def pieceWiseLanesToTwoDigitWithMassQuery(pwLanes: Seq[PieceWiseLane]): Seq[Option[PieceWiseLane]] = {
     val vkmParameters =
       pwLanes.map(lane => {
-        MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long],
-          lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
+        MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]],
+          lane.attributes.get("ROAD_PART_NUMBER").asInstanceOf[Option[Long]])
       }) ++ pwLanes.map(lane => {
-        MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long],
-          lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
+        MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]],
+          lane.attributes.get("ROAD_PART_NUMBER").asInstanceOf[Option[Long]])
       })
 
     val vkmParametersSplit = vkmParameters.grouped(1000).toSeq

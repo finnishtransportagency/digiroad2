@@ -209,8 +209,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           }
 
           val filteredRoadAddresses = roadAddresses.filter(address =>{
-            val startInside = (address.startAddressM >= laneRoadAddressInfo.startDistance) && (address.startAddressM <= laneRoadAddressInfo.endDistance)
-            val endInside = (address.endAddressM <= laneRoadAddressInfo.endDistance) && (address.endAddressM >= laneRoadAddressInfo.startDistance)
+            val startInside = (address.startMValue >= laneRoadAddressInfo.startDistance) && (address.startMValue <= laneRoadAddressInfo.endDistance)
+            val endInside = (address.endAddrMValue <= laneRoadAddressInfo.endDistance) && (address.endAddrMValue >= laneRoadAddressInfo.startDistance)
             startInside || endInside
           })
 
@@ -219,7 +219,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
         val correctLanes = filteredRoadAddresses.flatMap(roadAddress => {
           val lanesOnLink = mainLanes.filter(_.linkId == roadAddress.linkId)
-          val addressSideCode = roadAddress.sideCode.get
+          val addressSideCode = roadAddress.sideCode
           val correctLaneSideCode = (addressSideCode, laneCode.toInt) match {
             case (TowardsDigitizing, 11) => TowardsDigitizing
             case (TowardsDigitizing, 21) => AgainstDigitizing
