@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.PolygonTools
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
@@ -41,7 +41,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
        "endMinute" -> 20))))
         )))
 
-    adjustProjectedAssetWithCreation(TestAssetInfo(NewLinearAsset("5000", 0, 150, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId))
+    adjustProjectedAssetWithCreation(TestAssetInfo(NewLinearAsset("ae2ffef1-353d-4c82-8246-108bb89809e1:5", 0, 150, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId))
 
   }
 
@@ -51,7 +51,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
       val value = Seq(DynamicPropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(0), "endHour" -> BigInt(0), "startMinute" -> BigInt(24), "endMinute" -> BigInt(0), "periodType" -> None)))
       val propertyData  = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("public_validity_period", "time_period", false, value))))
 
-      val newAssets = mtlServiceWithDao.create(Seq(NewLinearAsset("388562360", 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
+      val newAssets = mtlServiceWithDao.create(Seq(NewLinearAsset(LinkIdGenerator.generateRandom(), 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
       newAssets.length should be(1)
       val asset = mtlServiceWithDao.getPersistedAssetsByIds(typeId, newAssets.toSet).head
       asset.value.get.equals(propertyData) should be (true)
@@ -66,7 +66,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
 
       val propertyData  = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("public_validity_period", "time_period", false, value))))
 
-      val newAssets = mtlServiceWithDao.create(Seq(NewLinearAsset("388562360", 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
+      val newAssets = mtlServiceWithDao.create(Seq(NewLinearAsset(LinkIdGenerator.generateRandom(), 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
       newAssets.length should be(1)
       val asset = mtlServiceWithDao.getPersistedAssetsByIds(typeId, newAssets.toSet).head
       asset.value.get.equals(propertyData) should be (true)
@@ -76,8 +76,8 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
 
   def adjustProjectedAssetWithCreation(assetInfoCount: TestAssetInfo) : Unit = {
     val assetInfo = assetInfoCount
-    val oldLinkId = "5000"
-    val newLinkId = "6000"
+    val oldLinkId = "ae2ffef1-353d-4c82-8246-108bb89809e1:5" // Data created in siilinjarvi_verificationService_test_data.sql
+    val newLinkId = "4e339ea7-0d1c-4b83-ac34-d8cfeebe4066:6"
     val municipalityCode = 444
     val functionalClass = 1
     val geom = List(Point(0, 0), Point(300, 0))
