@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -22,7 +22,9 @@ class WeightLimitServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val (linkId1, linkId2, linkId3) = ("1611387", "123", "388553075")
+
+  val linkId1 = "a2c8e119-5739-456a-aa6c-cba0f300cc3c:1"
+  val (linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(

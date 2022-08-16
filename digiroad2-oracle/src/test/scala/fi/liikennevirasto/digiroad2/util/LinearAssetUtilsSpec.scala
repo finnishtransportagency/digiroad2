@@ -14,8 +14,8 @@ class LinearAssetUtilsSpec extends FunSuite with Matchers {
 
   test("testNewChangeInfoDetected") {
     // vvh time stamp is older
-    val linkId1 = "1"
-    val linkId2 = "2"
+    val linkId1 = LinkIdGenerator.generateRandom()
+    val linkId2 = LinkIdGenerator.generateRandom()
     val speedlimit = SpeedLimit(1, linkId1, SideCode.BothDirections,TrafficDirection.BothDirections,Some(SpeedLimitValue(40)),
       Seq(Point(0.0,0.0),Point(1.0,0.0)), 0.0, 1.0, None, None, None, None, 14000000, None, linkSource = NormalLinkInterface)
     // vvh time stamp is the same

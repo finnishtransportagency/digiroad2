@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -23,7 +23,8 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val linkId = "1611317"
+  val linkId = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
+  val randomLinkId: String = LinkIdGenerator.generateRandom()
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
@@ -61,7 +62,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       val result = service.getByMunicipality(235).find(_.id == 600051).get
 
       result.id should equal(600051)
-      result.linkId should equal("12345")
+      result.linkId should equal("abcdabcd-1234-5678-abcd-abcdabcdabcd:7")
       result.lon should equal(374396)
       result.lat should equal(6677319)
       result.mValue should equal(103)
@@ -85,7 +86,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Update railway crossing with geometry changes"){
     runWithRollback {
-      val linkId = "388553075"
+      val linkId = randomLinkId
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val codeValue = PropertyValue("")
       val safetyEquipmentValue = PropertyValue("1")
@@ -119,7 +120,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Update railway crossing without geometry changes"){
     runWithRollback {
-      val linkId = "388553075"
+      val linkId = randomLinkId
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val codeValue = PropertyValue("")
       val safetyEquipmentValue = PropertyValue("1")

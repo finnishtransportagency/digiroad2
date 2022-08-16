@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, Track}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite
@@ -20,8 +20,8 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   private val laneApi = new LaneApi(new OthSwagger, mockRoadLinkService, mockRoadAddressService)
   addServlet(laneApi, "/*")
 
-  val linkId1 = "1"
-  val linkId2 = "2"
+  val linkId1 = LinkIdGenerator.generateRandom()
+  val linkId2 = LinkIdGenerator.generateRandom()
 
   val roadLink = RoadLink(
     linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,

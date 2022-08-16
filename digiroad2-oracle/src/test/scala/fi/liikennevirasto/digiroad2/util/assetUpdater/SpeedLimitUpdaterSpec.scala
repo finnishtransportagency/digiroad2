@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, Post
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -31,10 +31,10 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
 
   test("Should map the speed limit of an old link to three new links") {
 
-    val oldLinkId = "5000"
-    val newLinkId1 = "6001"
-    val newLinkId2 = "6002"
-    val newLinkId3 = "6003"
+    val oldLinkId = LinkIdGenerator.generateRandom()
+    val newLinkId1 = LinkIdGenerator.generateRandom()
+    val newLinkId2 = LinkIdGenerator.generateRandom()
+    val newLinkId3 = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -70,10 +70,10 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Should map the speed limit of three old links to one new link") {
-    val oldLinkId1 = "5001"
-    val oldLinkId2 = "5002"
-    val oldLinkId3 = "5003"
-    val newLinkId = "6000"
+    val oldLinkId1 = LinkIdGenerator.generateRandom()
+    val oldLinkId2 = LinkIdGenerator.generateRandom()
+    val oldLinkId3 = LinkIdGenerator.generateRandom()
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections

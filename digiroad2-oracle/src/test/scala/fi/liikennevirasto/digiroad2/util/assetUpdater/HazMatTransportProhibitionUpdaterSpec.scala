@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, LinearAssetTypes, Measures}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -32,8 +32,8 @@ class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Hazmat asset should be shortened when the road link is shortened") {
-    val oldRoadLinkId = "160L"
-    val newRoadLinkId = "310L"
+    val oldRoadLinkId = LinkIdGenerator.generateRandom()
+    val newRoadLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 1
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.TowardsDigitizing

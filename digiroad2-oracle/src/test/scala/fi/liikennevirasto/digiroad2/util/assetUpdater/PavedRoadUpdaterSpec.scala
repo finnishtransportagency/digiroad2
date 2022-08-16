@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -43,7 +43,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Asset on a removed road link should be expired") {
-    val oldRoadLinkId = "1505L"
+    val oldRoadLinkId = LinkIdGenerator.generateRandom()
     val oldRoadLink = RoadLink(
       oldRoadLinkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
@@ -62,9 +62,9 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Assets should be mapped to a new road link combined from two smaller links") {
-    val oldRoadLinkId1 = "160L"
-    val oldRoadLinkId2 = "170L"
-    val newRoadLinkId = "310L"
+    val oldRoadLinkId1 = LinkIdGenerator.generateRandom()
+    val oldRoadLinkId2 = LinkIdGenerator.generateRandom()
+    val newRoadLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 1
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.TowardsDigitizing
@@ -93,7 +93,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       val assetsAfter = Service.dao.fetchLinearAssetsByLinkIds(PavedRoad.typeId, Seq(oldRoadLinkId1, oldRoadLinkId2, newRoadLinkId), "paallysteluokka", true)
       val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)
       expiredAssets.size should be(2)
-      expiredAssets.sortBy(_.linkId).map(_.linkId) should be(List(oldRoadLinkId1, oldRoadLinkId2))
+      expiredAssets.map(_.linkId).sorted should be(List(oldRoadLinkId1, oldRoadLinkId2).sorted)
       validAssets.size should be(2)
       validAssets.map(_.linkId) should be(List(newRoadLinkId, newRoadLinkId))
       val sortedValidAssets = validAssets.sortBy(_.startMeasure)

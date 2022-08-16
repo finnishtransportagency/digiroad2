@@ -28,8 +28,9 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val oldLinkId = "5000"
-  val newLinkId = "6000"
+  // Data created in siilinjarvi_verificationService_test_data.sql
+  val oldLinkId = "ae2ffef1-353d-4c82-8246-108bb89809e1:5"
+  val newLinkId = "4e339ea7-0d1c-4b83-ac34-d8cfeebe4066:6"
   val municipalityCode = 444
   val functionalClass = 1
   val assetTypeId = 170
