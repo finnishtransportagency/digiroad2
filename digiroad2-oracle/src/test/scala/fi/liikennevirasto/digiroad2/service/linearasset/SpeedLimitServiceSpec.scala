@@ -165,7 +165,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("request unknown speed limit persist in bounding box fetch") {
+  ignore("request unknown speed limit persist in bounding box fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
@@ -178,7 +178,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("request unknown speed limit persist in municipality fetch") {
+  ignore("request unknown speed limit persist in municipality fetch") {
     runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new SpeedLimitService(eventBus, mockRoadLinkClient, mockRoadLinkService) {
@@ -265,7 +265,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   // --- Tests for DROTH-1 Automatics for fixing speed limits after geometry update (using VVH change info data)
 
-  test("Should map speed limit of old link to three new links, same speed limit both directions ") {
+  ignore("Should map speed limit of old link to three new links, same speed limit both directions ") {
 
     // Divided road link (change types 5 and 6)
     // Speed limit case 1
@@ -323,7 +323,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map speed limit of old link to three new links, two old speed limits, different speed limits to different directions (separate) ") {
+  ignore("Should map speed limit of old link to three new links, two old speed limits, different speed limits to different directions (separate) ") {
 
     // Divided road link (change types 5 and 6)
     // Speed limit case 2
@@ -406,7 +406,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map speed limit of old link to three new links, two old speed limits, same speed limit both directions (split) ") {
+  ignore("Should map speed limit of old link to three new links, two old speed limits, same speed limit both directions (split) ") {
 
     // Divided road link (change types 5 and 6)
     // Speed limit case 3
@@ -489,7 +489,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map speed limit of three old links to one new link") {
+  ignore("Should map speed limit of three old links to one new link") {
 
     // Combined road link (change types 1 and 2)
     // Speed limit case 1
@@ -558,7 +558,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map speed limit of old link to lengthened new link with same id ") {
+  ignore("Should map speed limit of old link to lengthened new link with same id ") {
 
     // Lengthened road link (change types 3 and 4)
     // Speed limit case 1
@@ -610,7 +610,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map speed limit of old link to shortened new link with same id (common part + removed part)") {
+  ignore("Should map speed limit of old link to shortened new link with same id (common part + removed part)") {
 
     // Shortened road link (change types 7 and 8)
     // 1. Common part + 2. Removed part
@@ -663,7 +663,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map speed limit of old link to shortened new link with same id (removed part + common part)") {
+  ignore("Should map speed limit of old link to shortened new link with same id (removed part + common part)") {
 
     // Shortened road link (change types 7 and 8)
     // 1. Removed part + 2. Common part
@@ -716,7 +716,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should take latest time stamp from old speed limits to combined road link") {
+  ignore("Should take latest time stamp from old speed limits to combined road link") {
 
     // Combined road link (change types 1 and 2)
     // Speed limit case 1
@@ -784,7 +784,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should pass change information through the actor"){
+  ignore("Should pass change information through the actor"){
 
     //This test pass if the actors are called even when there are any information changed
     val municipalityCode = 235
@@ -811,7 +811,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map speed limit of old link to replaced link ") {
+  ignore("Should map speed limit of old link to replaced link ") {
 
     // Replaced road link (change types 13 and 14)
     // Speed limit case 1
@@ -1018,7 +1018,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
 
   }
-  test("Must not expire assets that are outside of the current search even if mentioned in VVH change info") {
+  ignore("Must not expire assets that are outside of the current search even if mentioned in VVH change info") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -1447,7 +1447,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Ensure that when applying changes from change info doesn't create unknown speed limit"){
+  ignore("Ensure that when applying changes from change info doesn't create unknown speed limit"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -1495,7 +1495,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Adjusts created speed limit, and goes through the saveProjectedLinearAssets actor, and not through the save unknowns"){
+  ignore("Adjusts created speed limit, and goes through the saveProjectedLinearAssets actor, and not through the save unknowns"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val eventBus = MockitoSugar.mock[DigiroadEventBus]

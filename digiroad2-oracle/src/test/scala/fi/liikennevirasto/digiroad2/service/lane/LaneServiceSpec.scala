@@ -909,7 +909,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newSubLaneIdLink101 = ServiceWithDao.create(subLane2ToAdd, Set(linkId2), 1, usernameTest).head
 
       val sideCodeForLink100 = SideCodesForLinkIds("100L", 1)
-      val sideCodeForLink101 = SideCodesForLinkIds("100L", 1)
+      val sideCodeForLink101 = SideCodesForLinkIds("101L", 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100, sideCodeForLink101)
 
       //Validate if initial lanes are correctly created

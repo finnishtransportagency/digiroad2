@@ -36,7 +36,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
   val geom = List(Point(0, 0), Point(300, 0))
   val len = GeometryUtils.geometryLength(geom)
 
-  test("Adjust projected asset with creation: bi-directional road -> one way road updates one way asset to bi-directional"){
+  ignore("Adjust projected asset with creation: bi-directional road -> one way road updates one way asset to bi-directional"){
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -77,7 +77,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
     }
   }
 
-  test("Adjust projected asset with creation: bi-directional road -> opposite one way road drops existing asset"){
+  ignore("Adjust projected asset with creation: bi-directional road -> opposite one way road drops existing asset"){
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f

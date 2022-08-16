@@ -22,25 +22,4 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     verify(mockProvider, times(1)).purgeUnknown(Set("1l"), Seq())
   }
 
-  test("should persist unknown speed limits") {
-    val system = ActorSystem("TestActorSystem")
-    val mockProvider = MockitoSugar.mock[SpeedLimitService]
-    val eventBus = new DigiroadEventBus()
-    val updater = TestActorRef[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]](Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], mockProvider), name = "testSpeedLimitUpdater")(system)
-    eventBus.subscribe(updater, "testSpeedLimits:persistUnknownSpeedLimit")
-    eventBus.publish("testSpeedLimits:persistUnknownSpeedLimit", Seq(UnknownSpeedLimit("1l", 235, Municipality)))
-
-    verify(mockProvider, times(1)).persistUnknown(Seq(UnknownSpeedLimit("1l", 235, Municipality)))
-  }
-
-  test("should persist update speed limits") {
-    val system = ActorSystem("TestActorSystem")
-    val mockProvider = MockitoSugar.mock[SpeedLimitService]
-    val eventBus = new DigiroadEventBus()
-    val updater = TestActorRef[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]](Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], mockProvider), name = "testSpeedLimitUpdater")(system)
-    eventBus.subscribe(updater, "testSpeedLimits:update")
-    eventBus.publish("testSpeedLimits:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long], Nil))
-
-    verify(mockProvider, times(1)).updateChangeSet(ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long], Nil))
-  }
 }
