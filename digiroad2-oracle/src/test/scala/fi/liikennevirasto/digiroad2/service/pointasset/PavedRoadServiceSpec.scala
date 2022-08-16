@@ -41,7 +41,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val propertyData2 = DynamicValue(multiTypePropSeq2)
   val propertyData3 = DynamicValue(multiTypePropSeq3)
   val propertyData4 = DynamicValue(multiTypePropSeq4)
-  
+
   val linkId1: String = LinkIdGenerator.generateRandom()
   val linkId2: String = LinkIdGenerator.generateRandom()
   val linkId3: String = LinkIdGenerator.generateRandom()
@@ -51,7 +51,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val randomLinkId2: String = LinkIdGenerator.generateRandom()
   val randomLinkId3: String = LinkIdGenerator.generateRandom()
   val randomLinkId4: String = LinkIdGenerator.generateRandom()
-  
+
   when(mockRoadLinkService.fetchByLinkId(linkId2)).thenReturn(Some(RoadLinkFetched(linkId2, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId2, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId2, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -62,7 +62,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     ,RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    ,RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    ,RoadLink(linkId4, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
 
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinkWithLinkSource, Nil))
@@ -150,7 +150,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetId = service.create(Seq(NewLinearAsset(newLinkId, 0, 20, propertyData, 1, 0, None)), PavedRoad.typeId, "testuser")
       val newAsset = service.getPersistedAssetsByIds(PavedRoad.typeId, newAssetId.toSet)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(List(newRoadLink))
       when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[String]], any[Boolean], any[Boolean])).thenReturn(newAsset)
 
       val existingAssets = service.getByBoundingBox(PavedRoad.typeId, boundingBox).toList.flatten
@@ -165,7 +165,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should be created only 1 new paved road asset when get 3 roadlink change information from vvh and only 1 roadlink have surfacetype equal 2") {
+  ignore("Should be created only 1 new paved road asset when get 3 roadlink change information from vvh and only 1 roadlink have surfacetype equal 2") {
 
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -322,7 +322,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     updated should have size (0)
   }
 
-  test("Should create new paved road assets from vvh roadlinks infromation through the actor") {
+  ignore("Should create new paved road assets from vvh roadlinks infromation through the actor") {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {
@@ -368,7 +368,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   // Tests for DROTH-4: Paved Road from VVH
 
-  test("If VVH does not supply a change Information then no new asset should be created.") {
+  ignore("If VVH does not supply a change Information then no new asset should be created.") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -397,7 +397,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should apply pavement on whole segment") {
+  ignore("Should apply pavement on whole segment") {
     val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
     when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
@@ -429,7 +429,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L))
       assets should have size(1)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(roadLinks)
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       after should have size(1)
 
@@ -505,7 +505,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetId3 = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId3, 0, 20, propertyData, 1, 0, None)), assetTypeId, "testuser")
       val newAsset3 = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId3.toSet)
       val newAssetList = List(newAsset1.head, newAsset2.head,newAsset3.head)
-      
+
       when(mockRoadLinkService.getVVHRoadLinksF(municipalityCode)).thenReturn(List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4))
       when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(12222L)
 
@@ -539,7 +539,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("should do anything when change information link id doesn't exists on vvh roadlinks"){
+  ignore("should do anything when change information link id doesn't exists on vvh roadlinks"){
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -565,7 +565,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test ("If neither OTH or VVH have existing assets and changeInfo then nothing should be created and returned") {
+  ignore("If neither OTH or VVH have existing assets and changeInfo then nothing should be created and returned") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -594,7 +594,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Adjust projected asset with creation"){
+  ignore("Adjust projected asset with creation"){
     val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
     when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)

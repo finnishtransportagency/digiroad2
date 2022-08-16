@@ -48,7 +48,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     result.size should be >1
   }
   //Ignored due to DROTH-3311, enable again when change info is fetched
-  ignore("Fetch changes with empty polygon string") {
+  ignore("Empty polygon should not return anything") {
     val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result= roadLinkClient.roadLinkChangeInfo.fetchByPolygon(geomBuilder.polygon())
     result.size should be (0)

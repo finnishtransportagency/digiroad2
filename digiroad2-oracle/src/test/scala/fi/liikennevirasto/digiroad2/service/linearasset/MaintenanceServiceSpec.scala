@@ -23,7 +23,6 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
-  
   when(mockRoadLinkService.fetchByLinkId(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -246,7 +245,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId2), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
     )
 
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((roadLinkWithLinkSource, changeInfo))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(roadLinkWithLinkSource)
 
     val maintenanceRoad = DynamicAssetValue(propertiesSeq)
     runWithRollback {

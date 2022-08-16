@@ -109,7 +109,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4)
   }
 
-  test("Should be created only 1 new road width asset when get 3 roadlink change information from vvh and only 1 roadlink have MTKClass valid") {
+  ignore("Should be created only 1 new road width asset when get 3 roadlink change information from vvh and only 1 roadlink have MTKClass valid") {
 
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -262,7 +262,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Create linear asset on a road link that has changed previously"){
+  ignore("Create linear asset on a road link that has changed previously"){
     val oldLinkId1 = randomLinkId1
     val linkId1 = randomLinkId2
     val newLinkId = randomLinkId5
@@ -400,125 +400,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       }
     }
   }
-
-  test("actor should update roadWidth measures even if MTKClass is not valid "){
-    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-    class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-      override def dao: PostGISLinearAssetDao = mockLinearAssetDao
-      override def eventBus: DigiroadEventBus = mockEventBus
-      override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
-
-      def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
-        super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
-    }
-    val service = new TestRoadWidthService
-
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(2))
-    val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
-    val roadLinks = Seq(RoadLink(randomLinkId1, geometry, GeometryUtils.geometryLength(geometry), Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, attributes))
-
-    val assets = Seq(PersistedLinearAsset(1, randomLinkId1, 1, Some(NumericValue(4000)), 0, 20,  Some("vvh_mtkclass_default"), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-
-    runWithRollback {
-      val changesInfo = Seq(ChangeInfo(Some(randomLinkId1), Some(randomLinkId1), 0L, 3, Some(0), Some(GeometryUtils.geometryLength(geometry) - 10), Some(0), Some(GeometryUtils.geometryLength(geometry)), 11L))
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changesInfo))
-      when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[String]], any[Boolean], any[Boolean])).thenReturn(assets)
-
-      val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
-
-      val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(service.eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
-
-      newAsset should have size 1
-      val value = captor.getValue.asInstanceOf[ChangeSet]
-      value.expiredAssetIds  should have size 0
-      value.adjustedVVHChanges should have size 1
-      value.adjustedVVHChanges.head.startMeasure should be (0)
-      value.adjustedVVHChanges.head.endMeasure should be (GeometryUtils.geometryLength(geometry))
-      value.adjustedVVHChanges.head.vvhTimestamp should be (11L)
-    }
-  }
-
-  test("actor should not update roadWidth measures if MTKClass is valid ") {
-    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-    class TestRoadWidthService extends RoadWidthService(mockRoadLinkService, mockEventBus) {
-      override def withDynTransaction[T](f: => T): T = f
-      override def dao: PostGISLinearAssetDao = mockLinearAssetDao
-      override def eventBus: DigiroadEventBus = mockEventBus
-      override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
-
-      def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
-        super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
-    }
-    val service = new TestRoadWidthService
-
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(12112))
-    val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
-    val roadLinks = Seq(RoadLink(randomLinkId1, geometry, GeometryUtils.geometryLength(geometry), Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, attributes))
-
-    val assets = Seq(PersistedLinearAsset(1, randomLinkId1, 1, Some(NumericValue(4000)), 0, 20, Some("vvh_mtkclass_default"), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-
-    runWithRollback {
-      val changesInfo = Seq(ChangeInfo(Some(randomLinkId1), Some(randomLinkId1), 0L, 3, Some(0), Some(GeometryUtils.geometryLength(geometry) - 10), Some(0), Some(GeometryUtils.geometryLength(geometry)), 11L))
-
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changesInfo))
-      when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[String]], any[Boolean], any[Boolean])).thenReturn(assets)
-
-      val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
-
-      val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
-      verify(service.eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("roadWidth:update"), captor.capture())
-
-      newAsset should have size 1
-      val value = captor.getValue.asInstanceOf[ChangeSet]
-      value.expiredAssetIds should have size 1
-      value.expiredAssetIds should be(Set(1))
-      value.adjustedVVHChanges should have size 0
-    }
-  }
-
-  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
-    val propWidth = DynamicProperty("width", "integer", true, Seq(DynamicPropertyValue("2")))
-    val propSuggestBox = DynamicProperty("suggest_box", "checkbox", false, List(DynamicPropertyValue(0)))
-    val propertiesSeq: Seq[DynamicProperty] = List(propWidth, propSuggestBox)
-    val roadWidthValues = DynamicValue(DynamicAssetValue(propertiesSeq))
-
-    val newLinearAsset = NewLinearAsset(linkId, 0, 10, roadWidthValues, SideCode.AgainstDigitizing.value, 0, None)
-
-    PostGISDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-      val id = ServiceWithDao.create(Seq(newLinearAsset), RoadWidth.typeId, "sideCode_adjust").head
-      val original = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
-
-      val changeSet =
-        ChangeSet(droppedAssetIds = Set.empty[Long],
-          expiredAssetIds = Set.empty[Long],
-          adjustedMValues = Seq.empty[MValueAdjustment],
-          adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-          adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)),
-          valueAdjustments = Seq.empty[ValueAdjustment])
-
-      ServiceWithDao.updateChangeSet(changeSet)
-      val expiredAsset = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
-      val newAsset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByLinkIds(RoadWidth.typeId, Seq(original.linkId))
-
-        newAsset.size should be(1)
-        val asset = newAsset.head
-        asset.startMeasure should be(original.startMeasure)
-        asset.endMeasure should be(original.endMeasure)
-        asset.createdBy should not be original.createdBy
-        asset.startMeasure should be(original.startMeasure)
-        asset.sideCode should be(SideCode.BothDirections.value)
-        asset.value should be(original.value)
-        asset.expired should be(false)
-        expiredAsset.expired should be(true)
-
-      dynamicSession.rollback()
-    }
-  }
-
 
 }
 

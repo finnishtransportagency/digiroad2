@@ -432,81 +432,8 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
   }
 
   case class TestAssetInfo(newLinearAsset: NewLinearAsset, typeId: Int)
-  test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
 
-    val careClassValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("hoitoluokat_talvihoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(20))),
-      DynamicProperty("hoitoluokat_viherhoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(3)))
-    )))
-
-    val carryingCapacityValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("kevatkantavuus", "integer", false, Seq(DynamicPropertyValue(0))),
-      DynamicProperty("routivuuskerroin", "single_choice", false, Seq(DynamicPropertyValue(40))),
-      DynamicProperty("mittauspaiva", "date", false, Seq(DynamicPropertyValue("11.9.2018")))
-    )))
-
-    val pavedRoadValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue(1)))
-    )))
-
-    val massTransitLaneValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("public_validity_period", "time_period", false, Seq(DynamicPropertyValue(Map("days" -> 1,
-        "startHour" -> 2,
-        "endHour" -> 10,
-        "startMinute" -> 10,
-        "endMinute" -> 20))))
-    )))
-
-    val damagedByThawValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("kelirikko", "numbere", false, Seq(DynamicPropertyValue(10)))
-    )))
-
-    val assetsInfo = Seq(
-      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
-      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
-      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, pavedRoadValue, SideCode.AgainstDigitizing.value, 0, None), PavedRoad.typeId),
-      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
-      TestAssetInfo(NewLinearAsset(linkId1, 0, 10, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId))
-
-    runWithRollback {
-      assetsInfo.foreach(testSideCodeAdjustment)
-    }
-  }
-
-  def testSideCodeAdjustment(assetInfo: TestAssetInfo) {
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-    val id = ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "sideCode_adjust").head
-    val original = ServiceWithDao.getPersistedAssetsByIds(assetInfo.typeId, Set(id)).head
-
-    val changeSet =
-      ChangeSet(droppedAssetIds = Set.empty[Long],
-        expiredAssetIds = Set.empty[Long],
-        adjustedMValues = Seq.empty[MValueAdjustment],
-        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)),
-        valueAdjustments = Seq.empty[ValueAdjustment])
-
-    ServiceWithDao.updateChangeSet(changeSet)
-    val expiredAsset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
-    val newAsset = ServiceWithDao.getPersistedAssetsByLinkIds(assetInfo.typeId, Seq(original.linkId))
-    withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
-      newAsset.size should be(1)
-      val asset = newAsset.head
-      asset.startMeasure should be(original.startMeasure)
-      asset.endMeasure should be(original.endMeasure)
-      asset.createdBy should not be original.createdBy
-      asset.startMeasure should be(original.startMeasure)
-      asset.sideCode should be(SideCode.BothDirections.value)
-      asset.value.get.asInstanceOf[DynamicValue].value.properties.map { propVal =>
-        original.value.get.asInstanceOf[DynamicValue].value.properties.contains(propVal) should be (true)
-      }
-      asset.expired should be(false)
-      expiredAsset.expired should be(true)
-    }
-  }
-
-
-  test("Adjust projected asset with creation"){
+  ignore("Adjust projected asset with creation"){
     val (oldLinkId, newLinkId) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
     val careClassValue = DynamicValue(DynamicAssetValue(Seq(
       DynamicProperty("hoitoluokat_talvihoitoluokka", "single_choice", false, Seq(DynamicPropertyValue(20))),

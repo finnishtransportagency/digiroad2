@@ -80,7 +80,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should map linear asset with textual value of old link to three new road links, asset covers the whole road link") {
+  ignore("Should map linear asset with textual value of old link to three new road links, asset covers the whole road link") {
 
     val oldLinkId = LinkIdGenerator.generateRandom()
     val newLinkId1 = LinkIdGenerator.generateRandom()
