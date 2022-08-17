@@ -386,7 +386,7 @@ class RoadLinkDAO {
     
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger,"TEST LOG Getting roadlinks by polygon" ){
-      sql"""select kmtkid
+      sql"""select linkid
           from roadlink
           where #$polygonFilter
        """.as[String].list
