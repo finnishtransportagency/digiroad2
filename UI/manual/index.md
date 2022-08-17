@@ -356,7 +356,7 @@ Kaistatietoja voi tarkastella kaistan mallinnustyökalussa myös tieosoiteinfo-t
 
 _Tieosoiteinfo-työkalu ja kaistatiedot._
 
-Pääkaistalle voi lisätä lisäkaistoja tieosoitteen avulla, jos kaista sijaitsee valtion tiellä, ja sille on tieosoite saatavilla. Lisääminen tapahtuu valitsemalla linkin geometrian (yksittäinen tielinkki tai kaistajoukko) sovelluksen ollessa kaistan mallinnustyökalun muokkaustilassa, jolloin ominaisuustietoikkunaan avautuu linkin/kaistajoukon kaistatiedot. Tämän jälkeen valitaan kummalla puolelle pääkaistaa lisäkaista halutaan lisätä, minkä jälkeen "lisää kaista tieosoitteen avulla" -valinta muuttuu aktiiviseksi (23).
+Pääkaistalle voi lisätä lisäkaistoja tieosoitteen avulla, jos kaista sijaitsee valtion tiellä, ja sille on tieosoite saatavilla. Huom! Jotta lisäkaistan voi lisätä tieosoitteen avulla, pääkaistalla ei saa entuudestaan olla lisäkaistoja. Lisääminen tapahtuu valitsemalla linkin geometrian (yksittäinen tielinkki tai kaistajoukko) sovelluksen ollessa kaistan mallinnustyökalun muokkaustilassa, jolloin ominaisuustietoikkunaan avautuu linkin/kaistajoukon kaistatiedot. Tämän jälkeen valitaan kummalla puolelle pääkaistaa lisäkaista halutaan lisätä, minkä jälkeen "lisää kaista tieosoitteen avulla" -valinta muuttuu aktiiviseksi (23).
 
 ![Lisää kaista tieosoitteen avulla.](km9.png)
 
