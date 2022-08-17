@@ -209,7 +209,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           }
 
           val filteredRoadAddresses = roadAddresses.filter(address =>{
-            val startInside = (address.startMValue >= laneRoadAddressInfo.startDistance) && (address.startMValue <= laneRoadAddressInfo.endDistance)
+            val startInside = (address.startAddrMValue >= laneRoadAddressInfo.startDistance) && (address.startAddrMValue <= laneRoadAddressInfo.endDistance)
             val endInside = (address.endAddrMValue <= laneRoadAddressInfo.endDistance) && (address.endAddrMValue >= laneRoadAddressInfo.startDistance)
             startInside || endInside
           })
