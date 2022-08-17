@@ -81,7 +81,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         .thenReturn(Some(toRoadLink(rl))))
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[String], any[Boolean])).thenReturn(Some(toRoadLink(RoadLinkFetched(testLinkId5, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
-    when(mockRoadLinkService.getHistoryDataLinkFromVVH(any[String], any[Boolean])).thenReturn(None)
+    when(mockRoadLinkService.getHistoryDataLink(any[String], any[Boolean])).thenReturn(None)
 
   }
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.lane.{NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.roadLinkService.getHistoryDataLinksFromVVH
+import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.roadLinkService.getHistoryDataLinks
 import fi.liikennevirasto.digiroad2.util.LaneUtils.laneService._
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
@@ -38,7 +38,7 @@ object ChangeLanesAccordingToVvhChanges {
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
-    val historyLinks = getHistoryDataLinksFromVVH(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+    val historyLinks = getHistoryDataLinks(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
     val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.timeStamp)).toSeq
 
     val (changeSet, modifiedLanes) = handleChanges(roadLinks,latestHistoryRoadLinks, changes, existingAssets)

@@ -312,7 +312,7 @@ trait MassTransitStopService extends PointAssetOperations {
         case _ => asset.linkId
       }
 
-      val (optRoadLink, optHistoric) = (roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false), roadLinkService.getHistoryDataLinkFromVVH(linkId, false))
+      val (optRoadLink, optHistoric) = (roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false), roadLinkService.getHistoryDataLink(linkId, false))
 
       val (previousStrategy, currentStrategy) = getStrategy(properties, asset, optRoadLink)
       val roadLink = currentStrategy.pickRoadLink(optRoadLink, optHistoric)

@@ -38,7 +38,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     */
   test("Test VVH History LinkId API") {
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result = roadLinkClient.historyData.fetchVVHRoadLinkByLinkIds(Set("440484","440606","440405","440489"))
+    val result = roadLinkClient.historyData.fetchByLinkIds(Set("440484","440606","440405","440489"))
     result.nonEmpty should be (true)
   }
   //Ignored due to DROTH-3311, enable again when change info is fetched

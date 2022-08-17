@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, Parallel}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
@@ -82,6 +82,11 @@ object FilterOgc extends Filter {
       else ""
   }
 
+  override def withOldkmtkidFilter(linkIds: Set[String]): String = {
+    if (linkIds.nonEmpty) withFilter("oldkmtkid",linkIds)
+    else ""
+  }
+  
   override def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
       if (roadNames.nonEmpty) withFilter(roadNameSource,roadNames)
       else ""
@@ -106,9 +111,14 @@ object FilterOgc extends Filter {
   
 }
 
-object Extractor {
+
+class ExtractorBase {
   lazy val logger = LoggerFactory.getLogger(getClass)
-  private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+  type LinkType
+
+  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
+  
+  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath,
@@ -119,12 +129,12 @@ object Extractor {
     12132 -> FeatureClass.CarRoad_IIIb
   )
 
-  private val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+  protected val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
 
-  private  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
+  protected  def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     if (attributes("adminclass").asInstanceOf[String] != null)
       Option(attributes("adminclass").asInstanceOf[String].toInt)
         .map(AdministrativeClass.apply)
@@ -139,26 +149,58 @@ object Extractor {
         .getOrElse(ConstructionType.InUse)
     else ConstructionType.InUse
   }
-  
-  private  def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
+
+  protected def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
     if (attributes("directiontype").asInstanceOf[String] != null)
       Option(attributes("directiontype").asInstanceOf[String].toInt)
         .map(trafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
         .getOrElse(TrafficDirection.UnknownDirection)
     else TrafficDirection.UnknownDirection
   }
-  
-  private def extractAttributes(attributesMap: Map[String, Any],validFromDate:BigInt,lastEditedDate:BigInt,starttime:BigInt): Map[String, Any] = {
-    def numberConversion(field:String): BigInt = {
-      try {
-        toBigInt(attributesMap(field).toString.toInt)
-      } catch {
-        case _: Exception =>
-          logger.warn(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
-         0
+
+
+  /**
+    * Extract double value from data. Used for change info start and end measures.
+    */
+  protected def anyToDouble(value: Any): Option[Double] = {
+    value match {
+      case null => None
+      case _ => {
+        val doubleValue = Try(value.toString.toDouble).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}") )
+        Some(doubleValue)
       }
     }
-    
+  }
+
+  def toBigInt(value: Int): BigInt = {
+    Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
+  }
+
+  protected def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
+    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
+    var lastEditedDate : Option[Long] = Option(0)
+    if(attributes.contains("versionstarttime")){
+      lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
+    }
+
+    lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
+  }
+  
+  protected def extractAttributes(attributesMap: Map[String, Any], validFromDate:BigInt, lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
+    case class NumberConversionFailed(msg:String)extends Exception(msg)
+    def numberConversion(field:String): BigInt = {
+      if (attributesMap(field) == null){
+        null
+      }else {
+        try {
+          toBigInt(attributesMap(field).toString.toInt)
+        } catch {
+          case _: Exception =>
+            throw NumberConversionFailed(s"Failed to retrieve value ${field}: ${attributesMap(field)}")
+        }
+      }
+    }
+
     Map(
       "ROADNUMBER"            -> numberConversion("roadnumber"),
       "ROADPARTNUMBER"        -> numberConversion("roadpartnumber"),
@@ -178,48 +220,26 @@ object Extractor {
       "TO_RIGHT"              -> numberConversion("addresstoright"),
       "FROM_LEFT"             -> numberConversion("addressfromleft"),
       "TO_LEFT"               -> numberConversion("addresstoleft"),
-      
+
       "MTKHEREFLIP"           -> attributesMap("geometryflip"),
       "CREATED_DATE"          -> starttime,
       "LAST_EDITED_DATE"      -> lastEditedDate,
       "VALIDFROM"             -> validFromDate
     )
   }
-  
-  /**
-    * Extract double value from data. Used for change info start and end measures.
-    */
-  private def anyToDouble(value: Any): Option[Double] = {
-    value match {
-      case null => None
-      case _ => {
-        val doubleValue = Try(value.toString.toDouble).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}") )
-        Some(doubleValue)
-      }
-    }
-  }
 
-  def toBigInt(value: Int): BigInt = {
-    Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
-  }
-
- private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
-    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
-    var lastEditedDate : Option[Long] = Option(0)
-    if(attributes.contains("versionstarttime")){
-      lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
-    }
-   
-   lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
-  }
+}
+class Extractor extends ExtractorBase {
   
-  def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): RoadLinkFetched = {
+  override type LinkType = RoadLinkFetched
+  
+  override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = {
     val attributes = feature.properties
-    
+
     val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
     val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
     val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
-    
+
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
     })
@@ -228,11 +248,11 @@ object Extractor {
 
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
-    
+
     val geometryLength: Double = anyToDouble(attributes("horizontallength")).getOrElse(0.0)
 
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-   
+
     val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
 
     RoadLinkFetched(linkId, municipalityCode,
@@ -245,23 +265,25 @@ object Extractor {
   }
 }
 
-trait KgvOperation extends LinkOperationsAbstract{
+abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
   
   protected val linkGeomSource: LinkGeomSource
   protected def serviceName: String
-  
   private val cqlLang = "cql-text"
   private val bboxCrsType = "EPSG%3A3067"
   private val crs = "EPSG%3A3067"
   private val WARNING_LEVEL: Int = 10
+  
   // This is way to bypass AWS API gateway 10MB limitation, tune it if item size increase or degrease 
   private val BATCH_SIZE: Int = 4999
+  // Limit size of url query, Too big query string result error 414
+  private val BATCH_SIZE_FOR_SELECT_IN_QUERY: Int = 150
   
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
-  protected def convertToFeature(content: Map[String, Any]): Feature = {
+  private def convertToFeature(content: Map[String, Any]): Feature = {
     val geometry = Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
       coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]]
     )
@@ -287,13 +309,13 @@ trait KgvOperation extends LinkOperationsAbstract{
     * Under Construction - 1
     * Planned - 3
     */
-  protected def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
+  private def roadLinkStatusFilter(feature: Map[String, Any]): Boolean = {
     val attributes = feature("properties").asInstanceOf[Map[String, Any]]
-    val linkStatus = Extractor.extractConstructionType(attributes)
+    val linkStatus = extractor.extractConstructionType(attributes)
     linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
   }
-  
-  protected def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
+
+  private def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
     val request = new HttpGet(url)
     addHeaders(request)
     
@@ -339,7 +361,7 @@ trait KgvOperation extends LinkOperationsAbstract{
           }
           Left(resort)
         } else {
-          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString))
+          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
         }
       }
       catch {
@@ -352,13 +374,13 @@ trait KgvOperation extends LinkOperationsAbstract{
       }
     }
   }
-  
-  def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
+
+  private def paginationRequest(base:String,limit:Int,startIndex:Int = 0,firstRequest:Boolean = true ): (String,Int) = {
     if (firstRequest) (s"${base}&limit=${limit}&startIndex=${startIndex}",limit)
     else (s"${base}&limit=${limit}&startIndex=${startIndex}",startIndex+limit)
   }
   
-  def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
+  private def queryWithPaginationThreaded(baseUrl: String = ""): Seq[LinkType] = {
     val pageAllReadyFetched: mutable.HashSet[String] = new mutable.HashSet()
 
     @tailrec
@@ -395,7 +417,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     val items2 = Await.result(fut2, atMost = Duration.Inf)
     val items3 = Await.result(fut3, atMost = Duration.Inf)
     (items1 ++ items2 ++ items3).flatMap(_.features.par.map(feature=>
-      Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
+      extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])).toList
   }
   
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
@@ -409,7 +431,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
     match {
       case Left(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -425,7 +447,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(t=>Extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Left(features) =>features.get.features.map(t=>extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
       case Right(error) => throw new ClientException(error.toString)
     }
   }
@@ -440,17 +462,17 @@ trait KgvOperation extends LinkOperationsAbstract{
       case Right(error) => throw new ClientException(error.toString)
     }
   }
-
-  protected def queryByLinkId[LinkType](linkId: String): Seq[LinkType] = {
-    fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${linkId}") match {
-      case Left(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+  
+  override protected def queryByIds[LinkType](idSet: Set[String],filter: Set[String] => String): Seq[LinkType] = {
+    new Parallel().operation(idSet.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
+      _.flatMap(ids=>queryByFilter(Some(filter(ids)))).toList
     }
   }
   
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
-      linkIds.grouped(BATCH_SIZE).toList.par.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    new Parallel().operation( linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par,2){
+      _.flatMap(ids=>queryByLinkIdsUsingFilter(ids,filter)).toList
+    }
   }
 
   protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {
@@ -463,8 +485,8 @@ trait KgvOperation extends LinkOperationsAbstract{
     if(!pagination){
       fetchFeatures(url)
       match {
-        case Left(features) =>features.get.features.map(feature=> 
-          Extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+        case Left(features) =>features.get.features.map(feature=>
+          extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
         case Right(error) => throw new ClientException(error.toString)
       }
     }else {
