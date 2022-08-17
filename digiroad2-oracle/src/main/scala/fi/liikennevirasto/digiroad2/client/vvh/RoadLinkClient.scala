@@ -65,7 +65,7 @@ case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long,
 }
 
 case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
-                           trafficDirection: TrafficDirection, featureClass: FeatureClass,modifiedAt: Option[DateTime] = None, createdDate:BigInt = 0, endDate: BigInt = 0, attributes: Map[String, Any] = Map(),kmtkid:String="",version:Int=0,
+                           trafficDirection: TrafficDirection, featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, createdDate:BigInt = 0, endDate: BigInt = 0, attributes: Map[String, Any] = Map(),kmtkid:String="",version:Int=0,
                            constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends IRoadLinkFetched {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
