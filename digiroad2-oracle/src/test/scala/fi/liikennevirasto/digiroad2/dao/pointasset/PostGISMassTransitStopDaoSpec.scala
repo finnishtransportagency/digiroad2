@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.dao.Queries.PropertyRow
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopRow
+import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
 import org.scalatest.{FunSuite, MustMatchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -77,7 +78,7 @@ class PostGISMassTransitStopDaoSpec extends FunSuite with MustMatchers {
   }
 
   private def createAssetRow(propertyRow: PropertyRow) = {
-    MassTransitStopRow(1, 1, 1, Some(Point(1, 1)), "123l", Some(180), 2, None, None, propertyRow,
+    MassTransitStopRow(1, 1, 1, Some(Point(1, 1)), LinkIdGenerator.generateRandom(), Some(180), 2, None, None, propertyRow,
       Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, AdministrativeClass.apply(99), 235, false, None)
   }
 }

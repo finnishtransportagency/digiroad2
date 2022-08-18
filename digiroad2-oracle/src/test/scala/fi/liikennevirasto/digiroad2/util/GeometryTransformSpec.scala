@@ -14,7 +14,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   val transform = new GeometryTransform(mockRoadAddressService)
 
   test("Resolve location on left when asset SideCode different than AgainstDigitizing value") {
-    val linkId = "1641830"
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 1
 
@@ -32,7 +32,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on left when asset SideCode equals to TowardsDigitizing value") {
-    val linkId = "1641830"
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 3
 
@@ -51,7 +51,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on right when asset SideCode different than AgainstDigitizing value") {
-    val linkId = "1641830"
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 1
 
@@ -67,7 +67,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on right when asset SideCode equals to TowardsDigitizing value") {
-    val linkId = "1641830"
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 2
 
@@ -83,7 +83,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on two-way road") {
-    val linkId = "1641830"
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 11
     val sideCode = 0
 

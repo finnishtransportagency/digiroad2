@@ -133,8 +133,6 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
         } else if (codeValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueCode(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-        } else if (mandatoryFields.contains(key) && !value.toString.forall(_.isDigit)) {
-          result.copy(_1 = List(mandatoryFields) ::: result._1, _2 = result._2)
         } else
           result
       }

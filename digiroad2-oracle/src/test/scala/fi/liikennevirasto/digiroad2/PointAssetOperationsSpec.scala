@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
+import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
@@ -92,8 +93,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been combined and the Asset its in Modified Part") {
-    val modifiedLinkId = "6001"
-    val removedLinkId = "6002"
+    val modifiedLinkId = LinkIdGenerator.generateRandom()
+    val removedLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -120,8 +121,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Divided and with more than one ChangeInfo") {
-    val cmpLinkId = "6001"
-    val crpLinkId = "6002"
+    val cmpLinkId = LinkIdGenerator.generateRandom()
+    val crpLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -159,8 +160,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Divided and with Asset filtering by timeStamp") {
-    val cmpLinkId = "6001"
-    val crpLinkId = "6002"
+    val cmpLinkId = LinkIdGenerator.generateRandom()
+    val crpLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -197,8 +198,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and considering max distance allowed") {
-    val cmpLinkId = "6001"
-    val crpLinkId = "6002"
+    val cmpLinkId = LinkIdGenerator.generateRandom()
+    val crpLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -238,8 +239,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and filtered by timeStamp") {
-    val cmpLinkId = "6001"
-    val crpLinkId = "6002"
+    val cmpLinkId = LinkIdGenerator.generateRandom()
+    val crpLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -278,8 +279,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been combined and the Asset its in Removed Part") {
-    val modifiedLinkId = "6001"
-    val removedLinkId = "6002"
+    val modifiedLinkId = LinkIdGenerator.generateRandom()
+    val removedLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -314,8 +315,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been divided and the Asset its in Modified Part") {
-    val modifiedLinkId = "6001"
-    val newLinkId = "6002"
+    val modifiedLinkId = LinkIdGenerator.generateRandom()
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -350,9 +351,9 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been divided and the Asset its in New Part") {
-    val newLinkId = "6002"
-    val newLinkId2 = "6001"
-    val oldLinkId = "106"
+    val newLinkId = LinkIdGenerator.generateRandom()
+    val newLinkId2 = LinkIdGenerator.generateRandom()
+    val oldLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -387,8 +388,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been Lengthened and the Asset its in Common Part") {
-    val CommonLinkId = "6001"
-    val newLinkId = "6002"
+    val CommonLinkId = LinkIdGenerator.generateRandom()
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -415,8 +416,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been Lengthened and the Asset its in New Part") {
-    val CommonLinkId = "6001"
-    val newLinkId = "6002"
+    val CommonLinkId = LinkIdGenerator.generateRandom()
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -451,7 +452,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto Correct Floating Point in case Geometry has been Replaced and the Asset its in Common Part") {
-    val linkId = "6002"
+    val linkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -484,8 +485,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to first roadlink geometry point") {
-    val linkId1 = "1611552"
-    val linkId2 = "1611558"
+    val linkId1 = LinkIdGenerator.generateRandom()
+    val linkId2 = LinkIdGenerator.generateRandom()
     val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
     val persistedAsset =  testPersistedPointAsset(11, 0, 8, 24, linkId1, 8, false, 0, NormalLinkInterface)
 
@@ -507,8 +508,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to last roadlink geometry point") {
-    val linkId1 = "1611552"
-    val linkId2 = "1611558"
+    val linkId1 = LinkIdGenerator.generateRandom()
+    val linkId2 = LinkIdGenerator.generateRandom()
     val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
     val persistedAsset =  testPersistedPointAsset(11, 0, 82, 24, linkId1, 82, false, 0, NormalLinkInterface)
 
@@ -530,8 +531,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to last roadlink geometry point (3 < startPoint)") {
-    val linkId1 = "1611552"
-    val linkId2 = "1611558"
+    val linkId1 = LinkIdGenerator.generateRandom()
+    val linkId2 = LinkIdGenerator.generateRandom()
     val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
     val persistedAsset =  testPersistedPointAsset(11, 0, 5, 24, linkId1, 5, false, 0, NormalLinkInterface)
 
@@ -546,8 +547,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to last roadlink geometry point (endPoint > 3) ") {
-    val linkId1 = "1611552"
-    val linkId2 = "1611558"
+    val linkId1 = LinkIdGenerator.generateRandom()
+    val linkId2 = LinkIdGenerator.generateRandom()
     val changeInfo = ChangeInfo(Some(linkId1), Some(linkId1), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
     val persistedAsset =  testPersistedPointAsset(11, 0, 85, 24, linkId1, 85, false, 0, NormalLinkInterface)
 

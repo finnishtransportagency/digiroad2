@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{ RoadLink, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
@@ -20,7 +20,6 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.Caching
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
-import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.roadLinkClient
 import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -966,7 +965,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
     val roadlinks = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
     
-    val linkprocessor = new VVHRoadLinkHistoryProcessor()
+    val linkprocessor = new RoadLinkHistoryProcessor()
     // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
     val filteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
 
@@ -975,23 +974,23 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     }
   }
 
-  def getHistoryDataLinkFromVVH(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getHistoryDataLinksFromVVH(Set(linkId), newTransaction).headOption
+  def getHistoryDataLink(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getHistoryDataLinks(Set(linkId), newTransaction).headOption
 
-  def getHistoryDataLinksFromVVH(linkId: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchHistoryDataLinks(linkId)
+  def getHistoryDataLinks(linkId: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val historyRoadLinks = fetchHistoryDataLinks(linkId)
     if (newTransaction)
       withDynTransaction {
-        enrichRoadLinksFromVVH(vvhRoadLinks)
+        enrichRoadLinksFromVVH(historyRoadLinks)
       }
     else
-      enrichRoadLinksFromVVH(vvhRoadLinks)
+      enrichRoadLinksFromVVH(historyRoadLinks)
   }
 
-  def fetchHistoryDataLinks(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+  def fetchHistoryDataLinks(linkIds: Set[String]): Seq[HistoryRoadLink] = {
     if (linkIds.nonEmpty)
       roadLinkClient.historyData.fetchByLinkIds(linkIds)
     else
-      Seq.empty[RoadLinkFetched]
+      Seq.empty[HistoryRoadLink]
   }
 
 
@@ -1371,7 +1370,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
 
-  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[RoadLinkFetched]): Seq[RoadLink] = {
+  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
     val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + vvhRoadLinks.size){getRoadLinkDataByLinkIds(vvhRoadLinks)}
   }
@@ -1401,14 +1400,14 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   /**
     * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
-  def getRoadLinkDataByLinkIds(vvhRoadLinks: Seq[RoadLinkFetched]): Seq[RoadLink] = {
-    adjustedRoadLinks(vvhRoadLinks)
+  def getRoadLinkDataByLinkIds(roadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
+    adjustedRoadLinks(roadLinks)
   }
 
-  private def adjustedRoadLinks(vvhRoadlinks: Seq[RoadLinkFetched]): Seq[RoadLink] = {
-    val propertyRows = fetchRoadLinkPropertyRows(vvhRoadlinks.map(_.linkId).toSet)
+  private def adjustedRoadLinks(roadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
+    val propertyRows = fetchRoadLinkPropertyRows(roadLinks.map(_.linkId).toSet)
 
-    vvhRoadlinks.map { link =>
+    roadLinks.map { link =>
       val latestModification = propertyRows.latestModifications(link.linkId, link.modifiedAt.map(at => (at, "vvh_modified")))
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
 

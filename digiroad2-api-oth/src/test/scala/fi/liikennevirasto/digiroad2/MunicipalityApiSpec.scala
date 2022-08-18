@@ -9,8 +9,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
-
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, LinearAssetUtils}
 import javax.sql.DataSource
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
@@ -49,8 +48,11 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
+  val (linkId1, linkId2, linkId3, linkId4, linkId5) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(),
+    LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
+
   val dataSetId = "ab70d6a9-9616-4cc4-abbe-6272c2344709"
-  val roadLinksList: List[List[String]] = List(List("441062", "441063", "441070", "452512"), List("445212"))
+  val roadLinksList: List[List[String]] = List(List(linkId1, linkId2, linkId3, linkId4), List(linkId5))
 
   val commonLinearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "100001", "functionalClass" -> "Katu", "type" -> "Roadlink")
   val commonPointProperties: Map[String, String] = Map("id" -> "100000", "type" -> "obstacle", "class" -> "1")
@@ -70,7 +72,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("number of features doesn't match with the number of list of road links give") {
 
-    val wrongRoadLinksList: List[List[String]] = List(List("441062", "441063", "441070", "452512"))
+    val wrongRoadLinksList: List[List[String]] = List(List(linkId1, linkId2, linkId3, linkId4))
     val dataSet = Dataset(dataSetId, commonFeatureCollection, wrongRoadLinksList)
 
     runWithRollback {
@@ -81,7 +83,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("validate if features have id key/value") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
     val pointProperties: Map[String, String] = Map("type" -> "obstacle", "class" -> "1")
@@ -102,8 +104,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("validate if roadLink exists on VVH") {
-    val linkId1 = "5"
-    val linkId2 = "10"
+    val linkId1 = LinkIdGenerator.generateRandom()
+    val linkId2 = LinkIdGenerator.generateRandom()
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId1, linkId2), false)).thenReturn(Seq())
 
     val roadLinksList: List[List[String]] = List(List(linkId1),List(linkId2))
@@ -121,7 +123,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("validate if the Geometry Type is one of the allowed") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
@@ -144,7 +146,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new obstacle with nonvalid value to be created/updated") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
@@ -167,7 +169,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new speedlimit with nonvalid value to be created/updated") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
@@ -190,7 +192,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new pavementClass with nonvalid value to be created/updated") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
 
@@ -213,7 +215,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new speedlimit with valid value to be created") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
@@ -257,7 +259,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new pavementClass with valid value to be created") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
@@ -305,7 +307,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new obstacle with valid value to be created") {
-    val linkId = "5000"
+    val linkId = LinkIdGenerator.generateRandom()
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))

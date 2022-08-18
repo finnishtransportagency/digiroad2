@@ -204,8 +204,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
         lastModifiedBy(None, roadLink.modifiedBy),
-        "startNode" -> roadLink.attributes.get("STARTNODE"),
-        "endNode" -> roadLink.attributes.get("ENDNODE"),
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
         "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
@@ -213,8 +211,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
                                                                                               .filterNot(_._1 == "ROADNUMBER")
                                                                                               .filterNot(_._1 == "ROADPARTNUMBER")
-                                                                                              .filterNot(_._1 == "STARTNODE")
-                                                                                              .filterNot(_._1 == "ENDNODE")
                                                                                               .filterNot(_._1 == "CUST_OWNER")
                                                                                               .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
                                                                                               .filterNot(_._1 == "ACCESS_RIGHT_ID")

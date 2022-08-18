@@ -10,12 +10,13 @@ import org.scalatest.{FunSuite, Matchers}
 
 class JsonSerializerTest extends FunSuite with Matchers {
 
+  val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   val serializer = new JsonSerializer
   test("testWriteReadCachedGeometry") {
     val f = File.createTempFile("test", ".cache")
-    val roadLinks = Seq(RoadLink("1L", Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
+    val roadLinks = Seq(RoadLink(linkId1, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
       Map()),
-      RoadLink("2L", Seq(Point(2.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
+      RoadLink(linkId2, Seq(Point(2.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
       Map()))
     serializer.writeCache(f, roadLinks) should be (true)
     val result = serializer.readCachedGeometry(f)
@@ -25,7 +26,7 @@ class JsonSerializerTest extends FunSuite with Matchers {
   // Takes some time to run, run manually if needed.
   ignore("testWriteHugeCachedGeometry") {
     val f = File.createTempFile("test", ".cache")
-    val roadLink = RoadLink("1", Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
+    val roadLink = RoadLink(linkId1, Seq(Point(0.0, 1.0),Point(0.1, 2.0)), 1.1, State, 5, TrafficDirection.BothDirections, Motorway, modifiedAt = Option("yesterday"), modifiedBy = Option("someone"),
       Map("TO_RIGHT"->104,"LAST_EDITED_DATE"->1476468913000L,"FROM_LEFT"->103,"MTKHEREFLIP"->1,"MTKID"->362888804,
         "ROADNAME_FI"->"Evitskogintie","VERTICALACCURACY"->201,"VALIDFROM"->1379548800000L,"CONSTRUCTIONTYPE"->0,
         "SURFACETYPE"->2,"MTKCLASS"->12122,"ROADPARTNUMBER"->4,"TO_LEFT"->103,
@@ -41,7 +42,7 @@ class JsonSerializerTest extends FunSuite with Matchers {
 
   test("testWriteReadCachedChanges") {
     val f = File.createTempFile("test", ".cache")
-    val changes = Seq(ChangeInfo(Option("1"), Option("2"), 3L, 4, Option(0.0), Option(1.0), Option(1.5), Option(2.5), 10L))
+    val changes = Seq(ChangeInfo(Option(linkId1), Option(linkId2), 3L, 4, Option(0.0), Option(1.0), Option(1.5), Option(2.5), 10L))
     serializer.writeCache(f, changes) should be (true)
     val result = serializer.readCachedChanges(f)
     result should be (changes)

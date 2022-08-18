@@ -132,7 +132,6 @@ class RoadLinkDAO {
       val mtkClass = r.nextInt()
       val roadNameFi = r.nextStringOption()
       val roadNameSe = r.nextStringOption()
-      val roadNameSm = r.nextStringOption()
       val roadNumber = r.nextLongOption()
       val roadPart = r.nextIntOption()
       val constructionType = r.nextInt()
@@ -148,10 +147,7 @@ class RoadLinkDAO {
       val validFrom = r.nextTimestampOption().map(new DateTime(_))
       val geometryEdited = r.nextTimestampOption().map(new DateTime(_))
       val surfaceType = r.nextInt()
-      val subType = r.nextInt()
       val objectId = r.nextLong()
-      val startNode = r.nextLong()
-      val endNode = r.nextLong()
       val sourceInfo = r.nextInt()
       val length  = r.nextDouble()
 
@@ -170,7 +166,6 @@ class RoadLinkDAO {
         "CONSTRUCTIONTYPE" -> constructionType,
         "ROADNAME_FI" -> roadNameFi,
         "ROADNAME_SE" -> roadNameSe,
-        "ROADNAME_SM" -> roadNameSm,
         "ROADNUMBER" -> roadNumber,
         "ROADPARTNUMBER" -> roadPart,
         "FROM_LEFT" -> fromLeft,
@@ -184,10 +179,6 @@ class RoadLinkDAO {
         "CREATED_DATE" -> createdDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
         "LAST_EDITED_DATE" -> lastEditedDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
         "SURFACETYPE" -> BigInt(surfaceType),
-        "SUBTYPE" -> subType,
-        "OBJECTID" -> objectId,
-        "STARTNODE" -> startNode,
-        "ENDNODE" -> endNode,
         "points" -> geometryForApi,
         "geometryWKT" -> geometryWKT
       ).collect {
@@ -341,9 +332,9 @@ class RoadLinkDAO {
  protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
    LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
      sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
-                 roadname_se, roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+                 roadname_se, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
-                 geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
+                 geometry_edited_date, surfacetype, objectid, sourceinfo, geometrylength
           from roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
@@ -386,7 +377,7 @@ class RoadLinkDAO {
     
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger,"TEST LOG Getting roadlinks by polygon" ){
-      sql"""select kmtkid
+      sql"""select linkid
           from roadlink
           where #$polygonFilter
        """.as[String].list

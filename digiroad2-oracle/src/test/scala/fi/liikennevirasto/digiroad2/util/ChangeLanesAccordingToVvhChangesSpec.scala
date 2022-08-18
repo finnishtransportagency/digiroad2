@@ -25,45 +25,53 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Map(), UnknownConstructionType, NormalLinkInterface, List())
   }
 
+  val oldLinkId1_1: String = LinkIdGenerator.generateRandom()
+  val oldLinkId1_2: String = LinkIdGenerator.generateRandom()
+  val oldLinkId1_3: String = LinkIdGenerator.generateRandom()
+  val newLinkId1: String = LinkIdGenerator.generateRandom()
+
   val changesForTest1: Seq[ChangeInfo] = {
-    val change1 = ChangeInfo(Some(1785786.toString),Some(12626035.toString),1340062600, CombinedModifiedPart.value, Some(0.0),Some(24.46481088),Some(0.0),Some(25.72055144),1648076424000L)
-    val change2a = ChangeInfo(Some(1785785.toString),Some(12626035.toString),1340062600, CombinedRemovedPart.value, Some(0.0),Some(23.56318194),Some(25.72055144),Some(49.28373338),1648076424000L)
-    val change2b = ChangeInfo(Some(1785787.toString),Some(12626035.toString),1340062600, CombinedRemovedPart.value, Some(0.0),Some(26.67487965),Some(0.0),Some(25.72055144), 1648076424000L)
+    val change1 = ChangeInfo(Some(oldLinkId1_1),Some(newLinkId1),1340062600, CombinedModifiedPart.value, Some(0.0),Some(24.46481088),Some(0.0),Some(25.72055144),1648076424000L)
+    val change2a = ChangeInfo(Some(oldLinkId1_2),Some(newLinkId1),1340062600, CombinedRemovedPart.value, Some(0.0),Some(23.56318194),Some(25.72055144),Some(49.28373338),1648076424000L)
+    val change2b = ChangeInfo(Some(oldLinkId1_3),Some(newLinkId1),1340062600, CombinedRemovedPart.value, Some(0.0),Some(26.67487965),Some(0.0),Some(25.72055144), 1648076424000L)
     Seq(change1, change2a, change2b)
   }
 
   val roadLinksForTest1: Seq[RoadLink] = {
     val linkGeometry1 = Seq(Point(408965.077,7526198.366,198.62600000000384),Point(408962.127,7526203.399,198.8929999999964),Point(408958.656,7526212.77,199.07600000000093),
       Point(408958.067,7526222.646,199.32200000000012),Point(408960.03,7526234.58,199.68499999999767),Point(408959.826,7526246.047,200.24499999999534))
-    val roadLink1 = RoadLink(12626035.toString, linkGeometry1, 49.283733382337545, Municipality, 5, BothDirections, SingleCarriageway, Some("24.03.2022 01:16:41"), Some("automatic_generation"),
+    val roadLink1 = RoadLink(newLinkId1, linkGeometry1, 49.283733382337545, Municipality, 5, BothDirections, SingleCarriageway, Some("24.03.2022 01:16:41"), Some("automatic_generation"),
       Map(), InUse, NormalLinkInterface, List())
     Seq(roadLink1)
   }
 
   val lanesForTest1: Seq[PersistedLane] = {
     //MainLanes on link 1785785
-    val lane1 = generateTestLane(201, 1785785.toString, 2, 1 , 0.0, 23.563, 1636588800000L)
-    val lane2 = generateTestLane(301, 1785785.toString, 3, 1 , 0.0, 23.563, 1636588800000L)
+    val lane1 = generateTestLane(201, oldLinkId1_2, 2, 1 , 0.0, 23.563, 1636588800000L)
+    val lane2 = generateTestLane(301, oldLinkId1_2, 3, 1 , 0.0, 23.563, 1636588800000L)
 
     //MainLanes on link 1785786
-    val lane3 = generateTestLane(211, 1785786.toString, 2, 1 , 0.0, 24.465, 1636588800000L)
-    val lane4 = generateTestLane(311, 1785786.toString, 3, 1 , 0.0, 24.465, 1636588800000L)
+    val lane3 = generateTestLane(211, oldLinkId1_1, 2, 1 , 0.0, 24.465, 1636588800000L)
+    val lane4 = generateTestLane(311, oldLinkId1_1, 3, 1 , 0.0, 24.465, 1636588800000L)
 
     //MainLanes on link 1785787
-    val lane5 = generateTestLane(221, 1785787.toString, 2, 1 , 0.0, 26.675, 1636588800000L)
-    val lane6 = generateTestLane(321, 1785787.toString, 3, 1 , 0.0, 26.675, 1636588800000L)
+    val lane5 = generateTestLane(221, oldLinkId1_3, 2, 1 , 0.0, 26.675, 1636588800000L)
+    val lane6 = generateTestLane(321, oldLinkId1_3, 3, 1 , 0.0, 26.675, 1636588800000L)
 
     Seq(lane1, lane2, lane3, lane4, lane5, lane6)
   }
 
   val historyLinksForTest1: Seq[RoadLink] = {
-    Seq(generateHistoryLink(1785785.toString, 23.563), generateHistoryLink(1785786.toString, 24.465) , generateHistoryLink(1785787.toString,26.675))
+    Seq(generateHistoryLink(oldLinkId1_2, 23.563), generateHistoryLink(oldLinkId1_1, 24.465) , generateHistoryLink(oldLinkId1_3,26.675))
   }
 
+  val oldLinkId1b_1: String = LinkIdGenerator.generateRandom()
+  val oldLinkId1b_2: String = LinkIdGenerator.generateRandom()
+  val newLinkId1b: String = LinkIdGenerator.generateRandom()
 
   val changesForTest1b: Seq[ChangeInfo] = {
-    val change1 = ChangeInfo(Some(7170899.toString), Some(12639364.toString), 64149003, CombinedModifiedPart.value, Some(0.0), Some(70.6541142), Some(21.47317639), Some(90.24410827), 1649113226000L)
-    val change2 = ChangeInfo(Some(7170904.toString), Some(12639364.toString), 64149003, CombinedRemovedPart.value, Some(0.0), Some(21.60276422), Some(0.0), Some(21.47317639), 1649113226000L)
+    val change1 = ChangeInfo(Some(oldLinkId1b_1), Some(newLinkId1b), 64149003, CombinedModifiedPart.value, Some(0.0), Some(70.6541142), Some(21.47317639), Some(90.24410827), 1649113226000L)
+    val change2 = ChangeInfo(Some(oldLinkId1b_2), Some(newLinkId1b), 64149003, CombinedRemovedPart.value, Some(0.0), Some(21.60276422), Some(0.0), Some(21.47317639), 1649113226000L)
     Seq(change1, change2)
   }
 
@@ -73,25 +81,27 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(226455.179, 6988261.051, 16.94000000000233),
       Point(226441.81, 6988291.883, 16.726999999998952),
       Point(226434.98, 6988309.034, 16.979000000006636))
-    Seq(RoadLink(12639364.toString, linkGeometry, 90.24410827275189, State, 4, BothDirections, SingleCarriageway, None, None, Map(), InUse, NormalLinkInterface, List()))
+    Seq(RoadLink(newLinkId1b, linkGeometry, 90.24410827275189, State, 4, BothDirections, SingleCarriageway, None, None, Map(), InUse, NormalLinkInterface, List()))
   }
 
   val lanesForTest1b: Seq[PersistedLane] = {
-    val mainLaneTowards1 = generateTestLane(211, 7170899.toString, 2, 1, 0.0, 70.654, 1636588800000L)
-    val mainLaneAgainst1 = generateTestLane(311, 7170899.toString, 3, 1, 0.0, 70.654, 1636588800000L)
-    val lane2Towards1 = generateTestLane(212, 7170899.toString, 2, 2, 0.0, 55.45, 1636588800000L)
-    val lane3Against1 = generateTestLane(313, 7170899.toString, 3, 3, 12.4, 34.5, 1636588800000L)
+    val mainLaneTowards1 = generateTestLane(211, oldLinkId1b_1, 2, 1, 0.0, 70.654, 1636588800000L)
+    val mainLaneAgainst1 = generateTestLane(311, oldLinkId1b_1, 3, 1, 0.0, 70.654, 1636588800000L)
+    val lane2Towards1 = generateTestLane(212, oldLinkId1b_1, 2, 2, 0.0, 55.45, 1636588800000L)
+    val lane3Against1 = generateTestLane(313, oldLinkId1b_1, 3, 3, 12.4, 34.5, 1636588800000L)
 
-    val mainLaneTowards2 = generateTestLane(221, 7170904.toString, 2, 1, 0.0, 21.603, 1636588800000L)
-    val mainLaneAgainst2 = generateTestLane(321, 7170904.toString, 3, 1, 0.0, 21.603, 1636588800000L)
-    val lane2Towards2 = generateTestLane(222, 7170904.toString, 2, 2, 0.0, 21.603, 1636588800000L)
-    val lane3Against2 = generateTestLane(323, 7170904.toString, 3, 3, 0.0, 21.603, 1636588800000L)
+    val mainLaneTowards2 = generateTestLane(221, oldLinkId1b_2, 2, 1, 0.0, 21.603, 1636588800000L)
+    val mainLaneAgainst2 = generateTestLane(321, oldLinkId1b_2, 3, 1, 0.0, 21.603, 1636588800000L)
+    val lane2Towards2 = generateTestLane(222, oldLinkId1b_2, 2, 2, 0.0, 21.603, 1636588800000L)
+    val lane3Against2 = generateTestLane(323, oldLinkId1b_2, 3, 3, 0.0, 21.603, 1636588800000L)
     Seq(mainLaneTowards1, mainLaneAgainst1, mainLaneTowards2, mainLaneAgainst2, lane2Towards2, lane2Towards1, lane3Against1, lane3Against2)
   }
 
+  val linkId2: String = LinkIdGenerator.generateRandom()
+
   val changesForTest2: Seq[ChangeInfo] = {
-    val change3 = ChangeInfo(Some(6170239.toString), Some(6170239.toString), 63590222, LengthenedCommonPart.value, Some(0.0), Some(203.35672628), Some(98.47743301), Some(301.83415929), 1648162836000L)
-    val change4 = ChangeInfo(None, Some(6170239.toString), 63590222, LengthenedNewPart.value, None, None, Some(0.0), Some(98.47743301), 1648162836000L)
+    val change3 = ChangeInfo(Some(linkId2), Some(linkId2), 63590222, LengthenedCommonPart.value, Some(0.0), Some(203.35672628), Some(98.47743301), Some(301.83415929), 1648162836000L)
+    val change4 = ChangeInfo(None, Some(linkId2), 63590222, LengthenedNewPart.value, None, None, Some(0.0), Some(98.47743301), 1648162836000L)
 
     Seq(change3, change4)
   }
@@ -109,23 +119,27 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(523953.841,6711437.694,7.614000000001397),
       Point(523961.295,6711452.731,8.430999999996857),
       Point(523965.311,6711463.184,7.752999999996973))
-    val roadLink = RoadLink(6170239.toString, linkGeometry, 301.834159290816, State, 7, BothDirections, TractorRoad, Some("25.03.2022 01:00:36"), Some("vvh_modified"), Map(), InUse, NormalLinkInterface,
+    val roadLink = RoadLink(linkId2, linkGeometry, 301.834159290816, State, 7, BothDirections, TractorRoad, Some("25.03.2022 01:00:36"), Some("vvh_modified"), Map(), InUse, NormalLinkInterface,
       Seq())
 
     Seq(roadLink)
   }
 
   val lanesForTest2: Seq[PersistedLane] = {
-    val mainLane = generateTestLane(101, 6170239.toString, 1, 1, 0.0, 203.357, 1636588800000L)
-    val lane2FullLength = generateTestLane(102, 6170239.toString, 1, 2, 0.0, 203.357, 1636588800000L)
-    val lane3CutFromEnd = generateTestLane(103, 6170239.toString, 1, 3, 0.0, 150.50, 1636588800000L)
-    val lane4CutFromStart = generateTestLane(104, 6170239.toString, 1, 4, 120.25, 203.357, 1636588800000L)
+    val mainLane = generateTestLane(101, linkId2, 1, 1, 0.0, 203.357, 1636588800000L)
+    val lane2FullLength = generateTestLane(102, linkId2, 1, 2, 0.0, 203.357, 1636588800000L)
+    val lane3CutFromEnd = generateTestLane(103, linkId2, 1, 3, 0.0, 150.50, 1636588800000L)
+    val lane4CutFromStart = generateTestLane(104, linkId2, 1, 4, 120.25, 203.357, 1636588800000L)
     Seq(mainLane, lane2FullLength, lane3CutFromEnd, lane4CutFromStart)
   }
 
+  val oldLinkId3: String = LinkIdGenerator.generateRandom()
+  val newLinkId3_1: String = LinkIdGenerator.generateRandom()
+  val newLinkId3_2: String = LinkIdGenerator.generateRandom()
+
   val changesForTest3: Seq[ChangeInfo] = {
-    val change5 = ChangeInfo(Some(5452255.toString), Some(12628125.toString), 517006310, DividedModifiedPart.value, Some(0.0), Some(138.29966444), Some(0.0), Some(138.29966471), 1648162836000L)
-    val change6 = ChangeInfo(Some(5452255.toString), Some(12628139.toString), 517006310, DividedNewPart.value, Some(381.82675568), Some(651.79968351), Some(0.0), Some(269.97292782), 1648162836000L)
+    val change5 = ChangeInfo(Some(oldLinkId3), Some(newLinkId3_1), 517006310, DividedModifiedPart.value, Some(0.0), Some(138.29966444), Some(0.0), Some(138.29966471), 1648162836000L)
+    val change6 = ChangeInfo(Some(oldLinkId3), Some(newLinkId3_2), 517006310, DividedNewPart.value, Some(381.82675568), Some(651.79968351), Some(0.0), Some(269.97292782), 1648162836000L)
 
     Seq(change5, change6)
   }
@@ -158,30 +172,32 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(434628.905, 6827933.16, 92.56900000000314),
       Point(434622.44, 6827938.025, 92.89299999999639))
 
-    val link1 = RoadLink(12628125.toString,link1Geometry, 138.29966470656584, State, 7, BothDirections, TractorRoad,
+    val link1 = RoadLink(newLinkId3_1,link1Geometry, 138.29966470656584, State, 7, BothDirections, TractorRoad,
       Some("25.03.2022 01:00:36"), Some("vvh_modified"), Map(), InUse, NormalLinkInterface, Seq())
 
-    val link2 = RoadLink(12628139.toString, link2Geometry, 269.9729278270251, State, 7, BothDirections, TractorRoad,
+    val link2 = RoadLink(newLinkId3_2, link2Geometry, 269.9729278270251, State, 7, BothDirections, TractorRoad,
       Some("25.03.2022 00:53:10"), Some("automatic_generation"), Map(), InUse, NormalLinkInterface, Seq())
 
     Seq(link1, link2)
   }
 
   val lanesForTest3: Seq[PersistedLane] = {
-    val mainLane = generateTestLane(101, 5452255.toString, 1, 1, 0.0, 651.8, 1636588800000L)
+    val mainLane = generateTestLane(101, oldLinkId3, 1, 1, 0.0, 651.8, 1636588800000L)
     //Additional lane cut from start and end
-    val lane2Cut = generateTestLane(102, 5452255.toString, 1, 2, 50.75, 150.61, 1636588800000L)
+    val lane2Cut = generateTestLane(102, oldLinkId3, 1, 2, 50.75, 150.61, 1636588800000L)
     //Additional lane cut from start and end
-    val lane3Cut = generateTestLane(103, 5452255.toString, 1, 3, 50.75, 530.75, 1636588800000L)
+    val lane3Cut = generateTestLane(103, oldLinkId3, 1, 3, 50.75, 530.75, 1636588800000L)
 
     Seq(mainLane, lane2Cut, lane3Cut)
   }
 
+  val linkId4: String = LinkIdGenerator.generateRandom()
+
   val changesForTest4: Seq[ChangeInfo] = {
-    val change7 = ChangeInfo(Some(56731.toString), Some(56731.toString), 362451385, ShortenedCommonPart.value, Some(7.21549736), Some(315.93394668), Some(0.0),
+    val change7 = ChangeInfo(Some(linkId4), Some(linkId4), 362451385, ShortenedCommonPart.value, Some(7.21549736), Some(315.93394668), Some(0.0),
       Some(313.48187171), 1648832434000L)
-    val change8a = ChangeInfo(Some(56731.toString), None, 362451385, ShortenedRemovedPart.value, Some(0.0), Some(7.21549736), None, None, 1648832434000L)
-    val change8b = ChangeInfo(Some(56731.toString), None, 362451385, ShortenedRemovedPart.value, Some(315.93394668), Some(317.9947522), None, None, 1648832434000L)
+    val change8a = ChangeInfo(Some(linkId4), None, 362451385, ShortenedRemovedPart.value, Some(0.0), Some(7.21549736), None, None, 1648832434000L)
+    val change8b = ChangeInfo(Some(linkId4), None, 362451385, ShortenedRemovedPart.value, Some(315.93394668), Some(317.9947522), None, None, 1648832434000L)
 
     Seq(change7, change8a, change8b)
   }
@@ -215,25 +231,27 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(418301.536, 6785062.14, 152.14500000000407),
       Point(418297.99, 6785076.53, 152.80299999999988))
 
-    val roadLink = RoadLink(56731.toString, linkGeom, 313.48187170953395, State, 7, BothDirections, TractorRoad, Some("01.04.2022 20:00:34"),
+    val roadLink = RoadLink(linkId4, linkGeom, 313.48187170953395, State, 7, BothDirections, TractorRoad, Some("01.04.2022 20:00:34"),
       None, Map(), InUse, NormalLinkInterface, List())
 
     Seq(roadLink)
   }
 
   val lanesForTest4: Seq[PersistedLane] = {
-    val mainLane = generateTestLane(101, 56731.toString, 1, 1, 0.0, 317.995, 1636588800000L)
+    val mainLane = generateTestLane(101, linkId4, 1, 1, 0.0, 317.995, 1636588800000L)
     //Additional lane cut from start and end
-    val additionalLane2 = generateTestLane(102, 56731.toString, 1, 2, 65.25, 290.55, 1636588800000L)
+    val additionalLane2 = generateTestLane(102, linkId4, 1, 2, 65.25, 290.55, 1636588800000L)
     //Additional lane cut from start
-    val additionalLane3 = generateTestLane(103, 56731.toString, 1, 3, 45.25, 317.995, 1636588800000L)
+    val additionalLane3 = generateTestLane(103, linkId4, 1, 3, 45.25, 317.995, 1636588800000L)
 
     Seq(mainLane, additionalLane2, additionalLane3)
   }
 
+  val linkId5a: String = LinkIdGenerator.generateRandom()
+
   val changesForTest5a: Seq[ChangeInfo] = {
-    val change13 = ChangeInfo(Some(2776126.toString), Some(2776126.toString), 2110412275, ReplacedCommonPart.value, Some(0.0), Some(217.79702887), Some(0.0), Some(217.79702887), 1648832434000L)
-    val change14 = ChangeInfo(None, Some(2776126.toString), 2110412275, ReplacedNewPart.value, None, None, Some(217.79702887), Some(324.37921035), 1648832434000L)
+    val change13 = ChangeInfo(Some(linkId5a), Some(linkId5a), 2110412275, ReplacedCommonPart.value, Some(0.0), Some(217.79702887), Some(0.0), Some(217.79702887), 1648832434000L)
+    val change14 = ChangeInfo(None, Some(linkId5a), 2110412275, ReplacedNewPart.value, None, None, Some(217.79702887), Some(324.37921035), 1648832434000L)
 
     Seq(change13, change14)
   }
@@ -252,24 +270,26 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(556547.015, 6940545.762, 132.42600000000675),
       Point(556543.231, 6940550.117, 132.48099999999977))
 
-    Seq(RoadLink(2776126.toString, linkGeometry, 324.3792103503157, State, 4, BothDirections, SingleCarriageway, None,
+    Seq(RoadLink(linkId5a, linkGeometry, 324.3792103503157, State, 4, BothDirections, SingleCarriageway, None,
       None, Map(), InUse, NormalLinkInterface, List()))
   }
 
   val lanesForTest5a: Seq[PersistedLane] = {
-    val mainLaneTowards = generateTestLane(201, 2776126.toString, 2, 1, 0.0, 217.797, 1636588800000L)
-    val mainLaneAgainst = generateTestLane(301, 2776126.toString, 3, 1, 0.0, 217.797, 1636588800000L)
+    val mainLaneTowards = generateTestLane(201, linkId5a, 2, 1, 0.0, 217.797, 1636588800000L)
+    val mainLaneAgainst = generateTestLane(301, linkId5a, 3, 1, 0.0, 217.797, 1636588800000L)
     //Additional lane 2 cut from start and end
-    val lane2 = generateTestLane(202, 2776126.toString, 2, 2, 50.75, 180.50, 1636588800000L)
+    val lane2 = generateTestLane(202, linkId5a, 2, 2, 50.75, 180.50, 1636588800000L)
     //Full length additional
-    val lane3 = generateTestLane(303, 2776126.toString, 3, 3, 0.0, 217.797, 1636588800000L)
+    val lane3 = generateTestLane(303, linkId5a, 3, 3, 0.0, 217.797, 1636588800000L)
 
     Seq(mainLaneTowards, mainLaneAgainst, lane2, lane3)
   }
 
+  val linkId5b: String = LinkIdGenerator.generateRandom()
+  
   val changesForTest5b: Seq[ChangeInfo] = {
-    val change13 = ChangeInfo(Some(12397071.toString), Some(12397071.toString), 2110376244, ReplacedCommonPart.value, Some(0.0), Some(34.81129942), Some(0.0), Some(34.81121228), 1648832434000L)
-    val change15 = ChangeInfo(Some(12397071.toString), None, 2110376244, ReplacedRemovedPart.value, Some(34.81121228), Some(36.00944863), None, None, 1648832434000L)
+    val change13 = ChangeInfo(Some(linkId5b), Some(linkId5b), 2110376244, ReplacedCommonPart.value, Some(0.0), Some(34.81129942), Some(0.0), Some(34.81121228), 1648832434000L)
+    val change15 = ChangeInfo(Some(linkId5b), None, 2110376244, ReplacedRemovedPart.value, Some(34.81121228), Some(36.00944863), None, None, 1648832434000L)
 
     Seq(change13, change15)
   }
@@ -280,23 +300,23 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
       Point(225265.664, 6994903.343, 30.172000000005937),
       Point(225254.502, 6994912.196, 29.66700000000128),
       Point(225252.87, 6994912.718, 29.672999999995227))
-    Seq(RoadLink(12397071.toString, linkGeometry, 34.81129942581629, Municipality, 5, BothDirections, SingleCarriageway, None, None, Map(),
+    Seq(RoadLink(linkId5b, linkGeometry, 34.81129942581629, Municipality, 5, BothDirections, SingleCarriageway, None, None, Map(),
       InUse, NormalLinkInterface, List()))
   }
 
   val lanesForTest5b: Seq[PersistedLane] ={
     // Full lenght mainLanes
-    val mainLaneTowards = generateTestLane(201, 12397071.toString, 2, 1, 0.0, 36.009, 1636588800000L)
-    val mainLaneAgainst = generateTestLane(301, 12397071.toString, 3, 1, 0.0, 36.009, 1636588800000L)
+    val mainLaneTowards = generateTestLane(201, linkId5b, 2, 1, 0.0, 36.009, 1636588800000L)
+    val mainLaneAgainst = generateTestLane(301, linkId5b, 3, 1, 0.0, 36.009, 1636588800000L)
 
     // Cut from start
-    val lane2Towards = generateTestLane(202, 12397071.toString, 2, 2, 15.5, 36.009, 1636588800000L)
+    val lane2Towards = generateTestLane(202, linkId5b, 2, 2, 15.5, 36.009, 1636588800000L)
     // Cut from end inside shortened link segment
-    val lane3Against = generateTestLane(303, 12397071.toString, 3, 3, 0.0, 35.45, 1636588800000L)
+    val lane3Against = generateTestLane(303, linkId5b, 3, 3, 0.0, 35.45, 1636588800000L)
     // Cut from end before shortened link segment
-    val lane4Towards = generateTestLane(204, 12397071.toString, 2, 4, 0.0, 27.5, 1636588800000L)
+    val lane4Towards = generateTestLane(204, linkId5b, 2, 4, 0.0, 27.5, 1636588800000L)
     // Cut lane completely on removed link segment
-    val lane5Against = generateTestLane(305, 12397071.toString, 3, 5, 34.9, 36.0, 1636588800000L)
+    val lane5Against = generateTestLane(305, linkId5b, 3, 5, 34.9, 36.0, 1636588800000L)
     Seq(mainLaneTowards, mainLaneAgainst, lane2Towards, lane3Against, lane4Towards, lane5Against)
   }
 
@@ -327,7 +347,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val roadLinks = roadLinksForTest1b
     val changes = changesForTest1b
     val existingLanes = lanesForTest1b
-    val historyLinks = Seq(generateHistoryLink(7170899.toString, 70.654), generateHistoryLink(7170904.toString, 21.603))
+    val historyLinks = Seq(generateHistoryLink(oldLinkId1b_1, 70.654), generateHistoryLink(oldLinkId1b_2, 21.603))
     val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
     changeSet.expiredLaneIds.size should equal(8)
     modifiedLanes.size should equal(5)
@@ -371,7 +391,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val roadLinks = roadLinksForTest2
     val changes = changesForTest2
     val existingLanes = lanesForTest2
-    val historyLinks = Seq(generateHistoryLink(6170239.toString, 203.357))
+    val historyLinks = Seq(generateHistoryLink(linkId2, 203.357))
     val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(4)
@@ -410,21 +430,21 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val roadLinks = roadLinksForTest3
     val changes = changesForTest3
     val existingLanes = lanesForTest3
-    val historyLinks = Seq(generateHistoryLink(5452255.toString, 651.8))
+    val historyLinks = Seq(generateHistoryLink(oldLinkId3, 651.8))
     val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     val originalLane3 = existingLanes.find(_.id == 103).get
 
-    val adjustedMainLaneLink25 = modifiedLanes.find(lane => lane.linkId == 12628125 && lane.laneCode == 1).get
-    val adjustedLane2Link25 = modifiedLanes.find(lane => lane.linkId == 12628125 && lane.laneCode == 2).get
-    val adjustedLane3Link25 = modifiedLanes.find(lane => lane.linkId == 12628125 && lane.laneCode == 3).get
+    val adjustedMainLaneLink25 = modifiedLanes.find(lane => lane.linkId == newLinkId3_1 && lane.laneCode == 1).get
+    val adjustedLane2Link25 = modifiedLanes.find(lane => lane.linkId == newLinkId3_1 && lane.laneCode == 2).get
+    val adjustedLane3Link25 = modifiedLanes.find(lane => lane.linkId == newLinkId3_1 && lane.laneCode == 3).get
 
-    val adjustedMainLaneLink39 = modifiedLanes.find(lane => lane.linkId == 12628139 && lane.laneCode == 1).get
-    val adjustedLane2Link39 = modifiedLanes.find(lane => lane.linkId == 12628139 && lane.laneCode == 2)
-    val adjustedLane3Link39 = modifiedLanes.find(lane => lane.linkId == 12628139 && lane.laneCode == 3).get
+    val adjustedMainLaneLink39 = modifiedLanes.find(lane => lane.linkId == newLinkId3_2 && lane.laneCode == 1).get
+    val adjustedLane2Link39 = modifiedLanes.find(lane => lane.linkId == newLinkId3_2 && lane.laneCode == 2)
+    val adjustedLane3Link39 = modifiedLanes.find(lane => lane.linkId == newLinkId3_2 && lane.laneCode == 3).get
 
-    val changeInfoLink25 = changes.find(_.newId.contains(12628125)).get
-    val changeInfoLink39 = changes.find(_.newId.contains(12628139)).get
+    val changeInfoLink25 = changes.find(_.newId.contains(newLinkId3_1)).get
+    val changeInfoLink39 = changes.find(_.newId.contains(newLinkId3_2)).get
 
     modifiedLanes.size should equal(5)
     changeSet.expiredLaneIds.size should equal(3)
@@ -442,7 +462,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     adjustedLane2Link25.startMeasure.round should equal(51)
     areMeasuresCloseEnough(changeInfoLink25.newEndMeasure.get, adjustedLane2Link25.endMeasure, 1.0) should equal(true)
 
-    //Additional lane should not exist on on link 12628139 because original additional lane didn't cover that segment
+    //Additional lane should not exist on on link newLinkId3_2 because original additional lane didn't cover that segment
     adjustedLane2Link39.isEmpty should equal(true)
 
     //StartM should have stayed the same
@@ -461,7 +481,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val roadLinks = roadLinksForTest4
     val changes = changesForTest4
     val existingLanes = lanesForTest4
-    val historyLinks = Seq(generateHistoryLink(56731.toString, 317.995))
+    val historyLinks = Seq(generateHistoryLink(linkId4, 317.995))
     val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(3)
@@ -478,7 +498,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val existingLane2 = existingLanes.find(_.id == 102).get
     val roadLink = roadLinks.head
 
-    val commonPartChange = changes.find(c => c.oldId.contains(56731) && c.newId.contains(56731)).get
+    val commonPartChange = changes.find(c => c.oldId.contains(linkId4) && c.newId.contains(linkId4)).get
 
     //Mainlane should cover the whole link
     mainLaneVvhAdjustment.startMeasure should equal(0.0)
@@ -498,7 +518,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val roadLinks = roadLinksForTest5a
     val changes = changesForTest5a
     val existingLanes = lanesForTest5a
-    val historyLinks = Seq(generateHistoryLink(2776126.toString, 217.797))
+    val historyLinks = Seq(generateHistoryLink(linkId5a, 217.797))
     val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(existingLanes.size)
@@ -535,7 +555,7 @@ class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
     val roadLinks = roadLinksForTest5b
     val changes = changesForTest5b
     val existingLanes = lanesForTest5b
-    val historyLinks = Seq(generateHistoryLink(12397071.toString, 36.009))
+    val historyLinks = Seq(generateHistoryLink(linkId5b, 36.009))
     val (changeSet, modifiedLanes) = handleChanges(roadLinks, historyLinks, changes, existingLanes)
 
     modifiedLanes.size should equal(5)

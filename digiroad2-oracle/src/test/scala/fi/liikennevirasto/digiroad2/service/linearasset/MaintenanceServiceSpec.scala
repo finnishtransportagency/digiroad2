@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, Post
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.geotools.geometry.jts.GeometryBuilder
 import org.mockito.ArgumentMatchers._
@@ -22,8 +22,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
-  val (linkId1, linkId2, linkId3) = ("388562360", "388562361", "388562362")
-
+  val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   when(mockRoadLinkService.fetchByLinkId(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -234,12 +233,16 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val prop1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue("1")))
     val prop2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue("2")))
     val prop3 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue("text")))
+    val oldLinkId1 = LinkIdGenerator.generateRandom()
+    val oldLinkId2 = LinkIdGenerator.generateRandom()
+    val newLinkId1 = LinkIdGenerator.generateRandom()
+    val newLinkId2 = LinkIdGenerator.generateRandom()
 
     val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
 
     val changeInfo = Seq(
-      ChangeInfo(Some("1"), Some("2"), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
-      ChangeInfo(Some("3"), Some("4"), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
+      ChangeInfo(Some(oldLinkId1), Some(newLinkId1), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
+      ChangeInfo(Some(oldLinkId2), Some(newLinkId2), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
     )
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(roadLinkWithLinkSource)

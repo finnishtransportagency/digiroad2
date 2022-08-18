@@ -38,7 +38,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     */
   test("Test VVH History LinkId API") {
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result = roadLinkClient.historyData.fetchVVHRoadLinkByLinkIds(Set("440484","440606","440405","440489"))
+    val result = roadLinkClient.historyData.fetchByLinkIds(Set("440484","440606","440405","440489"))
     result.nonEmpty should be (true)
   }
   //Ignored due to DROTH-3311, enable again when change info is fetched
@@ -53,7 +53,8 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     val result= roadLinkClient.roadLinkChangeInfo.fetchByPolygon(geomBuilder.polygon())
     result.size should be (0)
   }
-  test("Fetch changes with by bounding box and municipalities") {
+  //Ignored due to DROTH-3311, enable again when change info is fetched
+  ignore("Fetch changes with by bounding box and municipalities") {
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result= roadLinkClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(BoundingRectangle(Point(532578.3338013917,6993401.605560873,0.0),Point(532978.3338013917,6994261.605560873,0.0)), Set.empty[Int])
     result.size should be >1

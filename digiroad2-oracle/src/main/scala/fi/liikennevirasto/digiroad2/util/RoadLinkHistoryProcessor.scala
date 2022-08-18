@@ -1,20 +1,17 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
+import fi.liikennevirasto.digiroad2.client.vvh.{HistoryRoadLink, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import org.geotools.filter.function.GeometryTransformation
-
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.ArrayBuffer
 
 /**
-  * This class is used to filter history road links from VVH. Filtered history links are used to show history information on map (DROTH-10).
+  * This class is used to filter history road links. Filtered history links are used to show history information on map.
   *
   * @param includeCurrentLinks If true, compare history with current road links within tolerance
   * @param minimumChange Tolerance minimum value
   * @param maximumChange Tolerance maximum value
   */
-class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChange: Double = 1.0, maximumChange: Double = 50.0) {
+class RoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumChange: Double = 1.0, maximumChange: Double = 50.0) {
 
   /**
     * This method returns the latest history links that:
@@ -25,23 +22,22 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
     * @param roadLinks Current road links
     * @return Filtered history links
     */
-  def process(historyRoadLinks:Seq[RoadLinkFetched], roadLinks :Seq[RoadLinkFetched]) : Seq[RoadLinkFetched] ={
-    def endDate(roadLinkFetched: RoadLinkFetched) =
-      roadLinkFetched.attributes.getOrElse("END_DATE", BigInt(0)).asInstanceOf[BigInt].longValue()
+  def process(historyRoadLinks:Seq[HistoryRoadLink], roadLinks :Seq[RoadLinkFetched]) : Seq[HistoryRoadLink] ={
+    def getVersion(historyRoadLink: HistoryRoadLink) = historyRoadLink.version
 
-    def newLinkId(roadLinkFetched: RoadLinkFetched) : Option[String] = {
-      roadLinkFetched.attributes.get("LINKID_NEW") match {
+    def newLinkId(roadLink: RoadLinkLike) : Option[String] = {
+      roadLink.attributes.get("LINKID_NEW") match {
         case Some(linkId) =>
-          Some(linkId.asInstanceOf[BigInt].toString)
+          Some(linkId.toString)
         case _ =>
           None
       }
     }
 
-    def hasNewLinkId(roadLinkFetched: RoadLinkFetched) = newLinkId(roadLinkFetched).isEmpty
+    def hasNewLinkId(roadLink: RoadLinkLike) = newLinkId(roadLink).isEmpty
 
-    // If several history link items have the same linkId, pick the one with latest endDate
-    val latestHistory = historyRoadLinks.groupBy(_.linkId).mapValues(rl => rl.maxBy(endDate)).values
+    // If several history link items have the same kmtkid, pick the one with latest version
+    val latestHistory = historyRoadLinks.groupBy(_.kmtkid).mapValues(rl => rl.maxBy(getVersion)).values
 
     // Deleted = history link has newLinkId and it's linkId is not found in current links
     val deletedRoadLinks = latestHistory.filter(hasNewLinkId).filterNot(rl => roadLinks.exists(rl.linkId == _.linkId))
@@ -54,7 +50,7 @@ class VVHRoadLinkHistoryProcessor(includeCurrentLinks: Boolean = false, minimumC
           compareGeometry(r.geometry, rl.geometry)
         )
     }
-
+    
     (changedRoadLinks ++ deletedRoadLinks).toSeq
   }
 

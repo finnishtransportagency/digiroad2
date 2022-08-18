@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -34,7 +34,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Asset on a removed road link should be expired") {
-    val oldRoadLinkId = "1505L"
+    val oldRoadLinkId = LinkIdGenerator.generateRandom()
     val oldRoadLink = RoadLink(
       oldRoadLinkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
@@ -55,9 +55,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Should map winter speed limits of two old links to one new link") {
-    val oldLinkId1 = "5001"
-    val oldLinkId2 = "5002"
-    val newLinkId = "6000"
+    val oldLinkId1 = LinkIdGenerator.generateRandom()
+    val oldLinkId2 = LinkIdGenerator.generateRandom()
+    val newLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 1
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -100,10 +100,10 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Should map winter speed limits of old link to three new road links, asset covers part of road link") {
-    val oldLinkId = "5000"
-    val newLinkId1 = "6001"
-    val newLinkId2 = "6002"
-    val newLinkId3 = "6003"
+    val oldLinkId = LinkIdGenerator.generateRandom()
+    val newLinkId1 = LinkIdGenerator.generateRandom()
+    val newLinkId2 = LinkIdGenerator.generateRandom()
+    val newLinkId3 = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
     val administrativeClass = Municipality
     val trafficDirection = TrafficDirection.BothDirections
@@ -134,7 +134,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
       expiredAssets.size should be(1)
       expiredAssets.head.linkId should be(oldLinkId)
       validAssets.size should be(3)
-      validAssets.sortBy(_.linkId).map(_.linkId) should be(List(newLinkId1, newLinkId2, newLinkId3))
+      validAssets.map(_.linkId).sorted should be(List(newLinkId1, newLinkId2, newLinkId3).sorted)
       val sortedValidAssets = validAssets.sortBy(_.startMeasure)
       sortedValidAssets.head.startMeasure should be(0)
       sortedValidAssets.head.endMeasure should be(10)
@@ -146,7 +146,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
   }
 
   test("Asset on a lengthened road link should be lengthened") {
-    val oldRoadLinkId = "150L"
+    val oldRoadLinkId = LinkIdGenerator.generateRandom()
     val oldRoadLink = RoadLink(
       oldRoadLinkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
@@ -155,7 +155,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
       val id = service.createWithoutTransaction(WinterSpeedLimit.typeId, oldRoadLink.linkId, NumericValue(80), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
-      val newLinkId = "160L"
+      val newLinkId = LinkIdGenerator.generateRandom()
       val newRoadLink = oldRoadLink.copy(linkId = newLinkId, geometry = Seq(Point(0.0, 0.0), Point(15, 0.0)), length = 15)
       val change = ChangeInfo(Some(oldRoadLinkId), Some(newLinkId), 123L, 2, Some(0), Some(10), Some(0), Some(15), 99L)
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newLinkId), false)).thenReturn(Seq(newRoadLink))
