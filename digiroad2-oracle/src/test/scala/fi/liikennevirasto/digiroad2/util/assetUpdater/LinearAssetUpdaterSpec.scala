@@ -22,7 +22,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
   val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val service = new LinearAssetService(mockRoadLinkService, mockEventBus)
-  when(mockRoadLinkClient.createVVHTimeStamp()).thenReturn(0L)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 

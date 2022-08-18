@@ -245,11 +245,11 @@ trait ResolvingFrozenRoadLinks {
 
     val frozenRoadLinks = missingRoadLinks.filter { road =>
       val matchedAddress = tempRoadAddress.find(_.linkId == road.linkId)
-      val vvhtimestamp = road.attributes.getOrElse("LAST_EDITED_DATE", road.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+      val timeStamp = road.attributes.getOrElse("LAST_EDITED_DATE", road.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 
       val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
 
-      matchedAddress.isEmpty || (vvhtimestamp > DateTime.parse(matchedAddress.get.createdDate.head, formatter).getMillis)
+      matchedAddress.isEmpty || (timeStamp > DateTime.parse(matchedAddress.get.createdDate.head, formatter).getMillis)
     }
 
     val addressToDelete = tempRoadAddress.map(_.linkId).diff(missingRoadLinks.map(_.linkId)) ++ frozenRoadLinks.map(_.linkId)

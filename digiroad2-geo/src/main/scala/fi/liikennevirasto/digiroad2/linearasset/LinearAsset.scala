@@ -9,7 +9,7 @@ trait LinearAsset extends PolyLine {
   val linkId: String
   val sideCode: SideCode
   val value: Option[Value]
-  val vvhTimeStamp: Long
+  val timeStamp: Long
   val geomModifiedDate: Option[DateTime]
 }
 
@@ -167,17 +167,17 @@ case class PieceWiseLinearAsset(id: Long, linkId: String, sideCode: SideCode, va
                                 startMeasure: Double, endMeasure: Double,
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime], typeId: Int, trafficDirection: TrafficDirection,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
+                                timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, administrativeClass: AdministrativeClass,
                                 attributes: Map[String, Any] = Map(), verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[InformationSource]) extends LinearAsset
 
 case class PersistedLinearAsset(id: Long, linkId: String, sideCode: Int, value: Option[Value],
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
+                                timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
                                 informationSource: Option[InformationSource])
 
 case class NewLinearAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
-                          vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
+                          timeStamp: Long, geomModifiedDate: Option[DateTime])
 
 case class InaccurateLinearAsset(assetId: Option[Long], municipality: String, administrativeClass: String, linkId: Option[String])
 

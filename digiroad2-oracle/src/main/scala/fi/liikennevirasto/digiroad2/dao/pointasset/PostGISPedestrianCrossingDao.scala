@@ -17,7 +17,7 @@ import scala.language.reflectiveCalls
 case class PedestrianCrossingRow(id: Long, linkId: String,
                                  lon: Double, lat: Double,
                                  mValue: Double, floating: Boolean,
-                                 vvhTimeStamp: Long,
+                                 timeStamp: Long,
                                  municipalityCode: Int,
                                  property: PropertyRow,
                                  createdBy: Option[String] = None,
@@ -30,7 +30,7 @@ case class PedestrianCrossingRow(id: Long, linkId: String,
 case class PedestrianCrossing(id: Long, linkId: String,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
-                              vvhTimeStamp: Long,
+                              timeStamp: Long,
                               municipalityCode: Int,
                               propertyData: Seq[Property],
                               createdBy: Option[String] = None,
@@ -200,7 +200,7 @@ class PostGISPedestrianCrossingDao() {
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
@@ -222,7 +222,7 @@ class PostGISPedestrianCrossingDao() {
       val expired = r.nextBoolean()
       val linkSource = r.nextInt()
 
-      PedestrianCrossingRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
+      PedestrianCrossingRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
     }
   }
 
@@ -252,7 +252,7 @@ class PostGISPedestrianCrossingDao() {
       val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> PedestrianCrossing(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
-        floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
+        floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
         expired = row.expired, linkSource = row.linkSource)
     }.values.toSeq

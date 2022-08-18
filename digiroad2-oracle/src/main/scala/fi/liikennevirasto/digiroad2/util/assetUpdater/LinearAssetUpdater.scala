@@ -85,7 +85,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
     changeSet.adjustedVVHChanges.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
+      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.timeStamp, LinearAssetTypes.VvhGenerated)
     }
     val ids = changeSet.expiredAssetIds.toSeq
     if (ids.nonEmpty)
@@ -143,11 +143,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         (linearAsset.createdBy, linearAsset.createdDateTime) match {
           case (Some(createdBy), Some(createdDateTime)) =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
+              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.timeStamp,
               service.getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = service.getGeometry(roadlink))
           case _ =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
+              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.timeStamp,
               service.getLinkSource(roadlink), geometry = service.getGeometry(roadlink))
         }
 
@@ -220,7 +220,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case (_, _) => (0.0, 0.0)
     }
 
-    if (mStart != mEnd && extensionChangeInfo.vvhTimeStamp == replacementChangeInfo.vvhTimeStamp)
+    if (mStart != mEnd && extensionChangeInfo.timeStamp == replacementChangeInfo.timeStamp)
       Option(extensionChangeInfo.copy(oldId = replacementChangeInfo.oldId, oldStartMeasure = Option(mStart), oldEndMeasure = Option(mEnd)))
     else
       None
@@ -282,11 +282,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case true => change.oldId
       case _ => change.newId
     }
-    (id, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
+    (id, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.timeStamp) match {
       case (Some(targetId), Some(oldStart:Double), Some(oldEnd:Double),
-      Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        condition(assets, targetId, oldStart, oldEnd, vvhTimeStamp) match {
-          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
+      Some(newStart:Double), Some(newEnd:Double), timeStamp) =>
+        condition(assets, targetId, oldStart, oldEnd, timeStamp) match {
+          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, timeStamp))
           case false =>
             None
         }
@@ -296,20 +296,20 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def testNoAssetExistsOnTarget(assets: Seq[PersistedLinearAsset], linkId: String, mStart: Double, mEnd: Double,
-                                        vvhTimeStamp: Long): Boolean = {
+                                        timeStamp: Long): Boolean = {
     !assets.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
   }
 
   private def testAssetOutdated(assets: Seq[PersistedLinearAsset], linkId: String, mStart: Double, mEnd: Double,
-                                vvhTimeStamp: Long): Boolean = {
+                                timeStamp: Long): Boolean = {
     val targetAssets = assets.filter(a => a.linkId == linkId)
-    targetAssets.nonEmpty && !targetAssets.exists(a => a.vvhTimeStamp >= vvhTimeStamp)
+    targetAssets.nonEmpty && !targetAssets.exists(a => a.timeStamp >= timeStamp)
   }
 
   private def testAssetsContainSegment(assets: Seq[PersistedLinearAsset], linkId: String, mStart: Double, mEnd: Double,
-                                       vvhTimeStamp: Long): Boolean = {
+                                       timeStamp: Long): Boolean = {
     val targetAssets = assets.filter(a => a.linkId == linkId)
-    targetAssets.nonEmpty && !targetAssets.exists(a => a.vvhTimeStamp >= vvhTimeStamp) && targetAssets.exists(
+    targetAssets.nonEmpty && !targetAssets.exists(a => a.timeStamp >= timeStamp) && targetAssets.exists(
       a => GeometryUtils.covered((a.startMeasure, a.endMeasure),(mStart,mEnd)))
   }
 
@@ -321,7 +321,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     service.expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
     service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.getOrElse(throw new IllegalStateException(
       "Value of the old asset " + oldAsset.id + " of type " + oldAsset.typeId + " is not available")), adjustment.sideCode.value,
-      Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, roadLinkClient.roadLinkData.createVVHTimeStamp(),
+      Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, LinearAssetUtils.createTimeStamp(),
       Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 

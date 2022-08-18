@@ -392,7 +392,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       after.length should be(6)
       after.flatten.forall(sl => sl.sideCode != SideCode.BothDirections) should be(true)
-      after.flatten.forall(sl => sl.vvhTimeStamp == 144000000L) should be(true)
+      after.flatten.forall(sl => sl.timeStamp == 144000000L) should be(true)
       val towards = after.flatten.filter(sl => sl.sideCode == SideCode.TowardsDigitizing)
       val against = after.flatten.filter(sl => sl.sideCode == SideCode.AgainstDigitizing)
 
@@ -472,7 +472,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       after.length should be(4)
       after.flatten.forall(sl => sl.sideCode eq SideCode.BothDirections) should be (true)
-      after.flatten.forall(sl => sl.vvhTimeStamp == 144000000L) should be (true)
+      after.flatten.forall(sl => sl.timeStamp == 144000000L) should be (true)
       val link1Limits = after.flatten.filter(sl => sl.linkId == newLinkId1)
       val link2Limits = after.flatten.filter(sl => sl.linkId == newLinkId2)
       val link3Limits = after.flatten.filter(sl => sl.linkId == newLinkId3)
@@ -1243,14 +1243,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       topology.forall(sl => sl.id == 22696720 || sl.id == 0)  should be (true)
       topology.exists(_.id == 22696720) should be (true)
       topology.find(_.id == 22696720).get.value.getOrElse(0) should be (NumericValue(50))
-      topology.forall(sl => sl.vvhTimeStamp > 0) should be (true)
+      topology.forall(sl => sl.timeStamp > 0) should be (true)
       val newLimits = topology.filter(_.id == 0).map(sl => {
         val aId = Sequences.nextPrimaryKeySeqValue
         val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
         (sl.value.get.value, (
           (aId.toString, "20", "09.09.2016 12:00:00", "test_generated", "0"),
           (aId.toString, lrmId.toString, "", sl.sideCode.value.toString, sl.startMeasure.toString, sl.endMeasure.toString,
-            "0", sl.linkId, sl.vvhTimeStamp.toString, "09.09.2016 12:00:00")))
+            "0", sl.linkId, sl.timeStamp.toString, "09.09.2016 12:00:00")))
       }
       )
       val save = newLimits.groupBy(_._1).mapValues(x => x.map(_._2))
@@ -1364,14 +1364,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[String]])).thenReturn(vvhRoadLinks)
 
       val topology = service.get(municipalityCode).sortBy(_.startMeasure).sortBy(_.linkId)
-      topology.filter(_.id != 0).foreach(sl => service.dao.updateMValues(sl.id, (sl.startMeasure, sl.endMeasure), Some(sl.vvhTimeStamp)))
+      topology.filter(_.id != 0).foreach(sl => service.dao.updateMValues(sl.id, (sl.startMeasure, sl.endMeasure), Some(sl.timeStamp)))
       val newLimits = topology.filter(_.id == 0).map(sl => {
         val aId = Sequences.nextPrimaryKeySeqValue
         val lrmId = Sequences.nextLrmPositionPrimaryKeySeqValue
         (sl.value.get.value, (
           (aId.toString, "20", "09.09.2016 12:00:00", "test_generated", "0"),
           (aId.toString, lrmId.toString, "", sl.sideCode.value.toString, sl.startMeasure.toString, sl.endMeasure.toString,
-            "0", sl.linkId, sl.vvhTimeStamp.toString, "09.09.2016 12:00:00")))
+            "0", sl.linkId, sl.timeStamp.toString, "09.09.2016 12:00:00")))
       }
       )
       val save = newLimits.groupBy(_._1).mapValues(x => x.map(_._2))

@@ -33,7 +33,7 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: String, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
                                     validityDirection: Option[Int], bearing: Option[Int],
-                                    validityPeriod: Option[String], floating: Boolean, vvhTimeStamp: Long,
+                                    validityPeriod: Option[String], floating: Boolean, timeStamp: Long,
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property], linkSource: LinkGeomSource, terminalId: Option[Long] = None) extends PersistedPointAsset with TimeStamps
 
@@ -555,7 +555,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def createPersistedAssetObject(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
     new PersistedAsset(adjustment.assetId, asset.nationalId, adjustment.linkId, asset.stopTypes, asset.municipalityCode, adjustment.lon, adjustment.lat,
-      adjustment.mValue, asset.validityDirection, asset.bearing, asset.validityPeriod, asset.floating, asset.vvhTimeStamp,
+      adjustment.mValue, asset.validityDirection, asset.bearing, asset.validityPeriod, asset.floating, asset.timeStamp,
       asset.created, asset.modified, asset.propertyData, asset.linkSource, asset.terminalId)
   }
 
@@ -618,7 +618,7 @@ trait MassTransitStopService extends PointAssetOperations {
     */
   private def updateAjustedGeometry(adjustment: AssetAdjustment, linkSource: LinkGeomSource) = {
     massTransitStopDao.updateAssetLastModified(adjustment.assetId, "vvh_generated")
-    massTransitStopDao.updateLrmPosition(adjustment.assetId, adjustment.mValue, adjustment.linkId, linkSource, Some(adjustment.vvhTimeStamp))
+    massTransitStopDao.updateLrmPosition(adjustment.assetId, adjustment.mValue, adjustment.linkId, linkSource, Some(adjustment.timeStamp))
     updateAssetGeometry(adjustment.assetId, Point(adjustment.lon, adjustment.lat))
   }
 

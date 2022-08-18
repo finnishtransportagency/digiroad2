@@ -122,7 +122,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
       val asset = assets.head
 
-      asset.vvhTimeStamp should not be(0)
+      asset.timeStamp should not be(0)
 
       val propertyId = asset.propertyData.head.id
       val pointAssetProperty = Property(propertyId, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
@@ -134,7 +134,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         lat = 0,
         mValue = 2,
         floating = false,
-        vvhTimeStamp = asset.vvhTimeStamp,
+        timeStamp = asset.timeStamp,
         municipalityCode = 235,
         propertyData = Seq(pointAssetProperty),
         createdBy = Some("jakke"),

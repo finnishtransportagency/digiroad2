@@ -125,7 +125,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
       val asset = assets.head
 
-      asset.vvhTimeStamp should not be(0)
+      asset.timeStamp should not be(0)
 
       val trafficLightTypeProperty = asset.propertyData.find(_.publicId == "trafficLight_type").head
       val assetGroupedId = trafficLightTypeProperty.groupedId
@@ -162,7 +162,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
       val asset = assets.head
 
-      asset.vvhTimeStamp should not be(0)
+      asset.timeStamp should not be(0)
 
       val trafficLightTypeProperties = asset.propertyData.filter(_.publicId == "trafficLight_type")
       val assetGroupedIds = trafficLightTypeProperties.map(_.groupedId)
@@ -193,7 +193,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
       val asset = assets.head
 
-      asset.vvhTimeStamp should not be(0)
+      asset.timeStamp should not be(0)
 
      val updatedId = service.update(id = asset.id, IncomingTrafficLight(2, 0.0, linkId, trafficLightPropertyData), roadLink, "test")
       val afterUpdate = service.getPersistedAssetsByIds(Set(updatedId)).head

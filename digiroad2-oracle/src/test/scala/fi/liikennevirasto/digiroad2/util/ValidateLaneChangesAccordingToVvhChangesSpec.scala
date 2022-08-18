@@ -15,7 +15,7 @@ class ValidateLaneChangesAccordingToVvhChangesSpec extends FunSuite with Matcher
   }
 
   def createLane(id: Long, linkId: String, sideCode: Int, laneCode: Int): PersistedLane = {
-    PersistedLane(id,linkId, sideCode, laneCode, municipalityCode = 235, startMeasure = 0.0, endMeasure = 200.0, createdBy = Some("Test"), createdDateTime = None, modifiedBy = None, modifiedDateTime = None, expiredBy = None, expiredDateTime = None, expired = false, vvhTimeStamp = 0l, geomModifiedDate = None, attributes = Seq())
+    PersistedLane(id,linkId, sideCode, laneCode, municipalityCode = 235, startMeasure = 0.0, endMeasure = 200.0, createdBy = Some("Test"), createdDateTime = None, modifiedBy = None, modifiedDateTime = None, expiredBy = None, expiredDateTime = None, expired = false, timeStamp = 0l, geomModifiedDate = None, attributes = Seq())
   }
 
   def createRoadLinks(): Seq[RoadLink] = {

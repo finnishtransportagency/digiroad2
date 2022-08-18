@@ -10,6 +10,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.LaneNumberOneDigit.MainLane
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -20,7 +21,7 @@ import scala.language.implicitConversions
 case class LaneRow(id: Long, linkId: String, sideCode: Int, value: LanePropertyRow,
                    startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                    modifiedBy: Option[String], modifiedDate: Option[DateTime], expiredBy: Option[String], expiredDate: Option[DateTime],
-                   expired: Boolean, vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
+                   expired: Boolean, timeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
 
 case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
@@ -50,7 +51,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
       val modifiedBy = r.nextStringOption()
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val atrrName = r.nextString()
       val atrrValue = r.nextStringOption()
@@ -61,7 +62,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
       val expiredDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
       LaneRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
-        expiredBy, expiredDate, expired, vvhTimeStamp, municipalityCode, laneCode, geomModifiedDate)
+        expiredBy, expiredDate, expired, timeStamp, municipalityCode, laneCode, geomModifiedDate)
     }
   }
 
@@ -208,7 +209,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
           createdBy = row.createdBy, createdDateTime = row.createdDate,
           modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate,
           expiredBy = row.expiredBy, expiredDateTime = row.expiredDate, expired = row.expired,
-          vvhTimeStamp = row.vvhTimeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues)
+          timeStamp = row.timeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues)
 
     }.values.toSeq
   }
@@ -251,7 +252,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
   def updateLanePosition (newIncomeLane: PersistedLane): Unit ={
     sqlu"""UPDATE LANE_POSITION
           SET start_measure = ${newIncomeLane.startMeasure}, end_measure = ${newIncomeLane.endMeasure},
-              modified_date = current_timestamp, adjusted_timestamp = ${newIncomeLane.vvhTimeStamp}
+              modified_date = current_timestamp, adjusted_timestamp = ${newIncomeLane.timeStamp}
           WHERE link_id = ${newIncomeLane.linkId}
     """.execute
   }
@@ -267,7 +268,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
           VALUES ($laneId, ${newIncomeLane.laneCode}, current_timestamp, $username, ${newIncomeLane.municipalityCode} );
          INSERT INTO LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
           VALUES ( $lanePositionId, ${newIncomeLane.sideCode}, ${newIncomeLane.startMeasure}, ${newIncomeLane.endMeasure},
-                   ${newIncomeLane.linkId}, ${newIncomeLane.vvhTimeStamp});
+                   ${newIncomeLane.linkId}, ${newIncomeLane.timeStamp});
         INSERT INTO LANE_LINK (lane_id, lane_position_id)VALUES ($laneId, $lanePositionId );
       """.execute
 
@@ -304,7 +305,7 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
         statement.setDouble(3, newLane.lane.startMeasure)
         statement.setDouble(4, newLane.lane.endMeasure)
         statement.setString(5, newLane.lane.linkId)
-        statement.setLong(6, newLane.lane.vvhTimeStamp)
+        statement.setLong(6, newLane.lane.timeStamp)
         statement.addBatch()
       }
     }
@@ -473,9 +474,9 @@ class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkS
     """.execute
   }
 
-  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = roadLinkClient.createVVHTimeStamp()): Unit = {
+  def updateSideCode(id: Long, newSideCode: Int, username: String, timeStamp: Long  = LinearAssetUtils.createTimeStamp()): Unit = {
     sqlu"""UPDATE LANE_POSITION
-           SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $vvhTimestamp
+           SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $timeStamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )
      """.execute
 

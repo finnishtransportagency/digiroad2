@@ -135,7 +135,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val output = changes map { change =>
       assetFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
 
 
@@ -166,7 +166,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val output = changes map { change =>
       assetFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output.head._1.sideCode should be (SideCode.TowardsDigitizing.value)
     output.last._1.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -177,7 +177,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val output2 = changes map { change =>
       assetFiller.projectLinearAsset(assets.last, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output2.length should be(3)
     output2.head._1.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -207,7 +207,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val output = changes flatMap { change =>
       assets.map(
         assetFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
           ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil) )._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.head.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -271,7 +271,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val output = changes flatMap { change =>
       assets.map(
         assetFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
-          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
           ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.filter(o => o.linkId == "1" && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
@@ -782,5 +782,5 @@ class AssetFillerSpec extends FunSuite with Matchers {
                         oldEndMeasure: Option[Double],
                         newStartMeasure: Option[Double],
                         newEndMeasure: Option[Double],
-                        vvhTimeStamp: Option[Long])
+                        timeStamp: Option[Long])
 }

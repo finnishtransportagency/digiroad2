@@ -129,13 +129,13 @@ class MassTransitStopDao {
       val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
       val stopTypes = extractStopTypes(stopRows)
       val mValue = row.lrmPosition.startMeasure
-      val vvhTimeStamp = row.lrmPosition.vvhTimeStamp
+      val timeStamp = row.lrmPosition.timeStamp
       val linkSource = row.lrmPosition.linkSource
 
       id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, linkId = row.linkId, stopTypes = stopTypes,
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
-        validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, created = row.created, modified = row.modified,
+        validityPeriod = validityPeriod, floating = row.persistedFloating, timeStamp = timeStamp, created = row.created, modified = row.modified,
         propertyData = properties, linkSource = LinkGeomSource(linkSource), terminalId = row.terminalId)
     }.values.toSeq
   }
@@ -158,7 +158,7 @@ class MassTransitStopDao {
       val point = r.nextObjectOption().map(objectToPoint)
       val municipalityCode = r.nextInt()
       val persistedFloating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -185,7 +185,7 @@ class MassTransitStopDao {
       val terminalId = r.nextLongOption
       MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource),
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, timeStamp, linkSource),
         municipalityCode = municipalityCode, persistedFloating = persistedFloating, terminalId = terminalId)
     }
   }

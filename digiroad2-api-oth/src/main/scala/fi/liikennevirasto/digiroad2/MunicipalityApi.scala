@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.json4s._
 import org.json4s.jackson.Serialization.write
 import org.scalatra._
@@ -191,7 +192,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
   private def updateLinearAssets(properties: Map[String, String], links: Seq[RoadLink]) = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
-    val timeStamp = roadLinkClient.createVVHTimeStamp()
+    val timeStamp = LinearAssetUtils.createTimeStamp()
 
     links.foreach { link =>
       speedLimit match {

@@ -16,7 +16,7 @@ case class SpeedLimit(id: Long,
                       modifiedDateTime: Option[DateTime],
                       createdBy: Option[String],
                       createdDateTime: Option[DateTime],
-                      vvhTimeStamp: Long,
+                      timeStamp: Long,
                       geomModifiedDate: Option[DateTime],
                       expired: Boolean = false,
                       linkSource: LinkGeomSource,
@@ -28,8 +28,8 @@ case class UnknownSpeedLimit(linkId: String, municipalityCode: Int, administrati
 
 case class PersistedSpeedLimit(id: Long, linkId: String, sideCode: SideCode, value: Option[SpeedLimitValue], startMeasure: Double, endMeasure: Double,
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
-                               vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource)
+                               timeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource)
 
 case class SpeedLimitRow(id: Long, linkId: String, sideCode: SideCode, value: Option[Int], startMeasure: Double, endMeasure: Double,
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
-                               vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource, publicId: String)
+                               timeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource, publicId: String)

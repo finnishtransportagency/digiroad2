@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers._
@@ -31,8 +31,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
-  val timeStamp = RoadLinkClient.createVVHTimeStamp(5)
-  when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+  val timeStamp = LinearAssetUtils.createTimeStamp(5)
+  when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
   val roadLinkWithLinkSource = RoadLink(
     "1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -67,8 +67,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
   val assetLock = "Used to prevent deadlocks"
 
-  private def createChangeInfo(roadLinks: Seq[RoadLink], vvhTimeStamp: Long) = {
-    roadLinks.map(rl => ChangeInfo(Some(rl.linkId), Some(rl.linkId), 0L, 1, None, None, None, None, vvhTimeStamp))
+  private def createChangeInfo(roadLinks: Seq[RoadLink], timeStamp: Long) = {
+    roadLinks.map(rl => ChangeInfo(Some(rl.linkId), Some(rl.linkId), 0L, 1, None, None, None, None, timeStamp))
   }
 
   private def createService() = {
@@ -120,15 +120,15 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val attributes0 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(12112))
     val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(100))
     val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2), "MTKCLASS" -> BigInt(2))
-    val vvhTimeStamp = 14440000
+    val timeStamp = 14440000
 
     val newRoadLink2 = RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes2)
     val newRoadLink1 = RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes1)
     val newRoadLink0 = RoadLink(newLinkId0, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes0)
 
-    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp),
-      ChangeInfo(Some(newLinkId1), Some(newLinkId1), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp),
-      ChangeInfo(Some(newLinkId0), Some(newLinkId0), 12345, 1, Some(0), Some(10), Some(0), Some(10), vvhTimeStamp)
+    val changeInfoSeq = Seq(ChangeInfo(Some(newLinkId2), Some(newLinkId2), 12345, 1, Some(0), Some(10), Some(0), Some(10), timeStamp),
+      ChangeInfo(Some(newLinkId1), Some(newLinkId1), 12345, 1, Some(0), Some(10), Some(0), Some(10), timeStamp),
+      ChangeInfo(Some(newLinkId0), Some(newLinkId0), 12345, 1, Some(0), Some(10), Some(0), Some(10), timeStamp)
     )
 
     runWithRollback {
@@ -143,7 +143,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       filteredCreatedAssets.length should be (1)
       filteredCreatedAssets.head.typeId should be (RoadWidthAssetTypeId)
       filteredCreatedAssets.head.value should be (Some(NumericValue(1100)))
-      filteredCreatedAssets.head.vvhTimeStamp should be (vvhTimeStamp)
+      filteredCreatedAssets.head.timeStamp should be (timeStamp)
     }
   }
 
@@ -231,7 +231,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val (newAsset, changeSet) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo, _ => Seq(), initChangeSet)
       changeSet.expiredAssetIds should have size 1
       changeSet.expiredAssetIds should be(Set(1))
-      newAsset.forall(_.vvhTimeStamp == 11L) should be(true)
+      newAsset.forall(_.timeStamp == 11L) should be(true)
       newAsset.forall(_.value.isDefined) should be(true)
       newAsset should have size 1
       newAsset.head.linkId should be("5000")
@@ -289,7 +289,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
       val assets = service.getPersistedAssetsByIds(RoadWidthAssetTypeId, Set(1L, id.head, id1.head))
       assets should have size 2
-      assets.forall(_.vvhTimeStamp > 0L) should be (true)
+      assets.forall(_.timeStamp > 0L) should be (true)
 
       val after = service.getByBoundingBox(RoadWidthAssetTypeId, BoundingRectangle(Point(0.0, 0.0), Point(120.0, 120.0)), Set(municipalityCode))
       after should have size 2

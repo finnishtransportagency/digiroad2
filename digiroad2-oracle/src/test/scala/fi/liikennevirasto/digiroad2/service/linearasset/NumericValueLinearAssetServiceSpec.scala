@@ -79,7 +79,7 @@ class NumericValueLinearAssetServiceSpec extends FunSuite with Matchers {
       limitUpdated.modifiedDateTime should not be empty
       limitUpdated.expired should be (false)
       limitUpdated.typeId should be (limitToUpdate.typeId)
-      limitUpdated.vvhTimeStamp should be (limitToUpdate.vvhTimeStamp)
+      limitUpdated.timeStamp should be (limitToUpdate.timeStamp)
 
       //Verify if old asset is expired
       val limitExpired = linearAssetDao.fetchLinearAssetsByIds(Set(11111), "mittarajoitus").head

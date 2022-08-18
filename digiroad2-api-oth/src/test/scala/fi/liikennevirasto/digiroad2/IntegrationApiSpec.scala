@@ -318,10 +318,10 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   val roadLink = RoadLink(
-    "5000", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    "5000L", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((Seq(roadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[Int])).thenReturn(Seq(roadLink))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink))
 
   test("care class value is returned from api as integer") {

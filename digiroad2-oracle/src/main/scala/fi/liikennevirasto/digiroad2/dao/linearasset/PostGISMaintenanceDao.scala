@@ -54,7 +54,7 @@ class PostGISMaintenanceDao(val roadLinkClient: RoadLinkClient, val roadLinkServ
       val value =  DynamicAssetValue(assetRowToProperty(assetRows))
 
       PersistedLinearAsset(id, row.linkId, row.sideCode, value = Some(DynamicValue(value)), row.startMeasure, row.endMeasure, row.createdBy,
-        row.createdDate, row.modifiedBy, row.modifiedDate, row.expired, row.typeId, row.vvhTimeStamp,
+        row.createdDate, row.modifiedBy, row.modifiedDate, row.expired, row.typeId, row.timeStamp,
         row.geomModifiedDate, LinkGeomSource.apply(row.linkSource), row.verifiedBy, row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)))
 
     }.toSeq
@@ -83,14 +83,14 @@ class PostGISMaintenanceDao(val roadLinkClient: RoadLinkClient, val roadLinkServ
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean
       val typeId = r.nextInt()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
 
-      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
+      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
 
@@ -134,7 +134,7 @@ class PostGISMaintenanceDao(val roadLinkClient: RoadLinkClient, val roadLinkServ
   /**
     * Creates new Maintenance asset. Return id of new asset. Used by MaintenanceService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
+  def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String, timeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), area: Int): Long = {
@@ -147,7 +147,7 @@ class PostGISMaintenanceDao(val roadLinkClient: RoadLinkClient, val roadLinkServ
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $area);
 
        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
 
        insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -158,7 +158,7 @@ class PostGISMaintenanceDao(val roadLinkClient: RoadLinkClient, val roadLinkServ
       values ($id, $typeId, $username, current_timestamp, #$validTo, $area);
 
       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
 
       insert into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId);

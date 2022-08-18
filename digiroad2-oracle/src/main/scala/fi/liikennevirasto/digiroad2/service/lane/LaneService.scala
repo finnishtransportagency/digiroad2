@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools, RoadAddress}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -192,17 +192,17 @@ trait LaneOperations {
     }
     val projectedLane = Some(PersistedLane(laneId, newLinkId, newSideCode, lane.laneCode, lane.municipalityCode, newStart, newEnd, lane.createdBy,
       lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, lane.expiredBy, lane.expiredDateTime,
-      expired = false, projection.vvhTimeStamp, lane.geomModifiedDate, lane.attributes))
+      expired = false, projection.timeStamp, lane.geomModifiedDate, lane.attributes))
 
 
     val changeSet = laneId match {
       case 0 => changedSet
       case _ if(newSideCode != lane.sideCode) => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++
-        Seq(VVHChangesAdjustment(laneId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)),
+        Seq(VVHChangesAdjustment(laneId, newLinkId, newStart, newEnd, projection.timeStamp)),
         adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(laneId, SideCode.apply(newSideCode))))
 
       case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++
-        Seq(VVHChangesAdjustment(laneId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)))
+        Seq(VVHChangesAdjustment(laneId, newLinkId, newStart, newEnd, projection.timeStamp)))
     }
 
     (projectedLane, changeSet)
@@ -260,14 +260,14 @@ trait LaneOperations {
   }
 
   private def testNoAssetExistsOnTarget(lanes: Seq[PersistedLane], linkId: String, mStart: Double, mEnd: Double,
-                                        vvhTimeStamp: Long): Boolean = {
+                                        timeStamp: Long): Boolean = {
     !lanes.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
   }
 
   private def testAssetOutdated(lanes: Seq[PersistedLane], linkId: String, mStart: Double, mEnd: Double,
-                                vvhTimeStamp: Long): Boolean = {
+                                timeStamp: Long): Boolean = {
     val targetLanes = lanes.filter(a => a.linkId == linkId)
-    targetLanes.nonEmpty && !targetLanes.exists(a => a.vvhTimeStamp >= vvhTimeStamp)
+    targetLanes.nonEmpty && !targetLanes.exists(a => a.timeStamp >= timeStamp)
   }
 
   private def projectAssetsConditionally(change: ChangeInfo, lanes: Seq[PersistedLane],
@@ -279,12 +279,12 @@ trait LaneOperations {
                 change.newId
               }
 
-    (id, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
+    (id, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.timeStamp) match {
       case (Some(targetId), Some(oldStart:Double), Some(oldEnd:Double),
-            Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
+            Some(newStart:Double), Some(newEnd:Double), timeStamp) =>
 
-              if (condition(lanes, targetId, oldStart, oldEnd, vvhTimeStamp)) {
-                Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
+              if (condition(lanes, targetId, oldStart, oldEnd, timeStamp)) {
+                Some(Projection(oldStart, oldEnd, newStart, newEnd, timeStamp))
               } else {
                 None
               }
@@ -294,9 +294,9 @@ trait LaneOperations {
   }
 
   private def testAssetsContainSegment(lanes: Seq[PersistedLane], linkId: String, mStart: Double, mEnd: Double,
-                                       vvhTimeStamp: Long): Boolean = {
+                                       timeStamp: Long): Boolean = {
     val targetAssets = lanes.filter(a => a.linkId == linkId)
-    targetAssets.nonEmpty && !targetAssets.exists(a => a.vvhTimeStamp >= vvhTimeStamp) && targetAssets.exists(
+    targetAssets.nonEmpty && !targetAssets.exists(a => a.timeStamp >= timeStamp) && targetAssets.exists(
       a => GeometryUtils.covered((a.startMeasure, a.endMeasure),(mStart,mEnd)))
   }
 
@@ -320,7 +320,7 @@ trait LaneOperations {
       case (_, _) => (0.0, 0.0)
     }
 
-    if (mStart != mEnd && extensionChangeInfo.vvhTimeStamp == replacementChangeInfo.vvhTimeStamp)
+    if (mStart != mEnd && extensionChangeInfo.timeStamp == replacementChangeInfo.timeStamp)
       Option(extensionChangeInfo.copy(oldId = replacementChangeInfo.oldId, oldStartMeasure = Option(mStart), oldEndMeasure = Option(mEnd)))
     else
       None
@@ -565,7 +565,7 @@ trait LaneOperations {
       val municipalityCode = pwLane.attributes.getOrElse("municipality", 99).asInstanceOf[Long]
       val laneCode = getLaneCode(pwLane)
       PersistedLane(pwLane.id, pwLane.linkId, pwLane.sideCode, laneCode, municipalityCode, pwLane.startMeasure, pwLane.endMeasure,
-        pwLane.createdBy, pwLane.createdDateTime, pwLane.modifiedBy, pwLane.modifiedDateTime, None, None, false, pwLane.vvhTimeStamp,
+        pwLane.createdBy, pwLane.createdDateTime, pwLane.modifiedBy, pwLane.modifiedDateTime, None, None, false, pwLane.timeStamp,
         pwLane.geomModifiedDate, pwLane.laneAttributes)
     }
   }
@@ -575,7 +575,7 @@ trait LaneOperations {
                   historyLane.municipalityCode, historyLane.startMeasure, historyLane.endMeasure, historyLane.createdBy,
                   historyLane.createdDateTime, historyLane.modifiedBy, historyLane.modifiedDateTime,
                   Some(historyLane.historyCreatedBy), Some(historyLane.historyCreatedDate),
-                  historyLane.expired, historyLane.vvhTimeStamp, historyLane.geomModifiedDate, historyLane.attributes)
+                  historyLane.expired, historyLane.timeStamp, historyLane.geomModifiedDate, historyLane.attributes)
   }
 
   def fixSideCode( roadAddress: RoadAddressTEMP , laneCode: String ): SideCode = {
@@ -794,7 +794,7 @@ trait LaneOperations {
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def create(newLanes: Seq[NewLane], linkIds: Set[String], sideCode: Int, username: String, sideCodesForLinkIds: Seq[SideCodesForLinkIds] = Seq(), vvhTimeStamp: Long = roadLinkClient.createVVHTimeStamp()): Seq[Long] = {
+  def create(newLanes: Seq[NewLane], linkIds: Set[String], sideCode: Int, username: String, sideCodesForLinkIds: Seq[SideCodesForLinkIds] = Seq(), timeStamp: Long = LinearAssetUtils.createTimeStamp()): Seq[Long] = {
 
     if (newLanes.isEmpty || linkIds.isEmpty)
       return Seq()
@@ -811,7 +811,7 @@ trait LaneOperations {
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
-                                      expired = false, vvhTimeStamp, None, newLane.properties)
+                                      expired = false, timeStamp, None, newLane.properties)
 
           createWithoutTransaction(laneToInsert, username)
         }
@@ -839,18 +839,18 @@ trait LaneOperations {
             val laneToInsert = sideCodesForLinkIds.isEmpty match{
               case true => PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
                 0,endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
-                expired = false, vvhTimeStamp, None, newLane.properties)
+                expired = false, timeStamp, None, newLane.properties)
 
               case false =>
                 val correctSideCode = sideCodesForLinkIds.find(_.linkId == linkId)
                 correctSideCode match {
                   case Some(_) => PersistedLane(0, linkId, correctSideCode.get.sideCode, laneCode.toInt, newLane.municipalityCode,
                     0,endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
-                    expired = false, vvhTimeStamp, None, newLane.properties)
+                    expired = false, timeStamp, None, newLane.properties)
 
                   case None => PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
                     0,endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
-                    expired = false, vvhTimeStamp, None, newLane.properties)
+                    expired = false, timeStamp, None, newLane.properties)
                 }
             }
 
@@ -976,7 +976,7 @@ trait LaneOperations {
       val existingLanes = fetchAllLanesByLinkIds(roadLinkIds.toSeq, newTransaction = false)
 
       val allLanesToCreate = linksWithAddresses.flatMap { link =>
-        val vvhTimeStamp = roadLinkClient.createVVHTimeStamp()
+        val timeStamp = LinearAssetUtils.createTimeStamp()
 
         lanesToInsert.flatMap { lane =>
           val laneCode = getLaneCode(lane).toInt
@@ -996,7 +996,7 @@ trait LaneOperations {
 
               Some(PersistedLane(0, link.linkId, sideCode.value, laneCode, link.link.municipalityCode,
                 endPoints.start, endPoints.end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
-                vvhTimeStamp, None, lane.properties))
+                timeStamp, None, lane.properties))
             case (Some(_), None) =>
               // Throw error if sideCode is not determined due to missing road addresses
               throw new InvalidParameterException(s"All links in selection do not have road address")

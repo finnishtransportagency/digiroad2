@@ -9,6 +9,8 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+
 import javax.sql.DataSource
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
@@ -218,8 +220,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
     
-    val timeStamp = RoadLinkClient.createVVHTimeStamp()
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    val timeStamp = LinearAssetUtils.createTimeStamp()
+    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -229,6 +231,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     val dataSet = Dataset(dataSetId, featureCollection, roadLinksList)
 
     runWithRollback {
+      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false)).thenReturn(Some(newRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(linkId))).thenReturn(Seq(newFetchedRoadLink))
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
       val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
       val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
@@ -260,9 +264,9 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
     
-    val timeStamp = RoadLinkClient.createVVHTimeStamp()
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    val timeStamp = LinearAssetUtils.createTimeStamp()
+    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -311,9 +315,9 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
     
-    val timeStamp = RoadLinkClient.createVVHTimeStamp()
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    val timeStamp = LinearAssetUtils.createTimeStamp()
+    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonPointFeature))

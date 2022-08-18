@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.withMtkClassFilter
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils}
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -48,12 +48,12 @@ case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[
 
 case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long, changeType: Int,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
-                      newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
+                      newEndMeasure: Option[Double], timeStamp: Long = 0L) {
   def isOldId(id: String): Boolean = {
     oldId.nonEmpty && oldId.get == id
   }
-  def affects(id: String, assetVvhTimeStamp: Long): Boolean = {
-    isOldId(id) && assetVvhTimeStamp < vvhTimeStamp
+  def affects(id: String, assettimeStamp: Long): Boolean = {
+    isOldId(id) && assettimeStamp < timeStamp
   }
 }
 
@@ -307,21 +307,6 @@ object Filter extends Filter {
   }
 }
 
-object RoadLinkClient {
-  /**
-    * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
-    * This prevents change info from being applied to the recently created asset. Resolution is one day.
-    * @param offsetHours Offset to the timestamp. Defaults to 5 which reflects to VVH offset for batch runs.
-    * @return VVH timestamp for current date
-    */
-  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    val oneHourInMs = 60 * 60 * 1000L
-    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
-    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
-    curr - (curr % (24L*oneHourInMs))
-  }
-}
-
 class RoadLinkClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData: OldVVHRoadLinkClient = new OldVVHRoadLinkClient(vvhRestApiEndPoint)
   lazy val frozenTimeRoadLinkData: VVHFrozenTimeRoadLinkClientServicePoint = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
@@ -336,8 +321,8 @@ class RoadLinkClient(vvhRestApiEndPoint: String) {
     }
   }
   
-  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    RoadLinkClient.createVVHTimeStamp(offsetHours)
+  def createTimeStamp(offsetHours: Int = 5): Long = {
+    LinearAssetUtils.createTimeStamp(offsetHours)
   }
 }
 
@@ -400,7 +385,7 @@ class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceV
   override protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
   val filter:Filter = FilterOgc
 
-  def createVVHTimeStamp(offsetHours: Int = 5): Long =  RoadLinkClient.createVVHTimeStamp(offsetHours)
+  def createTimeStamp(offsetHours: Int = 5): Long =  LinearAssetUtils.createTimeStamp(offsetHours)
 
   def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
     queryByMunicipality(municipality)
@@ -626,13 +611,13 @@ trait VVHClientOperations {
   }
 
   /**
-    * Creates a pseudo VVH Timestamp for new assets and speed limits. Turns clock back to 0:00 on the same day
+    * Creates a timestamp for new assets and speed limits. Turns clock back to 0:00 on the same day
     * if less than offsetHours have passed since or 0:00 on previous day if not.
     *
-    * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
+    * @param offsetHours Number of hours since midnight to return current day as a timestamp (UNIX time in ms)
     */
-  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
-    RoadLinkClient.createVVHTimeStamp(offsetHours)
+  def createTimeStamp(offsetHours: Int = 5): Long = {
+    LinearAssetUtils.createTimeStamp(offsetHours)
   }
 
   /**
@@ -1053,13 +1038,13 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     val newId = Option(attributes("NEW_ID").asInstanceOf[BigInt]).map(_.toString)// TODO: Temporary parsing to string. Remove after not needed anymore
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val changeType = attributes("CHANGETYPE").asInstanceOf[BigInt].intValue()
-    val vvhTimeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue()).getOrElse(0L)
+    val timeStamp = Option(attributes("CREATED_DATE").asInstanceOf[BigInt]).map(_.longValue()).getOrElse(0L)
     val oldStartMeasure = extractMeasure(attributes("OLD_START"))
     val oldEndMeasure = extractMeasure(attributes("OLD_END"))
     val newStartMeasure = extractMeasure(attributes("NEW_START"))
     val newEndMeasure = extractMeasure(attributes("NEW_END"))
 
-    ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, vvhTimeStamp)
+    ChangeInfo(oldId, newId, mmlId, changeType, oldStartMeasure, oldEndMeasure, newStartMeasure, newEndMeasure, timeStamp)
   }
 
   def fetchByDates(since: DateTime, until: DateTime): Seq[ChangeInfo] = {
