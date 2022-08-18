@@ -144,10 +144,7 @@ class RoadLinkDAO {
       val toLeft = r.nextLongOption()
       val fromRight = r.nextLongOption()
       val toRight = r.nextLongOption()
-      val validFrom = r.nextTimestampOption().map(new DateTime(_))
-      val geometryEdited = r.nextTimestampOption().map(new DateTime(_))
       val surfaceType = r.nextInt()
-      val objectId = r.nextLong()
       val sourceInfo = r.nextInt()
       val length  = r.nextDouble()
 
@@ -155,7 +152,7 @@ class RoadLinkDAO {
       val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
       val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
       val featureClass = extractFeatureClass(mtkClass)
-      val modifiedAt = extractModifiedDate(validFrom, lastEditedDate, geometryEdited)
+      val modifiedAt = extractModifiedDate(createdDate, lastEditedDate)
 
       val attributes = Map(
         "MTKID" -> mtkId,
@@ -174,8 +171,6 @@ class RoadLinkDAO {
         "TO_RIGHT" -> toRight,
         "MUNICIPALITYCODE" -> BigInt(municipality),
         "MTKHEREFLIP" -> mtkHereFlip,
-        "VALIDFROM" -> validFrom.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
-        "GEOMETRY_EDITED_DATE" -> geometryEdited.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
         "CREATED_DATE" -> createdDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
         "LAST_EDITED_DATE" -> lastEditedDate.map(time => BigInt(time.toDateTime.getMillis)).getOrElse(None),
         "SURFACETYPE" -> BigInt(surfaceType),
@@ -333,8 +328,8 @@ class RoadLinkDAO {
    LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
      sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
-                 verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
-                 geometry_edited_date, surfacetype, objectid, sourceinfo, geometrylength
+                 verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
+                 surfacetype, sourceinfo, geometrylength
           from roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
@@ -407,18 +402,10 @@ class RoadLinkDAO {
     }
   }
 
-  protected def extractModifiedDate(validFrom: Option[DateTime], lastEdited: Option[DateTime],
-                                    geometryEdited: Option[DateTime]): Option[DateTime] = {
-    val validFromTime = if (validFrom.nonEmpty) validFrom.get.getMillis else 0
-    val lastEditedTime = if (lastEdited.nonEmpty) lastEdited.get.getMillis else 0
-    val geometryEditedTime = if (geometryEdited.nonEmpty) geometryEdited.get.getMillis else 0
-
-    val lastModification = {
-      if (lastEditedTime > geometryEditedTime) Some(lastEditedTime)
-      else if (geometryEditedTime > 0) Some(geometryEditedTime)
-      else None
-    }
-    lastModification.orElse(Option(validFromTime)).map(modified => new DateTime(modified))
+  protected def extractModifiedDate(createdDate: Option[DateTime], lastEdited: Option[DateTime]): Option[DateTime] = {
+    val createdDateTime = if (createdDate.nonEmpty) createdDate.get.getMillis else 0
+    val lastEditedTime = if (lastEdited.nonEmpty) Some(lastEdited.get.getMillis) else None
+    lastEditedTime.orElse(Option(createdDateTime)).map(modified => new DateTime(modified))
   }
   
   protected def extractGeometry(data: Object): List[List[Double]] = {
