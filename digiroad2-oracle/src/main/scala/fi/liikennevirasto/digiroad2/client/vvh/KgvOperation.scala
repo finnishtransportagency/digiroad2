@@ -231,8 +231,8 @@ class Extractor extends ExtractorBase {
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = {
     val attributes = feature.properties
     
-    val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
-    val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
+    val lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
+    val startTime = Option(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis)
 
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
@@ -253,7 +253,7 @@ class Extractor extends ExtractorBase {
       linkGeometry,
       extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, extractModifiedAt(startTime,lastEditedDate),
-      extractAttributes(attributes,lastEditedDate.get,startTime.get)
+      extractAttributes(attributes,BigInteger.valueOf(lastEditedDate.get),BigInteger.valueOf(startTime.get))
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
       , extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
