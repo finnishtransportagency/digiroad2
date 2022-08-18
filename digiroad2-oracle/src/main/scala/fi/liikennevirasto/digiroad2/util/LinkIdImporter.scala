@@ -26,12 +26,14 @@ object LinkIdImporter {
   }
 
   sealed implicit class SplitByConversionTuple(val list: TraversableLike[(String, String), Any]) {
-    def partitionByConversion(): (Seq[(Int, Int)], Seq[(String, String)]) = {
-      val (intList, stringList) = (new ListBuffer[(Int, Int)], new ListBuffer[(String, String)])
+    def partitionByConversion(): (Seq[(Int, Option[Int])], Seq[(String, String)]) = {
+      val (intList, stringList) = (new ListBuffer[(Int, Option[Int])], new ListBuffer[(String, String)])
       for (element <- list) {
-        if (Try(element._1.toInt).isSuccess && Try(element._2.toInt).isSuccess)
-          intList.append((element._1.toInt, element._2.toInt))
-        else stringList.append(element)
+        (Try(element._1.toInt).isSuccess, Try(element._2.toInt).isSuccess) match {
+          case (true, true) =>  intList.append((element._1.toInt, Some(element._2.toInt)))
+          case (true, false) => intList.append((element._1.toInt, None))
+          case _ =>             stringList.append(element)
+        }
       }
       (intList.toList, stringList.toList)
     }
@@ -84,16 +86,26 @@ object LinkIdImporter {
        | vvh_id = ?,
        | $linkIdColumn = (SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? ),
        | dest_vvh_id = ?,
-       | dest_link_id =  COALESCE((SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ?),? ) 
-       | WHERE $linkIdColumn = ? """.stripMargin
+       | dest_link_id =  COALESCE((SELECT id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ?),? )
+       | WHERE $linkIdColumn = ?
+       | AND (dest_link_id = ? OR (? is null AND dest_link_id is null))""".stripMargin
   }
-  private def updateTableManoeuvreRow(statement: PreparedStatement, ids: (Int, Int)): Unit = {
-    statement.setInt(1, ids._1)
-    statement.setInt(2, ids._1)
-    statement.setInt(3, ids._2)
-    statement.setInt(4, ids._2)
-    statement.setString(5, ids._2.toString)
+  private def updateTableManoeuvreRow(statement: PreparedStatement, ids: (Int, Option[Int])): Unit = {
+    def setOptionalId(index: Int, id: Option[Int], sqlType: Int): Unit = {
+      (id.isDefined, sqlType) match {
+        case (true, java.sql.Types.BIGINT) =>   statement.setLong(index, id.get)
+        case (true, java.sql.Types.VARCHAR) =>  statement.setString(index, id.get.toString)
+        case _ => statement.setNull(index, sqlType)
+      }
+    }
+    statement.setLong(1, ids._1)
+    statement.setLong(2, ids._1)
+    setOptionalId(3, ids._2, java.sql.Types.BIGINT)
+    setOptionalId(4, ids._2, java.sql.Types.BIGINT)
+    setOptionalId(5, ids._2, java.sql.Types.VARCHAR)
     statement.setString(6, ids._1.toString)
+    setOptionalId(7, ids._2, java.sql.Types.VARCHAR)
+    setOptionalId(8, ids._2, java.sql.Types.VARCHAR)
     statement.addBatch()
   }
   
