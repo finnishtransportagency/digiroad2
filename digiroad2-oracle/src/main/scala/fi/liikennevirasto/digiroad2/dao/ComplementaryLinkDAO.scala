@@ -102,6 +102,19 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
     }
   }
 
+  protected def extractModifiedDate(createdDate: Option[DateTime], lastEdited: Option[DateTime], geometryEdited: Option[DateTime]): Option[DateTime] = {
+    val createdDateTime = if (createdDate.nonEmpty) createdDate.get.getMillis else 0
+    val lastEditedTime = if (lastEdited.nonEmpty) lastEdited.get.getMillis else 0
+    val geometryEditedTime = if (geometryEdited.nonEmpty) geometryEdited.get.getMillis else 0
+
+    val lastModification = {
+      if (lastEditedTime > geometryEditedTime) Some(lastEditedTime)
+      else if (geometryEditedTime > 0) Some(geometryEditedTime)
+      else None
+    }
+    lastModification.orElse(Option(createdDateTime)).map(modified => new DateTime(modified))
+  }
+  
   override def getLinksIdByPolygons(polygon: Polygon): Seq[String] = {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger,"TEST LOG Getting complementery roadlinks by polygon" ){
