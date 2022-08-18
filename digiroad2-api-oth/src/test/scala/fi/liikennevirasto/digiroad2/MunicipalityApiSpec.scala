@@ -221,9 +221,6 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
-    
-    val timeStamp = LinearAssetUtils.createTimeStamp()
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -265,10 +262,6 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
     when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
-    
-    val timeStamp = LinearAssetUtils.createTimeStamp()
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -316,10 +309,6 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadLinkFromVVH(linkId, false)).thenReturn(Some(newRoadLink))
 
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
-    
-    val timeStamp = LinearAssetUtils.createTimeStamp()
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonPointFeature))
