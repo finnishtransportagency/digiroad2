@@ -65,7 +65,6 @@ drop table if exists service_user cascade;
 drop table if exists single_choice_value cascade;
 drop table if exists single_choice_value_history cascade;
 drop table if exists temporary_id cascade;
-drop table if exists temp_road_address_info cascade;
 drop table if exists terminal_bus_stop_link cascade;
 drop table if exists text_property_value cascade;
 drop table if exists text_property_value_history cascade;
