@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.dao.RoadAddressTEMP
 import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneRoadAddressInfo}
+import fi.liikennevirasto.digiroad2.service.RoadAddressForLink
 import org.scalatest.{FunSuite, Matchers}
 
 class LaneUtilsSpec extends FunSuite with Matchers {
@@ -12,21 +12,22 @@ class LaneUtilsSpec extends FunSuite with Matchers {
 
   test("Return None for link with road addresses outside of scope") {
     val linkLength = 50.214
+    val linkId = 1234567
     val addressesOnLink1 = Set( // At same road part but start after selection ends
-      RoadAddressTEMP(1234567, 1, 1, Track.RightSide, 120, 320, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 120, 320, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink2 = Set( // At same road part but ends before selection starts
-      RoadAddressTEMP(1234567, 1, 1, Track.RightSide, 0, 10, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 0, 10, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink3 = Set( // road part > selection.endRoadPart
-      RoadAddressTEMP(1234567, 1, 2, Track.RightSide, 10, 120, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 2, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink4 = Set( // road part < selection.startRoadPart
-      RoadAddressTEMP(1234567, 1, 1, Track.RightSide, 10, 120, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink5 = Set( // multiple addresses on link and all outside scope
-      RoadAddressTEMP(1234567, 1, 1, Track.RightSide, 120, 220, 0.0, 49.281, Seq(), None, None, None),
-      RoadAddressTEMP(1234567, 1, 1, Track.RightSide, 220, 320, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 120, 220, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None),
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 220, 320, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
 
     val endPoints1 = LaneUtils.calculateStartAndEndPoint(addLaneToAddress1, addressesOnLink1, linkLength)
@@ -46,10 +47,11 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkId = 1234567
     val linkLength = 50.214
     val addressesOnLink1 = Set( // road part == selection.startRoadPart && road part == selection.endRoadPart
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 120, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
+
     )
     val addressesOnLink2 = Set( // road part > selection.startRoadPart && road part < selection.endRoadPart
-      RoadAddressTEMP(linkId, 1, 3, Track.RightSide, 10, 120, 0.0, 49.281, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 3, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
 
     val endPoints1 = LaneUtils.calculateStartAndEndPoint(addLaneToAddress1, addressesOnLink1, linkLength)
@@ -66,10 +68,9 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkId = 1234567
     val linkLength = 50.214
     val addressesOnLink1a = Set( // TowardsDigitizing
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 130, 0.0, 49.281, Seq(), Some(SideCode.TowardsDigitizing), None, None)
-    )
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 130, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None))
     val addressesOnLink1b = Set( // AgainstDigitizing
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 130, 0.0, 49.281, Seq(), Some(SideCode.AgainstDigitizing), None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 130, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     )
 
     val endPoints1a = LaneUtils.calculateStartAndEndPoint(addLaneToAddress1, addressesOnLink1a, linkLength)
@@ -86,10 +87,10 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkId = 1234567
     val linkLength = 50.214
     val addressesOnLink1a = Set( // TowardsDigitizing
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 0, 120, 0.0, 49.281, Seq(), Some(SideCode.TowardsDigitizing), None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 0, 120, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
     )
     val addressesOnLink1b = Set( // AgainstDigitizing
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 0, 120, 0.0, 49.281, Seq(), Some(SideCode.AgainstDigitizing), None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 0, 120, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     )
 
     val endPoints1a = LaneUtils.calculateStartAndEndPoint(addLaneToAddress1, addressesOnLink1a, linkLength)
@@ -106,16 +107,16 @@ class LaneUtilsSpec extends FunSuite with Matchers {
     val linkId = 1234567
     val linkLength = 150.214
     val addressesOnLink1a = Set( // TowardsDigitizing
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 50, 0.0, 49.281, Seq(), Some(SideCode.TowardsDigitizing), None, None),
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 50, 120, 49.281, 182.984, Seq(), Some(SideCode.TowardsDigitizing), None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 50, None, None, linkId, 0.0, 49.281, SideCode.TowardsDigitizing, Seq(), false, None, None, None),
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 50, 120, None, None, linkId, 49.281, 182.984, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
     )
     val addressesOnLink1b = Set( // AgainstDigitizing
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 50, 49.281, 182.984, Seq(), Some(SideCode.AgainstDigitizing), None, None),
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 50, 120, 0.0, 49.281, Seq(), Some(SideCode.AgainstDigitizing), None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 50, None, None, linkId, 49.281, 182.984, SideCode.AgainstDigitizing, Seq(), false, None, None, None),
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 50, 120, None, None, linkId, 0.0, 49.281, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     )
     val addressesOnLink2 = Set( // Road part changes during link
-      RoadAddressTEMP(linkId, 1, 1, Track.RightSide, 10, 50, 0.0, 49.281, Seq(), None, None, None),
-      RoadAddressTEMP(linkId, 1, 2, Track.RightSide, 0, 70, 49.281, 182.984, Seq(), None, None, None)
+      RoadAddressForLink(0, 1, 1, Track.RightSide, 10, 50, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None),
+      RoadAddressForLink(0, 1, 2, Track.RightSide, 0, 70, None, None, linkId, 49.281, 182.984, SideCode.Unknown, Seq(), false, None, None, None)
     )
 
     val endPoints1a = LaneUtils.calculateStartAndEndPoint(addLaneToAddress1, addressesOnLink1a, linkLength)

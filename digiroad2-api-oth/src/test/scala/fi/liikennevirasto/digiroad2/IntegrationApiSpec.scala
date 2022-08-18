@@ -420,7 +420,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
     val trafficSignValuesFromApi = integrationApi.trafficSignsToApi(Seq(trafficSignForApi)).head
     trafficSignValuesFromApi.get("typeOfDamage").get.isInstanceOf[Int] should be(true)
-    trafficSignValuesFromApi.get("oldTrafficCode").get.isInstanceOf[Int] should be(true)
+    trafficSignValuesFromApi.get("oldTrafficCode").get.isInstanceOf[String] should be(true)
     trafficSignValuesFromApi.get("size").get.isInstanceOf[Int] should be(true)
     trafficSignValuesFromApi.get("height").get.isInstanceOf[Int] should be(true)
     trafficSignValuesFromApi.get("lane").get.isInstanceOf[Int] should be(true)
