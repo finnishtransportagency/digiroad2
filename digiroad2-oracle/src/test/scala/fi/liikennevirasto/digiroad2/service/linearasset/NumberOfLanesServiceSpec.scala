@@ -20,9 +20,7 @@ import slick.jdbc.{StaticQuery => Q}
 
 class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
 
-  val timeStamp = new RoadLinkClient("http://localhost:6080").createTimeStamp(-5)
   when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-  when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
   val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f

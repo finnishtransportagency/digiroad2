@@ -333,10 +333,7 @@ class RoadLinkClient(vvhRestApiEndPoint: String) {
       case None => complementaryData.fetchByLinkId(linkId)
     }
   }
-  
-  def createTimeStamp(offsetHours: Int = 5): Long = {
-    LinearAssetUtils.createTimeStamp(offsetHours)
-  }
+
 }
 
 case class LinkOperationError(content: String, statusCode:String, url:String ="") extends Exception(s"Content: ${content}, Status code: ${statusCode}, ${url} ")
@@ -401,8 +398,6 @@ class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSo
   protected val serviceName:String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
   protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
   val filter:Filter = FilterOgc
-
-  def createTimeStamp(offsetHours: Int = 5): Long =  LinearAssetUtils.createTimeStamp(offsetHours)
 
   def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
     queryByMunicipality(municipality)
@@ -625,16 +620,6 @@ trait VVHClientOperations {
       case null => None
       case _ => Some(value.toString.toDouble)
     }
-  }
-
-  /**
-    * Creates a timestamp for new assets and speed limits. Turns clock back to 0:00 on the same day
-    * if less than offsetHours have passed since or 0:00 on previous day if not.
-    *
-    * @param offsetHours Number of hours since midnight to return current day as a timestamp (UNIX time in ms)
-    */
-  def createTimeStamp(offsetHours: Int = 5): Long = {
-    LinearAssetUtils.createTimeStamp(offsetHours)
   }
 
   /**

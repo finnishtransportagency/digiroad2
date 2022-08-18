@@ -397,8 +397,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   ignore("Should apply pavement on whole segment") {
-    val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -506,7 +504,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
       val newAssetList = List(newAsset1.head, newAsset2.head,newAsset3.head)
 
       when(mockRoadLinkService.getVVHRoadLinksF(municipalityCode)).thenReturn(List(newRoadLink1, newRoadLink2, newRoadLink3, newRoadLink4))
-      when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(12222L)
 
       service.expireImportRoadLinksVVHtoOTH(assetTypeId)
       val assetListAfterChanges = ServiceWithDao.dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(assetTypeId, Seq(newLinkId1, newLinkId2, newLinkId3, newLinkId4))
@@ -596,7 +593,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   ignore("Adjust projected asset with creation"){
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {

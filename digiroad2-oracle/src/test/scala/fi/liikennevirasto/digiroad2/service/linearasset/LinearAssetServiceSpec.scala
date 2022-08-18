@@ -577,7 +577,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   ignore("Should extend traffic count on segment") {
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -632,9 +631,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   test("Get Municipality Code By Asset Id") {
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenCallRealMethod()
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -726,7 +723,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   ignore("Adjust projected asset with creation"){
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-    when(mockRoadLinkClient.createTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
