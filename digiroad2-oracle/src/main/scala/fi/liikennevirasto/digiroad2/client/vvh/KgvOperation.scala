@@ -253,7 +253,7 @@ class Extractor extends ExtractorBase {
       linkGeometry,
       extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, extractModifiedAt(startTime,lastEditedDate),
-      extractAttributes(attributes,BigInteger.valueOf(lastEditedDate.get),BigInteger.valueOf(startTime.get))
+      extractAttributes(attributes,BigInteger.valueOf(lastEditedDate.getOrElse(0)),BigInteger.valueOf(startTime.getOrElse(0)))
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
       , extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
