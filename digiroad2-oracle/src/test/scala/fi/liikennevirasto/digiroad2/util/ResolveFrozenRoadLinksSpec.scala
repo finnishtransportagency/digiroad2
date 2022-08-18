@@ -75,22 +75,22 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(415512.94000000041,6989434.0329999998), Point(415349.89199999999,6989472.9849999994), Point(415141.25800000038, 6989503.9090000018)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
-        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Sininentie", "ROADNAME_SE" -> null, "ROADNAME_SM" -> null, "ROADNUMBER" -> "77", "ROADPARTNUMBER" -> "7")),
+        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Sininentie", "ROADNAME_SE" -> null, "ROADNUMBER" -> "77", "ROADPARTNUMBER" -> "7")),
       RoadLink(linkId2, Seq(Point(415512.94000000041, 6989434.0329999998), Point(415707.37399999984, 6989417.0780000016), Point(415976.35800000001, 6989464.9849999994)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
-        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI"-> "Sininentie", "ROADNAME_SE"-> null, "ROADNAME_SM"-> null, "ROADNUMBER"-> "77", "ROADPARTNUMBER" -> "8")),
+        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI"-> "Sininentie", "ROADNAME_SE"-> null, "ROADNUMBER"-> "77", "ROADPARTNUMBER" -> "8")),
       RoadLink(linkId3, Seq(Point(415512.94000000041, 6989434.0329999998), Point(415530.69299999997, 6989518.8949999996)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
-        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Kämärintie", "ROADNAME_SE" -> null, "ROADNAME_SM" -> null, "ROADNUMBER" -> "16934", "ROADPARTNUMBER" -> "1")),
+        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Kämärintie", "ROADNAME_SE" -> null, "ROADNUMBER" -> "16934", "ROADPARTNUMBER" -> "1")),
       RoadLink(linkId4, Seq(Point(415976.35800000001, 6989464.9849999994), Point(416063.48300000001, 6989495.443)), 10
         ,State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
-        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Sininentie", "ROADNAME_SE" -> null, "ROADNAME_SM" -> null, "ROADNUMBER" -> "77", "ROADPARTNUMBER" -> "8")),
+        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Sininentie", "ROADNAME_SE" -> null, "ROADNUMBER" -> "77", "ROADPARTNUMBER" -> "8")),
       RoadLink(linkId5, Seq(Point(415468.00499999989, 6989158.6240000017), Point(415487.87299999967, 6989275.7030000016), Point(415512.94000000041, 6989434.0329999998)), 10
         , State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
-        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Yhteisahontie", "ROADNAME_SE" -> null, "ROADNAME_SM" -> null, "ROADNUMBER" -> "648", "ROADPARTNUMBER" -> "8")),
+        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Yhteisahontie", "ROADNAME_SE" -> null, "ROADNUMBER" -> "648", "ROADPARTNUMBER" -> "8")),
       RoadLink(linkId6, Seq(Point(415464.78699999955,6989139.6889999993), Point(415468.00499999989, 6989158.6240000017)), 10
         , State, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None,
-        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Yhteisahontie", "ROADNAME_SE" -> null, "ROADNAME_SM" -> null, "ROADNUMBER" -> "648", "ROADPARTNUMBER" -> "8")))
+        Map("MUNICIPALITYCODE" -> BigInt(216), "ROADNAME_FI" -> "Yhteisahontie", "ROADNAME_SE" -> null, "ROADNUMBER" -> "648", "ROADPARTNUMBER" -> "8")))
 
     val viiteRoadAddress = Seq(ViiteRoadAddress(21675,77,7,Combined,4082,4461,None,None,
       linkId1,0.0,378.889,AgainstDigitizing,List(),false,None,None,None),

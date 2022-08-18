@@ -62,7 +62,6 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
       .orElse(Try(Right(getStringAttribute("ROADNAME_FI"))))
       .orElse(Try(Right(getStringAttribute("ROADNAME_SE"))))
-      .orElse(Try(Right(getStringAttribute("ROADNAME_SM"))))
       .toOption
   }
 
@@ -86,8 +85,7 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
 
   def roadNameIdentifier: Option[String] = {
     Try(getStringAttribute("ROADNAME_FI"))
-      .orElse(Try(getStringAttribute("ROADNAME_SE")))
-      .orElse(Try(getStringAttribute("ROADNAME_SM"))).toOption
+      .orElse(Try(getStringAttribute("ROADNAME_SE"))).toOption
   }
 
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]
