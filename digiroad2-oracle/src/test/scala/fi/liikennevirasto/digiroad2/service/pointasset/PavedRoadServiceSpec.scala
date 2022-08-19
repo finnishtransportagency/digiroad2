@@ -77,7 +77,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
@@ -94,7 +93,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     }
     service
   }
@@ -470,7 +468,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Expire OTH Assets and create new assets based on VVH RoadLink data") {
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     }
     val assetTypeId = 110
     val municipalityCode = 564
