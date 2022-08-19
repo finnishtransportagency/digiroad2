@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.{Freeway, HazmatTransportProhibition, Municipality, TrafficDirection}
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.DividedNewPart
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService

@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
-import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, LinearAssetUtils}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LinkIdGenerator}
+
 import javax.sql.DataSource
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._

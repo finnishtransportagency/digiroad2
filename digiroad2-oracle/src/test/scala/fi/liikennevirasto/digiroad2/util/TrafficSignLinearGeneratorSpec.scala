@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.{Bus => _, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import org.mockito.Mockito._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -15,12 +14,12 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.asset.HazmatTransportProhibitionClass.{HazmatProhibitionTypeA, HazmatProhibitionTypeB}
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import org.mockito.ArgumentMatchers.any
 
 class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val linearAssetDao = new PostGISLinearAssetDao()
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
 

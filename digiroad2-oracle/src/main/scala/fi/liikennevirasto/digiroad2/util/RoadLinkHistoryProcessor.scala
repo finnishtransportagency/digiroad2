@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.{HistoryRoadLink, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{HistoryRoadLink, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 

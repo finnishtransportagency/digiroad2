@@ -4,7 +4,7 @@ import java.io.InputStream
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.csvDataImporter._
 import fi.liikennevirasto.digiroad2.user.User
 
