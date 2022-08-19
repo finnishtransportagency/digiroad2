@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
-class PostGISMaintenanceDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService) {
+class PostGISMaintenanceDao() {
 
   def fetchPotentialServiceRoads(includeFloating: Boolean = false, includeExpire: Boolean = false ): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else " and a.floating = '0'"

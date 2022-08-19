@@ -28,7 +28,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new PostGISLinearAssetDao()
-  val maintenanceDao = new PostGISMaintenanceDao(mockRoadLinkClient, mockRoadLinkService)
+  val maintenanceDao = new PostGISMaintenanceDao()
   val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
   object Service extends MaintenanceService(mockRoadLinkService, mockEventBus) {
