@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.client
 import com.vividsolutions.jts.geom.GeometryFactory
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.geotools.geometry.jts.GeometryBuilder
 import org.scalatest.{FunSuite, Matchers}

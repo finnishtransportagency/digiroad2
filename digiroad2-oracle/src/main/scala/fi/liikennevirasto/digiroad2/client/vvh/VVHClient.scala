@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.{ClientException, FeatureClass, Filter, LinkOperationError, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.client.vvh.Filter.withMtkClassFilter
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, LogUtils}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.apache.commons.codec.binary.Base64
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -26,33 +26,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
-sealed trait FeatureClass
-object FeatureClass {
-  case object TractorRoad extends FeatureClass
-  case object DrivePath extends FeatureClass
-  case object CycleOrPedestrianPath extends FeatureClass
-  case object WinterRoads extends FeatureClass
-  case object SpecialTransportWithoutGate extends FeatureClass
-  case object SpecialTransportWithGate extends FeatureClass
-  case object CarRoad_IIIa extends FeatureClass
-  case object CarRoad_IIIb extends FeatureClass
-  case object AllOthers extends FeatureClass
-}
-
-sealed trait IRoadLinkFetched extends RoadLinkLike {
-  def featureClass: FeatureClass
-  def modifiedAt: Option[DateTime]
-}
-
-case class RoadLinkFetched(linkId: String, municipalityCode: Int, geometry: Seq[Point],
-                           administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                           featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                           constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends IRoadLinkFetched {
-  def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  def verticalLevel: Option[String] = attributes.get("VERTICALLEVEL").map(_.toString)
-  val timeStamp = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
-}
-
 case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long, changeType: Int,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
                       newEndMeasure: Option[Double], timeStamp: Long = 0L) {
@@ -63,18 +36,6 @@ case class ChangeInfo(oldId: Option[String], newId: Option[String], mmlId: Long,
     isOldId(id) && assettimeStamp < timeStamp
   }
 }
-
-case class HistoryRoadLink(linkId: String, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
-                           trafficDirection: TrafficDirection, featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, createdDate:BigInt = 0, endDate: BigInt = 0, attributes: Map[String, Any] = Map(),kmtkid:String="",version:Int=0,
-                           constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends IRoadLinkFetched {
-  def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", createdDate).asInstanceOf[BigInt].longValue()
-}
-
-case class ChangeKgv( id: Int, oldKmtkId: String, oldVersion: Int, newKmtkId: String,
-                      newVersion: Int, `type`: String, ruleId: String, cTime: DateTime,
-                      mFromOld: String, mToOld: Int, mFromNew: Int, mToNew: Int,
-                      taskId: String)
 
 /**
   * Numerical values for change types from VVH ChangeInfo Api
@@ -186,40 +147,6 @@ object ChangeType {
   }
 }
 
-trait Filter {
-  def withFilter[T](attributeName: String, ids: Set[T]): String = ???
-
-  def withMunicipalityFilter(municipalities: Set[Int]): String = ???
-
-  def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = ???
-
-  def combineFiltersWithAnd(filter1: String, filter2: String): String = ???
-
-  def combineFiltersWithAnd(filter1: String, filter2: Option[String]): String = ???
-
-  def withOldkmtkidFilter(linkIds: Set[String]): String = ???
-  /**
-    *
-    * @param polygon to be converted to string
-    * @return string compatible with VVH polygon query
-    */
-  def stringifyPolygonGeometry(polygon: Polygon): String = ???
-
-  // Query filters methods
-  def withLinkIdFilter[T](linkIds: Set[T]): String = ???
-
-  def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = ???
-
-  def withMmlIdFilter(mmlIds: Set[Long]): String = ???
-
-  def withMtkClassFilter(ids: Set[Long]): String = ???
-
-  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = ???
-
-  def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = ???
-
-}
-
 object Filter extends Filter {
 
   def anyToDouble(number: Any): Option[Double] = number match {
@@ -320,52 +247,6 @@ object Filter extends Filter {
   }
 }
 
-class RoadLinkClient(vvhRestApiEndPoint: String) {
-  lazy val roadLinkData: OldVVHRoadLinkClient = new OldVVHRoadLinkClient(vvhRestApiEndPoint)
-  lazy val frozenTimeRoadLinkData: VVHFrozenTimeRoadLinkClientServicePoint = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
-  lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
-  lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
-  lazy val historyData: RoadLinkHistoryClient = new RoadLinkHistoryClient()
-
-  def fetchRoadLinkByLinkId(linkId: String): Option[RoadLinkFetched] = {
-    roadLinkData.fetchByLinkId(linkId) match {
-      case Some(vvhRoadLink) => Some(vvhRoadLink)
-      case None => complementaryData.fetchByLinkId(linkId)
-    }
-  }
-
-}
-
-case class LinkOperationError(content: String, statusCode:String, url:String ="") extends Exception(s"Content: ${content}, Status code: ${statusCode}, ${url} ")
-class ClientException(response: String) extends RuntimeException(response)
-
-trait LinkOperationsAbstract {
-  type LinkType
-  type Content
-  protected val linkGeomSource: LinkGeomSource
-  protected def restApiEndPoint: String
-  protected def serviceName: String
-  
-  protected implicit val jsonFormats: Formats = DefaultFormats
-
-  lazy val logger = LoggerFactory.getLogger(getClass)
-
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
-                                               filter: Option[String]): Seq[LinkType] = ???
-
-  protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = ???
-
-  protected def queryByPolygons(polygon: Polygon): Seq[LinkType] = ???
-
-  protected def queryLinksIdByPolygons(polygon: Polygon): Seq[String] = ???
-
-  protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = ???
-  protected def queryByIds[LinkType](idSet: Set[String],filter:(Set[String])=>String): Seq[LinkType] = ???
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities, None)
-  }
-}
-
 class VVHAuthPropertyReader {
   private def getUsername: String = {
     val loadedKeyString = Digiroad2Properties.vvhRestUsername
@@ -384,77 +265,6 @@ class VVHAuthPropertyReader {
   def getAuthInBase64: String = {
     Base64.encodeBase64String((getUsername + ":" + getPassword).getBytes)
   }
-}
-
-
-class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvRoadLinkClientBase {
-  override type LinkType = RoadLinkFetched
-}
-
-class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSourceValue:Option[LinkGeomSource] = None, extractor:ExtractorBase = new Extractor) extends KgvOperation(extractor) {
-
-  override type LinkType
-  override def restApiEndPoint: String = Digiroad2Properties.kgvEndpoint
-  protected val serviceName:String = collection.getOrElse(throw new ClientException("Collection is not defined") ).value
-  protected val linkGeomSource: LinkGeomSource = linkGeomSourceValue.getOrElse(throw new ClientException("LinkGeomSource is not defined") )
-  val filter:Filter = FilterOgc
-
-  def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
-    queryByMunicipality(municipality)
-  }
-
-  def fetchByMunicipalityF(municipality: Int): Future[Seq[LinkType]] = {
-    Future(queryByMunicipality(municipality))
-  }
-  
-  def fetchByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
-    queryByMunicipalitiesAndBounds(bounds, municipalities)
-  }
-
-  def fetchByBounds(bounds: BoundingRectangle): Seq[LinkType] = {
-    queryByMunicipalitiesAndBounds(bounds, Set[Int]())
-  }
-  
-  def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[LinkType]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities))
-  }
-  
-  def fetchByLinkId(linkId: String): Option[LinkType] = fetchByLinkIds(Set(linkId)).headOption
-  
-  def fetchByLinkIds(linkIds: Set[String]): Seq[LinkType] = {
-    queryByLinkIds[LinkType](linkIds)
-  }
-
-  def fetchByLinkIdsF(linkIds: Set[String]) = Future(fetchByLinkIds(linkIds))
-  
-  def fetchVVHRoadlinks[LinkType](linkIds: Set[String]): Seq[LinkType] =
-    queryByLinkIds[LinkType](linkIds)
-  
-  def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
-    queryByLastEditedDate(lowerDate,higherDate)
-  }
-
-  def fetchByDatetime(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
-    queryByDatetimeAndFilter(lowerDate,higherDate)
-  }
-
-  def fetchByPolygonF(polygon : Polygon): Future[Seq[LinkType]] = {
-    Future(queryByPolygons(polygon))
-  }
-
-  def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[String]] = {
-    Future(queryLinksIdByPolygons(polygon))
-  }
-  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[LinkType]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(filter.withMtkClassFilter(Set(12314)))))
-  }
-
-  def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[LinkType]] =
-    Future(queryByMunicipality(municipality, Some(filter.withMtkClassFilter(Set(12314)))))
-
-  def fetchByMmlIds(toSet: Set[Long]): Seq[LinkType] = queryByFilter(Some(filter.withMmlIdFilter(toSet)))
-
-  def fetchByMmlId(mmlId: Long) : Option[LinkType]= fetchByMmlIds(Set(mmlId)).headOption
 }
 
 trait VVHClientOperations {
@@ -1202,89 +1012,5 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkC
     } finally {
       response.close()
     }
-  }
-}
-
-
-class ExtractHistory extends ExtractorBase {
-  
-  override type LinkType = HistoryRoadLink
-  
-  override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
-    val attributes = feature.properties
-    val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
-    val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
-    val linkGeometry: Seq[Point] = path.map(point => {
-      Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
-    })
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> anyToDouble(point(0)).get, "y" -> anyToDouble(point(1)).get, "z" -> anyToDouble(point(2)).get, "m" -> anyToDouble(point(3)).get)))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> (s"LINESTRING ZM (${path.map(point => anyToDouble(point(0)).get + " " + anyToDouble(point(1)).get + " " + anyToDouble(point(2)).get + " " + anyToDouble(point(3)).get).mkString(", ")})"))
-    
-    val linkId = attributes("id").asInstanceOf[String]
-    val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
-    val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
-    
-    val kmtkId = linkId.split(":")(0)
-    val version = linkId.split(":")(1).toInt
-    
-    HistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), roadClass, createdDate = startTime.get,
-      attributes = extractAttributes(attributes,lastEditedDate.get,startTime.get)
-        ++ linkGeometryForApi ++ linkGeometryWKTForApi, kmtkid = kmtkId, version = version)
-  }
-}
-class ExtractKgvChange extends ExtractorBase {
-  override type LinkType = ChangeKgv
-  
-  override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
-    val attributes = feature.properties
-
-    ChangeKgv(
-      attributes("id").toString.toInt,
-      attributes("oldkmtkid").toString,
-      attributes("oldversion").toString.toInt,
-      attributes("newkmtkid").toString,
-      attributes("newversion").toString.toInt,
-      attributes("type").toString,
-      attributes("ruleid").toString,
-      new DateTime(attributes("ctime").asInstanceOf[String]),
-      attributes("mfromold").toString,
-      attributes("mtoold").toString.toInt,
-      attributes("mfromnew").toString.toInt,
-      attributes("mtonew").toString.toInt,
-      attributes("taskid").toString)
-  }
-}
-class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersios, linkGeomSource:LinkGeomSource=LinkGeomSource.HistoryLinkInterface)
-  extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractHistory) {
-  
-  override type LinkType = HistoryRoadLink
-  
-  private def enrichWithChangeInfo(response: Seq[HistoryRoadLink]): Seq[HistoryRoadLink] = {
-    val changesLinkInfo = new RoadLinkChangeKGvClient().fetchByOldKmtkId(response.map(_.kmtkid).toSet)
-    response.map(r => {
-      val newId = Try {
-        val link = changesLinkInfo.find(f => r.kmtkid == f.oldKmtkId && r.version == f.oldVersion).get
-        s"${link.oldKmtkId}:${link.oldVersion}"
-      }.getOrElse(None)
-      r.copy(attributes = r.attributes ++ Map("LINKID_NEW" -> newId))
-    })
-  }
-
-  override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[LinkType] = {
-    val response = queryByMunicipalitiesAndBounds(bounds, municipalities, None)
-    enrichWithChangeInfo(response)
-  }
-  
-}
-
-class RoadLinkChangeKGvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
-  extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractKgvChange) {
-  
-  override type LinkType = ChangeKgv
-  
-  def fetchByOldKmtkId(ids: Set[String]): Seq[LinkType] = {
-    queryByIds(ids,filter.withOldkmtkidFilter).asInstanceOf[Seq[LinkType]]
   }
 }
