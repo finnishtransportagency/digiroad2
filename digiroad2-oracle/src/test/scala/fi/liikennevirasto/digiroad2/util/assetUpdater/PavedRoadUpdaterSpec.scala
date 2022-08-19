@@ -18,14 +18,12 @@ import org.scalatest.{FunSuite, Matchers}
 class PavedRoadUpdaterSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockRoadLinkData = MockitoSugar.mock[OldVVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao()
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockRoadLinkData)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 

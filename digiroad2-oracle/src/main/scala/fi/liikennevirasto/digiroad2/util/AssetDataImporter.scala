@@ -654,7 +654,7 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
-    val dao = new PostGISLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao()
 
     withDynTransaction {
       val linearAssetLinks = sql"""

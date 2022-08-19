@@ -91,7 +91,7 @@ trait TrafficSignLinearGenerator {
     new TrafficSignService(roadLinkService, eventbus)
   }
 
-  lazy val postGisLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkService.roadLinkClient, roadLinkService)
+  lazy val postGisLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   lazy val dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
   def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Value]

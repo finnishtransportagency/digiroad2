@@ -299,7 +299,7 @@ object Digiroad2Context {
   }
 
   lazy val linearAssetDao: PostGISLinearAssetDao = {
-    new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
+    new PostGISLinearAssetDao()
   }
 
   lazy val roadLinkService: RoadLinkService = {

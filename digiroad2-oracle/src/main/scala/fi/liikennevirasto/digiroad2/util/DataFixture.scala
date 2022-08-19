@@ -121,7 +121,7 @@ object DataFixture {
   }
 
   lazy val postGISLinearAssetDao : PostGISLinearAssetDao = {
-    new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
+    new PostGISLinearAssetDao()
   }
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
@@ -632,7 +632,7 @@ object DataFixture {
   }
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
-    val dao = new PostGISLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
@@ -738,7 +738,7 @@ object DataFixture {
     println("\nFill Road Width in missing and incomplete road links")
     println(DateTime.now())
 
-    val dao = new PostGISLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {

@@ -29,7 +29,7 @@ case class AssetLastModification(id: Long, linkId: String, modifiedBy: Option[St
 case class AssetLink(id: Long, linkId: String)
 
 
-class PostGISLinearAssetDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService ) {
+class PostGISLinearAssetDao() {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
