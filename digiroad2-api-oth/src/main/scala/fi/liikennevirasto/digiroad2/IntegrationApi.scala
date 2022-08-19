@@ -801,7 +801,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
 
-    def showOldTrafficCode(trafficSign: PersistedTrafficSign): String = {
+    def showOldTrafficCode(trafficSign: PersistedTrafficSign): Option[Int] = {
       val oldTrafficCodeProperty = trafficSignService.getProperty(trafficSign, "old_traffic_code")
       val trafficSignTypeProperty = trafficSignService.getProperty(trafficSign, "trafficSigns_type")
 
@@ -810,8 +810,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           if (oldCodeProp.propertyValue == "1" ||  createdAt.isBefore(trafficSignService.newTrafficCodeStartDate)){
             TrafficSignType.applyOTHValue(signTypeProp.propertyValue.toInt).OldLawCode
           }
-          else ""
-        case _ => ""
+          else None
+        case _ => None
       }
 
 
