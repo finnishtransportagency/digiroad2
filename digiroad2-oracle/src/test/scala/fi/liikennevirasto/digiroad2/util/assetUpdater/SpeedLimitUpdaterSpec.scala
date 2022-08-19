@@ -25,7 +25,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
   val service = new SpeedLimitService(mockEventBus, mockRoadLinkClient, mockRoadLinkService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  object TestSpeedLimitUpdater extends SpeedLimitUpdater(mockEventBus, mockRoadLinkClient, mockRoadLinkService, service) {
+  object TestSpeedLimitUpdater extends SpeedLimitUpdater(mockEventBus, mockRoadLinkService, service) {
     override val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkService)
   }
 

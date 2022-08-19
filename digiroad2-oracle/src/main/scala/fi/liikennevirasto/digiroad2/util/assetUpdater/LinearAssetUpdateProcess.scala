@@ -60,7 +60,7 @@ object LinearAssetUpdateProcess {
   lazy val prohibitionUpdater = new ProhibitionUpdater(prohibitionService)
   lazy val hazMatTransportProhibitionUpdater = new HazMatTransportProhibitionUpdater(hazMatTransportProhibitionService)
   lazy val roadWidthUpdater = new RoadWidthUpdater(roadWidthService)
-  lazy val speedLimitUpdater = new SpeedLimitUpdater(eventbus, roadLinkClient, roadLinkService, speedLimitService)
+  lazy val speedLimitUpdater = new SpeedLimitUpdater(eventbus, roadLinkService, speedLimitService)
 
   def main(args: Array[String]): Unit = {
     val batchMode = Digiroad2Properties.batchMode
