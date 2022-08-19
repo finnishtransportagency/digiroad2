@@ -73,17 +73,17 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new PostGISSpeedLimitDao(mockRoadLinkClient, mockRoadLinkService)
+    new PostGISSpeedLimitDao(mockRoadLinkService)
   }
 
 
-  private def truncateLinkGeometry(linkId: String, startMeasure: Double, endMeasure: Double, roadLinkClient: RoadLinkClient): Seq[Point] = {
+  private def truncateLinkGeometry(linkId: String, startMeasure: Double, endMeasure: Double): Seq[Point] = {
     val geometry = mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(linkId).get.geometry
     GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
   }
 
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: String, startMeasure: Double, endMeasure: Double, dao: PostGISSpeedLimitDao) = {
-    val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure, dao.roadLinkClient).toList)
+    val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure).toList)
     val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromVVH(speedLimitId).find { link => link._1 == linkId }.get._3)
     expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
     expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)

@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-class PostGISSpeedLimitDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService) {
+class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
   def MassQueryThreshold = 500
   case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
 

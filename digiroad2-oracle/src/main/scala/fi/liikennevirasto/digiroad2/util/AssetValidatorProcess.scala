@@ -88,7 +88,7 @@ object AssetValidatorProcess {
   def verifyInaccurateSpeedLimits(): Unit = {
     println("Start inaccurate SpeedLimit verification\n")
     println(DateTime.now())
-    val dao = new PostGISSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null)
 
     //Expire all inaccuratedAssets
     PostGISDatabase.withDynTransaction {

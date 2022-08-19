@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
 
 class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClient, roadLinkService: RoadLinkService) {
-  val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(roadLinkClient, roadLinkService)
+  val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(roadLinkService)
   val inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
   val assetDao: PostGISAssetDao = new PostGISAssetDao()
   val logger = LoggerFactory.getLogger(getClass)

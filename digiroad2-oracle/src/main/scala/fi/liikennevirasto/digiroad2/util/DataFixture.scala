@@ -149,7 +149,7 @@ object DataFixture {
   }
 
   lazy val speedLimitDao: PostGISSpeedLimitDao = {
-    new PostGISSpeedLimitDao(null, null)
+    new PostGISSpeedLimitDao(null)
   }
 
   lazy val verificationService: VerificationService = {

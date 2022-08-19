@@ -624,7 +624,7 @@ class AssetDataImporter {
   }
 
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
-    val dao = new PostGISSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null)
 
     withDynTransaction {
       val speedLimitLinks = sql"""
