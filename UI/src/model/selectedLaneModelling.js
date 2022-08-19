@@ -124,7 +124,7 @@
           lane.linkIds = _.map(linearAssets, function (linearAsset) {
             return linearAsset.linkId;
           });
-          lane.selectedLinks = linearAssets;
+          lane.selectedLinks = _.uniq(linearAssets);
         });
         var lanesWithSplitMarkers = giveSplitMarkers(asset);
         self.selection = lanesWithSplitMarkers;
