@@ -16,7 +16,7 @@ import slick.jdbc.{StaticQuery => Q}
 case class PersistedManoeuvreRow(id: Long, linkId: String, destLinkId: String, elementType: Int, modifiedDate: Option[DateTime],
                                  modifiedBy: Option[String], additionalInfo: String, createdDate: DateTime, createdBy: String, isSuggested: Boolean)
 
-class ManoeuvreDao(val roadLinkClient: RoadLinkClient) {
+class ManoeuvreDao() {
 
   def find(id: Long): Option[Manoeuvre] = {
     val manoeuvresById = Map(id -> fetchManoeuvreById(id))
