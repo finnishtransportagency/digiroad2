@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
@@ -23,9 +23,8 @@ case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], chang
 
 class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, roadAddressServiceImpl: RoadAddressService) extends LaneOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
-  override def dao: LaneDao = new LaneDao(roadLinkServiceImpl.roadLinkClient, roadLinkServiceImpl)
-  override def historyDao: LaneHistoryDao = new LaneHistoryDao(roadLinkServiceImpl.roadLinkClient, roadLinkServiceImpl)
+  override def dao: LaneDao = new LaneDao()
+  override def historyDao: LaneHistoryDao = new LaneHistoryDao()
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
@@ -39,7 +38,6 @@ trait LaneOperations {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
-  def roadLinkClient: RoadLinkClient
   def dao: LaneDao
   def historyDao: LaneHistoryDao
   def municipalityDao: MunicipalityDao

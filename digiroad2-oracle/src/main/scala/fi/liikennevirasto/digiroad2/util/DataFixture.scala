@@ -74,7 +74,7 @@ object DataFixture {
   }
 
   lazy val speedLimitService: SpeedLimitService = {
-    new SpeedLimitService(new DummyEventBus, roadLinkClient, roadLinkService)
+    new SpeedLimitService(new DummyEventBus, roadLinkService)
   }
 
   lazy val manoeuvreService: ManoeuvreService = {

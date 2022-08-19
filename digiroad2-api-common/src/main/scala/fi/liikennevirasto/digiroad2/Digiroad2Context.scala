@@ -275,7 +275,7 @@ object Digiroad2Context {
   }
 
   lazy val speedLimitService: SpeedLimitService = {
-    new SpeedLimitService(eventbus, roadLinkClient, roadLinkService)
+    new SpeedLimitService(eventbus, roadLinkService)
   }
 
   lazy val userProvider: UserProvider = {

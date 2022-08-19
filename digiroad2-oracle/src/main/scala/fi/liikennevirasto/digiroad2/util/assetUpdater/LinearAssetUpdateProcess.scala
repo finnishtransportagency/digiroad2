@@ -23,7 +23,7 @@ object LinearAssetUpdateProcess {
   lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val hazMatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
   lazy val roadWidthService = new RoadWidthService(roadLinkService, eventbus)
-  lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkClient, roadLinkService)
+  lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkService)
 
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {

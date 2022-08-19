@@ -22,7 +22,6 @@ import slick.jdbc.StaticQuery.interpolation
 class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
@@ -89,7 +88,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val assetLock = "Used to prevent deadlocks"
 
   private def createService() = {
-    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
@@ -126,7 +124,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Should not create new paved road assets and return the existing paved road assets when VVH doesn't have change information") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
+  
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -588,8 +586,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   ignore("Adjust projected asset with creation"){
-    val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {

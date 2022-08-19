@@ -20,7 +20,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val linearAssetDao = new PostGISLinearAssetDao()
-  val service = new SpeedLimitService(mockEventBus, mockRoadLinkClient, mockRoadLinkService)
+  val service = new SpeedLimitService(mockEventBus, mockRoadLinkService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   object TestSpeedLimitUpdater extends SpeedLimitUpdater(mockEventBus, mockRoadLinkService, service) {

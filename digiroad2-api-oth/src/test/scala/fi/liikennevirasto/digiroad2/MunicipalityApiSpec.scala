@@ -43,7 +43,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val obstacleService = new ObstacleService(mockRoadLinkService)
-  val speedLimitService = new SpeedLimitService(new DummyEventBus, mockRoadLinkClient, mockRoadLinkService)
+  val speedLimitService = new SpeedLimitService(new DummyEventBus, mockRoadLinkService)
   val pavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
 
   protected implicit val jsonFormats: Formats = DefaultFormats

@@ -24,7 +24,6 @@ import slick.jdbc.StaticQuery.interpolation
 class LinearAssetSpecSupport extends FunSuite with Matchers {
 
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools: PolygonTools = MockitoSugar.mock[PolygonTools]
 
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
@@ -574,7 +573,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
   ignore("Should extend traffic count on segment") {
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -720,7 +718,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
   ignore("Adjust projected asset with creation"){
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
