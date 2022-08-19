@@ -23,7 +23,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val RoadWidthAssetTypeId = 120
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]

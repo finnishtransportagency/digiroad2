@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, RoadLink}
@@ -19,7 +19,6 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockLinearAssetDao = new PostGISLinearAssetDao()
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]

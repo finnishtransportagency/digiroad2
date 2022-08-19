@@ -19,7 +19,6 @@ import org.scalatest.{FunSuite, Matchers}
 
 class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())

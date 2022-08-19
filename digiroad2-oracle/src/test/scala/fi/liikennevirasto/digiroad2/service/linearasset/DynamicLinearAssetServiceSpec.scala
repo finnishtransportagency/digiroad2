@@ -22,7 +22,6 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 class DynamicLinearTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val (linkId1, linkId2, linkId3, linkId4) =
     (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())

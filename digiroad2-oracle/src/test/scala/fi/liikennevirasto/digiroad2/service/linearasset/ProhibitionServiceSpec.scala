@@ -25,7 +25,6 @@ import slick.jdbc.StaticQuery.interpolation
 
 class ProhibitionServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 

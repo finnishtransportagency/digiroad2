@@ -19,7 +19,6 @@ import slick.jdbc.{StaticQuery => Q}
 
 class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   private val (linkId, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   

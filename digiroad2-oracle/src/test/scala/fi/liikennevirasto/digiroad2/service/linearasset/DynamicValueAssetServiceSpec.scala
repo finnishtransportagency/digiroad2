@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -12,7 +11,6 @@ import org.scalatest.mockito.MockitoSugar
 
 class DynamicValueAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
