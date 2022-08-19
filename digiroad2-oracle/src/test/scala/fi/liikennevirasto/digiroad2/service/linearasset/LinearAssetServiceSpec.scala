@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LinkIdGenerator, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -26,7 +26,7 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools: PolygonTools = MockitoSugar.mock[PolygonTools]
-  
+
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
 
   when(mockRoadLinkService.fetchByLinkId(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -323,9 +323,9 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       linearAsset3.head.startMeasure should be (0)
       linearAsset3.head.endMeasure should be (5)
 
-      linearAsset1.forall(a => a.vvhTimeStamp > 0L) should be (true)
-      linearAsset2.forall(a => a.vvhTimeStamp > 0L) should be (true)
-      linearAsset3.forall(a => a.vvhTimeStamp > 0L) should be (true)
+      linearAsset1.forall(a => a.timeStamp > 0L) should be (true)
+      linearAsset2.forall(a => a.timeStamp > 0L) should be (true)
+      linearAsset3.forall(a => a.timeStamp > 0L) should be (true)
       dynamicSession.rollback()
     }
   }
@@ -572,21 +572,11 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
   case class TestAssetInfo(newLinearAsset: NewLinearAsset, typeId: Int)
 
-  test("pseudo vvh timestamp is correctly created") {
-    val hours = DateTime.now().getHourOfDay
-    val yesterday = RoadLinkClient.createVVHTimeStamp(hours + 1)
-    val today = RoadLinkClient.createVVHTimeStamp(hours)
 
-    (today % 24*60*60*1000L) should be (0L)
-    (yesterday % 24*60*60*1000L) should be (0L)
-    today should be > yesterday
-    (yesterday + 24*60*60*1000L) should be (today)
-  }
 
   ignore("Should extend traffic count on segment") {
-    val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
+    val timeStamp = LinearAssetUtils.createTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -631,7 +621,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
       val assets = service.getPersistedAssetsByIds(assetTypeId, Set(asset, id.head))
       assets should have size 2
-      assets.forall(_.vvhTimeStamp > 0L) should be (true)
+      assets.forall(_.timeStamp > 0L) should be (true)
 
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       after should have size 1
@@ -641,9 +631,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   test("Get Municipality Code By Asset Id") {
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenCallRealMethod()
-    val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    val timeStamp = LinearAssetUtils.createTimeStamp(-5)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -733,9 +721,8 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
   }
 
   ignore("Adjust projected asset with creation"){
-    val timeStamp = RoadLinkClient.createVVHTimeStamp(-5)
+    val timeStamp = LinearAssetUtils.createTimeStamp(-5)
     when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
-    when(mockRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {

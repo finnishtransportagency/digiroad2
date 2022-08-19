@@ -8,8 +8,8 @@ import java.util.UUID
 import scala.util.Random
 
 class LinearAssetPartitionerSpec extends FunSuite with Matchers {
-  case class TestLinearAsset(id: Long, linkId: String, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point], vvhTimeStamp: Long = 0, geomModifiedDate: Option[DateTime] = None) extends LinearAsset
-  case class TestProhibitionAsset(id: Long, linkId: String, sideCode: SideCode, value: Option[Prohibitions], geometry: Seq[Point], vvhTimeStamp: Long = 0, geomModifiedDate: Option[DateTime] = None) extends LinearAsset
+  case class TestLinearAsset(id: Long, linkId: String, sideCode: SideCode, value: Option[NumericValue], geometry: Seq[Point], timeStamp: Long = 0, geomModifiedDate: Option[DateTime] = None) extends LinearAsset
+  case class TestProhibitionAsset(id: Long, linkId: String, sideCode: SideCode, value: Option[Prohibitions], geometry: Seq[Point], timeStamp: Long = 0, geomModifiedDate: Option[DateTime] = None) extends LinearAsset
 
   private def generateRandomLinkId(): String = s"${UUID.randomUUID()}:${Random.nextInt(100)}"
   val linkId1: String = generateRandomLinkId()

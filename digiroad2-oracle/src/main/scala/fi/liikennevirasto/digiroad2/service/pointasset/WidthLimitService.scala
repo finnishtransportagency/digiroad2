@@ -34,7 +34,7 @@ case class IncomingWidthLimit(lon: Double, lat: Double, linkId: String, limit: D
 case class WidthLimit(id: Long, linkId: String,
                       lon: Double, lat: Double,
                       mValue: Double, floating: Boolean,
-                      vvhTimeStamp: Long,
+                      timeStamp: Long,
                       municipalityCode: Int,
                       createdBy: Option[String] = None,
                       createdAt: Option[DateTime] = None,

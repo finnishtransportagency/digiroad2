@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.SideCodeAdjustment
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, LinearAssetTypes, Measures}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends LinearAssetUpdater(service) {
 
@@ -26,7 +27,7 @@ class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends Line
       val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
 
       val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-        Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, service.getLinkSource(roadLink), informationSource = Some(MmlNls.value))
+        Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.timeStamp, service.getLinkSource(roadLink), informationSource = Some(MmlNls.value))
       linearAsset.value match {
         case Some(DynamicValue(multiTypeProps)) =>
           val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
@@ -77,7 +78,7 @@ class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends Line
       .getOrElse(throw new IllegalStateException("Road link " + oldAsset.linkId + " no longer available"))
     service.expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
     service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure),
-      LinearAssetTypes.VvhGenerated, roadLinkClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
+      LinearAssetTypes.VvhGenerated, LinearAssetUtils.createTimeStamp(), Some(roadLink))
   }
 
 }

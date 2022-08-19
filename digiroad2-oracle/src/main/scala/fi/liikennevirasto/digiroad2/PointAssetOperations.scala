@@ -63,7 +63,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val linkId: String
   val mValue: Double
   val floating: Boolean
-  val vvhTimeStamp: Long
+  val timeStamp: Long
   val linkSource: LinkGeomSource
   val propertyData: Seq[Property]
 }
@@ -76,7 +76,7 @@ trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
   val linkId: String
   val mValue: Double
   val floating: Boolean
-  val vvhTimeStamp: Long
+  val timeStamp: Long
   val createdBy: Option[String]
   val createdAt: Option[DateTime]
   val modifiedBy: Option[String]

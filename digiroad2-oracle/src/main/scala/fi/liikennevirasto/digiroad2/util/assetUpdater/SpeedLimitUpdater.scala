@@ -79,7 +79,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
       logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
 
     changeSet.adjustedVVHChanges.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
+      dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.timeStamp, LinearAssetTypes.VvhGenerated)
     }
 
     //NOTE the order between expire and sideCode adjustment cant be changed
@@ -100,7 +100,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     val (newlimits, changedlimits) = limits.partition(_.id <= 0)
     newlimits.foreach { limit =>
       dao.createSpeedLimit(limit.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), limit.linkId, Measures(limit.startMeasure, limit.endMeasure),
-        limit.sideCode, SpeedLimitValue(limit.value.get.value, limit.value.get.isSuggested), Some(limit.vvhTimeStamp), limit.createdDateTime, limit.modifiedBy,
+        limit.sideCode, SpeedLimitValue(limit.value.get.value, limit.value.get.isSuggested), Some(limit.timeStamp), limit.createdDateTime, limit.modifiedBy,
         limit.modifiedDateTime, limit.linkSource)
     }
     purgeUnknown(limits.map(_.linkId).toSet, Seq())
@@ -188,21 +188,21 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
     }
   }
 
-  private def testNoSpeedLimitExists(speedLimits: Seq[SpeedLimit], linkId: String, mStart: Double, mEnd: Double, vvhTimeStamp: Long) = {
+  private def testNoSpeedLimitExists(speedLimits: Seq[SpeedLimit], linkId: String, mStart: Double, mEnd: Double, timeStamp: Long) = {
     !speedLimits.exists(l => l.linkId == linkId && GeometryUtils.overlaps((l.startMeasure,l.endMeasure),(mStart,mEnd)))
   }
 
-  private def testSpeedLimitOutdated(speedLimits: Seq[SpeedLimit], linkId: String, mStart: Double, mEnd: Double, vvhTimeStamp: Long) = {
+  private def testSpeedLimitOutdated(speedLimits: Seq[SpeedLimit], linkId: String, mStart: Double, mEnd: Double, timeStamp: Long) = {
     val targetLimits = speedLimits.filter(l => l.linkId == linkId)
-    targetLimits.nonEmpty && !targetLimits.exists(l => l.vvhTimeStamp >= vvhTimeStamp)
+    targetLimits.nonEmpty && !targetLimits.exists(l => l.timeStamp >= timeStamp)
   }
 
   private def projectSpeedLimitConditionally(change: ChangeInfo, limits: Seq[SpeedLimit], condition: (Seq[SpeedLimit], String, Double, Double, Long) => Boolean) = {
-    (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
+    (change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.timeStamp) match {
       case (Some(newId), Some(oldStart:Double), Some(oldEnd:Double),
-      Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        condition(limits, newId, newStart, newEnd, vvhTimeStamp) match {
-          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
+      Some(newStart:Double), Some(newEnd:Double), timeStamp) =>
+        condition(limits, newId, newStart, newEnd, timeStamp) match {
+          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, timeStamp))
           case false => None
         }
       case _ => None
@@ -257,7 +257,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
   }
 
   def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
-    existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.vvhTimeStamp)}
+    existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.timeStamp)}
       .flatMap { asset =>
         val roadLink = roadLinks.find(_.linkId == asset.linkId)
         if (roadLink.nonEmpty && roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {

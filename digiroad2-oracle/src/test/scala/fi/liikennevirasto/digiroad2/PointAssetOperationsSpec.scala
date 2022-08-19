@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
-  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String, mValue: Double, floating: Boolean, vvhTimeStamp: Long, linkSource: LinkGeomSource, propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
+  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String, mValue: Double, floating: Boolean, timeStamp: Long, linkSource: LinkGeomSource, propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
 
   test ("Calculate bearing for point: horizontal") {
     val bearing = calculateBearing(Point(0,0,0), Seq(Point(1,-1,0), Point(1,1,0)))
@@ -159,7 +159,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Auto Correct Floating Point that has been Divided and with Asset filtering by vvhTimeStamp") {
+  test("Auto Correct Floating Point that has been Divided and with Asset filtering by timeStamp") {
     val cmpLinkId = LinkIdGenerator.generateRandom()
     val crpLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235
@@ -238,7 +238,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and filtered by vvhTimeStamp") {
+  test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and filtered by timeStamp") {
     val cmpLinkId = LinkIdGenerator.generateRandom()
     val crpLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235

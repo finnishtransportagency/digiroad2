@@ -1239,7 +1239,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   def createFakeNewLinearAssetsForValidations(existingAssets: Seq[PersistedLinearAsset], inputValues: Option[Value]): Seq[NewLinearAsset] = {
     inputValues match {
       case Some(values) => existingAssets.map(existingAsset => NewLinearAsset(existingAsset.linkId, existingAsset.startMeasure,
-        existingAsset.endMeasure, values, existingAsset.sideCode, existingAsset.vvhTimeStamp, existingAsset.geomModifiedDate))
+        existingAsset.endMeasure, values, existingAsset.sideCode, existingAsset.timeStamp, existingAsset.geomModifiedDate))
       case _ => Seq()
     }
   }

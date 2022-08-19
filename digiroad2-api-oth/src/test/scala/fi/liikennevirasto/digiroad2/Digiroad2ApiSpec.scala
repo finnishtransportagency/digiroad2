@@ -25,7 +25,7 @@ import org.scalatest.{BeforeAndAfter, Tag}
 import scala.concurrent.Promise
 
 case class LinearAssetFromApi(id: Option[Long], linkId: String, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
-case class DirectionalTrafficSignFromApi(id: Long, linkId: String, lon: Double, lat: Double, mValue: Double, floating: Boolean, vvhTimeStamp: Long, municipalityCode: Int,
+case class DirectionalTrafficSignFromApi(id: Long, linkId: String, lon: Double, lat: Double, mValue: Double, floating: Boolean, timeStamp: Long, municipalityCode: Int,
                                          validityDirection: Int, text: Option[String], bearing: Option[Int], createdBy: Option[String] = None, createdAt: Option[DateTime] = None,
                                          modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, geometry: Seq[Point] = Nil)
 case class MassLinearAssetFromApi(geometry: Seq[Point], sideCode: Int, value: Option[Value], administrativeClass: Int)

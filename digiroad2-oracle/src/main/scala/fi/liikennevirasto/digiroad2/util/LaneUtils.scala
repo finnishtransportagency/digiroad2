@@ -51,7 +51,7 @@ object LaneUtils {
 
 
       val allLanesToCreate = linksWithAddresses.flatMap { link =>
-        val vvhTimeStamp = roadLinkClient.createVVHTimeStamp()
+        val timeStamp = LinearAssetUtils.createTimeStamp()
 
         lanesToInsert.flatMap { lane =>
           val laneCode = laneService.getLaneCode(lane).toInt
@@ -66,7 +66,7 @@ object LaneUtils {
             case Some(endPoints) =>
               Some(PersistedLane(0, link.linkId, finalSideCode.value, laneCodeOneDigit, link.link.municipalityCode,
                 endPoints.start, endPoints.end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
-                vvhTimeStamp, None, lane.properties))
+                timeStamp, None, lane.properties))
 
             case _ => None
             }
@@ -239,7 +239,7 @@ object LaneUtils {
 
   def newChangeInfoDetected(lane : PersistedLane, changes: Map[String, Seq[ChangeInfo]]): Boolean = {
     changes.getOrElse(lane.linkId, Seq()).exists(c =>
-      c.vvhTimeStamp > lane.vvhTimeStamp && (c.oldId.getOrElse(0) == lane.linkId || c.newId.getOrElse(0) == lane.linkId)
+      c.timeStamp > lane.timeStamp && (c.oldId.getOrElse(0) == lane.linkId || c.newId.getOrElse(0) == lane.linkId)
     )
   }
 

@@ -58,7 +58,7 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
       val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
       val area = service.getAssetArea(roadLinks.find(_.linkId == linearAsset.linkId), Measures(linearAsset.startMeasure, linearAsset.endMeasure))
       val id = service.maintenanceDAO.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-        Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, service.getLinkSource(roadLink), area = area)
+        Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.timeStamp, service.getLinkSource(roadLink), area = area)
       linearAsset.value match {
         case Some(DynamicValue(multiTypeProps)) =>
           val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)

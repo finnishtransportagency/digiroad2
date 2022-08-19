@@ -15,9 +15,9 @@ import org.scalatest.{FunSuite, Matchers}
 
 class ChangeLanesAccordingToVvhChangesSpec extends FunSuite with Matchers{
 
-  def generateTestLane(id: Int, linkId: String, sideCode: Int, laneCode: Int, startM: Double, endM: Double, vvhTimestamp: Long): PersistedLane = {
+  def generateTestLane(id: Int, linkId: String, sideCode: Int, laneCode: Int, startM: Double, endM: Double, timeStamp: Long): PersistedLane = {
     val attributes = Seq(LaneProperty("lane_type", Seq(LanePropertyValue(1))), LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))))
-    PersistedLane(id, linkId, sideCode, laneCode, 999, startM, endM, None, None, None, None, None, None, false, vvhTimestamp, None, attributes)
+    PersistedLane(id, linkId, sideCode, laneCode, 999, startM, endM, None, None, None, None, None, None, false, timeStamp, None, attributes)
   }
 
   def generateHistoryLink(linkId: String, length: Double ): RoadLink = {

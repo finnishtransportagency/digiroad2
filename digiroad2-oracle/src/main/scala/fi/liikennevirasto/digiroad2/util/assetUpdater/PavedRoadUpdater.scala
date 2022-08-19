@@ -24,7 +24,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
       val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
         expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++ expiredIds,
         adjustedMValues = Seq.empty[MValueAdjustment],
-        adjustedVVHChanges = newAndUpdatedPavedRoadAssets.filter(_.id != 0).map(a => VVHChangesAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure, a.vvhTimeStamp)),
+        adjustedVVHChanges = newAndUpdatedPavedRoadAssets.filter(_.id != 0).map(a => VVHChangesAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure, a.timeStamp)),
         adjustedSideCodes = Seq.empty[SideCodeAdjustment],
         valueAdjustments = Seq.empty[ValueAdjustment])
 

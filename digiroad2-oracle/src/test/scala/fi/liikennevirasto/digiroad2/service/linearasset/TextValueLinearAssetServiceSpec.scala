@@ -72,7 +72,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       assetUpdated.modifiedDateTime should not be empty
       assetUpdated.expired should be(false)
       assetUpdated.typeId should be(assetToUpdate.typeId)
-      assetUpdated.vvhTimeStamp should be(assetToUpdate.vvhTimeStamp)
+      assetUpdated.timeStamp should be(assetToUpdate.timeStamp)
 
       //Verify if old asset is not expired, since the changes were made on value
       val assetExpired = linearAssetDao.fetchLinearAssetsByIds(Set(600068), "liittymänumero").head

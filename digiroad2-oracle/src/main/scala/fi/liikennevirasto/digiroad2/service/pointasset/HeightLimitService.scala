@@ -12,7 +12,7 @@ case class IncomingHeightLimit(lon: Double, lat: Double, linkId: String, limit: 
 case class HeightLimit(id: Long, linkId: String,
                        lon: Double, lat: Double,
                        mValue: Double, floating: Boolean,
-                       vvhTimeStamp: Long,
+                       timeStamp: Long,
                        municipalityCode: Int,
                        createdBy: Option[String] = None,
                        createdAt: Option[DateTime] = None,

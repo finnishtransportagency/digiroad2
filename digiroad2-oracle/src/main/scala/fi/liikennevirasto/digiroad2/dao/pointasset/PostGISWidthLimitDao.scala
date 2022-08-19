@@ -65,7 +65,7 @@ object PostGISWidthLimitDao {
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -75,7 +75,7 @@ object PostGISWidthLimitDao {
       val limit = r.nextDouble()
       val reason =  WidthLimitReason.apply(r.nextInt())
 
-      WidthLimit(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit, reason)
+      WidthLimit(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit, reason)
     }
   }
 }

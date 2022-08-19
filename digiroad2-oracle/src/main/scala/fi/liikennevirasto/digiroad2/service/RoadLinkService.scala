@@ -1310,7 +1310,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
           val commonAttributes = returnEqualAttributes(Seq(attributesFirstRoadLink, attributesLastRoadLink))
 
           commonAttributes.foreach { case (attribute, value) =>
-            LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+            LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.timeStamp)
           }
         }
       }
@@ -1333,23 +1333,23 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
           case ChangeType.New =>
             resolveNewChange(change)
           case ChangeType.Removed =>
-            if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty)
-              LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp))
+            if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.timeStamp)).nonEmpty)
+              LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.timeStamp))
           case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty =>
             val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)
             if (newIdFromVariousOld.size > 1) {
               val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
-                LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
+                LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.timeStamp))
               }
               returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
-                LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+                LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.timeStamp)
               }
             } else {
-              val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
+              val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.timeStamp))
 
               if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
                 roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
-                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.timeStamp)
                 }
               }
             }
@@ -1365,7 +1365,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
       isOldEqNew || isNotToExpire || isNotToCreate
     }
-      .sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
+      .sortWith(_.timeStamp < _.timeStamp)
     resolveChanges(changesToBeProcessed)
   }
 

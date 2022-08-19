@@ -58,7 +58,7 @@ object PostGISTrailerTruckWeightLimitDao {
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -67,7 +67,7 @@ object PostGISTrailerTruckWeightLimitDao {
       val linkSource = r.nextInt()
       val limit = r.nextDouble()
 
-      WeightLimit(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit)
+      WeightLimit(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit)
     }
   }
 }

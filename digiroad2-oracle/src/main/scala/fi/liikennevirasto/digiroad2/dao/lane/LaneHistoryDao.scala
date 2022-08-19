@@ -18,7 +18,7 @@ import scala.language.implicitConversions
 case class LaneHistoryRow(id: Long, newId: Long, oldId: Long, linkId: String, sideCode: Int, value: LanePropertyRow,
                           startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                           modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean,
-                          vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime],
+                          timeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime],
                           historyCreatedDate: DateTime, historyCreatedBy: String)
 case class laneToHistoryLane(oldId: Long, historyId: Long, historyPositionId: Long)
 
@@ -38,7 +38,7 @@ class LaneHistoryDao(val roadLinkClient: RoadLinkClient, val roadLinkService: Ro
       val modifiedBy = r.nextStringOption()
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val atrrName = r.nextString()
       val atrrValue = r.nextStringOption()
@@ -49,7 +49,7 @@ class LaneHistoryDao(val roadLinkClient: RoadLinkClient, val roadLinkService: Ro
       val historyCreatedBy = r.nextString()
 
       LaneHistoryRow(id, newId, oldId, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
-        expired, vvhTimeStamp, municipalityCode, laneCode, geomModifiedDate, historyCreatedDate, historyCreatedBy)
+        expired, timeStamp, municipalityCode, laneCode, geomModifiedDate, historyCreatedDate, historyCreatedBy)
     }
   }
 
@@ -191,7 +191,7 @@ class LaneHistoryDao(val roadLinkClient: RoadLinkClient, val roadLinkService: Ro
         municipalityCode = row.municipalityCode, startMeasure = row.startMeasure, endMeasure = row.endMeasure,
         createdBy = row.createdBy, createdDateTime = row.createdDate,
         modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired,
-        vvhTimeStamp = row.vvhTimeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues,
+        timeStamp = row.timeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues,
         row.historyCreatedDate, row.historyCreatedBy)
 
     }.values.toSeq

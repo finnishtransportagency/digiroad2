@@ -332,7 +332,7 @@ object SpeedLimitFiller {
         val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
         val modified = toBeFused.head.copy(id=newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure,
           geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, origin.startMeasure, target.get.endMeasure),
-          vvhTimeStamp = latestTimestamp(toBeFused.head, target))
+          timeStamp = latestTimestamp(toBeFused.head, target))
         val droppedId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to drop id zero
         val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
         // Replace origin and target with this new item in the list and recursively call itself again
@@ -386,7 +386,7 @@ object SpeedLimitFiller {
           Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
-            vvhTimeStamp = latestTimestamp(left, right))
+            timeStamp = latestTimestamp(left, right))
           val adj = MValueAdjustment(adjustedLeft.id, adjustedLeft.linkId, adjustedLeft.startMeasure, adjustedLeft.endMeasure)
           val recurse = fillBySideCode(speedLimits.tail, roadLink, changeSet)
           (Seq(adjustedLeft) ++ recurse._1, recurse._2.copy(adjustedMValues = recurse._2.adjustedMValues ++ Seq(adj)))
@@ -406,8 +406,8 @@ object SpeedLimitFiller {
 
   private def latestTimestamp(speedLimit: SpeedLimit, speedLimitO: Option[SpeedLimit]) = {
     speedLimitO match {
-      case Some(slo) => Math.max(speedLimit.vvhTimeStamp, slo.vvhTimeStamp)
-      case _ => speedLimit.vvhTimeStamp
+      case Some(slo) => Math.max(speedLimit.timeStamp, slo.timeStamp)
+      case _ => speedLimit.timeStamp
     }
   }
   /**
@@ -501,7 +501,7 @@ object SpeedLimitFiller {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp.toString)
+    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.timeStamp.toString)
     if (speedLimit.expired) {
       println("N/A")
     } else {
@@ -549,7 +549,7 @@ object SpeedLimitFiller {
     val changeSet =
       if ((Math.abs(newStart - newEnd) > 0) && assetId != 0) {
         changedSet.copy(
-          adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)),
+          adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.timeStamp)),
           adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode, SpeedLimitAsset.typeId))
         )
       }
@@ -558,7 +558,7 @@ object SpeedLimitFiller {
 
     (SpeedLimit(id = assetId, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
       asset.value, geometry, newStart, newEnd, modifiedBy = asset.modifiedBy, modifiedDateTime = asset.modifiedDateTime,
-      createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, vvhTimeStamp = projection.vvhTimeStamp,
+      createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, timeStamp = projection.timeStamp,
       geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
   }
 

@@ -3,14 +3,13 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
-import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISPedestrianCrossingDao, PedestrianCrossing}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{PedestrianCrossing, PostGISPedestrianCrossingDao}
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
 case class IncomingPedestrianCrossingAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
@@ -47,7 +46,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     else {
       checkDuplicates(incomingPedestrianCrossing) match {
         case Some(existingAsset) =>
-          updateWithoutTransaction(existingAsset.id, incomingPedestrianCrossing, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
+          updateWithoutTransaction(existingAsset.id, incomingPedestrianCrossing, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.timeStamp))
         case _ =>
           create(incomingPedestrianCrossing, username, roadLink, false)
       }
@@ -68,7 +67,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
 
   def createFloatingWithoutTransaction(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
+    dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, LinearAssetUtils.createTimeStamp(), roadLink.linkSource)
   }
 
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
@@ -76,10 +75,10 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     val pedestrianId =
       if(newTransaction) {
         withDynTransaction {
-          dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
+          dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, LinearAssetUtils.createTimeStamp(), roadLink.linkSource)
         }
       } else {
-        dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, RoadLinkClient.createVVHTimeStamp(), roadLink.linkSource)
+        dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, LinearAssetUtils.createTimeStamp(), roadLink.linkSource)
       }
     pedestrianCrossingValidatorActor(Set(pedestrianId))
     pedestrianId
@@ -94,14 +93,14 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     pedestrianIdUpdated
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing,roadLink: RoadLink, username: String, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingPedestrianCrossing,roadLink: RoadLink, username: String, mValue : Option[Double], timeStamp: Option[Long]): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry)
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        dao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        dao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, timeStamp.getOrElse(LinearAssetUtils.createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        dao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(RoadLinkClient.createVVHTimeStamp())), roadLink.linkSource)
+        dao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, Some(timeStamp.getOrElse(LinearAssetUtils.createTimeStamp())), roadLink.linkSource)
     }
   }
 
@@ -117,7 +116,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingPedestrianCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet)
     updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated",
-                            Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
+                            Some(adjustment.mValue), Some(adjustment.timeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
@@ -129,7 +128,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
+      asset.mValue, asset.floating, persistedStop.timeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, linkSource = persistedStop.linkSource)
   }
 
