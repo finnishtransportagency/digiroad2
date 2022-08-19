@@ -19,9 +19,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockRoadLinkData = MockitoSugar.mock[OldVVHRoadLinkClient]
   val linearAssetDao = new PostGISLinearAssetDao()
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockRoadLinkData)
   val service = new SpeedLimitService(mockEventBus, mockRoadLinkClient, mockRoadLinkService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -57,7 +55,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId)).thenReturn(Some(RoadLinkFetched(oldLinkId, oldRoadLink.municipalityCode, oldRoadLink.geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 25)))
       service.create(Seq(NewLimit(oldLinkId, 0.0, 25.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkClient.roadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, newRoadLinks, changeInfo)
       newRoadLinks.sortBy(_.linkId).foreach { roadLink =>
         val asset = service.getExistingAssetByRoadLink(roadLink, false)
@@ -98,7 +96,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 5)))
       service.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId2, 0.0, 10.0),
         NewLimit(oldLinkId2, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkClient.roadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, Seq(newRoadLink), changeInfo)
       val newAsset = service.getExistingAssetByRoadLink(newRoadLink, false).head
       newAsset.linkId should be(newRoadLink.linkId)
