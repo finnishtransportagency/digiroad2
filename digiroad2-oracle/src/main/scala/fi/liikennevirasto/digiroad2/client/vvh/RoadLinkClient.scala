@@ -1242,7 +1242,6 @@ class ExtractHistory extends ExtractorBase {
   
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
     val attributes = feature.properties
-    val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
     val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
     val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
     val linkGeometry: Seq[Point] = path.map(point => {
@@ -1261,7 +1260,7 @@ class ExtractHistory extends ExtractorBase {
     
     HistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), roadClass, createdDate = startTime.get,
-      attributes = extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
+      attributes = extractAttributes(attributes,lastEditedDate.get,startTime.get)
         ++ linkGeometryForApi ++ linkGeometryWKTForApi, kmtkid = kmtkId, version = version)
   }
 }

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, Parallel}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LogUtils, Parallel}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
@@ -176,17 +176,11 @@ class ExtractorBase {
     Try(BigInt(value)).getOrElse(throw new NumberFormatException(s"Failed to convert value: ${value.toString}"))
   }
 
-  protected def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
-    val validFromDate = Option(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis)
-    var lastEditedDate : Option[Long] = Option(0)
-    if(attributes.contains("versionstarttime")){
-      lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
-    }
-
-    lastEditedDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
+  protected def extractModifiedAt(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
+    KgvUtil.extractModifiedAt(createdDate,lastEdited)
   }
   
-  protected def extractAttributes(attributesMap: Map[String, Any], validFromDate:BigInt, lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
+  protected def extractAttributes(attributesMap: Map[String, Any], lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {
     case class NumberConversionFailed(msg:String)extends Exception(msg)
     def numberConversion(field:String): BigInt = {
       if (attributesMap(field) == null){
@@ -223,8 +217,7 @@ class ExtractorBase {
 
       "MTKHEREFLIP"           -> attributesMap("geometryflip"),
       "CREATED_DATE"          -> starttime,
-      "LAST_EDITED_DATE"      -> lastEditedDate,
-      "VALIDFROM"             -> validFromDate
+      "LAST_EDITED_DATE"      -> lastEditedDate
     )
   }
 
@@ -235,10 +228,9 @@ class Extractor extends ExtractorBase {
   
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = {
     val attributes = feature.properties
-
-    val validFromDate = Option(BigInteger.valueOf(new DateTime(attributes("sourcemodificationtime").asInstanceOf[String]).getMillis))
-    val lastEditedDate = Option(BigInteger.valueOf(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis))
-    val startTime = Option(BigInteger.valueOf(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis))
+    
+    val lastEditedDate = Option(new DateTime(attributes("versionstarttime").asInstanceOf[String]).getMillis)
+    val startTime = Option(new DateTime(attributes("starttime").asInstanceOf[String]).getMillis)
 
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(anyToDouble(point(0)).get, anyToDouble(point(1)).get, anyToDouble(point(2)).get)
@@ -258,8 +250,8 @@ class Extractor extends ExtractorBase {
     RoadLinkFetched(linkId, municipalityCode,
       linkGeometry,
       extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), roadClass, extractModifiedAt(attributes),
-      extractAttributes(attributes,validFromDate.get,lastEditedDate.get,startTime.get)
+      extractTrafficDirection(attributes), roadClass, extractModifiedAt(startTime,lastEditedDate),
+      extractAttributes(attributes,BigInteger.valueOf(lastEditedDate.getOrElse(0)),BigInteger.valueOf(startTime.getOrElse(0)))
         ++ linkGeometryForApi ++ linkGeometryWKTForApi
       , extractConstructionType(attributes), linkGeomSource, geometryLength)
   }
