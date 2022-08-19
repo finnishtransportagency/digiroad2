@@ -5,6 +5,6 @@ import org.joda.time.DateTime
 object KgvUtil {
 
   def extractModifiedAt(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
-    Some(new DateTime(lastEdited.getOrElse(createdDate.getOrElse(0L))))
+    lastEdited.orElse(createdDate).map(new DateTime(_))
   }
 }
