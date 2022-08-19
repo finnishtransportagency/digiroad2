@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
+import org.joda.time.DateTime
 import org.scalatest.FunSuite
 import org.scalatest.Matchers.{be, convertToAnyShouldWrapper}
 import slick.jdbc.StaticQuery.interpolation
@@ -21,4 +22,15 @@ class RoadLinkDAOSpec extends FunSuite {
     }
   }
 
+  test("Select lastEdited or createdDate") {
+    class ExposeDao extends RoadLinkDAO{
+      override def extractModifiedDate(createdDate:Option[Long], lastEdited:Option[Long]): Option[DateTime]={
+        super.extractModifiedDate(createdDate,lastEdited)
+      }
+    }
+    val dao = new ExposeDao
+    dao.extractModifiedDate(Some(1L),Some(1660886069945L)).get.toString should be("2022-08-19T08:14:29.945+03:00")
+    dao.extractModifiedDate(Some(1L),None).get.toString should be("1970-01-01T02:00:00.001+02:00")
+  }
+  
 }

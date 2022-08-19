@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.vvh
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils, Parallel}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LogUtils, Parallel}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpRequestBase}
@@ -177,9 +177,7 @@ class ExtractorBase {
   }
 
   protected def extractModifiedAt(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
-    val createdDateTime = if (createdDate.nonEmpty) createdDate.get else 0
-    val lastEditedTime = if (lastEdited.nonEmpty) Some(lastEdited.get) else None
-    lastEditedTime.orElse(Option(createdDateTime)).map(new DateTime(_))
+    KgvUtil.extractModifiedAt(createdDate,lastEdited)
   }
   
   protected def extractAttributes(attributesMap: Map[String, Any], lastEditedDate:BigInt, starttime:BigInt): Map[String, Any] = {

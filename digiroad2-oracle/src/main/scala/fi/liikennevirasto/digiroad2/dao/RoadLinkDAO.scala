@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangl
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
-import fi.liikennevirasto.digiroad2.util.LogUtils
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LogUtils}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.postgis.PGgeometry
@@ -152,7 +152,7 @@ class RoadLinkDAO {
       val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
       val geometryWKT = "LINESTRING ZM (" + path.map(point => s"${point(0)} ${point(1)} ${point(2)} ${point(3)}").mkString(", ") + ")"
       val featureClass = extractFeatureClass(mtkClass)
-      val modifiedAt = extractModifiedDate(createdDate, lastEditedDate)
+      val modifiedAt = extractModifiedDate(createdDate.map(_.getMillis), lastEditedDate.map(_.getMillis))
 
       val attributes = Map(
         "MTKID" -> mtkId,
@@ -402,10 +402,8 @@ class RoadLinkDAO {
     }
   }
 
-  protected def extractModifiedDate(createdDate: Option[DateTime], lastEdited: Option[DateTime]): Option[DateTime] = {
-    val createdDateTime = if (createdDate.nonEmpty) createdDate.get.getMillis else 0
-    val lastEditedTime = if (lastEdited.nonEmpty) Some(lastEdited.get.getMillis) else None
-    lastEditedTime.orElse(Option(createdDateTime)).map(modified => new DateTime(modified))
+  protected def extractModifiedDate(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
+    KgvUtil.extractModifiedAt(createdDate,lastEdited)
   }
   
   protected def extractGeometry(data: Object): List[List[Double]] = {
