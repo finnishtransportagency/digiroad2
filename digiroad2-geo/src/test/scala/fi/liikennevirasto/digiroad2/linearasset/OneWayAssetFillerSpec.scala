@@ -56,15 +56,15 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
       SideCodeAdjustment(3l, SideCode.BothDirections, PavedRoad.typeId)))
   }
 
-  test("generate one-sided asset when two-way road link is half-covered 1") {
+  test("generate one-sided asset when two-way road link only has asset on the other side") {
     val linkId = generateRandomLinkId()
     val topology = Seq(
       RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      linkId -> Seq(PersistedLinearAsset(1l, linkId, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
+      linkId -> Seq(PersistedLinearAsset(1l, linkId, TowardsDigitizing.value, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val (filledTopology, changeSet) = oneWayAssetFiller.fillTopology(topology, linearAssets, 110)
+    val filledTopology = oneWayAssetFiller.fillRoadLinksWithoutAsset(topology, linearAssets, 110)
 
     filledTopology should have size 2
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))
@@ -74,7 +74,5 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
     filledTopology.filter(_.id == 0).map(_.sideCode) should be(Seq(AgainstDigitizing))
     filledTopology.filter(_.id == 0).map(_.value) should be(Seq(None))
     filledTopology.filter(_.id == 0).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-
-    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long], Nil))
   }
 }
