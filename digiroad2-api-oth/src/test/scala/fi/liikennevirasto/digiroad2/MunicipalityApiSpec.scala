@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, _}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
