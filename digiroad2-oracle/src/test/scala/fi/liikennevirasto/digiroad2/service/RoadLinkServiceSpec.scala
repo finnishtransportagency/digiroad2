@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHChangeInfoClient, VVHComplementaryClient}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
