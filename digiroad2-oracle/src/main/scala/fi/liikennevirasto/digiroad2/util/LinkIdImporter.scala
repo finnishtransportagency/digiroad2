@@ -51,7 +51,7 @@ object LinkIdImporter {
   def changeLinkIdIntoKMTKVersion(): Unit = {
     val tableNames = Seq(
       "lane_history_position", "lane_position", "lrm_position",
-      "lrm_position_history", "temp_road_address_info", "road_link_attributes",
+      "lrm_position_history", "road_link_attributes",
       "administrative_class", "traffic_direction", "inaccurate_asset",
       "functional_class", "incomplete_link", "link_type",
       "unknown_speed_limit", "roadlink", "manoeuvre_element_history",
