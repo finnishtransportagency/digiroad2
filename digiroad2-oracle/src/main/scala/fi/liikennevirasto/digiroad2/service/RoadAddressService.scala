@@ -16,7 +16,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                              endDate: Option[DateTime] = None, linkId: Long,
+                              endDate: Option[DateTime] = None, linkId: String,
                               startMValue: Double, endMValue: Double, sideCode: SideCode, geom: Seq[Point],
                               expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime]) {
   def addressMValueToLRM(addrMValue: Long): Option[Double] = {

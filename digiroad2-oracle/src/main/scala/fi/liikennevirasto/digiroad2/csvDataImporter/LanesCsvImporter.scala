@@ -340,7 +340,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     logger.info("Number of detected cores " + Runtime.getRuntime.availableProcessors)
     logger.info("Rows partitioned into " + results.size + " collections")
-    Parallel.operation(results.par, results.size) { p => p.map(result => {
+    new Parallel().operation(results.par, results.size) { p => p.map(result => {
       withDynTransaction {
         updateOnlyStartDates.onlyStartDates match {
           case true => try {

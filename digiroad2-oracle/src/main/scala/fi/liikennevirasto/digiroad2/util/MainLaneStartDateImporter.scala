@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.csvDataImporter.LanesCsvImporter
 import fi.liikennevirasto.digiroad2.middleware.UpdateOnlyStartDates
 import fi.liikennevirasto.digiroad2.service.{AwsService, RoadLinkService}
@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.slf4j.LoggerFactory
 
 object MainLaneStartDateImporter {
-  lazy val vvhClient = new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
-  lazy val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+  lazy val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   lazy val lanesCsvImporter: LanesCsvImporter = new LanesCsvImporter(roadLinkService, new DummyEventBus)
   val logger = LoggerFactory.getLogger(getClass)
   val awsService = new AwsService

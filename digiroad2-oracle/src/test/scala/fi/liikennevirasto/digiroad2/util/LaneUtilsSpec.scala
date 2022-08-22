@@ -14,22 +14,22 @@ class LaneUtilsSpec extends FunSuite with Matchers {
 
   test("Return None for link with road addresses outside of scope") {
     val linkLength = 50.214
-    val linkId = 1234567
+    val id = 1234567
     val addressesOnLink1 = Set( // At same road part but start after selection ends
-      RoadAddressForLink(linkId, 1, 1, Track.RightSide, 120, 320, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
+      RoadAddressForLink(id, 1, 1, Track.RightSide, 120, 320, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink2 = Set( // At same road part but ends before selection starts
-      RoadAddressForLink(linkId, 1, 1, Track.RightSide, 0, 10, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
+      RoadAddressForLink(id, 1, 1, Track.RightSide, 0, 10, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink3 = Set( // road part > selection.endRoadPart
-      RoadAddressForLink(linkId, 1, 2, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
+      RoadAddressForLink(id, 1, 2, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink4 = Set( // road part < selection.startRoadPart
-      RoadAddressForLink(linkId, 1, 1, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
+      RoadAddressForLink(id, 1, 1, Track.RightSide, 10, 120, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
     )
     val addressesOnLink5 = Set( // multiple addresses on link and all outside scope
-      RoadAddressForLink(linkId, 1, 1, Track.RightSide, 120, 220, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None),
-      RoadAddressForLink(linkId, 1, 1, Track.RightSide, 220, 320, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
+      RoadAddressForLink(id, 1, 1, Track.RightSide, 120, 220, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None),
+      RoadAddressForLink(id, 1, 1, Track.RightSide, 220, 320, None, None, linkId, 0.0, 49.281, SideCode.Unknown, Seq(), false, None, None, None)
 
     )
 

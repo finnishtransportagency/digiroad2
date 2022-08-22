@@ -1092,7 +1092,7 @@ trait LaneOperations {
 
   /*Creates an explicit expired lane piece for those parts of the split line that have been deleted before saving.
   Needed for change messages, so that the expiration change will be mapped to the expired lane part in ChangeAPI.*/
-  def createExpiredPartsOfOldLane(newLanes: Seq[PersistedLane], oldLane: PersistedLane, sideCode: Int, linkIds: Set[Long], username: String): Unit = {
+  def createExpiredPartsOfOldLane(newLanes: Seq[PersistedLane], oldLane: PersistedLane, sideCode: Int, linkIds: Set[String], username: String): Unit = {
     val sortedNewLanes = newLanes.sortBy(_.startMeasure)
     var start = oldLane.startMeasure
     sortedNewLanes.foreach { newLane =>
