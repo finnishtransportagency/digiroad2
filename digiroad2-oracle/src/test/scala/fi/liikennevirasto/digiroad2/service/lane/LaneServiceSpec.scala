@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane, SideCodesForLinkIds}
@@ -498,7 +498,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Update two lanes in one roadlink to only one lane") {
+  test("Replace two old split lanes with new full length additional lane") {
     runWithRollback {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(2))),
@@ -549,7 +549,10 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and one sublane not splitted
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
+      val expiredSubLane2A = subLane2SplitA.copy(id = newSubLane2SplitAId, isExpired = true)
+      val expiredSubLane2B = subLane2SplitB.copy(id = newSubLane2SplitBId, isExpired = true)
+
+      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2, expiredSubLane2A, expiredSubLane2B ), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
       val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       lanesAfterSplit.size should be(2)
@@ -574,7 +577,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       historyLanes.size should be(2)
 
       val historylane2A = historyLanes.filter(_.oldId == newSubLane2SplitAId).head
-      historylane2A.newId should not be 0
+      historylane2A.newId should be (0)
       historylane2A.newId should not be mainLane1Id
       historylane2A.startMeasure should be(0)
       historylane2A.endMeasure should be(250.0)
@@ -584,7 +587,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       val historylane2B = historyLanes.filter(_.oldId == newSubLane2SplitBId).head
-      historylane2B.newId should not be 0
+      historylane2B.newId should be (0)
       historylane2B.newId should not be mainLane1Id
       historylane2B.startMeasure should be(250.0)
       historylane2B.endMeasure should be(500.0)
@@ -1112,9 +1115,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1142,9 +1145,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1172,9 +1175,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1206,9 +1209,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1240,9 +1243,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1275,9 +1278,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1310,9 +1313,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1357,9 +1360,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1437,9 +1440,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )),
           RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map()))
       )
@@ -1530,9 +1533,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1599,9 +1602,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1659,9 +1662,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1764,9 +1767,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1838,9 +1841,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1913,9 +1916,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -2004,9 +2007,9 @@ class LaneServiceSpec extends LaneTestSupporter {
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 

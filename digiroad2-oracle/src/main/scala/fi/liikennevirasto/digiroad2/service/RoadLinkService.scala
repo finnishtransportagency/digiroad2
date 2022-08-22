@@ -1772,14 +1772,4 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     roadLinkClient.roadLinkChangeInfo.fetchByDates(since, until)
   }
 
-  def roadLinksWithConsistentAddress(roadLinksWithRoadAddress: Seq[RoadLink]): Seq[RoadLink] = {
-    roadLinksWithRoadAddress.map(roadLink => {
-      val roadNumber = roadLink.attributes.getOrElse("VIITE_ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER"))
-      val roadPartNumber = roadLink.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", roadLink.attributes.get("TEMP_ROAD_PART_NUMBER"))
-      val startAddr = roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes.get("TEMP_START_ADDR"))
-      val endAddr = roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR"))
-      roadLink.copy(attributes = roadLink.attributes + ("ROAD_NUMBER" -> roadNumber, "ROAD_PART_NUMBER" -> roadPartNumber,
-        "START_ADDR" -> startAddr, "END_ADDR" -> endAddr))
-    })
-  }
 }

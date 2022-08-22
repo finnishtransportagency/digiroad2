@@ -156,10 +156,6 @@ object DataFixture {
     new VerificationService( new DummyEventBus, roadLinkService)
   }
 
-  lazy val roadLinkTempDao : RoadLinkTempDAO = {
-    new RoadLinkTempDAO
-  }
-
   lazy val trafficSignProhibitionGenerator: TrafficSignProhibitionGenerator = {
     new TrafficSignProhibitionGenerator(roadLinkService)
   }
@@ -2294,8 +2290,6 @@ object DataFixture {
         trafficSignRoadWorkGenerator.createRoadWorkAssetUsingTrafficSign()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
-      case Some("resolving_Frozen_Links") =>
-        ResolvingFrozenRoadLinks.process()
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
       case Some("normalize_user_roles") =>
@@ -2350,7 +2344,7 @@ object DataFixture {
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_private_roads | add_geometry_to_linear_assets | " +
-        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
+        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | " +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +

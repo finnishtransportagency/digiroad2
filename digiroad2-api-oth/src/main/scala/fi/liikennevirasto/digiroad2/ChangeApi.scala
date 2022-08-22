@@ -552,20 +552,34 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
     }
 
-    def mapLaneAddressInfo(lane: PersistedLane, roadLink: RoadLink) = {
-      val roadStartAddr = roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes("TEMP_START_ADDR")).toString.toDouble
-      val roadEndAddr = roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes("TEMP_END_ADDR")).toString.toDouble
+    def mapLaneAddressInfo(lane: PersistedLane, roadLink: RoadLink): Map[String, Any] = {
+      try {
+        val roadStartAddr = roadLink.attributes("START_ADDR").toString.toDouble
+        val roadEndAddr = roadLink.attributes("END_ADDR").toString.toDouble
 
-      val laneStartAddr = roadStartAddr + lane.startMeasure
-      val laneEndAddr = roadEndAddr - (roadLink.length - lane.endMeasure)
+        val laneStartAddr = roadStartAddr + lane.startMeasure
+        val laneEndAddr = roadEndAddr - (roadLink.length - lane.endMeasure)
 
-      Map(
-        "roadNumber" -> roadLink.attributes.getOrElse("VIITE_ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER")),
-        "roadPart" -> roadLink.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", roadLink.attributes.get("TEMP_ROAD_PART_NUMBER")),
-        "roadTrack" -> roadLink.attributes.getOrElse("VIITE_TRACK", roadLink.attributes.get("TEMP_TRACK")),
-        "roadStartAddr" -> laneStartAddr.toInt,
-        "roadEndAddr" -> laneEndAddr.toInt
-      )
+        Map(
+          "roadNumber" -> roadLink.attributes("ROAD_NUMBER"),
+          "roadPart" -> roadLink.attributes("ROAD_PART_NUMBER"),
+          "roadTrack" -> roadLink.attributes("TRACK"),
+          "roadStartAddr" -> laneStartAddr.toInt,
+          "roadEndAddr" -> laneEndAddr.toInt
+        )
+      }
+      catch {
+        case nfe: NumberFormatException =>
+          logger.error(nfe.getMessage)
+          Map()
+        case nsee: NoSuchElementException =>
+          logger.error(nsee.getMessage)
+          Map()
+        case e: Exception =>
+          logger.error(e.getMessage)
+          Map()
+      }
+
     }
 
     //get address and measures of the different segment between the lanes
@@ -574,8 +588,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       val lane = laneChange.lane
       val oldLane = laneChange.oldLane.get
 
-      val roadStartAddr = roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes.get("TEMP_START_ADDR")).toString.toDouble
-      val roadEndAddr = roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR")).toString.toDouble
+      val roadStartAddr = roadLink.attributes.get("START_ADDR").toString.toDouble
+      val roadEndAddr = roadLink.attributes.get("END_ADDR").toString.toDouble
 
       val laneStartAddr = (roadStartAddr + lane.startMeasure).toInt
       val laneEndAddr = (roadEndAddr - (roadLink.length - lane.endMeasure)).toInt

@@ -785,11 +785,20 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
 
-    def showOldTrafficCode(trafficSign: PersistedTrafficSign): String = {
-      if (trafficSignService.getProperty(trafficSign, "old_traffic_code").get.propertyValue == "1" ||  trafficSign.createdAt.get.isBefore(trafficSignService.newTrafficCodeStartDate)){
-        TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).OldLawCode
+    def showOldTrafficCode(trafficSign: PersistedTrafficSign): Option[Int] = {
+      val oldTrafficCodeProperty = trafficSignService.getProperty(trafficSign, "old_traffic_code")
+      val trafficSignTypeProperty = trafficSignService.getProperty(trafficSign, "trafficSigns_type")
+
+      (oldTrafficCodeProperty, trafficSign.createdAt, trafficSignTypeProperty) match {
+        case (Some(oldCodeProp), Some(createdAt), Some(signTypeProp)) =>
+          if (oldCodeProp.propertyValue == "1" ||  createdAt.isBefore(trafficSignService.newTrafficCodeStartDate)){
+            TrafficSignType.applyOTHValue(signTypeProp.propertyValue.toInt).OldLawCode
+          }
+          else None
+        case _ => None
       }
-      else ""
+
+
     }
 
     trafficSigns.filterNot(x => x.floating | isSuggested(x)).map{ trafficSign =>
@@ -802,7 +811,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
           "type" -> Try(TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).NewLawCode).getOrElse(""),
-          "oldTrafficCode" -> Try(showOldTrafficCode(trafficSign).toInt).getOrElse(""),
+          "oldTrafficCode" -> showOldTrafficCode(trafficSign),
           "value" -> trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
           "municipalityId" -> trafficSignService.getProperty(trafficSign, "municipality_id").map(_.propertyDisplayValue.getOrElse("")),
