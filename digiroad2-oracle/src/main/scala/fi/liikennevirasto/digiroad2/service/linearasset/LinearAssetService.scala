@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISTrafficSignDao
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao, Queries}
@@ -49,7 +49,6 @@ trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   def roadLinkService: RoadLinkService
-  def roadLinkClient: RoadLinkClient
   def dao: PostGISLinearAssetDao
   def municipalityDao: MunicipalityDao
   def eventBus: DigiroadEventBus
@@ -577,10 +576,9 @@ trait LinearAssetOperations {
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkServiceImpl.roadLinkClient, roadLinkServiceImpl)
+  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
-  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def polygonTools : PolygonTools = new PolygonTools()
   override def assetDao: PostGISAssetDao = new PostGISAssetDao
 

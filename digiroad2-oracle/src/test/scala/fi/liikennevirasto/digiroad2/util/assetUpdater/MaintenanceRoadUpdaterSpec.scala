@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{CombinedRemovedPart, Removed}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, RoadLink}
@@ -27,8 +28,8 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
-  val maintenanceDao = new PostGISMaintenanceDao(mockRoadLinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao()
+  val maintenanceDao = new PostGISMaintenanceDao()
   val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
   object Service extends MaintenanceService(mockRoadLinkService, mockEventBus) {

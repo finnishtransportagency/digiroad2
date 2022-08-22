@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, HistoryRoadLink, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, HistoryRoadLink, RoadLinkFetched}
 import org.scalatest.{FunSuite, Matchers}
 
 

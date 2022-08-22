@@ -1,8 +1,9 @@
-package fi.liikennevirasto.digiroad2.client.vvh
+package fi.liikennevirasto.digiroad2.client.kgv
 
 import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.{ClientException, FeatureClass, Filter, LinkOperationError, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LogUtils, Parallel}
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}

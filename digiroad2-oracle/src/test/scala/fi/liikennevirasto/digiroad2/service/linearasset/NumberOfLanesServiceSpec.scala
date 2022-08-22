@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment, ValueAdjustment}
@@ -19,8 +19,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
-
-  when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
+  
 
   val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f

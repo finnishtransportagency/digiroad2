@@ -10,7 +10,6 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -18,7 +17,7 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-class PostGISSpeedLimitDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService) {
+class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
   def MassQueryThreshold = 500
   case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
 

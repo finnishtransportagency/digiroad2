@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.UnknownLinkType
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.slf4j.LoggerFactory
 
-class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClient, roadLinkService: RoadLinkService, service: SpeedLimitService) {
+class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService, service: SpeedLimitService) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val dao = service.dao
@@ -108,7 +108,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkClient: RoadLinkClie
   }
 
   def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
-    val roadLinks = roadLinkClient.roadLinkData.fetchByLinkIds(linkIds)
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(linkIds)
     roadLinks.foreach { rl =>
       dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
     }

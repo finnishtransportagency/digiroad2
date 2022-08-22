@@ -1,8 +1,9 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.CarRoad_IIIa
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, OldVVHRoadLinkClient, RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.FeatureClass.CarRoad_IIIa
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -19,14 +20,12 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val mockRoadLinkData = MockitoSugar.mock[OldVVHRoadLinkClient]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
-  when(mockRoadLinkClient.roadLinkData).thenReturn(mockRoadLinkData)
-  val service = new SpeedLimitService(mockEventBus, mockRoadLinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao()
+  val service = new SpeedLimitService(mockEventBus, mockRoadLinkService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  object TestSpeedLimitUpdater extends SpeedLimitUpdater(mockEventBus, mockRoadLinkClient, mockRoadLinkService, service) {
-    override val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkClient, mockRoadLinkService)
+  object TestSpeedLimitUpdater extends SpeedLimitUpdater(mockEventBus, mockRoadLinkService, service) {
+    override val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkService)
   }
 
   test("Should map the speed limit of an old link to three new links") {
@@ -57,7 +56,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(oldLinkId)).thenReturn(Some(RoadLinkFetched(oldLinkId, oldRoadLink.municipalityCode, oldRoadLink.geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 25)))
       service.create(Seq(NewLimit(oldLinkId, 0.0, 25.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkClient.roadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, newRoadLinks, changeInfo)
       newRoadLinks.sortBy(_.linkId).foreach { roadLink =>
         val asset = service.getExistingAssetByRoadLink(roadLink, false)
@@ -98,7 +97,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 5)))
       service.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId2, 0.0, 10.0),
         NewLimit(oldLinkId2, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkClient.roadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq())
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, Seq(newRoadLink), changeInfo)
       val newAsset = service.getExistingAssetByRoadLink(newRoadLink, false).head
       newAsset.linkId should be(newRoadLink.linkId)

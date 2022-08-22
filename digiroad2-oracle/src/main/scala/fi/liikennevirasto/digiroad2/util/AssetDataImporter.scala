@@ -8,7 +8,7 @@ import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PostGISObstacleDao}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -624,7 +624,7 @@ class AssetDataImporter {
   }
 
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
-    val dao = new PostGISSpeedLimitDao(null, null)
+    val dao = new PostGISSpeedLimitDao(null)
 
     withDynTransaction {
       val speedLimitLinks = sql"""
@@ -654,7 +654,7 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
-    val dao = new PostGISLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao()
 
     withDynTransaction {
       val linearAssetLinks = sql"""

@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
@@ -11,7 +10,8 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -21,7 +21,7 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   val linkId: String = LinkIdGenerator.generateRandom()
   val roadLink = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-
+  val dao = new PostGISLinearAssetDao()
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   def setupTestProhibition(linkId: String,
@@ -55,7 +55,6 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch simple prohibition without validity periods or exceptions") {
-    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = LinkIdGenerator.generateRandom()
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty, ""))
 
@@ -73,7 +72,6 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period") {
-    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = LinkIdGenerator.generateRandom()
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, ""))
 
@@ -91,7 +89,6 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period and exceptions") {
-    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = LinkIdGenerator.generateRandom()
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), ""))
@@ -110,7 +107,6 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period, exceptions and additional information") {
-    val dao = new PostGISLinearAssetDao(null, null)
     val linkId = LinkIdGenerator.generateRandom()
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), "test value string"))
@@ -129,7 +125,6 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch multiple prohibitions") {
-    val dao = new PostGISLinearAssetDao(null, null)
     val linkId1 = LinkIdGenerator.generateRandom()
     val linkId2 = LinkIdGenerator.generateRandom()
     val linkId3 = LinkIdGenerator.generateRandom()
@@ -173,7 +168,6 @@ class PostGISLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("all entities should be expired") {
-    val dao = new PostGISLinearAssetDao(null, null)
     val typeId = 110
     val linkId = LinkIdGenerator.generateRandom()
     runWithRollback {

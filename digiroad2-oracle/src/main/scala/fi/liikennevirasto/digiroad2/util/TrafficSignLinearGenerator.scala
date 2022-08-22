@@ -5,7 +5,6 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -28,8 +27,6 @@ case class TrafficSignToLinear(roadLink: RoadLink, value: Value, sideCode: SideC
 
 trait TrafficSignLinearGenerator {
   def roadLinkService: RoadLinkService
-
-  def roadLinkClient: RoadLinkClient
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -91,7 +88,7 @@ trait TrafficSignLinearGenerator {
     new TrafficSignService(roadLinkService, eventbus)
   }
 
-  lazy val postGisLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkService.roadLinkClient, roadLinkService)
+  lazy val postGisLinearAssetDao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   lazy val dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
   def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Value]
@@ -682,7 +679,6 @@ trait TrafficSignLinearGenerator {
 //Prohibition
 case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignLinearGenerator  {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
 
   override val assetType : Int = Prohibition.typeId
 
@@ -942,7 +938,6 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
 ***************************************************************/
 class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignDynamicAssetGenerator {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
 
   override val assetType : Int = ParkingProhibition.typeId
 
@@ -1101,7 +1096,6 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
   ***************************************************************/
 class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignDynamicAssetGenerator {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
 
   override val assetType: Int = RoadWorksAsset.typeId
   private val MAX_DISTANCE: Int = 1000

@@ -1,10 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao.lane
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
@@ -27,7 +25,7 @@ case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
-class LaneDao(val roadLinkClient: RoadLinkClient, val roadLinkService: RoadLinkService ){
+class LaneDao(){
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {

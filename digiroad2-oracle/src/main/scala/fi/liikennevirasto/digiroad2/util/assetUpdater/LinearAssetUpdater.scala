@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{EuropeanRoads, ExitNumbers, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.{New, isExtensionChange, isReplacementChange}
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, RoadLinkClient}
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import org.slf4j.LoggerFactory
 
 class LinearAssetUpdater(service: LinearAssetOperations) {
@@ -21,7 +22,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
   def assetFiller: AssetFiller = new AssetFiller
-  def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
+  def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val logger = LoggerFactory.getLogger(getClass)
 

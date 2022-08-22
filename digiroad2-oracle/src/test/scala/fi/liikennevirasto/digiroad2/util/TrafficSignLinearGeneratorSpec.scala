@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.{Bus => _, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import org.mockito.Mockito._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -15,13 +14,13 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.asset.HazmatTransportProhibitionClass.{HazmatProhibitionTypeA, HazmatProhibitionTypeB}
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import org.mockito.ArgumentMatchers.any
 
 class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao()
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
 
   class TestTrafficSignProhibitionGenerator extends TrafficSignProhibitionGenerator(mockRoadLinkService) {
@@ -29,7 +28,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
     override lazy val postGisLinearAssetDao: PostGISLinearAssetDao = linearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override lazy val prohibitionService = mockProhibitionService
 
     case class createdObjectTest(id: Long, linkId: String, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, roadLink: RoadLink)
@@ -410,7 +408,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
     override lazy val postGisLinearAssetDao: PostGISLinearAssetDao = linearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
   val hazmatTransportProhibitionGenerator = new TestTrafficSignHazmatTransportProhibitionGenerator()
@@ -442,7 +439,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
     override lazy val postGisLinearAssetDao: PostGISLinearAssetDao = linearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
   test("parking generate segments additional panel DistanceFromSignToPointWhichSignApplies") {

@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -16,12 +15,12 @@ import org.scalatest.{FunSuite, Matchers}
 class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-
+  val dao = new ManoeuvreDao()
+  
   test("test setManoeuvreExceptions") {
     runWithRollback {
       val (linkId1, linkId2, linkId3) =
         (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
-      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(), None, Seq(linkId1, linkId2, linkId3), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -37,7 +36,6 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test create Manoeuvre For Update") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
       val exceptions = List(4,5)
       val mano = NewManoeuvre(validityPeriod, exceptions, None, Seq(LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom()), None, false)
@@ -57,7 +55,6 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test getByRoadLinks") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
       val mano = NewManoeuvre(Set(), Seq(), None, Seq(linkId1, linkId2), None, false)
       val id = dao.createManoeuvre("user", mano)
@@ -77,7 +74,6 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test addManoeuvreValidityPeriods") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val (linkId1, linkId2, linkId3) =
         (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
       val mano = NewManoeuvre(Set(), Seq(), None, Seq(linkId1, linkId2, linkId3), None, false)
@@ -99,7 +95,6 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test addManoeuvreExceptions") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(1, 2), None, Seq(LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom()), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -115,7 +110,6 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   test("test deleteManoeuvre") {
     runWithRollback {
-      val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
       val mano = NewManoeuvre(Set(), Seq(1, 2), Option("added"), Seq(LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom()), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
@@ -127,7 +121,6 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
   }
 
   test("test createManoeuvre") {
-    val dao = new ManoeuvreDao(MockitoSugar.mock[RoadLinkClient])
     val (linkId1, linkId2, linkId3) =
       (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
     val elements = Seq(ManoeuvreElement(1, linkId1, linkId2, ElementTypes.FirstElement),

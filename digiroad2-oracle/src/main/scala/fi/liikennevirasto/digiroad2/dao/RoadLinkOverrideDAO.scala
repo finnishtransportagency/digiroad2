@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkFetched
+import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertiesEntries}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

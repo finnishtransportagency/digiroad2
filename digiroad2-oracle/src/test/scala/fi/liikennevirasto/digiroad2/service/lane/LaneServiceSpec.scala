@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
@@ -21,7 +20,6 @@ import org.scalatest.{FunSuite, Matchers}
 
 class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
@@ -31,8 +29,8 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLaneService = MockitoSugar.mock[LaneService]
 
-  val laneDao = new LaneDao(mockRoadLinkClient, mockRoadLinkService)
-  val laneHistoryDao = new LaneHistoryDao(mockRoadLinkClient, mockRoadLinkService)
+  val laneDao = new LaneDao()
+  val laneHistoryDao = new LaneHistoryDao()
   val linkId: String = LinkIdGenerator.generateRandom()
   val roadLinkWithLinkSource = RoadLink(
     linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -67,7 +65,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def dao: LaneDao = mockLaneDao
     override def historyDao: LaneHistoryDao = mockLaneHistoryDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
@@ -85,7 +82,6 @@ class LaneServiceSpec extends LaneTestSupporter {
 
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def dao: LaneDao = laneDao
     override def historyDao: LaneHistoryDao = laneHistoryDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao

@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Weekday
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
@@ -12,7 +11,8 @@ import org.scalatest.{FunSuite, Matchers, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -24,7 +24,6 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
-    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     
     when(mockRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
@@ -36,9 +35,10 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new PostGISSpeedLimitDao(mockRoadLinkClient, mockRoadLinkService)
+    new PostGISSpeedLimitDao(mockRoadLinkService)
   }
 
+  val dao = new PostGISSpeedLimitDao(mockRoadLinkService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
 
@@ -64,7 +64,6 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
         RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
         RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new PostGISSpeedLimitDao(MockitoSugar.mock[RoadLinkClient], MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
@@ -79,7 +78,6 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
         RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
         RoadLink("080f5065-5ce7-4c58-b838-d0b4daf84adc:1", List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new PostGISSpeedLimitDao(MockitoSugar.mock[RoadLinkClient], MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
@@ -179,7 +177,6 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit mass query") {
     val ids = Seq.range(1L, 500L).map(_.toString).toSet
-    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
@@ -187,7 +184,6 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit no mass query") {
     val ids = Seq.range(1L, 2L).map(_.toString).toSet
-    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
@@ -195,14 +191,12 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   test("speed limit empty set must not crash") {
     val ids = Set():Set[String]
-    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
   }
 
   test("speed limit no set must not crash") {
-    val dao = new PostGISSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(None)
     }

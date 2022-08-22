@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, State}
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService

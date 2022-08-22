@@ -2,7 +2,8 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
@@ -22,12 +23,11 @@ import slick.jdbc.StaticQuery.interpolation
 class PavedRoadServiceSpec extends FunSuite with Matchers {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao()
   val dynamicLinearAssetDao = new DynamicLinearAssetDao()
 
   val multiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("suggest_box","checkbox",required = false,List()),DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("50")))))
@@ -77,7 +77,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
@@ -90,11 +89,9 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   val assetLock = "Used to prevent deadlocks"
 
   private def createService() = {
-    val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     }
     service
   }
@@ -128,7 +125,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Should not create new paved road assets and return the existing paved road assets when VVH doesn't have change information") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
+  
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -470,7 +467,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   test("Expire OTH Assets and create new assets based on VVH RoadLink data") {
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     }
     val assetTypeId = 110
     val municipalityCode = 564
@@ -591,8 +587,6 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
   }
 
   ignore("Adjust projected asset with creation"){
-    val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val service = new PavedRoadService(mockRoadLinkService, mockEventBus) {

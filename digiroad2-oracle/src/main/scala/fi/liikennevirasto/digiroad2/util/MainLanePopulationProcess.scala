@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, Moto
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, lane}
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, LaneType, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink

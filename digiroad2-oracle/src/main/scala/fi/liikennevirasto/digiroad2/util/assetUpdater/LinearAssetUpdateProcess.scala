@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
@@ -23,7 +23,7 @@ object LinearAssetUpdateProcess {
   lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val hazMatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
   lazy val roadWidthService = new RoadWidthService(roadLinkService, eventbus)
-  lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkClient, roadLinkService)
+  lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkService)
 
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
@@ -60,7 +60,7 @@ object LinearAssetUpdateProcess {
   lazy val prohibitionUpdater = new ProhibitionUpdater(prohibitionService)
   lazy val hazMatTransportProhibitionUpdater = new HazMatTransportProhibitionUpdater(hazMatTransportProhibitionService)
   lazy val roadWidthUpdater = new RoadWidthUpdater(roadWidthService)
-  lazy val speedLimitUpdater = new SpeedLimitUpdater(eventbus, roadLinkClient, roadLinkService, speedLimitService)
+  lazy val speedLimitUpdater = new SpeedLimitUpdater(eventbus, roadLinkService, speedLimitService)
 
   def main(args: Array[String]): Unit = {
     val batchMode = Digiroad2Properties.batchMode

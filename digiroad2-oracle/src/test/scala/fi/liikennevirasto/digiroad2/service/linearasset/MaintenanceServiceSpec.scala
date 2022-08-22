@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -19,7 +20,6 @@ import org.scalatest.{FunSuite, Matchers}
 
 class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
 
   val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
@@ -52,8 +52,8 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq("1")))
     .thenReturn(Seq(PersistedLinearAsset(1, "1", 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, MaintenanceRoadAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
-  val maintenanceDao = new PostGISMaintenanceDao(mockRoadLinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao()
+  val maintenanceDao = new PostGISMaintenanceDao()
   val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
@@ -61,7 +61,6 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: PostGISMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
@@ -75,7 +74,6 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: PostGISMaintenanceDao = mockMaintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao

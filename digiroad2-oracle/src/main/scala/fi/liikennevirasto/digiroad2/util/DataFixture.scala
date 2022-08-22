@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
-import fi.liikennevirasto.digiroad2.client.vvh.{RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{PostGISUserProvider, _}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
@@ -74,7 +74,7 @@ object DataFixture {
   }
 
   lazy val speedLimitService: SpeedLimitService = {
-    new SpeedLimitService(new DummyEventBus, roadLinkClient, roadLinkService)
+    new SpeedLimitService(new DummyEventBus, roadLinkService)
   }
 
   lazy val manoeuvreService: ManoeuvreService = {
@@ -121,7 +121,7 @@ object DataFixture {
   }
 
   lazy val postGISLinearAssetDao : PostGISLinearAssetDao = {
-    new PostGISLinearAssetDao(roadLinkClient, roadLinkService)
+    new PostGISLinearAssetDao()
   }
 
   lazy val inaccurateAssetDAO : InaccurateAssetDAO = {
@@ -149,7 +149,7 @@ object DataFixture {
   }
 
   lazy val speedLimitDao: PostGISSpeedLimitDao = {
-    new PostGISSpeedLimitDao(null, null)
+    new PostGISSpeedLimitDao(null)
   }
 
   lazy val verificationService: VerificationService = {
@@ -632,7 +632,7 @@ object DataFixture {
   }
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
-    val dao = new PostGISLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
@@ -738,7 +738,7 @@ object DataFixture {
     println("\nFill Road Width in missing and incomplete road links")
     println(DateTime.now())
 
-    val dao = new PostGISLinearAssetDao(null, null)
+    val dao = new PostGISLinearAssetDao()
     val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
 
     lazy val roadWidthService: RoadWidthService = {

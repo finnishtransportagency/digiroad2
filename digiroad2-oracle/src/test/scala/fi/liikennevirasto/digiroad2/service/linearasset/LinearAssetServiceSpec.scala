@@ -2,7 +2,8 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -24,7 +25,6 @@ import slick.jdbc.StaticQuery.interpolation
 class LinearAssetSpecSupport extends FunSuite with Matchers {
 
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools: PolygonTools = MockitoSugar.mock[PolygonTools]
 
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
@@ -42,7 +42,7 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
 
   val mockLinearAssetDao: PostGISLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new PostGISLinearAssetDao(mockRoadLinkClient, mockRoadLinkService)
+  val linearAssetDao = new PostGISLinearAssetDao()
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao: PostGISAssetDao = MockitoSugar.mock[PostGISAssetDao]
 
@@ -51,7 +51,6 @@ class LinearAssetSpecSupport extends FunSuite with Matchers {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: PostGISAssetDao = mockAssetDao
@@ -70,7 +69,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def assetDao: PostGISAssetDao = mockAssetDao
@@ -576,7 +574,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
   ignore("Should extend traffic count on segment") {
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
       override def withDynSession[T](f: => T): T = f
@@ -722,7 +719,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
   ignore("Adjust projected asset with creation"){
     val timeStamp = LinearAssetUtils.createTimeStamp(-5)
-    when(mockRoadLinkService.roadLinkClient).thenReturn(mockRoadLinkClient)
 
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
