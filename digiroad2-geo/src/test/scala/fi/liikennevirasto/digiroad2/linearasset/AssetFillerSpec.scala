@@ -25,7 +25,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map.empty[String, Seq[PersistedLinearAsset]]
-    val (filledTopology, _) = assetFiller.fillTopology(topology, linearAssets, 30)
+    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(topology, linearAssets, 30)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
@@ -42,13 +42,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
       linkId1 -> Seq(PersistedLinearAsset(1l, linkId1, 1, Some(NumericValue(1)), 10.0, 15.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
-
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.map(_.value) should be(Seq(None))
-    filledTopology.map(_.id) should be(Seq(0))
-    filledTopology.map(_.linkId) should be(Seq(linkId1))
-    filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.expiredAssetIds should be(Set(1l))
     changeSet.droppedAssetIds should be(Set())
@@ -236,8 +229,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 140)
-    filledTopology should have size 2
-    filledTopology.map(_.id).sorted should be (Seq(0,2))
     changeSet.droppedAssetIds should have size 1
     changeSet.droppedAssetIds.head should be (1)
   }

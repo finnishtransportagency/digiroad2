@@ -485,7 +485,8 @@ object SpeedLimitFiller {
       val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      (existingSegments ++ adjustedSegments, segmentAdjustments)
+      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
+      (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
     }
   }
 
