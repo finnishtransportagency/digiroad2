@@ -43,6 +43,7 @@ class NumericValueLinearAssetServiceSpec extends FunSuite with Matchers {
     override def dao: PostGISLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def polygonTools: PolygonTools = mockPolygonTools
+    override def createTimeStamp(offsetHours:Int=5): Long = 0L 
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
 

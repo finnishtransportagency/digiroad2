@@ -55,7 +55,7 @@ trait LinearAssetOperations {
   def polygonTools : PolygonTools
   def assetDao: PostGISAssetDao
   def assetFiller: AssetFiller = new AssetFiller
-
+  def createTimeStamp(offsetHours:Int=5): Long = LinearAssetUtils.createTimeStamp(offsetHours)
 
   val logger = LoggerFactory.getLogger(getClass)
   val verifiableAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
@@ -373,7 +373,7 @@ trait LinearAssetOperations {
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
     //Create New Asset
     val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, timeStamp.getOrElse(LinearAssetUtils.createTimeStamp()),
+      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, timeStamp.getOrElse(createTimeStamp()),
       roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId), informationSource)
 
       Some(newAssetIDcreate)
@@ -382,7 +382,7 @@ trait LinearAssetOperations {
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, timeStamp: Long = LinearAssetUtils.createTimeStamp()): Seq[Long] = {
+  def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, timeStamp: Long = createTimeStamp()): Seq[Long] = {
     withDynTransaction {
       val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.map { newAsset =>
@@ -461,7 +461,7 @@ trait LinearAssetOperations {
         case NumericValue(intValue) =>
           if ((validateMinDistance(newMeasures.startMeasure, oldLinearAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) || newSideCode != oldLinearAsset.sideCode) {
             dao.updateExpiration(id)
-            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue.apply(intValue), newSideCode, newMeasures, username, LinearAssetUtils.createTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldLinearAsset.verifiedBy, informationSource = informationSource))
+            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue.apply(intValue), newSideCode, newMeasures, username, createTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldLinearAsset.verifiedBy, informationSource = informationSource))
           }
           else
             dao.updateValue(id, intValue, LinearAssetTypes.numericValuePropertyId, username)
@@ -513,7 +513,7 @@ trait LinearAssetOperations {
             filter(_.attributes.get("SURFACETYPE").contains(2)).
             map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
           newAssets.foreach{ newAsset =>
-              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), LinearAssetTypes.VvhGenerated, LinearAssetUtils.createTimeStamp(),
+              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), LinearAssetTypes.VvhGenerated, createTimeStamp(),
                 roadLinks.find(_.linkId == newAsset.linkId))
             count = count + 1
           }

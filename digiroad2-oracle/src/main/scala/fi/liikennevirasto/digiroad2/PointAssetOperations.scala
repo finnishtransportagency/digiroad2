@@ -13,6 +13,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
@@ -119,7 +120,7 @@ trait  PointAssetOperations{
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
-
+  def createTimeStamp(offsetHours:Int=5): Long = LinearAssetUtils.createTimeStamp(offsetHours)
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds,asyncMode=false)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
