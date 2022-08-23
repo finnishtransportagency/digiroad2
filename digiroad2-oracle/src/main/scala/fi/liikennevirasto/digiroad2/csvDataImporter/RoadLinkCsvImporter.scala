@@ -91,15 +91,6 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     }
   }
 
-  def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[String] = {
-    val timeStamps = new java.util.Date().getTime
-    val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap ++ Map("LAST_EDITED_DATE" -> timeStamps) ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)
-    roadLinkClient.complementaryData.updateVVHFeatures(mapProperties) match {
-      case Right(error) => Some(roadLinkVVHAttribute.linkId)
-      case _ => None
-    }
-  }
-
   private def verifyValueType(parameterName: String, parameterValue: String): ParsedRow = {
     parameterValue.forall(_.isDigit) match {
       case true => (Nil, List(AssetProperty(columnName = intFieldMappings(parameterName), value = parameterValue.toInt)))
@@ -204,8 +195,8 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
         }) ++ validateAdministrativeClass(properties.filter(prop => prop.columnName == "ADMINCLASS").map(_.value).headOption, "CSV")
 
         if (unauthorizedAdminClass.isEmpty && objectId != None) {
-          val (propertiesOTH, propertiesVVH) = properties.partition(a => fieldInOTH.contains(a.columnName))
-          val hasDirectionType = propertiesVVH.exists(_.columnName == "DIRECTIONTYPE")
+          val propertiesOTH = properties.partition(a => fieldInOTH.contains(a.columnName))._1
+          val hasDirectionType = propertiesOTH.exists(_.columnName == "DIRECTIONTYPE")
 
           withDynTransaction {
             if (propertiesOTH.nonEmpty || hasDirectionType) {
@@ -216,15 +207,10 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
                   result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
               }
             }
-            if (propertiesVVH.nonEmpty) {
-              val parsedRowVVH = CsvRoadLinkRow(row("linkin id"), objectId.toString.toInt, properties = propertiesVVH)
-              updateRoadLinkInVVH(parsedRowVVH) match {
-                case None => result
-                case Some(value) =>
-                  dynamicSession.rollback()
-                  result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
-              }
-            } else result
+            //if (propertiesVVH.nonEmpty) {
+            // possible future logic to update complimentary links
+            //} else 
+          result
           }
         } else {
           result.copy(
