@@ -22,7 +22,6 @@ class NumericValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, event
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: PostGISAssetDao = new PostGISAssetDao
-  def createTimeStamp(i:Int=5): Long = LinearAssetUtils.createTimeStamp(i) 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
