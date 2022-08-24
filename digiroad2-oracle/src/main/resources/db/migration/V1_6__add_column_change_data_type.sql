@@ -41,9 +41,6 @@ ALTER TABLE manoeuvre_element_history ALTER COLUMN dest_link_id TYPE VARCHAR(40)
 ALTER TABLE road_link_attributes ADD COLUMN vvh_id NUMERIC(38);
 ALTER TABLE road_link_attributes ALTER COLUMN link_id TYPE VARCHAR(40);
 
-ALTER TABLE temp_road_address_info ADD COLUMN vvh_id BIGINT;
-ALTER TABLE temp_road_address_info ALTER COLUMN link_id TYPE VARCHAR(40);
-
 ALTER TABLE traffic_direction ADD COLUMN vvh_id NUMERIC(38);
 ALTER TABLE traffic_direction ALTER COLUMN link_id TYPE VARCHAR(40);
 

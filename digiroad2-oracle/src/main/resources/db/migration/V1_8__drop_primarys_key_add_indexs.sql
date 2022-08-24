@@ -10,7 +10,6 @@ CREATE INDEX lane_history_position_vvh_id_idx ON lane_history_position (vvh_id);
 CREATE INDEX lane_position_vvh_id_idx ON lane_position (vvh_id);
 CREATE INDEX lrm_position_vvh_id_idx ON lrm_position (vvh_id);
 CREATE INDEX lrm_position_history_vvh_id_idx ON lrm_position_history (vvh_id);
-CREATE INDEX temp_road_address_info_vvh_id_idx ON temp_road_address_info (vvh_id);
 CREATE INDEX road_link_attributest_vvh_id_idx ON road_link_attributes (vvh_id);
 CREATE INDEX administrative_class_vvh_id_idx ON administrative_class (vvh_id);
 CREATE INDEX traffic_direction_vvh_id_idx ON traffic_direction (vvh_id);

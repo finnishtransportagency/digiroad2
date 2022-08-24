@@ -89,7 +89,9 @@ object ChangeLanesAccordingToVvhChanges {
   }
 
   def saveChanges(changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]): Unit ={
-    updateChangeSet(changeSet)
+    withDynTransaction {
+      updateChangeSet(changeSet)
+    }
     persistModifiedLinearAssets(modifiedLanes)
   }
 
@@ -115,7 +117,6 @@ object ChangeLanesAccordingToVvhChanges {
       NewLane(0, newStartMeasure, newEndMeasure, persistedLane.municipalityCode, false, false, persistedLane.attributes)
     }
 
-    PostGISDatabase.withDynTransaction {
       if (changeSet.adjustedSideCodes.nonEmpty)
         logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
 
@@ -138,7 +139,7 @@ object ChangeLanesAccordingToVvhChanges {
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))
       ids.foreach(moveToHistory(_, None, true, true, VvhGenerated))
-    }
+
   }
 
   def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit = {

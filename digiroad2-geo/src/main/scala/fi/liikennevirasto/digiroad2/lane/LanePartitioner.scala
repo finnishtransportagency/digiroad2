@@ -13,8 +13,8 @@ object LanePartitioner {
 
 
   def getLaneRoadIdentifierByUsingViiteRoadNumber(lane: PieceWiseLane, roadLink: RoadLink): String = {
-    val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")).toString
-    val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")).toString
+    val roadNumber = lane.attributes.get("ROAD_NUMBER").toString
+    val roadPartNumber = lane.attributes.get("ROAD_PART_NUMBER").toString
     val vvhRoadIdentifier = roadLink.roadIdentifier.toString
     if(roadNumber != "None" && roadPartNumber != "None") roadNumber + "/" + roadPartNumber
     else vvhRoadIdentifier
@@ -110,7 +110,10 @@ object LanePartitioner {
           case Some(laneWithContinuing) =>
             val checkedLane = checkLane(sortedLanes.last, laneWithContinuing.lane, allLanes)
             val nextPoint = checkedLane.endpoints.find(_.round() != continuingPoint.round())
-            getSortedLanes(nextPoint.get, sortedLanes ++ Seq(checkedLane))
+            nextPoint match {
+              case Some(point) => getSortedLanes(point, sortedLanes ++ Seq(checkedLane))
+              case None => sortedLanes
+            }
           case _ => sortedLanes
         }
       }

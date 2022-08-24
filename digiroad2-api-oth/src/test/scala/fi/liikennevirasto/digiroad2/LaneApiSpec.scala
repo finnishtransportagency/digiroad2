@@ -2,10 +2,9 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{ConstructionType, LinkGeomSource, Motorway, Municipality, SideCode, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
-import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, Track}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -31,12 +30,11 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   val pieceWiseLane = PieceWiseLane(111, linkId1, 2, false, Seq(Point(0.0, 0.0), Point(1.0, 1.0)), 0, 1, Set(Point(0.0, 0.0), Point(1.0, 1.0)),
     None, None, None, None, 0L, None, State, Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))))
 
-  val roadAddress = RoadAddress(0, 0, 0, Track(99), 0, 0, None, None, "0", 0, 0, SideCode(1), Seq(), false, None, None, None)
+  val roadAddress = RoadAddressForLink(0, 0, 0, Track(99), 0, 0, None, None, "0", 0, 0, SideCode(1), Seq(), false, None, None, None)
 
   when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(Seq(roadLink))
   when(mockRoadAddressService.getAllByRoadNumber(any())).thenReturn(Seq(roadAddress))
-  when(mockRoadAddressService.laneWithRoadAddress(any())).thenReturn(Seq(Seq(pieceWiseLane)))
-  when(mockRoadAddressService.experimentalLaneWithRoadAddress(any())).thenReturn(Seq(Seq(pieceWiseLane)))
+  when(mockRoadAddressService.laneWithRoadAddress(any())).thenReturn(Seq(pieceWiseLane))
 
   //Creates two road links geometrically next to each other
   def createRoadLinks(): Seq[RoadLink] = {
