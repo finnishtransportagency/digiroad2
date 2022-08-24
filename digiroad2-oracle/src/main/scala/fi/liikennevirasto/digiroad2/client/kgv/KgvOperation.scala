@@ -105,7 +105,12 @@ object FilterOgc extends Filter {
   override def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
     withDateLimitFilter("versionstarttime",lowerDate, higherDate)
   }
-
+  
+  override def withMmlIdFilter(toSet: Set[Long]): String = {
+    if (toSet.nonEmpty) withFilter("sourceid",toSet)
+    else ""
+  }
+  
   override def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
     s"$attributeName >= $lowerDate and $attributeName <= $higherDate"
   }
