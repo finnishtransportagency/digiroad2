@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHChangeInfoClient, VVHComplementaryClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHChangeInfoClient}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -49,7 +49,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockVVHComplementaryDataClient = MockitoSugar.mock[VVHComplementaryClient]
   val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]
   val mockRoadLinkComplimentaryDao = MockitoSugar.mock[ComplementaryLinkDAO]
   
