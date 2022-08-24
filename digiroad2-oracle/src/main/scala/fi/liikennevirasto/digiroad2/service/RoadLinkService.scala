@@ -813,7 +813,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
         insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
 
       case (None, Some(masterDataValue)) =>
-        if (masterDataValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) // only save if it overrides VVH provided value
+        if (masterDataValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) // only save if it overrides master data value
           insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
     }
   }
