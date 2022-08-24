@@ -954,20 +954,6 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkC
     "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
   }
 
-  private def createFormParams(complementaryFeatures: Map[String, Any]): ArrayList[NameValuePair] = {
-    val featuresValue = Serialization.write(Seq(Map("attributes" -> complementaryFeatures)))
-    // Print JSON sent to VVH for testing purposes
-    logger.info("complementaryFeatures to JSON: %s".format(featuresValue))
-
-    val nvps = new ArrayList[NameValuePair]()
-    nvps.add(new BasicNameValuePair("features", featuresValue))
-    nvps.add(new BasicNameValuePair("gdbVersion", ""))
-    nvps.add(new BasicNameValuePair("rollbackOnFailure", "true"))
-    nvps.add(new BasicNameValuePair("f", "pjson"))
-
-    nvps
-  }
-
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLinkFetched]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(Filter.withMtkClassFilter(Set(12314)))))
   }
@@ -978,39 +964,4 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends OldVVHRoadLinkC
 
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[RoadLinkFetched]] =
     Future(queryByMunicipality(municipality, Some(Filter.withMtkClassFilter(Set(12314)))))
-  case class LinkOperationErrorComplementary(content: Map[String, Any], url: String)
-  def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], LinkOperationErrorComplementary] = {
-    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/0/updateFeatures"
-    val request = new HttpPost(url)
-    request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
-    val client = HttpClientBuilder.create().build()
-    val vVHAuthPropertyReader = new VVHAuthPropertyReader
-    request.addHeader("Authorization", "Basic " + vVHAuthPropertyReader.getAuthInBase64)
-
-    val response = client.execute(request)
-    try {
-      val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
-      content.get("updateResults").getOrElse(None) match {
-        case None =>
-          content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
-            case None => Right(LinkOperationErrorComplementary(Map("error" -> "Error Without Details "), url))
-            case value => Right(LinkOperationErrorComplementary(Map("error details" -> value), url))
-          }
-        case _ =>
-          content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
-            case None => Right(LinkOperationErrorComplementary(Map("error" -> "Update status not available in JSON Response"), url))
-            case true => Left(List(content))
-            case false =>
-              content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
-                case None => Right(LinkOperationErrorComplementary(Map("error" -> "Error Without Information"), url))
-                case value => Right(LinkOperationErrorComplementary(Map("error" -> value), url))
-              }
-          }
-      }
-    } catch {
-      case e: Exception => Right(LinkOperationErrorComplementary(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
 }

@@ -314,7 +314,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
     when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     runWithRollback {
-      when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
       when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
       val link_id = "4d146477-876b-4ab5-ad11-f29d16a9b300:1"
       RoadLinkOverrideDAO.insert(RoadLinkOverrideDAO.TrafficDirection, link_id, Some("unit_test"), 1)
@@ -337,7 +336,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
     when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     runWithRollback {
-      when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
       when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
       val link_id = LinkIdGenerator.generateRandom()
       val linkTypeValue = 3
