@@ -106,8 +106,8 @@ object FilterOgc extends Filter {
     withDateLimitFilter("versionstarttime",lowerDate, higherDate)
   }
   
-  override def withMmlIdFilter(toSet: Set[Long]): String = {
-    if (toSet.nonEmpty) withFilter("sourceid",toSet)
+  override def withMmlIdFilter(mmlIds: Set[Long]): String = {
+    if (mmlIds.nonEmpty) withFilter("sourceid",mmlIds)
     else ""
   }
   

@@ -48,7 +48,7 @@ case class LinkOperationError(content: String, statusCode:String, url:String =""
 class ClientException(response: String) extends RuntimeException(response)
 
 trait Filter {
-  def withMmlIdFilter(toSet: Set[Long]): String = ???
+  def withMmlIdFilter(mmlIds: Set[Long]): String = ???
 
   def withFilter[T](attributeName: String, ids: Set[T]): String = ???
 
