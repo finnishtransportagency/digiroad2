@@ -4,7 +4,6 @@ import java.io.{ByteArrayInputStream, InputStream}
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHComplementaryClient
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkOverrideDAO}
@@ -310,9 +309,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
     val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-
-    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-    when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+    
     runWithRollback {
       when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
       val link_id = "4d146477-876b-4ab5-ad11-f29d16a9b300:1"
@@ -332,9 +329,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val attributes1 = Map("OBJECTID" -> BigInt(99))
 
     val newRoadLink1 = RoadLinkFetched(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
-
-    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
-    when(roadLinkCsvImporter.roadLinkClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+    
     runWithRollback {
       when(mockRoadLinkService.fetchComplimentaryByLinkId(any[String])).thenReturn(Some(newRoadLink1))
       val link_id = LinkIdGenerator.generateRandom()

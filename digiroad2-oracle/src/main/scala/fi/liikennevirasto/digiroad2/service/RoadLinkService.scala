@@ -321,16 +321,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getRoadLinksFromVVHByBounds(bounds: BoundingRectangle, bounds2: BoundingRectangle, newTransaction: Boolean = true) : Seq[RoadLink] =
     getRoadLinksAndChangesByBoundsFromVVH(bounds, bounds2, newTransaction)._1
-
-  /**
-    * This method returns VVH road links by link ids.
-    *
-    * @param linkIds
-    * @return VVHRoadLinks
-    */
-  def fetchVVHRoadlinks(linkIds: Set[String]): Seq[RoadLinkFetched] = {
-    fetchVVHRoadlinks(linkIds,false)
-  }
   
   /**
     * This method returns VVH road links by link ids.
@@ -338,8 +328,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param linkIds
     * @return VVHRoadLinks
     */
-  def fetchVVHRoadlinks(linkIds: Set[String], frozenTimeVVHAPIServiceEnabled:Boolean = false): Seq[RoadLinkFetched] = {
-    if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){roadLinkClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else  withDbConnection {roadLinkDAO.fetchByLinkIds(linkIds) }}
+  def fetchVVHRoadlinks(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+    if (linkIds.nonEmpty) {withDbConnection {roadLinkDAO.fetchByLinkIds(linkIds) }}
     else Seq.empty[RoadLinkFetched]
   }
 

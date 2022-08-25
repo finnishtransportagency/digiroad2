@@ -4,7 +4,7 @@ import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ConstructionType, LinkGeomSource, TrafficDirection}
 import fi.liikennevirasto.digiroad2.client.kgv.RoadLinkHistoryClient
-import fi.liikennevirasto.digiroad2.client.vvh.{OldVVHRoadLinkClient, VVHChangeInfoClient, VVHComplementaryClient, VVHFrozenTimeRoadLinkClientServicePoint}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHChangeInfoClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import org.joda.time.DateTime
 
@@ -48,6 +48,8 @@ case class LinkOperationError(content: String, statusCode:String, url:String =""
 class ClientException(response: String) extends RuntimeException(response)
 
 trait Filter {
+  def withMmlIdFilter(mmlIds: Set[Long]): String = ???
+
   def withFilter[T](attributeName: String, ids: Set[T]): String = ???
 
   def withMunicipalityFilter(municipalities: Set[Int]): String = ???
@@ -71,8 +73,6 @@ trait Filter {
 
   def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = ???
 
-  def withMmlIdFilter(mmlIds: Set[Long]): String = ???
-
   def withMtkClassFilter(ids: Set[Long]): String = ???
 
   def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = ???
@@ -82,17 +82,6 @@ trait Filter {
 }
 
 class RoadLinkClient(vvhRestApiEndPoint: String) {
-  lazy val roadLinkData: OldVVHRoadLinkClient = new OldVVHRoadLinkClient(vvhRestApiEndPoint)
-  lazy val frozenTimeRoadLinkData: VVHFrozenTimeRoadLinkClientServicePoint = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
-  lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: RoadLinkHistoryClient = new RoadLinkHistoryClient()
-
-  def fetchRoadLinkByLinkId(linkId: String): Option[RoadLinkFetched] = {
-    roadLinkData.fetchByLinkId(linkId) match {
-      case Some(vvhRoadLink) => Some(vvhRoadLink)
-      case None => complementaryData.fetchByLinkId(linkId)
-    }
-  }
-  
 }

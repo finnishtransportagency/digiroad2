@@ -11,35 +11,7 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
 
   val geomFact= new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
-
-  /**
-    * Checks that VVH history bounding box search works uses API example bounding box so it should receive results
-    */
-  ignore("Tries to connect VVH history API and retrive result") {
-    val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result= roadLinkClient.historyData.fetchByMunicipalitiesAndBounds(BoundingRectangle(Point(564000, 6930000),Point(566000, 6931000)), Set(420))
-    result.size should be >1
-  }
-
-  ignore("Fetch roadlinks with polygon string ") {
-    val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result= roadLinkClient.roadLinkData.fetchByPolygon(geomBuilder.polygon(564000,6930000,566000,6931000,567000,6933000))
-    result.size should be >1
-  }
-  //TODO these test are no longer needed now when we use local db, Delete test in later time
-  ignore("Fetch roadlinks with empty polygon string") {
-    val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result= roadLinkClient.roadLinkData.fetchByPolygon(geomBuilder.polygon())
-    result.size should be (0)
-  }
-  /**
-    * Checks that VVH history link id search works and returns something //TODO these test are no longer needed now when we use local db, Delete test in later time
-    */
-  ignore("Test VVH History LinkId API") {
-    val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-    val result = roadLinkClient.historyData.fetchByLinkIds(Set("440484","440606","440405","440489"))
-    result.nonEmpty should be (true)
-  }
+  
   //Ignored due to DROTH-3311, enable again when change info is fetched
   ignore("Fetch changes with polygon string ") {
     val roadLinkClient= new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
@@ -57,19 +29,6 @@ class RoadLinkClientSpec extends FunSuite with Matchers{
     val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
     val result= roadLinkClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(BoundingRectangle(Point(532578.3338013917,6993401.605560873,0.0),Point(532978.3338013917,6994261.605560873,0.0)), Set.empty[Int])
     result.size should be >1
-  }
-
-  /**
-    * Test for frozen december 15.12.2016 VVH API: No test cases writen to documentation so test might fail for not having any links
-  */
-  //TODO these test are no longer needed now when we use local db, Delete test in later time
-  ignore("Frozen In Time API test ") {
-    val frozenApiEnabled = Digiroad2Properties.vvhRoadlinkFrozen
-    if (frozenApiEnabled=="true") { //Api only exists in QA and Production
-      val roadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
-      val result= roadLinkClient.frozenTimeRoadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)))
-      result.size should be >1
-    }
   }
 
   //Ignored due to DROTH-3311, enable again when change info is fetched
