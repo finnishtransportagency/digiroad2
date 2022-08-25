@@ -19,7 +19,7 @@ sealed trait RoadLinkOverrideDAO{
 
   def getValue(linkProperty: LinkProperties) : Int
 
-  def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int]
+  def getMasterDataValue(roadLinkFetched: RoadLinkFetched): Option[Int]
 
   def getExistingValue(linkId: String): Option[Int]= {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
@@ -55,8 +55,8 @@ sealed trait RoadLinkOverrideDAO{
 
   def insertValuesMass(entries: Seq[MassOperationEntry]): Unit = {
     val insertLinkPropertyPS = dynamicSession.prepareStatement(
-      s"""insert into $table (id, link_id, $column,modified_date, modified_by ) 
-         select nextval('primary_key_seq'),(?),(?),to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'),(?) 
+      s"""insert into $table (id, link_id, $column,modified_date, modified_by )
+         select nextval('primary_key_seq'),(?),(?),to_timestamp((?), 'YYYY-MM-DD"T"HH24:MI:SS.ff3"+"TZH:TZM'),(?)
          where not exists (select * from $table where link_id =(?))""".stripMargin)
     try {
       entries.foreach { property =>
@@ -75,10 +75,10 @@ sealed trait RoadLinkOverrideDAO{
 
   def updateValuesMass(entries: Seq[MassOperationEntry]): Unit = {
     val updateLinkPropertyPS = dynamicSession.prepareStatement(
-      s"""update $table 
-          set $column = (?), 
-          modified_date = current_timestamp, 
-          modified_by = (?) 
+      s"""update $table
+          set $column = (?),
+          modified_date = current_timestamp,
+          modified_by = (?)
           where link_id = (?)""".stripMargin)
     try {
       entries.foreach { property =>
@@ -164,7 +164,7 @@ object RoadLinkOverrideDAO{
   val TrafficDirection = "traffic_direction"
   val LinkType = "link_type"
   val AdministrativeClass = "administrative_class"
-  val VVHAdministrativeClass = "vvh_administrative_class"
+  val MasterDataAdministrativeClass = "master_data_administrative_class"
   val LinkAttributes = "road_link_attributes"
 
   private def getDao(propertyName: String): RoadLinkOverrideDAO = {
@@ -192,9 +192,9 @@ object RoadLinkOverrideDAO{
     dao.getValue(linkProperty)
   }
 
-  def getVVHValue(propertyName: String, roadLinkFetched: RoadLinkFetched): Option[Int] = {
+  def getMasterDataValue(propertyName: String, roadLinkFetched: RoadLinkFetched): Option[Int] = {
     val dao = getDao(propertyName)
-    dao.getVVHValue(roadLinkFetched)
+    dao.getMasterDataValue(roadLinkFetched)
   }
 
   def getLinkIdByValue(propertyName: String, value: Int, since: Option[String]): Seq[String] = {
@@ -281,7 +281,7 @@ object RoadLinkOverrideDAO{
       linkProperty.functionalClass
     }
 
-    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
+    def getMasterDataValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
       None
     }
   }
@@ -295,7 +295,7 @@ object RoadLinkOverrideDAO{
       linkProperty.trafficDirection.value
     }
 
-    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
+    def getMasterDataValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
       Some(roadLinkFetched.trafficDirection.value)
     }
 
@@ -308,8 +308,8 @@ object RoadLinkOverrideDAO{
     override def insertValuesMass(entries: Seq[MassOperationEntry]): Unit = {
 
       val insertLinkPropertyPS = dynamicSession.prepareStatement(
-        s"""insert into $table (id, link_id, $column, modified_by,link_type ) 
-           select nextval('primary_key_seq'),(?),(?),(?),(?) 
+        s"""insert into $table (id, link_id, $column, modified_by,link_type )
+           select nextval('primary_key_seq'),(?),(?),(?),(?)
            where not exists (select * from $table where link_id =(?))""".stripMargin)
       try {
         entries.foreach { property =>
@@ -372,7 +372,7 @@ object RoadLinkOverrideDAO{
       linkProperty.linkType.value
     }
 
-    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
+    def getMasterDataValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
       None
     }
 
@@ -389,7 +389,7 @@ object RoadLinkOverrideDAO{
           (linkId, asset.LinkType.apply(linkType))
       }
     }
-  }
+ }
 
   case object AdministrativeClassDao extends RoadLinkOverrideDAO {
 
@@ -404,14 +404,14 @@ object RoadLinkOverrideDAO{
       linkProperty.administrativeClass.value
     }
 
-    def getVVHValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
+    def getMasterDataValue(roadLinkFetched: RoadLinkFetched): Option[Int] = {
       Some(roadLinkFetched.administrativeClass.value)
     }
 
     override def insertValues(linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
-      val vvhValue = getVVHValue(roadLinkFetched)
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${vvhValue}
+      val masterDataValue = getMasterDataValue(roadLinkFetched)
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$MasterDataAdministrativeClass )
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mmlId, ${masterDataValue}
               where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
@@ -424,10 +424,10 @@ object RoadLinkOverrideDAO{
 
     override def updateValues(linkProperty: LinkProperties, roadLinkFetched: RoadLinkFetched, username: Option[String], value: Int, mml_id: Option[Long] = None): Unit = {
       expireValues(linkProperty.linkId, username)
-      val vvhValue = getVVHValue(roadLinkFetched)
+      val masterDataValue = getMasterDataValue(roadLinkFetched)
 
-      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$VVHAdministrativeClass )
-             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $vvhValue
+      sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$MasterDataAdministrativeClass )
+             select nextval('primary_key_seq'), ${linkProperty.linkId}, $value, $username, $mml_id, $masterDataValue
                    where exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
 
     }
@@ -532,8 +532,8 @@ object RoadLinkOverrideDAO{
       throw new UnsupportedOperationException("Method getValue is not supported for Link Attributes class")
     }
 
-    def getVVHValue(roadLinkFetched: RoadLinkFetched) = {
-      throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
+    def getMasterDataValue(roadLinkFetched: RoadLinkFetched) = {
+      throw new UnsupportedOperationException("Method getMasterDataValue is not supported for Link Attributes class")
     }
   }
 }

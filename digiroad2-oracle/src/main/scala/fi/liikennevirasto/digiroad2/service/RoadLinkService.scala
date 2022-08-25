@@ -796,14 +796,14 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
                                 roadLinkFetched: RoadLinkFetched, latestModifiedAt: Option[String],
                                 latestModifiedBy: Option[String]) = {
     val optionalExistingValue: Option[Int] = RoadLinkOverrideDAO.get(propertyName, linkProperty.linkId)
-    (optionalExistingValue, RoadLinkOverrideDAO.getVVHValue(propertyName, roadLinkFetched)) match {
+    (optionalExistingValue, RoadLinkOverrideDAO.getMasterDataValue(propertyName, roadLinkFetched)) match {
       case (Some(existingValue), _) =>
         RoadLinkOverrideDAO.update(propertyName, linkProperty, roadLinkFetched, username, existingValue, checkMMLId(roadLinkFetched))
       case (None, None) =>
         insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
 
-      case (None, Some(vvhValue)) =>
-        if (vvhValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) // only save if it overrides VVH provided value
+      case (None, Some(masterDataValue)) =>
+        if (masterDataValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) // only save if it overrides master data value
           insertLinkProperty(propertyName, linkProperty, roadLinkFetched, username, latestModifiedAt, latestModifiedBy)
     }
   }
@@ -1085,13 +1085,13 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       val optionalExistingValues = RoadLinkOverrideDAO.getValues(propertyName, entries.map(_.linkProperty.linkId))
       for (entry <- entries) {
         val optionalExistingValue = optionalExistingValues.find(_.linkId == entry.linkProperty.linkId)
-        (optionalExistingValue, RoadLinkOverrideDAO.getVVHValue(entry.propertyName, entry.roadLinkFetched)) match {
+        (optionalExistingValue, RoadLinkOverrideDAO.getMasterDataValue(entry.propertyName, entry.roadLinkFetched)) match {
           case (Some(_), _) =>
             updateValues.append(entry)
           case (None, None) =>
             insertValues.append(entry)
-          case (None, Some(vvhValue)) =>
-            if (vvhValue != RoadLinkOverrideDAO.getValue(entry.propertyName, entry.linkProperty))
+          case (None, Some(masterDataValue)) =>
+            if (masterDataValue != RoadLinkOverrideDAO.getValue(entry.propertyName, entry.linkProperty))
               insertValues.append(entry) // only if it override vvh value
           case _ => Unit
         }

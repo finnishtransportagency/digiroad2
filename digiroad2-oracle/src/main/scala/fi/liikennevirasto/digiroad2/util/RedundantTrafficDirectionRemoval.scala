@@ -13,10 +13,10 @@ class RedundantTrafficDirectionRemoval(roadLinkService: RoadLinkService) {
 
     def findAndDeleteRedundant(roadLinkFetched: RoadLinkFetched): Unit = {
       val optionalExistingValue: Option[Int] = RoadLinkOverrideDAO.get(RoadLinkOverrideDAO.TrafficDirection, roadLinkFetched.linkId)
-      val optionalVVHValue: Option[Int] = RoadLinkOverrideDAO.getVVHValue(RoadLinkOverrideDAO.TrafficDirection, roadLinkFetched)
-      (optionalExistingValue, optionalVVHValue) match {
-        case (Some(existingValue), Some(vvhValue)) =>
-          if (existingValue == vvhValue) {
+      val optionalMasterDataValue: Option[Int] = RoadLinkOverrideDAO.getMasterDataValue(RoadLinkOverrideDAO.TrafficDirection, roadLinkFetched)
+      (optionalExistingValue, optionalMasterDataValue) match {
+        case (Some(existingValue), Some(masterDataValue)) =>
+          if (existingValue == masterDataValue) {
             RoadLinkOverrideDAO.delete(RoadLinkOverrideDAO.TrafficDirection, roadLinkFetched.linkId)
           }
         case (_, _) =>
