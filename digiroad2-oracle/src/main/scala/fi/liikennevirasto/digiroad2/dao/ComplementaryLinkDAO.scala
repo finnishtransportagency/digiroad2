@@ -61,7 +61,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
         "CONSTRUCTIONTYPE" -> constructionType,
         "ROADNAME_FI" -> roadNameFi,
         "ROADNAME_SE" -> roadNameSe,
-        "ROADNAME_SM" -> roadNameSm,
+        "ROADNAMESME" -> roadNameSm,
         "ROADNUMBER" -> roadNumber,
         "ROADPARTNUMBER" -> roadPart,
         "FROM_LEFT" -> fromLeft,

@@ -54,7 +54,9 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   private val textFieldMappings = Map(
     "tien nimi (suomi)" -> "ROADNAME_FI",
     "tien nimi (ruotsi)" -> "ROADNAME_SE",
-    "tien nimi (saame)" -> "ROADNAME_SM"
+    "tien nimi (pohjoissaame)" -> "ROADNAMESME",
+    "tien nimi (inarinsaame)" -> "ROADNAMESMN",
+    "tien nimi (koltansaame)" -> "ROADNAMESMS"
   )
 
   private val mandatoryFields = "linkin id"
