@@ -64,7 +64,7 @@
     ];
 
     var linkTypeRules = [
-      new StyleRule().where('linkType').isIn([2, 3]).use({ stroke: { color: '#01b'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),
+      new StyleRule().where('linkType').isIn([2, 3, 22]).use({ stroke: { color: '#01b'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),
       new StyleRule().where('linkType').isIn([1, 4]).use({ stroke: { color: '#f00'}, icon: { src: 'images/link-properties/arrow-drop-red.svg' } }),
       new StyleRule().where('linkType').isIn([5, 6]).use({ stroke: { color: '#0cd'}, icon: { src: 'images/link-properties/arrow-drop-cyan.svg' } }),
       new StyleRule().where('linkType').isIn([8, 9]).use({ stroke: { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } }),

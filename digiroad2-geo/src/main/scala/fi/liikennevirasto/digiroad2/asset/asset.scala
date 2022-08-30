@@ -52,7 +52,7 @@ sealed trait LinkType
 object LinkType {
   val values = Set(Motorway, MultipleCarriageway, SingleCarriageway, Freeway, Roundabout, SlipRoad,
                    RestArea, CycleOrPedestrianPath, PedestrianZone, ServiceOrEmergencyRoad, EnclosedTrafficArea,
-                   TractorRoad, MotorwayServiceAccess, CableFerry, SpecialTransportWithoutGate, SpecialTransportWithGate, UnknownLinkType)
+                   TractorRoad, MotorwayServiceAccess, CableFerry, SpecialTransportWithoutGate, SpecialTransportWithGate, TwoDirectionTrafficSingleLane, UnknownLinkType)
 
   def apply(value: Int): LinkType = {
     values.find(_.value == value).getOrElse(UnknownLinkType)
@@ -74,6 +74,7 @@ case object MotorwayServiceAccess extends LinkType { def value = 13 }
 case object SpecialTransportWithoutGate extends LinkType { def value = 14 }
 case object SpecialTransportWithGate extends LinkType { def value = 15 }
 case object CableFerry extends LinkType { def value = 21 }
+case object TwoDirectionTrafficSingleLane extends  LinkType { def value = 22}
 case object UnknownLinkType extends LinkType { def value = 99 }
 
 sealed trait FunctionalClass
