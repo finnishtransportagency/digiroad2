@@ -12,6 +12,7 @@ object KgvUtil {
   def extractFeatureClass(code: Int): FeatureClass = {
     code match {
       case 12316 => FeatureClass.TractorRoad
+      case 12317 => FeatureClass.TractorRoad
       case 12141 => FeatureClass.DrivePath
       case 12314 => FeatureClass.CycleOrPedestrianPath
       case 12312 => FeatureClass.WinterRoads
