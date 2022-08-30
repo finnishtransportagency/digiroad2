@@ -481,8 +481,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
     val url = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
     if(!pagination){
-      fetchFeatures(url)
-      match {
+      fetchFeatures(url) match {
         case Right(features) =>features.get.features.map(feature=>
           extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
         case Left(error) => throw new ClientException(error.toString)
