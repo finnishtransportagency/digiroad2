@@ -124,16 +124,9 @@ class ExtractorBase {
 
   def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType = ???
   
-  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
-    12316 -> FeatureClass.TractorRoad,
-    12141 -> FeatureClass.DrivePath,
-    12314 -> FeatureClass.CycleOrPedestrianPath,
-    12312 -> FeatureClass.WinterRoads,
-    12153 -> FeatureClass.SpecialTransportWithoutGate,
-    12154 -> FeatureClass.SpecialTransportWithGate,
-    12131 -> FeatureClass.CarRoad_IIIa,
-    12132 -> FeatureClass.CarRoad_IIIb
-  )
+  protected def featureClassCodeToFeatureClass(code: Int) = {
+    KgvUtil.extractFeatureClass(code)
+  }
 
   protected val trafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
     0 -> TrafficDirection.BothDirections,
@@ -251,7 +244,7 @@ class Extractor extends ExtractorBase {
 
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
 
-    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
+    val roadClass = featureClassCodeToFeatureClass(roadClassCode)
 
     RoadLinkFetched(linkId, municipalityCode,
       linkGeometry,
