@@ -18,10 +18,11 @@ import org.apache.http.params.HttpParams
 import org.json4s.jackson.JsonMethods.parse
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats, StreamInput}
+import org.slf4j.LoggerFactory
 
 import java.util.ArrayList
 
-case class MassQueryParams(identifier: String, point: Point, roadNumber: Long, roadPartNumber: Long)
+case class MassQueryParams(identifier: String, point: Point, roadNumber: Option[Long], roadPartNumber: Option[Long])
 case class AddrWithIdentifier(identifier: String, roadAddress: RoadAddress)
 case class PointWithIdentifier(identifier: String, point: Point)
 
@@ -40,6 +41,7 @@ class VKMClient {
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
 
+  private val logger = LoggerFactory.getLogger(getClass)
   private def vkmBaseUrl = Digiroad2Properties.vkmUrl + "/viitekehysmuunnin/"
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
@@ -139,7 +141,7 @@ class VKMClient {
       case Left(address) => address.features.map(feature => mapMassQueryFields(feature))
       case Right(error) => throw new RoadAddressException(error.toString)
     }
-    result.flatten.toMap
+    result.flatten.flatten.toMap
   }
 
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
@@ -246,17 +248,24 @@ class VKMClient {
     }
   }
 
-  private def mapMassQueryFields(data: Feature): Map[String, RoadAddress] = {
-    val municipalityCode = data.properties.get(VkmMunicipalityCode)
-    val road = validateAndConvertToInt(VkmRoad, data.properties)
-    val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
-    val track = validateAndConvertToInt(VkmTrackCode, data.properties)
-    val mValue = validateAndConvertToInt(VkmDistance, data.properties)
-    val queryIdentifier = data.properties(VkmQueryIdentifier)
-    if (Track.apply(track).eq(Track.Unknown)) {
-      throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
+  private def mapMassQueryFields(data: Feature): Option[Map[String, RoadAddress]] = {
+    try{
+      val municipalityCode = data.properties.get(VkmMunicipalityCode)
+      val road = validateAndConvertToInt(VkmRoad, data.properties)
+      val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
+      val track = validateAndConvertToInt(VkmTrackCode, data.properties)
+      val mValue = validateAndConvertToInt(VkmDistance, data.properties)
+      val queryIdentifier = data.properties(VkmQueryIdentifier)
+      if (Track.apply(track).eq(Track.Unknown)) {
+        throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
+      }
+      Some(Map(queryIdentifier -> RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)))
     }
-    Map(queryIdentifier -> RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue))
+    catch {
+      case rae: RoadAddressException =>
+        logger.error("Error mapping to VKM data to road address: " + rae.getMessage)
+        None
+    }
   }
 
   private def mapFields(data: Feature) = {

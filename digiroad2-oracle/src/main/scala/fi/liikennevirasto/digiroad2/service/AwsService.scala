@@ -73,5 +73,10 @@ class AwsService {
           false //Return false when wait object request time outs
       }
     }
+
+    def getObjectFromS3(s3bucket: String, key: String) = {
+      val getObjectRequest = GetObjectRequest.builder().bucket(s3bucket).key(key).build()
+      s3.getObject(getObjectRequest)
+    }
   }
 }
