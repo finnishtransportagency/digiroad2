@@ -91,7 +91,8 @@
       [21, 'Huoltoaukko moottoritiellä'],
       [14, 'Erikoiskuljetusyhteys ilman puomia'],
       [15, 'Erikoiskuljetusyhteys puomilla'],
-      [13, 'Lautta tai lossi']
+      [13, 'Lautta tai lossi'],
+      [22, 'Kaksisuuntainen yksikaistainen tie']
 
     ];
     var linkTypeLegendEntries = _.map(linkTypes, function(linkType) {
