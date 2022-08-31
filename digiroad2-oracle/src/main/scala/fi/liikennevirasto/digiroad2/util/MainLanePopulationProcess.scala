@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
 
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, RestArea, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection, BidirectionalLaneCarriageWay, RestArea}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
