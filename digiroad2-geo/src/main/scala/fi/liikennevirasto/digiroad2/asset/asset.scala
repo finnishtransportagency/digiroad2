@@ -74,7 +74,7 @@ case object MotorwayServiceAccess extends LinkType { def value = 13 }
 case object SpecialTransportWithoutGate extends LinkType { def value = 14 }
 case object SpecialTransportWithGate extends LinkType { def value = 15 }
 case object CableFerry extends LinkType { def value = 21 }
-case object TwoDirectionTrafficSingleLane extends  LinkType { def value = 22}
+case object BidirectionalLaneCarriageway extends  LinkType { def value = 22}
 case object UnknownLinkType extends LinkType { def value = 99 }
 
 sealed trait FunctionalClass
