@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
+
 import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, RestArea, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection, BidirectionalLaneCarriageWay, RestArea}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, lane}
@@ -39,8 +41,7 @@ object MainLanePopulationProcess {
   lazy val username = "auto_generated_lane"
 
   lazy val twoWayLanes: Seq[LinkType] = Seq(
-      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess,
-      TractorRoad, CycleOrPedestrianPath, RestArea)
+      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess, CycleOrPedestrianPath, BidirectionalLaneCarriageWay, RestArea)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -83,7 +84,7 @@ object MainLanePopulationProcess {
   private def mainLanesForMunicipality(municipality: Int, initialProcessing: Boolean): Unit = {
     logger.info("Working on municipality -> " + municipality)
 
-    val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+    val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filterNot(_.linkType == TractorRoad)
 
     // If not initial process, filter out roadLinks that already have main lanes
     val roadLinksWithoutMainLanes =
@@ -124,18 +125,11 @@ object MainLanePopulationProcess {
 
   // Moves all existing lanes to history and creates new main lanes from vvh road links
   def initialProcess(): Unit = {
-    logger.info(s"Start to remove existing lanes ${DateTime.now()}")
+    logger.info(s"Truncate all lane tables ${DateTime.now()}")
 
-    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+    PostGISDatabase.withDynTransaction(laneService.deleteAllPreviousLaneData())
 
-    municipalities.foreach { municipality =>
-      logger.info("Deleting lanes from municipality -> " + municipality)
-      PostGISDatabase.withDynTransaction(laneService.expireAllMunicipalityLanes(municipality, username))
-    }
-
-    logger.info(s"Finished removing lanes ${DateTime.now()}")
+    logger.info(s"Finished removing all lane data ${DateTime.now()}")
 
     // Populate main lanes from road links
     process(initialProcessing = true)

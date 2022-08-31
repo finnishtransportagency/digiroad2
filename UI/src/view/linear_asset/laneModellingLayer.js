@@ -179,6 +179,17 @@
         var nearestLinearAsset = getLanePieceToCut([mousePoint.x, mousePoint.y]);
         if (_.isUndefined(nearestLinearAsset)) return;
 
+        if (nearestLinearAsset.selectedLinks.length !== 1) {
+          var cutToolAlertPopUpOptions = {
+            type: "alert",
+            yesButtonLbl: 'Ok',
+          };
+          var alertMessage = "Kaistan katkaisu ei ole sallittu, kun useamman kuin yhden tielinkin kaistat ovat valittu";
+
+          GenericConfirmPopup(alertMessage, cutToolAlertPopUpOptions);
+          return;
+        }
+
         if(authorizationPolicy.formEditModeAccess(nearestLinearAsset)) {
           var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
           selectedLane.splitLinearAsset(_.head(_.find(nearestLinearAsset.properties, function(property){
