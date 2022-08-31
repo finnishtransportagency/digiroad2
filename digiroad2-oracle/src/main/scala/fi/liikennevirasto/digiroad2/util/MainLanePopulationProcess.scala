@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, RestArea, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, lane}
@@ -40,7 +40,7 @@ object MainLanePopulationProcess {
 
   lazy val twoWayLanes: Seq[LinkType] = Seq(
       SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess,
-      TractorRoad, CycleOrPedestrianPath)
+      TractorRoad, CycleOrPedestrianPath, RestArea)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -111,9 +111,10 @@ object MainLanePopulationProcess {
   def process(initialProcessing: Boolean = false): Unit = {
     logger.info(s"Start to populate main lanes from road links ${DateTime.now()}")
 
-    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+    val municipalities: Seq[Int] = Seq(179)
+//      PostGISDatabase.withDynSession {
+//      Queries.getMunicipalities
+//    }
 
     municipalities.foreach { municipality =>
       mainLanesForMunicipality(municipality, initialProcessing)
@@ -126,9 +127,10 @@ object MainLanePopulationProcess {
   def initialProcess(): Unit = {
     logger.info(s"Start to remove existing lanes ${DateTime.now()}")
 
-    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+    val municipalities: Seq[Int] = Seq(179)
+    //      PostGISDatabase.withDynSession {
+    //      Queries.getMunicipalities
+    //    }
 
     municipalities.foreach { municipality =>
       logger.info("Deleting lanes from municipality -> " + municipality)
