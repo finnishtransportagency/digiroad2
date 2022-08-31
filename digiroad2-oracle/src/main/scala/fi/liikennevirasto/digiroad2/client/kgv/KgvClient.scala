@@ -86,9 +86,6 @@ class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSo
 
   def fetchByLinkIdsF(linkIds: Set[String]) = Future(fetchByLinkIds(linkIds))
 
-  def fetchVVHRoadlinks[LinkType](linkIds: Set[String]): Seq[LinkType] =
-    queryByLinkIds[LinkType](linkIds)
-
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     queryByLastEditedDate(lowerDate,higherDate)
   }
