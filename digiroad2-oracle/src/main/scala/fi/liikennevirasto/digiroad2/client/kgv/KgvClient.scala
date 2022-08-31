@@ -86,9 +86,6 @@ class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSo
 
   def fetchByLinkIdsF(linkIds: Set[String]) = Future(fetchByLinkIds(linkIds))
 
-  def fetchVVHRoadlinks[LinkType](linkIds: Set[String]): Seq[LinkType] =
-    queryByLinkIds[LinkType](linkIds)
-
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     queryByLastEditedDate(lowerDate,higherDate)
   }
@@ -172,7 +169,7 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
   override type LinkType = HistoryRoadLink
 
   private def enrichWithChangeInfo(response: Seq[HistoryRoadLink]): Seq[HistoryRoadLink] = {
-    val changesLinkInfo = new RoadLinkChangeKGvClient().fetchByOldKmtkId(response.map(_.kmtkid).toSet)
+    val changesLinkInfo = new RoadLinkChangeKgvClient().fetchByOldKmtkId(response.map(_.kmtkid).toSet)
     response.map(r => {
       val newId = Try {
         val link = changesLinkInfo.find(f => r.kmtkid == f.oldKmtkId && r.version == f.oldVersion).get
@@ -189,7 +186,7 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
 
 }
 
-class RoadLinkChangeKGvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
+class RoadLinkChangeKgvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
   extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractKgvChange) {
 
   override type LinkType = ChangeKgv
