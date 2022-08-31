@@ -111,10 +111,9 @@ object MainLanePopulationProcess {
   def process(initialProcessing: Boolean = false): Unit = {
     logger.info(s"Start to populate main lanes from road links ${DateTime.now()}")
 
-    val municipalities: Seq[Int] = Seq(179)
-//      PostGISDatabase.withDynSession {
-//      Queries.getMunicipalities
-//    }
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
 
     municipalities.foreach { municipality =>
       mainLanesForMunicipality(municipality, initialProcessing)
@@ -127,10 +126,9 @@ object MainLanePopulationProcess {
   def initialProcess(): Unit = {
     logger.info(s"Start to remove existing lanes ${DateTime.now()}")
 
-    val municipalities: Seq[Int] = Seq(179)
-    //      PostGISDatabase.withDynSession {
-    //      Queries.getMunicipalities
-    //    }
+    val municipalities: Seq[Int] = PostGISDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
 
     municipalities.foreach { municipality =>
       logger.info("Deleting lanes from municipality -> " + municipality)
