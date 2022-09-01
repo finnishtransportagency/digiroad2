@@ -32,7 +32,7 @@
       {value: 10, text: 'Huolto- tai pelastustie'},
       {value: 11, text: 'Liitännäisliikennealue'},
       {value: 12, text: 'Ajopolku'},
-      {value: 13, text: 'Huoltoaukko moottoritiellä'},
+      {value: 13, text: 'Huoltoaukko'},
       {value: 14, text: 'Erikoiskuljetusyhteys ilman puomia'},
       {value: 15, text: 'Erikoiskuljetusyhteys puomilla'},
       {value: 21, text: 'Lautta/lossi'},
