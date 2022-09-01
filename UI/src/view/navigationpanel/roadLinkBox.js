@@ -88,7 +88,7 @@
       [8, 'Kevyen liikenteen väylä'],
       [11, '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>'],
       [12, 'Ajopolku'],
-      [21, 'Huoltoaukko moottoritiellä'],
+      [21, 'Huoltoaukko'],
       [14, 'Erikoiskuljetusyhteys ilman puomia'],
       [15, 'Erikoiskuljetusyhteys puomilla'],
       [13, 'Lautta tai lossi']

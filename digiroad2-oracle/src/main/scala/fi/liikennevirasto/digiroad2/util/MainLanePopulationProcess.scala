@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, MotorwayServiceAccess, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, LinkType, ServiceAccess, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.toSideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, lane}
@@ -39,7 +39,7 @@ object MainLanePopulationProcess {
   lazy val username = "auto_generated_lane"
 
   lazy val twoWayLanes: Seq[LinkType] = Seq(
-      SpecialTransportWithoutGate, SpecialTransportWithGate, MotorwayServiceAccess,
+      SpecialTransportWithoutGate, SpecialTransportWithGate, ServiceAccess,
       TractorRoad, CycleOrPedestrianPath)
 
   private val logger = LoggerFactory.getLogger(getClass)
