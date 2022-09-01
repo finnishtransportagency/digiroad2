@@ -5,12 +5,12 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
@@ -78,17 +78,17 @@ trait LaneOperations {
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
-    val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets.map(Seq(_))))
-    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
-    val lanesWithRoadAddress = (updatedInfo.flatten ++ frozenInfo.flatten).distinct.map {lane =>
+    val lanesWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets))
+    val lanesWithAddressAndLinkType = lanesWithRoadAddress.map { lane =>
       val linkType = roadLinks.find(_.linkId == lane.linkId).headOption match {
+
         case Some(roadLink) => roadLink.linkType.value
         case _ => UnknownLinkType.value
       }
       lane.copy(attributes = lane.attributes + ("linkType" -> linkType))
     }
 
-    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithRoadAddress, roadLinks.groupBy(_.linkId).mapValues(_.head)))
+    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithAddressAndLinkType, roadLinks.groupBy(_.linkId).mapValues(_.head)))
     (partitionedLanes, roadLinksWithoutLanes)
   }
 
@@ -399,9 +399,7 @@ trait LaneOperations {
     val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
 
-    val viiteInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks)
-    val vkmInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))
-    val roadLinksWithRoadAddressInfo = viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation.filter(_.attributes.contains("TEMP_START_ADDR"))
+    val roadLinksWithRoadAddressInfo = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
     val historyLanesWithRoadAddress = historyLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
 
     val upToDateLaneChanges = upToDateLanes.flatMap{ upToDate =>
@@ -522,11 +520,11 @@ trait LaneOperations {
     val existingPersistedLanes = laneChanges.map(_.lane)
     val oldPersistedLanes = laneChanges.flatMap(_.oldLane)
 
-    val existingLanesWithConsistentAddress = lanesWithConsistentRoadAddress(pwLanesToPersistedLanesWithAddress(existingPersistedLanes, roadLinks))
-    val oldLanesWithConsistentAddress = lanesWithConsistentRoadAddress(pwLanesToPersistedLanesWithAddress(oldPersistedLanes, roadLinks))
+    val existingLanesWithRoadAddress = pwLanesToPersistedLanesWithAddress(existingPersistedLanes, roadLinks)
+    val oldLanesWithRoadAddress = pwLanesToPersistedLanesWithAddress(oldPersistedLanes, roadLinks)
 
-    val twoDigitExistingPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(existingLanesWithConsistentAddress).flatten
-    val twoDigitOldPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(oldLanesWithConsistentAddress).flatten
+    val twoDigitExistingPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(existingLanesWithRoadAddress).flatten
+    val twoDigitOldPwLanes = pieceWiseLanesToTwoDigitWithMassQuery(oldLanesWithRoadAddress).flatten
 
     val twoDigitExistingPersistedLanes = pieceWiseLanesToPersistedLane(twoDigitExistingPwLanes)
     val twoDigitOldPersistedLanes = pieceWiseLanesToPersistedLane(twoDigitOldPwLanes)
@@ -555,9 +553,8 @@ trait LaneOperations {
     val lanesWithRoadLinks = roadLinks.map(roadLink => (lanes.filter(_.linkId == roadLink.linkId), roadLink))
     val pwLanes = lanesWithRoadLinks.flatMap(pair => laneFiller.toLPieceWiseLane(pair._1, pair._2))
 
-    val updatedInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(Seq(pwLanes)))
-    val frozenInfo = LogUtils.time(logger, "TEST LOG Get temp road address for lanes ")(roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))))
-    (updatedInfo.flatten ++ frozenInfo.flatten).distinct
+    val lanesWithRoadAddressInfo = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(pwLanes))
+    lanesWithRoadAddressInfo
   }
 
   def pieceWiseLanesToPersistedLane(pwLanes: Seq[PieceWiseLane]): Seq[PersistedLane] = {
@@ -578,12 +575,12 @@ trait LaneOperations {
                   historyLane.expired, historyLane.vvhTimeStamp, historyLane.geomModifiedDate, historyLane.attributes)
   }
 
-  def fixSideCode( roadAddress: RoadAddressTEMP , laneCode: String ): SideCode = {
+  def fixSideCode(roadAddress: RoadAddressForLink, laneCode: String ): SideCode = {
     // Need to pay attention of the SideCode and laneCode. This will have influence in representation of the lane
     roadAddress.sideCode match {
-      case Some(SideCode.AgainstDigitizing) =>
+      case SideCode.AgainstDigitizing =>
         if (laneCode.startsWith("1")) SideCode.AgainstDigitizing else SideCode.TowardsDigitizing
-      case Some(SideCode.TowardsDigitizing) =>
+      case SideCode.TowardsDigitizing =>
         if (laneCode.startsWith("1")) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
       case _ => SideCode.BothDirections
     }
@@ -1070,88 +1067,57 @@ trait LaneOperations {
     newLanesByLaneCode.flatMap { case (laneCode, lanesToUpdate) =>
       val oldLanesByCode = oldLanes.filter(_.laneCode == laneCode)
 
-      if (lanesToUpdate.size >= 2) {
-        //When one or more lanes are cut to smaller pieces
-        val newLanesIDs = lanesToUpdate.map { lane =>
-          create(Seq(lane), linkIds, sideCode, username).head
-        }
+      //When one or more lanes are cut to smaller pieces
+      val newLanesIDs = lanesToUpdate.map { lane =>
+        create(Seq(lane), linkIds, sideCode, username).head
+      }
 
-        val createdNewLanes = dao.fetchLanesByIds(newLanesIDs.toSet)
+      val createdNewLanes = dao.fetchLanesByIds(newLanesIDs.toSet)
 
-        def newLanesWithinOldLaneRange(newLanes: Seq[PersistedLane], oldLane: PersistedLane) = {
-          newLanes.filter(newLane => newLane.startMeasure >= oldLane.startMeasure && newLane.endMeasure <= oldLane.endMeasure)
-        }
-
-        /*Creates an explicit expired lane piece for those parts of the split line that have been deleted before saving.
-        Needed for change messages, so that the expiration change will be mapped to the expired lane part in ChangeAPI.*/
-        def createExpiredPartsOfOldLane(newLanes: Seq[PersistedLane], oldLane: PersistedLane): Unit = {
-          val sortedNewLanes = newLanes.sortBy(_.startMeasure)
-          var start = oldLane.startMeasure
-          sortedNewLanes.foreach { newLane =>
-            if (start < newLane.startMeasure) {
-              val replacementLaneId = create(Seq(NewLane(0, start, newLane.startMeasure, oldLane.municipalityCode, true, true,
-                oldLane.attributes, Some(sideCode))), linkIds, sideCode, username).head
-              moveToHistory(oldLane.id, Some(replacementLaneId), true, false, username)
-              moveToHistory(replacementLaneId, None, true, true, username)
-              start = newLane.startMeasure
-            } else {
-              start = newLane.endMeasure
-            }
-
+      //Expire only those old lanes that have been replaced by new lane pieces.
+      oldLanesByCode.foreach { oldLane =>
+        val newLanesWithinRange = newLanesWithinOldLaneRange(createdNewLanes, oldLane)
+        if (!newLanesWithinRange.isEmpty) {
+          createExpiredPartsOfOldLane(newLanesWithinRange, oldLane, sideCode, linkIds, username)
+          newLanesWithinRange.foreach { newLane =>
+            moveToHistory(oldLane.id, Some(newLane.id), true, false, username)
           }
-          val lastNewLane = sortedNewLanes.last
-          if (lastNewLane.endMeasure < oldLane.endMeasure) {
-            val replacementLaneId = create(Seq(NewLane(0, lastNewLane.endMeasure, oldLane.endMeasure, oldLane.municipalityCode, true, true,
-              oldLane.attributes, Some(sideCode))), linkIds, sideCode, username).head
-            moveToHistory(oldLane.id, Some(replacementLaneId), true, false, username)
-            moveToHistory(replacementLaneId, None, true, true, username)
-          }
-        }
-
-        //Expire only those old lanes that have been replaced by new lane pieces.
-        oldLanes.foreach { oldLane =>
-          val newLanesWithinRange = newLanesWithinOldLaneRange(createdNewLanes, oldLane)
-          if (!newLanesWithinRange.isEmpty) {
-            createExpiredPartsOfOldLane(newLanesWithinRange, oldLane)
-            newLanesWithinRange.foreach { newLane =>
-              moveToHistory(oldLane.id, Some(newLane.id), true, false, username)
-            }
-            dao.deleteEntryLane(oldLane.id)
-          }
-        }
-
-        newLanesIDs
-
-      } else if (lanesToUpdate.size == 1 && oldLanesByCode.size == 2) {
-        //When its to transform two lanes in one on same roadlink
-        val newLanesIDs = lanesToUpdate.map { lane =>
-          create(Seq(lane), linkIds, sideCode, username).head
-        }
-
-        oldLanesByCode.foreach { oldLane =>
-          moveToHistory(oldLane.id, Some(newLanesIDs.head), true, true, username)
-        }
-
-        newLanesIDs
-
-      } else {
-        //When its to update both lanes in one link
-        oldLanesByCode.map { oldLane =>
-          val newDataToUpdate = lanesToUpdate.filter(_.id == oldLane.id).head
-
-          if (isSomePropertyDifferent(oldLane, newDataToUpdate.properties)) {
-            val persistedLaneToUpdate = PersistedLane(newDataToUpdate.id, linkIds.head, sideCode, oldLane.laneCode, newDataToUpdate.municipalityCode,
-              newDataToUpdate.startMeasure, newDataToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, newDataToUpdate.properties)
-
-            moveToHistory(oldLane.id, None, false, false, username)
-            dao.updateEntryLane(persistedLaneToUpdate, username)
-
-          } else {
-            oldLane.id
-          }
+          dao.deleteEntryLane(oldLane.id)
         }
       }
+
+      newLanesIDs
     }.toSeq
+  }
+
+  def newLanesWithinOldLaneRange(newLanes: Seq[PersistedLane], oldLane: PersistedLane) = {
+    newLanes.filter(newLane => newLane.startMeasure >= oldLane.startMeasure && newLane.endMeasure <= oldLane.endMeasure)
+  }
+
+  /*Creates an explicit expired lane piece for those parts of the split line that have been deleted before saving.
+  Needed for change messages, so that the expiration change will be mapped to the expired lane part in ChangeAPI.*/
+  def createExpiredPartsOfOldLane(newLanes: Seq[PersistedLane], oldLane: PersistedLane, sideCode: Int, linkIds: Set[Long], username: String): Unit = {
+    val sortedNewLanes = newLanes.sortBy(_.startMeasure)
+    var start = oldLane.startMeasure
+    sortedNewLanes.foreach { newLane =>
+      if (start < newLane.startMeasure) {
+        val replacementLaneId = create(Seq(NewLane(0, start, newLane.startMeasure, oldLane.municipalityCode, true, true,
+          oldLane.attributes, Some(sideCode))), linkIds, sideCode, username).head
+        moveToHistory(oldLane.id, Some(replacementLaneId), true, false, username)
+        moveToHistory(replacementLaneId, None, true, true, username)
+        start = newLane.startMeasure
+      } else {
+        start = newLane.endMeasure
+      }
+
+    }
+    val lastNewLane = sortedNewLanes.last
+    if (lastNewLane.endMeasure < oldLane.endMeasure) {
+      val replacementLaneId = create(Seq(NewLane(0, lastNewLane.endMeasure, oldLane.endMeasure, oldLane.municipalityCode, true, true,
+        oldLane.attributes, Some(sideCode))), linkIds, sideCode, username).head
+      moveToHistory(oldLane.id, Some(replacementLaneId), true, false, username)
+      moveToHistory(replacementLaneId, None, true, true, username)
+    }
   }
 
   def expireAllAdditionalLanes(username: String): Unit = {
@@ -1169,6 +1135,11 @@ trait LaneOperations {
     }
   }
 
+  //Deletes all lane info, only to be used in MainLanePopulation initial process
+  def deleteAllPreviousLaneData(): Unit = {
+    dao.truncateLaneTables()
+  }
+
   def persistedLaneToTwoDigitLaneCode(lane: PersistedLane, newTransaction: Boolean = true): Option[PersistedLane] = {
     val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId), newTransaction).head
     val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
@@ -1179,27 +1150,21 @@ trait LaneOperations {
     }
   }
 
-  def lanesWithConsistentRoadAddress(lanesWithRoadAddress: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
-    lanesWithRoadAddress.map(lane => {
-      val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.getOrElse("TEMP_ROAD_NUMBER", None))
-      val trackNumber = lane.attributes.getOrElse("VIITE_TRACK", lane.attributes.getOrElse("TEMP_TRACK", None))
-      val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.getOrElse("TEMP_ROAD_PART_NUMBER", None))
-      val startAddr = lane.attributes.getOrElse("VIITE_START_ADDR", lane.attributes.getOrElse("TEMP_START_ADDR", None))
-      val endAddr = lane.attributes.getOrElse("VIITE_END_ADDR", lane.attributes.getOrElse("TEMP_END_ADDR", None))
-      lane.copy(attributes = lane.attributes + ("ROAD_NUMBER" -> roadNumber, "ROAD_PART_NUMBER" -> roadPartNumber,
-        "START_ADDR" -> startAddr, "END_ADDR" -> endAddr, "TRACK" -> trackNumber))
-    })
-  }
-
   def pieceWiseLanesToTwoDigitWithMassQuery(pwLanes: Seq[PieceWiseLane]): Seq[Option[PieceWiseLane]] = {
-    val vkmParameters = pwLanes.map(lane => {
-      MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long], lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
-    }) ++ pwLanes.map(lane => {
-      MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes("ROAD_NUMBER").asInstanceOf[Long], lane.attributes("ROAD_PART_NUMBER").asInstanceOf[Long])
-    })
+    val vkmParameters =
+      pwLanes.map(lane => {
+        MassQueryParams(lane.id.toString + "/starting", lane.endpoints.minBy(_.y), lane.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]],
+          lane.attributes.get("ROAD_PART_NUMBER").asInstanceOf[Option[Long]])
+      }) ++ pwLanes.map(lane => {
+        MassQueryParams(lane.id.toString + "/ending", lane.endpoints.maxBy(_.y), lane.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]],
+          lane.attributes.get("ROAD_PART_NUMBER").asInstanceOf[Option[Long]])
+      })
 
-    val vkmParametesSplit = vkmParameters.grouped(1000).toSeq
-    val roadAddressesSplit = vkmParametesSplit.map(parameterGroup => vkmClient.coordToAddressMassQuery(parameterGroup))
+    val vkmParametersSplit = vkmParameters.grouped(1000).toSeq
+    val roadAddressesSplit = vkmParametersSplit.map(parameterGroup => {
+      LogUtils.time(logger, "VKM transformation for " + parameterGroup.size + " coordinates") {
+        vkmClient.coordToAddressMassQuery(parameterGroup)}
+    })
     val roadAddresses = roadAddressesSplit.foldLeft(Map.empty[String, RoadAddress])(_ ++ _)
 
     pwLanes.map(lane => {

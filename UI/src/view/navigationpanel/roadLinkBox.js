@@ -91,7 +91,8 @@
       [21, 'Huoltoaukko'],
       [14, 'Erikoiskuljetusyhteys ilman puomia'],
       [15, 'Erikoiskuljetusyhteys puomilla'],
-      [13, 'Lautta tai lossi']
+      [13, 'Lautta tai lossi'],
+      [22, 'Kaksisuuntainen yksikaistainen tie']
 
     ];
     var linkTypeLegendEntries = _.map(linkTypes, function(linkType) {
@@ -169,7 +170,7 @@
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
 
-        var complementaryCheckboxChecked = legendContainer.find('#complementaryCheckbox').prop('checked');
+        var complementaryCheckboxChecked = elements.expanded.find('#complementaryCheckbox').prop('checked');
 
         legendContainer.find('#historyCheckbox').prop('checked', false);
         eventbus.trigger('roadLinkHistory:hide');
@@ -182,9 +183,9 @@
         if (allCheckBoxs) {
           elements.expanded.find('.panel-section.checkbox-box').replaceWith(allCheckBoxs);
           if (complementaryCheckboxChecked) {
-            legendContainer.find('#complementaryCheckbox').prop('checked', true);
+            elements.expanded.find('#complementaryCheckbox').prop('checked', true);
           } else {
-            legendContainer.find('#complementaryCheckbox').prop('checked', false);
+            elements.expanded.find('#complementaryCheckbox').prop('checked', false);
           }
         }
 

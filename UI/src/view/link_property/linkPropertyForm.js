@@ -51,7 +51,8 @@
       [13, 'Huoltoaukko'],
       [14, 'Erikoiskuljetusyhteys ilman puomia'],
       [15, 'Erikoiskuljetusyhteys puomilla'],
-      [21, 'Lautta/lossi']
+      [21, 'Lautta/lossi'],
+      [22, 'Kaksisuuntainen yksikaistainen tie']
     ];
 
     var verticalLevelTypes= [

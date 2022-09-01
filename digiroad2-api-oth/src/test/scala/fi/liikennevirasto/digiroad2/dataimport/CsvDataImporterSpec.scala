@@ -531,7 +531,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val laneRow = Map("kaista" -> 12)
 
     val invalidCsv = csvToInputStream(createBadCsvLanes(laneRow))
-    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse)
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse, "fileName")
 
     assets.incompleteRows.size should be (1)
     assets.incompleteRows.head.missingParameters should contain allOf ("katyyppi", "tie", "osa", "ajorata", "aet", "let")
@@ -542,7 +542,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val laneRow2 = Map("kaista" -> 13, "katyyppi" -> 100, "tie" -> 2, "osa" -> 67, "ajorata" -> 671, "aet" -> "", "let" -> "")
 
     val invalidCsv = csvToInputStream(createCsvLanes(laneRow1, laneRow2))
-    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse)
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse, "fileName")
 
     assets.malformedRows.size should be (2)
     assets.malformedRows.last.malformedParameters should contain allOf ("kaista", "tie")
@@ -553,7 +553,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val laneRow = Map("kaista" -> 12, "katyyppi" -> 2, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
 
     val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
-    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse)
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse, "fileName")
 
     assets.notImportedData.size should be (1)
     assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow))
@@ -563,7 +563,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
 
     val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
-    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse)
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse, "fileName")
 
     assets.notImportedData.size should be (1)
     assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow))
@@ -582,7 +582,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val laneRow = Map("kaista" -> 12, "katyyppi" -> 2, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
 
       val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
-      val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse)
+      val assets = lanesCsvImporter.processing(invalidCsv, testUser, updateOnlyStartDatesFalse, "fileName")
 
       val propertiesCreated = List(AssetProperty("end distance","1000"),
         AssetProperty("road part","999"),

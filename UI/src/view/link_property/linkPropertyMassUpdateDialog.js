@@ -35,7 +35,8 @@
       {value: 13, text: 'Huoltoaukko'},
       {value: 14, text: 'Erikoiskuljetusyhteys ilman puomia'},
       {value: 15, text: 'Erikoiskuljetusyhteys puomilla'},
-      {value: 21, text: 'Lautta/lossi'}
+      {value: 21, text: 'Lautta/lossi'},
+      {value: 22, text: 'Kaksisuuntainen yksikaistainen tie'}
     ];
 
     var createOptionElements = function(options) {
