@@ -64,11 +64,11 @@ class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater
         (linearAsset.createdBy, linearAsset.createdDateTime) match {
           case (Some(createdBy), Some(createdDateTime)) =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.timeStamp,
+              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.generatedInUpdate, linearAsset.timeStamp,
               service.getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate)
           case _ =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.timeStamp, service.getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
+              Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.generatedInUpdate, linearAsset.timeStamp, service.getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
         }
       linearAsset.value match {
         case Some(prohibitions: Prohibitions) =>
@@ -85,10 +85,10 @@ class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater
       .getOrElse(throw new IllegalStateException("Prohibition: Old asset " + adjustment.assetId + " no longer available"))
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
       .getOrElse(throw new IllegalStateException("Road link " + oldAsset.linkId + " no longer available"))
-    service.expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
+    service.expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.generatedInUpdate, expired = true, newTransaction = false)
     service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value,
-      Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, LinearAssetUtils.createTimeStamp(),
-      Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
+      Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.generatedInUpdate, LinearAssetUtils.createTimeStamp(),
+      Some(roadLink), false, Some(LinearAssetTypes.generatedInUpdate), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 
   override protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
@@ -102,7 +102,7 @@ class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater
       if (valueChanged(linearAsset, persistedLinearAsset)) {
         linearAsset.value match {
           case Some(prohibitions: Prohibitions) =>
-            dao.updateProhibitionValue(id, linearAsset.typeId, prohibitions, LinearAssetTypes.VvhGenerated)
+            dao.updateProhibitionValue(id, linearAsset.typeId, prohibitions, LinearAssetTypes.generatedInUpdate)
           case _ => None
         }
       }

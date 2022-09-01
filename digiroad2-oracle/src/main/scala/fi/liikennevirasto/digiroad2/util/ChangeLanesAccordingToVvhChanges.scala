@@ -103,8 +103,8 @@ object ChangeLanesAccordingToVvhChanges {
         val oldLane = toAdjustLanes.find(_.id == adjustment.laneId)
         if(oldLane.nonEmpty){
           val newLane = persistedToNewLaneWithNewMeasures(oldLane.get, adjustment.startMeasure, adjustment.endMeasure)
-          val newLaneID = create(Seq(newLane), Set(oldLane.get.linkId), oldLane.get.sideCode, VvhGenerated)
-          moveToHistory(oldLane.get.id, Some(newLaneID.head), true, true, VvhGenerated)
+          val newLaneID = create(Seq(newLane), Set(oldLane.get.linkId), oldLane.get.sideCode, generatedInUpdate)
+          moveToHistory(oldLane.get.id, Some(newLaneID.head), true, true, generatedInUpdate)
         }
         else{
           logger.error("Old lane not found with ID: " + adjustment.laneId + " Adjustment link ID: " + adjustment.linkId)
@@ -121,8 +121,8 @@ object ChangeLanesAccordingToVvhChanges {
         logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
 
       changeSet.adjustedSideCodes.foreach { adjustment =>
-        moveToHistory(adjustment.laneId, None, false, false, VvhGenerated)
-        dao.updateSideCode(adjustment.laneId, adjustment.sideCode.value, VvhGenerated)
+        moveToHistory(adjustment.laneId, None, false, false, generatedInUpdate)
+        dao.updateSideCode(adjustment.laneId, adjustment.sideCode.value, generatedInUpdate)
       }
 
       if (changeSet.adjustedMValues.nonEmpty)
@@ -138,7 +138,7 @@ object ChangeLanesAccordingToVvhChanges {
       val ids = changeSet.expiredLaneIds.toSeq
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))
-      ids.foreach(moveToHistory(_, None, true, true, VvhGenerated))
+      ids.foreach(moveToHistory(_, None, true, true, generatedInUpdate))
 
   }
 
