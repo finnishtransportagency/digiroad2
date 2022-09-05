@@ -143,7 +143,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     }
 
     val speedLimits = groupSpeedLimitsResult(speedLimitRows)
-    val roadLinksWithComplementaryByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(speedLimits.map(_.linkId).toSet)
+    val roadLinksWithComplementaryByLinkId = roadLinkService.fetchRoadlinksAndComplementaryFromDB(speedLimits.map(_.linkId).toSet)
 
     speedLimits.map {speedLimit =>
       val roadLinkFetched = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
@@ -273,7 +273,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(String, Double, Double)].list
 
-    val roadLinksByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(links.map(_._1).toSet)
+    val roadLinksByLinkId = roadLinkService.fetchRoadlinksAndComplementaryFromDB(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
       val roadLinkFetched = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -380,7 +380,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     */
   def createSpeedLimit(creator: String, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue,
                        timeStamp: Long, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
-    val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId)
+    val roadLink = roadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)
     municipalityValidation(roadLink.get.municipalityCode, roadLink.get.administrativeClass)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadLink.get.linkSource)
   }

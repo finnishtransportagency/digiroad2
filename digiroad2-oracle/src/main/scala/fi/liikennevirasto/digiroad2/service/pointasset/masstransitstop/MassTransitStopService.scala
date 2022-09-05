@@ -217,7 +217,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedMassTransitStop] = {
     val roadLinks = LogUtils.time(logger, "TEST LOG Get and enrich roadlinks and complementaries"){
-      roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds,asyncMode=false)
+      roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode=false)
     }
     LogUtils.time(logger, "TEST LOG Get massTransitStop assets by bounding box") {
       super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
@@ -312,7 +312,7 @@ trait MassTransitStopService extends PointAssetOperations {
         case _ => asset.linkId
       }
 
-      val (optRoadLink, optHistoric) = (roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false), roadLinkService.getHistoryDataLink(linkId, false))
+      val (optRoadLink, optHistoric) = (roadLinkService.getRoadLinkAndComplementaryFromDB(linkId, false), roadLinkService.getHistoryDataLink(linkId, false))
 
       val (previousStrategy, currentStrategy) = getStrategy(properties, asset, optRoadLink)
       val roadLink = currentStrategy.pickRoadLink(optRoadLink, optHistoric)
@@ -432,7 +432,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int, withEnrich: Boolean): Seq[PersistedAsset] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(municipalityCode)
     val mapRoadLinks = roadLinks.map(roadLink => roadLink.linkId -> roadLink).toMap
     val assets = super.getByMunicipality(mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject), withMunicipality(municipalityCode))
 
@@ -541,7 +541,7 @@ trait MassTransitStopService extends PointAssetOperations {
       }
 
       val result = massTransitStopDao.fetchTerminalFloatingAssets(query => query + municipalityFilter, isOperator)
-      val administrativeClasses = roadLinkService.getRoadLinksByLinkIdsFromVVH(result.map(_._2).toSet, newTransaction = false).groupBy(_.linkId).mapValues(_.head.administrativeClass)
+      val administrativeClasses = roadLinkService.getRoadLinksByLinkIdsFromDB(result.map(_._2).toSet, newTransaction = false).groupBy(_.linkId).mapValues(_.head.administrativeClass)
       result
         .map { case (id, linkId) =>
           (id, administrativeClasses.getOrElse(linkId, Unknown).toString, FloatingReason.TerminalChildless)
@@ -585,7 +585,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def fetchRoadLink(linkId: String): Option[RoadLinkLike] = {
-    roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
+    roadLinkService.getRoadLinkAndComplementaryFromDB(linkId, newTransaction = false)
   }
 
   private def getStrategies(): (Seq[AbstractBusStopStrategy], AbstractBusStopStrategy) ={
@@ -644,7 +644,7 @@ trait MassTransitStopService extends PointAssetOperations {
       fetchPointAssetsWithExpiredLimited(withFilter(filter), token)
     }
 
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromDB(assets.map(_.linkId).toSet)
 
     assets.map { asset =>
       ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException(s"Road link no longer available: ${asset.linkId}")))    }

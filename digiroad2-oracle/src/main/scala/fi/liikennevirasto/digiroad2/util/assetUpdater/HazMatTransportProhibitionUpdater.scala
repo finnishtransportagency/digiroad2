@@ -12,7 +12,7 @@ class HazMatTransportProhibitionUpdater(service: HazmatTransportProhibitionServi
       logger.info("Saving projected prohibition assets")
 
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromDB(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
     if (toUpdate.nonEmpty) {
       val prohibitions = toUpdate.filter(a => Set(HazmatTransportProhibition.typeId).contains(a.typeId))
       val persisted = dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, prohibitions.map(_.id).toSet).groupBy(_.id)

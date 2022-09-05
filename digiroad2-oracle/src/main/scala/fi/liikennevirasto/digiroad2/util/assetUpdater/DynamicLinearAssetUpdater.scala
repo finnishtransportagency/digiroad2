@@ -13,7 +13,7 @@ class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends Line
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromDB(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
 
     if (toUpdate.nonEmpty) {
       val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
@@ -74,7 +74,7 @@ class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends Line
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
     val oldAsset = service.getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction =  false).headOption
       .getOrElse(throw new IllegalStateException("Old asset " + adjustment.assetId + " of type " + adjustment.typeId + " no longer available"))
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromDB(oldAsset.linkId, newTransaction = false)
       .getOrElse(throw new IllegalStateException("Road link " + oldAsset.linkId + " no longer available"))
     service.expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
     service.createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure),

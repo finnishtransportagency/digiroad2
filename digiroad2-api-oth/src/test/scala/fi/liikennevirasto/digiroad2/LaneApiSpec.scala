@@ -32,7 +32,7 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
 
   val roadAddress = RoadAddressForLink(0, 0, 0, Track(99), 0, 0, None, None, "0", 0, 0, SideCode(1), Seq(), false, None, None, None)
 
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(Seq(roadLink))
+  when(mockRoadLinkService.getRoadLinks(any[Int])).thenReturn(Seq(roadLink))
   when(mockRoadAddressService.getAllByRoadNumber(any())).thenReturn(Seq(roadAddress))
   when(mockRoadAddressService.laneWithRoadAddress(any())).thenReturn(Seq(pieceWiseLane))
 

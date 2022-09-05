@@ -45,7 +45,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   val roadLink3 = RoadLink(linkId3, Seq(Point(20.0, 0.0), Point(50.0, 0.0)), 30.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   val roadLink4 = RoadLink(linkId4, Seq(Point(50.0, 0.0), Point(70.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+  when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
   test("Pedestrian crossing traffic sign without match asset") {
     PostGISDatabase.withDynTransaction {
@@ -89,7 +89,7 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
 
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(pedestrianValidator.dao.fetchPedestrianCrossingByLinkIds(Seq(linkId1,linkId2, linkId3, linkId4)))
         .thenReturn(
           Seq(PedestrianCrossing(1, linkId4, 13, 13, 13, false, 0, 235, Seq(pointAssetProperty), linkSource = LinkGeomSource.NormalLinkInterface))

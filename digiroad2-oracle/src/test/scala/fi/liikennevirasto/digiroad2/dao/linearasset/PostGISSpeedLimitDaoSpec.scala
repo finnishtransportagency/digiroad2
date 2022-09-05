@@ -25,10 +25,10 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
     
-    when(mockRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.linkId).toSet))
+    when(mockRoadLinkService.fetchRoadlinksFromDB(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
-    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
+    when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
@@ -89,7 +89,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()
       val roadLink = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
         dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
@@ -106,7 +106,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()
       val roadLink = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
         dao.createSpeedLimit("test", linkId, Measures(0.0, 100.0), SideCode.TowardsDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
@@ -142,7 +142,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
       val roadLink = RoadLinkFetched(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
 
-      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)).thenReturn(Some(roadLink))
       dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[String].firstOption should be(Some(linkId))

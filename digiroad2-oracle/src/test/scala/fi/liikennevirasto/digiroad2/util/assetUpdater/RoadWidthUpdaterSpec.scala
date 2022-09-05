@@ -43,7 +43,7 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
       val linearAssetId = service.createWithoutTransaction(RoadWidth.typeId, oldRoadLinkId, NumericValue(300), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(linearAssetId))
@@ -74,13 +74,13 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldRoadLinkId2), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(0), Some(10), Some(10), Some(20), 1L))
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
       val id1 = service.createWithoutTransaction(RoadWidth.typeId, oldRoadLinkId1, NumericValue(300), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false)
       val id2 = service.createWithoutTransaction(RoadWidth.typeId, oldRoadLinkId2, NumericValue(300), 1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink2), false)
       val assetsBefore = service.getPersistedAssetsByIds(RoadWidth.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.foreach(asset => asset.expired should be(false))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
       TestRoadWidthUpdater.updateByRoadLinks(RoadWidth.typeId, 1, Seq(newRoadLink), change)
       val expiredAssets = service.getPersistedAssetsByIds(RoadWidth.typeId, Set(id1, id2), false)
       expiredAssets.size should be(2)

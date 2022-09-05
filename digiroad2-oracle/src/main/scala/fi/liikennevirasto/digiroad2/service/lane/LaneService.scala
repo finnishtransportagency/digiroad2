@@ -71,7 +71,7 @@ trait LaneOperations {
     * @return
     */
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): (Seq[Seq[PieceWiseLane]], Seq[RoadLink]) = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,asyncMode = false)
+    val roadLinks = roadLinkService.getRoadLinks(bounds, municipalities,asyncMode = false)
     val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks)
 
@@ -95,7 +95,7 @@ trait LaneOperations {
    * This is only to be used for visualization purposes after the getByBoundingBox ran first
    */
   def getViewOnlyByBoundingBox (bounds :BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): Seq[ViewOnlyLane] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities,asyncMode = false)
+    val roadLinks = roadLinkService.getRoadLinks(bounds, municipalities,asyncMode = false)
     val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
 
     val linkIds = filteredRoadLinks.map(_.linkId)
@@ -349,7 +349,7 @@ trait LaneOperations {
   }
 
   def fetchExistingLanesByLinksIdAndSideCode(linkId: String, sideCode: Int): Seq[PieceWiseLane] = {
-    val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(linkId).head
+    val roadLink = roadLinkService.getRoadLinkByLinkIdFromDB(linkId).head
 
     val existingAssets =
       withDynTransaction {
@@ -395,7 +395,7 @@ trait LaneOperations {
     }
 
     val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(linkIds)
 
     val roadLinksWithRoadAddressInfo = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
     val historyLanesWithRoadAddress = historyLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
@@ -814,7 +814,7 @@ trait LaneOperations {
       } else {
         // If we have more than 1 linkId than we have a chain selected
         // Lanes will be created with the size of the link
-        val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, false)
+        val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(linkIds, false)
                                                   .groupBy(_.linkId)
 
         val result = linkIds.map { linkId =>
@@ -868,7 +868,7 @@ trait LaneOperations {
    */
   def getLinksWithCorrectSideCodes(selectedLane: PersistedLane, linkIds: Set[String],
                                    newTransaction: Boolean = true): Map[String, SideCode] = {
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, newTransaction)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(linkIds, newTransaction)
 
     // Determine side codes with existing main lanes
     val lanes = fetchExistingMainLanesByRoadLinks(roadLinks, Seq(), newTransaction)
@@ -1137,7 +1137,7 @@ trait LaneOperations {
   }
 
   def persistedLaneToTwoDigitLaneCode(lane: PersistedLane, newTransaction: Boolean = true): Option[PersistedLane] = {
-    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lane.linkId), newTransaction).head
+    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromDB(Set(lane.linkId), newTransaction).head
     val pwLane = laneFiller.toLPieceWiseLane(Seq(lane), roadLink).head
     val newLaneCode = getTwoDigitLaneCode(roadLink, pwLane)
     newLaneCode match {

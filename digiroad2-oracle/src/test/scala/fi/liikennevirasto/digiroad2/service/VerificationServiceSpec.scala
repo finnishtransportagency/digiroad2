@@ -30,7 +30,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
       val tinyRoadLinkMunicipality90 = Seq(TinyRoadLink(linkId1), TinyRoadLink(linkId2), TinyRoadLink(linkId3))
-      when(mockRoadLinkService.getTinyRoadLinkFromVVH(90)).thenReturn(tinyRoadLinkMunicipality90)
+      when(mockRoadLinkService.getTinyRoadLinksByMunicipality(90)).thenReturn(tinyRoadLinkMunicipality90)
 
       val assetId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue

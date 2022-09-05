@@ -122,7 +122,7 @@ trait  PointAssetOperations{
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
   def createTimeStamp(offsetHours:Int=5): Long = LinearAssetUtils.createTimeStamp(offsetHours)
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds,asyncMode=false)
+    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode=false)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
   }
 
@@ -142,7 +142,7 @@ trait  PointAssetOperations{
       fetchPointAssetsWithExpiredLimited(withFilter(filter), token)
     }
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(assets.map(_.linkId).toSet)
     val historicRoadLink = roadLinkService.getHistoryDataLinks(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
     assets.flatMap { asset =>
@@ -253,7 +253,7 @@ trait  PointAssetOperations{
       }
 
       val result = fetchFloatingAssets(query => query + municipalityFilter, isOperator)
-      val administrativeClasses = roadLinkService.getRoadLinksByLinkIdsFromVVH(result.map(_._3).toSet, newTransaction = false).groupBy(_.linkId).mapValues(_.head.administrativeClass)
+      val administrativeClasses = roadLinkService.getRoadLinksByLinkIdsFromDB(result.map(_._3).toSet, newTransaction = false).groupBy(_.linkId).mapValues(_.head.administrativeClass)
 
       result
         .map { case (id, municipality, administrativeClass, floatingReason) =>
@@ -275,7 +275,7 @@ trait  PointAssetOperations{
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
     getByMunicipality(mapRoadLinks, roadLinks, Seq(), (_, _, _, _, _) => None, withMunicipality(municipalityCode))
   }
@@ -295,7 +295,7 @@ trait  PointAssetOperations{
 
   def getById(id: Long): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkByLinkIdFromVVH(x.linkId) }
+    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkByLinkIdFromDB(x.linkId) }
 
     def findRoadlink(linkId: String): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)

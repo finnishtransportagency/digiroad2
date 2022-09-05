@@ -960,7 +960,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "traffic_volumes" => linearAssetsToApi(TrafficVolume.typeId, municipalityNumber)
           case "european_roads" => linearAssetsToApi(EuropeanRoads.typeId, municipalityNumber)
           case "exit_numbers" => linearAssetsToApi(ExitNumbers.typeId, municipalityNumber)
-          case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
+          case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipalityNumber)))
           case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
           case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
           case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))

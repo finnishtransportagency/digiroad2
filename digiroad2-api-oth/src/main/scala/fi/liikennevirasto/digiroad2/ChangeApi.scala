@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneProperty, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, RoadLink, SpeedLimitValue, Value}
-import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
+import fi.liikennevirasto.digiroad2.service.RoadlinkWithChange
 import fi.liikennevirasto.digiroad2.service.lane.LaneChange
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
@@ -488,11 +488,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     }
   }
 
-  private def vvhRoadLinkToGeoJson(changedRoadlinks: Seq[ChangedVVHRoadlink]) =
+  private def vvhRoadLinkToGeoJson(changedRoadlinks: Seq[RoadlinkWithChange]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        changedRoadlinks.map { case ChangedVVHRoadlink(link, value, createdAt, changeType) =>
+        changedRoadlinks.map { case RoadlinkWithChange(link, value, createdAt, changeType) =>
           Map(
             "type" -> "Feature",
             "id" -> link.linkId,

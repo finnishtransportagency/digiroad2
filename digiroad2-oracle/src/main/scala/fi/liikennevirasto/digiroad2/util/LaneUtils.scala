@@ -101,7 +101,7 @@ object LaneUtils {
     val groupedAddresses = roadAddressService.groupRoadAddress(roadAddresses.toSeq)
 
     // Get all updated information from VVH
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(_.linkId))
+    val roadLinks = roadLinkService.fetchRoadlinksFromDB(roadAddresses.map(_.linkId))
 
     val finalRoads = groupedAddresses.filter { elem =>  // Remove addresses which roadPart is not between our start and end
       val roadPartNumber = elem.roadPartNumber

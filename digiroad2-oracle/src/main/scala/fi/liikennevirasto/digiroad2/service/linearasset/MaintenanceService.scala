@@ -23,7 +23,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
   override def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinks(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
 
@@ -31,7 +31,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   override def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
@@ -64,7 +64,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
   override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, timeStamp: Long = createTimeStamp()): Seq[Long] = {
-    val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
+    val roadLink = roadLinkService.getRoadLinksAndComplementariesFromDB(newLinearAssets.map(_.linkId).toSet)
     withDynTransaction {
       newLinearAssets.map { newAsset =>
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, createTimeStamp(), roadLink.find(_.linkId == newAsset.linkId))
@@ -101,7 +101,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   def getActiveMaintenanceRoadByPolygon(areaId: Int): Seq[PersistedLinearAsset] = {
     val polygon = polygonTools.getPolygonByArea(areaId)
-    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
+    val vVHLinkIds = roadLinkService.getLinkIdsFromDBWithComplementaryByPolygons(polygon)
     getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, vVHLinkIds)
   }
 
@@ -137,14 +137,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   def getByZoomLevel :Seq[Seq[PieceWiseLinearAsset]] = {
     val linearAssets  = getPotencialServiceAssets
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(linearAssets.map(_.linkId).toSet)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
     val linearAssets  = getPotencialServiceAssets
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromDB(linearAssets.map(_.linkId).toSet)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
@@ -158,7 +158,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   def getAllByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(PersistedLinearAsset, RoadLink)] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(bounds, municipalities)
     val linkIds = roadLinks.map(_.linkId)
     getPersistedAssetsByLinkIds(MaintenanceRoadAsset.typeId, linkIds).map { asset => (asset, roadLinks.find(r => r.linkId == asset.linkId).getOrElse(throw new NoSuchElementException)) }
   }
@@ -169,7 +169,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
-      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromDB(linearAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (linearAsset.startMeasure, linearAsset.endMeasure))
       dao.updateExpiration(id)

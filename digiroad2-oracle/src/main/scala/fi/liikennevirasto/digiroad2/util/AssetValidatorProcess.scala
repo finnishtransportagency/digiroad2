@@ -99,7 +99,7 @@ object AssetValidatorProcess {
 
       municipalities.foreach { municipality =>
         println("Working on... municipality -> " + municipality)
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(roadLink => Seq(Municipality, State).contains(roadLink.administrativeClass)).groupBy(_.linkId)
+        val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality, false).filter(roadLink => Seq(Municipality, State).contains(roadLink.administrativeClass)).groupBy(_.linkId)
         val speedLimitsByLinkId = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet)).groupBy(_.linkId)
 
         val inaccurateAssets = speedLimitsByLinkId.flatMap {

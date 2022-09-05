@@ -86,7 +86,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("validate if features have id key/value") {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(newRoadLinks)
     val pointProperties: Map[String, String] = Map("type" -> "obstacle", "class" -> "1")
     val pointGeometry: Geometry = Geometry("Point", List(List(385786, 6671390, 0)))
     val pointFeature: Feature = Feature("Feature", pointGeometry, pointProperties)
@@ -107,7 +107,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("validate if roadLink exists on VVH") {
     val linkId1 = LinkIdGenerator.generateRandom()
     val linkId2 = LinkIdGenerator.generateRandom()
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId1, linkId2), false)).thenReturn(Seq())
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId1, linkId2), false)).thenReturn(Seq())
 
     val roadLinksList: List[List[String]] = List(List(linkId1),List(linkId2))
     val dataSet = Dataset(dataSetId, commonFeatureCollection, roadLinksList)
@@ -126,7 +126,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("validate if the Geometry Type is one of the allowed") {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(newRoadLinks)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val pointGeometry: Geometry = Geometry("WrongGeometryType", List(List(385786, 6671390, 0)))
@@ -149,7 +149,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("new obstacle with nonvalid value to be created/updated") {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(newRoadLinks)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val pointProperties: Map[String, String] = Map("id" -> "100000", "type" -> "obstacle", "class" -> "10")
@@ -172,7 +172,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("new speedlimit with nonvalid value to be created/updated") {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(newRoadLinks)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "speedLimit" -> "210", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -195,7 +195,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("new pavementClass with nonvalid value to be created/updated") {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLinks = Seq(RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(newRoadLinks)
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(newRoadLinks)
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "100", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -219,9 +219,9 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)).thenReturn(Some(newFetchedRoadLink))
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -231,8 +231,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     val dataSet = Dataset(dataSetId, featureCollection, roadLinksList)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false)).thenReturn(Some(newRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(linkId))).thenReturn(Seq(newFetchedRoadLink))
+      when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId, false)).thenReturn(Some(newRoadLink))
+      when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(Set(linkId))).thenReturn(Seq(newFetchedRoadLink))
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
       val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
       val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
@@ -260,9 +260,9 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)).thenReturn(Some(newFetchedRoadLink))
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val linearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "sideCode" -> "1", "id" -> "200000", "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -304,12 +304,12 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     val linkId = LinkIdGenerator.generateRandom()
     val newRoadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newFetchedRoadLink = RoadLinkFetched(linkId, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId), false)).thenReturn(Seq(newRoadLink))
-    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(newFetchedRoadLink))
-    when(mockRoadLinkService.getRoadLinkFromVVH(linkId, false)).thenReturn(Some(newRoadLink))
+    when(mockRoadLinkService.getRoadsLinksFromDB(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)).thenReturn(Some(newFetchedRoadLink))
+    when(mockRoadLinkService.getRoadLinkFromDB(linkId, false)).thenReturn(Some(newRoadLink))
 
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(235)).thenReturn((Seq(newRoadLink), Seq()))
 
     val roadLinksList: List[List[String]] = List(List(linkId))
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonPointFeature))

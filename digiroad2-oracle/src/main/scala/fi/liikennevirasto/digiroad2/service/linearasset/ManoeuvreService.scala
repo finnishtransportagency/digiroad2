@@ -51,12 +51,12 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
+    val roadLinks = roadLinkService.getRoadLinks(municipalityNumber)
     getBySourceRoadLinks(roadLinks)
   }
 
   def getByMunicipalityAndRoadLinks(municipalityNumber: Int): Seq[(Manoeuvre, Seq[RoadLink])] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
+    val roadLinks = roadLinkService.getRoadLinks(municipalityNumber)
     val manoeuvres = getBySourceRoadLinks(roadLinks)
     manoeuvres.map{ manoeuvre => (manoeuvre, roadLinks.filter(road => road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId).get ||
       road.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).get))
@@ -65,7 +65,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
     val roadLinks = LogUtils.time(logger, "TEST LOG manoeuvres get roadlinks by boundingBox") {
-      roadLinkService.getRoadLinksFromVVH(bounds,asyncMode = false)
+      roadLinkService.getRoadLinks(bounds,asyncMode = false)
     }
     LogUtils.time(logger, "TEST LOG manoeuvres get assets by roadlinks, roadlink count: " + roadLinks.size) {
       getByRoadLinks(roadLinks)
@@ -236,7 +236,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     //Get all road links from vvh that are not on the RoadLinks sequence passed as parameter
     val linkIds = allLinkIds(manoeuvre)
     val additionalRoadLinks = linkIds.forall(id => roadLinks.exists(_.linkId == id)) match {
-      case false => roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds.toSet -- roadLinks.map(_.linkId))
+      case false => roadLinkService.getRoadLinksByLinkIdsFromDB(linkIds.toSet -- roadLinks.map(_.linkId))
       case true => Seq()
     }
 

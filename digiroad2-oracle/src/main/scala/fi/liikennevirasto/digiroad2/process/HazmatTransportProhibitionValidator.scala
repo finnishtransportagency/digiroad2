@@ -67,7 +67,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
       withDynTransaction {
 
         val assets = dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetInfo.ids)
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromDB(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
 
         assets.foreach { asset =>
           roadLinks.find(_.linkId == asset.linkId) match {

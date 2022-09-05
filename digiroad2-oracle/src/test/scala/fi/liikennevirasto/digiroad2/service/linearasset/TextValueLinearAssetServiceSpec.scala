@@ -24,15 +24,15 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
   private val (linkId, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   
   when(mockRoadLinkService.fetchByLinkId(linkId)).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinksFromDB(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(
     linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinksAndChanges(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -112,7 +112,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrm)""".execute
       sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values ($assetId, $assetId, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', current_timestamp, 'dr2_test_data')""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChanges(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = ServiceWithDao.getByBoundingBox(assetTypeId, boundingBox).toList
 
       before.length should be (1)
@@ -121,7 +121,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
       before.head.map(_.startMeasure should be (0))
       before.head.map(_.endMeasure should be (25))
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChanges(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = ServiceWithDao.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (3)

@@ -27,7 +27,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   val linkId = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(
+  when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(
     Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
@@ -79,7 +79,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     }
   }
   test("Expire directional traffic sign") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
@@ -96,12 +96,12 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   test("Update directional traffic sign with geometry changes") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
     val linkId1 = LinkIdGenerator.generateRandom()
-    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementary(91)).thenReturn(Seq(
       RoadLinkFetched(linkId1, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
-    when(mockRoadLinkService.getRoadLinkFromVVH(linkId)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinkFromDB(linkId)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, linkGeometry, Municipality,
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
@@ -144,9 +144,9 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   test("Update directional traffic sign without geometry changes") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(100.0, 0.0))
     val linkId = LinkIdGenerator.generateRandom()
-    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-    when(mockRoadLinkService.getRoadLinkFromVVH(linkId)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinkFromDB(linkId)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, linkGeometry, Municipality,
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
     val roadLink = RoadLink(linkId, linkGeometry, 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))

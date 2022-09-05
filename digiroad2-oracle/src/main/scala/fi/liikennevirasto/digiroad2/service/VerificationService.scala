@@ -66,7 +66,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getMunicipalityInfo(bounds: BoundingRectangle): Option[Int] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds,asyncMode = false)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode = false)
     val midPoint = Point((bounds.rightTop.x + bounds.leftBottom.x) / 2, (bounds.rightTop.y + bounds.leftBottom.y) / 2)
 
     if(roadLinks.nonEmpty)
@@ -157,7 +157,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getRefreshedAssetTypesByMunicipality(municipalityCode : Int,  getRoadLink: Int => Seq[RoadLink]): Seq[VerificationInfo] = {
-    val tinyRoadLink = roadLinkService.getTinyRoadLinkFromVVH(municipalityCode)
+    val tinyRoadLink = roadLinkService.getTinyRoadLinksByMunicipality(municipalityCode)
 
     withDynTransaction {
       refreshVerificationInfo(municipalityCode, tinyRoadLink.map(_.linkId), Some(DateTime.now()))

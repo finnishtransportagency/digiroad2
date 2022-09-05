@@ -445,7 +445,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
 
-      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchRoadlinksFromDB(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -474,7 +474,7 @@ object DataFixture {
 
     if(assets.nonEmpty){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchRoadlinksFromDB(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -535,7 +535,7 @@ object DataFixture {
 
     if (assets.nonEmpty) {
 
-      val roadLinks = roadLinkService.fetchVVHRoadlinks(assets.map(_._2).toSet)
+      val roadLinks = roadLinkService.fetchRoadlinksFromDB(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -597,7 +597,7 @@ object DataFixture {
       persistedStop.foreach { stop =>
         val massTransitStopDirectionValue = stop.validityDirection
 
-        val roadLinkOfMassTransitStop = roadLinkService.getRoadLinkByLinkIdFromVVH(stop.linkId)
+        val roadLinkOfMassTransitStop = roadLinkService.getRoadLinkByLinkIdFromDB(stop.linkId)
         val roadLinkDirectionValue = roadLinkOfMassTransitStop.map(rl => rl.trafficDirection).headOption
 
         roadLinkDirectionValue match {
@@ -659,7 +659,7 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality)
 
       println ("Total roadlink by municipality -> " + roadLinks.size)
 
@@ -754,7 +754,7 @@ object DataFixture {
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
-      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
+      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesByMunicipality(municipality)
       //filter roadLink by administrative class and roadLink with MTKClass valid
       val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
       val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
@@ -851,7 +851,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
 
       //Obtain all RoadLink by municipality
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality)
 
       PostGISDatabase.withDynTransaction {
         //Obtain all existing RoadLinkId by AssetType and roadLinks
@@ -898,7 +898,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println("\nWorking on... municipality -> " + municipality)
       println("Fetching roadlinks")
-      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
+      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesByMunicipality(municipality)
 
       PostGISDatabase.withDynTransaction {
 
@@ -962,7 +962,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println("\nWorking on... municipality -> " + municipality)
       println("Fetching roadlinks")
-      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipality)
 
       PostGISDatabase.withDynTransaction {
 
@@ -1004,7 +1004,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println("")
       println(s"Obtaining all Road Links for Municipality: $municipality")
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality)
 
       println(s"Grouping roundabouts")
       val roundabouts = RoundaboutProcessor.groupByRoundabout(roadLinks, withIncomplete = false)
@@ -1059,7 +1059,7 @@ object DataFixture {
 
       val trafficSigns = trafficSignService.getTrafficSigns(municipality, trafficSignService.getRestrictionsEnumeratedValues(TrafficSignManager.manoeuvreRelatedSigns))
       println(s"Obtaining all Road Links for Municipality: $municipality")
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality)
       println(s"End of roadLinks fetch for Municipality: $municipality")
 
       println("Start processing traffic signs, to create manoeuvres")
@@ -1102,7 +1102,7 @@ object DataFixture {
         println(DateTime.now())
         println(s"Fetching Traffic Signs for Municipality: $municipality")
 
-        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipality, newTransaction = false)._1
         val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet).filterNot(_.floating)
         val (panels, signs) = existingAssets.partition(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
         val signsByType = signs.filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == group)
@@ -1322,7 +1322,7 @@ object DataFixture {
       municipality =>
 
         println(s"Obtaining all Road Links for Municipality: $municipality")
-        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)._1
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipality)._1
         println(s"End of roadLinks fetch for Municipality: $municipality")
         PostGISDatabase.withDynTransaction {
           println("Fetching assets")
@@ -1356,7 +1356,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println(s"Obtaining all Road Links for Municipality: $municipality")
       val roadLinksWithAssets =  PostGISDatabase.withDynTransaction {
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
+        val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
         val linkIds = roadLinks.map(_.linkId)
 
         val existingAssets = postGISLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
@@ -1386,7 +1386,7 @@ object DataFixture {
         val unknownSpeedLimitByMunicipality = speedLimitDao.getMunicipalitiesWithUnknown(municipality)
         val allUnknownSpeedLimitLinkIds = unknownSpeedLimitByMunicipality.map(_._1)
 
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(allUnknownSpeedLimitLinkIds.toSet, false)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromDB(allUnknownSpeedLimitLinkIds.toSet, false)
         val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad).map(_.linkId) ++ allUnknownSpeedLimitLinkIds.diff(roadLinks.map(_.linkId))
 
         if (filterRoadLinks.nonEmpty) {
@@ -1422,7 +1422,7 @@ object DataFixture {
     PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
 
-        val roads = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
+        val roads = roadLinkService.getRoadLinksFromDBByMunicipality(municipality, false)
         val speedLimits = speedLimitDao.fetchSpeedLimitsByLinkIds(roads.map(_.linkId))
 
         val roadLinks = roads.filter(road => speedLimits.exists(speed => speed.linkId == road.linkId))
@@ -1473,8 +1473,8 @@ object DataFixture {
         if (privateRoadInfo.nonEmpty) {
           println(s"Number of records to update ${privateRoadInfo.keySet.size}")
 
-          val roadLinksVVH = roadLinkService.fetchVVHRoadlinksAndComplementary(privateRoadInfo.keySet)
-          val roadLinks = roadLinkService.enrichRoadLinksFromVVH(roadLinksVVH)
+          val roadLinksVVH = roadLinkService.fetchRoadlinksAndComplementaryFromDB(privateRoadInfo.keySet)
+          val roadLinks = roadLinkService.enrichFetchedRoadLinks(roadLinksVVH)
 
           val missingRoadLinks = privateRoadInfo.keySet.diff(roadLinks.map(_.linkId).toSet)
           if (missingRoadLinks.nonEmpty)
@@ -1517,7 +1517,7 @@ object DataFixture {
 
     PostGISDatabase.withDynTransaction {
       val linkIdsOverridden = FunctionalClassDao.getLinkIdByValue(functionalClassValue, sinceDate).toSet
-      val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIdsOverridden, false).filter(_.administrativeClass == State)
+      val roadLinks = roadLinkService.getRoadsLinksFromDB(linkIdsOverridden, false).filter(_.administrativeClass == State)
 
       roadLinks.foreach { roadLink =>
         println(roadLink.linkId + ", " + roadLink.administrativeClass + ", " + roadLink.functionalClass + ", " + roadLink.linkType)
@@ -1541,7 +1541,7 @@ object DataFixture {
     }
     PostGISDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(rl => rl.administrativeClass == State && rl.functionalClass == functionalClassValue)
+        val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality, false).filter(rl => rl.administrativeClass == State && rl.functionalClass == functionalClassValue)
 
         roadLinks.foreach { roadLink =>
           println(roadLink.linkId + ", " + roadLink.administrativeClass + ", " + roadLink.functionalClass + ", " + roadLink.linkType + ", " + municipality)
@@ -1573,9 +1573,9 @@ object DataFixture {
         println("Creating a obstacle with coordinates -> " + "x:" + obstacle.lon + " y:" + obstacle.lat)
         val pointObstacle = Point(obstacle.lon, obstacle.lat)
 
-        roadLinkService.getClosestRoadlinkFromVVH(user, pointObstacle, 10) match {
+        roadLinkService.getClosestRoadlinkFromDB(user, pointObstacle, 10) match {
           case Some(link) =>
-            val nearestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(Seq(link))
+            val nearestRoadLinks = roadLinkService.enrichFetchedRoadLinks(Seq(link))
 
             if(nearestRoadLinks.nonEmpty){
               val nearestRoadLink = nearestRoadLinks.head
@@ -1620,7 +1620,7 @@ object DataFixture {
 
         println(s"Number of records to update ${cyclingAndWalkingInfo.size}")
         if (cyclingAndWalkingInfo.nonEmpty) {
-          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
+          val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality, false)
 
           cyclingAndWalkingInfo.foreach { asset =>
             val roadLink = roadLinks.find(_.linkId == asset.linkId)
@@ -1723,7 +1723,7 @@ object DataFixture {
       municipalities.foreach { municipality =>
         counter += 1
         println(s"Working on municipality $municipality ($counter/${municipalities.size})")
-        val roadLinkIds = roadLinkService.getRoadLinksIdsFromVVHByMunicipality(municipality)
+        val roadLinkIds = roadLinkService.getRoadLinksIdsFromDBByMunicipality(municipality)
         verificationService.refreshVerificationInfo(municipality, roadLinkIds, Some(DateTime.now()))
       }
     }
@@ -1769,7 +1769,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println("\nWorking on... municipality -> " + municipality)
       println("Fetching roadlinks")
-      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipality)
 
       PostGISDatabase.withDynTransaction {
         println("Fetching assets")
@@ -1821,7 +1821,7 @@ object DataFixture {
       }
     withDynTransaction{
       municipalities.foreach{ municipality =>
-        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipality, newTransaction = false)._1
         val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet)
           .filterNot(_.floating)
           .filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == signGroup)
@@ -1882,7 +1882,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
       PostGISDatabase.withDynTransaction {
         println("\nWorking at Municipailty: " + municipality)
-        val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
+        val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipality, newTransaction = false)
         val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
         val changesToTreat = changes.filter(c => c.changeType == New.value && c.newId.nonEmpty && filteredRoadLinks.exists(_.linkId == c.newId.get))
         val roadLinksToTreat = filteredRoadLinks.filter(r => changesToTreat.exists(_.newId.get == r.linkId))
@@ -1999,7 +1999,7 @@ object DataFixture {
 
     municipalities.foreach { municipality =>
       println(s"Obtaining all road links and private road association information for Municipality: $municipality")
-      val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)._1
+      val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesByMunicipality(municipality)._1
       val privateInfo = roadLinkService.getPrivateRoadsInfoByLinkIds(roadLinks.map(_.linkId).toSet)
 
       val privateRoadAssociationInfo = privateInfo.filter{ case (_, attributeInfo) =>
@@ -2050,7 +2050,7 @@ object DataFixture {
     val roadLinksFromMunicipalities = municipalitiesToRestoreFrom
       .flatMap { municipality =>
         println(s"Obtaining all road links and for Municipality: $municipality")
-        roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+        roadLinkService.getRoadLinksFromDBByMunicipality(municipality)
       }
       .map(_.linkId).toSet
     println(s"All road links obtained")

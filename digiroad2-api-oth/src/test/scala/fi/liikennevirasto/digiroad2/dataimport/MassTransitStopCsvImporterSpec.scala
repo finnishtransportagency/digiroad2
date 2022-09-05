@@ -46,8 +46,8 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   val roadLinkFetcheds = Seq(RoadLinkFetched(linkId1, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(linkId2, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
 
-  when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
-  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[RoadLinkFetched]])).thenReturn(roadLink)
+  when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromDB(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+  when(mockRoadLinkService.enrichFetchedRoadLinks(any[Seq[RoadLinkFetched]])).thenReturn(roadLink)
 
   def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
 

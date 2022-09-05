@@ -71,7 +71,7 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
 
         val idFilter = s"where a.id in (${assetInfo.ids.mkString(",")})"
         val assets = dao.fetchByFilter(query => query + idFilter).filterNot(_.floating)
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromDB(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
 
         assets.foreach { asset =>
           roadLinks.find(_.linkId == asset.linkId) match {

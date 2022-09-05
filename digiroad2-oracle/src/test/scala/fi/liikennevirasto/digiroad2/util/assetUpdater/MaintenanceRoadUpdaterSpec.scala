@@ -20,7 +20,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set.empty[String])).thenReturn(Seq())
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(Set.empty[String])).thenReturn(Seq())
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   val mockMaintenanceDao = MockitoSugar.mock[PostGISMaintenanceDao]
@@ -66,7 +66,7 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
       val id = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId, assetValues, 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink))
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = Service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id))
@@ -98,12 +98,12 @@ class MaintenanceRoadUpdaterSpec extends FunSuite with Matchers{
       ChangeInfo(Some(oldRoadLinkId2), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(10), Some(20), Some(10), Some(20), 1L))
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
       val id1 = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId1, assetValues, 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false)
       val id2 = Service.createWithoutTransaction(MaintenanceRoadAsset.typeId, oldRoadLinkId2, assetValues, 1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink2), false)
       val assetsBefore = Service.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, Set(id1, id2), false)
       assetsBefore.foreach(asset => asset.expired should be(false))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
       TestMaintenanceRoadUpdater.updateByRoadLinks(MaintenanceRoadAsset.typeId, 1, Seq(newRoadLink), change)
       val expiredAssets = Service.getPersistedAssetsByIds(MaintenanceRoadAsset.typeId, Set(id1, id2), false)
       expiredAssets.size should be(2)
