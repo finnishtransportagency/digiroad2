@@ -280,14 +280,14 @@ _Korjattava linkki._
 
 _Korjattavien linkkien lista._
 
-# 4. Kaistan mallinnustyökalu [TIETOLAJI EI VIELÄ KÄYTTÖVALMIINA SOVELLUKSESSA]
+# 4. Kaistan mallinnustyökalu
 
 Kartalle voi valita tietolajivalikosta (1) Kaistan mallinnustyökalu -valinnan. Työkalu mahdollistaa aiempaa tarkempien kaistatietojen ylläpitämisen mm. liikenneohjauslaitteiden sijoittamisen sujuvoittamiseksi. Karttaikkunaa zoomaamalla geometriat visualisoituvat kaistatietojen mukaan, joiden kategoriat ovat:
 
 * Pääkaista
 * Lisäkaista
 * Tielinkillä 1 lisäkaista
-* Tielinkillä 2 lisäkaistaa
+* Tielenkillä 2 lisäkaistaa
 * Tielinkillä 3 lisäkaistaa
 * Tielinkillä 4 lisäkaistaa
 * Tielinkillä 5 lisäkaistaa
@@ -301,7 +301,7 @@ _Kaistan mallinnustyökalu -valinta._
 
 ## 4.1 Kaistan mallinnustyökalu -tietojen katselu
 
-Kaistan mallinnustyökalun kohteita voidaan valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko kaistajoukko, eli kaikki geometriat, joilla on samat kaistatiedot tietolajissa, sama tieosanumero sekä tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;. Valitut tielinkit korostuvat karttaikkunassa ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai kaistojoukon ominaisuustietoikkuna (3). Ominaisuustietoikkunan yläosassa on visualisoitu tielinkillä olevien kaistojen numerot ja niiden sijainnit suhteessa toisiinsa. Valittu kaista on korostettuna keltaisella värillä (4). Lisäksi tietolajipaneelin selitteessä (5) eritelty kaistavaihtoehdot toisistaan. Kaistavalintaa voi muuttaa napauttamalla ominaisuustietoikkunassa lisäkaistan kuvaketta (6) , jolloin karttaikkunaan visualisoituu lisäkaista pääkaistan rinnalle (7). Ominaisuustietoikkunassa on nähtävissä myös valinnan tieosoitetiedot sekä kaistan tiedot. Lisäksi ominaisuustietoikkunassa näkyy, milloin tiedot on lisätty järjestelmään sekä milloin niitä on muokattu viimeksi. 
+Kaistan mallinnustyökalun kohteita voidaan valita napauttamalla kartalta sen geometriaa (2). Kerran napauttamalla tulee valituksi koko kaistajoukko, eli kaikki geometriat, joilla on samat kaistatiedot tietolajissa, sama tieosanumero sekä tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; kaksoisnapauttamalla tielinkki&auml;. Valitut tielinkit korostuvat karttaikkunassa ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun tielinkin tai kaistajoukon ominaisuustietoikkuna (3). Ominaisuustietoikkunan yläosassa on visualisoitu tielinkillä olevien kaistojen numerot ja niiden sijainnit suhteessa toisiinsa. Valittu kaista on korostettuna keltaisella värillä (4). Lisäksi tietolajipaneelin selitteessä (5) eritelty kaistavaihtoehdot toisistaan. Kaistavalintaa voi muuttaa napauttamalla ominaisuustietoikkunassa lisäkaistan kuvaketta (6) , jolloin karttaikkunaan visualisoituu lisäkaista pääkaistan rinnalle (7). Ominaisuustietoikkunassa on nähtävissä myös valinnan tieosoitetiedot sekä kaistan tiedot. Lisäksi ominaisuustietoikkunassa näkyy, milloin tiedot on lisätty järjestelmään sekä milloin niitä on muokattu viimeksi. 
 
 ![Kaistan mallinnustyökalu -katselutila.](km2.png)
 ![Kaistan mallinnustyökalu -katselutila 2.](km3.png)
@@ -316,9 +316,9 @@ Kaistanumerointi muodostuu seuraavasti:
 * 2 = ensimmäinen lisäkaista pääkaistan vasemmalla puolella
 * 3 = ensimmäinen lisäkaista pääkaistan oikealla puolella
 * 4 = toinen lisäkaista pääkaistan vasemmalla puolella
-* 5 = toinen lisäkaistan pääkaistan oikealla puolella
+* 5 = toinen lisäkaista pääkaistan oikealla puolella
 * 6 = kolmas lisäkaista pääkaistan vasemmalla puolella
-* 7 = kolmas lisäkaistan pääkaistan oikealla puolella
+* 7 = kolmas lisäkaista pääkaistan oikealla puolella
 * 8 = neljäs lisäkaista pääkaistan vasemmalla puolella
 * 9 = neljäs lisäkaista pääkaistan oikealla puolella
 
@@ -356,7 +356,7 @@ Kaistatietoja voi tarkastella kaistan mallinnustyökalussa myös tieosoiteinfo-t
 
 _Tieosoiteinfo-työkalu ja kaistatiedot._
 
-Pääkaistalle voi lisätä lisäkaistoja tieosoitteen avulla, jos kaista sijaitsee valtion tiellä, ja sille on tieosoite saatavilla. Huom! Jotta lisäkaistan voi lisätä tieosoitteen avulla, pääkaistalla ei saa entuudestaan olla lisäkaistoja. Lisääminen tapahtuu valitsemalla linkin geometrian (yksittäinen tielinkki tai kaistajoukko) sovelluksen ollessa kaistan mallinnustyökalun muokkaustilassa, jolloin ominaisuustietoikkunaan avautuu linkin/kaistajoukon kaistatiedot. Tämän jälkeen valitaan kummalla puolelle pääkaistaa lisäkaista halutaan lisätä, minkä jälkeen "lisää kaista tieosoitteen avulla" -valinta muuttuu aktiiviseksi (23).
+Pääkaistalle voi lisätä lisäkaistoja tieosoitteen avulla, jos kaista sijaitsee valtion tiellä, ja sille on tieosoite saatavilla. Lisääminen tapahtuu valitsemalla linkin geometrian (yksittäinen tielinkki tai kaistajoukko) sovelluksen ollessa kaistan mallinnustyökalun muokkaustilassa, jolloin ominaisuustietoikkunaan avautuu linkin/kaistajoukon kaistatiedot. Tämän jälkeen valitaan kummalla puolelle pääkaistaa lisäkaista halutaan lisätä, minkä jälkeen "lisää kaista tieosoitteen avulla" -valinta muuttuu aktiiviseksi (23).
 
 ![Lisää kaista tieosoitteen avulla.](km9.png)
 
@@ -376,7 +376,7 @@ Lisäkaistoja voi tarvittaessa katkaista leikkaustyökalua käyttämällä (huom
 
 _Kaistan katkaisu 1._
 
-Leikkaustyökalulla (28) voi määrittää lyhyille tiepätkille tarkat lisäkaistatiedot. Leikkausty&ouml;kalulla napautetaan tielinkin geometriasta kohtaa, josta rajoitus halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaistun lisäkaistan osille voi määrittää eriävät lisäkaistatiedot. Uusille kohteille valitaan arvot oikean laidan ominaisuustietoikkunasta. Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (29). Uudet kaistojen lukum&auml;&auml;r&auml;tiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+Leikkaustyökalulla (28) voi määrittää lyhyille tiepätkille tarkat lisäkaistatiedot. Leikkausty&ouml;kalulla napautetaan tielinkin geometriasta kohtaa, josta kaista halutaan katkaista. Tielinkin geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaistun lisäkaistan osille voi määrittää eriävät lisäkaistatiedot. Uusille kohteille valitaan arvot oikean laidan ominaisuustietoikkunasta. Kartalla ja valikkojen vieress&auml; olevat kirjaimet osoittavat, kummasta geometriasta on kyse (29). Ominaisuustietoikkunassa on myös mahdollista poistaa jomman kumman katkaistun osan napauttamalla poista kaista -painiketta. Uudet kaistojen lukum&auml;&auml;r&auml;tiedot tallennetaan tallenna-painikkeesta. Katkaisun voi peruuttaa peruuta-painikkeella, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
 
 Huom! Katkaisussa tulee m&auml;&auml;ritt&auml;&auml; uusille osuuksille eri arvot, jotta tallennus on mahdollista.
 
