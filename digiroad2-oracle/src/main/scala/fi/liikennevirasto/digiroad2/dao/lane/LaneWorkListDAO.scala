@@ -42,7 +42,7 @@ class LaneWorkListDAO {
   }
 
   def deleteItemsById(ids: Seq[Long]): Unit = {
-    sqlu"""DELETE FROM lane_work_list WHERE id IN $ids"""
+    sqlu"""DELETE FROM lane_work_list WHERE id IN $ids""".execute
   }
 
 }
