@@ -6,6 +6,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+import java.sql.Date
+
 case class LaneWorkListItem(id: Long, linkId: Long, propertyName: String, oldValue: Int, newValue: Int, modifiedDate: DateTime)
 
 class LaneWorkListDAO {
@@ -34,15 +36,16 @@ class LaneWorkListDAO {
     val propertyName = item.propertyName
     val oldValue = item.oldValue
     val newValue = item.newValue
-    val modifiedDate = item.modifiedDate
+    val modifiedDate = new Date(item.modifiedDate.toDate.getTime)
     sqlu"""INSERT INTO lane_work_list (id, link_id, property, old_value, new_value, modified_date)
-          values($id, $linkId, $propertyName, $oldValue, $newValue, $modifiedDate)"""
+          values($id, $linkId, $propertyName, $oldValue, $newValue, $modifiedDate)""".execute
 
     id
   }
 
   def deleteItemsById(ids: Seq[Long]): Unit = {
-    sqlu"""DELETE FROM lane_work_list WHERE id IN $ids""".execute
+    val idsString = ids.mkString(",")
+    sqlu"""DELETE FROM lane_work_list WHERE id IN $idsString""".execute
   }
 
 }
