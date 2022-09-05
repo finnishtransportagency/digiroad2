@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao, LaneWorkListDAO, LaneWorkListItem}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
@@ -31,6 +31,7 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def polygonTools: PolygonTools = new PolygonTools()
   override def vkmClient: VKMClient = new VKMClient
   override def roadAddressService: RoadAddressService = roadAddressServiceImpl
+  override def workListDao: LaneWorkListDAO = new LaneWorkListDAO
 
 }
 
@@ -48,6 +49,7 @@ trait LaneOperations {
   def laneFiller: LaneFiller = new LaneFiller
   def vkmClient: VKMClient
   def roadAddressService: RoadAddressService
+  def workListDao: LaneWorkListDAO
 
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -104,6 +106,12 @@ trait LaneOperations {
     val allLanes = fetchExistingLanesByLinkIds(linkIds)
 
     getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks)
+  }
+
+  def getLaneWorkList(): Seq[LaneWorkListItem] = {
+    withDynTransaction {
+      workListDao.getAllItems
+    }
   }
 
   /**

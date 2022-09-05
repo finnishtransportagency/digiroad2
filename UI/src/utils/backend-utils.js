@@ -590,6 +590,10 @@
       return $.getJSON('api/municipalities/byUser');
     };
 
+    this.getLaneWorkList = function () {
+      return $.getJSON('api/laneWorkList');
+    };
+
     this.getMunicipalityIdByName = function(municipalityName) {
       return $.getJSON('api/municipalities/idByName?name=' + municipalityName);
     };

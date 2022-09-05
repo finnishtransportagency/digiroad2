@@ -1502,6 +1502,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  //TODO Mitä palautetaan jos lane maintainer autentikointi ei toimi backend,
+  get("/laneWorkList") {
+    val user = userProvider.getCurrentUser()
+    val workListItems = user.isLaneMaintainer() match {
+      case true => laneService.getLaneWorkList()
+      case false => Seq()
+    }
+
+  }
+
   get("/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
