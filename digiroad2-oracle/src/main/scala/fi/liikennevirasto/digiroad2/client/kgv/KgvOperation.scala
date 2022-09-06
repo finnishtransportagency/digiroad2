@@ -306,7 +306,7 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     linkStatus == ConstructionType.InUse || linkStatus == ConstructionType.Planned || linkStatus == ConstructionType.UnderConstruction
   }
 
-  private def fetchFeatures(url: String): Either[Option[FeatureCollection], LinkOperationError] = {
+  private def fetchFeatures(url: String): Either[LinkOperationError, Option[FeatureCollection]] = {
     val request = new HttpGet(url)
     addHeaders(request)
     
@@ -350,13 +350,13 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
               ))
             case _ => None
           }
-          Left(resort)
+          Right(resort)
         } else {
-          Right(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
+          Left(LinkOperationError(response.getStatusLine.getReasonPhrase, response.getStatusLine.getStatusCode.toString,url))
         }
       }
       catch {
-        case e: Exception => Right(LinkOperationError(e.toString, ""))
+        case e: Exception => Left(LinkOperationError(e.toString, ""))
       }
       finally {
         if (response != null) {
@@ -379,14 +379,14 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
       val (url, newPosition) = paginationRequest(baseUrl, limit, firstRequest = false, startIndex = position)
       if (!pageAllReadyFetched.contains(url)) {
         val resort = fetchFeatures(url) match {
-          case Left(features) => features
-          case Right(error) => throw new ClientException(error.toString)
+          case Right(features) => features
+          case Left(error) => throw new ClientException(error.toString)
         }
         pageAllReadyFetched.add(url)
         resort match {
           case Some(feature) if feature.numberReturned == 0 => finalResponse
           case Some(feature) if feature.numberReturned != 0 =>
-              if ( counter == WARNING_LEVEL) logger.warn(s"Getting the resort is taking very long time, URL was : $url")
+              if ( counter == WARNING_LEVEL) logger.warn(s"Getting the result is taking very long time, URL was : $url")
             if(feature.nextPageLink.nonEmpty) {
               paginateAtomic(finalResponse ++ Set(feature), baseUrl, limit, newPosition, counter+1)
             }else {
@@ -421,9 +421,9 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     }
     fetchFeatures(s"$restApiEndPoint/${serviceName}/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString") 
     match {
-      case Left(features) =>features.get.features.map(feature=>
+      case Right(features) =>features.get.features.map(feature=>
         extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -438,8 +438,8 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(t=>extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) =>features.get.features.map(t=>extractor.extractFeature(t,t.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
 
@@ -449,8 +449,8 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     val filterString  = s"filter=${(s"INTERSECTS(geometry,${encode(polygon.toString)}")})"
     val queryString = s"?${filterString}&filter-lang=${cqlLang}&crs=${crs}"
     fetchFeatures(s"${restApiEndPoint}/${serviceName}/items/${queryString}") match {
-      case Left(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[String])
-      case Right(error) => throw new ClientException(error.toString)
+      case Right(features) =>features.get.features.map(_.properties.get("id").asInstanceOf[String])
+      case Left(error) => throw new ClientException(error.toString)
     }
   }
   
@@ -474,11 +474,10 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
     val url = s"${restApiEndPoint}/${serviceName}/items?filter-lang=${cqlLang}&crs=${crs}${filterString}"
     if(!pagination){
-      fetchFeatures(url)
-      match {
-        case Left(features) =>features.get.features.map(feature=>
+      fetchFeatures(url) match {
+        case Right(features) =>features.get.features.map(feature=>
           extractor.extractFeature(feature,feature.geometry.coordinates,linkGeomSource).asInstanceOf[LinkType])
-        case Right(error) => throw new ClientException(error.toString)
+        case Left(error) => throw new ClientException(error.toString)
       }
     }else {
       queryWithPaginationThreaded(url).asInstanceOf[Seq[LinkType]]
