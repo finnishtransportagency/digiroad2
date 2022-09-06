@@ -46,7 +46,7 @@ trait LinkOperationsAbstract {
   }
 }
 
-class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvRoadLinkClientBase {
+class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvRoadLinkClientBase(collection,linkGeomSourceValue) {
   override type LinkType = RoadLinkFetched
 }
 
