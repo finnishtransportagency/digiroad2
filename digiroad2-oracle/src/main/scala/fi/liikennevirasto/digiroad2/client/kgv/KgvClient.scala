@@ -130,7 +130,7 @@ class ExtractHistory extends ExtractorBase {
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
+    val roadClass = featureClassCodeToFeatureClass(roadClassCode)
 
     val kmtkId = linkId.split(":")(0)
     val version = linkId.split(":")(1).toInt
