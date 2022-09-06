@@ -38,10 +38,10 @@ object ConstructionType{
   def apply(intValue: Int): ConstructionType = {
     values.find(_.value == intValue).getOrElse(InUse)
   }
-
-  case object InUse extends ConstructionType { def value = 0 }
-  case object UnderConstruction extends ConstructionType { def value = 1 }
-  case object Planned extends ConstructionType { def value = 3 }
+  
+  case object Planned extends ConstructionType { def value = 1 }
+  case object UnderConstruction extends ConstructionType { def value = 2 }
+  case object InUse extends ConstructionType { def value = 3 }
   case object UnknownConstructionType extends ConstructionType { def value = 99 }
 }
 

@@ -67,9 +67,9 @@
     ];
 
     var constructionTypes= [
-      [0, 'Käytössä'], //In Use
-      [1, 'Rakenteilla'], //Under Construction
-      [3, 'Suunnitteilla'] //Planned
+        [1, 'Suunnitteilla'], //Planned
+        [2, 'Rakenteilla'], //Under Construction
+        [3, 'Käytössä'] //In Use
     ];
 
     var linkSources= [
