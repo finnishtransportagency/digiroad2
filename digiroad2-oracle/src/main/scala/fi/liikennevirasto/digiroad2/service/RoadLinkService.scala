@@ -1360,8 +1360,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
 
-  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
-    val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
+  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[IRoadLinkFetched], includeHardShoulderRoads: Boolean = false): Seq[RoadLink] = {
+    val featureClassesToExclude =
+      if (includeHardShoulderRoads) Seq(FeatureClass.WinterRoads)
+      else Seq(FeatureClass.WinterRoads, FeatureClass.HardShoulder)
+    val vvhRoadLinks = allVvhRoadLinks.filterNot(link => featureClassesToExclude.contains(link.featureClass))
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + vvhRoadLinks.size){getRoadLinkDataByLinkIds(vvhRoadLinks)}
   }
 
