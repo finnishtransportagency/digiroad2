@@ -72,7 +72,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(RoadLinkFetched(linkId2, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchByLinkId(linkId3))
     .thenReturn(Some(RoadLinkFetched(linkId3, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  private val vvhRoadlinksForBoundingBox = List(
+  private val fetchedRoadlinksForBoundingBox = List(
     RoadLinkFetched(linkId3, 235, Seq(Point(0, 0), Point(0, 10)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
  
@@ -106,13 +106,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId3))
     .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId3, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean]))
-    .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
+    .thenReturn(fetchedRoadlinksForBoundingBox.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinks(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
-    .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
+    .thenReturn(fetchedRoadlinksForBoundingBox.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinksAndChanges(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
-    .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
+    .thenReturn((fetchedRoadlinksForBoundingBox.map(toRoadLink), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean]))
-    .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
+    .thenReturn((fetchedRoadlinksForBoundingBox.map(toRoadLink), Nil))
   when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(linkId5))
     .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(linkId6))
@@ -121,7 +121,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId6, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.fetchRoadlinksFromDB(Set(linkId4)))
     .thenReturn(List(RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((fetchedRoadlinksForBoundingBox.map(toRoadLink), Nil))
   when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId5)).thenReturn(Some(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId2))
     .thenReturn(Some(RoadLinkFetched(linkId2, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))

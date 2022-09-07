@@ -439,7 +439,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
                               fieldSelection: Option[String],
                               fetchGeometry: Boolean,
                               resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] = {
-    if (linkIds.nonEmpty)withDbConnection { roadLinkDAO.fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition)}
+    if (linkIds.nonEmpty)withDbConnection { roadLinkDAO.fetchRoadlinksFromDB(linkIds, fieldSelection, fetchGeometry, resultTransition)}
     else Seq.empty[T]
   }
 
