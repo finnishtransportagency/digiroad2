@@ -817,7 +817,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     withDbConnection {roadLinkDAO.fetchByLinkId(id).map(_.geometry)}
   }
 
-  def insertToLaneWorkList(itemToInsert: LaneWorkListItem): Long = {
+  def insertToLaneWorkList(itemToInsert: LaneWorkListItem): Unit = {
     laneWorkListDAO.insertItem(itemToInsert)
   }
 

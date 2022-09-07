@@ -160,7 +160,7 @@
         trailerTruckWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'trailerTruckWeightLimit'},
         widthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'widthLimit'},
         pedestrianCrossingsErrors: {Title: 'Laatuvirhelista', SourceLayer: 'pedestrianCrossings'},
-        lanes: {Title: 'Kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', showDeleteCheckboxes: true}
+        lanes: {Title: 'Kaistojen tarkistuslista', SourceLayer: 'laneModellingTool', ShowDeleteCheckboxes: true}
       };
 
       var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;

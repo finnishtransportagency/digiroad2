@@ -114,6 +114,12 @@ trait LaneOperations {
     }
   }
 
+  def deleteFromLaneWorkList(itemsToDelete: Set[Long]): Unit = {
+    withDynTransaction {
+      workListDao.deleteItemsById(itemsToDelete)
+    }
+  }
+
   /**
     * Use lanes measures to create segments with lanes with same link id and side code
     * @param allLanes lanes to be segmented

@@ -26,11 +26,10 @@ class LaneWorkListDAO {
   }
 
   def getAllItems: Seq[LaneWorkListItem] = {
-    val query = """SELECT id, link_id, property, old_value, new_value, modified_date FROM lane_work_list"""
-    StaticQuery.queryNA[LaneWorkListItem](query)(getItemResult).iterator.toSeq
+    sql"""SELECT id, link_id, property, old_value, new_value, modified_date FROM lane_work_list""".as[LaneWorkListItem].list
   }
 
-  def insertItem(item: LaneWorkListItem): Long = {
+  def insertItem(item: LaneWorkListItem): Unit = {
     val id = Sequences.nextPrimaryKeySeqValue
     val linkId = item.linkId
     val propertyName = item.propertyName
@@ -39,13 +38,10 @@ class LaneWorkListDAO {
     val modifiedDate = new Date(item.modifiedDate.toDate.getTime)
     sqlu"""INSERT INTO lane_work_list (id, link_id, property, old_value, new_value, modified_date)
           values($id, $linkId, $propertyName, $oldValue, $newValue, $modifiedDate)""".execute
-
-    id
   }
 
-  def deleteItemsById(ids: Seq[Long]): Unit = {
-    val idsString = ids.mkString(",")
-    sqlu"""DELETE FROM lane_work_list WHERE id IN $idsString""".execute
+  def deleteItemsById(ids: Set[Long]): Unit = {
+    sqlu"""DELETE FROM lane_work_list WHERE id IN (#${ids.mkString(",")})""".execute
   }
 
 }

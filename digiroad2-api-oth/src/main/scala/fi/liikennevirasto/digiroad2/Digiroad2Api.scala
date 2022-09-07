@@ -1502,14 +1502,28 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  //TODO Mitä palautetaan jos lane maintainer autentikointi ei toimi backend,
+  delete("/laneWorkList/delete") {
+    val itemIdsToDelete = parsedBody.extractOpt[Set[Long]]
+        itemIdsToDelete match {
+          case Some(ids) =>
+            laneService.deleteFromLaneWorkList(ids)
+            true
+          case None => false
+        }
+  }
+
   get("/laneWorkList") {
     val user = userProvider.getCurrentUser()
-    val workListItems = user.isLaneMaintainer() match {
-      case true => laneService.getLaneWorkList()
-      case false => Seq()
-    }
+    val workListItems = if(user.isLaneMaintainer() || user.isOperator()) laneService.getLaneWorkList()
+    else Seq()
 
+    Map("items" -> workListItems.groupBy(_.propertyName)
+      .mapValues(_.map{values =>
+        Map("id" -> values.id,
+          "linkId" -> values.linkId,
+          "newValue" -> values.newValue,
+          "oldValue" -> values.oldValue,
+          "modifiedAt" -> values.modifiedDate)}))
   }
 
   get("/inaccurates") {

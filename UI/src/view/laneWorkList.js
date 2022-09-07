@@ -2,7 +2,9 @@
     root.LaneWorkList = function(){
         WorkListView.call(this);
         var me = this;
-        this.initialize = function(){
+        var backend;
+        this.initialize = function(mapBackend){
+            backend = mapBackend;
             me.bindEvents();
         };
 
@@ -15,43 +17,79 @@
             });
         };
 
-        this.workListItemTable = function(layerName, showDeleteCheckboxes, workListItems, municipalityName) {
+        this.workListItemTable = function(layerName, showDeleteCheckboxes, workListItems) {
+            var selectedToDelete = [];
 
-            var municipalityHeader = function(municipalityName) {
-                return $('<h2/>').html("Testi Header");
-            };
-            var tableHeaderRow = function(headerName) {
-                return $('<caption/>').html("Testi caption");
-            };
-            var tableContentRows = function(Ids) {
-                return _.map(Ids, function(item) {
-                    return $('<tr/>').append($('<td/>').append(item.assetId ? assetLink(item) : idLink(item)));
+            var trafficDirectionHeader = $('<h2/>').html("Tielinkin liikennevirran suuntaa muutettu");
+            var linkTypeHeader = $('<h2/>').html("<br>Tielinkin tyypin muutos vaikuttaa kaistojen lukumäärään");
+            var tableContentRows = function(items) {
+                return _.map(items, function(item) {
+                    return $('<tr/>')
+                        .append(checkbox(item.id))
+                        .append($('<th/>')
+                        .append(assetLink(item))
+                        .append(changeToLinkInfo(item)));
                 });
             };
-            var idLink = function(item) {
-                var href =  '#' + layerName + '/linkId/' + item.linkId;
-                var link =  '#' + layerName + '/' + item.linkId;
-                return $('<a class="work-list-item"/>').attr('href', href).html(link);
+
+            var changeToLinkInfo = function(item) {
+                return $('<dd class="work-list-item-description"/>')
+                    .html("Vanha arvo:" + item.oldValue + "<br> Uusi arvo: " + item.newValue + "<br> Muokkauksen ajankohta: " + item.modifiedAt);
             };
 
             var assetLink = function(item) {
-                var link = '#' + layerName + '/' + item.assetId;
-                return $('<a class="work-list-item"/>').attr('href', link).html(link);
+                var link = '#' + "linkProperty" + '/' + item.linkId;
+                return $('<a class="work-list-item"/>').attr('href', link).html("Link ID: " + item.linkId);
             };
 
-            var tableForGroupingValues = function(values, Ids) {
-                if (!Ids || Ids.length === 0) return '';
+            var tableForGroupingValues = function(items) {
+                if (!items || items.length === 0) return '';
                 return $('<table><tbody>').addClass('table')
-                    .append(tableHeaderRow(values))
-                    .append(tableContentRows(Ids))
+                    .append(tableContentRows(items))
                     .append('</tbody></table>');
             };
 
-            return $('<div/>').append(municipalityHeader(municipalityName))
-                .append(tableForGroupingValues('Kunnan omistama', workListItems.Municipality))
-                .append(tableForGroupingValues('Valtion omistama', workListItems.State))
-                .append(tableForGroupingValues('Yksityisen omistama', workListItems.Private))
-                .append(tableForGroupingValues('Ei tiedossa', workListItems.Unknown));
+            var checkbox = function (itemId) {
+                return $('<td class="laneWorkListCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+            };
+
+            var deleteBtn = function () {
+                return $('<button disabled/>').attr('id', 'deleteUnknownSpeedLimits').addClass('delete btn btn-municipality').text('Poista valitut kohteet').click(function () {
+                    new GenericConfirmPopup("Haluatko varmasti poistaa valitut tielinkin muutokset työlistasta?", {
+                        container: '#work-list',
+                        successCallback: function () {
+                            $(".verificationCheckbox:checkbox:checked").each(function () {
+                                selectedToDelete.push(parseInt(($(this).attr('value'))));
+                            });
+                            backend.deleteLaneWorkListItems(selectedToDelete, function () {
+                                new GenericConfirmPopup("Valitut tarkastettavat tielinkin muutokset poistettu!", {
+                                    container: '#work-list',
+                                    type: "alert",
+                                    okCallback: function () {
+                                        location.reload();
+                                    }
+                                });
+                            }, function () {
+                                new GenericConfirmPopup("Valittuja tarkastettavia tielinkin muutoksia ei voitu poistaa. Yritä myöhemmin uudelleen!", {
+                                    container: '#work-list',
+                                    type: "alert"
+                                });
+                            });
+                            selectedToDelete = [];
+                        },
+                        closeCallback: function () {
+                        }
+                    });
+                });
+
+            };
+
+            return $('<div/>')
+                .append(deleteBtn())
+                .append(linkTypeHeader)
+                .append(tableForGroupingValues(workListItems.link_type))
+                .append(trafficDirectionHeader)
+                .append(tableForGroupingValues(workListItems.traffic_direction));
         };
     };
 })(this);
