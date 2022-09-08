@@ -62,8 +62,11 @@
             var changeToLinkInfo = function (item) {
                 var newValueLegend = (item.propertyName === "link_type") ? linkTypes.get(item.newValue) : trafficDirections.get(item.newValue);
                 var oldValueLegend = (item.propertyName === "link_type") ? linkTypes.get(item.oldValue) : trafficDirections.get(item.oldValue);
-                return $('<dd class="work-list-item-description"/>')
-                    .html("Vanha arvo: " + oldValueLegend + " (" + item.oldValue + ")" + "<br> Uusi arvo: " + newValueLegend + " (" + item.newValue + ")" + "<br> Muokkauksen ajankohta: " + item.modifiedAt);
+                return $('<dd class="laneWorkListTextSize"/>')
+                    .html("Vanha arvo: " + oldValueLegend + " (" + item.oldValue + ")" +
+                        "<br> Uusi arvo: " + newValueLegend + " (" + item.newValue + ")" +
+                        "<br> Muokkauksen ajankohta: " + item.createdAt +
+                        "<br> Muokkaaja: " + item.createdBy);
             };
 
             var assetLink = function (item) {

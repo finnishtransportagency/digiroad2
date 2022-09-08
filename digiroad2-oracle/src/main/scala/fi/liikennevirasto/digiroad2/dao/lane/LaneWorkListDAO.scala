@@ -6,9 +6,10 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
-import java.sql.Date
+import java.sql.{Date, Timestamp}
+import java.time.LocalDateTime
 
-case class LaneWorkListItem(id: Long, linkId: Long, propertyName: String, oldValue: Int, newValue: Int, modifiedDate: DateTime)
+case class LaneWorkListItem(id: Long, linkId: Long, propertyName: String, oldValue: Int, newValue: Int,  createdDate: DateTime, createdBy: String)
 
 class LaneWorkListDAO {
 
@@ -19,14 +20,15 @@ class LaneWorkListDAO {
       val propertyName = result.nextString()
       val oldValue: Int = result.nextInt()
       val newValue: Int = result.nextInt()
-      val modifiedDate: DateTime = new DateTime(result.nextDate())
+      val createdDate: DateTime = new DateTime(result.nextTimestamp())
+      val createdBy: String = result.nextString()
 
-      LaneWorkListItem(id, linkId, propertyName, oldValue, newValue, modifiedDate)
+      LaneWorkListItem(id, linkId, propertyName, oldValue, newValue,  createdDate, createdBy)
     }
   }
 
   def getAllItems: Seq[LaneWorkListItem] = {
-    sql"""SELECT id, link_id, property, old_value, new_value, modified_date FROM lane_work_list""".as[LaneWorkListItem].list
+    sql"""SELECT id, link_id, property, old_value, new_value, created_date, created_by FROM lane_work_list""".as[LaneWorkListItem].list
   }
 
   def insertItem(item: LaneWorkListItem): Unit = {
@@ -35,9 +37,10 @@ class LaneWorkListDAO {
     val propertyName = item.propertyName
     val oldValue = item.oldValue
     val newValue = item.newValue
-    val modifiedDate = new Date(item.modifiedDate.toDate.getTime)
-    sqlu"""INSERT INTO lane_work_list (id, link_id, property, old_value, new_value, modified_date)
-          values($id, $linkId, $propertyName, $oldValue, $newValue, $modifiedDate)""".execute
+    val createdBy = item.createdBy
+    val createdDate = new Timestamp(item.createdDate.toDate.getTime)
+    sqlu"""INSERT INTO lane_work_list (id, link_id, property, old_value, new_value, created_date, created_by)
+          values($id, $linkId, $propertyName, $oldValue, $newValue, $createdDate, $createdBy)""".execute
   }
 
   def deleteItemsById(ids: Set[Long]): Unit = {

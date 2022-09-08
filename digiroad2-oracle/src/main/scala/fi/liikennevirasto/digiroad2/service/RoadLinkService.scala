@@ -831,13 +831,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         val newValue = linkProperty.trafficDirection.value
         val oldValue = optionalExistingValue.getOrElse(vvhRoadLink.trafficDirection.value)
         val timeStamp = DateTime.now()
-        val itemToInsert = LaneWorkListItem(0, vvhRoadLink.linkId, propertyName, oldValue, newValue, timeStamp)
+        val createdBy = username.getOrElse("")
+        val itemToInsert = LaneWorkListItem(0, vvhRoadLink.linkId, propertyName, oldValue, newValue, timeStamp, createdBy)
         if(newValue != oldValue) insertToLaneWorkList(itemToInsert)
       case "link_type" =>
         val newValue = linkProperty.linkType.value
         val oldValue = optionalExistingValue.getOrElse(99)
         val timeStamp = DateTime.now()
-        val itemToInsert = LaneWorkListItem(0, vvhRoadLink.linkId, propertyName, oldValue, newValue, timeStamp)
+        val createdBy = username.getOrElse("")
+        val itemToInsert = LaneWorkListItem(0, vvhRoadLink.linkId, propertyName, oldValue, newValue, timeStamp, createdBy)
 
         val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
         if(twoWayLaneLinkTypeChange && (newValue != oldValue)) {

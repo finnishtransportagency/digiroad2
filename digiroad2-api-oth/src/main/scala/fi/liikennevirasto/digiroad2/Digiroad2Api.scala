@@ -1519,7 +1519,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "propertyName" -> item.propertyName,
           "newValue" -> item.newValue,
           "oldValue" -> item.oldValue,
-          "modifiedAt" -> item.modifiedDate)}))
+          "createdAt" -> item.createdDate,
+          "createdBy" -> item.createdBy)}))
   }
 
   get("/inaccurates") {
