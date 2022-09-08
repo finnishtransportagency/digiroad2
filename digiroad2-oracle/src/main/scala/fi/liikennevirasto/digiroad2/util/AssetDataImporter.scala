@@ -1111,7 +1111,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def createTextPropertyValue(assetId: Long, propertyVal: Int, vname : String) = {
       sqlu"""
         INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-        VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,'vvh_generated')
+        VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,'generated_in_update')
       """.execute
     }
 

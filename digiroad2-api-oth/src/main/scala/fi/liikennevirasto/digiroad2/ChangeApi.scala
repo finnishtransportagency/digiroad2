@@ -41,7 +41,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       .parameters(
         queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
         queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
-        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by vvh_generated and not modified yet on the response. The value is False by default").optional,
+        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by generated_in_update and not modified yet on the response. The value is False by default").optional,
         queryParam[String]("withGeometry").description("With the field withGeometry, we allow or not to print the geometry values for lane_information. The value is False by default").optional,
         pathParam[String]("assetType").description("Asset type name to get the changes")
       )
