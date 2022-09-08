@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, MotorwayServiceAccess, SideCode, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad}
+import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, ServiceAccess, SideCode, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.{LaneNumberOneDigit, PersistedLane}
@@ -58,7 +58,7 @@ object ValidateLaneChangesAccordingToVvhChanges {
     roadLink.trafficDirection match {
 
       case BothDirections => roadLink.linkType match {
-        case MotorwayServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad  =>
+        case ServiceAccess | SpecialTransportWithoutGate | SpecialTransportWithGate | CycleOrPedestrianPath | TractorRoad  =>
           if (mainLanes.size != 1)  Some(roadLink)
           else None
         case _ => if (mainLanes.size != 2) Some(roadLink)

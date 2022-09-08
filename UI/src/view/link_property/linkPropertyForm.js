@@ -48,10 +48,11 @@
       [10, 'Huolto- tai pelastustie'],
       [11, 'Liitännäisliikennealue'],
       [12, 'Ajopolku'],
-      [13, 'Huoltoaukko moottoritiellä'],
+      [13, 'Huoltoaukko'],
       [14, 'Erikoiskuljetusyhteys ilman puomia'],
       [15, 'Erikoiskuljetusyhteys puomilla'],
-      [21, 'Lautta/lossi']
+      [21, 'Lautta/lossi'],
+      [22, 'Kaksisuuntainen yksikaistainen tie']
     ];
 
     var verticalLevelTypes= [
