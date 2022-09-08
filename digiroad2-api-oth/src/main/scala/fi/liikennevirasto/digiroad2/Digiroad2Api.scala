@@ -1496,13 +1496,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   delete("/laneWorkList/delete") {
-    val itemIdsToDelete = parsedBody.extractOpt[Set[Long]]
-        itemIdsToDelete match {
-          case Some(ids) =>
-            laneService.deleteFromLaneWorkList(ids)
-            true
-          case None => false
-        }
+    val user = userProvider.getCurrentUser()
+    val itemIdsToDelete = if (user.isLaneMaintainer() || user.isOperator()) parsedBody.extractOpt[Set[Long]]
+    else None
+    itemIdsToDelete match {
+      case Some(ids) =>
+        laneService.deleteFromLaneWorkList(ids)
+        true
+      case None => false
+    }
   }
 
   get("/laneWorkList") {
