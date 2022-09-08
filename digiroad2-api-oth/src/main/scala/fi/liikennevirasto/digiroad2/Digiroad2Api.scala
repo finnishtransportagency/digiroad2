@@ -701,7 +701,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       partitionedRoadLinks.map(r=>{roadLinkToApiWithLaneInfo(r,withLaneInfo=withLaneInfo)})
     }
   }
-  
+
   protected def lanesWithRoadlink(linkIds: Seq[RoadLink]): Seq[RoadLink]= {
     val lanes = laneService.fetchExistingLanesByLinkIds(linkIds.map(_.linkId))
     val lanesByLink = lanes.groupBy(_.linkId)
@@ -890,7 +890,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val lang = params("language")
     assetPropertyService.assetPropertyNames(lang)
   }
-  
+
   object RoadAddressNotFound {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
       ActionResult(HttpStatus.SC_PRECONDITION_FAILED, body, headers)
@@ -1511,12 +1511,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     else Seq()
 
     Map("items" -> workListItems.groupBy(_.propertyName)
-      .mapValues(_.map{values =>
-        Map("id" -> values.id,
-          "linkId" -> values.linkId,
-          "newValue" -> values.newValue,
-          "oldValue" -> values.oldValue,
-          "modifiedAt" -> values.modifiedDate)}))
+      .mapValues(_.map{ item =>
+        Map("id" -> item.id,
+          "linkId" -> item.linkId,
+          "propertyName" -> item.propertyName,
+          "newValue" -> item.newValue,
+          "oldValue" -> item.oldValue,
+          "modifiedAt" -> item.modifiedDate)}))
   }
 
   get("/inaccurates") {
