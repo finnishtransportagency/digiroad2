@@ -46,7 +46,7 @@ trait LinkOperationsAbstract {
   }
 }
 
-class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvRoadLinkClientBase {
+class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvRoadLinkClientBase(collection,linkGeomSourceValue) {
   override type LinkType = RoadLinkFetched
 }
 
@@ -85,9 +85,6 @@ class KgvRoadLinkClientBase(collection: Option[KgvCollection] = None, linkGeomSo
   }
 
   def fetchByLinkIdsF(linkIds: Set[String]) = Future(fetchByLinkIds(linkIds))
-
-  def fetchVVHRoadlinks[LinkType](linkIds: Set[String]): Seq[LinkType] =
-    queryByLinkIds[LinkType](linkIds)
 
   def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[LinkType] = {
     queryByLastEditedDate(lowerDate,higherDate)
@@ -133,7 +130,7 @@ class ExtractHistory extends ExtractorBase {
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
+    val roadClass = featureClassCodeToFeatureClass(roadClassCode)
 
     val kmtkId = linkId.split(":")(0)
     val version = linkId.split(":")(1).toInt
@@ -172,7 +169,7 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
   override type LinkType = HistoryRoadLink
 
   private def enrichWithChangeInfo(response: Seq[HistoryRoadLink]): Seq[HistoryRoadLink] = {
-    val changesLinkInfo = new RoadLinkChangeKGvClient().fetchByOldKmtkId(response.map(_.kmtkid).toSet)
+    val changesLinkInfo = new RoadLinkChangeKgvClient().fetchByOldKmtkId(response.map(_.kmtkid).toSet)
     response.map(r => {
       val newId = Try {
         val link = changesLinkInfo.find(f => r.kmtkid == f.oldKmtkId && r.version == f.oldVersion).get
@@ -189,7 +186,7 @@ class RoadLinkHistoryClient(serviceName:KgvCollection = KgvCollection.LinkVersio
 
 }
 
-class RoadLinkChangeKGvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
+class RoadLinkChangeKgvClient(serviceName:KgvCollection = KgvCollection.Changes, linkGeomSource:LinkGeomSource=LinkGeomSource.Unknown)
   extends KgvRoadLinkClientBase(Some(serviceName),Some(linkGeomSource),extractor = new ExtractKgvChange) {
 
   override type LinkType = ChangeKgv
