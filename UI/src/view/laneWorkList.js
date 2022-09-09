@@ -18,7 +18,8 @@
             14: 'Erikoiskuljetusyhteys ilman puomia',
             15: 'Erikoiskuljetusyhteys puomilla',
             21: 'Lautta/lossi',
-            22: 'Kaksisuuntainen yksikaistainen tie'
+            22: 'Kaksisuuntainen yksikaistainen tie',
+            99: 'Tuntematon'
         };
 
         var trafficDirections = {
