@@ -1,31 +1,31 @@
 (function (root) {
     root.LaneWorkList = function () {
 
-        var linkTypes = new Map([
-            [1, 'Moottoritie'],
-            [2, 'Moniajoratainen tie'],
-            [3, 'Yksiajoratainen tie'],
-            [4, 'Moottoriliikennetie'],
-            [5, 'Kiertoliittymä'],
-            [6, 'Ramppi'],
-            [7, 'Levähdysalue'],
-            [8, 'Kevyen liikenteen väylä'],
-            [9, 'Jalankulkualue'],
-            [10, 'Huolto- tai pelastustie'],
-            [11, 'Liitännäisliikennealue'],
-            [12, 'Ajopolku'],
-            [13, 'Huoltoaukko'],
-            [14, 'Erikoiskuljetusyhteys ilman puomia'],
-            [15, 'Erikoiskuljetusyhteys puomilla'],
-            [21, 'Lautta/lossi'],
-            [22, 'Kaksisuuntainen yksikaistainen tie']
-        ]);
+        var linkTypes = {
+            1: 'Moottoritie',
+            2: 'Moniajoratainen tie',
+            3: 'Yksiajoratainen tie',
+            4: 'Moottoriliikennetie',
+            5: 'Kiertoliittymä',
+            6: 'Ramppi',
+            7: 'Levähdysalue',
+            8: 'Kevyen liikenteen väylä',
+            9: 'Jalankulkualue',
+            10: 'Huolto- tai pelastustie',
+            11: 'Liitännäisliikennealue',
+            12: 'Ajopolku',
+            13: 'Huoltoaukko',
+            14: 'Erikoiskuljetusyhteys ilman puomia',
+            15: 'Erikoiskuljetusyhteys puomilla',
+            21: 'Lautta/lossi',
+            22: 'Kaksisuuntainen yksikaistainen tie'
+        };
 
-        var trafficDirections = new Map([
-            [2, 'Molempiin suuntiin'],
-            [3, 'Digitointisuuntaa vastaan'],
-            [4, 'Digitointisuuntaan']
-        ]);
+        var trafficDirections = {
+            2: 'Molempiin suuntiin',
+            3: 'Digitointisuuntaa vastaan',
+            4: 'Digitointisuuntaan'
+        };
 
         WorkListView.call(this);
         var me = this;
@@ -63,8 +63,8 @@
             };
 
             var changeToLinkInfo = function (item) {
-                var newValueLegend = (item.propertyName === "link_type") ? linkTypes.get(item.newValue) : trafficDirections.get(item.newValue);
-                var oldValueLegend = (item.propertyName === "link_type") ? linkTypes.get(item.oldValue) : trafficDirections.get(item.oldValue);
+                var newValueLegend = (item.propertyName === "link_type") ? linkTypes[item.newValue] : trafficDirections[item.newValue];
+                var oldValueLegend = (item.propertyName === "link_type") ? linkTypes[item.oldValue] : trafficDirections[item.oldValue];
                 return $('<dd class="laneWorkListTextSize"/>')
                     .html("Vanha arvo: " + oldValueLegend + " (" + item.oldValue + ")" +
                         "<br> Uusi arvo: " + newValueLegend + " (" + item.newValue + ")" +
