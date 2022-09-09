@@ -45,6 +45,7 @@ drop table if exists manoeuvre_val_period_history cascade;
 drop table if exists multiple_choice_value cascade;
 drop table if exists multiple_choice_value_history cascade;
 drop table if exists municipality cascade;
+drop table if exists municipality_asset_id_mapping cascade;
 drop table if exists municipality_dataset cascade;
 drop table if exists municipality_feature cascade;
 drop table if exists municipality_verification cascade;
