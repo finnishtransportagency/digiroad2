@@ -1,20 +1,14 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import com.vividsolutions.jts.geom.Polygon
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISTrafficSignDao
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao, Queries}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 

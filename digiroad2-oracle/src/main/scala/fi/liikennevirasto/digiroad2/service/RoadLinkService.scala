@@ -168,8 +168,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * ATENTION Use this method always with transation not with session
-    * Returns the road links from VVH by municipality.
+    * ATTENTION Use this method always with transaction, never with session,
+    * Returns the road links from database by municipality.
     *
     * @param municipality A integer, representative of the municipality Id.
     */
@@ -184,7 +184,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * Returns the road link ids from VVH by municipality.
+    * Returns the road link ids from database by municipality.
    *
     * @param municipality A integer, representative of the municipality Id.
     */
@@ -195,7 +195,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   /**
     * ATENTION Use this method always with transation not with session
-    * Returns the road links and changes from VVH by municipality.
+    * Returns the road links and changes by municipality.
     *
     * @param municipality A integer, representative of the municipality Id.
     */
@@ -253,7 +253,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   def getRoadLinkByLinkIdFromDB(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksByLinkIdsFromDB(Set(linkId), newTransaction: Boolean).headOption
 
   /**
-    * This method returns VVH road links that had changed between two dates.
+    * This method returns road links that have been changed within a specified time period.
     *
     * @param since
     * @param until
@@ -323,10 +323,10 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     getRoadLinksAndChangesByBounds(bounds, bounds2, newTransaction)._1
 
   /**
-    * This method returns VVH road links by link ids.
+    * This method returns road links from database by link ids.
     *
     * @param linkIds
-    * @return VVHRoadLinks
+    * @return RoadLinkFetched
     */
   def fetchRoadlinksFromDB(linkIds: Set[String]): Seq[RoadLinkFetched] = {
     if (linkIds.nonEmpty) {withDbConnection {roadLinkDAO.fetchByLinkIds(linkIds) }}
@@ -334,11 +334,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * This method returns VVH road links by Finnish or Swedish name. No used
+    * This method returns road links from database by Finnish or Swedish name. Not used at the moment.
     *
     * @param roadNamePublicIds
     * @param roadNameSource
-    * @return VVHRoadLinks
+    * @return RoadLinkFetched
     */
   def fetchRoadlinksFromDB(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[RoadLinkFetched] = {
     withDbConnection {roadLinkDAO.fetchByRoadNames(roadNamePublicIds, roadNameSource)}
@@ -403,11 +403,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   def fetchRoadlinkAndComplementaryFromDB(linkId: String): Option[RoadLinkFetched] = fetchRoadlinksAndComplementaryFromDB(Set(linkId)).headOption
 
   /**
-    * This method returns VVH road links that had changed between two dates.
+    * This method fetches road links that have been changed within a specified time period.
     *
     * @param since
     * @param until
-    * @return VVHRoadLinks
+    * @return RoadLinkFetched
     */
   def fetchRoadlinksChangedWithinTimePeriod(since: DateTime, until: DateTime): Seq[RoadLinkFetched] = {
     if ((since != null) || (until != null))withDbConnection { roadLinkDAO.fetchByChangesDates(since, until)}
@@ -415,11 +415,11 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * This method returns VVH road links by bounding box and municipalities. Utilized to find the closest road link of a point.
+    * This method returns road links from database by bounding box and municipalities. Used for finding the closest road link of a geometry point.
     *
     * @param bounds
     * @param municipalities
-    * @return VVHRoadLinks
+    * @return RoadLinkFetched
     */
   def getRoadLinksFromDB(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLinkFetched] = {
     withDbConnection{roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
@@ -453,13 +453,13 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   def getRoadLinksAndChanges(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), asyncMode: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val changes = if (!asyncMode){
       roadLinkClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(bounds, municipalities)
-    }else LogUtils.time(logger, "TEST LOG VVH fetch by boundingBox")(
+    }else LogUtils.time(logger, "TEST LOG fetch changes by boundingBox")(
       Await.result(roadLinkClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities), atMost = Duration.Inf)
     )
     
     val links = withDbConnection {roadLinkDAO.fetchByMunicipalitiesAndBounds(bounds, municipalities)}
     withDynTransaction {
-      LogUtils.time(logger, "TEST LOG enrichRoadLinksFromVVH from boundingBox request, link count: " + links.size)(
+      LogUtils.time(logger, "TEST LOG enrichFetchedRoadLinksFrom from boundingBox request, link count: " + links.size)(
         (enrichFetchedRoadLinks(links), changes)
       )
     }
@@ -1092,7 +1092,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
             insertValues.append(entry)
           case (None, Some(masterDataValue)) =>
             if (masterDataValue != RoadLinkOverrideDAO.getValue(entry.propertyName, entry.linkProperty))
-              insertValues.append(entry) // only if it override vvh value
+              insertValues.append(entry) // only if it override master data value
           case _ => Unit
         }
       }
@@ -1196,7 +1196,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   /**
     *  Fills incomplete road links with the previous link information.
-    *  Used by ROadLinkService.enrichRoadLinksFromVVH.
+    *  Used by UpdateIncompleteLinkList.
     */
   def fillIncompleteLinksWithPreviousLinkData(incompleteLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): (Seq[RoadLink], Seq[RoadLink]) = {
     val oldRoadLinkProperties = getOldRoadLinkPropertiesForChanges(changes)
@@ -1246,12 +1246,12 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
+    * Checks if road link is not complete. Used by UpdateIncompleteLinkList.
     */
   def isIncomplete(roadLink: RoadLink): Boolean = !isComplete(roadLink)
 
   /**
-    * Checks if road link is partially complete (has functional class OR link type but not both). Used by RoadLinkService.enrichRoadLinksFromVVH.
+    * Checks if road link is partially complete (has functional class OR link type but not both). Used by UpdateIncompleteLinkList.
     */
   def isPartiallyIncomplete(roadLink: RoadLink): Boolean = {
     val onlyFunctionalClassIsSet = roadLink.functionalClass != UnknownFunctionalClass.value && roadLink.linkType.value == UnknownLinkType.value
@@ -1281,7 +1281,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * @param changes        Change information to treat
     * @param changeUsername Username applied to this changes
     */
-  def fillRoadLinkAttributes(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], changeUsername: String = "vvh_change"): Unit = {
+  def fillRoadLinkAttributes(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], changeUsername: String = AutoGeneratedUsername.generatedInUpdate): Unit = {
     val roadLinkMap: mutable.HashMap[String, RoadLinkSet] = roadLinkToMap(roadLinks, changes)
 
     def resolveNewChange(change: ChangeInfo): Unit = {
@@ -1391,7 +1391,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * Passes VVH road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichRoadLinksFromVVH.
+    * Passes fetched road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichFetchedRoadLinks and UpdateIncompleteLinkList.
     */
   def getRoadLinkDataByLinkIds(roadLinks: Seq[IRoadLinkFetched]): Seq[RoadLink] = {
     adjustedRoadLinks(roadLinks)
@@ -1718,7 +1718,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    *  Call reloadRoadLinksWithComplementaryAndChangesFromVVH
+    *  Call reloadRoadLinksWithComplementaryAndChanges
     */
   private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     Caching.cache[(Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])](
@@ -1727,14 +1727,14 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * This method returns Road Link that have been changed in VVH between given dates values. It is used by TN-ITS ChangeApi.
+    * This method returns roadLinks that have been changed within a specified time period. It is used by TN-ITS ChangeApi.
     *
     * @param sinceDate
     * @param untilDate
     * @return Changed Road Links between given dates
     */
   def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[RoadlinkWithChange] = {
-    val municipalitiesCodeToValidate = List(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
+    val municipalitiesForSwedishRoadNames = List(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
     val timezone = DateTimeZone.forOffsetHours(0)
 
     val roadLinksBetweenDates = getRoadLinksByChangesWithinTimePeriodFromDB(sinceDate, untilDate)
@@ -1744,7 +1744,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       RoadlinkWithChange(
         link = roadLink,
         value =
-          if (municipalitiesCodeToValidate.contains(roadLink.municipalityCode)) {
+          if (municipalitiesForSwedishRoadNames.contains(roadLink.municipalityCode)) {
             roadLink.attributes.getOrElse("ROADNAME_SE", "").toString
           } else {
             roadLink.attributes.getOrElse("ROADNAME_FI", "").toString

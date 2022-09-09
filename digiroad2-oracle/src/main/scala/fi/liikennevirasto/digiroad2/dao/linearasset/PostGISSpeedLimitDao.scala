@@ -263,7 +263,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     /**
     * Returns data for municipality validation. Used by PostGISSpeedLimitDao.splitSpeedLimit.
     */
-  def getLinksWithLengthFromVVH(id: Long): Seq[(String, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
+  def getLinksWithLengthFromDB(id: Long): Seq[(String, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
     val assetTypeId = SpeedLimitAsset.typeId
     val links = sql"""
       select pos.link_id, pos.start_measure, pos.end_measure

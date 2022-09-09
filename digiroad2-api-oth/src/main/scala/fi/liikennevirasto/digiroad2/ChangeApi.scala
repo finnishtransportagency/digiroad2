@@ -91,7 +91,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         case "height_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust, token))
         case "length_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust, token))
         case "width_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust, token))
-        case "road_names" => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+        case "road_names" => roadLinksToGeoJson(roadLinkService.getChanged(since, until))
         case "vehicle_prohibitions" => prohibitionsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust, token))
         case "pedestrian_crossing" => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until, token), pointAssetGenericProperties)
         case "obstacles" => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
@@ -488,7 +488,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     }
   }
 
-  private def vvhRoadLinkToGeoJson(changedRoadlinks: Seq[RoadlinkWithChange]) =
+  private def roadLinksToGeoJson(changedRoadlinks: Seq[RoadlinkWithChange]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->

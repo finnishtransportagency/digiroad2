@@ -58,10 +58,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def getLinksWithLengthFromVVH(id: Long, newTransaction: Boolean = true): Seq[(String, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
     if (newTransaction)
       withDynTransaction {
-        dao.getLinksWithLengthFromVVH(id)
+        dao.getLinksWithLengthFromDB(id)
       }
     else
-      dao.getLinksWithLengthFromVVH(id)
+      dao.getLinksWithLengthFromDB(id)
   }
 
   def getSpeedLimitAssetsByIds(ids: Set[Long], newTransaction: Boolean = true): Seq[SpeedLimit] = {

@@ -473,7 +473,7 @@ object DataFixture {
     println("Processing %d assets not floating".format(assets.length))
 
     if(assets.nonEmpty){
-      //Get All RoadLinks from VVH by asset link ids
+      //Get All RoadLinks from database by asset link ids
       val roadLinks = roadLinkService.fetchRoadlinksFromDB(assets.map(_._2).toSet)
 
       assets.foreach{
@@ -651,7 +651,7 @@ object DataFixture {
 
     println("Obtaining all Road Links By Municipality")
 
-    //For each municipality get all VVH Roadlinks for pick link id and pavement data
+    //For each municipality get all roadlinks from db for pick link id and pavement data
     municipalities.foreach { municipality =>
 
       var countMotorway = 0
@@ -690,7 +690,7 @@ object DataFixture {
         println ("Max possibles to insert       -> " + filteredRoadLinksByNonCreated.size )
 
         if (filteredRoadLinksByNonCreated.nonEmpty) {
-          //Create new Assets for the RoadLinks from VVH
+          //Create new Assets for the RoadLinks
           filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
             val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
@@ -847,7 +847,7 @@ object DataFixture {
 
     println("Obtaining all Road Links By Municipality")
 
-    //For each municipality get all VVH Roadlinks for pick link id and pavement data
+    //For each municipality get all roadlinks from database
     municipalities.foreach { municipality =>
 
       //Obtain all RoadLink by municipality
@@ -1473,8 +1473,8 @@ object DataFixture {
         if (privateRoadInfo.nonEmpty) {
           println(s"Number of records to update ${privateRoadInfo.keySet.size}")
 
-          val roadLinksVVH = roadLinkService.fetchRoadlinksAndComplementaryFromDB(privateRoadInfo.keySet)
-          val roadLinks = roadLinkService.enrichFetchedRoadLinks(roadLinksVVH)
+          val fetchedRoadLinks = roadLinkService.fetchRoadlinksAndComplementaryFromDB(privateRoadInfo.keySet)
+          val roadLinks = roadLinkService.enrichFetchedRoadLinks(fetchedRoadLinks)
 
           val missingRoadLinks = privateRoadInfo.keySet.diff(roadLinks.map(_.linkId).toSet)
           if (missingRoadLinks.nonEmpty)
@@ -1486,9 +1486,9 @@ object DataFixture {
             println(s"Change Administrative Class for link ${road.linkId}")
             val linkProperties = LinkProperties(road.linkId, road.functionalClass, road.linkType, road.trafficDirection, road.administrativeClass)
             if (road.administrativeClass != Unknown)
-              AdministrativeClassDao.updateValues(linkProperties, roadLinksVVH.find(_.linkId == road.linkId).get, Some(username), Private.value, privateRoadInfo(road.linkId).map(_._2).headOption)
+              AdministrativeClassDao.updateValues(linkProperties, fetchedRoadLinks.find(_.linkId == road.linkId).get, Some(username), Private.value, privateRoadInfo(road.linkId).map(_._2).headOption)
             else
-              AdministrativeClassDao.insertValues(linkProperties, roadLinksVVH.find(_.linkId == road.linkId).get, Some(username), Private.value, privateRoadInfo(road.linkId).map(_._2).headOption)
+              AdministrativeClassDao.insertValues(linkProperties, fetchedRoadLinks.find(_.linkId == road.linkId).get, Some(username), Private.value, privateRoadInfo(road.linkId).map(_._2).headOption)
           }
 
           (privateRoad ++ otherRoad).foreach { road =>

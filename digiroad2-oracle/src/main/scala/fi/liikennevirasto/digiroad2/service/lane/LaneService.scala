@@ -813,7 +813,7 @@ trait LaneOperations {
       } else {
         // If we have more than 1 linkId than we have a chain selected
         // Lanes will be created with the size of the link
-        val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(linkIds, false)
+        val groupedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(linkIds, false)
                                                   .groupBy(_.linkId)
 
         val result = linkIds.map { linkId =>
@@ -823,8 +823,8 @@ trait LaneOperations {
             val laneCode = getLaneCode(newLane)
             validateStartDateOneDigit(newLane, laneCode.toInt)
 
-            val roadLink = if (vvhRoadLinks(linkId).nonEmpty)
-                            vvhRoadLinks(linkId).head
+            val roadLink = if (groupedRoadLinks(linkId).nonEmpty)
+                            groupedRoadLinks(linkId).head
                            else
                             throw new InvalidParameterException(s"No RoadLink found: $linkId")
 
