@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import java.util.NoSuchElementException
-
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
@@ -49,6 +48,9 @@ trait AbstractPublishInfo {
 }
 
 case class PublishInfo(asset: Option[PersistedMassTransitStop]) extends AbstractPublishInfo
+
+sealed case class InvalidParameterException (message:String) extends IllegalArgumentException(message)
+
 
 trait AbstractBusStopStrategy {
   val typeId: Int
@@ -165,12 +167,16 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   def getPersistedAssetsByIdsEnriched(ids: Set[Long]): Seq[PersistedAsset] = {
-    val idsStr = ids.toSeq.mkString(",")
-    val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
-    fetchPointAssets(withFilter(filter)).map { asset =>
-      val strategy = getStrategy(asset)
-      val (enrichedStop, _) = strategy.enrichBusStop(asset)
-      enrichedStop
+    if(ids.nonEmpty){
+      val idsStr = ids.toSeq.mkString(",")
+      val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
+      fetchPointAssets(withFilter(filter)).map { asset =>
+        val strategy = getStrategy(asset)
+        val (enrichedStop, _) = strategy.enrichBusStop(asset)
+        enrichedStop
+      }
+    } else {
+      throw InvalidParameterException("Ids list is empty")
     }
   }
 

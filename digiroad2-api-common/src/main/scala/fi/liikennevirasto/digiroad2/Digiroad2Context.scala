@@ -61,7 +61,6 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
   def persistedAssetChanges(terminalPublishInfo: TerminalPublishInfo) = {
     withDynSession {
       val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset ++ terminalPublishInfo.detachAsset).toSet)
-
       persistedStop.foreach { busStop =>
         val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, false)
         val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
