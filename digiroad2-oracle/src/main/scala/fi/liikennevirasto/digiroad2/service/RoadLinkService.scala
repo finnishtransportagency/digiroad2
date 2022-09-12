@@ -19,8 +19,10 @@ import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.Caching
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneWorkListDAO, LaneWorkListItem}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.vvhClient
+import fi.liikennevirasto.digiroad2.util.MainLanePopulationProcess.twoWayLanes
 import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -99,6 +101,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   protected def roadLinkDAO: RoadLinkDAO = new RoadLinkDAO
   protected def complementaryLinkDAO: ComplementaryLinkDAO = new ComplementaryLinkDAO
+  protected def laneWorkListDAO: LaneWorkListDAO = new LaneWorkListDAO
   
   val logger = LoggerFactory.getLogger(getClass)
   
@@ -814,10 +817,37 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     withDbConnection {roadLinkDAO.fetchByLinkId(id).map(_.geometry)}
   }
 
+  def insertToLaneWorkList(itemToInsert: LaneWorkListItem): Unit = {
+    laneWorkListDAO.insertItem(itemToInsert)
+  }
+
   protected def setLinkProperty(propertyName: String, linkProperty: LinkProperties, username: Option[String],
                                 vvhRoadLink: VVHRoadlink, latestModifiedAt: Option[String],
                                 latestModifiedBy: Option[String]) = {
     val optionalExistingValue: Option[Int] = RoadLinkOverrideDAO.get(propertyName, linkProperty.linkId)
+
+    propertyName match {
+      case "traffic_direction" =>
+        val newValue = linkProperty.trafficDirection.value
+        val oldValue = optionalExistingValue.getOrElse(vvhRoadLink.trafficDirection.value)
+        val timeStamp = DateTime.now()
+        val createdBy = username.getOrElse("")
+        val itemToInsert = LaneWorkListItem(0, vvhRoadLink.linkId, propertyName, oldValue, newValue, timeStamp, createdBy)
+        if(newValue != oldValue) insertToLaneWorkList(itemToInsert)
+      case "link_type" =>
+        val newValue = linkProperty.linkType.value
+        val oldValue = optionalExistingValue.getOrElse(99)
+        val timeStamp = DateTime.now()
+        val createdBy = username.getOrElse("")
+        val itemToInsert = LaneWorkListItem(0, vvhRoadLink.linkId, propertyName, oldValue, newValue, timeStamp, createdBy)
+
+        val twoWayLaneLinkTypeChange = twoWayLanes.map(_.value).contains(newValue) || twoWayLanes.map(_.value).contains(oldValue)
+        if(twoWayLaneLinkTypeChange && (newValue != oldValue)) {
+          insertToLaneWorkList(itemToInsert)
+        }
+      case _ =>
+    }
+
     (optionalExistingValue, RoadLinkOverrideDAO.getVVHValue(propertyName, vvhRoadLink)) match {
       case (Some(existingValue), _) =>
         RoadLinkOverrideDAO.update(propertyName, linkProperty, vvhRoadLink, username, existingValue, checkMMLId(vvhRoadLink))

@@ -590,6 +590,10 @@
       return $.getJSON('api/municipalities/byUser');
     };
 
+    this.getLaneWorkList = function () {
+      return $.getJSON('api/laneWorkList');
+    };
+
     this.getMunicipalityIdByName = function(municipalityName) {
       return $.getJSON('api/municipalities/idByName?name=' + municipalityName);
     };
@@ -1060,6 +1064,18 @@
         contentType: "application/json",
         type: "DELETE",
         url: "api/unknownSpeedLimit/delete",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.deleteLaneWorkListItems = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/laneWorkList/delete",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
