@@ -2413,21 +2413,21 @@ case object NatureSite extends ServiceSignsType {
 case object Viewpoint extends ServiceSignsType {
   override val OTHvalue = 327
   override val TRvalue = 726 // UUSIASNR Value in TR
-  override val OldLawCode: Option[Int] = Some(7725) // The previous way was "772 d"
+  override val OldLawCode: Option[Int] = Some(7724) // The previous way was "772 d"
   override val NewLawCode = "G26"
 }
 
 case object Zoo extends ServiceSignsType {
   override val OTHvalue = 328
   override val TRvalue = 727 // UUSIASNR Value in TR
-  override val OldLawCode: Option[Int] = Some(7726) // The previous way was "772 e"
+  override val OldLawCode: Option[Int] = Some(7725) // The previous way was "772 e"
   override val NewLawCode = "G27"
 }
 
 case object OtherTouristAttraction extends ServiceSignsType {
   override val OTHvalue = 329
   override val TRvalue = 728 // UUSIASNR Value in TR
-  override val OldLawCode: Option[Int] = Some(7727) // The previous way was "772 f"
+  override val OldLawCode: Option[Int] = Some(7726) // The previous way was "772 f"
   override val NewLawCode = "G28"
 }
 
