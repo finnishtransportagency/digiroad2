@@ -51,7 +51,6 @@ case class PublishInfo(asset: Option[PersistedMassTransitStop]) extends Abstract
 
 sealed case class InvalidParameterException (message:String) extends IllegalArgumentException(message)
 
-
 trait AbstractBusStopStrategy {
   val typeId: Int
   val roadLinkService: RoadLinkService
