@@ -73,7 +73,8 @@ object MainLanePopulationProcess {
         Seq(roadLink.copy(trafficDirection = TrafficDirection.TowardsDigitizing),
             roadLink.copy(trafficDirection = TrafficDirection.AgainstDigitizing))
       case _ if twoWayLane =>
-        Seq(roadLink.copy(trafficDirection = TrafficDirection.BothDirections))
+        if (roadLink.linkType == RestArea) Seq(roadLink)
+        else Seq(roadLink.copy(trafficDirection = TrafficDirection.BothDirections))
       case _ =>
         Seq(roadLink)
     }
