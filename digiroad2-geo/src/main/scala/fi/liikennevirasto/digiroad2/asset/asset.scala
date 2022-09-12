@@ -33,7 +33,7 @@ sealed trait ConstructionType {
 }
 
 object ConstructionType{
-  val values = Set[ConstructionType](InUse, UnderConstruction, Planned, UnknownConstructionType)
+  val values = Set[ConstructionType](InUse, UnderConstruction, Planned, UnknownConstructionType,TemporallyNotInUsed)
 
   def apply(intValue: Int): ConstructionType = {
     values.find(_.value == intValue).getOrElse(InUse)
@@ -42,6 +42,7 @@ object ConstructionType{
   case object InUse extends ConstructionType { def value = 0 }
   case object UnderConstruction extends ConstructionType { def value = 1 }
   case object Planned extends ConstructionType { def value = 3 }
+  case object TemporallyNotInUsed extends ConstructionType { def value = 4 }
   case object UnknownConstructionType extends ConstructionType { def value = 99 }
 }
 

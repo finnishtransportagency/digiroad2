@@ -338,7 +338,8 @@ class RoadLinkDAO {
           from roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
-                                                  ${ConstructionType.Planned.value})
+                                                  ${ConstructionType.Planned.value},
+                                                  ${ConstructionType.TemporallyNotInUsed.value})
           """.as[VVHRoadlink].list
    }
   }

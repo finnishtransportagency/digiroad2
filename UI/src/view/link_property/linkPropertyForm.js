@@ -69,7 +69,8 @@
     var constructionTypes= [
       [0, 'Käytössä'], //In Use
       [1, 'Rakenteilla'], //Under Construction
-      [3, 'Suunnitteilla'] //Planned
+      [3, 'Suunnitteilla'], //Planned
+      [4, 'Väliaikaiseti pois käytöstä'] //Temporally not in used
     ];
 
     var linkSources= [
