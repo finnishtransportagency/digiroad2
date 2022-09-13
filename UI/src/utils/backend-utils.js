@@ -1075,7 +1075,7 @@
       $.ajax({
         contentType: "application/json",
         type: "DELETE",
-        url: "api/laneWorkList/",
+        url: "api/laneWorkList",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,

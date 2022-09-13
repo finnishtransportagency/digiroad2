@@ -1496,7 +1496,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  delete("/laneWorkList/") {
+  delete("/laneWorkList") {
     val user = userProvider.getCurrentUser()
     val userHasRights = user.isLaneMaintainer() || user.isOperator()
     val itemIdsToDelete = userHasRights match{
