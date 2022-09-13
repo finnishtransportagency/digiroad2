@@ -554,24 +554,6 @@ object DataFixture {
       }
     }
   }
-
-  def importVVHRoadLinksByMunicipalities(): Unit = {
-    println("\nExpire all RoadLinks and then migrate the road Links from VVH to OTH")
-    println(DateTime.now())
-    val roadLinkService = new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
-    val assetTypeId = 110
-
-    lazy val linearAssetService: LinearAssetService = {
-      new LinearAssetService(roadLinkService, new DummyEventBus)
-    }
-
-    linearAssetService.expireImportRoadLinksVVHtoOTH(assetTypeId)
-
-    println("\n")
-    println("Complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
   
   def listingBusStopsWithSideCodeConflictWithRoadLinkDirection(): Unit = {
     println("\nCreate a listing of bus stops on one-way roads in Production that have side code against traffic direction of road link")
@@ -2232,8 +2214,6 @@ object DataFixture {
         linkFloatObstacleAssets()
       case Some ("check_unknown_speedlimits") =>
         checkUnknownSpeedlimits()
-      case Some ("import_VVH_RoadLinks_by_municipalities") =>
-        importVVHRoadLinksByMunicipalities()
       case Some("set_transitStops_floating_reason") =>
         transisStopAssetsFloatingReason()
       case Some ("verify_roadLink_administrative_class_changed") =>
@@ -2337,7 +2317,7 @@ object DataFixture {
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | adjust_digitization | repair | link_float_obstacle_assets |" +
-        " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
+        " generate_floating_obstacles | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed |" +
         " listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | fill_roadWidth_in_road_links |" +

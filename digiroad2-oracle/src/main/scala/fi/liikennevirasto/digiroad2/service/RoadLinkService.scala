@@ -676,16 +676,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * This method returns road links by municipality. Used by expireImportRoadLinksVVHtoOTH.
-    *
-    * @param municipality
-    * @return VVHRoadLinks
-    */
-  def getRoadLinksFromDBF(municipality: Int) : Seq[RoadLinkFetched] = {
-    Await.result(withDbConnection {roadLinkDAO.fetchByMunicipalityF(municipality)}, atMost = Duration.Inf)
-  }
-
-  /**
     * Returns incomplete links by municipalities (Incomplete link = road link with no functional class and link type saved in OTH).
     * Used by Digiroad2Api /roadLinks/incomplete GET endpoint.
     */
