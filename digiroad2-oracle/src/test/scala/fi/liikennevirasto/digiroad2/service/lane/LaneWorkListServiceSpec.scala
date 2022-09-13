@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, B
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneWorkListDAO
-import fi.liikennevirasto.digiroad2.service.LinkProperties
+import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertyChange}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
 
@@ -22,7 +22,7 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
     val vvhRoadLink = VVHRoadlink(1l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)
     runWithRollback {
       val itemsBeforeOperation = laneWorkListDao.getAllItems
-      laneWorkListService.insertToLaneWorkList("traffic_direction", None, linkProperty, vvhRoadLink, Some(user), false)
+      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("traffic_direction", None, linkProperty, vvhRoadLink, Some(user)), false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)
@@ -42,7 +42,7 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
       val existingOverriddenValue = Option(3)
       val itemsBeforeOperation = laneWorkListDao.getAllItems
 
-      laneWorkListService.insertToLaneWorkList("traffic_direction", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user), false)
+      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("traffic_direction", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user)), false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)
@@ -62,7 +62,7 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
       val existingOverriddenValue = Option(3)
       val itemsBeforeOperation = laneWorkListDao.getAllItems
 
-      laneWorkListService.insertToLaneWorkList("link_type", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user), false)
+      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("link_type", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user)), false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)
@@ -82,8 +82,8 @@ class LaneWorkListServiceSpec extends FunSuite with Matchers {
       val existingOverriddenValue = None
       val itemsBeforeOperation = laneWorkListDao.getAllItems
 
-      laneWorkListService.insertToLaneWorkList("link_type", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user), false)
-      laneWorkListService.insertToLaneWorkList("traffic_direction", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user), false)
+      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("link_type", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user)), false)
+      laneWorkListService.insertToLaneWorkList(LinkPropertyChange("traffic_direction", existingOverriddenValue, linkProperty, vvhRoadLink, Some(user)), false)
       val itemsAfterOperation = laneWorkListDao.getAllItems
 
       itemsBeforeOperation.size should equal(0)

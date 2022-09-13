@@ -49,6 +49,8 @@ case class RoadLinkAttributeInfo(id: Long, linkId: Option[Long], name: Option[St
 case class LinkPropertiesEntries(propertyName: String, linkProperty: LinkProperties, username: Option[String],
                                  vvhRoadLink: VVHRoadlink, latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String],mmlId: Option[Long])
+case class LinkPropertyChange(propertyName: String, optionalExistingValue: Option[Int], linkProperty: LinkProperties,
+                              vvhRoadLink: VVHRoadlink, username: Option[String])
 
 
 sealed trait RoadLinkType {
@@ -821,15 +823,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val optionalExistingValue: Option[Int] = RoadLinkOverrideDAO.get(propertyName, linkProperty.linkId)
     (optionalExistingValue, RoadLinkOverrideDAO.getVVHValue(propertyName, vvhRoadLink)) match {
       case (Some(existingValue), _) =>
-        eventbus.publish("laneWorkList:insert", (propertyName, optionalExistingValue, linkProperty, vvhRoadLink, username))
+        eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, vvhRoadLink, username))
         RoadLinkOverrideDAO.update(propertyName, linkProperty, vvhRoadLink, username, existingValue, checkMMLId(vvhRoadLink))
       case (None, None) =>
-        eventbus.publish("laneWorkList:insert", (propertyName, optionalExistingValue, linkProperty, vvhRoadLink, username))
+        eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, vvhRoadLink, username))
         insertLinkProperty(propertyName, linkProperty, vvhRoadLink, username, latestModifiedAt, latestModifiedBy)
 
       case (None, Some(vvhValue)) =>
         if (vvhValue != RoadLinkOverrideDAO.getValue(propertyName, linkProperty)) { // only save if it overrides VVH provided value
-          eventbus.publish("laneWorkList:insert", (propertyName, optionalExistingValue, linkProperty, vvhRoadLink, username))
+          eventbus.publish("laneWorkList:insert", LinkPropertyChange(propertyName, optionalExistingValue, linkProperty, vvhRoadLink, username))
           insertLinkProperty(propertyName, linkProperty, vvhRoadLink, username, latestModifiedAt, latestModifiedBy)
         }
     }

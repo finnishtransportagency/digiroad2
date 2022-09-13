@@ -295,13 +295,8 @@ class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSig
 
 class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends Actor {
   def receive = {
-    case x: (String, Option[Int],LinkProperties, VVHRoadlink, Option[String]) =>
-      val propertyName: String = x._1
-      val optionalExistingValue: Option[Int] = x._2
-      val linkProperty: LinkProperties = x._3
-      val vvhRoadLink: VVHRoadlink = x._4
-      val username: Option[String] = x._5
-      laneWorkListService.insertToLaneWorkList(propertyName, optionalExistingValue, linkProperty, vvhRoadLink, username)
+    case linkPropertyChange: LinkPropertyChange =>
+      laneWorkListService.insertToLaneWorkList(linkPropertyChange)
     case _ => println("LaneWorkListInsertItem: Received unknown message")
   }
 }
