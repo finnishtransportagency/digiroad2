@@ -80,7 +80,7 @@
 
     var laneConfirmationPopUp = function (target, selectedValue) {
       return {
-        message: "Vastakkaisen suunnan kaistat lakkautetaan.",
+        message: "Tielinkki nousee kaistojen tarkastuslistalle.",
         type: "confirm",
         yesButtonLbl: 'Kyllä',
         noButtonLbl: 'Ei',
