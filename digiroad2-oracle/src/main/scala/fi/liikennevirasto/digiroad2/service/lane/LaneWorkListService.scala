@@ -45,9 +45,10 @@ class LaneWorkListService {
     }
   }
 
-  def deleteFromLaneWorkList(itemsToDelete: Set[Long]): Unit = {
+  def deleteFromLaneWorkList(itemsToDelete: Set[Long]): Set[Long] = {
     PostGISDatabase.withDynTransaction {
       workListDao.deleteItemsById(itemsToDelete)
     }
+    itemsToDelete
   }
 }

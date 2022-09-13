@@ -1498,20 +1498,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   delete("/laneWorkList/") {
     val user = userProvider.getCurrentUser()
-    val itemIdsToDelete = if (user.isLaneMaintainer() || user.isOperator()) parsedBody.extractOpt[Set[Long]]
-    else None
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val itemIdsToDelete = userHasRights match{
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(BadRequest("User not authorized to delete items from lane work list"))
+    }
     itemIdsToDelete match {
       case Some(ids) =>
         laneWorkListService.deleteFromLaneWorkList(ids)
-        true
-      case None => false
+      case None => halt(BadRequest("No item ids to delete provided"))
     }
   }
 
   get("/laneWorkList") {
     val user = userProvider.getCurrentUser()
-    val workListItems = if(user.isLaneMaintainer() || user.isOperator()) laneWorkListService.getLaneWorkList
-    else Seq()
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val workListItems = userHasRights match {
+      case true => laneWorkListService.getLaneWorkList
+      case false => halt(BadRequest("User not authorized to get items from lane work list"))
+    }
 
     Map("items" -> workListItems.groupBy(_.propertyName)
       .mapValues(_.map{ item =>
