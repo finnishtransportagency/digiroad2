@@ -52,7 +52,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockVVHRoadNodesClient = MockitoSugar.mock[VVHRoadNodesClient]
   val mockRoadLinkDao = MockitoSugar.mock[RoadLinkDAO]
   val mockRoadLinkComplimentaryDao = MockitoSugar.mock[ComplementaryLinkDAO]
-  val laneworkListDao: LaneWorkListDAO = new LaneWorkListDAO
   
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -1355,68 +1354,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       trafficDirections.size should be (4)
       functionalClass.size should be (4)
       linkTypes.size should be (3)
-    }
-  }
-
-  test("traffic direction change should be identified and saved to lane work list") {
-    runWithRollback{
-      when(mockRoadLinkDao.fetchByLinkId(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
-      val itemsBeforeOperation = laneworkListDao.getAllItems
-      val user = "testuser"
-      val service = new TestService(mockVVHClient)
-      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, Private)
-      service.updateLinkProperties(linkProperty, Option(user), { (_, _) => })
-      val itemsAfterOperation = laneworkListDao.getAllItems
-
-      itemsBeforeOperation.size should equal(0)
-      itemsAfterOperation.size should equal(1)
-
-      itemsAfterOperation.head.propertyName should equal("traffic_direction")
-      itemsAfterOperation.head.oldValue should equal(TowardsDigitizing.value)
-      itemsAfterOperation.head.newValue should equal(BothDirections.value)
-      itemsAfterOperation.head.createdBy should equal(user)
-
-    }
-  }
-
-  test("only link type changes from or to types specified in twowayLanes list should be saved to work list") {
-    runWithRollback{
-      when(mockRoadLinkDao.fetchByLinkId(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
-      when(mockRoadLinkDao.fetchByLinkId(2l))
-        .thenReturn(Some(VVHRoadlink(2l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
-      when(mockRoadLinkDao.fetchByLinkId(3l))
-        .thenReturn(Some(VVHRoadlink(3l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
-
-      val user = "testuser"
-      //Give link 2 link type value included in twowayLanes list
-      RoadLinkOverrideDAO.LinkTypeDao.insertValues(2l, Some(user), SpecialTransportWithGate.value)
-      val itemsBeforeOperation = laneworkListDao.getAllItems
-      val service = new TestService(mockVVHClient)
-      val linkProperty1 = LinkProperties(1, 5, SpecialTransportWithoutGate, TrafficDirection.TowardsDigitizing, Private)
-      val linkProperty2 = LinkProperties(2, 5, BidirectionalLaneCarriageWay, TrafficDirection.TowardsDigitizing, Private)
-      val linkProperty3 = LinkProperties(3, 5, PedestrianZone, TrafficDirection.TowardsDigitizing, Private)
-      service.updateLinkProperties(linkProperty1, Option(user), { (_, _) => })
-      service.updateLinkProperties(linkProperty2, Option(user), { (_, _) => })
-      service.updateLinkProperties(linkProperty3, Option(user), { (_, _) => })
-      val itemsAfterOperation = laneworkListDao.getAllItems
-
-      itemsBeforeOperation.size should equal(0)
-      itemsAfterOperation.size should equal(2)
-
-      val itemLink1 = itemsAfterOperation.find(_.linkId == 1).get
-      val itemLink2 = itemsAfterOperation.find(_.linkId == 2).get
-
-      itemLink1.propertyName should equal("link_type")
-      itemLink1.oldValue should equal(UnknownLinkType.value)
-      itemLink1.newValue should equal(SpecialTransportWithoutGate.value)
-      itemLink1.createdBy should equal(user)
-
-      itemLink2.propertyName should equal("link_type")
-      itemLink2.oldValue should equal(SpecialTransportWithGate.value)
-      itemLink2.newValue should equal(BidirectionalLaneCarriageWay.value)
-      itemLink2.createdBy should equal(user)
     }
   }
 }
