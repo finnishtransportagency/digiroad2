@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.LaneService
+import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ProhibitionService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop, ServicePointStopService}
@@ -90,7 +90,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
-                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService)
+                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
+                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -1501,7 +1502,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     else None
     itemIdsToDelete match {
       case Some(ids) =>
-        laneService.deleteFromLaneWorkList(ids)
+        laneWorkListService.deleteFromLaneWorkList(ids)
         true
       case None => false
     }
@@ -1509,7 +1510,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/laneWorkList") {
     val user = userProvider.getCurrentUser()
-    val workListItems = if(user.isLaneMaintainer() || user.isOperator()) laneService.getLaneWorkList()
+    val workListItems = if(user.isLaneMaintainer() || user.isOperator()) laneWorkListService.getLaneWorkList
     else Seq()
 
     Map("items" -> workListItems.groupBy(_.propertyName)
