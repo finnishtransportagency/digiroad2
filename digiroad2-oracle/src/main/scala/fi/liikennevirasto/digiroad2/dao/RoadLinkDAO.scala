@@ -322,56 +322,56 @@ class RoadLinkDAO {
    }
   }
 
-        private def getByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
+  private def getByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                  filter: Option[String]): Seq[RoadLinkFetched] = {
-          val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, geometryColumn)
-          val withFilter = (municipalities.nonEmpty, filter.nonEmpty) match {
-            case (true, true) =>  s"and municipalitycode in (${municipalities.mkString(",")}) and ${filter.get}"
-            case (true, false) => s"and municipalitycode in (${municipalities.mkString(",")})"
-            case (false, true) => s"and ${filter.get}"
-            case _ => ""
-          }
+    val bboxFilter = PostGISDatabase.boundingBoxFilter(bounds, geometryColumn)
+    val withFilter = (municipalities.nonEmpty, filter.nonEmpty) match {
+      case (true, true) => s"and municipalitycode in (${municipalities.mkString(",")}) and ${filter.get}"
+      case (true, false) => s"and municipalitycode in (${municipalities.mkString(",")})"
+      case (false, true) => s"and ${filter.get}"
+      case _ => ""
+    }
 
-          getLinksWithFilter(s"$bboxFilter $withFilter")
-        }
+    getLinksWithFilter(s"$bboxFilter $withFilter")
+  }
 
-        private def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[RoadLinkFetched] = {
-          val queryFilter =
-            if (filter.nonEmpty) s"and ${filter.get}"
-            else ""
+  private def getByMunicipality(municipality: Int, filter: Option[String] = None): Seq[RoadLinkFetched] = {
+    val queryFilter =
+      if (filter.nonEmpty) s"and ${filter.get}"
+      else ""
 
-          getLinksWithFilter(s"municipalitycode = $municipality $queryFilter")
-        }
+    getLinksWithFilter(s"municipalitycode = $municipality $queryFilter")
+  }
 
-        private def getByPolygon(polygon: Polygon): Seq[RoadLinkFetched] = {
-          if(polygon.getCoordinates.isEmpty) return Seq[RoadLinkFetched]()
+  private def getByPolygon(polygon: Polygon): Seq[RoadLinkFetched] = {
+    if (polygon.getCoordinates.isEmpty) return Seq[RoadLinkFetched]()
 
-          val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
+    val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
 
-          getLinksWithFilter(polygonFilter)
-        }
+    getLinksWithFilter(polygonFilter)
+  }
 
-        protected def getLinksIdByPolygons(polygon: Polygon): Seq[String] = {
-          if (polygon.getCoordinates.isEmpty) return Seq.empty[String]
+  protected def getLinksIdByPolygons(polygon: Polygon): Seq[String] = {
+    if (polygon.getCoordinates.isEmpty) return Seq.empty[String]
 
-          val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
-          LogUtils.time(logger,"TEST LOG Getting roadlinks by polygon" ){
-            sql"""select linkid
+    val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
+    LogUtils.time(logger, "TEST LOG Getting roadlinks by polygon") {
+      sql"""select linkid
           from roadlink
           where #$polygonFilter
        """.as[String].list
-          }
-        }
+    }
+  }
 
-        protected def extractFeatureClass(code: Int): FeatureClass = {
-          KgvUtil.extractFeatureClass(code)
-        }
+  protected def extractFeatureClass(code: Int): FeatureClass = {
+    KgvUtil.extractFeatureClass(code)
+  }
 
-        protected def extractTrafficDirection(code: Option[Int]): TrafficDirection = {
-          code match {
-            case Some(0) => TrafficDirection.BothDirections
-            case Some(1) => TrafficDirection.TowardsDigitizing
-            case Some(2) => TrafficDirection.AgainstDigitizing
+  protected def extractTrafficDirection(code: Option[Int]): TrafficDirection = {
+    code match {
+      case Some(0) => TrafficDirection.BothDirections
+      case Some(1) => TrafficDirection.TowardsDigitizing
+      case Some(2) => TrafficDirection.AgainstDigitizing
       case _ => TrafficDirection.UnknownDirection
     }
   }
