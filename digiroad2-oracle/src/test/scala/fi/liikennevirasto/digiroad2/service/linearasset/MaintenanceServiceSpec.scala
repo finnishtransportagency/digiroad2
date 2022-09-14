@@ -24,11 +24,11 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
 
   val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   when(mockRoadLinkService.fetchByLinkId(linkId1)).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchRoadlinksFromDB(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId1, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(Set(linkId2))).thenReturn(Seq(RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+  when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId2))).thenReturn(Seq(RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(Set.empty[String])).thenReturn(Seq())
+  when(mockRoadLinkService.getRoadLinksByLinkIds(Set.empty[String])).thenReturn(Seq())
 
   val roadLinkWithLinkSource = Seq(RoadLink("1", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
@@ -41,7 +41,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
 
   when(mockRoadLinkService.getRoadLinksAndChanges(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinkWithLinkSource, Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((roadLinkWithLinkSource, Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
+  when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
   when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(1)
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
@@ -173,7 +173,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
 
     when(mockPolygonTools.getAreaGeometry(any[Int])).thenReturn(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59))
-    when(mockRoadLinkService.getLinkIdsFromDBWithComplementaryByPolygons(any[Seq[Polygon]])).thenReturn(Seq(linkId1))
+    when(mockRoadLinkService.getLinkIdsWithComplementaryByPolygons(any[Seq[Polygon]])).thenReturn(Seq(linkId1))
 
     val maintenanceRoad = DynamicAssetValue(propertiesSeq)
     runWithRollback {
@@ -191,7 +191,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   }
 
   test("Fetch Active Maintenance Road By Polygon, with an empty result") {
-    when(mockRoadLinkService.getLinkIdsFromDBWithComplementaryByPolygons(Seq(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59)))).thenReturn(Seq(linkId1))
+    when(mockRoadLinkService.getLinkIdsWithComplementaryByPolygons(Seq(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59)))).thenReturn(Seq(linkId1))
     PostGISDatabase.withDynTransaction {
       val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1)
       assets.length should be(0)
@@ -243,7 +243,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId2), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
     )
 
-    when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(roadLinkWithLinkSource)
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(roadLinkWithLinkSource)
 
     val maintenanceRoad = DynamicAssetValue(propertiesSeq)
     runWithRollback {

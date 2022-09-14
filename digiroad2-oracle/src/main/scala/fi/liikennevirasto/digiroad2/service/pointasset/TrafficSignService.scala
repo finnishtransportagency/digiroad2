@@ -139,7 +139,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       fetchPointAssetsWithExpiredLimited(withFilter(filter), token)
     }
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(assets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIds(assets.map(_.linkId).toSet)
     val historicRoadLink = roadLinkService.getHistoryDataLinks(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
     assets.map { asset =>

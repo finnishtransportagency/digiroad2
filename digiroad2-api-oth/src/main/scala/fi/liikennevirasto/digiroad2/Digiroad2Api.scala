@@ -566,7 +566,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimplePointAssetProperty]].getOrElse(Seq())
     val id = params("id").toLong
 
-    roadLinkService.getClosestRoadlinkFromDB(user, Point(lon, lat)) match {
+    roadLinkService.getClosestRoadlink(user, Point(lon, lat)) match {
       case None =>
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
@@ -624,7 +624,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val linkId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimplePointAssetProperty]]
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromDB(linkId).getOrElse(throw new NoSuchElementException)
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId).getOrElse(throw new NoSuchElementException)
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
     validateElyMaintainerUser(properties)
     validateCreationProperties(properties)
@@ -645,7 +645,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val lon = positionParameters._1.get
     val lat = positionParameters._2.get
     val properties = (parsedBody \ "properties").extract[Seq[SimplePointAssetProperty]]
-    val roadLink = roadLinkService.getClosestRoadlinkFromDB(user, Point(lon, lat)).getOrElse(throw new NoSuchElementException)
+    val roadLink = roadLinkService.getClosestRoadlink(user, Point(lon, lat)).getOrElse(throw new NoSuchElementException)
 
     validateUserMunicipalityAccessByMunicipality(user)(roadLink.municipalityCode)
     validatePropertiesMaxSize(properties)
@@ -664,7 +664,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = LogUtils.time(logger, "TEST LOG Constructing boundingBox")(constructBoundingRectangle(bbox))
       validateBoundingBox(boundingRectangle)
       val roadLinkSeq = LogUtils.time(logger, "TEST LOG Get and enrich RoadLinks from VVH  with boundingBox"){
-        roadLinkService.getRoadLinks(boundingRectangle, municipalities,asyncMode = false)
+        roadLinkService.getRoadLinksByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false)
       }
       val roadLinks = if (withRoadAddress) {
         val roadLinksWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for links, link count: " + roadLinkSeq.size) {
@@ -679,7 +679,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true,withLaneInfo:Boolean=false)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    val roadLinkSeq = roadLinkService.getRoadLinksWithComplementary(boundingRectangle, municipalities,asyncMode = false)
+    val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(boundingRectangle, municipalities,asyncMode = false)
     val roadLinks = if(withRoadAddress) {
       val roadLinksWithRoadAddress = roadAddressService.roadLinkWithRoadAddress(roadLinkSeq)
       roadLinksWithRoadAddress
@@ -1276,7 +1276,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService = getLinearAssetService(typeId)
     val linkIds = usedService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
-    roadLinkService.fetchRoadlinksFromDB(linkIds.toSet)
+    roadLinkService.fetchRoadlinksByIds(linkIds.toSet)
       .foreach(a => validateUserAccess(user, Some(typeId))(a.municipalityCode, a.administrativeClass))
 
     usedService.updateVerifiedInfo(ids, user.username, typeId)
@@ -1580,12 +1580,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateMunicipalityAccessByLinkId(user: User, linkId: String): Unit = {
-    val road = roadLinkService.getRoadLinkAndComplementaryFromDB(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
+    val road = roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId).getOrElse(halt(NotFound("Link id for asset not found")))
     validateUserMunicipalityAccessByMunicipality(user)(road.municipalityCode)
   }
 
   private def validateUserMunicipalityAccessByLinkId(user: User, linkId: String, municipality: Int): Unit = {
-    roadLinkService.getRoadLinkAndComplementaryFromDB(linkId) match {
+    roadLinkService.getRoadLinkAndComplementaryByLinkId(linkId) match {
       case Some(road) =>
         if (!user.isAuthorizedToWrite(road.municipalityCode, road.administrativeClass))
           halt(Unauthorized("User not authorized"))
@@ -1597,7 +1597,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def validateUserRights(existingAssets: Seq[PersistedLinearAsset], newLinearAssets: Seq[NewLinearAsset], user: User, typeId: Int) : Unit = {
 
-    val roadLinks = roadLinkService.fetchRoadlinksAndComplementaryFromDB((existingAssets.map(_.linkId) ++ newLinearAssets.map(_.linkId)).toSet)
+    val roadLinks = roadLinkService.fetchRoadlinksAndComplementaries((existingAssets.map(_.linkId) ++ newLinearAssets.map(_.linkId)).toSet)
     if (typeId == MaintenanceRoadAsset.typeId) {
 
       val groupedRoadLinks = roadLinks.groupBy(_.linkId)
@@ -1625,7 +1625,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(Unauthorized("User not authorized"))
     }
 
-    val roadLinks = roadLinkService.fetchRoadlinksAndComplementaryFromDB(linkIds)
+    val roadLinks = roadLinkService.fetchRoadlinksAndComplementaries(linkIds)
     roadLinks.foreach(a => validateUserAccess(user)(a.municipalityCode, a.administrativeClass))
   }
 
@@ -1689,7 +1689,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
 
       val linkIds = manoeuvres.flatMap(_.linkIds)
-      val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromDB(linkIds.toSet)
+      val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds.toSet)
 
       roadLinks.foreach{rl => validateUserMunicipalityAccessByMunicipality(user)(rl.municipalityCode)}
 
@@ -1930,7 +1930,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val refresh = params("refresh").toBoolean
 
     val verifiedAssetTypes = if(refresh) {
-      verificationService.getRefreshedAssetTypesByMunicipality(municipalityCode, roadLinkService.getRoadLinksWithComplementary)
+      verificationService.getRefreshedAssetTypesByMunicipality(municipalityCode, roadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache)
     } else
       verificationService.getAssetTypesByMunicipality(municipalityCode)
 
@@ -2004,7 +2004,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    roadLinkService.getRoadLinkAndComplementaryFromDB(updatedAsset.linkId) match {
+    roadLinkService.getRoadLinkAndComplementaryByLinkId(updatedAsset.linkId) match {
       case None => halt(NotFound(s"RoadLink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) =>
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
@@ -2022,7 +2022,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
 
-    roadLinkService.getRoadLinkAndComplementaryFromDB(asset.linkId).map{
+    roadLinkService.getRoadLinkAndComplementaryByLinkId(asset.linkId).map{
       link =>
        validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
         service match {
@@ -2077,7 +2077,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
-    roadLinkService.getClosestRoadlinkFromDB(user, Point(asset.lon, asset.lat)) match {
+    roadLinkService.getClosestRoadlink(user, Point(asset.lon, asset.lat)) match {
       case None =>
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
@@ -2094,7 +2094,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[IncomingServicePoint]
     val user = userProvider.getCurrentUser()
-    roadLinkService.getClosestRoadlinkFromDB(user, Point(updatedAsset.lon, updatedAsset.lat)) match {
+    roadLinkService.getClosestRoadlink(user, Point(updatedAsset.lon, updatedAsset.lat)) match {
       case None =>
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
@@ -2113,7 +2113,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     servicePointService.getPersistedAssetsByIds(Set(id)).headOption.map { a =>
       (a.lon, a.lat) match {
         case (lon, lat) =>
-          roadLinkService.getClosestRoadlinkFromDB(user, Point(lon, lat)) match {
+          roadLinkService.getClosestRoadlink(user, Point(lon, lat)) match {
             case None =>
               halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
             case Some(link) =>

@@ -66,7 +66,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getMunicipalityInfo(bounds: BoundingRectangle): Option[Int] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementary(bounds,asyncMode = false)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds,asyncMode = false)
     val midPoint = Point((bounds.rightTop.x + bounds.leftBottom.x) / 2, (bounds.rightTop.y + bounds.leftBottom.y) / 2)
 
     if(roadLinks.nonEmpty)

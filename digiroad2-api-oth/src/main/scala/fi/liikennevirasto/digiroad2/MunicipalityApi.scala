@@ -236,7 +236,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
       None
     } else {
       awsDao.insertDataset(dataset.datasetId, write(dataset.featuresCollection.toString), write(dataset.roadlinks), DatasetStatus.Inserted.value)
-      val vvhRoadLinksIds = roadLinkService.getRoadsLinksFromDB(roadlinks.flatten.toSet, false).filter(road => road.administrativeClass != State).map(road => road.linkId)
+      val vvhRoadLinksIds = roadLinkService.getRoadLinksByLinkIds(roadlinks.flatten.toSet, false).filter(road => road.administrativeClass != State).map(road => road.linkId)
 
       val featuresWithoutIds: List[Option[Int]] = (roadlinks, assets).zipped.map((featureRoadlinks, feature) => {
         val properties = feature.properties
@@ -279,7 +279,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
     if (awsDao.getDatasetStatus(dataset.datasetId) != DatasetStatus.FeatureRoadlinksDontMatch.value) {
       val assets = dataset.featuresCollection.features
       val roadlinks = dataset.roadlinks
-      val vvhRoadLinksIds = roadLinkService.getRoadsLinksFromDB(roadlinks.flatten.toSet, false).filter(road => road.administrativeClass != State)
+      val vvhRoadLinksIds = roadLinkService.getRoadLinksByLinkIds(roadlinks.flatten.toSet, false).filter(road => road.administrativeClass != State)
 
       (roadlinks, assets).zipped.foreach((featureRoadlinks, feature) => {
         val properties = feature.properties

@@ -53,10 +53,10 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
 
     runWithRollback {
 
-      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(oldLinkId)).thenReturn(Some(RoadLinkFetched(oldLinkId, oldRoadLink.municipalityCode, oldRoadLink.geometry,
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId)).thenReturn(Some(RoadLinkFetched(oldLinkId, oldRoadLink.municipalityCode, oldRoadLink.geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 25)))
       service.create(Seq(NewLimit(oldLinkId, 0.0, 25.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkService.fetchRoadlinksFromDB(any[Set[String]])).thenReturn(Seq())
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, newRoadLinks, changeInfo)
       newRoadLinks.sortBy(_.linkId).foreach { roadLink =>
         val asset = service.getExistingAssetByRoadLink(roadLink, false)
@@ -89,15 +89,15 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
     runWithRollback {
-      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(oldLinkId1)).thenReturn(Some(RoadLinkFetched(oldLinkId1, oldRoadLinks(0).municipalityCode, oldRoadLinks(0).geometry,
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId1)).thenReturn(Some(RoadLinkFetched(oldLinkId1, oldRoadLinks(0).municipalityCode, oldRoadLinks(0).geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 10)))
-      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(oldLinkId2)).thenReturn(Some(RoadLinkFetched(oldLinkId2, oldRoadLinks(1).municipalityCode, oldRoadLinks(1).geometry,
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId2)).thenReturn(Some(RoadLinkFetched(oldLinkId2, oldRoadLinks(1).municipalityCode, oldRoadLinks(1).geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 10)))
-      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(oldLinkId3)).thenReturn(Some(RoadLinkFetched(oldLinkId3, oldRoadLinks(2).municipalityCode, oldRoadLinks(2).geometry,
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId3)).thenReturn(Some(RoadLinkFetched(oldLinkId3, oldRoadLinks(2).municipalityCode, oldRoadLinks(2).geometry,
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 5)))
       service.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId2, 0.0, 10.0),
         NewLimit(oldLinkId2, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkService.fetchRoadlinksFromDB(any[Set[String]])).thenReturn(Seq())
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq())
       TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, Seq(newRoadLink), changeInfo)
       val newAsset = service.getExistingAssetByRoadLink(newRoadLink, false).head
       newAsset.linkId should be(newRoadLink.linkId)

@@ -28,7 +28,7 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
     (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   
   when(mockRoadLinkService.fetchByLinkId(linkId4)).thenReturn(Some(RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchRoadlinksFromDB(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq(RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val roadLinkWithLinkSource = RoadLink(
@@ -36,8 +36,8 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndChanges(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
   val mockLinearAssetDao = MockitoSugar.mock[PostGISLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(linkId1), "mittarajoitus", false))
@@ -141,7 +141,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       val asset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(propertyData))
       asset.expired should be (false)
-      mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId4), newTransaction = false).head.linkSource.value should be (1)
+      mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId4), newTransaction = false).head.linkSource.value should be (1)
     }
   }
 
@@ -375,7 +375,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(92)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
       RoadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(roadLink)
+    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(roadLink)
 
     val municipalitiesInfo = List(MunicipalityInfo(91, 9, "Helsinki"), MunicipalityInfo(92, 9, "Vantaa"))
     when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfo)
@@ -409,7 +409,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
     val roadLink = Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
     when(mockMunicipalityDao.getMunicipalityNameByCode(91)).thenReturn("Helsinki")
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(roadLink)
+    when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(roadLink)
 
     runWithRollback {
       val (propId1, propId2) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)

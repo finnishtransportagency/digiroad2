@@ -80,7 +80,7 @@ object MainLanePopulationProcess {
   private def mainLanesForMunicipality(municipality: Int, initialProcessing: Boolean): Unit = {
     logger.info("Working on municipality -> " + municipality)
 
-    val roadLinks = roadLinkService.getRoadLinksFromDBByMunicipality(municipality).filterNot(_.linkType == TractorRoad)
+    val roadLinks = roadLinkService.getRoadLinksByMunicipality(municipality).filterNot(_.linkType == TractorRoad)
 
     // If not initial process, filter out roadLinks that already have main lanes
     val roadLinksWithoutMainLanes =

@@ -44,7 +44,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(roadLink), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((List(roadLink), Nil))
 
-  when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(Set(linkId2, linkId3, linkId4)))
+  when(mockRoadLinkService.fetchRoadlinksAndComplementaries(Set(linkId2, linkId3, linkId4)))
     .thenReturn(Seq(RoadLinkFetched(linkId2, 91, List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
       RoadLinkFetched(linkId3, 91, List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
       RoadLinkFetched(linkId4, 91, List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -58,16 +58,16 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
 
   val roadLinkForSeparation = RoadLink(linkId5, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId5)).thenReturn(Some(roadLinkForSeparation))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId5, true)).thenReturn(Some(roadLinkForSeparation))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5)).thenReturn(Some(roadLinkForSeparation))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5, true)).thenReturn(Some(roadLinkForSeparation))
   val roadLinkFetched = RoadLinkFetched(linkId5, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[RoadLinkFetched]): PostGISSpeedLimitDao = {
     
-    when(mockRoadLinkService.fetchRoadlinksFromDB(roadLinks.map(_.linkId).toSet))
+    when(mockRoadLinkService.fetchRoadlinksByIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
-    when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(roadLinks.map(_.linkId).toSet))
+    when(mockRoadLinkService.fetchRoadlinksAndComplementaries(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
@@ -85,7 +85,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, linkId: String, startMeasure: Double, endMeasure: Double, dao: PostGISSpeedLimitDao) = {
     val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(linkId, startMeasure, endMeasure).toList)
-    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLengthFromDB(speedLimitId).find { link => link._1 == linkId }.get._3)
+    val limitEndPoints = GeometryUtils.geometryEndpoints(dao.getLinksWithLength(speedLimitId).find { link => link._1 == linkId }.get._3)
     expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
     expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
@@ -93,8 +93,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("create new speed limit") {
     runWithRollback {
       val roadLink = RoadLinkFetched(linkId1, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId1)).thenReturn(Some(roadLink))
-      when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(Set(linkId1))).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchRoadlinksAndComplementaries(Set(linkId1))).thenReturn(Seq(roadLink))
 
       val id = provider.create(Seq(NewLimit(linkId1, 0.0, 150.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
 
@@ -109,7 +109,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       intercept[IllegalArgumentException] {
         val linkId = linkId5
         val roadLink = RoadLinkFetched(linkId, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-        when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId)).thenReturn(Some(roadLink))
+        when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
 
         val asset = provider.getPersistedSpeedLimitByIds(Set(200097)).head
         provider.split(asset.id, 100, 120, 60, "test", failingMunicipalityValidation _)
@@ -159,7 +159,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("split existing speed limit") {
     runWithRollback {
       val roadLink = RoadLinkFetched(linkId5, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(linkId5)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId5)).thenReturn(Some(roadLink))
       val speedLimits = provider.split(200097, 100, 50, 60, "test", (_, _) => Unit).sortBy(_.id)
 
       val existing = speedLimits(0)
@@ -195,7 +195,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val roadLinkFetched = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
 
     runWithRollback {
-      when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(any[Set[String]])).thenReturn(List(roadLinkFetched))
+      when(mockRoadLinkService.fetchRoadlinksAndComplementaries(any[Set[String]])).thenReturn(List(roadLinkFetched))
 
       val Seq(updatedLimit, createdLimit) = provider.separate(200097, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
 
@@ -217,7 +217,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
     val roadLinkFetched = RoadLinkFetched(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
 
-    when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(any[Set[String]])).thenReturn(List(roadLinkFetched))
+    when(mockRoadLinkService.fetchRoadlinksAndComplementaries(any[Set[String]])).thenReturn(List(roadLinkFetched))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
@@ -237,8 +237,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if speed limit is one way") {
     val linkId = "6cd52876-449d-47b5-8536-e206a8fee17b:1"
     val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId)).thenReturn(Some(roadLink))
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId, true)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, true)).thenReturn(Some(roadLink))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
@@ -250,8 +250,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if road link is one way") {
     val linkId = "4d146477-876b-4ab5-ad11-f29d16a9b300:1"
     val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId)).thenReturn(Some(roadLink))
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(linkId, true)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, true)).thenReturn(Some(roadLink))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
@@ -1018,8 +1018,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) values ('18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.YYYY HH24:MI:SS'),null)""".execute
       
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
-      when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(any[String], any[Boolean])).thenReturn(Some(newRoadLink))
-      when(mockRoadLinkService.fetchRoadlinkAndComplementaryFromDB(any[String])).thenReturn(Some(roadLinkFetched))
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(newRoadLink))
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(any[String])).thenReturn(Some(roadLinkFetched))
 
       val before = provider.get(boundingBox, Set(municipalityCode)).toList
 
@@ -1165,7 +1165,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChanges(any[Int])).thenReturn((roadLinks, changeInfo))
 
-      when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(any[Set[String]])).thenReturn(vvhRoadLinks)
+      when(mockRoadLinkService.fetchRoadlinksAndComplementaries(any[Set[String]])).thenReturn(vvhRoadLinks)
 
       val topology = provider.get(municipalityCode)
       topology.forall(sl => sl.id == 22696720 || sl.id == 0)  should be (true)
@@ -1284,7 +1284,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChanges(any[Int])).thenReturn((roadLinks, changeInfo))
 
-      when(mockRoadLinkService.fetchRoadlinksAndComplementaryFromDB(any[Set[String]])).thenReturn(vvhRoadLinks)
+      when(mockRoadLinkService.fetchRoadlinksAndComplementaries(any[Set[String]])).thenReturn(vvhRoadLinks)
 
       val topology = provider.get(municipalityCode).sortBy(_.startMeasure).sortBy(_.linkId)
       topology.filter(_.id != 0).foreach(sl => provider.dao.updateMValues(sl.id, (sl.startMeasure, sl.endMeasure), Some(sl.timeStamp)))
@@ -1355,7 +1355,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values ($asset3, $lrm3)""".execute
       sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values ($asset3,(SELECT ev.id FROM enumerated_value ev, PROPERTY p WHERE p.ASSET_TYPE_ID = 20 AND p.id = ev.property_id AND ev.value = 50),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
       val result = provider.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
       result.length should be(1)
@@ -1462,7 +1462,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   test("Delete link id from unknown speed limit list when that link does not exist anymore"){
     
-    when(mockRoadLinkService.fetchRoadlinksFromDB(any[Set[String]])).thenReturn(Seq())
+    when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq())
 
     val oldLinkId = LinkIdGenerator.generateRandom()
     val municipalityCode = 235

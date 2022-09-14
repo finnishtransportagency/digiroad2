@@ -28,7 +28,7 @@ class HeightLimitServiceSpec extends FunSuite with Matchers {
   val linkId1 = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
   val linkId2 = "a2c8e119-5739-456a-aa6c-cba0f300cc3c:1"
 
-  when(mockRoadLinkService.getRoadLinks(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
     RoadLinkFetched(linkId1, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
@@ -41,7 +41,7 @@ class HeightLimitServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(List())
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(List())
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
@@ -54,7 +54,7 @@ class HeightLimitServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(235)).thenReturn(Seq(
       RoadLinkFetched(linkId2, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
@@ -85,10 +85,10 @@ class HeightLimitServiceSpec extends FunSuite with Matchers {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
     val linkId = LinkIdGenerator.generateRandom()
 
-    when(mockRoadLinkService.getRoadLinksWithComplementary(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(235)).thenReturn(Seq(
       RoadLinkFetched(linkId2, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
-    when(mockRoadLinkService.getRoadLinksWithComplementary(91)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(91)).thenReturn(Seq(
       RoadLinkFetched(linkId, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {

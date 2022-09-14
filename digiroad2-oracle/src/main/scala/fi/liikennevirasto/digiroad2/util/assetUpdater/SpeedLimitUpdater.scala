@@ -108,7 +108,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
-    val roadLinks = roadLinkService.fetchRoadlinksFromDB(linkIds)
+    val roadLinks = roadLinkService.fetchRoadlinksByIds(linkIds)
     roadLinks.foreach { rl =>
       dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
     }

@@ -58,10 +58,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def getLinksWithLengthFromVVH(id: Long, newTransaction: Boolean = true): Seq[(String, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
     if (newTransaction)
       withDynTransaction {
-        dao.getLinksWithLengthFromDB(id)
+        dao.getLinksWithLength(id)
       }
     else
-      dao.getLinksWithLengthFromDB(id)
+      dao.getLinksWithLength(id)
   }
 
   def getSpeedLimitAssetsByIds(ids: Set[Long], newTransaction: Boolean = true): Seq[SpeedLimit] = {
@@ -143,7 +143,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate, untilDate, withAdjust, token)
     }
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromDB(persistedSpeedLimits.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(persistedSpeedLimits.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
     persistedSpeedLimits.flatMap { speedLimit =>
@@ -195,7 +195,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     * Removes speed limit from unknown speed limits list if speed limit exists. Used by SpeedLimitUpdater actor.
     */
   def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
-    val roadLinks = roadLinkService.fetchRoadlinksFromDB(linkIds)
+    val roadLinks = roadLinkService.fetchRoadlinksByIds(linkIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
         dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
@@ -328,7 +328,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   private def checkInaccurateSpeedLimit(id: Option[Long] = None) = {
     getSpeedLimitById(id.head, false) match {
       case Some(speedLimit) =>
-        val roadLink = roadLinkService.getRoadLinkAndComplementaryFromDB(speedLimit.linkId, false)
+        val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(speedLimit.linkId, false)
           .find(roadLink => roadLink.administrativeClass == State || roadLink.administrativeClass == Municipality)
           .getOrElse(throw new NoSuchElementException("RoadLink Not Found"))
 
@@ -355,7 +355,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     withDynTransaction {
       getPersistedSpeedLimitById(id, newTransaction = false) match {
         case Some(speedLimit) =>
-          val roadLink = roadLinkService.fetchRoadlinkAndComplementaryFromDB(speedLimit.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+          val roadLink = roadLinkService.fetchRoadlinkAndComplementary(speedLimit.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
           municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
           val (newId ,idUpdated) = split(speedLimit, roadLink, splitMeasure, existingValue, createdValue, username)
@@ -391,7 +391,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit, newTransaction: Boolean = true): SpeedLimit = {
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromDB(persistedSpeedLimit.linkId, newTransaction).get
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryByLinkId(persistedSpeedLimit.linkId, newTransaction).get
 
     SpeedLimit(
       persistedSpeedLimit.id, persistedSpeedLimit.linkId, persistedSpeedLimit.sideCode,

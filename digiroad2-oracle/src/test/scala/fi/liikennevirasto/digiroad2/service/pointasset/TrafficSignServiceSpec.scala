@@ -49,13 +49,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   private val typePublicId = "trafficSigns_type"
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockUserProvider = MockitoSugar.mock[PostGISUserProvider]
-  val vvHRoadlink1 = Seq(RoadLinkFetched(testLinkId1, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
-  val vvHRoadlink2 = Seq(RoadLinkFetched(testLinkId2, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
-  when(mockRoadLinkService.getRoadLinks(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(vvHRoadlink1.map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(any[String], any[Boolean])).thenReturn(vvHRoadlink1.map(toRoadLink).headOption)
-  when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromDB(any[User], any[Point], any[Boolean])).thenReturn(vvHRoadlink2.map(toRoadLink))
-  when(mockRoadLinkService.enrichFetchedRoadLinks(vvHRoadlink2)).thenReturn(vvHRoadlink2.map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(randomLinkId2)).thenReturn(Seq(
+  val fetchedRoadlink1 = Seq(RoadLinkFetched(testLinkId1, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+  val fetchedRoadlink2 = Seq(RoadLinkFetched(testLinkId2, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(fetchedRoadlink1.map(toRoadLink))
+  when(mockRoadLinkService.getRoadLinkByLinkId(any[String], any[Boolean])).thenReturn(fetchedRoadlink1.map(toRoadLink).headOption)
+  when(mockRoadLinkService.getClosestRoadlinkForCarTraffic(any[User], any[Point], any[Boolean])).thenReturn(fetchedRoadlink2.map(toRoadLink))
+  when(mockRoadLinkService.enrichFetchedRoadLinks(fetchedRoadlink2)).thenReturn(fetchedRoadlink2.map(toRoadLink))
+  when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId2)).thenReturn(Seq(
     RoadLinkFetched(randomLinkId2, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
@@ -238,7 +238,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
         SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
-      val closestLink: RoadLinkFetched = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
+      val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 2, testLinkId2, properties, validityDirection,  Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
@@ -261,7 +261,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(SpeedLimitSign.OTHvalue.toString))),
         SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
-      val closestLink: RoadLinkFetched = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+      val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
@@ -284,7 +284,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(SpeedLimitSign.OTHvalue.toString))),
         SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
-      val closestLink: RoadLinkFetched = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
+      val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 2, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
@@ -307,7 +307,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
     val bearing = Some(225)
-    val closestLink: RoadLinkFetched = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+    val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
     val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
     val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
@@ -330,7 +330,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val bearing = Some(45)
-      val closestLink: RoadLinkFetched = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+      val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, true)
       val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
@@ -352,7 +352,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Info Test"))))
 
       val bearing = Some(225)
-      val closestLink: RoadLinkFetched = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+      val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
       val sign = IncomingTrafficSign(3, 4, testLinkId2, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
@@ -547,7 +547,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Traffic Sign Pedestrians type, part of Prohibitions And Restrictions Signs"))))
 
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(Set(randomLinkId1), false)).thenReturn(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(randomLinkId1), false)).thenReturn(
         Seq(RoadLink(randomLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
       )
 
@@ -583,7 +583,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11,(select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 19:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(Set(randomLinkId1))).thenReturn(Seq(RoadLink(randomLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(randomLinkId1))).thenReturn(Seq(RoadLink(randomLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
       val roadLink = RoadLink(randomLinkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = service.create(IncomingTrafficSign(2.0, 0.0, randomLinkId1, properties, 2, None), testUser.username, roadLink)
@@ -609,7 +609,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(2, (select id from enumerated_value where name_fi='A33 Muu vaara'), (select id from property WHERE public_ID ='trafficSigns_type'), timestamp '2016-12-17 20:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq())
       when(mockRoadLinkService.getHistoryDataLinks(any[Set[String]], any[Boolean])).thenReturn(Seq())
 
       val changes = service.getChangedByType(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
@@ -624,7 +624,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimplePointAssetProperty("main_sign_text", List(PropertyValue("Riverside")))
       )
 
-      val closestLink: RoadLinkFetched = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(5, 4), r.geometry))
+      val closestLink: RoadLinkFetched = fetchedRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(5, 4), r.geometry))
       val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
       val validityDirection = service.getValidityDirection(Point(5, 4), toRoadLink(closestLink), bearing, false)
       val sign = IncomingTrafficSign(5, 4, testLinkId2, properties, validityDirection, bearing)
@@ -777,7 +777,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val additionalPanel4 = service.create(IncomingTrafficSign(4.5, 0.0, linkId, additionalPanelProperties, SideCode.AgainstDigitizing.value, None), testUser.username, roadLink)
 
 
-      when(mockRoadLinkService.getRoadLinkFromDB(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(any[String], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
@@ -815,7 +815,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val additionalPanel3 = service.create(IncomingTrafficSign(14.0, 0.0, linkId3, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink3)
 
 
-      when(mockRoadLinkService.getRoadLinkFromDB(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(linkId1, Seq(Point(10.0, 0.0)))).thenReturn(Seq(roadLink2))
       when(mockRoadLinkService.getAdjacent(linkId1, Seq(Point(13.0, 0.0)))).thenReturn(Seq(roadLink3))
 
@@ -849,7 +849,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val additionalPanel3 = service.create(IncomingTrafficSign(14.0, 0.0, linkId3, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink3)
 
 
-      when(mockRoadLinkService.getRoadLinkFromDB(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(linkId1, Seq(Point(10.0, 0.0)))).thenReturn(Seq(roadLink2))
       when(mockRoadLinkService.getAdjacent(linkId1, Seq(Point(13.0, 0.0)))).thenReturn(Seq(roadLink3))
 
@@ -882,7 +882,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val additionalPanel4 = service.create(IncomingTrafficSign(4.5, 0.0, linkId, additionalPanelProperties, SideCode.AgainstDigitizing.value, None), testUser.username, roadLink)
 
 
-      when(mockRoadLinkService.getRoadLinkFromDB(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(any[String], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
@@ -914,7 +914,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val trafficSign = service.create(IncomingTrafficSign(5.0, 0.0, linkId, properties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
       val additionalPanel = service.create(IncomingTrafficSign(5.0, 0.0, linkId, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
 
-      when(mockRoadLinkService.getRoadLinkFromDB(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(any[String], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
@@ -942,7 +942,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val additionalPanel3 = service.create(IncomingTrafficSign(6.0, 0.0, linkId, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
       val additionalPanel4 = service.create(IncomingTrafficSign(6.0, 0.0, linkId, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
 
-      when(mockRoadLinkService.getRoadLinkFromDB(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(any[String], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head

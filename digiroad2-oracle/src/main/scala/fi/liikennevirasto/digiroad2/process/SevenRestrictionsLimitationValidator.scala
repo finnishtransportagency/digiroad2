@@ -68,7 +68,7 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
       withDynTransaction {
 
         val assets = dynamicAssetDao.fetchDynamicLinearAssetsByIds(assetInfo.ids).filterNot(_.expired).filterNot(_.expired)
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromDB(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
 
         assets.foreach { asset =>
           roadLinks.find(_.linkId == asset.linkId) match {

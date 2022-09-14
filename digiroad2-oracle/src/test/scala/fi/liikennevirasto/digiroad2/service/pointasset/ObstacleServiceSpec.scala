@@ -34,14 +34,14 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   val linkId = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
   val randomLinkId = LinkIdGenerator.generateRandom()
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinks(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(linkId)).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId)).thenReturn(Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(randomLinkId)).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId)).thenReturn(Seq(
     RoadLinkFetched(randomLinkId, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
@@ -177,8 +177,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
     val roadLink = RoadLink(linkId, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
 
-    when(mockRoadLinkService.getRoadLinks(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(roadLink))
-    when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(linkId)).thenReturn(Seq(roadLink).headOption)
+    when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(roadLink))
+    when(mockRoadLinkService.getRoadLinkByLinkId(linkId)).thenReturn(Seq(roadLink).headOption)
 
     val service = new ObstacleService(mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
@@ -358,7 +358,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Get obstacles changes") {
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
@@ -390,7 +390,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
       val assets = service.getPersistedAssetsByIds(Set(11))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
@@ -420,7 +420,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq())
 
       val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(0)

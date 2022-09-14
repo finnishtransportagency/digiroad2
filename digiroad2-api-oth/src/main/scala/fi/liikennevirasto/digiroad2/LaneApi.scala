@@ -102,7 +102,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
-    val roadLinks = roadLinkService.getRoadLinks(municipalityNumber)
+    val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
     val lanes = laneService.getLanesByRoadLinks(roadLinks)
 
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(_.attributes.contains("ROAD_NUMBER"))

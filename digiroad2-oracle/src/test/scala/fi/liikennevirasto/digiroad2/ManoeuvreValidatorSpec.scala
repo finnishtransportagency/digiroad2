@@ -51,8 +51,8 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val trafficSign = PersistedTrafficSign(1, linkId3, 10, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
       when(mockTrafficSignService.getTrafficSign(Seq(linkId3))).thenReturn(Seq(trafficSign))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId1, linkId2))).thenReturn(Seq(roadLink1, roadLink2))
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId1, linkId2))).thenReturn(Seq(roadLink1, roadLink2))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(mockRoadLinkService.pickForwardMost(roadLink2, Seq(roadLink3))).thenReturn(roadLink3)
 
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(Seq(roadLink1,roadLink2, roadLink3).map(_.linkId))).thenReturn(Seq())
@@ -79,8 +79,8 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val propNoLeftTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoLeftTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, linkId1, 10, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -105,8 +105,8 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val propNoRightTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, linkId1, 2, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -133,9 +133,9 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val propNoUTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoUTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, linkId1, 2, 2, 2, false, 0, 235, propNoUTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4, linkId5))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4, linkId5))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -161,9 +161,9 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val propNoUTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoUTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, linkId1, 2, 2, 2, false, 0, 235, propNoUTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4, linkId5))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4, linkId5))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       val result = manoeuvreValidator.assetValidator(trafficSign)
@@ -190,8 +190,8 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val propNoRightTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, linkId1, 10, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       when(mockRoadLinkService.pickRightMost(roadLink1, Seq(roadLink2, roadLink5) )).thenReturn(roadLink2)
@@ -219,8 +219,8 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val propNoRightTurn = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, linkId1, 2, 10, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
-      when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId3, linkId4))).thenReturn(Seq(roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(manoeuvreValidator.manoeuvreDao.getByRoadLinks(any[Seq[String]])).thenReturn(Seq(manoeuvre))
 
       when(mockRoadLinkService.pickRightMost(roadLink1, Seq(roadLink2))).thenReturn(roadLink2)

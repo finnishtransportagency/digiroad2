@@ -73,7 +73,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     val topLeft = Point(point.x - radiusDistance, point.y - radiusDistance)
     val bottomRight = Point(point.x + radiusDistance, point.y + radiusDistance)
 
-    roadLinkService.getRoadLinksWithComplementary(BoundingRectangle(topLeft, bottomRight), Set(),  newTransaction)
+    roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(BoundingRectangle(topLeft, bottomRight), Set(),  newTransaction)
   }
 
   def getAdjacents(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[(RoadLink, (Point, Point))] = {

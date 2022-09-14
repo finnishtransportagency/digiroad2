@@ -73,12 +73,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     vvhRoadLinks.foreach(rl =>
       when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(rl.linkId))
         .thenReturn(Some(rl)))
-    when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
     vvhRoadLinks.foreach(rl =>
-      when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(rl.linkId, false))
+      when(mockRoadLinkService.getRoadLinkByLinkId(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromDB(any[Set[String]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromDB(any[String], any[Boolean])).thenReturn(Some(toRoadLink(RoadLinkFetched(testLinkId5, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
+    when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(any[String], any[Boolean])).thenReturn(Some(toRoadLink(RoadLinkFetched(testLinkId5, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
     when(mockRoadLinkService.getHistoryDataLink(any[String], any[Boolean])).thenReturn(None)
 
   }
@@ -523,7 +523,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       massTransitStop.floating should be(false)
       massTransitStop.stopTypes should be(List(1))
       massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
-      mockRoadLinkService.getRoadLinkAndComplementaryFromDB(randomLinkId1, newTransaction = false).get.linkSource.value should be (1)
+      mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(randomLinkId1, newTransaction = false).get.linkSource.value should be (1)
 
       //The property yllapitajan_koodi should not have values
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
@@ -649,7 +649,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         (RoadAddress(None, 1, 1, Track.Combined, 0), RoadSide.Left)
       )
       val roadLink = RoadLink(randomLinkId1, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
-      when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(randomLinkId1)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId1)).thenReturn(Some(roadLink))
       val id = service.create(NewMassTransitStop(60.0, 0.0, randomLinkId1, 100, properties), "test", roadLink)
 
       val newProperties = Set(
@@ -1027,7 +1027,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val vvhRoadLinks = List(
       RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
     
-    when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
@@ -1045,7 +1045,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val vvhRoadLinks = List(
       RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
     
-    when(mockRoadLinkService.getRoadLinksWithComplementary(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{

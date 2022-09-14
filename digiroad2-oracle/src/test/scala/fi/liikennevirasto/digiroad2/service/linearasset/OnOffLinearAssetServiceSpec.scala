@@ -43,7 +43,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
   test("Expire on-off asset with start and end measure by update - should create one asset"){
     runWithRollback {
       when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("100", 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
       val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(linkId2, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
       val ids =  onOffLinearAsset.update(newAssets, NumericValue(0), "test", Some(1400000000), Some(1), Some(Measures(0, 100)))
@@ -64,7 +64,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
   test("Expire on-off asset with start and end measure by update - should create two assets"){
     runWithRollback {
       when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("100", 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
       val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(linkId2, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
       val ids =  onOffLinearAsset.update(newAssets, NumericValue(0), "test", Some(1400000000), Some(1), Some(Measures(50, 100)))
@@ -87,7 +87,7 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
   test("Expire on-off asset with start and end measure by update - should not create assets"){
     runWithRollback {
       when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("100", 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
       val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(linkId2, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
       val ids =  onOffLinearAsset.update(newAssets, NumericValue(0), "test", Some(1400000000), Some(1), Some(Measures(0, 200)))

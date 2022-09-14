@@ -336,7 +336,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
           "z" -> 5.039000000004307, "m" -> 126.24649999999383)), "geometryWKT" -> "LINESTRING ZM (148500.251 6682412.563 4.914999999993597 0, 148500.277 6682419.949 4.911999999996624 7.385999999998603, 148498.659 6682436.121 5.232999999992899 23.63880000000063, 148500.32 6682450.942 5.095000000001164 38.55259999999544, 148505.67 6682461.014 4.81699999999546 49.957299999994575, 148515.38 6682471.428 4.838000000003376 64.19580000000133, 148524.065 6682480.948 4.811000000001513 77.08220000000438, 148528.798 6682486.726 4.876000000003842 84.55130000000645, 148536.287 6682495.204 5.297999999995227 95.86329999999725, 148545.1 6682504.235 5.349000000001979 108.48179999999411, 148554.27 6682511.474 5.100999999995111 120.16479999999865, 148559.451 6682514.659 5.039000000004307 126.24649999999383)",
         "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 766, "CREATED_DATE" -> 1446398762000L, "HORIZONTALACCURACY" -> 3000),
       ConstructionType.InUse,NormalLinkInterface,List())
-    when(mockRoadLinkService.getRoadLinksWithComplementary(766)).thenReturn(Seq(roadLinkFromDb))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(766)).thenReturn(Seq(roadLinkFromDb))
     val requiredKeys = Set("linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value","id")
     val jsonResult = integrationApi.sevenRestrictionToApi(30, 766)
 
@@ -352,8 +352,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
-  when(mockRoadLinkService.getRoadLinksWithComplementary(any[Int])).thenReturn(Seq(roadLink))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(any[Int])).thenReturn(Seq(roadLink))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink))
 
   test("care class value is returned from api as integer") {
     val careClassValue = DynamicValue(DynamicAssetValue(Seq(

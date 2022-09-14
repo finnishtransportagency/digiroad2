@@ -47,7 +47,7 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
       val linearAssetId = Service.createWithoutTransaction(PavedRoad.typeId, oldRoadLinkId, NumericValue(99), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false)
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = Service.dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(linearAssetId))
@@ -78,14 +78,14 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       ChangeInfo(Some(oldRoadLinkId2), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(0), Some(10), Some(10), Some(20), 1L))
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
       val id1 = Service.createWithoutTransaction(PavedRoad.typeId, oldRoadLinkId1, DynamicValue(DynamicAssetValue(Seq(
         DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue("99")))))), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false)
       val id2 = Service.createWithoutTransaction(PavedRoad.typeId, oldRoadLinkId2, DynamicValue(DynamicAssetValue(Seq(
         DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue("99")))))), 1, Measures(10, 20), "testuser", 0L, Some(oldRoadLink1), false)
       val assetsBefore = Service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id1, id2), false)
       assetsBefore.foreach(asset => asset.expired should be(false))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromDB(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
       TestPavedRoadUpdater.updateByRoadLinks(PavedRoad.typeId, 1, Seq(newRoadLink), change)
       val assetsAfter = Service.dao.fetchLinearAssetsByLinkIds(PavedRoad.typeId, Seq(oldRoadLinkId1, oldRoadLinkId2, newRoadLinkId), "paallysteluokka", true)
       val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)

@@ -527,7 +527,7 @@ trait TrafficSignLinearGenerator {
 
     //RoadLink with the same Finnish/Swedish name
     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
-      roadLinkService.getRoadLinksAndComplementaryByRoadNameFromDB(roadNamePublicIds, Set(roadNameSource), false)
+      roadLinkService.getRoadLinksAndComplementaryByRoadName(roadNamePublicIds, Set(roadNameSource), false)
         .filter(_.administrativeClass != State)
     }.getOrElse(Seq(signRoadLink))
   }
@@ -617,7 +617,7 @@ trait TrafficSignLinearGenerator {
       val trafficSignsToProcess = postGisLinearAssetDao.getTrafficSignsToProcess(assetType)
 
       val trafficSigns = if(trafficSignsToProcess.nonEmpty) trafficSignService.fetchPointAssetsWithExpired(withFilter(s"Where a.id in (${trafficSignsToProcess.mkString(",")}) ")) else Seq()
-      val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromDB(trafficSigns.map(_.linkId).toSet, false).filter(_.administrativeClass != State)
+      val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIds(trafficSigns.map(_.linkId).toSet, false).filter(_.administrativeClass != State)
       val trafficSignsToTransform = trafficSigns.filter(asset => roadLinks.exists(_.linkId == asset.linkId))
 
       println(s"Total of trafficSign to process: ${trafficSigns.size}")
@@ -651,7 +651,7 @@ trait TrafficSignLinearGenerator {
       val trafficSignsToProcess = postGisLinearAssetDao.getTrafficSignsToProcess(assetType)
 
       val trafficSigns = if(trafficSignsToProcess.nonEmpty) trafficSignService.fetchByFilterWithExpiredByIds(trafficSignsToProcess.toSet) else Seq()
-      val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromDB(trafficSigns.map(_.linkId).toSet, false).filter(_.administrativeClass != State)
+      val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIds(trafficSigns.map(_.linkId).toSet, false).filter(_.administrativeClass != State)
       val trafficSignsToTransform = trafficSigns.filter(asset => roadLinks.exists(_.linkId == asset.linkId))
 
       println(s"Total of trafficSign to process: ${trafficSigns.size}")

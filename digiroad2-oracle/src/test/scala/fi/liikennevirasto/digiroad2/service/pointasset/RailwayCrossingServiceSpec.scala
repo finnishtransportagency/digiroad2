@@ -27,10 +27,10 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   val randomLinkId: String = LinkIdGenerator.generateRandom()
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinks(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromDB(any[String], any[Boolean])).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinkByLinkId(any[String], any[Boolean])).thenReturn(Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
@@ -71,7 +71,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire railway crossing") {
-    when(mockRoadLinkService.getRoadLinks(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksByMunicipalityUsingCache(235)).thenReturn(Seq(
       RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
