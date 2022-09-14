@@ -374,7 +374,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
               if (groupedLanes.isEmpty) result
               else {
                 val linkIds = createdLanes.map(_.linkId).toSet
-                val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds, false)
+                val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds, false)
                 val changeSet = laneFiller.fillTopology(roadLinks, groupedLanes)._2
 
                 //For reasons unknown fillTopology creates duplicate mValue adjustments for some lanes and

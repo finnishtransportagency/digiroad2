@@ -24,7 +24,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     withDynTransaction {
       val municipalities = Queries.getMunicipalities
       municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
+        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesByMunicipality(municipality)
         updateByRoadLinks(municipality, roadLinks, changes)
       }
     }
@@ -108,7 +108,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(linkIds)
+    val roadLinks = roadLinkService.fetchRoadlinksByIds(linkIds)
     roadLinks.foreach { rl =>
       dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
     }

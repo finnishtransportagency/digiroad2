@@ -35,7 +35,7 @@ object ChangeLanesAccordingToVvhChanges {
     logger.info("Getting changed links Since: " + since + " Until: " + until)
     val changes = roadLinkService.getChangeInfoByDates(since, until)
     val linkIds = (changes.flatMap(_.oldId) ++ changes.flatMap(_.newId)).toSet
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds)
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)

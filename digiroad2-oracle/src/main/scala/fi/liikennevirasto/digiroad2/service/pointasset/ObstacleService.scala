@@ -103,7 +103,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds,asyncMode = false)
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
     super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
@@ -117,7 +117,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
     getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipality(municipalityCode))
   }

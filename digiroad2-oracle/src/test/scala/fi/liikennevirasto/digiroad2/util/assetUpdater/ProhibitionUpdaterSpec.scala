@@ -39,7 +39,7 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
       val linearAssetId = service.createWithoutTransaction(Prohibition.typeId, oldRoadLinkId, Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty))), 1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val change = ChangeInfo(Some(oldRoadLinkId), None, 123L, Removed.value, Some(0), Some(10), None, None, 99L)
       val assetsBefore = service.getPersistedAssetsByIds(Prohibition.typeId, Set(linearAssetId), false)
@@ -70,7 +70,7 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
       ChangeInfo(Some(oldRoadLinkId2), Some(newRoadLinkId), 12345, CombinedRemovedPart.value, Some(0), Some(10), Some(10), Some(20), 1L))
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(oldRoadLinkId1, oldRoadLinkId2), false)).thenReturn(oldRoadLinks)
       val id1 = service.createWithoutTransaction(Prohibition.typeId, oldRoadLinkId1, Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty))),
         1, Measures(0, 10), "testuser", 0L, Some(oldRoadLink1), false, None, None)
       val id2 = service.createWithoutTransaction(Prohibition.typeId, oldRoadLinkId2, Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty))),
@@ -78,7 +78,7 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
       val assetsBefore = service.getPersistedAssetsByIds(Prohibition.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.foreach(asset => asset.expired should be(false))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
       TestProhibitionUpdater.updateByRoadLinks(Prohibition.typeId, 1, Seq(newRoadLink), change)
       val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(Prohibition.typeId, Seq(oldRoadLinkId1, oldRoadLinkId2, newRoadLinkId), "parking_prohibition", true)
       val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)

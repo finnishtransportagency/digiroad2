@@ -113,7 +113,7 @@ class AssetDataImporter {
 
     val roadLinkClient = new RoadLinkClient(vvhHost)
     val roadLinkService = new RoadLinkService(roadLinkClient,new DummyEventBus,new DummySerializer)
-    val vvhLinks = roadLinkService.fetchVVHRoadlinks(roadsByLinkId.keySet)
+    val vvhLinks = roadLinkService.fetchRoadlinksByIds(roadsByLinkId.keySet)
     val linksByLinkId = vvhLinks.foldLeft(Map.empty[String, RoadLinkFetched]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
@@ -196,7 +196,7 @@ class AssetDataImporter {
 
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(prohibitions.map(_._2).toSet)
+    val roadLinks = roadLinkService.fetchRoadlinksByIds(prohibitions.map(_._2).toSet)
 
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
@@ -867,7 +867,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
 
     val obstaclePoint = Point(obstacle.lon, obstacle.lat, 0)
     //Get from vvh service all roadlinks in 10 meters rectangle arround the obstacle and filter
-    val (roadLinks, otherLinks) = roadLinkService.getRoadLinksFromVVH(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
+    val (roadLinks, otherLinks) = roadLinkService.getRoadLinksByBoundsAndMunicipalities(BoundingRectangle(obstaclePoint - diagonal, obstaclePoint + diagonal)).
       filter(rl => GeometryUtils.minimumDistance(obstaclePoint, rl.geometry) <= 10.0).
       partition(rl => allowedFunctionalClasses.contains(rl.functionalClass))
 
@@ -929,7 +929,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         val startTime = DateTime.now()
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsWOAddresses(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = roadLinkService.fetchVVHRoadlinks(listOfStops.map(_._2).toSet)
+        val roadLinks = roadLinkService.fetchRoadlinksByIds(listOfStops.map(_._2).toSet)
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
             if (rlinks.linkId == stops._2) {
@@ -953,7 +953,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       municipalitiesone.foreach { municipalityCode =>
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsMissingOneAddress(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = roadLinkService.fetchVVHRoadlinks(listOfStops.map(_._2).toSet)
+        val roadLinks = roadLinkService.fetchRoadlinksByIds(listOfStops.map(_._2).toSet)
         val finstops=getFinnishStopAddressRSe(municipalityCode, idAddressFi, idAddressSe)
         val swedishstops= getSwedishStopAddressRFi(municipalityCode, idAddressFi, idAddressSe)
         listOfStops.foreach { stops =>   //stop_1:asset_id, stop_2:link_id
@@ -1111,7 +1111,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def createTextPropertyValue(assetId: Long, propertyVal: Int, vname : String) = {
       sqlu"""
         INSERT INTO TEXT_PROPERTY_VALUE(ID,ASSET_ID,PROPERTY_ID,VALUE_FI,CREATED_BY)
-        VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,'vvh_generated')
+        VALUES(nextval('primary_key_seq'),$assetId,$propertyVal,$vname,'generated_in_update')
       """.execute
     }
 
