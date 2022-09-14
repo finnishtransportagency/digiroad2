@@ -79,6 +79,11 @@
       eventbus.on(me.layerName + ':unselected', me.closeFeedback);
 
       eventbus.on(me.layerName + ':selected ' + me.layerName + ':cancelled' ,me.initFeedback);
+
+      eventbus.on("feedback:tooBig",function() {
+        removeSpinner();
+        new GenericConfirmPopup("Palaute oli liian pitkä. Maksimi merkki määrä on 3747", {type: 'alert'});
+      });
     };
 
     $(document).ready(function () {
@@ -99,9 +104,15 @@
           {name: 'typeId',    value : selectedData.typeId},
           {name: 'freeText',  value: $('#freeTextData').html()});
 
+        var text = $('.feedback-message-asset')[0].innerText;
         if (formElements.valid()) {
           addSpinner();
-          me.collection.sendFeedbackData(values);
+          console.log(text.length);
+          if (text.length<=3747){
+            me.collection.sendFeedbackData(values);
+          }else{
+            eventbus.trigger("feedback:tooBig");
+          }
         }
       });
 
@@ -187,7 +198,7 @@
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">Palaute</label>' +
-        '<div contenteditable="true" id="freeTextData" class="form-control"></div>'+
+        '<div contenteditable="true" id="freeTextData" class="form-control feedback-message-asset"></div>'+
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">K-tunnus</label>' +

@@ -9,6 +9,8 @@ import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.service.feedback.FeedbackInfo
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+sealed case class FeedBackError(msg:String) extends Exception(msg)
+
 class FeedbackDao {
 
 
@@ -49,12 +51,17 @@ class FeedbackDao {
   }
 
   def insertFeedback(createdBy: String, body: String, subject: String, status: Boolean): Long = {
-   val id = sql"""select nextval('primary_key_seq')""".as[Long].first
+    if (body.length<4000){
+      val id = sql"""select nextval('primary_key_seq')""".as[Long].first
       sqlu"""
           insert into feedback (id, created_by, created_date, subject, body, status, status_date)
           values ($id, ${createdBy}, current_timestamp, ${subject},
                 ${body},${status}, current_timestamp)""".execute
-    id
+      id
+    }else {
+      throw FeedBackError(s"Messages was too big")
+    }
+   
   }
 
   def updateFeedback(id: Long): Long = {

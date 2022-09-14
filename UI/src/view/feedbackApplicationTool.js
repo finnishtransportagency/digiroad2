@@ -9,14 +9,25 @@
            bindEvents();
        };
 
+       var reopen = function(){
+           renderConfirmDialog();
+           $('#kidentifier').text(authorizationPolicy.username);
+           bindEvents();
+       };
+
        var options = {
            message: 'Palaute',
            saveButton: 'Lähetä',
            cancelButton: 'Peruuta',
-           saveCallback: function(){
+           saveCallback: function () {
                addSpinner();
-               collection.sendFeedbackApplication( $(".form-horizontal").serializeArray());
-               },
+               var message = $(".feedback-message").serializeArray();
+               if (message[0].value.length <= 3747) {
+                   collection.sendFeedbackApplication(message);
+               } else {
+                   eventbus.trigger("feedback:tooBig");
+               }
+           },
            closeCallback: function() { purge(); }
        };
 
@@ -67,6 +78,10 @@
                removeSpinner();
                new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
            });
+           eventbus.on("feedback:tooBig",function() {
+               removeSpinner();
+               new GenericConfirmPopup("Palaute oli liian pitkä. Maksimi merkki määrä on 3747", {type: 'alert',okCallback:reopen});
+           });
        };
 
        var suggestionText = 'Jättääksesi palautetta aineistosta, valitse haluamasi linkki ja <br /> valitse "Anna palautetta kohteesta" lomakkeen oikeasta yläkulmasta';
@@ -91,7 +106,7 @@
                             '<input type="text" name="headline" class="form-control">' +
 
                             '<label class="control-label">Palaute</label>' +
-                            '<textarea name="freeText" id="freetext" class="form-control"></textarea>'+
+                            '<textarea name="freeText" id="freetext" class="form-control feedback-message"></textarea>'+
 
                             '<label class="control-label">K-tunnus</label>' +
                             '<label id="kidentifier"></label>'+

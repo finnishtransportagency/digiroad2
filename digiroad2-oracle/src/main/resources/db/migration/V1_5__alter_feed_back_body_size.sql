@@ -1,1 +1,0 @@
-ALTER TABLE feedback ALTER COLUMN body TYPE varchar; -- max size 65535

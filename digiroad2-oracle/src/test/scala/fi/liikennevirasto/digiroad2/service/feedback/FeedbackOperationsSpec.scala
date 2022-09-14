@@ -1,7 +1,11 @@
 package fi.liikennevirasto.digiroad2.service.feedback
 
+import fi.liikennevirasto.digiroad2.dao.feedback.FeedBackError
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
+
+import java.nio.charset.StandardCharsets
+import scala.util.Random
 
 class FeedbackOperationsSpec extends FunSuite with Matchers {
 
@@ -84,6 +88,29 @@ class FeedbackOperationsSpec extends FunSuite with Matchers {
       val feedbacks = service.getNotSentFeedbacks
       feedbacks.length should be (1)
       feedbacks.map(_.id) should contain (id)
+    }
+  }
+
+  test("insert too big feedback, should throw error") {
+    runWithRollback {
+      // source: https://stackoverflow.com/a/64086683/5398840 
+      val rand = new Random()
+      val Alphanumeric = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes
+      def mkStr(chars: Array[Byte], length: Int): String = {
+        val bytes = new Array[Byte](length)
+        for (i <- 0 until length) bytes(i) = chars(rand.nextInt(chars.length))
+        new String(bytes, StandardCharsets.US_ASCII)
+      }
+      
+      def nextAlphanumeric(length: Int): String = mkStr(Alphanumeric, length)
+      
+      val messages = nextAlphanumeric(3704)
+      
+      val feedbackbody = FeedbackApplicationBody(Some("bugi"), Some("feedback headline"), Some(messages), Some("My name"), Some("My email"), None)
+
+      val error = intercept[FeedBackError](service.insertFeedback("feedback_createdBy", feedbackbody))
+
+      error.msg should be("Messages was too big")
     }
   }
 
