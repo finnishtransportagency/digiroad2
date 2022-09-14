@@ -62,6 +62,7 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
 
     var linearAssetsDropdown = function () {
         var assetTypes = [
+            assetTypeConfig.assetTypes.laneModellingTool,
             assetTypeConfig.assetTypes.speedLimit,
             assetTypeConfig.assetTypes.manoeuvre,
             assetTypeConfig.assetTypes.prohibition,
