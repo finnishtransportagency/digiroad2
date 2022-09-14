@@ -51,7 +51,7 @@
             var trafficDirectionHeader = $('<h2/>').html("Tielinkin liikennevirran suuntaa muutettu");
             var linkTypeHeader = $('<h2/>').html("<br>Tielinkin tyypin muutos vaikuttaa kaistojen lukumäärään");
             var tableContentRows = function (items) {
-                var itemsSorted = _.sortBy(items, ["createdAt", "linkId"]);
+                var itemsSorted = _.sortBy(items, ["linkId", "createdAt"]);
                 return _.map(itemsSorted, function (item) {
                     return $('<tr/>')
                         .append(checkbox(item.id))
