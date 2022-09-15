@@ -197,7 +197,7 @@
 
     var renderService = function (service) {
       var serviceTypeLabelOptions = _.map(serviceTypes, function(serviceType) {
-        return $('<option>', {value: serviceType.value, selected: service.serviceType === serviceType.value, text: serviceType.label})[0].outerHTML;
+        return $('<option>', {value: serviceType.value, "data-value": TextUtils.toDataValue(serviceType.label), selected: service.serviceType === serviceType.value, text: serviceType.label})[0].outerHTML;
       }).join('');
 
       var selectedServiceType = _.find(serviceTypes, { value: service.serviceType });
@@ -270,7 +270,7 @@
 
     function renderNewServiceElement() {
       var serviceTypeLabelOptions = _.map(serviceTypes, function(serviceType) {
-        return $('<option>', {value: serviceType.value, text: serviceType.label})[0].outerHTML;
+        return $('<option>', {value: serviceType.value, text: serviceType.label, "data-value": TextUtils.toDataValue(serviceType.label)})[0].outerHTML;
       }).join('');
 
       return '' +
@@ -286,7 +286,7 @@
       var extensions = serviceTypeExtensions[service.serviceType];
       if (extensions) {
         var extensionOptions = _.map(extensions, function(extension) {
-          return $('<option>', {value: extension.value, text: extension.label, selected: extension.value === service.typeExtension})[0].outerHTML;
+          return $('<option>', {value: extension.value, text: extension.label, "data-value": TextUtils.toDataValue(extension.label), selected: extension.value === service.typeExtension})[0].outerHTML;
         }).join('');
         var currentExtensionType = _.find(extensions, {value: service.typeExtension});
         return '' +

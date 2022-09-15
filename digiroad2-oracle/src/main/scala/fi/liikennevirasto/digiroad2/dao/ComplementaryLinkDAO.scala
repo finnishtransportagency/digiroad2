@@ -43,7 +43,6 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
       val surfaceType = r.nextInt()
       val subType = r.nextInt()
       val objectId = r.nextLong()
-      val sourceInfo = r.nextInt()
       val length  = r.nextDouble()
       val custOwner = r.nextLongOption()
 
@@ -95,7 +94,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
       sql"""select linkid, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi, roadname_se,
                  roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
-                 geometry_edited_date, surfacetype, subtype, objectid, sourceinfo, geometrylength, cust_owner
+                 geometry_edited_date, surfacetype, subtype, objectid, geometrylength, cust_owner
           from roadlinkex
           where subtype = 3 and #$filter
           """.as[VVHRoadlink].list
