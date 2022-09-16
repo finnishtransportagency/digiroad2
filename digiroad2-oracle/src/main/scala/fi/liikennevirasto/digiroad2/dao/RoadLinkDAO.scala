@@ -145,7 +145,6 @@ class RoadLinkDAO {
       val fromRight = r.nextLongOption()
       val toRight = r.nextLongOption()
       val surfaceType = r.nextInt()
-      val sourceInfo = r.nextInt()
       val length  = r.nextDouble()
 
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
@@ -183,7 +182,7 @@ class RoadLinkDAO {
 
       RoadLinkFetched(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
         extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
-        ConstructionType.apply(constructionType), LinkGeomSource.apply(sourceInfo), length)
+        ConstructionType.apply(constructionType), LinkGeomSource.NormalLinkInterface, length)
     }
   }
 
@@ -313,7 +312,7 @@ class RoadLinkDAO {
      sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
-                 surfacetype, sourceinfo, geometrylength
+                 surfacetype, geometrylength
           from roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
@@ -379,7 +378,7 @@ class RoadLinkDAO {
   protected def extractModifiedDate(createdDate:Option[Long],lastEdited:Option[Long]): Option[DateTime] = {
     KgvUtil.extractModifiedAt(createdDate,lastEdited)
   }
-  
+
   protected def extractGeometry(data: Object): List[List[Double]] = {
     val geometry = data.asInstanceOf[PGobject]
     if (geometry == null) Nil

@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.LaneService
+import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ProhibitionService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop, ServicePointStopService}
@@ -90,7 +90,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
-                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService)
+                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
+                   val laneWorkListService: LaneWorkListService = Digiroad2Context.laneWorkListService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -701,7 +702,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       partitionedRoadLinks.map(r=>{roadLinkToApiWithLaneInfo(r,withLaneInfo=withLaneInfo)})
     }
   }
-  
+
   protected def lanesWithRoadlink(linkIds: Seq[RoadLink]): Seq[RoadLink]= {
     val lanes = laneService.fetchExistingLanesByLinkIds(linkIds.map(_.linkId))
     val lanesByLink = lanes.groupBy(_.linkId)
@@ -889,7 +890,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val lang = params("language")
     assetPropertyService.assetPropertyNames(lang)
   }
-  
+
   object RoadAddressNotFound {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
       ActionResult(HttpStatus.SC_PRECONDITION_FAILED, body, headers)
@@ -1492,6 +1493,39 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false =>
         manoeuvreService.getInaccurateRecords(municipalityCode, Set(Municipality))
     }
+  }
+
+  delete("/laneWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val itemIdsToDelete = userHasRights match{
+      case true => parsedBody.extractOpt[Set[Long]]
+      case false => halt(Forbidden("User not authorized to delete items from lane work list"))
+    }
+    itemIdsToDelete match {
+      case Some(ids) =>
+        laneWorkListService.deleteFromLaneWorkList(ids)
+      case None => halt(BadRequest("No item ids to delete provided"))
+    }
+  }
+
+  get("/laneWorkList") {
+    val user = userProvider.getCurrentUser()
+    val userHasRights = user.isLaneMaintainer() || user.isOperator()
+    val workListItems = userHasRights match {
+      case true => laneWorkListService.getLaneWorkList
+      case false => halt(Forbidden("User not authorized to get items from lane work list"))
+    }
+
+    Map("items" -> workListItems.groupBy(_.propertyName)
+      .mapValues(_.map{ item =>
+        Map("id" -> item.id,
+          "linkId" -> item.linkId,
+          "propertyName" -> item.propertyName,
+          "newValue" -> item.newValue,
+          "oldValue" -> item.oldValue,
+          "createdAt" -> item.createdDate,
+          "createdBy" -> item.createdBy)}))
   }
 
   get("/inaccurates") {
