@@ -1370,10 +1370,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("road link property change triggers event bus 2 times") {
     runWithRollback {
-      when(mockRoadLinkDao.fetchByLinkId(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, State, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
-      val service = new TestService(mockVVHClient, mockEventBus)
-      val linkProperty = LinkProperties(1, 99, BidirectionalLaneCarriageWay, TrafficDirection.BothDirections, State, None, None, None)
+      when(mockRoadLinkDao.fetchByLinkId("1l"))
+        .thenReturn(Some(RoadLinkFetched("1l", 91, Nil, State, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
+      val service = new TestService(mockRoadLinkClient, mockEventBus)
+      val linkProperty = LinkProperties("1l", 99, BidirectionalLaneCarriageWay, TrafficDirection.BothDirections, State, None, None, None)
       val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
       verify(mockEventBus, times(2)).publish(
         org.mockito.ArgumentMatchers.eq("laneWorkList:insert"),
