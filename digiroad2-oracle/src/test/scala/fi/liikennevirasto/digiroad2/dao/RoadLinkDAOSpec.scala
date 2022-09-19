@@ -3,10 +3,13 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import org.joda.time.DateTime
+import org.joda.time.DateTime.now
 import org.scalatest.FunSuite
 import org.scalatest.Matchers.{be, convertToAnyShouldWrapper}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
+import java.util.Date
 
 class RoadLinkDAOSpec extends FunSuite {
   
@@ -29,8 +32,10 @@ class RoadLinkDAOSpec extends FunSuite {
       }
     }
     val dao = new ExposeDao
-    dao.extractModifiedDate(Some(1L),Some(1660886069945L)).get.toString should be("2022-08-19T08:14:29.945+03:00")
-    dao.extractModifiedDate(Some(1L),None).get.toString should be("1970-01-01T02:00:00.001+02:00")
+    val dateLong = new DateTime(now)
+    
+    dao.extractModifiedDate(Some(1L),Some(dateLong.getMillis)).get.toString should be(dateLong.toString)
+    dao.extractModifiedDate(Some(1L),None).get.toString should be(new DateTime(1).toString())
   }
   
 }
