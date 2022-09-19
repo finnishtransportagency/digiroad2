@@ -2,16 +2,15 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Property, PropertyValue, SimplePointAssetProperty}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{PostGISTrafficLightDao, TrafficLight}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Option[Int] = None, bearing: Option[Int] = None) extends IncomingPointAsset
-case class IncomingTrafficLightAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
+case class IncomingTrafficLight(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Option[Int] = None, bearing: Option[Int] = None) extends IncomingPointAsset
+case class IncomingTrafficLightAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
 class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficLight
@@ -34,20 +33,20 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficLight, roadLink: RoadLink, username: String, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficLight, roadLink: RoadLink, username: String, mValue : Option[Double], timeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        PostGISTrafficLightDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        PostGISTrafficLightDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource)
     }
   }
 
   def createFromCoordinates(incomingTrafficLight: IncomingTrafficLight, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
     if(isFloating)
-      createFloatingWithoutTransaction(incomingTrafficLight.copy(linkId = 0), username, roadLink)
+      createFloatingWithoutTransaction(incomingTrafficLight.copy(linkId = LinkId.Unknown.value), username, roadLink)
     else
       create(incomingTrafficLight, username, roadLink, false)
   }
@@ -58,7 +57,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   def createFloatingWithoutTransaction(asset: IncomingTrafficLight, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, createTimeStamp(), roadLink.linkSource)
   }
 
   override def setFloating(persistedAsset: TrafficLight, floating: Boolean) = {
@@ -73,10 +72,10 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     if(newTransaction) {
       withDynTransaction {
-        PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, createTimeStamp(), roadLink.linkSource)
       }
     } else {
-      PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      PostGISTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, createTimeStamp(), roadLink.linkSource)
     }
   }
 
@@ -92,7 +91,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingTrafficLight(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet)
     updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated",
-                             Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
+                             Some(adjustment.mValue), Some(adjustment.timeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
@@ -104,7 +103,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
+      asset.mValue, asset.floating, persistedStop.timeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 

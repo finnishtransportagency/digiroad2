@@ -62,8 +62,11 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
   val LupaMunicipalityInfo = MunicipalityInfo(408, 3, "Lapua")
   val SavitaipaleMunicipalityInfo = MunicipalityInfo(739, 8, "Savitaipale")
 
-  val vvhRoadlinks1 = Seq(RoadLink(388562360L, Seq(Point(0, 0), Point(10, 0)), 10.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
-  val vvhRoadlinks2 = Seq(RoadLink(38856690L, Seq(Point(10, 0), Point(65, 0)), 55.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
+  val linkId1 = "388562360L"
+  val linkId2 = "38856690L"
+
+  val vvhRoadlinks1 = Seq(RoadLink(linkId1, Seq(Point(0, 0), Point(10, 0)), 10.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
+  val vvhRoadlinks2 = Seq(RoadLink(linkId2, Seq(Point(10, 0), Point(65, 0)), 55.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
 
   val operatorUser = User(26867454, "k647320", Configuration(None, None, None, None, None, Set(), Set(), Set("operator"), Some("2018-11-27"), None), None)
 
@@ -89,8 +92,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
       when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
 
-      when(mockAssetReporterDAO.linearAssetQuery(Seq(388562360L), Seq(130))).thenReturn(assetReportsList1)
-      when(mockAssetReporterDAO.linearAssetQuery(Seq(38856690L), Seq(130))).thenReturn(assetReportsList2)
+      when(mockAssetReporterDAO.linearAssetQuery(Seq(linkId1), Seq(130))).thenReturn(assetReportsList1)
+      when(mockAssetReporterDAO.linearAssetQuery(Seq(linkId2), Seq(130))).thenReturn(assetReportsList2)
 
 
       val municipalities = assetReportCsvExporter.decodeMunicipalitiesToProcess(municipalitiesParam.split(",").map(_.trim.toInt).toList)
@@ -130,8 +133,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
       when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
 
-      when(mockAssetReporterDAO.pointAssetQuery(Seq(388562360L), Seq(300))).thenReturn(assetReportsList1)
-      when(mockAssetReporterDAO.pointAssetQuery(Seq(38856690L), Seq(300))).thenReturn(assetReportsList2)
+      when(mockAssetReporterDAO.pointAssetQuery(Seq(linkId1), Seq(300))).thenReturn(assetReportsList1)
+      when(mockAssetReporterDAO.pointAssetQuery(Seq(linkId2), Seq(300))).thenReturn(assetReportsList2)
 
       when(mockAssetReporterDAO.getTotalTrafficSignNewLaw(408)).thenReturn(0)
       when(mockAssetReporterDAO.getTotalTrafficSignNewLaw(739)).thenReturn(2)

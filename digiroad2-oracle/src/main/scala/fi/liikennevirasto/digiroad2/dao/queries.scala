@@ -432,7 +432,6 @@ object Queries {
     sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE INACCURATE_ASSET SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE INCOMPLETE_LINK SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
-    sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete""".execute
     sqlu"""DELETE FROM DASHBOARD_INFO WHERE MUNICIPALITY_ID = $municipalityToDelete""".execute
     sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute

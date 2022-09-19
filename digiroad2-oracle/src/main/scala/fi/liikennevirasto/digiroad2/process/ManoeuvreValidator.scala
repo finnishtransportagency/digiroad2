@@ -18,7 +18,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
   override def assetTypeInfo: AssetTypeInfo = Manoeuvres
 
-  lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao(vvhClient)
+  lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao()
 
   val allowedTrafficSign: Set[TrafficSignType] = Set(NoLeftTurn, NoRightTurn, NoUTurn)
 

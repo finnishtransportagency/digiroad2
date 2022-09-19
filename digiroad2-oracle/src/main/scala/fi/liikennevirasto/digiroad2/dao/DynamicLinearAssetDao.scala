@@ -18,19 +18,19 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 
 
-case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: DynamicPropertyRow,
+case class DynamicAssetRow(id: Long, linkId: String, sideCode: Int, value: DynamicPropertyRow,
                            startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                            modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean, typeId: Int,
-                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
+                           timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
 
 class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterFloating = if (includeFloating) "" else " and a.floating = '0'"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val filter = filterFloating + filterExpired
-    val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
+    val assets = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
          case
@@ -62,7 +62,7 @@ class DynamicLinearAssetDao {
       val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
 
       id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
-        createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  vvhTimeStamp = row.vvhTimeStamp,
+        createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId,  timeStamp = row.timeStamp,
         geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, informationSource = row.informationSource.map(info => InformationSource.apply(info)))
     }.values.toSeq
   }
@@ -99,7 +99,7 @@ class DynamicLinearAssetDao {
       val value: DynamicAssetValue = DynamicAssetValue(assetRowToProperty(assetRows))
 
       id -> PersistedLinearAsset(id = row.id, linkId = row.linkId, sideCode = row.sideCode, value = Some(DynamicValue(value)), startMeasure = row.startMeasure, endMeasure = row.endMeasure, createdBy = row.createdBy,
-        createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId, vvhTimeStamp = row.vvhTimeStamp,
+        createdDateTime = row.createdDate, modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired, typeId = row.typeId, timeStamp = row.timeStamp,
         geomModifiedDate = row.geomModifiedDate, linkSource = LinkGeomSource.apply(row.linkSource), verifiedBy = row.verifiedBy, verifiedDate = row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)))
     }.values.toSeq
   }
@@ -121,7 +121,7 @@ class DynamicLinearAssetDao {
   implicit val getDynamicAssetRow: GetResult[DynamicAssetRow] = new GetResult[DynamicAssetRow] {
     def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -140,14 +140,14 @@ class DynamicLinearAssetDao {
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean
       val typeId = r.nextInt()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
 
-      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
+      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
 
@@ -481,7 +481,7 @@ class DynamicLinearAssetDao {
           and a.floating = '0'
           #$withAutoAdjustFilter
         ) derivedAsset #$recordLimit"""
-      .as[(Long, Long, Int, Option[String], Double, Double, String, String, Boolean, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
+      .as[(Long, String, Int, Option[String], Double, Double, String, String, Boolean, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
       val groupedAssets = assets.groupBy(_._1)
 
@@ -490,8 +490,8 @@ class DynamicLinearAssetDao {
           DynamicProperty(publicId, propertyType, required, Seq(DynamicPropertyValue(optValue)))
         }
         assetRows.map{
-          case (id, linkId, sideCode, _, startMeasure, endMeasure, _, _, _, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-            PersistedLinearAsset(id, linkId, sideCode, Some(DynamicValue(DynamicAssetValue(value))), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
+          case (id, linkId, sideCode, _, startMeasure, endMeasure, _, _, _, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
+            PersistedLinearAsset(id, linkId, sideCode, Some(DynamicValue(DynamicAssetValue(value))), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
       }.toSet
     }.toList
   }

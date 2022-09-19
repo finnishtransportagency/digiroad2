@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -14,7 +14,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class RailwayCrossingServiceSpec extends FunSuite with Matchers {
-  def toRoadLink(l: VVHRoadlink) = {
+  def toRoadLink(l: RoadLinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
@@ -23,12 +23,15 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
+  val linkId = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
+  val randomLinkId: String = LinkIdGenerator.generateRandom()
+
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[String], any[Boolean])).thenReturn(Seq(
+    RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
   val service = new RailwayCrossingService(mockRoadLinkService) {
@@ -44,7 +47,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       Set(600049, 600050, 600051) should contain (result.id)
-      result.linkId should equal(1611317)
+      result.linkId should equal(linkId)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -53,13 +56,13 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Can fetch by municipality") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
-      VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+      RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600051).get
 
       result.id should equal(600051)
-      result.linkId should equal(12345)
+      result.linkId should equal("abcdabcd-1234-5678-abcd-abcdabcdabcd:7")
       result.lon should equal(374396)
       result.lat should equal(6677319)
       result.mValue should equal(103)
@@ -69,7 +72,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Expire railway crossing") {
     when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+      RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600051).get
@@ -83,14 +86,15 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Update railway crossing with geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkId = randomLinkId
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val codeValue = PropertyValue("")
       val safetyEquipmentValue = PropertyValue("1")
       val nameValue = PropertyValue("testCode")
       val simpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(codeValue))
       val simpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(safetyEquipmentValue))
       val simpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(nameValue))
-      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, Set(simpleCodeProperty, simpleSafetyEquipmentProperty, simpleNameProperty)), "jakke", roadLink )
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, linkId, Set(simpleCodeProperty, simpleSafetyEquipmentProperty, simpleNameProperty)), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
       oldAsset.modifiedAt.isDefined should equal(false)
 
@@ -100,7 +104,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       val updatedSimpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(updatedCodeValue))
       val updatedSimpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(updatedSafetyEquipmentValue))
       val updatedSimpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(updatedNameValue))
-      val newId = service.update(id, IncomingRailwayCrossing(0.0, 10.0, 388553075, Set(updatedSimpleCodeProperty, updatedSimpleNameProperty, updatedSimpleSafetyEquipmentProperty)), roadLink, "test")
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 10.0, linkId, Set(updatedSimpleCodeProperty, updatedSimpleNameProperty, updatedSimpleSafetyEquipmentProperty)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -116,14 +120,15 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Update railway crossing without geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkId = randomLinkId
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val codeValue = PropertyValue("")
       val safetyEquipmentValue = PropertyValue("1")
       val nameValue = PropertyValue("testCode")
       val simpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(codeValue))
       val simpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(safetyEquipmentValue))
       val simpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(nameValue))
-      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, Set(simpleCodeProperty, simpleSafetyEquipmentProperty, simpleNameProperty)), "jakke", roadLink )
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, linkId, Set(simpleCodeProperty, simpleSafetyEquipmentProperty, simpleNameProperty)), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
       val updatedCodeValue = PropertyValue("")
@@ -132,7 +137,7 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       val updatedSimpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(updatedCodeValue))
       val updatedSimpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(updatedSafetyEquipmentValue))
       val updatedSimpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(updatedNameValue))
-      val newId = service.update(id, IncomingRailwayCrossing(0.0, 20.0, 388553075, Set(updatedSimpleCodeProperty, updatedSimpleNameProperty, updatedSimpleSafetyEquipmentProperty)), roadLink, "test")
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 20.0, linkId, Set(updatedSimpleCodeProperty, updatedSimpleNameProperty, updatedSimpleSafetyEquipmentProperty)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)

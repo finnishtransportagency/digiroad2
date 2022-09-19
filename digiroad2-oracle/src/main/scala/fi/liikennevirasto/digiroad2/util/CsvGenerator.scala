@@ -9,13 +9,13 @@ import org.joda.time.{DateTime, Seconds}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 class CsvGenerator(vvhServiceHost: String) {
-  val roadLinkService = new RoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus, new DummySerializer)
-  val linearAssetDao = new PostGISLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+  val roadLinkService = new RoadLinkService(new RoadLinkClient(vvhServiceHost), new DummyEventBus, new DummySerializer)
+  val linearAssetDao = new PostGISLinearAssetDao()
 
   val Source = 1
   val Destination = 3
@@ -26,7 +26,7 @@ class CsvGenerator(vvhServiceHost: String) {
            select m.id, m.ADDITIONAL_INFO, m.TYPE, me.link_id, me.ELEMENT_TYPE
            from manoeuvre m
            join MANOEUVRE_ELEMENT me on me.MANOEUVRE_ID = m.id
-        """.as[(Long, Option[String], Int, Long, Int)].list
+        """.as[(Long, Option[String], Int, String, Int)].list
     }
 
     val groupedManoeuvres = manoeuvres.groupBy(_._1)
@@ -57,13 +57,13 @@ class CsvGenerator(vvhServiceHost: String) {
     exportManoeuvreCsv("dropped_manoeuvres", droppedManoeuvresWithExceptionsAndValidityPeriods)
   }
 
-  def getIdsAndLinkIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
+  def getIdsAndLinkIdsByMunicipality(municipality: Int): Seq[(Long, String)] = {
     Database.forDataSource(PostGISDatabase.ds).withDynTransaction {
       sql"""
         select dr1_id, link_id
           from tielinkki_ctas
           where kunta_nro = $municipality
-        """.as[(Long, Long)].list
+        """.as[(Long, String)].list
     }
   }
 
@@ -103,7 +103,7 @@ class CsvGenerator(vvhServiceHost: String) {
            join LRM_POSITION pos on al.position_id = pos.id
            where a.asset_type_id = $assetTypeId
            and (valid_to is null or valid_to > current_timestamp)
-         """.as[(Long, Double, Double, Boolean)].list
+         """.as[(String, Double, Double, Boolean)].list
     }
     println(s"*** fetched prohibitions of type ID $assetTypeId from DB in $elapsedTime seconds")
 
@@ -200,13 +200,13 @@ class CsvGenerator(vvhServiceHost: String) {
            left join text_property_value s on s.asset_id = a.id
            where a.asset_type_id in ($assetTypeId)
            and (valid_to is null or valid_to > current_timestamp)
-         """.as[(Long, Double, Double, String, Int, Boolean)].list.toSet
+         """.as[(String, Double, Double, String, Int, Boolean)].list.toSet
     }
     println(s"*** fetched all $assetName from DB in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
     def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
-      attributes("MTKID").asInstanceOf[BigInt].longValue()
+      attributes("MTKID").asInstanceOf[String]
     }
     val assetLinkIds = limits.map(_._1)
     val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
@@ -236,13 +236,13 @@ class CsvGenerator(vvhServiceHost: String) {
            left join number_property_value s on s.asset_id = a.id
            where a.asset_type_id in ($assetTypeId)
            and (valid_to is null or valid_to > current_timestamp)
-         """.as[(Long, Double, Double, Int, Int, Boolean)].list
+         """.as[(String, Double, Double, Int, Int, Boolean)].list
     }
     println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
     def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
-      attributes("MTKID").asInstanceOf[BigInt].longValue()
+      attributes("MTKID").asInstanceOf[String]
     }
     val assetLinkIds = limits.map(_._1).toSet
     val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
@@ -267,7 +267,7 @@ class CsvGenerator(vvhServiceHost: String) {
     println("Max Memory: " + runtime.maxMemory() / mb + " MB")
   }
 
-  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, Long, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
+  def exportManoeuvreCsv(fileName: String, droppedManoeuvres: Map[Long, List[(Long, Option[String], Int, String, Int, Seq[Int], Seq[ValidityPeriod])]]): Unit = {
     val headerLine = "manoeuvre_id; additional_info; source_link_link_id; dest_link_link_id; exceptions; validity_periods\n"
 
     val data = droppedManoeuvres.map { case (key, value) =>
@@ -284,7 +284,7 @@ class CsvGenerator(vvhServiceHost: String) {
     bw.close()
   }
 
-  def exportCsv(fileName: String, droppedLimits: Seq[(Long, Double, Double, Any, Int, Boolean)]): Unit = {
+  def exportCsv(fileName: String, droppedLimits: Seq[(String, Double, Double, Any, Int, Boolean)]): Unit = {
     val headerLine = "link_id; start_measure; end_measure; value \n"
     val data = droppedLimits.map { x =>
       s"""${x._1}; ${x._2}; ${x._3}; ${x._4}"""

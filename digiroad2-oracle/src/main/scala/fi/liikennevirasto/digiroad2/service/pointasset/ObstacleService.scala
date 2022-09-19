@@ -3,15 +3,14 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SimplePointAssetProperty}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, PostGISDirectionalTrafficSignDao, PostGISObstacleDao}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 
-case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingObstacle(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
 
-case class IncomingObstacleAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
+case class IncomingObstacleAsset(linkId: String, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
 
 class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -42,20 +41,20 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     if(newTransaction) {
       withDynTransaction {
-        PostGISObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        PostGISObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, createTimeStamp(), roadLink.linkSource)
       }
     } else {
-        PostGISObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        PostGISObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, createTimeStamp(), roadLink.linkSource)
     }
   }
 
   def createFromCoordinates(incomingObstacle: IncomingObstacle, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
     if(isFloating)
-      createFloatingWithoutTransaction(incomingObstacle.copy(linkId = 0), username, roadLink)
+      createFloatingWithoutTransaction(incomingObstacle.copy(linkId = LinkId.Unknown.value), username, roadLink)
     else {
       checkDuplicates(incomingObstacle) match {
         case Some(existingAsset) =>
-          updateWithoutTransaction(existingAsset.id, incomingObstacle, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
+          updateWithoutTransaction(existingAsset.id, incomingObstacle, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.timeStamp))
         case _ =>
           create(incomingObstacle, username, roadLink, false)
       }
@@ -83,7 +82,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   def createFloatingWithoutTransaction(asset: IncomingObstacle, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    PostGISObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    PostGISObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, createTimeStamp(), roadLink.linkSource)
   }
 
   override def update(id: Long, updatedAsset: IncomingObstacle, roadLink: RoadLink, username: String): Long = {
@@ -92,14 +91,14 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingObstacle, roadLink: RoadLink, username: String, mValue : Option[Double], vvhTimeStamp: Option[Long]): Long = {
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingObstacle, roadLink: RoadLink, username: String, mValue : Option[Double], timeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found"))  match {
       case old if old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        PostGISObstacleDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISObstacleDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        PostGISObstacleDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        PostGISObstacleDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource)
     }
   }
 
@@ -114,7 +113,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet)
-    updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated", Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
+    updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated", Some(adjustment.mValue), Some(adjustment.timeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
@@ -126,7 +125,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
+      asset.mValue, asset.floating, persistedStop.timeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, linkSource = persistedStop.linkSource)
 
   }

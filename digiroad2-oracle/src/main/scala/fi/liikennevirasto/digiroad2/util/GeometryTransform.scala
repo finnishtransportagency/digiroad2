@@ -3,9 +3,8 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
-import fi.liikennevirasto.digiroad2.service.RoadAddressService
-import fi.liikennevirasto.digiroad2.{ Point }
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
+import fi.liikennevirasto.digiroad2.Point
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -85,16 +84,16 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
     new VKMClient()
   }
 
-  def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
+  def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
-    def againstDigitizing(addr: RoadAddressDTO) = {
+    def againstDigitizing(addr: RoadAddressForLink) = {
       val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
       val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
       val newMValue = (addr.endAddrMValue - ((mValue-addr.startMValue) * addressLength / lrmLength)).toInt
       RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
     }
 
-    def towardsDigitizing (addr: RoadAddressDTO) = {
+    def towardsDigitizing (addr: RoadAddressForLink) = {
       val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
       val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
       val newMValue = (((mValue-addr.startMValue) * addressLength) / lrmLength + addr.startAddrMValue).toInt

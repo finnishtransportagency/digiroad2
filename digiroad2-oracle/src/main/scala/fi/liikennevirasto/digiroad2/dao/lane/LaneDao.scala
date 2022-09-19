@@ -1,15 +1,14 @@
 package fi.liikennevirasto.digiroad2.dao.lane
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.lane.LaneNumberOneDigit.MainLane
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -17,16 +16,16 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import scala.language.implicitConversions
 
 
-case class LaneRow(id: Long, linkId: Long, sideCode: Int, value: LanePropertyRow,
+case class LaneRow(id: Long, linkId: String, sideCode: Int, value: LanePropertyRow,
                    startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                    modifiedBy: Option[String], modifiedDate: Option[DateTime], expiredBy: Option[String], expiredDate: Option[DateTime],
-                   expired: Boolean, vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
+                   expired: Boolean, timeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
 
 case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 case class NewLaneWithIds(laneId: Long, positionId: Long, lane: PersistedLane)
 
 
-class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
+class LaneDao(){
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {
@@ -41,7 +40,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   implicit val getLaneAsset: GetResult[LaneRow] = new GetResult[LaneRow] {
     def apply(r: PositionedResult) : LaneRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -50,7 +49,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
       val modifiedBy = r.nextStringOption()
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val atrrName = r.nextString()
       val atrrValue = r.nextStringOption()
@@ -61,7 +60,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
       val expiredDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
       LaneRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
-        expiredBy, expiredDate, expired, vvhTimeStamp, municipalityCode, laneCode, geomModifiedDate)
+        expiredBy, expiredDate, expired, timeStamp, municipalityCode, laneCode, geomModifiedDate)
     }
   }
 
@@ -133,7 +132,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   /**
     * Iterates a set of link ids  and returns lanes. Used by LaneService.getByRoadLinks.
     */
-  def fetchLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
+  def fetchLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
     val lanesCodeToFilter =
       if (mainLanes)
         Seq(MainLane.laneCode)
@@ -149,11 +148,11 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     convertLaneRowToPersistedLane(lanes)
   }
 
-  def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int] = Seq(), includeExpired: Boolean = false): Seq[PersistedLane] = {
+  def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[String], laneCode: Seq[Int] = Seq(), includeExpired: Boolean = false): Seq[PersistedLane] = {
     fetchAllLanesByLinkIds(linkIds, includeExpired, laneCode)
   }
 
-  def fetchAllLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
+  def fetchAllLanesByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
     val filterExpired = s" (l.valid_to > current_timestamp OR l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
 
@@ -164,7 +163,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
       case _ => " ORDER BY l.lane_code ASC"
     }
 
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
 
       getLanesFilterQuery(withFilter(filter))
@@ -172,9 +171,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
 
-  def fetchLanesByLinkIdAndSideCode( linkId: Long, sideCode: Int): Seq[PersistedLane] = {
+  def fetchLanesByLinkIdAndSideCode( linkId: String, sideCode: Int): Seq[PersistedLane] = {
 
-    MassQuery.withIds(Set(linkId)) { idTableName =>
+    MassQuery.withStringIds(Set(linkId)) { idTableName =>
       val filter = s""" JOIN $idTableName i ON i.id = pos.link_id
                     WHERE (l.valid_to > current_timestamp OR l.valid_to IS NULL)
                     AND pos.side_code = $sideCode """
@@ -208,7 +207,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
           createdBy = row.createdBy, createdDateTime = row.createdDate,
           modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate,
           expiredBy = row.expiredBy, expiredDateTime = row.expiredDate, expired = row.expired,
-          vvhTimeStamp = row.vvhTimeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues)
+          timeStamp = row.timeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues)
 
     }.values.toSeq
   }
@@ -251,7 +250,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   def updateLanePosition (newIncomeLane: PersistedLane): Unit ={
     sqlu"""UPDATE LANE_POSITION
           SET start_measure = ${newIncomeLane.startMeasure}, end_measure = ${newIncomeLane.endMeasure},
-              modified_date = current_timestamp, adjusted_timestamp = ${newIncomeLane.vvhTimeStamp}
+              modified_date = current_timestamp, adjusted_timestamp = ${newIncomeLane.timeStamp}
           WHERE link_id = ${newIncomeLane.linkId}
     """.execute
   }
@@ -267,7 +266,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
           VALUES ($laneId, ${newIncomeLane.laneCode}, current_timestamp, $username, ${newIncomeLane.municipalityCode} );
          INSERT INTO LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
           VALUES ( $lanePositionId, ${newIncomeLane.sideCode}, ${newIncomeLane.startMeasure}, ${newIncomeLane.endMeasure},
-                   ${newIncomeLane.linkId}, ${newIncomeLane.vvhTimeStamp});
+                   ${newIncomeLane.linkId}, ${newIncomeLane.timeStamp});
         INSERT INTO LANE_LINK (lane_id, lane_position_id)VALUES ($laneId, $lanePositionId );
       """.execute
 
@@ -303,8 +302,8 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
         statement.setInt(2, newLane.lane.sideCode)
         statement.setDouble(3, newLane.lane.startMeasure)
         statement.setDouble(4, newLane.lane.endMeasure)
-        statement.setLong(5, newLane.lane.linkId)
-        statement.setLong(6, newLane.lane.vvhTimeStamp)
+        statement.setString(5, newLane.lane.linkId)
+        statement.setLong(6, newLane.lane.timeStamp)
         statement.addBatch()
       }
     }
@@ -405,6 +404,10 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     }
   }
 
+  //Deletes all lane info, only to be used in MainLanePopulation initial process
+  def truncateLaneTables(): Unit = {
+    sqlu"""TRUNCATE TABLE LANE, LANE_ATTRIBUTE, LANE_LINK, LANE_POSITION, LANE_HISTORY, LANE_HISTORY_ATTRIBUTE, LANE_HISTORY_LINK, LANE_HISTORY_POSITION""".execute
+  }
 
   def updateEntryLane( lane: PersistedLane, username: String ): Long = {
 
@@ -473,22 +476,22 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     """.execute
   }
 
-  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = vvhClient.createVVHTimeStamp()): Unit = {
+  def updateSideCode(id: Long, newSideCode: Int, username: String, timeStamp: Long  = LinearAssetUtils.createTimeStamp()): Unit = {
     sqlu"""UPDATE LANE_POSITION
-           SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $vvhTimestamp
+           SET  SIDE_CODE = $newSideCode,  modified_date = current_timestamp, adjusted_timestamp = $timeStamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )
      """.execute
 
     updateLaneModifiedFields(id, username)
   }
 
-  def getAllLinkIdsInLanePosition(): List[Long] = {
-    sql"""SELECT DISTINCT LINK_ID FROM LANE_POSITION""".as[Long].list
+  def getAllLinkIdsInLanePosition(): List[String] = {
+    sql"""SELECT DISTINCT LINK_ID FROM LANE_POSITION""".as[String].list
   }
 
 
-  def expireLanesByLinkId(linkIds: Set[Long], username: String) = {
-    MassQuery.withIds(linkIds) { idTableName =>
+  def expireLanesByLinkId(linkIds: Set[String], username: String) = {
+    MassQuery.withStringIds(linkIds) { idTableName =>
       sqlu"""
          UPDATE LANE SET
            VALID_TO = current_timestamp,

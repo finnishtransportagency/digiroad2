@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.TrafficSigns
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.postgis.MassQuery
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre, ManoeuvreElement, NewManoeuvre}
@@ -13,10 +12,10 @@ import slick.jdbc.{StaticQuery => Q}
 /**
   * Created by venholat on 3.5.2016.
   */
-case class PersistedManoeuvreRow(id: Long, linkId: Long, destLinkId: Long, elementType: Int, modifiedDate: Option[DateTime],
+case class PersistedManoeuvreRow(id: Long, linkId: String, destLinkId: String, elementType: Int, modifiedDate: Option[DateTime],
                                  modifiedBy: Option[String], additionalInfo: String, createdDate: DateTime, createdBy: String, isSuggested: Boolean)
 
-class ManoeuvreDao(val vvhClient: VVHClient) {
+class ManoeuvreDao() {
 
   def find(id: Long): Option[Manoeuvre] = {
     val manoeuvresById = Map(id -> fetchManoeuvreById(id))
@@ -31,12 +30,12 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
   }
 
 
-  def getSourceRoadLinkIdById(id: Long): Long = {
+  def getSourceRoadLinkIdById(id: Long): String = {
     sql"""
              select link_id
              from manoeuvre_element
              where manoeuvre_id = $id and element_type = 1
-          """.as[Long].first
+          """.as[String].first
   }
 
   def deleteManoeuvre(username: String, id: Long) = {
@@ -195,8 +194,8 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       manoeuvreRow.additionalInfo, manoeuvreRow.createdDate, manoeuvreRow.createdBy, manoeuvreRow.isSuggested)
   }
 
-  private def fetchManoeuvresByLinkIds(linkIds: Seq[Long]): Map[Long, Seq[PersistedManoeuvreRow]] = {
-    val manoeuvres = MassQuery.withIds(linkIds.toSet) { idTableName =>
+  private def fetchManoeuvresByLinkIds(linkIds: Seq[String]): Map[Long, Seq[PersistedManoeuvreRow]] = {
+    val manoeuvres = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
@@ -206,7 +205,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
                                join #$idTableName i on i.id = k.link_id
                                where
                                    k.manoeuvre_id = m.id)
-        """.as[(Long, Long, Long, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
+        """.as[(Long, String, String, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
     }
     manoeuvres.map { manoeuvreRow =>
       PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6,
@@ -214,8 +213,8 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
     }.groupBy(_.id)
   }
 
-  private def fetchManoeuvresByElementTypeLinkIds(elementType: Long, linkIds: Seq[Long]): Map[Long, Seq[PersistedManoeuvreRow]] = {
-    val manoeuvres = MassQuery.withIds(linkIds.toSet) { idTableName =>
+  private def fetchManoeuvresByElementTypeLinkIds(elementType: Long, linkIds: Seq[String]): Map[Long, Seq[PersistedManoeuvreRow]] = {
+    val manoeuvres = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""SELECT m.id, e.link_id, e.dest_link_id, e.element_type, m.modified_date, m.modified_by, m.additional_info, m.created_date, m.created_by, m.suggested
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
@@ -225,7 +224,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
                                join #$idTableName i on i.id = k.link_id
                                where
                                    k.manoeuvre_id = m.id and k.element_type = $elementType)
-        """.as[(Long, Long, Long, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
+        """.as[(Long, String, String, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
     }
     manoeuvres.map { manoeuvreRow =>
       PersistedManoeuvreRow(manoeuvreRow._1, manoeuvreRow._2, manoeuvreRow._3, manoeuvreRow._4, manoeuvreRow._5, manoeuvreRow._6,
@@ -239,7 +238,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
             FROM MANOEUVRE m
             JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id
             WHERE m.id = $id and (valid_to > current_timestamp OR valid_to is null)"""
-        .as[(Long, Long, Long, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
+        .as[(Long, String, String, Int, Option[DateTime], Option[String], String, DateTime, String, Boolean)].list
     manoeuvre.map(row =>
       PersistedManoeuvreRow(row._1, row._2, row._3, row._4, row._5, row._6, row._7, row._8, row._9, row._10))
   }
@@ -310,11 +309,11 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
         """.execute
   }
 
-  def getByRoadLinks(roadLinkIds: Seq[Long]): Seq[Manoeuvre] = {
+  def getByRoadLinks(roadLinkIds: Seq[String]): Seq[Manoeuvre] = {
     getByManoeuvresId(fetchManoeuvresByLinkIds(roadLinkIds))
   }
 
-  def getByElementTypeRoadLinks(elementType: Long)(roadLinkIds: Seq[Long]): Seq[Manoeuvre] = {
+  def getByElementTypeRoadLinks(elementType: Long)(roadLinkIds: Seq[String]): Seq[Manoeuvre] = {
     getByManoeuvresId(fetchManoeuvresByElementTypeLinkIds(elementType, roadLinkIds))
   }
 
@@ -326,7 +325,7 @@ class ManoeuvreDao(val vvhClient: VVHClient) {
       .toSeq
   }
 
-  def countExistings(sourceId: Long, destId: Long, elementType: Int): Long = {
+  def countExistings(sourceId: String, destId: String, elementType: Int): Long = {
     sql"""
          select COUNT(*)
          from manoeuvre_element me

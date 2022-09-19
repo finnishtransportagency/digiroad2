@@ -8,7 +8,6 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -19,17 +18,17 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 import scala.language.implicitConversions
 
-case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
+case class ProhibitionsRow(id: Long, linkId: String, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
                            endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedDate: Option[DateTime],
-                           expired: Boolean, vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], startMinute: Option[Int], endMinute: Option[Int],
+                           expired: Boolean, timeStamp: Long, geomModifiedDate: Option[DateTime], startMinute: Option[Int], endMinute: Option[Int],
                            additionalInfo: String, linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int], isSuggested: Boolean = false)
 
-case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[String], modifiedDate: Option[DateTime])
-case class AssetLink(id: Long, linkId: Long)
+case class AssetLastModification(id: Long, linkId: String, modifiedBy: Option[String], modifiedDate: Option[DateTime])
+case class AssetLink(id: Long, linkId: String)
 
 
-class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
+class PostGISLinearAssetDao() {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -37,7 +36,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     def apply(r: PositionedResult) : ProhibitionsRow = {
 
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val prohibitionId = r.nextLong()
       val prohibitionType = r.nextInt()
@@ -52,7 +51,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val modifiedBy = r.nextStringOption()
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validityPeridoStartMinute = r.nextIntOption()
       val validityPeridoEndMinute = r.nextIntOption()
@@ -64,7 +63,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val isSuggested = r.nextBoolean()
 
       ProhibitionsRow(id, linkId, sideCode, prohibitionId, prohibitionType, validityPeridoType, validityPeridoStartHour, validityPeridoEndHour,
-                      exceptionType, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, vvhTimeStamp,
+                      exceptionType, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, timeStamp,
                       geomModifiedDate, validityPeridoStartMinute, validityPeridoEndMinute, prohibitionAdditionalInfo, linkSource,
                       verifiedBy, verifiedDate, informationSource, isSuggested)
 
@@ -74,7 +73,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getLinearAsset: GetResult[PersistedLinearAsset] = new GetResult[PersistedLinearAsset] {
     def apply(r: PositionedResult) : PersistedLinearAsset = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val value = r.nextIntOption().map(NumericValue)
       val startMeasure = r.nextDouble()
@@ -85,7 +84,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
       val typeId = r.nextInt()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = LinkGeomSource.apply(r.nextInt())
       val verifiedBy = r.nextStringOption()
@@ -93,7 +92,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val informationSource = r.nextIntOption()
 
 
-      PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate,
+      PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate,
         linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
   }
@@ -101,7 +100,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getPiecewise = new GetResult[PieceWiseLinearAsset] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val value = r.nextIntOption().map(NumericValue)
       val startMeasure = r.nextDouble()
@@ -112,7 +111,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
       val typeId = r.nextInt()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = LinkGeomSource.apply(r.nextInt())
       val verifiedBy = r.nextStringOption()
@@ -126,7 +125,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
 
       val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
       PieceWiseLinearAsset(id, linkId, SideCode(sideCode), value, geometry, expired, startMeasure, endMeasure,
-                           geometry.toSet, modifiedBy, modifiedDate, createdBy, createdDate, typeId, SideCode.toTrafficDirection(SideCode(sideCode)), vvhTimeStamp,
+                           geometry.toSet, modifiedBy, modifiedDate, createdBy, createdDate, typeId, SideCode.toTrafficDirection(SideCode(sideCode)), timeStamp,
                            geomModifiedDate, linkSource, administrativeClass, verifiedBy = verifiedBy, verifiedDate = verifiedDate, informationSource = informationSource.map(info => InformationSource.apply(info)))
 
 
@@ -187,9 +186,9 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
           join #$idTableName i on i.id = a.id
           left join text_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.floating = '0'
-      """.as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
-      assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map{info => InformationSource(info)})
+      """.as[(Long, String, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
+      assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
+        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map{info => InformationSource(info)})
       }
     }
   }
@@ -197,9 +196,9 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   /**
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
-  def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String, includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -218,9 +217,9 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     }
   }
 
-  def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[Long], includeExpired: Boolean = false): Seq[AssetLink] = {
+  def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[String], includeExpired: Boolean = false): Seq[AssetLink] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id
           from asset a
@@ -234,15 +233,15 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getAssetLink = new GetResult[AssetLink] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
 
       AssetLink(id, linkId)
     }
   }
 
 
-  def fetchExpireAssetLastModificationsByLinkIds(assetTypeId: Int, linkIds: Seq[Long]) : Seq[AssetLastModification] = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def fetchExpireAssetLastModificationsByLinkIds(assetTypeId: Int, linkIds: Seq[String]) : Seq[AssetLastModification] = {
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       val assets = sql"""
         select a.id, pos.link_id, a.modified_date, a.modified_by
           from asset a
@@ -256,7 +255,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
             join #$idTableName i on i.id = pos.link_id
             group by pos.link_id) asset_lk on asset_lk.link_id = pos.link_id and asset_lk.modified_date = a.modified_date
         where asset_type_id = $assetTypeId and a.floating = '0' and  a.valid_to is not null and a.valid_to < current_timestamp"""
-        .as[(Long, Long, Option[DateTime], Option[String])].list
+        .as[(Long, String, Option[DateTime], Option[String])].list
       assets.map { case(id, linkId, modifiedDate, modifiedBy) =>
         AssetLastModification(id, linkId, modifiedBy, modifiedDate)
       }
@@ -266,8 +265,8 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   /**
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
-  def fetchAssetsWithTextualValuesByLinkIds(assetTypeId: Int, linkIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def fetchAssetsWithTextualValuesByLinkIds(assetTypeId: Int, linkIds: Seq[String], valuePropertyId: String): Seq[PersistedLinearAsset] = {
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       val assets = sql"""
         select a.id, pos.link_id, pos.side_code, s.value_fi, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -282,9 +281,9 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
           where a.asset_type_id = $assetTypeId
           and (a.valid_to > current_timestamp or a.valid_to is null)
           and a.floating = '0'"""
-        .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
-      assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map{info => InformationSource(info)})
+        .as[(Long, String, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
+      assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
+        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map{info => InformationSource(info)})
       }
     }
   }
@@ -306,7 +305,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
         ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
       }
       PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues, asset.isSuggested)), asset.startMeasure, asset.endMeasure, asset.createdBy,
-        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
+        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.timeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
         asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
@@ -315,10 +314,10 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     * Iterates a set of link ids with prohibition asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     * and CsvGenerator.generateDroppedProhibitions.
     */
-  def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchProhibitionsByLinkIds(prohibitionAssetTypeId: Int, linkIds: Seq[String], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = '0'"
 
-    val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
+    val assets = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code,
                pv.id, pv.type,
@@ -420,10 +419,10 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
            and a.floating = '0'
            #$withAutoAdjustFilter
            ) derivedAsset #$recordLimit"""
-      .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
+      .as[(Long, String, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
-    assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
-      PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
+    assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
+      PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
   }
 
@@ -523,8 +522,8 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   /**
     * Saves linear asset to db. Returns id of new linear asset. Used by AssetDataImporter.splitLinearAssets.
     */
-  def forceCreateLinearAsset(creator: String, typeId: Int, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Option[Int],
-                             valueInsertion: (Long, Int) => Unit, vvhTimeStamp: Option[Long], createdDate: Option[DateTime],
+  def forceCreateLinearAsset(creator: String, typeId: Int, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: Option[Int],
+                             valueInsertion: (Long, Int) => Unit, timeStamp: Option[Long], createdDate: Option[DateTime],
                              modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource): Long = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -551,7 +550,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
          values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate);
 
         insert into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
-         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value});
+         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, '$linkId', $sideCodeValue, ${timeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value});
 
        insert into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId);
@@ -586,7 +585,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   /**
     * Updates from Change Info in db.
     */
-  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), vvhTimestamp: Long, username: String): Unit = {
+  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
     println("asset_id -> " + id)
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
@@ -595,7 +594,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
         start_measure = $startMeasure,
         end_measure = $endMeasure,
         modified_date = current_timestamp,
-        adjusted_timestamp = $vvhTimestamp
+        adjusted_timestamp = $timeStamp
       where id = (
         select lrm.id
           from asset a
@@ -682,7 +681,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
+  def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String, timeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
                         verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq()): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
@@ -714,7 +713,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom);
 
       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
 
      insert   into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
@@ -724,7 +723,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $verifiedBy, #$verifiedDate, $informationSource, #$geom);
 
        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
 
       insert  into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
@@ -736,7 +735,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       values ($id, $typeId, $username, current_timestamp, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom);
 
       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
 
       insert into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId);
@@ -929,7 +928,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     sqlu"update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where asset_type_id = $typeId".execute
   }
 
-  def getIds (assetType: Int, linkId: Long): Seq[Long] = {
+  def getIds (assetType: Int, linkId: String): Seq[Long] = {
     val ids = sql""" select a.id from asset a
               join asset_link al on (a.id = al.asset_id)
               join lrm_position lp on (al.position_id = lp.id)
@@ -937,7 +936,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     ids
   }
 
-  def getAssetLrmPosition(typeId: Long, assetId: Long): Option[( Long, Double, Double)] = {
+  def getAssetLrmPosition(typeId: Long, assetId: Long): Option[( String, Double, Double)] = {
     val lrmInfo =
       sql"""
           select lrm.link_Id, lrm.start_measure, lrm.end_measure
@@ -948,7 +947,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
           and (a.valid_to IS NULL OR a.valid_to > current_timestamp )
           and a.floating = '0'
           and a.id = $assetId
-      """.as[(Long, Double, Double)].firstOption
+      """.as[(String, Double, Double)].firstOption
     lrmInfo
   }
 
@@ -956,7 +955,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     sqlu"update asset set verified_by = $verifiedBy, verified_date = current_timestamp where id in (#${ids.mkString(",")})".execute
   }
 
-  def getUnVerifiedLinearAsset(assetTypeId: Int): List[(Long, Long)] = {
+  def getUnVerifiedLinearAsset(assetTypeId: Int): List[(Long, String)] = {
     val TwoYears: Int = 24
     sql"""
           Select a.id, pos.link_id
@@ -969,7 +968,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
           and (a.modified_date is NULL OR (a.modified_date is NOT NULL and a.modified_by = 'vvh_generated'))
           and (a.verified_date is NULL OR (extract(month from age(current_timestamp, a.verified_date)) > $TwoYears))
           and a.floating = '0'
-      """.as[(Long, Long)].list
+      """.as[(Long, String)].list
   }
 
   def deleteByTrafficSign(queryFilter: String => String, username: Option[String]) : Unit = {
@@ -1000,8 +999,8 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
          and ca.created_date > TO_DATE($sinceString, 'YYYY-MM-DD hh24:mi:ss')-INTERVAL'1 MONTH'
          #$municipalityFilter""".as[(Long, Int)].list
   }
-  def getLinksWithExpiredAssets(linkIds: Seq[Long], assetType: Int): Seq[Long] = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def getLinksWithExpiredAssets(linkIds: Seq[String], assetType: Int): Seq[String] = {
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
       select LINK_ID
       from asset a
@@ -1010,7 +1009,7 @@ class PostGISLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       join #$idTableName i on i.id = pos.link_id
       where a.asset_type_id = $assetType
       and a.valid_to is not null
-    """.as[Long].list
+    """.as[String].list
     }
   }
 }

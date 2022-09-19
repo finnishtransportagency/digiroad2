@@ -113,6 +113,8 @@ Resources:
               Value: 'svc_vvh_digiroad'
             - Name: vvhRoadlink.frozen
               Value: 'false'
+            - Name: kgv.endpoint
+              Value: 'https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/'
             - Name: viiteRestApiEndPoint
               Value: 'https://api.vaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
@@ -178,6 +180,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/ses_username'
             - Name: vvhRest.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/vvhRest.password'
+            - Name: kgv.apikey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/apikey/kgv.apikey'
             - Name: ses.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/prod/ses_password'
             - Name: oag.password

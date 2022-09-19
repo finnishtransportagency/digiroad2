@@ -408,7 +408,7 @@
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(odd) && _.max(odd) == 9 || selectedAsset.isPromotionDirty()));
 
-      var selectedRoadLink = selectedAsset.getSelectedRoadlink();
+      var selectedRoadLink = selectedAsset.getSelectedRoadLink();
       var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary add-by-road-address">Lisää kaista tieosoitteen avulla</button>').click(function() {
         isAddByRoadAddressActive = true;
         selectedAsset.setInitialRoadFields();

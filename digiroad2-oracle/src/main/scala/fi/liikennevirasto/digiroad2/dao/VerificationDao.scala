@@ -82,8 +82,8 @@ class VerificationDao {
     }
   }
 
-  def getLastModificationLinearAssets(ids: Set[Long]) : Seq[LatestModificationInfo] = {
-    val lastModification = MassQuery.withIds(ids) { idTableName =>
+  def getLastModificationLinearAssets(linkIds: Set[String]) : Seq[LatestModificationInfo] = {
+    val lastModification = MassQuery.withStringIds(linkIds) { idTableName =>
       sql"""
       select typeId, modified_date, modified_by
       from (
@@ -107,8 +107,8 @@ class VerificationDao {
     }
   }
 
-  def getSuggestedLinearAssets(ids: Set[Long]): Seq[(Long, Int)] = {
-    MassQuery.withIds(ids) { idTableName =>
+  def getSuggestedLinearAssets(linkIds: Set[String]): Seq[(Long, Int)] = {
+    MassQuery.withStringIds(linkIds) { idTableName =>
       sql"""
       select a.id, a.asset_type_id
         from asset a

@@ -13,8 +13,8 @@ object LanePartitioner {
 
 
   def getLaneRoadIdentifierByUsingViiteRoadNumber(lane: PieceWiseLane, roadLink: RoadLink): String = {
-    val roadNumber = lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")).toString
-    val roadPartNumber = lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")).toString
+    val roadNumber = lane.attributes.get("ROAD_NUMBER").toString
+    val roadPartNumber = lane.attributes.get("ROAD_PART_NUMBER").toString
     val vvhRoadIdentifier = roadLink.roadIdentifier.toString
     if(roadNumber != "None" && roadPartNumber != "None") roadNumber + "/" + roadPartNumber
     else vvhRoadIdentifier
@@ -22,7 +22,7 @@ object LanePartitioner {
 
   //Returns lanes continuing from from given lane
   def getContinuingWithIdentifier(lane: PieceWiseLane, laneRoadIdentifier: String,
-                                  lanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink],
+                                  lanes: Seq[PieceWiseLane], roadLinks: Map[String, RoadLink],
                                   SideCodesCorrected: Boolean = false): Seq[PieceWiseLane] = {
     val continuingLanes = lanes.filter(potentialLane => {
       val potentialLaneLink = roadLinks(potentialLane.linkId)
@@ -110,7 +110,10 @@ object LanePartitioner {
           case Some(laneWithContinuing) =>
             val checkedLane = checkLane(sortedLanes.last, laneWithContinuing.lane, allLanes)
             val nextPoint = checkedLane.endpoints.find(_.round() != continuingPoint.round())
-            getSortedLanes(nextPoint.get, sortedLanes ++ Seq(checkedLane))
+            nextPoint match {
+              case Some(point) => getSortedLanes(point, sortedLanes ++ Seq(checkedLane))
+              case None => sortedLanes
+            }
           case _ => sortedLanes
         }
       }
@@ -169,7 +172,7 @@ object LanePartitioner {
 
   //Groups lanes by roadIdentifier, sideCode, LaneCode, and other lanes on link.
   //Makes sure that all the lanes in group are connected and there are no gaps in lane selection
-  def groupMainLanes(lanes: Seq[PieceWiseLane], allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
+  def groupMainLanes(lanes: Seq[PieceWiseLane], allLanes: Seq[PieceWiseLane], roadLinks: Map[String, RoadLink]): Seq[Seq[PieceWiseLane]] = {
     val (mainLanesWithCutAdditionalLanes, mainLanesWithFullLenghtLanes) = lanes.partition(lane => {
       val roadLink = roadLinks(lane.linkId)
       val roadLinkLength = Math.round(roadLink.length * 1000).toDouble/1000
@@ -220,7 +223,7 @@ object LanePartitioner {
 
   //Returns lanes grouped by corrected sideCode, laneCode, additional lanes and connection (lanes in group must
   // be geometrically connected together)
-  def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[Long, RoadLink]): Seq[Seq[PieceWiseLane]] = {
+  def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[String, RoadLink]): Seq[Seq[PieceWiseLane]] = {
     val (allMainLanes, allAdditionalLanes) = allLanes.partition(lane => {
       val laneCode = lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]
       LaneNumberOneDigit.isMainLane(laneCode)

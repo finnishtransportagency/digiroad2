@@ -3,7 +3,7 @@
     SelectedLinearAsset.call(this, backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType);
     this.promotionDirty = false;
     var lanesFetched = [];
-    var selectedRoadlink = null;
+    var selectedRoadLink = null;
     var assetsToBeExpired = [];
     var self = this;
     var linksSelected = null;
@@ -125,13 +125,13 @@
     self.open = function(linearAsset, singleLinkSelect) {
       self.close();
       var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
-      selectedRoadlink = linearAsset;
+      selectedRoadLink = linearAsset;
       backend.getLanesByLinkIdAndSidecode(linearAsset.linkId, linearAsset.sideCode, function(asset) {
         _.forEach(asset, function (lane) {
           lane.linkIds = _.map(linearAssets, function (linearAsset) {
             return linearAsset.linkId;
           });
-          lane.selectedLinks = linearAssets;
+          lane.selectedLinks = _.uniq(linearAssets);
         });
         var lanesWithSplitMarkers = giveSplitMarkers(asset);
         self.selection = lanesWithSplitMarkers;
@@ -143,15 +143,15 @@
       });
     };
 
-    this.getSelectedRoadlink = function() {
-      return selectedRoadlink;
+    this.getSelectedRoadLink = function() {
+      return selectedRoadLink;
     };
 
     this.setInitialRoadFields = function(){
-      roadNumber = selectedRoadlink.roadNumber;
+      roadNumber = selectedRoadLink.roadNumber;
       startRoadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(linksSelected, 'roadPartNumber')));
       startDistance = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(linksSelected, startRoadPartNumber, 'startAddrMValue'));
-      track = selectedRoadlink.track;
+      track = selectedRoadLink.track;
 
       var startRoadPartNumberElement  = {publicId: "startRoadPartNumber", propertyType: "number", required: 'required', values: [{value: startRoadPartNumber}]};
       var startDistanceElement = {publicId: "startDistance", propertyType: "number", required: 'required', values: [{value: startDistance}]};

@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, baseAdjustment}
 import fi.liikennevirasto.digiroad2.lane.{NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.roadLinkService.getHistoryDataLinksFromVVH
+import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.roadLinkService.getHistoryDataLinks
 import fi.liikennevirasto.digiroad2.util.LaneUtils.laneService._
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
@@ -14,12 +15,12 @@ import org.slf4j.LoggerFactory
 
 object ChangeLanesAccordingToVvhChanges {
 
-  lazy val vvhClient: VVHClient = {
-    new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
   lazy val roadLinkService: RoadLinkService = {
-    new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    new RoadLinkService(roadLinkClient, new DummyEventBus, new DummySerializer)
   }
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -38,8 +39,8 @@ object ChangeLanesAccordingToVvhChanges {
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
-    val historyLinks = getHistoryDataLinksFromVVH(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
-    val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.vvhTimeStamp)).toSeq
+    val historyLinks = getHistoryDataLinks(roadLinks.map(_.linkId).toSet).groupBy(_.linkId)
+    val latestHistoryRoadLinks = historyLinks.map(_._2.minBy(_.timeStamp)).toSeq
 
     val (changeSet, modifiedLanes) = handleChanges(roadLinks,latestHistoryRoadLinks, changes, existingAssets)
     val onlyNewModifiedLanes = modifiedLanes.filter(lane => lane.id == 0)
@@ -88,7 +89,9 @@ object ChangeLanesAccordingToVvhChanges {
   }
 
   def saveChanges(changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]): Unit ={
-    updateChangeSet(changeSet)
+    withDynTransaction {
+      updateChangeSet(changeSet)
+    }
     persistModifiedLinearAssets(modifiedLanes)
   }
 
@@ -114,7 +117,6 @@ object ChangeLanesAccordingToVvhChanges {
       NewLane(0, newStartMeasure, newEndMeasure, persistedLane.municipalityCode, false, false, persistedLane.attributes)
     }
 
-    PostGISDatabase.withDynTransaction {
       if (changeSet.adjustedSideCodes.nonEmpty)
         logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
 
@@ -137,7 +139,7 @@ object ChangeLanesAccordingToVvhChanges {
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))
       ids.foreach(moveToHistory(_, None, true, true, VvhGenerated))
-    }
+
   }
 
   def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit = {

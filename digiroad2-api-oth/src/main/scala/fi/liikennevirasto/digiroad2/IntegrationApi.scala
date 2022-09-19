@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -84,7 +83,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       "kelluvuus" -> massTransitStop.floating
     }
 
-    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = {
+    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[String]) = {
       "link_id" -> Some(massTransitStop.linkId)
     }
 
@@ -205,8 +204,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
         lastModifiedBy(None, roadLink.modifiedBy),
-        "startNode" -> roadLink.attributes.get("STARTNODE"),
-        "endNode" -> roadLink.attributes.get("ENDNODE"),
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
         "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
@@ -214,8 +211,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
                                                                                               .filterNot(_._1 == "ROADNUMBER")
                                                                                               .filterNot(_._1 == "ROADPARTNUMBER")
-                                                                                              .filterNot(_._1 == "STARTNODE")
-                                                                                              .filterNot(_._1 == "ENDNODE")
                                                                                               .filterNot(_._1 == "CUST_OWNER")
                                                                                               .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
                                                                                               .filterNot(_._1 == "ACCESS_RIGHT_ID")
@@ -746,17 +741,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def roadNodesToApi(roadNodes: Seq[VVHRoadNodes]) = {
-    roadNodes.map { roadNode =>
-      Map("nodeId" -> roadNode.nodeId,
-          "nodeType" -> roadNode.formOfNode.value,
-          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
-          "subtype" -> roadNode.subtype,
-          geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
-      )
-    }
-  }
-
   def trWeightLimitationsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
     weightLimits.filterNot(_.floating).map { weightLimit =>
       Map("id" -> weightLimit.id,
@@ -801,11 +785,20 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
 
-    def showOldTrafficCode(trafficSign: PersistedTrafficSign): String = {
-      if (trafficSignService.getProperty(trafficSign, "old_traffic_code").get.propertyValue == "1" ||  trafficSign.createdAt.get.isBefore(trafficSignService.newTrafficCodeStartDate)){
-        TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).OldLawCode
+    def showOldTrafficCode(trafficSign: PersistedTrafficSign): Option[Int] = {
+      val oldTrafficCodeProperty = trafficSignService.getProperty(trafficSign, "old_traffic_code")
+      val trafficSignTypeProperty = trafficSignService.getProperty(trafficSign, "trafficSigns_type")
+
+      (oldTrafficCodeProperty, trafficSign.createdAt, trafficSignTypeProperty) match {
+        case (Some(oldCodeProp), Some(createdAt), Some(signTypeProp)) =>
+          if (oldCodeProp.propertyValue == "1" ||  createdAt.isBefore(trafficSignService.newTrafficCodeStartDate)){
+            TrafficSignType.applyOTHValue(signTypeProp.propertyValue.toInt).OldLawCode
+          }
+          else None
+        case _ => None
       }
-      else ""
+
+
     }
 
     trafficSigns.filterNot(x => x.floating | isSuggested(x)).map{ trafficSign =>
@@ -818,7 +811,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
           "type" -> Try(TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).NewLawCode).getOrElse(""),
-          "oldTrafficCode" -> Try(showOldTrafficCode(trafficSign).toInt).getOrElse(""),
+          "oldTrafficCode" -> showOldTrafficCode(trafficSign),
           "value" -> trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
           "municipalityId" -> trafficSignService.getProperty(trafficSign, "municipality_id").map(_.propertyDisplayValue.getOrElse("")),
@@ -970,7 +963,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           case "road_link_properties" => roadLinkPropertiesToApi(roadAddressService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
           case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
           case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-          case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
           case "tr_total_weight_limits" => trWeightLimitationsToApi(weightLimitService.getByMunicipality(municipalityNumber))
           case "tr_trailer_truck_weight_limits" => trWeightLimitationsToApi(trailerTruckWeightLimitService.getByMunicipality(municipalityNumber))
           case "tr_axle_weight_limits" => trWeightLimitationsToApi(axleWeightLimitService.getByMunicipality(municipalityNumber))

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Sequences}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
@@ -15,7 +15,7 @@ class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("fetch asset containing several properties") {
     val dao = new DynamicLinearAssetDao
-    val linkId = 1l
+    val linkId = LinkIdGenerator.generateRandom()
 
     runWithRollback {
       val assetTypeId = 999
