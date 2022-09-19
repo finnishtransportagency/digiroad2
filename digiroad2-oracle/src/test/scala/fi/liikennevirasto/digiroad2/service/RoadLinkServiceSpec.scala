@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHChangeInfoClient}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
+import fi.liikennevirasto.digiroad2.dao.lane.LaneWorkListDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList.generateProperties
@@ -1366,4 +1367,18 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       linkTypes.size should be (3)
     }
   }
+
+  test("road link property change triggers event bus 2 times") {
+    runWithRollback {
+      when(mockRoadLinkDao.fetchByLinkId("1l"))
+        .thenReturn(Some(RoadLinkFetched("1l", 91, Nil, State, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
+      val service = new TestService(mockRoadLinkClient, mockEventBus)
+      val linkProperty = LinkProperties("1l", 99, BidirectionalLaneCarriageWay, TrafficDirection.BothDirections, State, None, None, None)
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
+      verify(mockEventBus, times(2)).publish(
+        org.mockito.ArgumentMatchers.eq("laneWorkList:insert"),
+        org.mockito.ArgumentMatchers.any[LinkPropertyChange])
+    }
+  }
+
 }

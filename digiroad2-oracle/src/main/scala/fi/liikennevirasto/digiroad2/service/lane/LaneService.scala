@@ -103,6 +103,7 @@ trait LaneOperations {
     getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks)
   }
 
+
   /**
     * Use lanes measures to create segments with lanes with same link id and side code
     * @param allLanes lanes to be segmented

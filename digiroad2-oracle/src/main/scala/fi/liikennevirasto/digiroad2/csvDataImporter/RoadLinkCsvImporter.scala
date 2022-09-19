@@ -196,7 +196,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
 
         if (unauthorizedAdminClass.isEmpty && objectId != None) {
           val propertiesOTH = properties.partition(a => fieldInOTH.contains(a.columnName))._1
-          val hasDirectionType = propertiesOTH.exists(_.columnName == "DIRECTIONTYPE")
+          val hasDirectionType = properties.exists(_.columnName == "DIRECTIONTYPE")
 
           withDynTransaction {
             if (propertiesOTH.nonEmpty || hasDirectionType) {

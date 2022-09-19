@@ -303,7 +303,7 @@
 
     var drawDashedLineFeaturesForType = function(roadLinks) {
       var dashedLinkTypes = [2, 4, 6, 8, 12, 15, 21];
-      var dashedNotAllowInLinkStatus = [1, 3];
+      var dashedNotAllowInLinkStatus = [1, 3, 22];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.includes(dashedLinkTypes, roadLink.linkType) && !_.includes(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });
