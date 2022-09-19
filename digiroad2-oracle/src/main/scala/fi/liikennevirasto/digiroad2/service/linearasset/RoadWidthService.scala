@@ -1,21 +1,20 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, PostGISLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.PolygonTools
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 
 class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: PostGISAssetDao = new PostGISAssetDao
   override def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
@@ -23,57 +22,25 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
 
-      val linkIds = roadLinks.map(_.linkId)
-      val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
-      val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-      val existingAssets =
-        withDynTransaction {
-          dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds ++ removedLinkIds)
-        }
+    val linkIds = roadLinks.map(_.linkId)
 
-      val timing = System.currentTimeMillis
-      val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
-
-      val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-
-      val initChangeSet: ChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                                    expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
-                                    adjustedMValues = Seq.empty[MValueAdjustment],
-                                    adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                    adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-        valueAdjustments = Seq.empty[ValueAdjustment])
-
-      val (projectedAssets, changedSetProjected) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-        assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
-
-      val (newRoadWidthAssets, changedSet) = getRoadWidthAssetChanges(existingAssets, projectedAssets, roadLinks, changes, newAssetIds =>
-        withDynTransaction {
-          dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, newAssetIds)
-      }, changedSetProjected)
-
-      val newAssets = assetsWithoutChangedLinks ++ projectedAssets.filterNot(a =>
-        newRoadWidthAssets.exists(b => b.linkId == a.linkId && b.sideCode == a.sideCode && b.startMeasure == a.startMeasure && b.endMeasure == a.endMeasure)) ++
-        newRoadWidthAssets
-
-      if (newAssets.nonEmpty) {
-        logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
+    val existingAssets =
+      withDynTransaction {
+        dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds)
       }
 
-      val groupedAssets = (existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
-      val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+    val groupedAssets = existingAssets.groupBy(_.linkId)
+    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(roadLinks, groupedAssets, typeId)
 
-      eventBus.publish("roadWidth:update", changeSet)
-      eventBus.publish("RoadWidth:saveProjectedRoadWidth", newAssets.filter(_.id == 0L))
-
-      filledTopology
-    }
+    filledTopology
+  }
 
   def getRoadWidthAssetChanges(linearAssets: Seq[PersistedLinearAsset], projectedAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo],
-                               fetchModifications: Seq[Long] => Seq[AssetLastModification], changedSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+                               fetchModifications: Seq[String] => Seq[AssetLastModification], changedSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
-    val mappedLastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
+    val mappedLastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.timeStamp))
     val mappedLinearAssets = linearAssets.groupBy(_.linkId)
     val mappedRoadLinks = roadLinks.
       filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private).
@@ -88,16 +55,16 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val expiredAssets = changedAssets.flatMap {
       case (Some(road), changeInfo, assets) =>
-        assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
-          (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default" ||
-            asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default"))
+        assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == AutoGeneratedUsername.dr1Conversion ||
+          (asset.timeStamp < changeInfo.timeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == AutoGeneratedUsername.mtkClassDefault ||
+            asset.modifiedBy.getOrElse("") == AutoGeneratedUsername.generatedInUpdate && asset.createdBy.getOrElse("") == AutoGeneratedUsername.mtkClassDefault))
         ).map{asset => (asset.id, asset.linkId)}
       case _ =>
         List()
     }.toSet
 
     val newAssetIds = changedAssets.filter(_._3.isEmpty).map(_._2.newId.get)
-    val assetsLastModification = if(newAssetIds.isEmpty) Map[Long, AssetLastModification]() else {
+    val assetsLastModification = if(newAssetIds.isEmpty) Map[String, AssetLastModification]() else {
       fetchModifications(newAssetIds.toSeq).groupBy(_.linkId)
     }
     val newAssets = changedAssets.flatMap{
@@ -107,8 +74,8 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             None
           case _ =>
             Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-              0, GeometryUtils.geometryLength(roadLink.geometry), Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId,
-              changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls)))
+              0, GeometryUtils.geometryLength(roadLink.geometry), Some(AutoGeneratedUsername.mtkClassDefault), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId,
+              changeInfo.timeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy(AutoGeneratedUsername.mtkClassDefault, LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls)))
         }
       case (Some(roadLink), changeInfo, assets) =>
         //if the asset was created by changeInfo and there is a new changeInfo, expire and crete a new asset
@@ -119,8 +86,8 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           }
 
         PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-          startMeasure, endMeasure, asset.createdBy, asset.createdDateTime, Some("vvh_mtkclass_default"), None, false, LinearAssetTypes.RoadWidthAssetTypeId,
-          changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy("vvh_mtkclass_default", LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls))}
+          startMeasure, endMeasure, asset.createdBy, asset.createdDateTime, Some(AutoGeneratedUsername.mtkClassDefault), None, false, LinearAssetTypes.RoadWidthAssetTypeId,
+          changeInfo.timeStamp, None, linkSource = roadLink.linkSource, getVerifiedBy(AutoGeneratedUsername.mtkClassDefault, LinearAssetTypes.RoadWidthAssetTypeId), None, Some(MmlNls))}
       case _ =>
         None
     }.toSeq
@@ -130,88 +97,13 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
                                   adjustedSideCodes = changedSet.adjustedSideCodes.filterNot(change => expiredAssets.map(_._1).contains(change.assetId))))
   }
 
-  override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
-    if (newLinearAssets.nonEmpty)
-      logger.info("Saving projected road Width assets")
 
-    val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
+
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, timeStamp: Long = createTimeStamp()): Seq[Long] = {
     withDynTransaction {
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-        if(toUpdate.nonEmpty) {
-          val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
-          updateProjected(toUpdate, persisted)
-
-          if (newLinearAssets.nonEmpty)
-            logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-        }
-
-      toInsert.foreach{ linearAsset =>
-        val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
-        val id = (linearAsset.createdBy, linearAsset.createdDateTime) match {
-          case (Some(createdBy), Some(createdDateTime)) =>
-            dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.modifiedBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp,
-              getLinkSource(roadLink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, Some(MmlNls.value), geometry = getGeometry(roadLink))
-          case _ =>
-            dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp,
-              getLinkSource(roadLink), verifiedBy = linearAsset.verifiedBy, informationSource = Some(MmlNls.value), geometry = getGeometry(roadLink))
-        }
-        linearAsset.value match {
-          case Some(DynamicValue(multiTypeProps)) =>
-            val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
-            validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
-
-          case Some(NumericValue(intValue)) =>
-            val multiTypeProps = DynamicAssetValue(Seq(DynamicProperty("width","integer",true,Seq(DynamicPropertyValue(intValue)))))
-            val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
-            validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
-
-          case _ => logger.error("Updating asset's " + linearAsset.id + " properties failed")
-        }
-      }
-      if (newLinearAssets.nonEmpty)
-        logger.info("Added assets for linkids " + toInsert.map(_.linkId))
-    }
-  }
-
-  override def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    withDynTransaction {
-      dao.floatLinearAssets(changeSet.droppedAssetIds)
-
-      if (changeSet.adjustedMValues.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-      changeSet.adjustedMValues.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
-
-//      //This changes only should be apply if the asset created_by or modified_by are different of "vvh_mtkclass_default"
-      if (changeSet.adjustedVVHChanges.nonEmpty)
-        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-      changeSet.adjustedVVHChanges.foreach { adjustment =>
-        dao.updateMValuesChangeInfo(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, LinearAssetTypes.VvhGenerated)
-      }
-
-      changeSet.adjustedSideCodes.foreach { adjustment =>
-        adjustedSideCode(adjustment)
-      }
-
-      val ids = changeSet.expiredAssetIds.toSeq
-      if (ids.nonEmpty)
-        logger.info("Expiring ids " + ids.mkString(", "))
-      ids.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
-    }
-  }
-
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.createVVHTimeStamp()): Seq[Long] = {
-    withDynTransaction {
-      val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
+      val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId), informationSource = Some(MunicipalityMaintenainer.value))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, timeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId), informationSource = Some(MunicipalityMaintenainer.value))
       }
     }
   }
@@ -219,7 +111,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   /**
     * Saves updated linear asset from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
+  override def update(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     withDynTransaction {
       updateWithoutTransaction(ids, value, username, measures = measures, sideCode = sideCode, informationSource = Some(MunicipalityMaintenainer.value))
     }
@@ -239,7 +131,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         case Some(value) => updateWithoutTransaction(Seq(id), value, username, measures = Some(Measures(existingLinkMeasures._1, existingLinkMeasures._2)), informationSource = Some(MunicipalityMaintenainer.value))
       }
 
-      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp,
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.timeStamp,
         Some(roadLink), informationSource = Some(MunicipalityMaintenainer.value)))
 
       newIdsToReturn ++ Seq(createdIdOption).flatten

@@ -2,14 +2,13 @@ package fi.liikennevirasto.digiroad2.util
 
 
 import java.util.Properties
-
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Polygon}
 import org.scalatest.{FunSuite, Matchers}
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.Point
 import com.vividsolutions.jts.io.WKTReader
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.Filter
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 
 
@@ -18,14 +17,13 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   val geomFact= new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
   val wKTParser = new WKTReader()
-  val vvhClient = new VVHClient(Digiroad2Properties.vvhRestApiEndPoint)
 
   test("Polygon to string test") {
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
-    val polyString = vvhClient.roadLinkData.stringifyPolygonGeometry(poly1)
+    val polyString = Filter.stringifyPolygonGeometry(poly1)
     polyString should be ("{rings:[[[24.2,60.5],[24.8,60.5],[24.8,59.0],[24.2,59.0]]]}")
   }
-
+  
   test("Polygon & BoundingBox intersection test") {
     val boundingBox= BoundingRectangle(Point(24,60), Point(25,61))
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)

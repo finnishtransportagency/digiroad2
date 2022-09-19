@@ -129,13 +129,13 @@ class MassTransitStopDao {
       val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
       val stopTypes = extractStopTypes(stopRows)
       val mValue = row.lrmPosition.startMeasure
-      val vvhTimeStamp = row.lrmPosition.vvhTimeStamp
+      val timeStamp = row.lrmPosition.timeStamp
       val linkSource = row.lrmPosition.linkSource
 
       id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, linkId = row.linkId, stopTypes = stopTypes,
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
-        validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, created = row.created, modified = row.modified,
+        validityPeriod = validityPeriod, floating = row.persistedFloating, timeStamp = timeStamp, created = row.created, modified = row.modified,
         propertyData = properties, linkSource = LinkGeomSource(linkSource), terminalId = row.terminalId)
     }.values.toSeq
   }
@@ -158,7 +158,7 @@ class MassTransitStopDao {
       val point = r.nextObjectOption().map(objectToPoint)
       val municipalityCode = r.nextInt()
       val persistedFloating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -177,7 +177,7 @@ class MassTransitStopDao {
       val lrmId = r.nextLong
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
-      val linkId = r.nextLong
+      val linkId = r.nextString()
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextObjectOption().map(objectToPoint)
@@ -185,7 +185,7 @@ class MassTransitStopDao {
       val terminalId = r.nextLongOption
       MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource),
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, timeStamp, linkSource),
         municipalityCode = municipalityCode, persistedFloating = persistedFloating, terminalId = terminalId)
     }
   }
@@ -475,7 +475,7 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
-  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource, adjustedTimeStampOption: Option[Long] = None) {
+  def updateLrmPosition(id: Long, mValue: Double, linkId: String, linkSource: LinkGeomSource, adjustedTimeStampOption: Option[Long] = None) {
     adjustedTimeStampOption match {
       case Some(adjustedTimeStamp) =>
         sqlu"""
@@ -506,14 +506,14 @@ class MassTransitStopDao {
     }
   }
 
-  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource) {
+  def insertLrmPosition(id: Long, mValue: Double, linkId: String, linkSource: LinkGeomSource) {
     sqlu"""
            insert into lrm_position (id, start_measure, end_measure, link_id, link_source)
            values ($id, $mValue, $mValue, $linkId, ${linkSource.value})
       """.execute
   }
 
-  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource, sideCode: SideCode) {
+  def insertLrmPosition(id: Long, mValue: Double, linkId: String, linkSource: LinkGeomSource, sideCode: SideCode) {
     sqlu"""
            insert into lrm_position (id, start_measure, end_measure, link_id, link_source, side_code)
            values ($id, $mValue, $mValue, $linkId, ${linkSource.value}, ${sideCode.value})
@@ -652,7 +652,7 @@ class MassTransitStopDao {
     sql"""select public_id, max_value_length from property where asset_type_id = $assetTypeId and max_value_length is not null""".as[(String, Int)].iterator.toMap
   }
 
-  def fetchTerminalFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, Long)] ={
+  def fetchTerminalFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String)] ={
     val query = s"""select a.$idField, lrm.link_id
           from asset a
           join asset_link al on a.id = al.asset_id
@@ -672,7 +672,7 @@ class MassTransitStopDao {
         addQueryFilter
     }
 
-    Q.queryNA[(Long, Long)](queryFilter(query)).list
+    Q.queryNA[(Long, String)](queryFilter(query)).list
   }
 
   def insertValluXmlIds(assetId: Long): Unit = {

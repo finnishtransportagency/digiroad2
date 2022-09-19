@@ -15,10 +15,10 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import scala.util.Try
 
-case class PersistedTrafficSign(id: Long, linkId: Long,
+case class PersistedTrafficSign(id: Long, linkId: String,
                                 lon: Double, lat: Double,
                                 mValue: Double, floating: Boolean,
-                                vvhTimeStamp: Long,
+                                timeStamp: Long,
                                 municipalityCode: Int,
                                 propertyData: Seq[Property],
                                 createdBy: Option[String] = None,
@@ -31,10 +31,10 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 expired: Boolean = false) extends PersistedPoint
 
 
-case class TrafficSignRow(id: Long, linkId: Long,
+case class TrafficSignRow(id: Long, linkId: String,
                           lon: Double, lat: Double,
                           mValue: Double, floating: Boolean,
-                          vvhTimeStamp: Long,
+                          timeStamp: Long,
                           municipalityCode: Int,
                           property: PropertyRow,
                           validityDirection: Int,
@@ -136,8 +136,8 @@ object PostGISTrafficSignDao {
                 where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in (#${values.mkString(",")}) """.as[Long].list
   }
 
-  def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
-    val rows = MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def fetchByLinkId(linkIds : Seq[String]): Seq[PersistedTrafficSign] = {
+    val rows = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
                p.id, p.public_id, p.property_type, p.required, ev.value,
@@ -172,7 +172,7 @@ object PostGISTrafficSignDao {
       val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
-        floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
+        floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
         linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired)
     }.values.toSeq
@@ -197,11 +197,11 @@ object PostGISTrafficSignDao {
   implicit val getTrafficSignRow = new GetResult[TrafficSignRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
@@ -237,7 +237,7 @@ object PostGISTrafficSignDao {
       }
       val expired = r.nextBoolean()
 
-      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel, expired)
+      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel, expired)
     }
   }
 
@@ -479,8 +479,8 @@ object PostGISTrafficSignDao {
     }
   }
 
-  def expire(linkIds: Set[Long], username: String): Unit = {
-    MassQuery.withIds(linkIds) { idTableName =>
+  def expire(linkIds: Set[String], username: String): Unit = {
+    MassQuery.withStringIds(linkIds) { idTableName =>
       sqlu"""
          update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where id in (
           select a.id
@@ -506,10 +506,10 @@ object PostGISTrafficSignDao {
     StaticQuery.updateNA(queryFilter(query) + " and (valid_to IS NULL OR valid_to > current_timestamp)").execute
   }
 
-  def expireAssetByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String]) : Unit = {
+  def expireAssetByLinkId(linkIds: Seq[String], signsType: Set[Int] = Set(), username: Option[String]) : Unit = {
     val trafficSignType = if(signsType.isEmpty) "" else s"and ev.value in (${signsType.mkString(",")})"
     val filterByUsername = if(username.isEmpty) "" else s"and created_by = $username"
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sqlu"""
          update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
          where id in (

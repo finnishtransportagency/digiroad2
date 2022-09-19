@@ -14,10 +14,10 @@ import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import scala.language.reflectiveCalls
 
-case class PedestrianCrossingRow(id: Long, linkId: Long,
+case class PedestrianCrossingRow(id: Long, linkId: String,
                                  lon: Double, lat: Double,
                                  mValue: Double, floating: Boolean,
-                                 vvhTimeStamp: Long,
+                                 timeStamp: Long,
                                  municipalityCode: Int,
                                  property: PropertyRow,
                                  createdBy: Option[String] = None,
@@ -27,10 +27,10 @@ case class PedestrianCrossingRow(id: Long, linkId: Long,
                                  expired: Boolean = false,
                                  linkSource: LinkGeomSource)
 
-case class PedestrianCrossing(id: Long, linkId: Long,
+case class PedestrianCrossing(id: Long, linkId: String,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
-                              vvhTimeStamp: Long,
+                              timeStamp: Long,
                               municipalityCode: Int,
                               propertyData: Seq[Property],
                               createdBy: Option[String] = None,
@@ -170,7 +170,7 @@ class PostGISPedestrianCrossingDao() {
     """
   }
 
-  def fetchPedestrianCrossingByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
+  def fetchPedestrianCrossingByLinkIds(linkIds: Seq[String], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > current_timestamp or a.valid_to is null)"
     val query =
       """
@@ -189,18 +189,18 @@ class PostGISPedestrianCrossingDao() {
           left join enumerated_value ev on (ev.property_id = p.id AND scv.enumerated_value_id = ev.id)
       """
     val queryWithFilter =
-      query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.mkString(",")})" + filterExpired
+      query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.map(id => s"'$id'").mkString(",")})" + filterExpired
     queryToPedestrian(queryWithFilter)
   }
 
   implicit val getPointAssetRow = new GetResult[PedestrianCrossingRow] {
     def apply(r: PositionedResult) : PedestrianCrossingRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
@@ -222,7 +222,7 @@ class PostGISPedestrianCrossingDao() {
       val expired = r.nextBoolean()
       val linkSource = r.nextInt()
 
-      PedestrianCrossingRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
+      PedestrianCrossingRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
     }
   }
 
@@ -252,7 +252,7 @@ class PostGISPedestrianCrossingDao() {
       val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> PedestrianCrossing(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
-        floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
+        floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
         expired = row.expired, linkSource = row.linkSource)
     }.values.toSeq

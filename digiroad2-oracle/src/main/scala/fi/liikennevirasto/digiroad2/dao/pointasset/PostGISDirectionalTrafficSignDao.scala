@@ -14,10 +14,10 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
 
-case class DirectionalTrafficSignRow(id: Long, linkId: Long,
+case class DirectionalTrafficSignRow(id: Long, linkId: String,
                                     lon: Double, lat: Double,
                                     mValue: Double, floating: Boolean,
-                                    vvhTimeStamp: Long,
+                                    timeStamp: Long,
                                     municipalityCode: Int,
                                     property: PropertyRow,
                                     validityDirection: Int,
@@ -29,10 +29,10 @@ case class DirectionalTrafficSignRow(id: Long, linkId: Long,
                                     geometry: Seq[Point] = Nil,
                                     linkSource: LinkGeomSource)
 
-case class DirectionalTrafficSign(id: Long, linkId: Long,
+case class DirectionalTrafficSign(id: Long, linkId: String,
                                   lon: Double, lat: Double,
                                   mValue: Double, floating: Boolean,
-                                  vvhTimeStamp: Long,
+                                  timeStamp: Long,
                                   municipalityCode: Int,
                                   propertyData: Seq[Property],
                                   validityDirection: Int,
@@ -92,7 +92,7 @@ object PostGISDirectionalTrafficSignDao {
       val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> DirectionalTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
-        floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
+        floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         validityDirection = row.validityDirection, bearing = row.bearing, createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
         geometry = row.geometry, linkSource = row.linkSource)
     }.values.toSeq
@@ -112,11 +112,11 @@ object PostGISDirectionalTrafficSignDao {
   implicit val getPointAsset = new GetResult[DirectionalTrafficSignRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
@@ -139,7 +139,7 @@ object PostGISDirectionalTrafficSignDao {
       val bearing = r.nextIntOption()
       val linkSource = r.nextInt()
 
-      DirectionalTrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
+      DirectionalTrafficSignRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
     }
   }
 

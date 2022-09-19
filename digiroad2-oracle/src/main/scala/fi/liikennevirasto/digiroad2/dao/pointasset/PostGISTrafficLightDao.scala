@@ -16,10 +16,10 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 
 import scala.util.Try
 
-case class TrafficLightRow(id: Long, linkId: Long,
+case class TrafficLightRow(id: Long, linkId: String,
                            lon: Double, lat: Double,
                            mValue: Double, floating: Boolean,
-                           vvhTimeStamp: Long,
+                           timeStamp: Long,
                            municipalityCode: Int,
                            property: PropertyRow,
                            createdBy: Option[String] = None,
@@ -28,10 +28,10 @@ case class TrafficLightRow(id: Long, linkId: Long,
                            modifiedAt: Option[DateTime] = None,
                            linkSource: LinkGeomSource)
 
-case class TrafficLight(id: Long, linkId: Long,
+case class TrafficLight(id: Long, linkId: String,
                         lon: Double, lat: Double,
                         mValue: Double, floating: Boolean,
-                        vvhTimeStamp: Long,
+                        timeStamp: Long,
                         municipalityCode: Int,
                         propertyData: Seq[Property],
                         createdBy: Option[String] = None,
@@ -101,7 +101,7 @@ object PostGISTrafficLightDao {
       val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> TrafficLight(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
-        floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
+        floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, linkSource = row.linkSource)
     }.values.toSeq
   }
@@ -130,11 +130,11 @@ object PostGISTrafficLightDao {
   implicit val getPointAsset = new GetResult[TrafficLightRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
@@ -166,7 +166,7 @@ object PostGISTrafficLightDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
 
-      TrafficLightRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
+      TrafficLightRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
     }
   }
 

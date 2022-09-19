@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 
 import java.nio.charset.StandardCharsets
 import java.util.{Base64, NoSuchElementException}
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -11,16 +10,16 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
+import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
   def MassQueryThreshold = 500
-  case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
+  case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -33,7 +32,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   implicit val getSpeedLimit = new GetResult[SpeedLimitRow] {
     def apply(r: PositionedResult) : SpeedLimitRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val value = r.nextIntOption()
       val startMeasure = r.nextDouble()
@@ -43,26 +42,26 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val expired = r.nextBoolean
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
       val publicId = r.nextString()
 
-      SpeedLimitRow(id, linkId, SideCode(sideCode), value, startMeasure, endMeasure, modifiedBy, modifiedDateTime, createdBy, createdDateTime, vvhTimeStamp, geomModifiedDate, expired, linkSource = LinkGeomSource(linkSource), publicId)
+      SpeedLimitRow(id, linkId, SideCode(sideCode), value, startMeasure, endMeasure, modifiedBy, modifiedDateTime, createdBy, createdDateTime, timeStamp, geomModifiedDate, expired, linkSource = LinkGeomSource(linkSource), publicId)
     }
   }
 
   implicit val getUnknown = new GetResult[UnknownLimit] {
     def apply(r: PositionedResult) = {
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val municipality = r.nextString()
       val administrativeClass = AdministrativeClass(r.nextInt()).toString
       UnknownLimit (linkId, municipality, administrativeClass)
     }
   }
 
-  private def fetchByLinkIds(linkIds: Seq[Long], queryFilter: String) : Seq[PersistedSpeedLimit] = {
-    val speedLimitRows = MassQuery.withIds(linkIds.toSet) { idTableName =>
+  private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedSpeedLimit] = {
+    val speedLimitRows = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,
         a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.created_by, a.created_date,
@@ -99,26 +98,26 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
       PersistedSpeedLimit(asset.id, asset.linkId, asset.sideCode, speedLimitValue,
         asset.startMeasure, asset.endMeasure, asset.modifiedBy, asset.modifiedDate, asset.createdBy,
-        asset.createdDate, asset.vvhTimeStamp, asset.geomModifiedDate, asset.expired, asset.linkSource)
+        asset.createdDate, asset.timeStamp, asset.geomModifiedDate, asset.expired, asset.linkSource)
     }.toSeq
   }
 
-  def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
+  def fetchSpeedLimitsByLinkIds(linkIds: Seq[String]): Seq[SpeedLimit] = {
 
     val queryFilter = "AND (valid_to IS NULL OR valid_to > current_timestamp)"
     fetchByLinkIds(linkIds, queryFilter).map {persisted =>
-        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value, Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.vvhTimeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
+        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value, Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.timeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
     }
   }
 
-  private def fetchSpeedLimitsByLinkId(linkId: Long): Seq[SpeedLimit] = fetchSpeedLimitsByLinkIds(Seq(linkId))
+  private def fetchSpeedLimitsByLinkId(linkId: String): Seq[SpeedLimit] = fetchSpeedLimitsByLinkIds(Seq(linkId))
 
-  private def fetchHistorySpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
+  private def fetchHistorySpeedLimitsByLinkIds(linkIds: Seq[String]): Seq[SpeedLimit] = {
     val queryFilter = "AND (valid_to IS NOT NULL AND valid_to < current_timestamp)"
 
     fetchByLinkIds(linkIds, queryFilter).map {
       case (persisted) =>
-        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value, Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.vvhTimeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
+        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value, Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.timeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
     }
   }
 
@@ -144,11 +143,11 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
 
     val speedLimits = groupSpeedLimitsResult(speedLimitRows)
-    val roadLinksWithComplementaryByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(speedLimits.map(_.linkId).toSet)
+    val roadLinksWithComplementaryByLinkId = roadLinkService.fetchRoadlinksAndComplementaries(speedLimits.map(_.linkId).toSet)
 
     speedLimits.map {speedLimit =>
-      val vvhRoadLink = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, vvhRoadLink.trafficDirection, speedLimit.value, GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.vvhTimeStamp, speedLimit.geomModifiedDate, linkSource = vvhRoadLink.linkSource)
+      val roadLinkFetched = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
+      SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, roadLinkFetched.trafficDirection, speedLimit.value, GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.timeStamp, speedLimit.geomModifiedDate, linkSource = roadLinkFetched.linkSource)
     }
   }
 
@@ -173,7 +172,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Returns speed limits that match a set of link ids.
     */
-  def getCurrentSpeedLimitsByLinkIds(linkIds: Option[Set[Long]]): Seq[SpeedLimit] = {
+  def getCurrentSpeedLimitsByLinkIds(linkIds: Option[Set[String]]): Seq[SpeedLimit] = {
 
     linkIds.map { linkId =>
       linkId.isEmpty match {
@@ -207,7 +206,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * Returns unknown speed limits by municipality. Used by SpeedLimitService.getUnknown.
     */
   def getUnknownSpeedLimits(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
-    def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
+    def toUnknownLimit(x: (String, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val unknownSpeedLimitQuery =
       """
       select s.link_id, m.name_fi, s.administrative_class
@@ -250,21 +249,21 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
 
-  def getMunicipalitiesWithUnknown(municipality: Int): Seq[(Long, Int)] = {
+  def getMunicipalitiesWithUnknown(municipality: Int): Seq[(String, Int)] = {
 
     val municipalitiesQuery =
       s"""
       select LINK_ID, ADMINISTRATIVE_CLASS from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
       """
 
-    Q.queryNA[(Long, Int)](municipalitiesQuery).list
+    Q.queryNA[(String, Int)](municipalitiesQuery).list
   }
 
 
     /**
     * Returns data for municipality validation. Used by PostGISSpeedLimitDao.splitSpeedLimit.
     */
-  def getLinksWithLengthFromVVH(id: Long): Seq[(Long, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
+  def getLinksWithLength(id: Long): Seq[(String, Double, Seq[Point], Int, LinkGeomSource, AdministrativeClass)] = {
     val assetTypeId = SpeedLimitAsset.typeId
     val links = sql"""
       select pos.link_id, pos.start_measure, pos.end_measure
@@ -272,14 +271,14 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         where a.asset_type_id = $assetTypeId and a.id = $id
-        """.as[(Long, Double, Double)].list
+        """.as[(String, Double, Double)].list
 
-    val roadLinksByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(links.map(_._1).toSet)
+    val roadLinksByLinkId = roadLinkService.fetchRoadlinksAndComplementaries(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
-      val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
-      val truncatedGeometry = GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, startMeasure, endMeasure)
-      (linkId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode, vvhRoadLink.linkSource, vvhRoadLink.administrativeClass)
+      val roadLinkFetched = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
+      val truncatedGeometry = GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, startMeasure, endMeasure)
+      (linkId, endMeasure - startMeasure, truncatedGeometry, roadLinkFetched.municipalityCode, roadLinkFetched.linkSource, roadLinkFetched.administrativeClass)
     }
   }
 
@@ -298,7 +297,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String]): Seq[PersistedSpeedLimit] = {
-    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'generated_in_update')"
     val recordLimit = token match {
       case Some(tk) =>
         val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
@@ -363,10 +362,10 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       """)
     try {
       limits.foreach { limit =>
-        statement.setLong(1, limit.linkId)
+        statement.setString(1, limit.linkId)
         statement.setInt(2, limit.municipalityCode)
         statement.setInt(3, limit.administrativeClass.value)
-        statement.setLong(4, limit.linkId)
+        statement.setString(4, limit.linkId)
         statement.addBatch()
       }
       statement.executeBatch()
@@ -379,26 +378,26 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * Creates new speed limit with municipality validation. Returns id of new speed limit.
     * Used by SpeedLimitService.create.
     */
-  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue,
-                       vvhTimeStamp: Long, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
-    val roadlink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId)
-    municipalityValidation(roadlink.get.municipalityCode, roadlink.get.administrativeClass)
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadlink.get.linkSource)
+  def createSpeedLimit(creator: String, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue,
+                       timeStamp: Long, municipalityValidation: (Int, AdministrativeClass) => Unit): Option[Long] = {
+    val roadLink = roadLinkService.fetchRoadlinkAndComplementary(linkId)
+    municipalityValidation(roadLink.get.municipalityCode, roadLink.get.administrativeClass)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadLink.get.linkSource)
   }
 
   /**
     * Creates new speed limit. Returns id of new speed limit. SpeedLimitService.persistProjectedLimit and SpeedLimitService.separate.
     */
-  def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue, vvhTimeStamp: Option[Long], createdDate: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, linkSource: LinkGeomSource): Option[Long]  =
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp, createdDate, modifiedBy, modifiedAt, linkSource)
+  def createSpeedLimit(creator: String, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue, timeStamp: Option[Long], createdDate: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, linkSource: LinkGeomSource): Option[Long]  =
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, timeStamp, createdDate, modifiedBy, modifiedAt, linkSource)
 
-  private def createSpeedLimitWithoutDuplicates(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue, vvhTimeStamp: Option[Long], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource): Option[Long] = {
+  private def createSpeedLimitWithoutDuplicates(creator: String, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: SpeedLimitValue, timeStamp: Option[Long], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource): Option[Long] = {
     val existingLrmPositions = fetchSpeedLimitsByLinkId(linkId).filter(sl => sideCode == SideCode.BothDirections || sl.sideCode == sideCode)
 
     val remainders = existingLrmPositions.map {speedLimit =>
       (speedLimit.startMeasure, speedLimit.endMeasure) }.foldLeft(Seq((linkMeasures.startMeasure, linkMeasures.endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01 }
     if (remainders.length == 1) {
-      Some(forceCreateSpeedLimit(creator, SpeedLimitAsset.typeId, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertProperties(id, value), Some(vvhTimeStamp.getOrElse(vvhClient.createVVHTimeStamp())), createdDate, modifiedBy, modifiedAt, linkSource))
+      Some(forceCreateSpeedLimit(creator, SpeedLimitAsset.typeId, linkId, linkMeasures, sideCode, Some(value), (id, value) => insertProperties(id, value), Some(timeStamp.getOrElse(LinearAssetUtils.createTimeStamp())), createdDate, modifiedBy, modifiedAt, linkSource))
     } else {
       None
     }
@@ -429,7 +428,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * This method doesn't trigger "speedLimits:purgeUnknownLimits" actor, to remove the created speed limits from the unknown list
     */
-  def forceCreateSpeedLimit(creator: String, typeId: Int, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Option[SpeedLimitValue], valueInsertion: (Long, SpeedLimitValue) => Unit, vvhTimeStamp: Option[Long], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource): Long = {
+  def forceCreateSpeedLimit(creator: String, typeId: Int, linkId: String, linkMeasures: Measures, sideCode: SideCode, value: Option[SpeedLimitValue], valueInsertion: (Long, SpeedLimitValue) => Unit, timeStamp: Option[Long], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedAt: Option[DateTime], linkSource: LinkGeomSource): Long = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val sideCodeValue = sideCode.value
@@ -455,7 +454,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          values ($assetId, $typeId, '$creator', $creationDate, $latestModifiedBy, $modifiedDate);
 
          insert into lrm_position(id, start_measure, end_measure, link_id, side_code, adjusted_timestamp, modified_date, link_source)
-         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, $linkId, $sideCodeValue, ${vvhTimeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value});
+         values ($lrmPositionId, ${linkMeasures.startMeasure}, ${linkMeasures.endMeasure}, '$linkId', $sideCodeValue, ${timeStamp.getOrElse(0)}, current_timestamp, ${linkSource.value});
 
          insert into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId);
@@ -499,14 +498,14 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
-    * Updates m-values and vvh time stamp in db. Used by PostGISSpeedLimitDao.splitSpeedLimit.
+    * Updates m-values and time stamp in db. Used by PostGISSpeedLimitDao.splitSpeedLimit.
     */
-  def updateMValues(id: Long, linkMeasures: (Double, Double), vvhTimeStamp: Option[Long] = None): Unit = {
+  def updateMValues(id: Long, linkMeasures: (Double, Double), timeStamp: Option[Long] = None): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
 
-    val adjusted_timestamp =  vvhTimeStamp match {
+    val adjusted_timestamp =  timeStamp match {
       case Some(timeStamp) => timeStamp
-      case _ => vvhClient.createVVHTimeStamp()
+      case _ => LinearAssetUtils.createTimeStamp()
     }
 
     sqlu"""
@@ -558,7 +557,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
     */
-  def purgeFromUnknownSpeedLimits(linkId: Long, roadLinkLength: Double): Unit = {
+  def purgeFromUnknownSpeedLimits(linkId: String, roadLinkLength: Double): Unit = {
     val speedLimits = fetchSpeedLimitsByLinkId(linkId)
 
     def calculateRemainders(sideCode: SideCode): Seq[(Double, Double)] = {
@@ -577,8 +576,8 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
     */
-  def deleteUnknownSpeedLimits(linkIds: Seq[Long]): Unit = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
+  def deleteUnknownSpeedLimits(linkIds: Seq[String]): Unit = {
+    MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sqlu"""delete from unknown_speed_limit where link_id in (select id from #$idTableName)""".execute
     }
   }
@@ -586,14 +585,14 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Update administrative_class and municipality_code of links in the unknown speed limits list. Used by removeUnnecessaryUnknownSpeedLimits batch.
     */
-  def updateUnknownSpeedLimitAdminClassAndMunicipality(linkId: Long, administrativeClass: AdministrativeClass, municipalityCode: Int): Unit = {
+  def updateUnknownSpeedLimitAdminClassAndMunicipality(linkId: String, administrativeClass: AdministrativeClass, municipalityCode: Int): Unit = {
     sqlu"""update unknown_speed_limit
           set administrative_class = ${administrativeClass.value}, municipality_code = $municipalityCode
           where link_id = $linkId""".execute
   }
 
-  def hideUnknownSpeedLimits(linkIds: Set[Long]): Set[Long] = {
-    sqlu"""update unknown_speed_limit set unnecessary = 1 where link_id in (#${linkIds.mkString(",")})""".execute
+  def hideUnknownSpeedLimits(linkIds: Set[String]): Set[String] = {
+    sqlu"""update unknown_speed_limit set unnecessary = 1 where link_id in (#${linkIds.map(id => s"'$id'").mkString(",")})""".execute
     linkIds
   }
 
@@ -625,7 +624,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val roadLink = topology.find(_.linkId == segment.linkId).get
     val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMeasure, segment.endMeasure)
     SpeedLimit(segment.id, segment.linkId, segment.sideCode, roadLink.trafficDirection, segment.value, geometry, segment.startMeasure,
-      segment.endMeasure, segment.modifiedBy, segment.modifiedDateTime, segment.createdBy, segment.createdDateTime, segment.vvhTimeStamp,
+      segment.endMeasure, segment.modifiedBy, segment.modifiedDateTime, segment.createdBy, segment.createdDateTime, segment.timeStamp,
       segment.geomModifiedDate, linkSource = roadLink.linkSource)
   }
 
@@ -643,7 +642,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Updates from Change Info in db.
     */
-  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), vvhTimestamp: Long, username: String): Unit = {
+  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
     println("asset_id -> " + id)
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
@@ -652,7 +651,7 @@ class PostGISSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         start_measure = $startMeasure,
         end_measure = $endMeasure,
         modified_date = current_timestamp,
-        adjusted_timestamp = $vvhTimestamp
+        adjusted_timestamp = $timeStamp
       where id = (
         select lrm.id
           from asset a

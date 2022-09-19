@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
@@ -12,19 +11,18 @@ import org.joda.time.DateTime
 
 class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetService(roadLinkServiceImpl, eventBusImpl){
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: PostGISAssetDao = new PostGISAssetDao
 
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.createVVHTimeStamp()): Seq[Long] = {
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, timeStamp: Long = createTimeStamp()): Seq[Long] = {
     withDynTransaction {
-      val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
+      val roadlinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(newLinearAssets.map(_.linkId).toSet, false)
       newLinearAssets.flatMap{ newAsset =>
         if (newAsset.value.toJson == 1) {
-          Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlinks.find(_.linkId == newAsset.linkId)))
+          Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, timeStamp, roadlinks.find(_.linkId == newAsset.linkId)))
         } else {
           None
         }
@@ -32,7 +30,7 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     }
   }
 
-  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
+  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -49,14 +47,14 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
             Seq(Measures(oldLinearAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldLinearAsset.endMeasure)).flatMap {
               m =>
                 if (m.endMeasure - m.startMeasure > 0.01)
-                  Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue(1), sideCode.getOrElse(oldLinearAsset.sideCode), m, username, vvhTimeStamp.getOrElse(vvhClient.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), verifiedBy = oldLinearAsset.verifiedBy, informationSource = None))
+                  Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, NumericValue(1), sideCode.getOrElse(oldLinearAsset.sideCode), m, username, timeStamp.getOrElse(createTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), verifiedBy = oldLinearAsset.verifiedBy, informationSource = None))
                 else
                   None
             }
           }
           else  {
             Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId, value, sideCode.getOrElse(oldLinearAsset.sideCode),
-             measure, username, vvhTimeStamp.getOrElse(vvhClient.createVVHTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = None))
+             measure, username, timeStamp.getOrElse(createTimeStamp()), Some(roadLink), true, oldLinearAsset.createdBy, Some(oldLinearAsset.createdDateTime.getOrElse(DateTime.now())), informationSource = None))
           }
         case _ => Some(id)
       }
@@ -67,9 +65,9 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     updatedAssets
   }
 
-  override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
+  override def update(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
+      updateWithoutTransaction(ids, value, username, timeStamp, sideCode, measures)
     }
   }
 }
