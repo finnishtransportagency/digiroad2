@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
@@ -8,8 +7,6 @@ import org.scalatest.FunSuite
 import org.scalatest.Matchers.{be, convertToAnyShouldWrapper}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-
-import java.util.Date
 
 class RoadLinkDAOSpec extends FunSuite {
   
