@@ -4,7 +4,8 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneRoadAddressInfo, NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -14,7 +15,7 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
-case class RoadLinkWithAddresses(linkId: Long, link: VVHRoadlink, addresses: Set[RoadAddressForLink])
+case class RoadLinkWithAddresses(linkId: String, link: RoadLinkFetched, addresses: Set[RoadAddressForLink])
 
 case class LaneUtils(){
   // DROTH-3057: Remove after lanes csv import is disabled
@@ -28,8 +29,8 @@ object LaneUtils {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus, roadAddressService)
-  lazy val roadLinkService: RoadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
-  lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
+  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
 
@@ -49,7 +50,7 @@ object LaneUtils {
 
 
       val allLanesToCreate = linksWithAddresses.flatMap { link =>
-        val vvhTimeStamp = vvhClient.createVVHTimeStamp()
+        val timeStamp = LinearAssetUtils.createTimeStamp()
 
         lanesToInsert.flatMap { lane =>
           val laneCode = laneService.getLaneCode(lane).toInt
@@ -64,7 +65,7 @@ object LaneUtils {
             case Some(endPoints) =>
               Some(PersistedLane(0, link.linkId, finalSideCode.value, laneCodeOneDigit, link.link.municipalityCode,
                 endPoints.start, endPoints.end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
-                vvhTimeStamp, None, lane.properties))
+                timeStamp, None, lane.properties))
 
             case _ => None
             }
@@ -100,7 +101,7 @@ object LaneUtils {
     val groupedAddresses = roadAddressService.groupRoadAddress(roadAddresses.toSeq)
 
     // Get all updated information from VVH
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(_.linkId))
+    val roadLinks = roadLinkService.fetchRoadlinksByIds(roadAddresses.map(_.linkId))
 
     val finalRoads = groupedAddresses.filter { elem =>  // Remove addresses which roadPart is not between our start and end
       val roadPartNumber = elem.roadPartNumber
@@ -211,21 +212,21 @@ object LaneUtils {
     Math.round(measure * exponentOfTen).toDouble / exponentOfTen
   }
 
-  def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {
+  def getMappedChanges(changes: Seq[ChangeInfo]): Map[String, Seq[ChangeInfo]] = {
     (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
       .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
   }
 
-  def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
+  def deletedRoadLinkIds(changes: Map[String, Seq[ChangeInfo]], currentLinkIds: Set[String]): Seq[String] = {
     changes.filter(c =>
       !c._2.exists(ci => ci.newId.contains(c._1)) &&
         !currentLinkIds.contains(c._1)
     ).keys.toSeq
   }
 
-  def newChangeInfoDetected(lane : PersistedLane, changes: Map[Long, Seq[ChangeInfo]]): Boolean = {
+  def newChangeInfoDetected(lane : PersistedLane, changes: Map[String, Seq[ChangeInfo]]): Boolean = {
     changes.getOrElse(lane.linkId, Seq()).exists(c =>
-      c.vvhTimeStamp > lane.vvhTimeStamp && (c.oldId.getOrElse(0) == lane.linkId || c.newId.getOrElse(0) == lane.linkId)
+      c.timeStamp > lane.timeStamp && (c.oldId.getOrElse(0) == lane.linkId || c.newId.getOrElse(0) == lane.linkId)
     )
   }
 

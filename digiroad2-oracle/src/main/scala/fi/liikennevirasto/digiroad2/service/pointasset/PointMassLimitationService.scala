@@ -12,10 +12,10 @@ case class MassLimitationPointAsset(lon: Double, lat: Double, assets : Seq[Persi
 
 case class WeightGroupLimitation(id: Long,
                                 typeId: Int,
-                                linkId: Long,
+                                linkId: String,
                                 lon: Double, lat: Double,
                                 mValue: Double, floating: Boolean,
-                                vvhTimeStamp: Long,
+                                timeStamp: Long,
                                 municipalityCode: Int,
                                 createdBy: Option[String] = None,
                                 createdAt: Option[DateTime] = None,

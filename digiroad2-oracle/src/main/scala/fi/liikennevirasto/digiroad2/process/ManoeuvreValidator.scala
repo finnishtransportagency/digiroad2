@@ -18,7 +18,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
   override def assetTypeInfo: AssetTypeInfo = Manoeuvres
 
-  lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao(vvhClient)
+  lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao()
 
   val allowedTrafficSign: Set[TrafficSignType] = Set(NoLeftTurn, NoRightTurn, NoUTurn)
 
@@ -33,7 +33,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
   override def verifyAsset(assets: Seq[AssetType], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val manoeuvres = assets.asInstanceOf[Seq[Manoeuvre]]
 
-    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(manoeuvres.flatMap(manoeuvre => manoeuvre.elements.map(_.sourceLinkId)).toSet, newTransaction = false)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(manoeuvres.flatMap(manoeuvre => manoeuvre.elements.map(_.sourceLinkId)).toSet, newTransaction = false)
 
     manoeuvres.flatMap {
       manoeuvre =>
@@ -146,7 +146,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
         val sourceLinkId = manoeuvre.find(_.elementType == ElementTypes.FirstElement).get.linkId
         val nextLinkId = manoeuvre.find(_.elementType == ElementTypes.FirstElement).get.destLinkId
 
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(sourceLinkId, nextLinkId), newTransaction = false)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(sourceLinkId, nextLinkId), newTransaction = false)
 
 
         if(roadLinks.exists(road => road.linkId == sourceLinkId && road.administrativeClass != Private)){

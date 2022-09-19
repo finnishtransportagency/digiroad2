@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.process
 import java.sql.SQLIntegrityConstraintViolationException
 import java.util.{NoSuchElementException, Properties}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -18,18 +18,18 @@ import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 
-case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
-case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
+case class Inaccurate(assetId: Option[Long], linkId: Option[String], municipalityCode: Int,  administrativeClass: AdministrativeClass)
+case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[String] = Set())
 
 trait AssetServiceValidator {
 
   val eventbus = new DummyEventBus
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val roadLinkService = new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
   lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
-  lazy val vvhClient: VVHClient = { new VVHClient(Digiroad2Properties.vvhRestApiEndPoint) }
+  lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 
@@ -73,7 +73,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     val topLeft = Point(point.x - radiusDistance, point.y - radiusDistance)
     val bottomRight = Point(point.x + radiusDistance, point.y + radiusDistance)
 
-    roadLinkService.getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight), Set(),  newTransaction)
+    roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(BoundingRectangle(topLeft, bottomRight), Set(),  newTransaction)
   }
 
   def getAdjacents(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[(RoadLink, (Point, Point))] = {
@@ -126,7 +126,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     }.toSet
   }
 
-  protected def insertInaccurate(insertInaccurate: (Long, Int, Int, AdministrativeClass) => Unit, id: Long, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
+  protected def insertInaccurate[T](insertInaccurate: (T, Int, Int, AdministrativeClass) => Unit, id: T, assetType: Int, municipalityCode: Int, adminClass: AdministrativeClass): Unit = {
     try {
       insertInaccurate(id, assetType, municipalityCode, adminClass)
     } catch {
@@ -188,11 +188,11 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
           }
         } catch {
           case noSuchElement: NoSuchElementException =>
-            logger.error(s"Municipality ${municipality} rollback caused by: ${noSuchElement.getMessage}")
+            logger.error(s"Municipality $municipality rollback caused by: ${noSuchElement.getMessage}")
           case runTime: RuntimeException =>
-            logger.error(s"Municipality ${municipality} rollback caused by: ${runTime.getMessage}")
-          case other =>
-            logger.error(s"Municipality ${municipality} rollback caused by: ${other.getMessage}")
+            logger.error(s"Municipality $municipality rollback caused by: ${runTime.getMessage}")
+          case other: Throwable =>
+            logger.error(s"Municipality $municipality rollback caused by: ${other.getMessage}")
         }
     }
   }

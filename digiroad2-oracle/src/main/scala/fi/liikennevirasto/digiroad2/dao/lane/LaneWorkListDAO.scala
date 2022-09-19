@@ -9,14 +9,14 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import java.sql.{Date, Timestamp}
 import java.time.LocalDateTime
 
-case class LaneWorkListItem(id: Long, linkId: Long, propertyName: String, oldValue: Int, newValue: Int,  createdDate: DateTime, createdBy: String)
+case class LaneWorkListItem(id: Long, linkId: String, propertyName: String, oldValue: Int, newValue: Int,  createdDate: DateTime, createdBy: String)
 
 class LaneWorkListDAO {
 
   implicit val getItemResult: GetResult[LaneWorkListItem] = new GetResult[LaneWorkListItem] {
     def apply(result: PositionedResult): LaneWorkListItem = {
       val id = result.nextLong()
-      val linkId = result.nextLong()
+      val linkId = result.nextString()
       val propertyName = result.nextString()
       val oldValue: Int = result.nextInt()
       val newValue: Int = result.nextInt()

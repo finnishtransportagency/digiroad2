@@ -213,7 +213,6 @@
             staticField('Kuntanumero', 'municipalityCode') +
             staticField('Tiennimi (Suomi)', 'roadNameFi') +
             staticField('Tiennimi (Ruotsi)', 'roadNameSe') +
-            staticField('Tiennimi (Saame)', 'roadNameSm') +
             staticField('Tienumero', 'roadNumber') +
             staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Ajorata', 'track') +

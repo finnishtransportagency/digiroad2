@@ -12,8 +12,8 @@ object TrafficSignTestData {
           insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE) values (600055,240,'dr2_test_data',235);
       """.execute
       sqlu"""
-          insert into LRM_POSITION (ID,MML_ID,link_id,START_MEASURE,END_MEASURE,SIDE_CODE) values (70000015, 388553074, 1611317, 103, 103, 2);
-          insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID,link_id,SIDE_CODE) values (70000016,69,69,388553080,1611341, 3);
+          insert into LRM_POSITION (ID,MML_ID,VVH_ID,link_id,START_MEASURE,END_MEASURE,SIDE_CODE) values (70000015, 388553074, 1611317, '52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1', 103, 103, 2);
+          insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID,VVH_ID,link_id,SIDE_CODE) values (70000016,69,69,388553080,1611341, '44dc1e56-79fb-452b-b35c-7ccb2b17b8aa:1', 3);
           insert into LRM_POSITION (ID,START_MEASURE,END_MEASURE,MML_ID,SIDE_CODE) values (70000017,100,100,12345, 3);
       """.execute
       sqlu"""
