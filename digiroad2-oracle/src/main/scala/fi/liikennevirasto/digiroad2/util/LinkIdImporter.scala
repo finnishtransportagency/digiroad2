@@ -55,7 +55,7 @@ object LinkIdImporter {
       "administrative_class", "traffic_direction", "inaccurate_asset",
       "functional_class", "incomplete_link", "link_type",
       "unknown_speed_limit", "manoeuvre_element_history",
-      "manoeuvre_element"
+      "manoeuvre_element", "lane_work_list"
     )
     
     val complementaryLinks = withDynSession(sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list)

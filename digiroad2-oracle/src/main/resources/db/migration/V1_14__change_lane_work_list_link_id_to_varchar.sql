@@ -1,1 +1,0 @@
-ALTER TABLE lane_work_list ALTER COLUMN link_id TYPE VARCHAR(40);
