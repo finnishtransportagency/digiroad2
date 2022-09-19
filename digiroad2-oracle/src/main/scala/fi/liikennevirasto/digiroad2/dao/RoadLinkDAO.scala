@@ -143,7 +143,6 @@ class RoadLinkDAO {
       val objectId = r.nextLong()
       val startNode = r.nextLong()
       val endNode = r.nextLong()
-      val sourceInfo = r.nextInt()
       val length  = r.nextDouble()
 
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
@@ -188,7 +187,7 @@ class RoadLinkDAO {
 
       VVHRoadlink(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
         extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
-        ConstructionType.apply(constructionType), LinkGeomSource.apply(sourceInfo), length)
+        ConstructionType.apply(constructionType), LinkGeomSource.NormalLinkInterface, length)
     }
   }
 
@@ -334,7 +333,7 @@ class RoadLinkDAO {
      sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadname_sm, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right, validfrom,
-                 geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, sourceinfo, geometrylength
+                 geometry_edited_date, surfacetype, subtype, objectid, startnode, endnode, geometrylength
           from kgv_roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},

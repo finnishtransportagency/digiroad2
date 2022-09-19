@@ -114,8 +114,10 @@ Resources:
               Value: 'svc_vvh_digiroad'
             - Name: vvhRoadlink.frozen
               Value: 'false'
+            - Name: kgv.endpoint
+              Value: 'https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/'
             - Name: viiteRestApiEndPoint
-              Value: 'https://api.testivaylapilvi.fi/viite/api/viite/'
+              Value: 'https://devapi.testivaylapilvi.fi/viite/api/viite/'
             - Name: authenticationTestMode
               Value: 'false'
             - Name: vkmUrl
@@ -170,7 +172,7 @@ Resources:
             - Name: bonecp.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/bonecp.password'
             - Name: viite.apikey
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/qa/apikey/viite'
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/apikey/viite'
             - Name: vkm.apikey
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/apikey/viitekehysmuunnin'
             - Name: rasterService.apikey
@@ -181,6 +183,8 @@ Resources:
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/ses_password'
             - Name: vvhRest.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/vvhRest.password'
+            - Name: kgv.apikey
+              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/apikey/kgv.apikey'
             - Name: oag.password
               ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/authentication.oag.basic.password'
             - Name: googlemapapi.client_id

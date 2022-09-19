@@ -66,8 +66,12 @@
         "value": "false"
       },
       {
+        "name": "kgv.endpoint",
+        "value": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+      },
+      {
         "name": "viiteRestApiEndPoint",
-        "value": "https://api.testivaylapilvi.fi/viite/api/viite/"
+        "value": "https://devapi.testivaylapilvi.fi/viite/api/viite/"
       },
       {
         "name": "vkmUrl",
@@ -142,12 +146,16 @@
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/vvhRest.password"
       },
       {
+        "name": "kgv.apikey",
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/kgv.apikey"
+      },
+      {
         "name": "oag.password",
         "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/authentication.oag.basic.password"
       },
       {
         "name": "viite.apikey",
-        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/qa/apikey/viite"
+        "valueFrom": "arn:aws:ssm:eu-west-1:475079312496:parameter/dev/apikey/viite"
       },
       {
         "name": "vkm.apikey",
