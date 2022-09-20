@@ -6,7 +6,7 @@
 
         this.formEditModeAccess = function(selectedAsset) {
             var isValidMaintainer = (((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.municipalityCode)));
-            var assetNotInConstructionType = ["1","3"].indexOf(selectedAsset.constructionType.toString()) < 0;
+            var assetNotInConstructionType = ["2","1"].indexOf(selectedAsset.constructionType.toString()) < 0;
 
             return ((!me.isState(selectedAsset) && isValidMaintainer) || me.isOperator())  && assetNotInConstructionType;
         };
