@@ -136,13 +136,13 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers{
       expiredAssets.head.linkId should be(oldLinkId)
       validAssets.size should be(3)
       validAssets.map(_.linkId).sorted should be(List(newLinkId1, newLinkId2, newLinkId3).sorted)
-      val sortedValidAssets = validAssets.sortBy(_.startMeasure)
+      val sortedValidAssets = validAssets.sortBy(asset => (asset.startMeasure, asset.endMeasure))
       sortedValidAssets.head.startMeasure should be(0)
-      sortedValidAssets.head.endMeasure should be(10)
+      sortedValidAssets.head.endMeasure should be(5)
       sortedValidAssets(1).startMeasure should be(0)
       sortedValidAssets(1).endMeasure should be(10)
       sortedValidAssets.last.startMeasure should be(0)
-      sortedValidAssets.last.endMeasure should be(5)
+      sortedValidAssets.last.endMeasure should be(10)
     }
   }
 
