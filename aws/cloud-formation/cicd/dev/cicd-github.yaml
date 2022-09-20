@@ -228,7 +228,7 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: "aws/buildspecs/development.yaml"
       Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_LARGE
         Image: aws/codebuild/standard:5.0 # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
         Type: LINUX_CONTAINER
         PrivilegedMode: true
