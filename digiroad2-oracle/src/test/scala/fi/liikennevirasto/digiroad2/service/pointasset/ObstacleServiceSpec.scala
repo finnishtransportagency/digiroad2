@@ -34,14 +34,14 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   val linkId = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
   val randomLinkId = LinkIdGenerator.generateRandom()
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(linkId)).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId)).thenReturn(Seq(
     RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(randomLinkId)).thenReturn(Seq(
+  when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId)).thenReturn(Seq(
     RoadLinkFetched(randomLinkId, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
@@ -55,7 +55,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
@@ -68,7 +68,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(235)).thenReturn((Seq(
       RoadLinkFetched(LinkIdGenerator.generateRandom(), 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
@@ -83,7 +83,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire obstacle") {
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksAndChanges(any[Int])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
@@ -177,8 +177,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
     val roadLink = RoadLink(linkId, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
 
-    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(roadLink))
-    when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(linkId)).thenReturn(Seq(roadLink).headOption)
+    when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(roadLink))
+    when(mockRoadLinkService.getRoadLinkByLinkId(linkId)).thenReturn(Seq(roadLink).headOption)
 
     val service = new ObstacleService(mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
@@ -358,7 +358,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Get obstacles changes") {
     runWithRollback {
       val linkId = LinkIdGenerator.generateRandom()
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
@@ -390,7 +390,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
       val assets = service.getPersistedAssetsByIds(Set(11))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
@@ -420,7 +420,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[String]], any[Boolean])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq())
 
       val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(0)

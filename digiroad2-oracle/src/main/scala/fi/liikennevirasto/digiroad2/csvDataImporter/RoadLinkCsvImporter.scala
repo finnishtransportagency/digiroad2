@@ -135,7 +135,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   def validateAdministrativeClass(optionalAdminClassValue: Option[Any], dataLocation: String): List[String] = {
     optionalAdminClassValue match {
       case Some(adminClassValue) if administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue.toString.toInt)) =>
-        List("AdminClass value State found on  " ++ dataLocation)
+        List("AdminClass value State found on " ++ dataLocation)
       case _ => List()
     }
   }
@@ -163,9 +163,9 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    def getCompletaryVVHInfo(linkId: String) = {
+    def getComplementaryInfo(linkId: String) = {
       roadLinkService.fetchComplimentaryByLinkId(linkId) match {
-        case Some(vvhRoadLink) => (vvhRoadLink.attributes.get("OBJECTID"), vvhRoadLink.administrativeClass.value)
+        case Some(fetchedRoadLink) => (fetchedRoadLink.attributes.get("OBJECTID"), fetchedRoadLink.administrativeClass.value)
         case _ => None
       }
     }
@@ -186,19 +186,19 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
             case parameters => MalformedRow(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedRows
           })
       } else {
-        val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("linkin id")) match {
+        val (objectId, oldAdminClassValue) = getComplementaryInfo(row("linkin id")) match {
           case None => (None, None)
           case (Some(objId), adminClass) => (objId, adminClass)
         }
 
         val unauthorizedAdminClass = (oldAdminClassValue match {
-          case None => List("AdminClass value Unknown found on VVH")
-          case adminClassValue => validateAdministrativeClass(Some(adminClassValue), "VVH")
+          case None => List("AdminClass value Unknown found on Database")
+          case adminClassValue => validateAdministrativeClass(Some(adminClassValue), "Database")
         }) ++ validateAdministrativeClass(properties.filter(prop => prop.columnName == "ADMINCLASS").map(_.value).headOption, "CSV")
 
         if (unauthorizedAdminClass.isEmpty && objectId != None) {
           val propertiesOTH = properties.partition(a => fieldInOTH.contains(a.columnName))._1
-          val hasDirectionType = propertiesOTH.exists(_.columnName == "DIRECTIONTYPE")
+          val hasDirectionType = properties.exists(_.columnName == "DIRECTIONTYPE")
 
           withDynTransaction {
             if (propertiesOTH.nonEmpty || hasDirectionType) {

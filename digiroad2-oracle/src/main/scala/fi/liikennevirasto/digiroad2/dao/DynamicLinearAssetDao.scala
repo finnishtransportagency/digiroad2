@@ -431,7 +431,7 @@ class DynamicLinearAssetDao {
   }
 
   def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None) : List[PersistedLinearAsset] = {
-    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'generated_in_update')"
     val recordLimit = token match {
       case Some(tk) =>
         val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneProperty, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, RoadLink, SpeedLimitValue, Value}
-import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
+import fi.liikennevirasto.digiroad2.service.ChangedRoadlink
 import fi.liikennevirasto.digiroad2.service.lane.LaneChange
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
@@ -41,7 +41,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       .parameters(
         queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
         queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
-        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by vvh_generated and not modified yet on the response. The value is False by default").optional,
+        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by generated_in_update and not modified yet on the response. The value is False by default").optional,
         queryParam[String]("withGeometry").description("With the field withGeometry, we allow or not to print the geometry values for lane_information. The value is False by default").optional,
         pathParam[String]("assetType").description("Asset type name to get the changes")
       )
@@ -91,7 +91,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         case "height_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust, token))
         case "length_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust, token))
         case "width_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust, token))
-        case "road_names" => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+        case "road_names" => roadLinksToGeoJson(roadLinkService.getChanged(since, until))
         case "vehicle_prohibitions" => prohibitionsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust, token))
         case "pedestrian_crossing" => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until, token), pointAssetGenericProperties)
         case "obstacles" => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
@@ -488,11 +488,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     }
   }
 
-  private def vvhRoadLinkToGeoJson(changedRoadlinks: Seq[ChangedVVHRoadlink]) =
+  private def roadLinksToGeoJson(changedRoadlinks: Seq[ChangedRoadlink]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        changedRoadlinks.map { case ChangedVVHRoadlink(link, value, createdAt, changeType) =>
+        changedRoadlinks.map { case ChangedRoadlink(link, value, createdAt, changeType) =>
           Map(
             "type" -> "Feature",
             "id" -> link.linkId,

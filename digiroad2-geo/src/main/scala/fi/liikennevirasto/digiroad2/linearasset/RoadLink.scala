@@ -77,7 +77,7 @@ case class RoadLink(linkId: String, geometry: Seq[Point],
   }
 
   def isSimpleCarTrafficRoad: Boolean = {
-    val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
+    val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
     val constructionTypeAllowed: Seq[ConstructionType] = Seq(UnderConstruction, Planned)
 
     !(constructionTypeAllowed.contains(constructionType) || (roadLinkTypeAllowed.contains(linkType) && administrativeClass == State))
