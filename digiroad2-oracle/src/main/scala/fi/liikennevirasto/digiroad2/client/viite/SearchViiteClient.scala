@@ -57,7 +57,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
   }
 
   def fetchAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    post[Seq[String], List[Map[String, Any]]](serviceName + "road_address", linkIds, ids => new StringEntity(s"[${ids.mkString(",")}]", ContentType.APPLICATION_JSON)) match {
+    post[Seq[String], List[Map[String, Any]]](serviceName + "road_address", linkIds, ids => new StringEntity(s"[${ids.map(id => s""""$id"""").mkString(",")}]", ContentType.APPLICATION_JSON)) match {
       case Left(roadAddresses) => roadAddresses.flatMap(mapFields)
       case Right(error) => throw new ViiteClientException(error.toString)
     }
