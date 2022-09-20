@@ -132,12 +132,15 @@ class RoadLinkDAO {
       val mtkClass = r.nextInt()
       val roadNameFi = r.nextStringOption()
       val roadNameSe = r.nextStringOption()
+      val roadNameSme = r.nextStringOption()
+      val roadNameSmn = r.nextStringOption()
+      val roadNameSms = r.nextStringOption()
       val roadNumber = r.nextLongOption()
       val roadPart = r.nextIntOption()
       val constructionType = r.nextInt()
       val verticalLevel = r.nextInt()
-      val horizontalAccuracy = r.nextLong()
-      val verticalAccuracy = r.nextLong()
+      val horizontalAccuracy = r.nextBigDecimalOption()
+      val verticalAccuracy = r.nextBigDecimalOption()
       val createdDate = r.nextTimestampOption().map(new DateTime(_))
       val lastEditedDate = r.nextTimestampOption().map(new DateTime(_))
       val fromLeft = r.nextLongOption()
@@ -162,6 +165,9 @@ class RoadLinkDAO {
         "CONSTRUCTIONTYPE" -> constructionType,
         "ROADNAME_FI" -> roadNameFi,
         "ROADNAME_SE" -> roadNameSe,
+        "ROADNAMESME" -> roadNameSme,
+        "ROADNAMESMN" -> roadNameSmn,
+        "ROADNAMESMS" -> roadNameSms,
         "ROADNUMBER" -> roadNumber,
         "ROADPARTNUMBER" -> roadPart,
         "FROM_LEFT" -> fromLeft,
@@ -310,10 +316,10 @@ class RoadLinkDAO {
  protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
    LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
      sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
-                 roadname_se, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+                 roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
                  surfacetype, geometrylength
-          from roadlink
+          from kgv_roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
                                                   ${ConstructionType.Planned.value})
@@ -356,7 +362,7 @@ class RoadLinkDAO {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger, "TEST LOG Getting roadlinks by polygon") {
       sql"""select linkid
-          from roadlink
+          from kgv_roadlink
           where #$polygonFilter
        """.as[String].list
     }
