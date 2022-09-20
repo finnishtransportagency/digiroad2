@@ -124,9 +124,9 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get assets Latests Modifications with one municipality") {
     runWithRollback {
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (1000, 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (3000, 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (5000, 235)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (1000, 235)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (3000, 235)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (5000, 235)""".execute
       val municipalities = Set(235)
       val latestModificationInfoMunicipality = ServiceWithDao.dao.getModifiedAssetTypes(municipalities)
       latestModificationInfoMunicipality should have size 3
@@ -137,13 +137,13 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("get assets Latests Modifications for Ely user with two municipalities"){
     runWithRollback {
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (2000, 100)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (4000, 100)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (6000, 100)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (2000, 100)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (4000, 100)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (6000, 100)""".execute
 
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (1000, 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (3000, 235)""".execute
-      sqlu"""insert into roadlink (linkId, municipalitycode) values (5000, 235)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (1000, 235)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (3000, 235)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode) values (5000, 235)""".execute
       
       val municipalities = Set(100, 235)
       val latestModificationInfo = ServiceWithDao.dao.getModifiedAssetTypes(municipalities)
