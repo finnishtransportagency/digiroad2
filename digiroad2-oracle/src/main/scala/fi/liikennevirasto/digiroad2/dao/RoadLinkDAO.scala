@@ -313,7 +313,7 @@ class RoadLinkDAO {
                  roadname_se, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
                  surfacetype, geometrylength
-          from roadlink
+          from kgv_roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
                                                   ${ConstructionType.Planned.value})
@@ -356,7 +356,7 @@ class RoadLinkDAO {
     val polygonFilter = PostGISDatabase.polygonFilter(polygon, geometryColumn)
     LogUtils.time(logger, "TEST LOG Getting roadlinks by polygon") {
       sql"""select linkid
-          from roadlink
+          from kgv_roadlink
           where #$polygonFilter
        """.as[String].list
     }
