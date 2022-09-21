@@ -225,11 +225,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false, roadFilterFunction: RoadLink => Boolean) = {
 
-    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(roadFilterFunction), showSpeedLimitsHistory)
+    val roadLinksFiltered = roadLinks.filter(roadFilterFunction)
+    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinksFiltered, showSpeedLimitsHistory)
     val speedLimits = (speedLimitLinks).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-    val filledTopology = roadLinks.filter(roadFilterFunction).foldLeft(Seq.empty[SpeedLimit]) { case (existingSegments, roadLink) =>
+    val filledTopology = roadLinksFiltered.foldLeft(Seq.empty[SpeedLimit]) { case (existingSegments, roadLink) =>
       val currentSegments = speedLimits.getOrElse(roadLink.linkId, Nil)
       val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, currentSegments)
       existingSegments ++ currentSegments ++ generatedSpeedLimits
