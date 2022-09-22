@@ -41,7 +41,7 @@ else
       elif [ "$batchRunType" = "LinearAssetUpdateProcess" ]; then
         echo "LinearAssetUpdateProcess"
         if [[ ! -z "$assetToUpdate" ]]; then
-          java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.LinearAssetUpdateProcess "$assetToUpdate"
+          java $javaParameter -cp /digiroad2.jar fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess "$assetToUpdate"
         else
           echo "assetToUpdate env is not defined"
           exit 1
