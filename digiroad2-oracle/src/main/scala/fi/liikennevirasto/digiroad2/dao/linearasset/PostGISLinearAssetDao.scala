@@ -384,7 +384,7 @@ class PostGISLinearAssetDao() {
   }
 
   def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None) : List[PersistedLinearAsset] = {
-    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'generated_in_update')"
     val recordLimit = token match {
       case Some(tk) =>
         val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
@@ -444,7 +444,7 @@ class PostGISLinearAssetDao() {
   }
 
   def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, token: Option[String] = None): Seq[PersistedLinearAsset] = {
-    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'generated_in_update')"
     val excludedTypesValues = excludedTypes.map(_.value)
 
     val recordLimit = token match {
@@ -965,7 +965,7 @@ class PostGISLinearAssetDao() {
           where a.asset_type_id = $assetTypeId
           and (valid_to is NULL OR valid_to >= current_timestamp)
           and (a.created_by in ('dr1_conversion', 'dr1conversion') OR (extract(month from age(current_timestamp, a.created_date)) > $TwoYears))
-          and (a.modified_date is NULL OR (a.modified_date is NOT NULL and a.modified_by = 'vvh_generated'))
+          and (a.modified_date is NULL OR (a.modified_date is NOT NULL and a.modified_by = 'generated_in_update'))
           and (a.verified_date is NULL OR (extract(month from age(current_timestamp, a.verified_date)) > $TwoYears))
           and a.floating = '0'
       """.as[(Long, String)].list

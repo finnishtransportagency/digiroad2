@@ -91,7 +91,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
     runWithRollback {
       val assetId = mtlServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "KX1", 0).head
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[Int])).thenReturn((roadLinks, changeInfo))
       mtlServiceWithDao.getByMunicipality(assetInfo.typeId, municipalityCode)
 
       withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {

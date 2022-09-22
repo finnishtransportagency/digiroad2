@@ -11,6 +11,7 @@ import org.joda.time.DateTime
 sealed trait FeatureClass
 object FeatureClass {
   case object TractorRoad extends FeatureClass
+  case object HardShoulder extends FeatureClass
   case object DrivePath extends FeatureClass
   case object CycleOrPedestrianPath extends FeatureClass
   case object WinterRoads extends FeatureClass
