@@ -24,7 +24,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     withDynTransaction {
       val municipalities = Queries.getMunicipalities
       municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesByMunicipality(municipality)
+        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesByMunicipality(municipality, false)
         updateByRoadLinks(municipality, roadLinks, changes)
       }
     }

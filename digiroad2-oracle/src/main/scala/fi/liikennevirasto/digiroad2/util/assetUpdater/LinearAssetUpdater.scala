@@ -30,7 +30,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     withDynTransaction {
       val municipalities = Queries.getMunicipalities
       municipalities.foreach { municipality =>
-        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesByMunicipality(municipality)
+        val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesByMunicipality(municipality, false)
         updateByRoadLinks(typeId, municipality, roadLinks, changes)
       }
     }
