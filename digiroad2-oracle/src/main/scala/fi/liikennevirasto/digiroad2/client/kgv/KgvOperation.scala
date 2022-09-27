@@ -275,9 +275,11 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
   override protected implicit val jsonFormats = DefaultFormats.preservingEmptyValues
 
   private def convertToFeature(content: Map[String, Any]): Feature = {
-    val geometry = Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
-      coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]]
-    )
+    val geometry = if( serviceName == "keskilinjavarasto:change" ) Geometry("", List())
+    else{
+      Geometry(`type` = content("geometry").asInstanceOf[Map[String, Any]]("type").toString,
+        coordinates = content("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]])
+    }
     Feature(
       `type` = content("type").toString,
       geometry = geometry,
@@ -336,11 +338,13 @@ abstract class KgvOperation(extractor:ExtractorBase) extends LinkOperationsAbstr
                 Link(link("title").asInstanceOf[String], link("type").asInstanceOf[String],
                   link("rel").asInstanceOf[String], link("href").asInstanceOf[String])
               )
-              
+
               val nextLink = Try(links.find(_.title=="Next page").get.href).getOrElse("")
               val previousLink = Try(links.find(_.title=="Previous page").get.href).getOrElse("")
-              val features = feature("features").asInstanceOf[List[Map[String, Any]]] .filter(roadLinkStatusFilter)
-                                                                                      .map(convertToFeature)
+              val features = if(serviceName == "keskilinjavarasto:change"){
+                feature("features").asInstanceOf[List[Map[String, Any]]].map(convertToFeature)
+              }
+              else feature("features").asInstanceOf[List[Map[String, Any]]] .filter(roadLinkStatusFilter).map(convertToFeature)
               Some(FeatureCollection(
                 `type` = "FeatureCollection",
                 features = features,
