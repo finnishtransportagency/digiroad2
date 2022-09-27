@@ -348,7 +348,7 @@ trait  PointAssetOperations{
   }
 
   def getPersistedAssetsByLinkIdWithoutTransaction(linkId: String): Seq[PersistedAsset] = {
-    val filter = s"where a.asset_type_id = $typeId and lp.link_Id = $linkId"
+    val filter = s"where a.asset_type_id = $typeId and lp.link_Id = '$linkId'"
     fetchPointAssets(withFilter(filter))
   }
 
