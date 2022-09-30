@@ -3,13 +3,12 @@
 Tarkista, että tuotantotilille on luotu VPC kahdella subnetillä.
 Tarkista yhtenevät parametrien nimet, esim. NetworkStackName VPC:n ja CloudFormation parametreistä.
 
-## Kloona repo koneellesi
-Kloonaa digiroad2-repo omalle koneellesi ja tee haaranvaihto AwsPostGist -haaraan
+## Kloonaa repo koneellesi
+Kloonaa digiroad2-repo omalle koneellesi:
 
 ```
 git clone https://github.com/finnishtransportagency/digiroad2.git
 cd digiroad2
-git checkout origin/AwsPostGist
 ```
 ## Aseta ympäristömuuttujat
 Huom. ympäristömuuttujat säilyvät vain shell / cmd session ajan
