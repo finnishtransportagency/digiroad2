@@ -3,13 +3,12 @@
 Tarkista, että tuotantotilille on luotu VPC kahdella subnetillä.
 Tarkista yhtenevät parametrien nimet, esim. NetworkStackName VPC:n ja CloudFormation parametreistä.
 
-## Kloona repo koneellesi
-Kloonaa digiroad2-repo omalle koneellesi ja tee haaranvaihto AwsPostGist -haaraan
+## Kloonaa repo koneellesi
+Kloonaa digiroad2-repo omalle koneellesi:
 
 ```
 git clone https://github.com/finnishtransportagency/digiroad2.git
 cd digiroad2
-git checkout origin/AwsPostGist
 ```
 ## Aseta ympäristömuuttujat
 Huom. ympäristömuuttujat säilyvät vain shell / cmd session ajan
@@ -185,6 +184,14 @@ aws batch register-job-definition \
 --cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
 ```
 
+### Batch-Lambdan päivitys (tarvittaessa)
+```
+aws cloudformation update-stack \
+--stack-name digiroad-batch-lambda-stack \
+--template-body file://aws/cloud-formation/batchSystem/batchLambda/batchLambda.yaml \
+--parameters file://aws/cloud-formation/batchSystem/batchLambda/prod-batch-lambda-parameter.json \
+--capabilities CAPABILITY_NAMED_IAM
+```
 ## Vanhan imagen laittaminen takaisin
 Muokkaa aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :prod -> @digest siihen docker digest(esim sha256:b1ff5c8586) jonka kehitystiimi on toimittanut. Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}@sha256:b1ff5c8586esimerkki'.
 Luo uusi task definition versio tästä:
