@@ -187,7 +187,7 @@ aws batch register-job-definition \
 ### Batch-Lambdan päivitys (tarvittaessa)
 ```
 aws cloudformation update-stack \
---stack-name batch-lambda-stack \
+--stack-name digiroad-batch-lambda-stack \
 --template-body file://aws/cloud-formation/batchSystem/batchLambda/batchLambda.yaml \
 --parameters file://aws/cloud-formation/batchSystem/batchLambda/prod-batch-lambda-parameter.json \
 --capabilities CAPABILITY_NAMED_IAM
