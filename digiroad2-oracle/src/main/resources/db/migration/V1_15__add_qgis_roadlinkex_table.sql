@@ -26,5 +26,6 @@ CREATE TABLE IF NOT EXISTS qgis_roadlinkex (
     CONSTRAINT qgis_roadlinkex_linkid UNIQUE (linkid) DEFERRABLE INITIALLY DEFERRED
 );
 CREATE INDEX IF NOT EXISTS qgis_roadlinkex_roadlink_spatial_index ON qgis_roadlinkex USING gist (shape);
+CREATE INDEX IF NOT EXISTS qgis_roadlinkex_vvh_id_index ON qgis_roadlinkex USING btree (vvh_id);
 CREATE INDEX IF NOT EXISTS qgis_roadlinkex_adminclass_index ON qgis_roadlinkex USING btree (adminclass);
 CREATE INDEX IF NOT EXISTS qgis_roadlinkex_municipality_index ON qgis_roadlinkex USING btree (municipalitycode);
