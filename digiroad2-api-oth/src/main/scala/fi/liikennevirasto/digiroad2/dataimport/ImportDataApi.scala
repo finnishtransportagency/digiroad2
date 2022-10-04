@@ -47,14 +47,11 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   /*this need to be first because Scalatra route order starts from the bottom and this post method is the most generic*/
   post("/:assetTypeImport") {
     val assetType = params("assetTypeImport")
-    if(assetType == Lanes.layerName && !userProvider.getCurrentUser().isOperator())
-      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-    else
-      validateOperation()
+    validateOperation()
     importAssets(fileParams("csv-file"), assetType)
   }
 
-  post("/:lanes") {
+  post("/lanes") {
     val updateOnlyStartDates = params.get("updateStartDates") match {
       case Some(param) => UpdateOnlyStartDates(param.toBoolean)
       case _ => UpdateOnlyStartDates(false)

@@ -264,7 +264,7 @@
                 var selected = value.id.toString() === selectedValue ? " selected" : "";
                 var disabled = value.disabled ?  'disabled' : '';
                 var hidden = _.isUndefined(value.hidden) ? false : value.hidden(assetTypeConfiguration.selectedLinearAsset.get(), value.id);
-                return  hidden ? '' : '<option value="' + value.id + '" data-value="' + value.label + '" ' + selected + ' '+ disabled +'>' + value.label + '</option>';
+                return  hidden ? '' : '<option value="' + value.id + '" data-value="' + TextUtils.toDataValue(value.label) + '" ' + selected + ' '+ disabled +'>' + value.label + '</option>';
             }).join('');
 
             me.element = $(template({className: className, optionTags: optionTags, disabled: me.disabled(), name: field.publicId, fieldType: field.type, required: me.required()}));

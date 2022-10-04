@@ -225,7 +225,7 @@ Resources:
           - subnet-0d38ee507d838207c
         VpcId: !Ref VpcIDOfSystem
       Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_LARGE
         Image: aws/codebuild/standard:5.0
         Type: LINUX_CONTAINER
         PrivilegedMode: true
