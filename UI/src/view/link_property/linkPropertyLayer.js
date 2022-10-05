@@ -294,7 +294,7 @@
 
     var drawDashedLineFeatures = function(roadLinks) {
       var dashedFunctionalClasses = [2, 4, 6, 8];
-      var dashedNotAllowInLinkStatus = [1, 3];
+      var dashedNotAllowInLinkStatus = [1, 2];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.includes(dashedFunctionalClasses, roadLink.functionalClass) && !_.includes(dashedNotAllowInLinkStatus, roadLink.constructionType);
       });

@@ -30,8 +30,8 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
       val roadPart = r.nextIntOption()
       val constructionType = r.nextInt()
       val verticalLevel = r.nextInt()
-      val horizontalAccuracy = r.nextLong()
-      val verticalAccuracy = r.nextLong()
+      val horizontalAccuracy = r.nextBigDecimalOption()
+      val verticalAccuracy = r.nextBigDecimalOption()
       val createdDate = r.nextTimestampOption().map(new DateTime(_))
       val lastEditedDate = r.nextTimestampOption().map(new DateTime(_))
       val fromLeft = r.nextLongOption()
@@ -60,7 +60,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
         "CONSTRUCTIONTYPE" -> constructionType,
         "ROADNAME_FI" -> roadNameFi,
         "ROADNAME_SE" -> roadNameSe,
-        "ROADNAME_SM" -> roadNameSm,
+        "ROADNAMESME" -> roadNameSm,
         "ROADNUMBER" -> roadNumber,
         "ROADPARTNUMBER" -> roadPart,
         "FROM_LEFT" -> fromLeft,

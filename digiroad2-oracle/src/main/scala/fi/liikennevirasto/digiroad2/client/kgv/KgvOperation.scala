@@ -209,6 +209,9 @@ class ExtractorBase {
       "CONSTRUCTIONTYPE"      -> numberConversion("lifecyclestatus"),
       "ROADNAME_FI"           -> attributesMap("roadnamefin"),
       "ROADNAME_SE"           -> attributesMap("roadnameswe"),
+      "ROADNAMESME"           -> attributesMap("roadnamesme"),
+      "ROADNAMESMN"           -> attributesMap("roadnamesmn"),
+      "ROADNAMESMS"           -> attributesMap("roadnamesms"),
 
       "FROM_RIGHT"            -> numberConversion("addressfromright"),
       "TO_RIGHT"              -> numberConversion("addresstoright"),
