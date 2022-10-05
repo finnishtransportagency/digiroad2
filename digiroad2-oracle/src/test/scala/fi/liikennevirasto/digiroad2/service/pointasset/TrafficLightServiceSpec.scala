@@ -2,13 +2,13 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.pointasset.TrafficLight
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
@@ -17,7 +17,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 class TrafficLightServiceSpec  extends FunSuite with Matchers {
-  def toRoadLink(l: VVHRoadlink) = {
+  def toRoadLink(l: RoadLinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
@@ -25,9 +25,14 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
+
+  val testLinkId1 = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
+  val testLinkId2 = "a2c8e119-5739-456a-aa6c-cba0f300cc3c:1"
+  val randomLinkId1: String = LinkIdGenerator.generateRandom()
+
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
+    RoadLinkFetched(testLinkId1, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
   val trafficLightPropertyData = Set(
@@ -78,12 +83,12 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
       result.id should equal(600070)
-      result.linkId should equal(1611387)
+      result.linkId should equal(testLinkId2)
       result.lon should equal(374101.60105163435)
       result.lat should equal(6677437.872017591)
       result.mValue should equal(16.592)
@@ -91,14 +96,15 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
-      VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    val linkId = testLinkId2
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(235)).thenReturn((Seq(
+      RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600070).get
 
       result.id should equal(600070)
-      result.linkId should equal(1611387)
+      result.linkId should equal(linkId)
       result.lon should equal(374101.60105163435)
       result.lat should equal(6677437.872017591)
       result.mValue should equal(16.592)
@@ -115,15 +121,16 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Create new") {
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData), "jakke", roadLink)
+      val linkId = randomLinkId1
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(2, 0.0, linkId, trafficLightPropertyData), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
 
       val asset = assets.head
 
-      asset.vvhTimeStamp should not be(0)
+      asset.timeStamp should not be(0)
 
       val trafficLightTypeProperty = asset.propertyData.find(_.publicId == "trafficLight_type").head
       val assetGroupedId = trafficLightTypeProperty.groupedId
@@ -135,7 +142,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       )
 
       asset.id should be(id)
-      asset.linkId should be(388553075)
+      asset.linkId should be(linkId)
       asset.lon should be(2)
       asset.lat should be(0)
       asset.mValue should be(2)
@@ -151,15 +158,16 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Create multiple in one asset") {
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData ++ secondPropertiesSet), "jakke", roadLink)
+      val linkId = randomLinkId1
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(2, 0.0, linkId, trafficLightPropertyData ++ secondPropertiesSet), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
 
       val asset = assets.head
 
-      asset.vvhTimeStamp should not be(0)
+      asset.timeStamp should not be(0)
 
       val trafficLightTypeProperties = asset.propertyData.filter(_.publicId == "trafficLight_type")
       val assetGroupedIds = trafficLightTypeProperties.map(_.groupedId)
@@ -181,17 +189,18 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("update asset delete one of multiple") {
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData ++ secondPropertiesSet), "jakke", roadLink)
+      val linkId = randomLinkId1
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(2, 0.0, linkId, trafficLightPropertyData ++ secondPropertiesSet), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
 
       val asset = assets.head
 
-      asset.vvhTimeStamp should not be(0)
+      asset.timeStamp should not be(0)
 
-     val updatedId = service.update(id = asset.id, IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData), roadLink, "test")
+     val updatedId = service.update(id = asset.id, IncomingTrafficLight(2, 0.0, linkId, trafficLightPropertyData), roadLink, "test")
       val afterUpdate = service.getPersistedAssetsByIds(Set(updatedId)).head
 
       afterUpdate.id should be(updatedId)
@@ -202,12 +211,14 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Update traffic light") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
-      VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(91)).thenReturn((Seq(
-      VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    val linkIdBeforeUpdate = testLinkId2
+    val linkIdAfterUpdate = LinkIdGenerator.generateRandom()
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(235)).thenReturn((Seq(
+      RoadLinkFetched(linkIdBeforeUpdate, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(91)).thenReturn((Seq(
+      RoadLinkFetched(linkIdAfterUpdate, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
-    val roadLink = RoadLink(123, linkGeometry, 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
+    val roadLink = RoadLink(linkIdAfterUpdate, linkGeometry, 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
 
     runWithRollback {
       val beforeUpdate = service.getByMunicipality(235).find(_.id == 600070).get
@@ -215,21 +226,21 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       beforeUpdate.lon should equal(374101.60105163435)
       beforeUpdate.lat should equal(6677437.872017591)
       beforeUpdate.mValue should equal(16.592)
-      beforeUpdate.linkId should equal(1611387)
+      beforeUpdate.linkId should equal(linkIdBeforeUpdate)
       beforeUpdate.municipalityCode should equal(235)
       beforeUpdate.createdBy should equal(Some("dr2_test_data"))
       beforeUpdate.createdAt.isDefined should equal(true)
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      val newAssetId = service.update(id = 600070, IncomingTrafficLight(100, 0, 123, Set()), roadLink, "test")
+      val newAssetId = service.update(id = 600070, IncomingTrafficLight(100, 0, linkIdAfterUpdate, Set()), roadLink, "test")
 
       val afterUpdate = service.getByMunicipality(91).find(_.id == newAssetId).get
       afterUpdate.id should equal(newAssetId)
       afterUpdate.lon should equal(100)
       afterUpdate.lat should equal(0)
       afterUpdate.mValue should equal(100)
-      afterUpdate.linkId should equal(123)
+      afterUpdate.linkId should equal(linkIdAfterUpdate)
       afterUpdate.municipalityCode should equal(91)
       afterUpdate.createdBy should equal(beforeUpdate.createdBy)
       afterUpdate.createdAt should equal(beforeUpdate.createdAt)
@@ -240,11 +251,12 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Update traffic light with geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
+      val linkId = randomLinkId1
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(0.0, 20.0, linkId, Set()), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
       oldAsset.modifiedAt.isDefined should equal(false)
-      val newId = service.update(id, IncomingTrafficLight(0.0, 10.0, 388553075, Set()), roadLink, "test")
+      val newId = service.update(id, IncomingTrafficLight(0.0, 10.0, linkId, Set()), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -259,11 +271,12 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Update traffic light without geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
+      val linkId = randomLinkId1
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(0.0, 20.0, linkId, Set()), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingTrafficLight(0.0, 20.0, 388553075, Set()), roadLink,  "test")
+      val newId = service.update(id, IncomingTrafficLight(0.0, 20.0, linkId, Set()), roadLink,  "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)

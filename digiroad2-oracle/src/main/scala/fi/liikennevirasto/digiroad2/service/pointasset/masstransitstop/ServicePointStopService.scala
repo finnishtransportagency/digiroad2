@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.User
 
 case class PersistedPublicTransportStop(id: Long, nationalId: Long, stopTypes: Seq[Int], municipalityCode: Int, lon: Double, lat: Double, validityPeriod: Option[String],
-                                        vvhTimeStamp: Long, created: Modification, modified: Modification, propertyData: Seq[Property])
+                                        timeStamp: Long, created: Modification, modified: Modification, propertyData: Seq[Property])
 
 class ServicePointStopService(eventbus: DigiroadEventBus) {
   lazy val servicePointBusStopDao = new ServicePointBusStopDao()
@@ -116,7 +116,7 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
 
   def transformToPersistedMassTransitStop(servicePoints :Seq[ServicePoint]): Seq[PersistedMassTransitStop] = {
     servicePoints.map { sp =>
-      PersistedMassTransitStop(sp.id, sp.nationalId, 0, sp.stopTypes, sp.municipalityCode, sp.lon, sp.lat, 0, None, None, None,
+      PersistedMassTransitStop(sp.id, sp.nationalId, "", sp.stopTypes, sp.municipalityCode, sp.lon, sp.lat, 0, None, None, None,
         floating = false, 0L, sp.created, sp.modified, sp.propertyData, LinkGeomSource.Unknown)
     }
   }

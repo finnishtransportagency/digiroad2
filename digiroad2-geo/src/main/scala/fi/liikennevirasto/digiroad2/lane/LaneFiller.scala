@@ -13,13 +13,13 @@ object LaneFiller {
 
   trait baseAdjustment {
     val laneId: Long
-    val linkId: Long
+    val linkId: String
     val startMeasure: Double
     val endMeasure: Double
   }
 
-  case class MValueAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double) extends baseAdjustment
-  case class VVHChangesAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, vvhTimestamp: Long) extends baseAdjustment
+  case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double) extends baseAdjustment
+  case class VVHChangesAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, timeStamp: Long) extends baseAdjustment
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
 
   case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
@@ -37,7 +37,7 @@ class LaneFiller {
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
 
-  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[Long, Seq[PersistedLane]], changedSet: Option[ChangeSet] = None ): (Seq[PieceWiseLane], ChangeSet) = {
+  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[String, Seq[PersistedLane]], changedSet: Option[ChangeSet] = None ): (Seq[PieceWiseLane], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
@@ -71,7 +71,7 @@ class LaneFiller {
 
       PieceWiseLane(dbLane.id,dbLane.linkId, dbLane.sideCode, dbLane.expired, points,
         dbLane.startMeasure, dbLane.endMeasure, Set(endPoints._1, endPoints._2), dbLane.modifiedBy, dbLane.modifiedDateTime,
-        dbLane.createdBy, dbLane.createdDateTime, dbLane.vvhTimeStamp, dbLane.geomModifiedDate, roadLink.administrativeClass,
+        dbLane.createdBy, dbLane.createdDateTime, dbLane.timeStamp, dbLane.geomModifiedDate, roadLink.administrativeClass,
         laneAttributes = dbLane.attributes, attributes = Map("municipality" -> dbLane.municipalityCode, "trafficDirection" -> roadLink.trafficDirection))
     }
   }

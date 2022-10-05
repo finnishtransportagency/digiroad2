@@ -1,5 +1,5 @@
 package fi.liikennevirasto.digiroad2
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
@@ -10,14 +10,14 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 class MunicipalityApiRequestSpec extends FunSuite with Matchers with BeforeAndAfter with AuthenticatedApiSpec {
 
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockPavedRoadService = MockitoSugar.mock[PavedRoadService]
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockSpeedLimitService = MockitoSugar.mock[SpeedLimitService]
   val mockAwsDao = MockitoSugar.mock[AwsDao]
 
-  private val municipalityApi = new MunicipalityApi(mockVVHClient, mockRoadLinkService, mockSpeedLimitService, mockPavedRoadService, mockObstacleService, new OthSwagger) {
+  private val municipalityApi = new MunicipalityApi(mockRoadLinkClient, mockRoadLinkService, mockSpeedLimitService, mockPavedRoadService, mockObstacleService, new OthSwagger) {
     override def awsDao: AwsDao = mockAwsDao
   }
 

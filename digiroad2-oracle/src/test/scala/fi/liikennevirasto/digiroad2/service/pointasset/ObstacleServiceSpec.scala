@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -11,7 +11,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -22,7 +22,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 class ObstacleServiceSpec extends FunSuite with Matchers {
 
-  def toRoadLink(l: VVHRoadlink) = {
+  def toRoadLink(l: RoadLinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
@@ -31,19 +31,21 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
+  val linkId = "52d58ce5-39e8-4ab4-8c43-d347a9945ab5:1"
+  val randomLinkId = LinkIdGenerator.generateRandom()
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(
+    RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1611317)).thenReturn(Seq(
-    VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId)).thenReturn(Seq(
+    RoadLinkFetched(linkId, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1191950690)).thenReturn(Seq(
-    VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
+  when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId)).thenReturn(Seq(
+    RoadLinkFetched(randomLinkId, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
-  when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
+  when(mockRoadLinkService.getHistoryDataLinks(any[Set[String]], any[Boolean])).thenReturn(Seq())
 
   val service = new ObstacleService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
@@ -53,12 +55,12 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PostGISDatabase.ds)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600046)
-      result.linkId should equal(1611317)
+      result.linkId should equal(linkId)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -66,14 +68,14 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
-      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(235)).thenReturn((Seq(
+      RoadLinkFetched(LinkIdGenerator.generateRandom(), 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
 
       result.id should equal(600046)
-      result.linkId should equal(1611317)
+      result.linkId should equal(linkId)
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
@@ -81,7 +83,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire obstacle") {
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksAndChanges(any[Int])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
@@ -95,10 +97,11 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Create new obstacle") {
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke", roadLink)
+      val id = service.create(IncomingObstacle(2.0, 0.0, linkId, Set(simpleProperty)), "jakke", roadLink)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -107,7 +110,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val asset = assets.head
 
       asset.id should be(id)
-      asset.linkId should be(388553075)
+      asset.linkId should be(linkId)
       asset.lon should be(2)
       asset.lat should be(0)
       asset.mValue should be(2)
@@ -139,10 +142,11 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Asset can be outside link within treshold") {
     runWithRollback {
-      val roadLink = RoadLink(1191950690, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 14.178, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkId = randomLinkId
+      val roadLink = RoadLink(linkId, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 14.178, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, Set(simpleProperty)), "unit_test", roadLink)
+      val id = service.create(IncomingObstacle(373494.183, 6677669.927, linkId, Set(simpleProperty)), "unit_test", roadLink)
       val asset = service.getById(id).get
       asset.floating should be(false)
     }
@@ -153,6 +157,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       id = 1,
       username = "Hannu",
       configuration = Configuration(authorizedMunicipalities = Set(235)))
+    val linkId = LinkIdGenerator.generateRandom()
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
     val geometry = Seq(Point(240863.911, 6700590.15),
@@ -170,10 +175,10 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
           Point(240881.381, 6700685.655),
           Point(240885.898, 6700689.602))
 
-    val roadLink = RoadLink(5797521, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
+    val roadLink = RoadLink(linkId, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
 
-    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(roadLink))
-    when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(5797521)).thenReturn(Seq(roadLink).headOption)
+    when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn(Seq(roadLink))
+    when(mockRoadLinkService.getRoadLinkByLinkId(linkId)).thenReturn(Seq(roadLink).headOption)
 
     val service = new ObstacleService(mockRoadLinkService) {
       override def withDynTransaction[T](f: => T): T = f
@@ -181,10 +186,10 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     }
 
     runWithRollback {
-      val roadLink = RoadLink(5797521, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
+      val roadLink = RoadLink(linkId, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, Set(simpleProperty)), "unit_test", roadLink)
+      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, linkId, Set(simpleProperty)), "unit_test", roadLink)
 
       val asset = service.getById(id).get
 
@@ -201,57 +206,57 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (1,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 6000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, '6000', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (1,${lrmPositionsIds(0)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400000, 1, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 6000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, '6000', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (3,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(2)}, 7000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(2)}, '7000', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (3,${lrmPositionsIds(2)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400003, 3, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (4,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(3)}, 8000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(3)}, '8000', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (4,${lrmPositionsIds(3)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400004, 4, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (5,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(4)}, 9000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(4)}, '9000', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (5,${lrmPositionsIds(4)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400005, 5, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (6,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(5)}, 1000, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(5)}, '1000', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (6,${lrmPositionsIds(5)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400006, 6, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (7,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(6)}, 1100, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(6)}, '1100', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (7,${lrmPositionsIds(6)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400007, 7, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (8,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(7)}, 1200, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(7)}, '1200', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (8,${lrmPositionsIds(7)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400008, 8, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (9,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(8)}, 1300, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(8)}, '1300', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (9,${lrmPositionsIds(8)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400009, 9, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (10,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(9)}, 1400, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(9)}, '1400', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (10,${lrmPositionsIds(9)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400010, 10, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (11,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 1500, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, '1500', null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
 
@@ -289,12 +294,12 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val obstacle = service.getById(600046).get
       val newMvalue = obstacle.mValue+1
       val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
-      val newObstacle = obstacle.copy(municipalityCode = 500, floating = true, mValue = newMvalue, linkId = 1611317, modifiedBy = Some("unit_test"), propertyData = Seq(pointAssetProperty))
+      val newObstacle = obstacle.copy(municipalityCode = 500, floating = true, mValue = newMvalue, linkId = linkId, modifiedBy = Some("unit_test"), propertyData = Seq(pointAssetProperty))
 
       service.updateFloatingAsset(newObstacle)
       val updatedObstacle = service.getById(600046).get
 
-      updatedObstacle.linkId should equal (1611317)
+      updatedObstacle.linkId should equal (linkId)
       updatedObstacle.mValue should equal (newMvalue)
       updatedObstacle.modifiedBy should equal (Some("unit_test"))
       updatedObstacle.municipalityCode should equal(500)
@@ -307,12 +312,13 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Update obstacle with geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val id = service.create(IncomingObstacle(0.0, 20.0, 388553075, Set(simpleProperty)), "jakke", roadLink )
+      val id = service.create(IncomingObstacle(0.0, 20.0, linkId, Set(simpleProperty)), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
-      val newId = service.update(id, IncomingObstacle(0.0, 10.0, 388553075, Set(simpleProperty)), roadLink, "test")
+      val newId = service.update(id, IncomingObstacle(0.0, 10.0, linkId, Set(simpleProperty)), roadLink, "test")
       oldAsset.modifiedAt.isDefined should equal(false)
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -328,15 +334,16 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Update obstacle without geometry changes"){
     runWithRollback {
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkId = LinkIdGenerator.generateRandom()
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val id = service.create(IncomingObstacle(0.0, 20.0, 388553075, Set(simpleProperty)), "jakke", roadLink )
+      val id = service.create(IncomingObstacle(0.0, 20.0, linkId, Set(simpleProperty)), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
       val updatedValues = Seq(PropertyValue("1"))
       val updatedSimpleProperty = SimplePointAssetProperty("esterakennelma", updatedValues)
-      val newId = service.update(id, IncomingObstacle(0.0, 20.0, 388553075, Set(updatedSimpleProperty)), roadLink, "test")
+      val newId = service.update(id, IncomingObstacle(0.0, 20.0, linkId, Set(updatedSimpleProperty)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
@@ -350,12 +357,13 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Get obstacles changes") {
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      val linkId = LinkIdGenerator.generateRandom()
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val (id, id1, id2) = (service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke_1", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke_2", roadLink))
+      val (id, id1, id2) = (service.create(IncomingObstacle(2.0, 0.0, linkId, Set(simpleProperty)), "jakke", roadLink), service.create(IncomingObstacle(2.0, 0.0, linkId, Set(simpleProperty)), "jakke_1", roadLink), service.create(IncomingObstacle(2.0, 0.0, linkId, Set(simpleProperty)), "jakke_2", roadLink))
 
       val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(3)
@@ -370,23 +378,24 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Get only one obstacle change"){
     runWithRollback{
+      val linkId = LinkIdGenerator.generateRandom()
       val obstacleAssetTypeId = 220
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
       sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId,'0', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, $linkId, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
       val assets = service.getPersistedAssetsByIds(Set(11))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId))).thenReturn(Seq(RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
-      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val values = Seq(PropertyValue("2"))
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
-      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke", roadLink)
+      val id = service.create(IncomingObstacle(2.0, 0.0, linkId, Set(simpleProperty)), "jakke", roadLink)
 
       val changes = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-12-31T12:00Z"))
       changes.length should be(1)
@@ -395,22 +404,23 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Obstacles get change does not return floating obstacles"){
     runWithRollback{
+      val linkId = LinkIdGenerator.generateRandom()
       val obstacleAssetTypeId = 220
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
       sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId, '1', TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, $linkId, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(11, Point(5, 0))
 
       sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,'1')""".execute
-      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, $linkId, null, 0.000, 25.000)""".execute
       sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, (SELECT id FROM PROPERTY WHERE PUBLIC_ID ='esterakennelma'), 1)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
+      when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq())
 
       val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(0)

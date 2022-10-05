@@ -25,7 +25,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
   type ImportResultData = ImportResultPointAsset
 
-  case class CsvPointAsset(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
+  case class CsvPointAsset(lon: Double, lat: Double, linkId: String, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
@@ -137,7 +137,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
     (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
+        val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong))
         roadLinks.isEmpty match {
           case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
           case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))

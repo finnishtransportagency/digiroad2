@@ -14,7 +14,7 @@ case class FeedbackInfo(id: Long, createdBy: Option[String], createdAt: Option[D
                         subject: Option[String], status: Boolean, statusDate: Option[DateTime])
 
 case class FeedbackApplicationBody(feedbackType: Option[String], headline: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String])
-case class FeedbackDataBody(linkId: Option[Seq[Long]], assetId: Option[Seq[Long]], assetName: Option[String], feedbackDataType: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String], typeId: Option[Int])
+case class FeedbackDataBody(linkId: Option[Seq[String]], assetId: Option[Seq[Long]], assetName: Option[String], feedbackDataType: Option[String], freeText: Option[String], name: Option[String], email: Option[String], phoneNumber: Option[String], typeId: Option[Int])
 
 trait Feedback {
 
@@ -116,7 +116,7 @@ class FeedbackDataService extends Feedback {
 
   override def stringifyBody(username: String, body: FeedbackBody): String = {
     val ids = body.assetId.getOrElse(Seq.empty[Long]).mkString(",")
-    val linkIds = body.linkId.getOrElse(Seq.empty[Long]).mkString(",")
+    val linkIds = body.linkId.getOrElse(Seq.empty[String]).mkString(",")
 
 
     val url = body.typeId match {

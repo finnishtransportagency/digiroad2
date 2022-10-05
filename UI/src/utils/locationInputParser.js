@@ -4,6 +4,7 @@
     var streetRegex = /^(\s*[A-Za-zÀ-ÿ].*)/;
     var roadRegex = /^\s*\d+\s+\d+\s+\d+\s*\d*$/;
     var idOrRoadRegex = /^\d+$/;
+    var linkIdRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}:\d+$/; // UUIDv4 followed with ":" and version number
     var liviIdRegex = /^[a-zA-Z]+\d+$/; // At least one letter and one digit, no space between
     var passengerIdRegex = /^MT+\s*\w/gi;
     var associationRoadIdRegex = /^YT+\s*[A-Za-zÀ-ÿ]/gi;
@@ -12,6 +13,7 @@
     var matchedStreet = input.match(streetRegex);
     var matchedRoad = input.match(roadRegex);
     var matchedIdOrRoad = input.match(idOrRoadRegex);
+    var matchedLinkId = input.match(linkIdRegex);
     var matchedLiviId = input.match(liviIdRegex);
     var matchedPassengerId = input.match(passengerIdRegex);
     var matchedAssociationRoadIdRegex = input.match(associationRoadIdRegex);
@@ -20,6 +22,8 @@
       return {type: 'liviId', text: input};
     } else if (selectedLayer === 'massTransitStop' && matchedPassengerId) {
       return {type: 'passengerId', text: input.substring(input.indexOf(' ')+1).replace(/\s+$/g, '')};
+    } else if (matchedLinkId) {
+      return { type: 'linkId', text: input};
     } else if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
     } else if(matchedAssociationRoadIdRegex){
