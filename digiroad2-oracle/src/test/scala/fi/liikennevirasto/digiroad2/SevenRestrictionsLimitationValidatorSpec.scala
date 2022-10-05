@@ -101,7 +101,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val roadLink3 = RoadLink(linkId3, Seq(Point(20.0, 0.0), Point(50.0, 0.0)), 30.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   val roadLink4 = RoadLink(linkId4, Seq(Point(50.0, 0.0), Point(70.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
   def massLimitationWithoutMatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     PostGISDatabase.withDynTransaction {
@@ -177,7 +177,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
 
       val trafficSign = PersistedTrafficSign(1, linkId2, 12, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(sevenRestrictionsAsset.service.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(linkId1,linkId2, linkId3, linkId4),false))
         .thenReturn(Seq(PersistedLinearAsset(1, linkId4, 1, Some(NumericValue(sevenRestrictionsAsset.value.toInt)), 13, 20, None, None, None, None, false, sevenRestrictionsAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
@@ -206,7 +206,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
       val roadLink3 = RoadLink(linkId3, Seq(Point(200.0, 0.0), Point(500.0, 0.0)), 30.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink4 = RoadLink(linkId4, Seq(Point(500.0, 0.0), Point(700.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(sevenRestrictionsAsset.service.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(linkId1,linkId2, linkId3, linkId4), false))
         .thenReturn(Seq(PersistedLinearAsset(1, linkId4, 1, Some(NumericValue(sevenRestrictionsAsset.value.toInt)), 121, 200, None, None, None, None, false, sevenRestrictionsAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
@@ -260,7 +260,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
 
       val trafficSign = PersistedTrafficSign(1, linkId2, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(bogieWeightLimitValidator.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(linkId1,linkId2, linkId3), false))
         .thenReturn(Seq(PersistedLinearAsset(1, linkId3, 1, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("bogie_weight_2_axel", "integer", false, Seq(DynamicPropertyValue(15000))), DynamicProperty("bogie_weight_3_axel", "integer", false, Seq(DynamicPropertyValue(16000))))))), 0.4, 9.6, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
@@ -282,7 +282,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
 
       val trafficSign = PersistedTrafficSign(1, linkId2, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
       when(bogieWeightLimitValidator.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(linkId1,linkId2, linkId3), false))
         .thenReturn(Seq(PersistedLinearAsset(1, linkId3, 1, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("bogie_weight_2_axel", "integer", false, Seq(DynamicPropertyValue(15000))), DynamicProperty("bogie_weight_3_axel", "integer", false, Seq(DynamicPropertyValue(16000))))))), 0.4, 9.6, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 

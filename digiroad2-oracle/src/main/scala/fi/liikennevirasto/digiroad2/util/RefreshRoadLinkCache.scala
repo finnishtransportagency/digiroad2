@@ -31,7 +31,7 @@ object RefreshRoadLinkCache {
 
       if (flushSuccess) {
         municipalities.foreach(municipality => {
-          roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality)
+          roadLinkService.getRoadLinksAndComplementaryLinksByMunicipality(municipality)
         })
         logger.info("Cached roadlinks with overrided properties from database")
       }

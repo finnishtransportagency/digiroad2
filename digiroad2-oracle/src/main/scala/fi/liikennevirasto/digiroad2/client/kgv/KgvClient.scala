@@ -14,9 +14,9 @@ import scala.concurrent.Future
 import scala.util.Try
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class ChangeKgv( id: Int, oldKmtkId: String, oldVersion: Int, newKmtkId: String,
-                      newVersion: Int, `type`: String, ruleId: String, cTime: DateTime,
-                      mFromOld: String, mToOld: Int, mFromNew: Int, mToNew: Int,
+case class ChangeKgv( id: Int, oldKmtkId: String, oldVersion: Int, newKmtkId: Option[String],
+                      newVersion: Option[Int], `type`: String, ruleId: Option[String], cTime: DateTime,
+                      mFromOld: Double, mToOld: Double, mFromNew: Option[Double], mToNew: Option[Double],
                       taskId: String)
 
 trait LinkOperationsAbstract {
@@ -46,7 +46,7 @@ trait LinkOperationsAbstract {
   }
 }
 
-class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvRoadLinkClientBase {
+class KgvRoadLinkClient(collection: Option[KgvCollection] = None,linkGeomSourceValue:Option[LinkGeomSource] = None) extends KgvRoadLinkClientBase(collection,linkGeomSourceValue) {
   override type LinkType = RoadLinkFetched
 }
 
@@ -130,7 +130,7 @@ class ExtractHistory extends ExtractorBase {
     val linkId = attributes("id").asInstanceOf[String]
     val municipalityCode = attributes("municipalitycode").asInstanceOf[String].toInt
     val roadClassCode = attributes("roadclass").asInstanceOf[String].toInt
-    val roadClass = featureClassCodeToFeatureClass.getOrElse(roadClassCode, FeatureClass.AllOthers)
+    val roadClass = featureClassCodeToFeatureClass(roadClassCode)
 
     val kmtkId = linkId.split(":")(0)
     val version = linkId.split(":")(1).toInt
@@ -145,21 +145,30 @@ class ExtractKgvChange extends ExtractorBase {
   override type LinkType = ChangeKgv
 
   override def extractFeature(feature: Feature, path: List[List[Double]], linkGeomSource: LinkGeomSource): LinkType  = {
-    val attributes = feature.properties
+    val attributes = feature.properties.filter{case (key, value) => value != null}
 
     ChangeKgv(
       attributes("id").toString.toInt,
       attributes("oldkmtkid").toString,
       attributes("oldversion").toString.toInt,
-      attributes("newkmtkid").toString,
-      attributes("newversion").toString.toInt,
+      attributes.get("newkmtkid").asInstanceOf[Option[String]],
+      attributes.get("newversion") match {
+        case Some(value) => Option(value.toString.toInt)
+        case None => None
+      },
       attributes("type").toString,
-      attributes("ruleid").toString,
+      attributes.get("ruleid").asInstanceOf[Option[String]],
       new DateTime(attributes("ctime").asInstanceOf[String]),
-      attributes("mfromold").toString,
-      attributes("mtoold").toString.toInt,
-      attributes("mfromnew").toString.toInt,
-      attributes("mtonew").toString.toInt,
+      attributes("mfromold").toString.toDouble,
+      attributes("mtoold").toString.toDouble,
+      attributes.get("mfromnew") match {
+        case Some(value) => Option(value.toString.toDouble)
+        case None => None
+      },
+      attributes.get("mtonew") match {
+        case Some(value) => Option(value.toString.toDouble)
+        case None => None
+      },
       attributes("taskid").toString)
   }
 }

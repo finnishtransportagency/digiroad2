@@ -54,8 +54,8 @@ object LinkIdImporter {
       "lrm_position_history", "road_link_attributes",
       "administrative_class", "traffic_direction", "inaccurate_asset",
       "functional_class", "incomplete_link", "link_type",
-      "unknown_speed_limit", "roadlink", "manoeuvre_element_history",
-      "manoeuvre_element"
+      "unknown_speed_limit", "manoeuvre_element_history",
+      "manoeuvre_element", "lane_work_list"
     )
     
     val complementaryLinks = withDynSession(sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list)
@@ -66,7 +66,6 @@ object LinkIdImporter {
 
   private def updateTable(tableName: String,complementaryLinks:List[Int] ): Unit = {
     tableName match {
-      case "roadlink" => updateTableRoadLink(tableName)
       case "manoeuvre_element_history" => updateTableManoeuvre(tableName)
       case "manoeuvre_element" => updateTableManoeuvre(tableName)
       case "lrm_position" => lrmTable(tableName)
@@ -145,12 +144,7 @@ object LinkIdImporter {
       }
     }
   }
-
-  private def updateTableRoadLink(tableName: String): Unit = {
-    val ids = withDynSession(sql"select linkid from #$tableName".as[String].list).partitionByConversion()._1.toSet
-    updateOperation(tableName,ids, "linkid")
-  }
-
+  
   private def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
     val ids = withDynSession(sql"select link_id from #${tableName}".as[String].list).partitionByConversion()._1.toSet.diff(complementaryLinks.toSet)
     updateOperation(tableName,ids, "link_id")
