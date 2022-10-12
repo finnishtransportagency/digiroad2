@@ -457,7 +457,7 @@
       {
         typeId: assetType.roadWidth,
         singleElementEventCategory: 'roadWidth',
-        multiElementEventCategory: 'roadWidth',
+        multiElementEventCategory: 'roadWidths',
         layerName: 'roadWidth',
         title: 'Leveys',
         newTitle: 'Uusi leveys',
@@ -822,7 +822,7 @@
       {
         typeId: assetType.carryingCapacity,
         singleElementEventCategory: 'carryingCapacity',
-        multiElementEventCategory: 'carryingCapacity',
+        multiElementEventCategory: 'carryingCapacities',
         layerName: 'carryingCapacity',
         title: 'Kantavuus',
         newTitle: 'Uusi Kantavuus',
