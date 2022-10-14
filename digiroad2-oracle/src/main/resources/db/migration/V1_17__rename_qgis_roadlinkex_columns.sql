@@ -1,0 +1,9 @@
+ALTER TABLE qgis_roadlinkex RENAME COLUMN sourceinfo to datasource;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN mtkclass to roadclass;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN roadname_fi to roadnamefin;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN roadname_se to roadnameswe;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN constructiontype to lifecyclestatus;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN verticallevel to surfacerelation;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN geometrylength to horizontallength;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN created_date to starttime;
+ALTER TABLE qgis_roadlinkex RENAME COLUMN last_edited_date to versionstarttime;
