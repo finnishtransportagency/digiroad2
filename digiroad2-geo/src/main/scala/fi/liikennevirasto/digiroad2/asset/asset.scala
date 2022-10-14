@@ -53,7 +53,7 @@ object LinkType {
   val values = Set(Motorway, MultipleCarriageway, SingleCarriageway, Freeway, Roundabout, SlipRoad,
                    RestArea, CycleOrPedestrianPath, PedestrianZone, ServiceOrEmergencyRoad, EnclosedTrafficArea,
                    TractorRoad, ServiceAccess, CableFerry, SpecialTransportWithoutGate, SpecialTransportWithGate,
-                   HardShoulder, UnknownLinkType)
+                   HardShoulder, BidirectionalLaneCarriageWay, UnknownLinkType)
 
   def apply(value: Int): LinkType = {
     values.find(_.value == value).getOrElse(UnknownLinkType)
