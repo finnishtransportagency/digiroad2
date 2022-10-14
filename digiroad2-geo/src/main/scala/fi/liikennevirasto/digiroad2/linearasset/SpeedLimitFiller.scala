@@ -83,7 +83,7 @@ object SpeedLimitFiller {
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
 
-  private def adjustLopsidedLimit(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  def adjustLopsidedLimit(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val onlyLimitOnLink = segments.length == 1 && segments.head.sideCode != SideCode.BothDirections
     if (onlyLimitOnLink) {
       val segment = segments.head
@@ -417,7 +417,7 @@ object SpeedLimitFiller {
     * @param changeSet
     * @return
     */
-  private def clean(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  def clean(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     /**
       * Remove adjustments that were overwritten later (new version appears later in the sequence)
       * @param adj list of adjustments

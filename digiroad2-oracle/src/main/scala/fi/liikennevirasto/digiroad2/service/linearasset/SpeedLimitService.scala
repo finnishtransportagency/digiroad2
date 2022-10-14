@@ -232,6 +232,19 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     val speedLimits = (speedLimitLinks).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
+    val filledTopology = adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, speedLimits)
+    (filledTopology, roadLinksByLinkId)
+  }
+
+  def adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]]): Seq[SpeedLimit] = {
+    val adjustmentOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
+      SpeedLimitFiller.combine,
+      SpeedLimitFiller.fuse,
+      SpeedLimitFiller.adjustLopsidedLimit,
+      SpeedLimitFiller.dropShortLimits,
+      SpeedLimitFiller.fillHoles,
+      SpeedLimitFiller.clean)
+
     val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
       expiredAssetIds = Set.empty[Long],
       adjustedMValues = Seq.empty[MValueAdjustment],
@@ -239,14 +252,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
 
-    val adjustmentOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
-      SpeedLimitFiller.combine,
-      SpeedLimitFiller.fuse,
-      SpeedLimitFiller.dropShortLimits,
-      SpeedLimitFiller.fillHoles)
-
-    val (filledTopology, adjustmentsChangeSet) = roadLinksFiltered.foldLeft(Seq.empty[SpeedLimit], changeSet) { case (acc, roadLink) =>
-      val (existingSegments, changeSet) = acc
+    val (filledTopology, adjustmentsChangeSet) = roadLinksFiltered.foldLeft(Seq.empty[SpeedLimit], changeSet) { case ((existingSegments, changeSet), roadLink) =>
       val currentSegments = speedLimits.getOrElse(roadLink.linkId, Nil)
       val validSegments = currentSegments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
       val (adjustedSegments, segmentAdjustments) = adjustmentOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
@@ -258,9 +264,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
 
     speedLimitUpdater.updateChangeSet(adjustmentsChangeSet)
-    (filledTopology, roadLinksByLinkId)
+    filledTopology
   }
-
 
   def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
     existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.timeStamp)}
