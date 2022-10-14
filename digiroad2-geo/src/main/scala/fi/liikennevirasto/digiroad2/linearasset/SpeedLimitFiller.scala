@@ -116,7 +116,7 @@ object SpeedLimitFiller {
     }
   }
 
-  private def dropShortLimits(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  def dropShortLimits(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MinAllowedSpeedLimitLength &&
       roadLink.length > MinAllowedSpeedLimitLength }.map(_.id).toSet
     val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
@@ -160,7 +160,7 @@ object SpeedLimitFiller {
     * @param changeSet Original changeset
     * @return Sequence of SpeedLimits and ChangeSet containing the changes done here
     */
-  private def combine(roadLink: RoadLink, limits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  def combine(roadLink: RoadLink, limits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: SpeedLimit, pseudoId: Long) = {
       asset.id match {
@@ -320,7 +320,7 @@ object SpeedLimitFiller {
     * @param changeSet Changes done previously
     * @return List of speed limits and a change set
     */
-  private def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+   def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val sortedList = speedLimits.sortBy(_.startMeasure)
     if (speedLimits.nonEmpty) {
       val origin = sortedList.head
@@ -357,7 +357,7 @@ object SpeedLimitFiller {
     * @param changeSet Set of changes
     * @return List of speed limits and change set so that there are no small gaps between speed limits
     */
-  private def fillHoles(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  def fillHoles(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     def firstAndLastLimit(speedLimits: Seq[SpeedLimit], sideCode: SideCode) = {
       val filtered = speedLimits.filter(_.sideCode == sideCode)
       (filtered.sortBy(_.startMeasure).headOption,

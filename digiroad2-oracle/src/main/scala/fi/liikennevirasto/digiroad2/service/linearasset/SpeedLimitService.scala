@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.speedLimitUpdater
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -231,11 +232,32 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     val speedLimits = (speedLimitLinks).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-    val filledTopology = roadLinksFiltered.foldLeft(Seq.empty[SpeedLimit]) { case (existingSegments, roadLink) =>
+    val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
+      expiredAssetIds = Set.empty[Long],
+      adjustedMValues = Seq.empty[MValueAdjustment],
+      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+      valueAdjustments = Seq.empty[ValueAdjustment])
+
+    val adjustmentOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
+      SpeedLimitFiller.combine,
+      SpeedLimitFiller.fuse,
+      SpeedLimitFiller.dropShortLimits,
+      SpeedLimitFiller.fillHoles)
+
+    val (filledTopology, adjustmentsChangeSet) = roadLinksFiltered.foldLeft(Seq.empty[SpeedLimit], changeSet) { case (acc, roadLink) =>
+      val (existingSegments, changeSet) = acc
       val currentSegments = speedLimits.getOrElse(roadLink.linkId, Nil)
+      val validSegments = currentSegments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
+      val (adjustedSegments, segmentAdjustments) = adjustmentOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+
       val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, currentSegments)
-      existingSegments ++ currentSegments ++ generatedSpeedLimits
+      (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
     }
+
+    speedLimitUpdater.updateChangeSet(adjustmentsChangeSet)
     (filledTopology, roadLinksByLinkId)
   }
 
