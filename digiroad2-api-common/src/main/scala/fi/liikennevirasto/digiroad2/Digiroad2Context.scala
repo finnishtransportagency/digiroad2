@@ -1,33 +1,30 @@
 package fi.liikennevirasto.digiroad2
 
-import java.util.Properties
-import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPointMassLimitationDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
-import fi.liikennevirasto.digiroad2.lane.{LaneFiller, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
-import fi.liikennevirasto.digiroad2.middleware.{CsvDataExporterInfo, CsvDataImporterInfo, DataExportManager, DataImportManager, TrafficSignManager}
+import fi.liikennevirasto.digiroad2.linearasset.UnknownSpeedLimit
+import fi.liikennevirasto.digiroad2.middleware._
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
+import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.lane.LaneService
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearTotalWeightLimitService, _}
+import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, JsonSerializer}
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform, JsonSerializer}
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
 
@@ -191,6 +188,14 @@ class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSig
   }
 }
 
+class LaneWorkListInsertItem(laneWorkListService: LaneWorkListService) extends Actor {
+  def receive = {
+    case linkPropertyChange: LinkPropertyChange =>
+      laneWorkListService.insertToLaneWorkList(linkPropertyChange)
+    case _ => println("LaneWorkListInsertItem: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -232,6 +237,9 @@ object Digiroad2Context {
 
   val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
+
+  val laneWorkListInsert = system.actorOf(Props(classOf[LaneWorkListInsertItem], laneWorkListService), name = "laneWorkListInsert")
+  eventbus.subscribe(laneWorkListInsert, "laneWorkList:insert")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
@@ -448,6 +456,10 @@ object Digiroad2Context {
 
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, eventbus)
+  }
+
+  lazy val laneWorkListService: LaneWorkListService = {
+    new LaneWorkListService()
   }
 
   lazy val manoeuvreService = {

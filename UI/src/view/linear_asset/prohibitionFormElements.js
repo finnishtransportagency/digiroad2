@@ -142,7 +142,7 @@
         function typeElement() {
           var optionTags = _.map(prohibitionValues, function (prohibitionValue) {
             var selected = prohibition.typeId === prohibitionValue.typeId ? 'selected' : '';
-            return '<option value="' + prohibitionValue.typeId + '" data-value="' + prohibitionValue.title + '" ' + selected + '>' + prohibitionValue.title + '</option>';
+            return '<option value="' + prohibitionValue.typeId + '" data-value="' + TextUtils.toDataValue(prohibitionValue.title) + '" ' + selected + '>' + prohibitionValue.title + '</option>';
           }).join('');
           return '' +
             '<div class="form-group prohibition-type">' +
@@ -273,7 +273,7 @@
         var elements = _.map(exceptionValues, function (exceptionValue) {
           var selected = exception && (exception === exceptionValue.typeId) ? 'selected' : '';
           return '' +
-            '<option value="' + exceptionValue.typeId + '" data-value="' + exceptionValue.title + '" ' + selected + '>' +
+            '<option value="' + exceptionValue.typeId + '" data-value="' + TextUtils.toDataValue(exceptionValue.title) + '" ' + selected + '>' +
             exceptionValue.title +
             '</option>';
         });
@@ -318,7 +318,7 @@
 
       function newProhibitionElement() {
         var optionTags = _.map(prohibitionValues, function (prohibitionValue) {
-          return '<option value="' + prohibitionValue.typeId + '" data-value="' + prohibitionValue.title + '">' + prohibitionValue.title + '</option>';
+          return '<option value="' + prohibitionValue.typeId + '" data-value="' + TextUtils.toDataValue(prohibitionValue.title) + '">' + prohibitionValue.title + '</option>';
         }).join('');
         return '' +
           '<li><div class="form-group new-prohibition">' +

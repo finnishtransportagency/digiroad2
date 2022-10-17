@@ -30,7 +30,7 @@ class CsvGenerator(vvhServiceHost: String) {
     }
 
     val groupedManoeuvres = manoeuvres.groupBy(_._1)
-    val roadLinksWithProperties = roadLinkService.getRoadLinksByLinkIdsFromVVH(manoeuvres.map(_._4).toSet)
+    val roadLinksWithProperties = roadLinkService.getRoadLinksByLinkIds(manoeuvres.map(_._4).toSet)
     val roadLinksByLinkId = roadLinksWithProperties.groupBy(_.linkId).mapValues(_.head)
     val roadLinkIds = roadLinksWithProperties.map(_.linkId).toSet
     val (manoeuvresWithIntactLinks, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkIds.contains(row._4)) }
@@ -107,7 +107,7 @@ class CsvGenerator(vvhServiceHost: String) {
     }
     println(s"*** fetched prohibitions of type ID $assetTypeId from DB in $elapsedTime seconds")
 
-    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.linkId)
+    val existingLinkIds = roadLinkService.fetchRoadlinksByIds(limits.map(_._1).toSet).map(_.linkId)
     println(s"*** fetched all road links from VVH in $elapsedTime seconds")
 
     val nonExistingLimits = limits.filter { limit => !existingLinkIds.contains(limit._1) }
@@ -205,11 +205,8 @@ class CsvGenerator(vvhServiceHost: String) {
     println(s"*** fetched all $assetName from DB in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
-    def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
-      attributes("MTKID").asInstanceOf[String]
-    }
     val assetLinkIds = limits.map(_._1)
-    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
+    val existingLinkIds = roadLinkService.fetchRoadlinksByIds(assetLinkIds)
     println(s"*** fetched associated road links from VVH in ${Seconds.secondsBetween(startTime, DateTime.now()).getSeconds} seconds")
     logMemoryStatistics(runtime)
 
@@ -241,11 +238,8 @@ class CsvGenerator(vvhServiceHost: String) {
     println("*** fetched all " + assetName + " from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
-    def linkIdFromFeature(attributes: Map[String, Any], geometry: List[List[Double]]) = {
-      attributes("MTKID").asInstanceOf[String]
-    }
     val assetLinkIds = limits.map(_._1).toSet
-    val existingLinkIds = roadLinkService.fetchVVHRoadlinks(assetLinkIds, Some("MTKID"), false, linkIdFromFeature).toSet
+    val existingLinkIds = roadLinkService.fetchRoadlinksByIds(assetLinkIds)
     println("*** fetched associated road links from VVH " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
     logMemoryStatistics(runtime)
 
