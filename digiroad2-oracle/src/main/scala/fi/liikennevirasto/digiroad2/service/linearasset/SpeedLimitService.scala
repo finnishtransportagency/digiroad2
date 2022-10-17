@@ -264,7 +264,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
 
     speedLimitUpdater.updateChangeSet(adjustmentsChangeSet)
-    filledTopology
+    if(adjustmentsChangeSet.isEmpty) filledTopology
+    else adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, filledTopology.groupBy(_.linkId))
   }
 
   def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {

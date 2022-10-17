@@ -12,5 +12,14 @@ object LinearAssetFiller {
                        adjustedVVHChanges: Seq[VVHChangesAdjustment],
                        adjustedSideCodes: Seq[SideCodeAdjustment],
                        expiredAssetIds: Set[Long],
-                       valueAdjustments: Seq[ValueAdjustment])
+                       valueAdjustments: Seq[ValueAdjustment]){
+    def isEmpty: Boolean = {
+      this.droppedAssetIds.isEmpty &&
+        this.adjustedMValues.isEmpty &&
+        this.adjustedVVHChanges.isEmpty &&
+        this.adjustedSideCodes.isEmpty &&
+        this.expiredAssetIds.isEmpty &&
+        this.valueAdjustments.isEmpty
+    }
+  }
 }
