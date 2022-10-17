@@ -89,8 +89,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockUserProvider.getUsers()).thenReturn(users)
       when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesList)
 
-      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
-      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
 
       when(mockAssetReporterDAO.linearAssetQuery(Seq(linkId1), Seq(130))).thenReturn(assetReportsList1)
       when(mockAssetReporterDAO.linearAssetQuery(Seq(linkId2), Seq(130))).thenReturn(assetReportsList2)
@@ -130,8 +130,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockUserProvider.getUsers()).thenReturn(users)
       when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfoList)
 
-      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
-      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
+      when(mockRoadLinkService.getRoadLinksByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
 
       when(mockAssetReporterDAO.pointAssetQuery(Seq(linkId1), Seq(300))).thenReturn(assetReportsList1)
       when(mockAssetReporterDAO.pointAssetQuery(Seq(linkId2), Seq(300))).thenReturn(assetReportsList2)

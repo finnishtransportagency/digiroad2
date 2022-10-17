@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesFromVVHWithPolygon}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesWithPolygon}
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{laneService, roadAddressService, roadLinkService}
 import fi.liikennevirasto.digiroad2.client.{AddrWithIdentifier, VKMClient}
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getLaneRoadIdentifierByUsingViiteRoadNumber, getStartingLanes}
@@ -102,7 +102,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
+    val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
     val lanes = laneService.getLanesByRoadLinks(roadLinks)
 
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(_.attributes.contains("ROAD_NUMBER"))
@@ -146,7 +146,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val coordinatesAndIdentifiers = roadAddressesSplit.flatMap(roadAddressGroup => vkmClient.addressToCoordsMassQuery(roadAddressGroup))
       val polygon = polygonTools.createPolygonFromCoordinates(coordinatesAndIdentifiers)
 
-      val roadLinks = getRoadLinksAndChangesFromVVHWithPolygon(polygon)._1
+      val roadLinks = getRoadLinksAndChangesWithPolygon(polygon)._1
       val roadLinksWithRoadAddress = roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
 
       val correctLinks = roadLinksWithRoadAddress.filter(roadLink => roadLink.attributes("ROAD_NUMBER") == params.roadNumber

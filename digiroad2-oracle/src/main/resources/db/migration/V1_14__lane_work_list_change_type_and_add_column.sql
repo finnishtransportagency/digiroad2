@@ -1,0 +1,2 @@
+ALTER TABLE lane_work_list ALTER COLUMN link_id TYPE VARCHAR(40);
+ALTER TABLE lane_work_list ADD COLUMN vvh_id NUMERIC(38);

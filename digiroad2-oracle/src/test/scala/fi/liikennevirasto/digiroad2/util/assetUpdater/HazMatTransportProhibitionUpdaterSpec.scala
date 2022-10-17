@@ -48,13 +48,13 @@ class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers{
     val change = Seq(ChangeInfo(Some(oldRoadLinkId), Some(newRoadLinkId), 12345, DividedNewPart.value, Some(0), Some(10), Some(0), Some(10), 144000000))
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(oldRoadLinkId), false)).thenReturn(Seq(oldRoadLink))
       val id = service.createWithoutTransaction(HazmatTransportProhibition.typeId, oldRoadLinkId, Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty))),
         1, Measures(0, 20), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val assetsBefore = service.getPersistedAssetsByIds(HazmatTransportProhibition.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.foreach(asset => asset.expired should be(false))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(newRoadLinkId), false)).thenReturn(Seq(newRoadLink))
       TestHazMatProhibitionUpdater.updateByRoadLinks(HazmatTransportProhibition.typeId, 1, Seq(newRoadLink), change)
       val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(HazmatTransportProhibition.typeId, Seq(oldRoadLinkId, newRoadLinkId), LinearAssetTypes.getValuePropertyId(HazmatTransportProhibition.typeId), true)
       val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)

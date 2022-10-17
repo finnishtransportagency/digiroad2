@@ -137,6 +137,7 @@
     new SuggestedAssetsWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();
+    new LaneWorkList().initialize(backend);
     new PrivateRoadsWorkList().initialize(backend);
     new CsvReportsWorkList().initialize(backend);
     new UserNotificationPopup(models.userNotificationCollection).initialize();
@@ -469,13 +470,6 @@
     return _(groupedPointAssets).find({ layerName: layerName }).selectedPointAsset;
   }
 
-  //Used to check if we are on prod environment, for now we hide Lane Modelling Tool in prod
-  function isProduction()  {
-    var url = window.location.href.split('/');
-    var urlParts = _.filter(url, function(urlPart) { return !_.isEmpty(urlPart); });
-    return urlParts[1] === 'digiroad.vaylapilvi.fi' || urlParts[1] === 'extranet.vayla.fi';
-  }
-
   function groupLinearAssets(assetConfiguration,
                        linearAssets,
                        linkPropertiesModel,
@@ -495,7 +489,7 @@
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
     var cyclingAndWalking = new CyclingAndWalkingBox(_.find(linearAssets, {typeId: assetType.cyclingAndWalking}));
-    var laneModellingBox = !isProduction() ? new LaneModellingBox(_.find(linearAssets, {typeId: assetType.laneModellingTool})) : [];
+    var laneModellingBox = new LaneModellingBox(_.find(linearAssets, {typeId: assetType.laneModellingTool}));
     return [
       [roadLinkBox]
           .concat(laneModellingBox)
