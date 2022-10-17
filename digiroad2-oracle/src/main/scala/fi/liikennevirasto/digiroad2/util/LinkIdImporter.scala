@@ -58,25 +58,24 @@ object LinkIdImporter {
       "manoeuvre_element", "lane_work_list"
     )
     
-    val complementaryLinks = withDynSession(sql"""select linkid from roadlinkex where subtype = 3""".as[Int].list)
     time(logger, s"Changing vvh id into kmtk id ") {
-      new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable(_,complementaryLinks)) }
+      new Parallel().operation(tableNames.par, tableNames.size+1) {_.foreach(updateTable) }
     }
   }
 
-  private def updateTable(tableName: String,complementaryLinks:List[Int] ): Unit = {
+  private def updateTable(tableName: String): Unit = {
     tableName match {
       case "manoeuvre_element_history" => updateTableManoeuvre(tableName)
       case "manoeuvre_element" => updateTableManoeuvre(tableName)
       case "lrm_position" => lrmTable(tableName)
-      case _ => regularTable(tableName,complementaryLinks)
+      case _ => regularTable(tableName)
     }
   }
 
   private def updateTableSQL(linkIdColumn: String, tableName: String): String = {
     s"""UPDATE $tableName SET
        | vvh_id = ?,
-       | $linkIdColumn = (select id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ? )
+       | $linkIdColumn = COALESCE((select id FROM frozenlinks_vastintaulu_csv WHERE vvh_linkid = ?), (SELECT linkid FROM qgis_roadlinkex WHERE vvh_id = ?) )
        | WHERE $linkIdColumn = ? """.stripMargin
   }
   
@@ -111,7 +110,8 @@ object LinkIdImporter {
   private def updateTableRow(statement: PreparedStatement, id: Int): Unit = {
     statement.setInt(1, id)
     statement.setInt(2, id)
-    statement.setString(3, id.toString)
+    statement.setInt(3, id)
+    statement.setString(4, id.toString)
     statement.addBatch()
   }
 
@@ -145,14 +145,15 @@ object LinkIdImporter {
     }
   }
   
-  private def regularTable(tableName: String,complementaryLinks:List[Int]): Unit = {
-    val ids = withDynSession(sql"select link_id from #${tableName}".as[String].list).partitionByConversion()._1.toSet.diff(complementaryLinks.toSet)
+  private def regularTable(tableName: String): Unit = {
+    val ids = withDynSession(sql"select link_id from #${tableName}".as[String].list).partitionByConversion()._1.toSet
     updateOperation(tableName,ids, "link_id")
   }
   
   private def lrmTable(tableName: String): Unit = {
     val ids = withDynSession(
-      sql"""select link_id from #${tableName} where link_source in (#${LinkGeomSource.NormalLinkInterface.value})
+      sql"""select link_id from #${tableName}
+            where link_source in (#${LinkGeomSource.NormalLinkInterface.value}, #${LinkGeomSource.ComplimentaryLinkInterface.value})
            """.as[String].list).partitionByConversion()._1.toSet
       updateOperation(tableName,ids, "link_id")
   }
