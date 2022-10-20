@@ -37,9 +37,10 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       }.filterNot(_.expired)
 
     val groupedAssets = existingAssets.groupBy(_.linkId)
-    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(roadLinks, groupedAssets, typeId)
-
-    filledTopology
+    val adjustedAssets = withDynTransaction {
+      adjustLinearAssets(roadLinks, groupedAssets, typeId)
+    }
+    adjustedAssets
   }
 
   def getPavedRoadAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],

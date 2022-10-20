@@ -124,9 +124,10 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       }
 
     val groupedAssets = existingAssets.groupBy(_.linkId)
-    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(roadLinks, groupedAssets, typeId)
-
-    filledTopology
+    val adjustedAssets = withDynTransaction {
+      adjustLinearAssets(roadLinks, groupedAssets, typeId)
+    }
+    adjustedAssets
   }
 
   def getPotencialServiceAssets: Seq[PersistedLinearAsset] = {

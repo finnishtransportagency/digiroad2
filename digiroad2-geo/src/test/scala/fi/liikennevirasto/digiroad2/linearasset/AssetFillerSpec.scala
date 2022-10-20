@@ -20,19 +20,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
   val (linkId1, linkId2, linkId3) = (generateRandomLinkId(), generateRandomLinkId(), generateRandomLinkId())
 
-  test("create non-existent linear assets on empty road links") {
-    val topology = Seq(
-      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-        1, TrafficDirection.BothDirections, Motorway, None, None))
-    val linearAssets = Map.empty[String, Seq[PersistedLinearAsset]]
-    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(topology, linearAssets, 30)
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.map(_.value) should be(Seq(None))
-    filledTopology.map(_.id) should be(Seq(0))
-    filledTopology.map(_.linkId) should be(Seq(linkId1))
-    filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-  }
 
   test("expire assets that fall completely outside topology") {
     val topology = Seq(

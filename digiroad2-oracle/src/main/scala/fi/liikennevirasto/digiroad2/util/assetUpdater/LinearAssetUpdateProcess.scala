@@ -29,6 +29,18 @@ object LinearAssetUpdateProcess {
     typeId match {
       case EuropeanRoads.typeId | ExitNumbers.typeId => new TextValueLinearAssetService(roadLinkService, eventbus)
       case NumberOfLanes.typeId => new NumberOfLanesService(roadLinkService, eventbus)
+      case HeightLimit.typeId => new LinearHeightLimitService(roadLinkService, eventbus)
+      case LengthLimit.typeId => new LinearLengthLimitService(roadLinkService, eventbus)
+      case WidthLimit.typeId => new LinearWidthLimitService(roadLinkService, eventbus)
+      case TotalWeightLimit.typeId => new LinearTotalWeightLimitService(roadLinkService, eventbus)
+      case TrailerTruckWeightLimit.typeId => new LinearTrailerTruckWeightLimitService(roadLinkService, eventbus)
+      case AxleWeightLimit.typeId => new LinearAxleWeightLimitService(roadLinkService, eventbus)
+      case BogieWeightLimit.typeId => new LinearBogieWeightLimitService(roadLinkService, eventbus)
+      case MassTransitLane.typeId => new MassTransitLaneService(roadLinkService, eventbus)
+      case DamagedByThaw.typeId => new DamagedByThawService(roadLinkService, eventbus)
+      case RoadWorksAsset.typeId => new RoadWorkService(roadLinkService, eventbus)
+      case ParkingProhibition.typeId => new ParkingProhibitionService(roadLinkService, eventbus)
+      case CyclingAndWalking.typeId => new CyclingAndWalkingService(roadLinkService, eventbus)
       case _ => linearAssetService
     }
   }

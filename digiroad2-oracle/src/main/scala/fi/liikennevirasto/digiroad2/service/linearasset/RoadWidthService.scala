@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.linearAssetUpdater
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 
 class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -23,18 +24,16 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
-
     val linkIds = roadLinks.map(_.linkId)
-
     val existingAssets =
       withDynTransaction {
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds)
       }
-
     val groupedAssets = existingAssets.groupBy(_.linkId)
-    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(roadLinks, groupedAssets, typeId)
-
-    filledTopology
+    val adjustedAssets = withDynTransaction {
+      adjustLinearAssets(roadLinks, groupedAssets, typeId)
+    }
+    adjustedAssets
   }
 
   def getRoadWidthAssetChanges(linearAssets: Seq[PersistedLinearAsset], projectedAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo],
