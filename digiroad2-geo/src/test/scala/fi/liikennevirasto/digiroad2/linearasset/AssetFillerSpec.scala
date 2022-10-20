@@ -7,8 +7,9 @@ import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.Motorcycle
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
 import org.scalatest._
+
 import java.util.UUID
 import scala.util.Random
 
@@ -20,6 +21,27 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
   val (linkId1, linkId2, linkId3) = (generateRandomLinkId(), generateRandomLinkId(), generateRandomLinkId())
 
+  test("create non-existent linear assets on empty road links") {
+    val topology = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None))
+    val changeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
+      expiredAssetIds = Set.empty[Long],
+      adjustedMValues = Seq.empty[MValueAdjustment],
+      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+      valueAdjustments = Seq.empty[ValueAdjustment])
+    val linearAssets = Map.empty[String, Seq[PersistedLinearAsset]]
+    val adjustedAssets = assetFiller.adjustAssets(topology, changeSet, linearAssets, 30)._1
+    val filledTopology = assetFiller.toLinearAsset(adjustedAssets, topology.head)
+
+    filledTopology should have size 1
+    filledTopology.map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.map(_.value) should be(Seq(None))
+    filledTopology.map(_.id) should be(Seq(0))
+    filledTopology.map(_.linkId) should be(Seq(linkId1))
+    filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+  }
 
   test("expire assets that fall completely outside topology") {
     val topology = Seq(
