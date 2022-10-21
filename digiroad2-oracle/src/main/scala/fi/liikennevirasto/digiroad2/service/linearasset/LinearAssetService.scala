@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.linearAssetUpdater
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getAssetUpdater, linearAssetUpdater}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -235,14 +235,16 @@ trait LinearAssetOperations {
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
     val groupedAssets = existingAssets.groupBy(_.linkId)
     val adjustedAssets = withDynTransaction {
-      adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId){
+        adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      }
     }
     adjustedAssets
   }
 
 
   def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]], typeId: Int): Seq[PieceWiseLinearAsset] = {
-    val assetUpdater = linearAssetUpdater(typeId)
+    val assetUpdater = getAssetUpdater(typeId)
 
     val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
       expiredAssetIds = Set.empty[Long],
@@ -251,17 +253,14 @@ trait LinearAssetOperations {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
 
-    val (filledTopology, adjustmentsChangeSet) = assetFiller.adjustAssets(roadLinks, changeSet, linearAssets, typeId)
-    assetUpdater.updateChangeSet(adjustmentsChangeSet)
-    val mappedTopology = filledTopology.groupBy(_.linkId)
+    val (filledTopology, adjustmentsChangeSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, Some(changeSet), false)
     if(adjustmentsChangeSet.isEmpty) {
-      mappedTopology.flatMap(pair => {
-        val (linkId, assets) = pair
-        val roadLink = roadLinks.find(_.linkId == linkId).get
-        assetFiller.toLinearAsset(assets, roadLink)
-      }).toSeq
+      assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
     }
-    else adjustLinearAssets(roadLinks, mappedTopology, typeId)
+    else {
+      assetUpdater.updateChangeSet(adjustmentsChangeSet)
+      adjustLinearAssets(roadLinks, filledTopology.groupBy(_.linkId), typeId)
+    }
 
   }
 

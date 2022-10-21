@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 
 class ProhibitionCreationException(val response: Set[String]) extends RuntimeException {}
@@ -64,7 +64,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     val groupedAssets = existingAssets.groupBy(_.linkId)
     val adjustedAssets = withDynTransaction {
-      adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
+        adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      }
     }
     adjustedAssets
   }

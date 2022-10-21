@@ -72,7 +72,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
 
-    val adjustedAssets = oneWayAssetFiller.adjustAssets(topology, changeSet, linearAssets, 110)._1
+    val adjustedAssets = oneWayAssetFiller.fillTopology(topology, linearAssets, 110, Some(changeSet), false)._1
     val filledTopology = oneWayAssetFiller.toLinearAsset(adjustedAssets, topology.head)
 
     filledTopology should have size 2

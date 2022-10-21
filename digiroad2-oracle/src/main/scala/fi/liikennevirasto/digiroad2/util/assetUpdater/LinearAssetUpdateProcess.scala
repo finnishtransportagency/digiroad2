@@ -67,6 +67,17 @@ object LinearAssetUpdateProcess {
 
   def linearAssetUpdater(typeId: Int) = new LinearAssetUpdater(getLinearAssetService(typeId))
 
+  def getAssetUpdater(typeId: Int): LinearAssetUpdater = {
+    typeId match {
+      case MaintenanceRoadAsset.typeId => maintenanceRoadUpdater
+      case PavedRoad.typeId => pavedRoadUpdater
+      case Prohibition.typeId => prohibitionUpdater
+      case HazmatTransportProhibition.typeId => hazMatTransportProhibitionUpdater
+      case RoadWidth.typeId => roadWidthUpdater
+      case _ => linearAssetUpdater(typeId)
+    }
+  }
+
   lazy val maintenanceRoadUpdater = new MaintenanceRoadUpdater(maintenanceService)
   lazy val pavedRoadUpdater = new PavedRoadUpdater(pavedRoadService)
   lazy val prohibitionUpdater = new ProhibitionUpdater(prohibitionService)

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISMaintenanceDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.PolygonTools
+import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import org.joda.time.DateTime
@@ -125,7 +125,9 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     val groupedAssets = existingAssets.groupBy(_.linkId)
     val adjustedAssets = withDynTransaction {
-      adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
+        adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      }
     }
     adjustedAssets
   }
@@ -140,14 +142,16 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linearAssets.map(_.linkId).toSet)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
-    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val pieceWiseFilledTopology = assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+    LinearAssetPartitioner.partition(pieceWiseFilledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIds(linearAssets.map(_.linkId).toSet)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
-    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val pieceWiseFilledTopology = assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+    LinearAssetPartitioner.partition(pieceWiseFilledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={

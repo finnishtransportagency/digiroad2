@@ -32,7 +32,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
     val linearAssets = Map.empty[String, Seq[PersistedLinearAsset]]
-    val adjustedAssets = assetFiller.adjustAssets(topology, changeSet, linearAssets, 30)._1
+    val adjustedAssets = assetFiller.fillTopology(topology, linearAssets, 30, Some(changeSet), false)._1
     val filledTopology = assetFiller.toLinearAsset(adjustedAssets, topology.head)
 
     filledTopology should have size 1
@@ -63,7 +63,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(
       linkId1 -> Seq(PersistedLinearAsset(1l, linkId1, 1, Some(NumericValue(1)), 0.0, 15.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
+    val (persistedLinearAssets, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
+    val filledTopology = assetFiller.toLinearAssetsOnMultipleLinks(persistedLinearAssets, topology)
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
@@ -115,8 +116,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(
       linkId1 -> Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
-
+    val (persistedFilledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
+    val filledTopology = assetFiller.toLinearAssetsOnMultipleLinks(persistedFilledTopology, topology)
     filledTopology should have size 1
 
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(BothDirections))

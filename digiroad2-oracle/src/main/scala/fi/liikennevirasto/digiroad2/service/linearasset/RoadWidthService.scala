@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, Post
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.PolygonTools
+import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.linearAssetUpdater
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 
@@ -31,7 +31,9 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       }
     val groupedAssets = existingAssets.groupBy(_.linkId)
     val adjustedAssets = withDynTransaction {
-      adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
+        adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      }
     }
     adjustedAssets
   }

@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.speedLimitUpdater
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -232,7 +232,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     val speedLimits = (speedLimitLinks).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-    val filledTopology = adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, speedLimits)
+    val filledTopology = LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + SpeedLimitAsset.typeId) {
+        adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, speedLimits)
+      }
     (filledTopology, roadLinksByLinkId)
   }
 
@@ -263,9 +265,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
     }
 
-    speedLimitUpdater.updateChangeSet(adjustmentsChangeSet)
-    if(adjustmentsChangeSet.isEmpty) filledTopology
-    else adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, filledTopology.groupBy(_.linkId))
+    val generatedFilteredFromChangeSet = adjustmentsChangeSet.filterGeneratedAssets
+    if(generatedFilteredFromChangeSet.isEmpty) filledTopology
+    else {
+      speedLimitUpdater.updateChangeSet(generatedFilteredFromChangeSet)
+      adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, filledTopology.groupBy(_.linkId))
+    }
   }
 
   def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
