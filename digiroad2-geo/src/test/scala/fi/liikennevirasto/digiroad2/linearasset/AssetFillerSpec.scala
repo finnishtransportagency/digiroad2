@@ -98,9 +98,9 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     filledTopology should have size 2
 
-    filledTopology.filter(_.linkId == linkId2).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.linkId == linkId2).map(_.sideCode) should be(Seq(BothDirections.value))
 
-    filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections.value))
     filledTopology.filter(_.id == 1l).map(_.linkId) should be(Seq(linkId1))
 
     changeSet.adjustedSideCodes should be(Seq(
@@ -304,7 +304,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 140)
     filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections.value))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
     filledTopology.map(_.typeId) should be(List(140))
     filledTopology.map(_.startMeasure) should be(List(0.0))
@@ -327,7 +327,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
     filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections.value))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
     filledTopology.map(_.createdBy) should be(Seq(Some("guy")))
     filledTopology.map(_.typeId) should be(List(140))

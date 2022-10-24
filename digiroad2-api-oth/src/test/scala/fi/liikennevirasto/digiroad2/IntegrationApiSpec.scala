@@ -362,7 +362,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testDynamicLinearAssetService.create(Seq(NewLinearAsset(linkId, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None)),
+      testDynamicLinearAssetService.create(Seq(NewLinearAsset(linkId, 0, 150, careClassValue, SideCode.BothDirections.value, 0, None)),
         CareClass.typeId, "test", 0)
       val linearAssetFromApi = integrationApi.linearAssetsToApi(CareClass.typeId, 235).head
       val (assetSideCode, assetValue) = (linearAssetFromApi.get("side_code").get, linearAssetFromApi.get("value").get)
@@ -381,7 +381,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testBogieWeightLimitService.create(Seq(NewLinearAsset(linkId, 0, 150, bogieWeightValue, SideCode.AgainstDigitizing.value, 0, None)), BogieWeightLimit.typeId, "test", 0)
+      testBogieWeightLimitService.create(Seq(NewLinearAsset(linkId, 0, 150, bogieWeightValue, SideCode.BothDirections.value, 0, None)), BogieWeightLimit.typeId, "test", 0)
       val twoAxelBogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("twoAxelValue").get
       twoAxelBogieWeightLimit.isInstanceOf[Int] should be(true)
       val threeAxelBogieWeightLimit = integrationApi.bogieWeightLimitsToApi(235).head.get("threeAxelValue").get
@@ -396,7 +396,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
 
     runWithRollback {
-      testDamagedByThawService.create(Seq(NewLinearAsset(linkId, 0, 150, damagedByThawValues, SideCode.AgainstDigitizing.value, 0, None)), DamagedByThaw.typeId, "test", 0)
+      testDamagedByThawService.create(Seq(NewLinearAsset(linkId, 0, 150, damagedByThawValues, SideCode.BothDirections.value, 0, None)), DamagedByThaw.typeId, "test", 0)
       val damagedByThawFromApi = integrationApi.damagedByThawToApi(235).head
       val (annualRepetition, value) = (damagedByThawFromApi.get("annual_repetition").get, damagedByThawFromApi.get("value").get)
       annualRepetition.isInstanceOf[Int] should be(true)
