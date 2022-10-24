@@ -45,12 +45,12 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(0L))
-    filledTopology.map(_.linkId) should be (Seq(linkId1))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(5.0, 0.0), Point(7.5, 0.0))))
+    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
+    pieceWiseTopology should have size 1
+    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
+    pieceWiseTopology.map(_.id) should be (Seq(0L))
+    pieceWiseTopology.map(_.linkId) should be (Seq(linkId1))
+    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(5.0, 0.0), Point(7.5, 0.0))))
 
     changeSet.expiredLaneIds should be (Set(1L))
   }
@@ -78,12 +78,12 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-
-    filledTopology should have size 2
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(0L, 0L))
-    filledTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(5.0, 0.0), Point(7.5, 0.0)), Seq(Point(5.0, 0.0), Point(7.5, 0.0))))
+    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
+    pieceWiseTopology should have size 2
+    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value))
+    pieceWiseTopology.map(_.id) should be (Seq(0L, 0L))
+    pieceWiseTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId))
+    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(5.0, 0.0), Point(7.5, 0.0)), Seq(Point(5.0, 0.0), Point(7.5, 0.0))))
 
     changeSet.expiredLaneIds should be (Set(1L, 2L, 3L))
   }
@@ -101,12 +101,12 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(1L))
-    filledTopology.map(_.linkId) should be (Seq(linkId1))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0, 0.0), Point(10.0, 0.0))))
+    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
+    pieceWiseTopology should have size 1
+    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
+    pieceWiseTopology.map(_.id) should be (Seq(1L))
+    pieceWiseTopology.map(_.linkId) should be (Seq(linkId1))
+    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(0, 0.0), Point(10.0, 0.0))))
 
     changeSet.expiredLaneIds should be (Set())
   }
@@ -136,12 +136,13 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
 
-    filledTopology should have size 3
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value, SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(1L, 2L, 20L))
-    filledTopology.map(_.linkId) should be (Seq(linkId3, linkId3, linkId1))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
+    pieceWiseTopology should have size 3
+    pieceWiseTopology.map(_.sideCode) should contain theSameElementsAs  Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value, SideCode.BothDirections.value)
+    pieceWiseTopology.map(_.id) should contain theSameElementsAs Seq(1L, 2L, 20L)
+    pieceWiseTopology.map(_.linkId) should contain theSameElementsAs Seq(linkId3, linkId3, linkId1)
+    pieceWiseTopology.map(_.geometry) should contain theSameElementsAs Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)))
 
     changeSet.expiredLaneIds should be (Set())
   }
@@ -169,12 +170,13 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
 
-    filledTopology should have size 2
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value,  SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(20L, 21L))
-    filledTopology.map(_.linkId) should be (Seq( linkId1, linkId1))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(4.0, 0.0), Point(10.0, 0.0)) ))
+    pieceWiseTopology should have size 2
+    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value,  SideCode.BothDirections.value))
+    pieceWiseTopology.map(_.id) should be (Seq(20L, 21L))
+    pieceWiseTopology.map(_.linkId) should be (Seq( linkId1, linkId1))
+    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(4.0, 0.0), Point(10.0, 0.0)) ))
 
     changeSet.expiredLaneIds should be (Set(22L))
   }
@@ -199,12 +201,13 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
 
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value ))
-    filledTopology.map(_.id) should be (Seq(21L))
-    filledTopology.map(_.linkId) should be (Seq( linkId1))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(8.0, 0.0), Point(10.0, 0.0)) ))
+    pieceWiseTopology should have size 1
+    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value ))
+    pieceWiseTopology.map(_.id) should be (Seq(21L))
+    pieceWiseTopology.map(_.linkId) should be (Seq( linkId1))
+    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(8.0, 0.0), Point(10.0, 0.0)) ))
 
     changeSet.expiredLaneIds should be (Set(20L))
   }
@@ -265,12 +268,13 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
 
-    filledTopology should have size 3
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value, SideCode.BothDirections.value))
-    filledTopology.map(_.id).sorted should be (Seq(1L, 2L, 4L))
-    filledTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId, roadLinkTowards1.linkId))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
+    pieceWiseTopology should have size 3
+    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value, SideCode.BothDirections.value))
+    pieceWiseTopology.map(_.id).sorted should be (Seq(1L, 2L, 4L))
+    pieceWiseTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId, roadLinkTowards1.linkId))
+    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.expiredLaneIds should be (Set(3L))
   }

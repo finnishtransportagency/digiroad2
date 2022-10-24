@@ -72,10 +72,9 @@ object ChangeLanesAccordingToVvhChanges {
     val allLanes = assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks
     val groupedAssets = allLanes.groupBy(_.linkId)
     val (changedLanes, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changedSet))
-    val persistedChangedLanes = pieceWiseLanesToPersistedLane(changedLanes)
 
     val changeSetFilteredExpired = filterExpiredIds(changeSet)
-    (changeSetFilteredExpired, persistedChangedLanes)
+    (changeSetFilteredExpired, changedLanes)
   }
 
   def filterExpiredIds(set: ChangeSet): ChangeSet = {
