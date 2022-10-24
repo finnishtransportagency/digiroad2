@@ -4,8 +4,9 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
 import org.scalatest.{FunSuite, Matchers}
+
 import java.util.UUID
 import scala.util.Random
 
@@ -64,7 +65,15 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(
       linkId -> Seq(PersistedLinearAsset(1l, linkId, TowardsDigitizing.value, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val filledTopology = oneWayAssetFiller.fillRoadLinksWithoutAsset(topology, linearAssets, 110)
+    val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
+      expiredAssetIds = Set.empty[Long],
+      adjustedMValues = Seq.empty[MValueAdjustment],
+      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+      valueAdjustments = Seq.empty[ValueAdjustment])
+
+    val adjustedAssets = oneWayAssetFiller.fillTopology(topology, linearAssets, 110, Some(changeSet), geometryChanged = false)._1
+    val filledTopology = oneWayAssetFiller.toLinearAsset(adjustedAssets, topology.head)
 
     filledTopology should have size 2
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))

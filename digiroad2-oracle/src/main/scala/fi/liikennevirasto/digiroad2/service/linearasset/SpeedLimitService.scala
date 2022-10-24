@@ -10,13 +10,14 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.generateUnknownSpeedLimitsForLink
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, generateUnknownSpeedLimitsForLink}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.speedLimitUpdater
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -231,14 +232,21 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     val speedLimits = (speedLimitLinks).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-    val filledTopology = roadLinksFiltered.foldLeft(Seq.empty[SpeedLimit]) { case (existingSegments, roadLink) =>
-      val currentSegments = speedLimits.getOrElse(roadLink.linkId, Nil)
-      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, currentSegments)
-      existingSegments ++ currentSegments ++ generatedSpeedLimits
-    }
+    val filledTopology = LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + SpeedLimitAsset.typeId) {
+        adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, speedLimits)
+      }
     (filledTopology, roadLinksByLinkId)
   }
 
+  def adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]]): Seq[SpeedLimit] = {
+    val (filledTopology, adjustmentsChangeSet) = fillTopology(roadLinksFiltered, speedLimits, geometryChanged = false)
+    val generatedFilteredFromChangeSet = adjustmentsChangeSet.filterGeneratedAssets
+    if(generatedFilteredFromChangeSet.isEmpty) filledTopology
+    else {
+      speedLimitUpdater.updateChangeSet(generatedFilteredFromChangeSet)
+      adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, filledTopology.groupBy(_.linkId))
+    }
+  }
 
   def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
     existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.timeStamp)}

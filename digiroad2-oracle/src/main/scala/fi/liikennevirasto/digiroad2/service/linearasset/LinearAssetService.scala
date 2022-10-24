@@ -4,11 +4,13 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, PostGISAssetDao, Queries}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getAssetUpdater}
+import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -232,10 +234,26 @@ trait LinearAssetOperations {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
     val groupedAssets = existingAssets.groupBy(_.linkId)
+    val adjustedAssets = withDynTransaction {
+      LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId){
+        adjustLinearAssets(roadLinks, groupedAssets, typeId)
+      }
+    }
+    adjustedAssets
+  }
 
-    val filledTopology = assetFiller.fillRoadLinksWithoutAsset(roadLinks, groupedAssets, typeId)
 
-    filledTopology
+  def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]], typeId: Int): Seq[PieceWiseLinearAsset] = {
+    val assetUpdater = getAssetUpdater(typeId)
+    val (filledTopology, adjustmentsChangeSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, geometryChanged = false)
+    if(adjustmentsChangeSet.isEmpty) {
+      assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+    }
+    else {
+      assetUpdater.updateChangeSet(adjustmentsChangeSet)
+      adjustLinearAssets(roadLinks, filledTopology.groupBy(_.linkId), typeId)
+    }
+
   }
 
   /**

@@ -26,18 +26,26 @@ object LaneFiller {
                         adjustedVVHChanges: Seq[VVHChangesAdjustment] = Seq.empty[VVHChangesAdjustment],
                         adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
                         expiredLaneIds: Set[Long] = Set.empty[Long],
-                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane])
+                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane]) {
+    def isEmpty: Boolean = {
+        this.adjustedMValues.isEmpty &&
+        this.adjustedVVHChanges.isEmpty &&
+        this.adjustedSideCodes.isEmpty &&
+        this.expiredLaneIds.isEmpty &&
+        this.generatedPersistedLanes.isEmpty
+    }
+  }
 
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
 }
 
 class LaneFiller {
-  val AllowedTolerance = 0.5
+  val AllowedTolerance = 2.0
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
 
-  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[String, Seq[PersistedLane]], changedSet: Option[ChangeSet] = None ): (Seq[PieceWiseLane], ChangeSet) = {
+  def getOperations(geometryChanged: Boolean) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
@@ -48,20 +56,44 @@ class LaneFiller {
       adjustAssets
     )
 
+    val adjustmentOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
+      combine,
+      fuse,
+      dropShortSegments,
+      adjustAssets
+    )
+
+    if(geometryChanged) fillOperations
+    else adjustmentOperations
+  }
+
+  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[String, Seq[PersistedLane]],
+                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true ): (Seq[PersistedLane], ChangeSet) = {
+
+    val operations = getOperations(geometryChanged)
     val changeSet = changedSet match {
       case Some(change) => change
       case None => ChangeSet()
     }
 
-    topology.foldLeft(Seq.empty[PieceWiseLane], changeSet) { case (acc, roadLink) =>
+    topology.foldLeft(Seq.empty[PersistedLane], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = groupedLanes.getOrElse(roadLink.linkId, Nil)
 
-      val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments )
       }
-      (existingAssets ++ toLPieceWiseLane(adjustedAssets, roadLink), assetAdjustments)
+      (existingAssets ++ adjustedAssets, assetAdjustments)
     }
+  }
+
+  def toLPieceWiseLaneOnMultipleLinks(persistedLanes: Seq[PersistedLane], roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
+    val mappedTopology = persistedLanes.groupBy(_.linkId)
+    mappedTopology.flatMap(pair => {
+      val (linkId, assets) = pair
+      val roadLink = roadLinks.find(_.linkId == linkId).get
+      toLPieceWiseLane(assets, roadLink)
+    }).toSeq
   }
 
   def toLPieceWiseLane(dbLanes: Seq[PersistedLane], roadLink: RoadLink): Seq[PieceWiseLane] = {
