@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getAssetUpdater, linearAssetUpdater}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.{getAssetUpdater}
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory

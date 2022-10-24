@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LogUtils, PolygonTools}
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.linearAssetUpdater
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 
 class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
