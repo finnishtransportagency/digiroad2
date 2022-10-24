@@ -39,16 +39,16 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
 
     filledTopology should have size 4
 
-    filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections.value))
     filledTopology.filter(_.id == 1l).map(_.linkId) should be(Seq(linkId1))
 
-    filledTopology.filter(_.id == 2l).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.id == 2l).map(_.sideCode) should be(Seq(BothDirections.value))
     filledTopology.filter(_.id == 2l).map(_.linkId) should be(Seq(linkId2))
 
-    filledTopology.filter(_.id == 3l).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.id == 3l).map(_.sideCode) should be(Seq(BothDirections.value))
     filledTopology.filter(_.id == 3l).map(_.linkId) should be(Seq(linkId2))
 
-    filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(BothDirections.value))
     filledTopology.filter(_.id == 4l).map(_.linkId) should be(Seq(linkId2))
 
     changeSet.adjustedSideCodes should be(Seq(
