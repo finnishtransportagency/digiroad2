@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
@@ -136,9 +137,22 @@ trait LaneOperations {
    def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
     val lanesMapped = lanes.groupBy(_.linkId)
-    val filledTopology = LogUtils.time(logger, "TEST LOG Lanes fillTopology")(laneFiller.fillTopology(roadLinks, lanesMapped)._1)
+    val filledTopology = LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks")(adjustLanes(roadLinks, lanesMapped))
 
     filledTopology
+  }
+
+  def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]]): Seq[PieceWiseLane] = {
+    val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, geometryChanged = false)
+    if(adjustmentsChangeSet.isEmpty) {
+      laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
+    }
+    else {
+      withDynTransaction {
+        updateChangeSet(adjustmentsChangeSet)
+      }
+      adjustLanes(roadLinks, filledTopology.groupBy(_.linkId))
+    }
   }
 
    def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], historyRoadLinks: Seq[RoadLink], lanesToUpdate: Seq[PersistedLane],
