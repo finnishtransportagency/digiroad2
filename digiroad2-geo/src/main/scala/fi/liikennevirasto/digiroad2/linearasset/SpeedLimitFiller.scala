@@ -13,6 +13,36 @@ object SpeedLimitFiller {
                              */
   private val MinAllowedSpeedLimitLength = 2.0
 
+  def getOperations(geometryChanged: Boolean): Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = {
+    val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
+      dropSegmentsOutsideGeometry,
+      combine,
+      fuse,
+      adjustSegmentMValues,
+      capToGeometry,
+      adjustLopsidedLimit,
+      droppedSegmentWrongDirection,
+      adjustSideCodeOnOneWayLink,
+      dropShortLimits,
+      fillHoles,
+      clean
+    )
+
+    val adjustmentOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
+      combine,
+      fuse,
+      adjustSegmentMValues,
+      adjustLopsidedLimit,
+      droppedSegmentWrongDirection,
+      adjustSideCodeOnOneWayLink,
+      dropShortLimits,
+      fillHoles,
+      clean)
+
+    if(geometryChanged) fillOperations
+    else adjustmentOperations
+  }
+
   private def adjustSegment(segment: SpeedLimit, roadLink: RoadLink): (SpeedLimit, Seq[MValueAdjustment]) = {
     val startError = segment.startMeasure
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
@@ -83,7 +113,7 @@ object SpeedLimitFiller {
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
 
-  def adjustLopsidedLimit(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  private def adjustLopsidedLimit(roadLink: RoadLink, segments: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val onlyLimitOnLink = segments.length == 1 && segments.head.sideCode != SideCode.BothDirections
     if (onlyLimitOnLink) {
       val segment = segments.head
@@ -116,7 +146,7 @@ object SpeedLimitFiller {
     }
   }
 
-  def dropShortLimits(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  private def dropShortLimits(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MinAllowedSpeedLimitLength &&
       roadLink.length > MinAllowedSpeedLimitLength }.map(_.id).toSet
     val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
@@ -160,7 +190,7 @@ object SpeedLimitFiller {
     * @param changeSet Original changeset
     * @return Sequence of SpeedLimits and ChangeSet containing the changes done here
     */
-  def combine(roadLink: RoadLink, limits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  private def combine(roadLink: RoadLink, limits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: SpeedLimit, pseudoId: Long) = {
       asset.id match {
@@ -320,7 +350,7 @@ object SpeedLimitFiller {
     * @param changeSet Changes done previously
     * @return List of speed limits and a change set
     */
-   def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+   private def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val sortedList = speedLimits.sortBy(_.startMeasure)
     if (speedLimits.nonEmpty) {
       val origin = sortedList.head
@@ -357,7 +387,7 @@ object SpeedLimitFiller {
     * @param changeSet Set of changes
     * @return List of speed limits and change set so that there are no small gaps between speed limits
     */
-  def fillHoles(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  private def fillHoles(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     def firstAndLastLimit(speedLimits: Seq[SpeedLimit], sideCode: SideCode) = {
       val filtered = speedLimits.filter(_.sideCode == sideCode)
       (filtered.sortBy(_.startMeasure).headOption,
@@ -417,7 +447,7 @@ object SpeedLimitFiller {
     * @param changeSet
     * @return
     */
-  def clean(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+  private def clean(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     /**
       * Remove adjustments that were overwritten later (new version appears later in the sequence)
       * @param adj list of adjustments
@@ -452,20 +482,8 @@ object SpeedLimitFiller {
 
   }
 
-  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None): (Seq[SpeedLimit], ChangeSet) = {
-    val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
-      dropSegmentsOutsideGeometry,
-      combine,
-      fuse,
-      adjustSegmentMValues,
-      capToGeometry,
-      adjustLopsidedLimit,
-      droppedSegmentWrongDirection,
-      adjustSideCodeOnOneWayLink,
-      dropShortLimits,
-      fillHoles,
-      clean
-    )
+  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[SpeedLimit], ChangeSet) = {
+    val operations = getOperations(geometryChanged)
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val changeSet = changedSet match {
       case Some(change) => change
@@ -482,7 +500,7 @@ object SpeedLimitFiller {
       val segments = speedLimits.getOrElse(roadLink.linkId, Nil)
       val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
 
-      val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedSegments, segmentAdjustments) = operations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
       val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)

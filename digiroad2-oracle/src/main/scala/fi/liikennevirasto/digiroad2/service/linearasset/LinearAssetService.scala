@@ -245,15 +245,7 @@ trait LinearAssetOperations {
 
   def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]], typeId: Int): Seq[PieceWiseLinearAsset] = {
     val assetUpdater = getAssetUpdater(typeId)
-
-    val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = Set.empty[Long],
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
-
-    val (filledTopology, adjustmentsChangeSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, Some(changeSet), false)
+    val (filledTopology, adjustmentsChangeSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, geometryChanged = false)
     if(adjustmentsChangeSet.isEmpty) {
       assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
     }

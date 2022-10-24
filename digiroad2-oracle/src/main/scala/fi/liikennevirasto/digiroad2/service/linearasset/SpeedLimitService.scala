@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.generateUnknownSpeedLimitsForLink
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, generateUnknownSpeedLimitsForLink}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
@@ -239,32 +239,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]]): Seq[SpeedLimit] = {
-    val adjustmentOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
-      SpeedLimitFiller.combine,
-      SpeedLimitFiller.fuse,
-      SpeedLimitFiller.adjustLopsidedLimit,
-      SpeedLimitFiller.dropShortLimits,
-      SpeedLimitFiller.fillHoles,
-      SpeedLimitFiller.clean)
-
-    val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = Set.empty[Long],
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
-
-    val (filledTopology, adjustmentsChangeSet) = roadLinksFiltered.foldLeft(Seq.empty[SpeedLimit], changeSet) { case ((existingSegments, changeSet), roadLink) =>
-      val currentSegments = speedLimits.getOrElse(roadLink.linkId, Nil)
-      val validSegments = currentSegments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
-      val (adjustedSegments, segmentAdjustments) = adjustmentOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-        operation(roadLink, currentSegments, currentAdjustments)
-      }
-
-      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, currentSegments)
-      (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
-    }
-
+    val (filledTopology, adjustmentsChangeSet) = fillTopology(roadLinksFiltered, speedLimits, geometryChanged = false)
     val generatedFilteredFromChangeSet = adjustmentsChangeSet.filterGeneratedAssets
     if(generatedFilteredFromChangeSet.isEmpty) filledTopology
     else {
