@@ -139,10 +139,10 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val pieceWiseTopology = laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, topology)
 
     pieceWiseTopology should have size 3
-    pieceWiseTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value, SideCode.BothDirections.value))
-    pieceWiseTopology.map(_.id) should be (Seq(1L, 2L, 20L))
-    pieceWiseTopology.map(_.linkId) should be (Seq(linkId3, linkId3, linkId1))
-    pieceWiseTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
+    pieceWiseTopology.map(_.sideCode) should contain theSameElementsAs  Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value, SideCode.BothDirections.value)
+    pieceWiseTopology.map(_.id) should contain theSameElementsAs Seq(1L, 2L, 20L)
+    pieceWiseTopology.map(_.linkId) should contain theSameElementsAs Seq(linkId3, linkId3, linkId1)
+    pieceWiseTopology.map(_.geometry) should contain theSameElementsAs Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)))
 
     changeSet.expiredLaneIds should be (Set())
   }
