@@ -53,11 +53,11 @@ object PostGISHeightLimitDao {
   implicit val getPointAsset = new GetResult[HeightLimit] {
     def apply(r: PositionedResult): HeightLimit = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -66,7 +66,7 @@ object PostGISHeightLimitDao {
       val linkSource = r.nextInt()
       val limit = r.nextDouble()
 
-      HeightLimit(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit)
+      HeightLimit(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit)
     }
   }
 

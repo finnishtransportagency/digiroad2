@@ -58,14 +58,14 @@ object PostGISWidthLimitDao {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("suurin_sallittu_leveys").first
   }
 
-  implicit val getPointAsset = new GetResult[WidthLimit] {
+  implicit val getPointAsset: GetResult[WidthLimit] = new GetResult[WidthLimit] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val point = r.nextObjectOption().map(objectToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -75,7 +75,7 @@ object PostGISWidthLimitDao {
       val limit = r.nextDouble()
       val reason =  WidthLimitReason.apply(r.nextInt())
 
-      WidthLimit(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit, reason)
+      WidthLimit(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), limit, reason)
     }
   }
 }

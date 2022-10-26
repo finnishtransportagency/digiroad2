@@ -43,8 +43,6 @@
     var searchById = function(input) {
       if (selectedLayer === 'massTransitStop') {
         return massTransitStopSearchByNationalId(input);
-      } else if (selectedLayer === 'linkProperty') {
-        return roadLinkSearchById(input);
       } else if (selectedLayer === 'speedLimit') {
         return speedLimitSearchById(input);
       } else {
@@ -84,11 +82,12 @@
     var roadLinkSearchById= function(input) {
       return $.when(backend.getRoadLinkToPromise(input.text)).then(function(linkdata) {
         var returnObject = [];
+        var resultType = selectedLayer === "linkProperty" ? "Link-id" : "Link-location";
         if (_.get(linkdata, 'success')) {
           var x = _.get(linkdata, 'middlePoint.x');
           var y = _.get(linkdata, 'middlePoint.y');
           var title = input.text + " (linkin ID)";
-          returnObject.push({title: title, lon: x, lat: y, resultType: "Link-id"});
+          returnObject.push({title: title, lon: x, lat: y, resultType: resultType});
         }
 
         if (_.isEmpty(returnObject))
@@ -211,7 +210,7 @@
     /**
      * Search private road association names.
      *
-     * @param associationRoadName
+     * @param associationRoad
      */
     var getAssociationRoadNamesByName = function(associationRoad) {
       var associationRoadName = associationRoad.name.toUpperCase().replace(/\s{2,}/g,' ').trim();
@@ -267,6 +266,7 @@
         street: geocode,
         road: getCoordinatesFromRoadAddress,
         assetId: searchById,
+        linkId: roadLinkSearchById,
         liviId: massTransitStopLiviIdSearch,
         passengerId:  massTransitStopPassengerIdSearch,
         roadAssociationName: getAssociationRoadNamesByName,

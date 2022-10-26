@@ -13,13 +13,13 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   val transform = new GeometryTransform(mockRoadAddressService)
 
   test("Resolve location on left when asset SideCode different than AgainstDigitizing value") {
-    val linkId = 1641830
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 1
 
-    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.Combined, 0, 299, None, None, linkId, 10, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[String], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) =
       transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
@@ -31,13 +31,13 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on left when asset SideCode equals to TowardsDigitizing value") {
-    val linkId = 1641830
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 3
 
-    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.Combined, 0, 299, None, None, linkId, 10, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[String], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) =
       transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
@@ -50,13 +50,13 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on right when asset SideCode different than AgainstDigitizing value") {
-    val linkId = 1641830
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 1
 
-    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.RightSide, 0, 299, None, None, linkId, 0, 298.694, SideCode.BothDirections, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[String], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
     roadAddress.road should be(921)
@@ -66,13 +66,13 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on right when asset SideCode equals to TowardsDigitizing value") {
-    val linkId = 1641830
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 60
     val sideCode = 2
 
-    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(RoadAddressForLink(1, 921, 2, Track.RightSide, 0, 299, None, None, linkId, 0, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[String], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
     roadAddress.road should be(921)
@@ -82,13 +82,13 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   }
 
   test("Resolve location on two-way road") {
-    val linkId = 1641830
+    val linkId = LinkIdGenerator.generateRandom()
     val mValue = 11
     val sideCode = 0
 
-    val dummyRoadAddress = Some(RoadAddressForLink(1, 110, 2, Track.Combined, 0, 160, None, None, 1641830, 1, 150.690, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(RoadAddressForLink(1, 110, 2, Track.Combined, 0, 160, None, None, linkId, 1, 150.690, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[String], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode, road = Option(110))
     roadAddress.road should be(110)

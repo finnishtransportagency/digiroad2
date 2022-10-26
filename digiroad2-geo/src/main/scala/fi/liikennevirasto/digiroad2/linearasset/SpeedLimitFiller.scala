@@ -13,6 +13,36 @@ object SpeedLimitFiller {
                              */
   private val MinAllowedSpeedLimitLength = 2.0
 
+  def getOperations(geometryChanged: Boolean): Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = {
+    val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
+      dropSegmentsOutsideGeometry,
+      combine,
+      fuse,
+      adjustSegmentMValues,
+      capToGeometry,
+      adjustLopsidedLimit,
+      droppedSegmentWrongDirection,
+      adjustSideCodeOnOneWayLink,
+      dropShortLimits,
+      fillHoles,
+      clean
+    )
+
+    val adjustmentOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
+      combine,
+      fuse,
+      adjustSegmentMValues,
+      adjustLopsidedLimit,
+      droppedSegmentWrongDirection,
+      adjustSideCodeOnOneWayLink,
+      dropShortLimits,
+      fillHoles,
+      clean)
+
+    if(geometryChanged) fillOperations
+    else adjustmentOperations
+  }
+
   private def adjustSegment(segment: SpeedLimit, roadLink: RoadLink): (SpeedLimit, Seq[MValueAdjustment]) = {
     val startError = segment.startMeasure
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
@@ -124,7 +154,7 @@ object SpeedLimitFiller {
   }
 
 
-  private def generateUnknownSpeedLimitsForLink(roadLink: RoadLink, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
+  def generateUnknownSpeedLimitsForLink(roadLink: RoadLink, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
 
     if(roadLink.isSimpleCarTrafficRoad) {
@@ -320,7 +350,7 @@ object SpeedLimitFiller {
     * @param changeSet Changes done previously
     * @return List of speed limits and a change set
     */
-  private def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
+   private def fuse(roadLink: RoadLink, speedLimits: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
     val sortedList = speedLimits.sortBy(_.startMeasure)
     if (speedLimits.nonEmpty) {
       val origin = sortedList.head
@@ -332,7 +362,7 @@ object SpeedLimitFiller {
         val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
         val modified = toBeFused.head.copy(id=newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure,
           geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, origin.startMeasure, target.get.endMeasure),
-          vvhTimeStamp = latestTimestamp(toBeFused.head, target))
+          timeStamp = latestTimestamp(toBeFused.head, target))
         val droppedId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to drop id zero
         val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
         // Replace origin and target with this new item in the list and recursively call itself again
@@ -386,7 +416,7 @@ object SpeedLimitFiller {
           Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
-            vvhTimeStamp = latestTimestamp(left, right))
+            timeStamp = latestTimestamp(left, right))
           val adj = MValueAdjustment(adjustedLeft.id, adjustedLeft.linkId, adjustedLeft.startMeasure, adjustedLeft.endMeasure)
           val recurse = fillBySideCode(speedLimits.tail, roadLink, changeSet)
           (Seq(adjustedLeft) ++ recurse._1, recurse._2.copy(adjustedMValues = recurse._2.adjustedMValues ++ Seq(adj)))
@@ -406,8 +436,8 @@ object SpeedLimitFiller {
 
   private def latestTimestamp(speedLimit: SpeedLimit, speedLimitO: Option[SpeedLimit]) = {
     speedLimitO match {
-      case Some(slo) => Math.max(speedLimit.vvhTimeStamp, slo.vvhTimeStamp)
-      case _ => speedLimit.vvhTimeStamp
+      case Some(slo) => Math.max(speedLimit.timeStamp, slo.timeStamp)
+      case _ => speedLimit.timeStamp
     }
   }
   /**
@@ -452,20 +482,8 @@ object SpeedLimitFiller {
 
   }
 
-  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[Long, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None): (Seq[SpeedLimit], ChangeSet) = {
-    val fillOperations: Seq[(RoadLink, Seq[SpeedLimit], ChangeSet) => (Seq[SpeedLimit], ChangeSet)] = Seq(
-      dropSegmentsOutsideGeometry,
-      combine,
-      fuse,
-      adjustSegmentMValues,
-      capToGeometry,
-      adjustLopsidedLimit,
-      droppedSegmentWrongDirection,
-      adjustSideCodeOnOneWayLink,
-      dropShortLimits,
-      fillHoles,
-      clean
-    )
+  def fillTopology(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]], changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[SpeedLimit], ChangeSet) = {
+    val operations = getOperations(geometryChanged)
     // TODO: Do not create dropped asset ids but mark them expired when they are no longer valid or relevant
     val changeSet = changedSet match {
       case Some(change) => change
@@ -482,7 +500,7 @@ object SpeedLimitFiller {
       val segments = speedLimits.getOrElse(roadLink.linkId, Nil)
       val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
 
-      val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedSegments, segmentAdjustments) = operations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
       val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
@@ -502,7 +520,7 @@ object SpeedLimitFiller {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp.toString)
+    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.timeStamp.toString)
     if (speedLimit.expired) {
       println("N/A")
     } else {
@@ -550,7 +568,7 @@ object SpeedLimitFiller {
     val changeSet =
       if ((Math.abs(newStart - newEnd) > 0) && assetId != 0) {
         changedSet.copy(
-          adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)),
+          adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.timeStamp)),
           adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode, SpeedLimitAsset.typeId))
         )
       }
@@ -559,7 +577,7 @@ object SpeedLimitFiller {
 
     (SpeedLimit(id = assetId, linkId = newLinkId, sideCode = newSideCode, trafficDirection = newDirection,
       asset.value, geometry, newStart, newEnd, modifiedBy = asset.modifiedBy, modifiedDateTime = asset.modifiedDateTime,
-      createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, vvhTimeStamp = projection.vvhTimeStamp,
+      createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, timeStamp = projection.timeStamp,
       geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
   }
 

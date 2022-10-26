@@ -59,8 +59,8 @@
     ];
 
     var linkStatusRules = [
-      new StyleRule().where('constructionType').is(1).use({ stroke: { color: '#ff9900' } }),
-      new StyleRule().where('constructionType').is(3).use({ stroke: { color: '#cc99ff'} })
+      new StyleRule().where('constructionType').is(2).use({ stroke: { color: '#ff9900' } }),
+      new StyleRule().where('constructionType').is(1).use({ stroke: { color: '#cc99ff'} })
     ];
 
     var linkTypeRules = [

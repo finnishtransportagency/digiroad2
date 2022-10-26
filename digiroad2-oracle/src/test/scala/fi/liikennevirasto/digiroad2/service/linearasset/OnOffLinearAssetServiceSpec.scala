@@ -2,12 +2,12 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, PostGISAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, PolygonTools, TestTransactions}
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -19,21 +19,21 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockLinearAssetDao = new PostGISLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val mockLinearAssetDao = new PostGISLinearAssetDao()
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockAssetDao = MockitoSugar.mock[PostGISAssetDao]
 
-  val roadLinkWithLinkSource = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+  val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
+
+  val roadLinkWithLinkSource = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
   object onOffLinearAsset extends OnOffLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: PostGISLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
   }
@@ -42,10 +42,10 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should create one asset"){
     runWithRollback {
-      when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+      when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("100", 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-      val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(388562360l, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
+      val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(linkId2, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
       val ids =  onOffLinearAsset.update(newAssets, NumericValue(0), "test", Some(1400000000), Some(1), Some(Measures(0, 100)))
 
       val assets = mockLinearAssetDao.fetchLinearAssetsByIds(ids.toSet ++ newAssets, LinearAssetTypes.numericValuePropertyId)
@@ -63,10 +63,10 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should create two assets"){
     runWithRollback {
-      when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+      when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("100", 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-      val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(388562360l, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
+      val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(linkId2, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
       val ids =  onOffLinearAsset.update(newAssets, NumericValue(0), "test", Some(1400000000), Some(1), Some(Measures(50, 100)))
 
       val assets = mockLinearAssetDao.fetchLinearAssetsByIds(ids.toSet ++ newAssets, LinearAssetTypes.numericValuePropertyId)
@@ -86,10 +86,10 @@ class OnOffLinearAssetServiceSpec  extends FunSuite with Matchers {
 
   test("Expire on-off asset with start and end measure by update - should not create assets"){
     runWithRollback {
-      when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(100, 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
+      when(mockRoadLinkService.fetchNormalOrComplimentaryRoadLinkByLinkId(any[String])).thenReturn(Some(RoadLinkFetched("100", 235, Seq(Point(0, 0), Point(0, 200)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-      val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(388562360l, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
+      val newAssets = onOffLinearAsset.create(Seq(NewLinearAsset(linkId2, 0, 200, NumericValue(1), 1, 0, None)), 30, "testuser", 1400000000)
       val ids =  onOffLinearAsset.update(newAssets, NumericValue(0), "test", Some(1400000000), Some(1), Some(Measures(0, 200)))
 
       val assets = mockLinearAssetDao.fetchLinearAssetsByIds(ids.toSet ++ newAssets, LinearAssetTypes.numericValuePropertyId)

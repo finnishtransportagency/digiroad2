@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.{CyclingAndWalking, Manoeuvres, Obstacles, ServicePoints}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import org.scalatest._
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
@@ -13,7 +13,7 @@ class HistoryServiceSpec extends FunSuite with Matchers {
   val testService = new HistoryService
   val testUser = "historyServiceSpecUser"
   val testSQLTimestamp = "TIMESTAMP '2010-01-01 10:00:00.000000'"
-  val testLinkId = 100
+  val testLinkId = LinkIdGenerator.generateRandom()
 
   def generateAssets = {
     //Insert expired 2 service points, 1 obstacle, 1 cycling and walking and 1 manoeuvre

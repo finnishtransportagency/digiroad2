@@ -18,9 +18,9 @@
     };
 
     this.getNewFeatureProperties = function(linearAssets, laneNumber){
-      var isRoadlink = _.isEmpty(linearAssets) || _.isUndefined(_.head(linearAssets).selectedLinks);
+      var isRoadLink = _.isEmpty(linearAssets) || _.isUndefined(_.head(linearAssets).selectedLinks);
       var relevantLinears = linearAssets;
-      if(!isRoadlink){
+      if(!isRoadLink){
         relevantLinears = _.cloneDeep(_.filter(linearAssets, function (linear) {
           var laneCode = _.find(linear.properties, function (property) {
             return property.publicId === "lane_code";
@@ -34,7 +34,7 @@
         var hasAsset = me.hasValue(linearAsset) || !_.isUndefined(linearAsset.isViewOnly);
         var hasAssetAndType = {hasAsset: hasAsset, type: 'line'};
 
-        if (isRoadlink || (!_.isUndefined(linearAsset.points) && !isRoadlink && linearAsset.selectedLinks.length == 1)) {
+        if (isRoadLink || (!_.isUndefined(linearAsset.points) && !isRoadLink && linearAsset.selectedLinks.length == 1)) {
           var notSelectable = {notSelectable: !hasAsset};
 
          if (!_.isEmpty(linearAsset.selectedLinks)) {
@@ -63,7 +63,7 @@
       }));
 
       var offsetBySideCode = function(linearAsset) {
-        return laneUtils.offsetByLaneNumber(linearAsset, isRoadlink);
+        return laneUtils.offsetByLaneNumber(linearAsset, isRoadLink);
       };
 
       var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);

@@ -7,15 +7,15 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
-case class IncomingWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class IncomingAxleWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class IncomingBogieWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class IncomingTrailerTruckWeightLimit(lon: Double, lat: Double, linkId: Long, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingWeightLimit(lon: Double, lat: Double, linkId: String, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingAxleWeightLimit(lon: Double, lat: Double, linkId: String, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingBogieWeightLimit(lon: Double, lat: Double, linkId: String, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingTrailerTruckWeightLimit(lon: Double, lat: Double, linkId: String, limit: Double, validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
-case class WeightLimit(id: Long, linkId: Long,
+case class WeightLimit(id: Long, linkId: String,
                        lon: Double, lat: Double,
                        mValue: Double, floating: Boolean,
-                       vvhTimeStamp: Long,
+                       timeStamp: Long,
                        municipalityCode: Int,
                        createdBy: Option[String] = None,
                        createdAt: Option[DateTime] = None,

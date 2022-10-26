@@ -322,12 +322,12 @@
         toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy));
 
         var manoeuvreData = function(formGroupElement) {
-          var firstTargetLinkId = parseInt(formGroupElement.attr('linkId'), 10);
+          var firstTargetLinkId = formGroupElement.attr('linkId');
           var destLinkId = firstTargetLinkId;
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
           var isSuggested = !_.isEmpty(rootElement.find('.suggestionCheckBox')) ? rootElement.find('.suggestionCheckBox').prop('checked') : false;
-          var nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
+          var nextTargetLinkId = formGroupElement.find('input:radio[name="target"]:checked').val();
           var linkIds = [firstTargetLinkId];
           return {
             manoeuvreId: manoeuvreId,
@@ -472,8 +472,8 @@
         rootElement.find('.continue-option-group').on('click', 'input:radio[name="target"]', function(event) {
           $(":radio[name='target']").attr("disabled", true);
           var formGroupElement = $(event.delegateTarget);
-          var targetLinkId = Number(formGroupElement.attr('linkId'));
-          var checkedLinkId = parseInt(formGroupElement.find(':checked').val(), 10);
+          var targetLinkId = formGroupElement.attr('linkId');
+          var checkedLinkId = formGroupElement.find(':checked').val();
           var manoeuvre = manoeuvreData(formGroupElement);
 
           if (targetLinkId && checkedLinkId) {

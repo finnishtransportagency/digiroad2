@@ -68,9 +68,9 @@
     ];
 
     var constructionTypes= [
-      [0, 'Käytössä'], //In Use
-      [1, 'Rakenteilla'], //Under Construction
-      [3, 'Suunnitteilla'] //Planned
+        [1, 'Suunnitteilla'], //Planned
+        [2, 'Rakenteilla'], //Under Construction
+        [3, 'Käytössä'] //In Use
     ];
 
     var linkSources= [
@@ -213,7 +213,9 @@
             staticField('Kuntanumero', 'municipalityCode') +
             staticField('Tiennimi (Suomi)', 'roadNameFi') +
             staticField('Tiennimi (Ruotsi)', 'roadNameSe') +
-            staticField('Tiennimi (Saame)', 'roadNameSm') +
+            staticField('Tiennimi (Pohjoissaame)', 'roadNameSme') +
+            staticField('Tiennimi (Inarinsaame)', 'roadNameSmn') +
+            staticField('Tiennimi (Koltansaame)', 'roadNameSms') +
             staticField('Tienumero', 'roadNumber') +
             staticField('Tieosanumero', 'roadPartNumber') +
             staticField('Ajorata', 'track') +
@@ -298,7 +300,9 @@
         modifiedAt : linkProperty.modifiedAt || '' ,
         roadNameFi : linkProperty.roadNameFi || '',
         roadNameSe : linkProperty.roadNameSe || '',
-        roadNameSm : linkProperty.roadNameSm || '',
+        roadNameSme : linkProperty.roadNameSme || '',
+        roadNameSmn : linkProperty.roadNameSmn || '',
+        roadNameSms : linkProperty.roadNameSms || '',
         roadNumber : linkProperty.roadNumber || '',
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',

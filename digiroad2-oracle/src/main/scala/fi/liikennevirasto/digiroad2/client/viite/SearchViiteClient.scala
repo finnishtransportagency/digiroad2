@@ -48,16 +48,16 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     fetchRoadAddress(serviceName + "road_address/" + roadNumber + "/" + roadPartNumber + "/" + startAddrM + "/" + endAddrM)
   }
 
-  def fetchByLrmPosition(linkId: Long, startMeasure: Double) = {
-    fetchRoadAddress(serviceName + "road_address/", Map("linkId" -> linkId.toString, "startMeasure" -> startMeasure.toString))
+  def fetchByLrmPosition(linkId: String, startMeasure: Double) = {
+    fetchRoadAddress(serviceName + "road_address/", Map("linkId" -> linkId, "startMeasure" -> startMeasure.toString))
   }
 
-  def fetchByLrmPositions(linkId: Long, startMeasure: Double, endMeasure: Double) = {
-    fetchRoadAddress(serviceName + "road_address/", Map("linkId" -> linkId.toString, "startMeasure" -> startMeasure.toString, "endMeasure" -> endMeasure.toString))
+  def fetchByLrmPositions(linkId: String, startMeasure: Double, endMeasure: Double) = {
+    fetchRoadAddress(serviceName + "road_address/", Map("linkId" -> linkId, "startMeasure" -> startMeasure.toString, "endMeasure" -> endMeasure.toString))
   }
 
-  def fetchAllByLinkIds(linkIds: Seq[Long]): Seq[RoadAddressForLink] = {
-    post[Seq[Long], List[Map[String, Any]]](serviceName + "road_address", linkIds, ids => new StringEntity(Serialization.write(ids), ContentType.APPLICATION_JSON)) match {
+  def fetchAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
+    post[Seq[String], List[Map[String, Any]]](serviceName + "road_address", linkIds, ids => new StringEntity(s"[${ids.map(id => s""""$id"""").mkString(",")}]", ContentType.APPLICATION_JSON)) match {
       case Left(roadAddresses) => roadAddresses.flatMap(mapFields)
       case Right(error) => throw new ViiteClientException(error.toString)
     }
@@ -83,7 +83,7 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     val trackCode = Track.apply(convertToInt(getMandatoryFieldValue(data, "track")).get)
     val startAddrM = convertToLong(getMandatoryFieldValue(data, "startAddrM")).get
     val endAddrM = convertToLong(getMandatoryFieldValue(data, "endAddrM")).get
-    val linkId = convertToLong(getMandatoryFieldValue(data, "linkId")).get
+    val linkId = getMandatoryFieldValue(data, "linkId").get
     val startMValue = convertToDouble(getMandatoryFieldValue(data, "startMValue")).get
     val sideCode = convertToInt(getMandatoryFieldValue(data, "sideCode")).get
     val endMValue = convertToDouble(getMandatoryFieldValue(data, "endMValue")).get
