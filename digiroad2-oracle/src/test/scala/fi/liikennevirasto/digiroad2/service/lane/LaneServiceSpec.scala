@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
-import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane, SideCodesForLinkIds}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane, SideCodesForLinkIds}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -1377,7 +1377,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
       val thrown = intercept[IllegalArgumentException] {
-        ServiceWithDao.validateStartDateOneDigit(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues), 2)
+        ServiceWithDao.validateStartDate(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues), 2)
       }
       thrown.getMessage should be("Start Date attribute not found on additional lane!")
     }

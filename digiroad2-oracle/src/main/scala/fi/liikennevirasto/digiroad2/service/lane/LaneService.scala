@@ -646,14 +646,6 @@ trait LaneOperations {
       throw new IllegalArgumentException("Lane code attribute not found!")
   }
 
-  def validateStartDateOneDigit(newLane: NewLane, laneCode: Int): Unit = {
-    if (!LaneNumberOneDigit.isMainLane(laneCode)) {
-      val startDateValue = getPropertyValue(newLane.properties, "start_date")
-      if (startDateValue == None || startDateValue.toString.trim.isEmpty)
-        throw new IllegalArgumentException("Start Date attribute not found on additional lane!")
-    }
-  }
-
   def validateStartDate(newLane: NewLane, laneCode: Int): Unit = {
     if (!LaneNumber.isMainLane(laneCode)) {
       val startDateValue = getPropertyValue(newLane.properties, "start_date")
@@ -816,7 +808,7 @@ trait LaneOperations {
 
         newLanes.map { newLane =>
           val laneCode = getLaneCode(newLane)
-          validateStartDateOneDigit(newLane, laneCode.toInt)
+          validateStartDate(newLane, laneCode.toInt)
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
@@ -836,7 +828,7 @@ trait LaneOperations {
           newLanes.map { newLane =>
 
             val laneCode = getLaneCode(newLane)
-            validateStartDateOneDigit(newLane, laneCode.toInt)
+            validateStartDate(newLane, laneCode.toInt)
 
             val roadLink = if (groupedRoadLinks(linkId).nonEmpty)
                             groupedRoadLinks(linkId).head

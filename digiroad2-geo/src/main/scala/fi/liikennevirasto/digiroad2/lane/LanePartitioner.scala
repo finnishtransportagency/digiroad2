@@ -226,7 +226,7 @@ object LanePartitioner {
   def partition(allLanes: Seq[PieceWiseLane], roadLinks: Map[String, RoadLink]): Seq[Seq[PieceWiseLane]] = {
     val (allMainLanes, allAdditionalLanes) = allLanes.partition(lane => {
       val laneCode = lane.laneAttributes.find(_.publicId == "lane_code").get.values.head.value.asInstanceOf[Int]
-      LaneNumberOneDigit.isMainLane(laneCode)
+      LaneNumber.isMainLane(laneCode)
     })
     val (lanesOnOneDirectionLink, lanesOnTwoDirectionLink) = allMainLanes.partition(lane =>
       roadLinks(lane.linkId).trafficDirection.value != BothDirections.value)
