@@ -18,11 +18,11 @@ $destinationpoint = "postgresql://digiroad2:${destinationPassword}@localhost:543
 $truncateroadlink   = "psql -c 'truncate roadlink;' ${destinationpoint}"
 $truncatecomplimentary  = "psql -c 'truncate roadlinkex;' ${destinationpoint}"
 
-$roadlink1 = "psql -c '\COPY (SELECT * FROM roadlink WHERE municipalitycode in (${municipalities})) TO ''${absolutePath}\tempSQL.sql'' (ENCODING ''UTF8'');' ${datasource}"
-$roadlink2 = "psql -c '\COPY roadlink FROM ''${absolutePath}\tempSQL.sql'';' ${destinationpoint}"
+$roadlink1 = "psql -c '\COPY (SELECT * FROM kgv_roadlink WHERE municipalitycode in (${municipalities})) TO ''${absolutePath}\tempSQL.sql'' (ENCODING ''UTF8'');' ${datasource}"
+$roadlink2 = "psql -c '\COPY kgv_roadlink FROM ''${absolutePath}\tempSQL.sql'';' ${destinationpoint}"
 
-$complimentary1 = "psql -c '\COPY (SELECT * FROM roadlinkex WHERE municipalitycode in (${municipalities})) TO ''${absolutePath}\tempSQL2.sql'' (ENCODING ''UTF8'');' ${datasource}"
-$complimentary2 = "psql -c '\COPY roadlinkex FROM ''${absolutePath}\tempSQL2.sql'';' ${destinationpoint}"
+$complimentary1 = "psql -c '\COPY (SELECT * FROM qgis_roadlinkex WHERE municipalitycode in (${municipalities})) TO ''${absolutePath}\tempSQL2.sql'' (ENCODING ''UTF8'');' ${datasource}"
+$complimentary2 = "psql -c '\COPY qgis_roadlinkex FROM ''${absolutePath}\tempSQL2.sql'';' ${destinationpoint}"
 
 if ($truncateBoolean)
 {
