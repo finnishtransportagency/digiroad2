@@ -61,6 +61,7 @@ case class LaneEndPoints ( start: Double, end: Double )
 sealed trait LaneNumber {
   def towardsDirection: Int
   def againstDirection : Int
+  def oneDigitLaneCode: Int
 }
 
 
@@ -88,142 +89,76 @@ object LaneNumber {
   }
 
   def isMainLane (laneCode : Int): Boolean = {
-    val mainLanes = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
+    val mainLanes = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance, MainLane.oneDigitLaneCode)
 
     mainLanes.contains(laneCode)
   }
 
   def isValidLaneNumber (laneCode: Int): Boolean = {
     val lanesNumbers = values.filterNot(_ == Unknown)
-    lanesNumbers.exists(x => x.againstDirection == laneCode || x.towardsDirection == laneCode) || MainLane.motorwayMaintenance == laneCode
+    lanesNumbers.exists(x => x.againstDirection == laneCode || x.towardsDirection == laneCode || x.oneDigitLaneCode == laneCode) || MainLane.motorwayMaintenance == laneCode
   }
 
   case object MainLane extends LaneNumber {
     def towardsDirection = 11
     def againstDirection = 21
     def motorwayMaintenance: Int = 31
+    def oneDigitLaneCode = 1
   }
 
   case object FirstLeftAdditional extends LaneNumber {
     def towardsDirection = 12
     def againstDirection = 22
+    def oneDigitLaneCode = 2
   }
 
   case object FirstRightAdditional extends LaneNumber {
     def towardsDirection = 13
     def againstDirection = 23
+    def oneDigitLaneCode = 3
   }
 
   case object SecondLeftAdditional extends LaneNumber {
     def towardsDirection = 14
     def againstDirection = 24
+    def oneDigitLaneCode = 4
   }
 
   case object SecondRightAdditional extends LaneNumber {
     def towardsDirection = 15
     def againstDirection = 25
+    def oneDigitLaneCode = 5
   }
 
   case object ThirdLeftAdditional extends LaneNumber {
     def towardsDirection = 16
     def againstDirection = 26
+    def oneDigitLaneCode = 6
   }
 
   case object ThirdRightAdditional extends LaneNumber {
     def towardsDirection = 17
     def againstDirection = 27
+    def oneDigitLaneCode = 7
   }
 
   case object FourthLeftAdditional extends LaneNumber {
     def towardsDirection = 18
     def againstDirection = 28
+    def oneDigitLaneCode = 8
   }
 
   case object FourthRightAdditional extends LaneNumber {
     def towardsDirection = 19
     def againstDirection = 29
+    def oneDigitLaneCode = 9
   }
 
   case object Unknown extends LaneNumber {
     def towardsDirection = 99
     def againstDirection = 99
+    def oneDigitLaneCode = 99
   }
-}
-
-
-sealed trait LaneNumberOneDigit {
-  def laneCode: Int
-}
-
-object LaneNumberOneDigit {
-  val values = Set(MainLane, FirstLeftAdditional, FirstRightAdditional, SecondLeftAdditional, SecondRightAdditional,
-    ThirdLeftAdditional, ThirdRightAdditional, FourthLeftAdditional, FourthRightAdditional, Unknown)
-
-  def apply(value: Int): LaneNumberOneDigit = {
-    val valueAsStr = value.toString
-
-    if(valueAsStr.length != 1 ) {
-      Unknown
-
-    } else {
-      values.find(_.laneCode == value).getOrElse(Unknown)
-    }
-  }
-
-
-  def isMainLane (laneCode : Int): Boolean = {
-    if (laneCode == 1) true
-    else{
-      false
-    }
-  }
-
-  def isValidLaneNumber (laneCode: Int): Boolean = {
-    val lanesNumbers = values.filterNot(_ == Unknown)
-    lanesNumbers.exists(x => x.laneCode == laneCode)
-  }
-
-  case object MainLane extends LaneNumberOneDigit {
-    def laneCode = 1
-
-  }
-
-  case object FirstLeftAdditional extends LaneNumberOneDigit {
-    def laneCode = 2
-  }
-
-  case object FirstRightAdditional extends LaneNumberOneDigit {
-    def laneCode = 3
-  }
-
-  case object SecondLeftAdditional extends LaneNumberOneDigit {
-    def laneCode = 4
-  }
-
-  case object SecondRightAdditional extends LaneNumberOneDigit {
-    def laneCode = 5
-  }
-
-  case object ThirdLeftAdditional extends LaneNumberOneDigit {
-    def laneCode = 6
-  }
-
-  case object ThirdRightAdditional extends LaneNumberOneDigit {
-    def laneCode = 7
-  }
-
-  case object FourthLeftAdditional extends LaneNumberOneDigit {
-    def laneCode = 8
-  }
-
-  case object FourthRightAdditional extends LaneNumberOneDigit {
-    def laneCode = 9
-  }
-
-  case object Unknown extends LaneNumberOneDigit{
-    def laneCode = 99
-  }
-
 }
 
 /**
