@@ -141,7 +141,7 @@
     var constructionTypes = [
       [1, 'Suunnitteilla'], //Planned
       [2, 'Rakenteilla'], //Under construction
-      [4, 'Tilapäisesti poissa käytöstä (haalennettu linkki)'] // Temporarily out of use
+      [4, 'Väliaikaisesti poissa käytöstä (haalennettu linkki)'] // Temporarily out of use
     ];
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
       return '<div class="legend-entry">' +
