@@ -139,8 +139,9 @@
 
     var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
     var constructionTypes = [
-      [1, 'Rakenteilla'], //Under construction
-      [3, 'Suunnitteilla'] //Planned
+      [1, 'Suunnitteilla'], //Planned
+      [2, 'Rakenteilla'], //Under construction
+      [4, 'Tilapäisesti poissa käytöstä (haalennettu linkki)'] // Temporarily out of use
     ];
     var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
       return '<div class="legend-entry">' +
