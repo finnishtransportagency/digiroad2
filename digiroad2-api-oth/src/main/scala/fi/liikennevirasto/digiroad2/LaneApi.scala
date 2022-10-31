@@ -77,12 +77,12 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val endAddrM = params.getOrElse("end_addrm", halt(BadRequest("Missing parameters")))
 
       val parameters = try {
-        RangeParameters(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
+        val params = RangeParameters(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
           endRoadPartNumber.toLong, startAddrM.toLong, endAddrM.toLong)
+
+        validateRangeParameters(params)
+        params
       }
-        try {
-          validateRangeParameters(parameters)
-        }
       catch {
         case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
         case _: InvalidRoadNumberException => halt(BadRequest("Invalid RoadNumber"))
