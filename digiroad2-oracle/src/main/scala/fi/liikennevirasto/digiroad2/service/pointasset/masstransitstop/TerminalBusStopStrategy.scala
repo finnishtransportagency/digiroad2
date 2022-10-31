@@ -53,7 +53,9 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     val terminalPublishInfo = publishInfo.asInstanceOf[TerminalPublishInfo]
     super.publishSaveEvent(terminalPublishInfo)
-    eventbus.publish("terminal:saved", terminalPublishInfo)
+    if(terminalPublishInfo.attachedAsset.nonEmpty || terminalPublishInfo.detachAsset.nonEmpty){
+      eventbus.publish("terminal:saved", terminalPublishInfo)
+    }
   }
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
