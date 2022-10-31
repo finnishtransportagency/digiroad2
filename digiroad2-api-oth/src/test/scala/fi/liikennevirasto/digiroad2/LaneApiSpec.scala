@@ -103,6 +103,10 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
     get("/lanes_in_range?road_number=9&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000") {
       status should equal(200)
     }
+    //TODO Remove after walking and cycling lanes are enabled in laneApi
+    get("/lanes_in_range?road_number=70001&track=1&start_part=208&start_addrm=8500&end_part=208&end_addrm=9000") {
+      status should equal(400)
+    }
   }
 
 }
