@@ -1013,7 +1013,7 @@
         isSeparable: false,
         allowMapViewOnly: true,
         allowComplementaryLinks: false,
-        allowWalkingCyclingLinks: true,
+        allowWalkingCyclingLinks: false,
         isVerifiable: false,
         showValidationErrorLabel: true,
         style: new LaneModellingStyle(),
