@@ -15,7 +15,6 @@ import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-import java.security.InvalidParameterException
 
 class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService)
   extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
@@ -28,6 +27,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   case class ApiLane(laneCode: Int, track: Int, startAddressM: Long, endAddressM: Long)
   case class RangeParameters(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long,
                              startAddrM: Long, endAddrM: Long)
+  case class InvalidRoadNumberException() extends Exception
 
   override protected def applicationDescription: String = "Lanes API"
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -85,7 +85,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         }
       catch {
         case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
-        case _: InvalidParameterException => halt(BadRequest("Invalid RoadNumber"))
+        case _: InvalidRoadNumberException => halt(BadRequest("Invalid RoadNumber"))
       }
 
       lanesInRoadAddressRangeToApi(parameters)
@@ -110,7 +110,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   }
 //TODO add more validations
   def validateRangeParameters(parameters: RangeParameters): Unit = {
-    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw new InvalidParameterException
+    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw new InvalidRoadNumberException
   }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
