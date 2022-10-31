@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLane
 import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.RoadAddressUtils.isCarTrafficRoadAddress
+import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddress, Track}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}

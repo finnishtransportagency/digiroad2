@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
-import fi.liikennevirasto.digiroad2.util.RoadAddressUtils.isCarTrafficRoadAddress
+import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
