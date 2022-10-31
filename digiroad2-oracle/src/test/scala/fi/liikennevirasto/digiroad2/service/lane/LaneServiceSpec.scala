@@ -1113,11 +1113,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1143,11 +1142,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1173,11 +1171,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1207,11 +1204,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1241,11 +1237,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1276,11 +1271,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1311,11 +1305,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1358,11 +1351,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1438,11 +1430,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1,linkId2), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )),
           RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map()))
       )
@@ -1531,11 +1522,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1600,11 +1590,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1660,11 +1649,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1765,11 +1753,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1839,11 +1826,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -1914,11 +1900,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
@@ -2005,11 +1990,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
         Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7L,
+          "ROAD_NUMBER" -> 100L,
+          "END_ADDR" -> 2000L
         )))
       )
 
