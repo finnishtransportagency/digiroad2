@@ -8,9 +8,44 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import org.joda.time.DateTime
 
 class AssetFiller {
-  val AllowedTolerance = 0.5
+  val AllowedTolerance = 2.0
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
+
+
+
+  def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = {
+
+    val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
+      expireSegmentsOutsideGeometry,
+      capSegmentsThatOverflowGeometry,
+      expireOverlappingSegments,
+      combine,
+      fuse,
+      dropShortSegments,
+      adjustAssets,
+      droppedSegmentWrongDirection,
+      adjustSegmentSideCodes,
+      updateValues
+    )
+
+    val adjustmentAndNonExistingOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
+      combine,
+      fuse,
+      dropShortSegments,
+      adjustAssets,
+      droppedSegmentWrongDirection,
+      adjustSegmentSideCodes,
+      generateTwoSidedNonExistingLinearAssets(typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
+      updateValues
+    )
+
+    if(geometryChanged) fillOperations
+    else adjustmentAndNonExistingOperations
+  }
+
 
   private def modifiedSort(left: PersistedLinearAsset, right: PersistedLinearAsset) = {
     val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
@@ -188,6 +223,8 @@ class AssetFiller {
 
   protected def updateValues(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = (segments, changeSet)
 
+  protected def updateValuesWithoutChangeSet(roadLink: RoadLink, segments: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = segments
+
   private def combine(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: PersistedLinearAsset, pseudoId: Long) = {
@@ -336,16 +373,25 @@ class AssetFiller {
 
   case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[Value])
 
-  private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: RoadLink): Seq[PieceWiseLinearAsset] = {
+  def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: RoadLink): Seq[PieceWiseLinearAsset] = {
     dbAssets.map { dbAsset =>
       val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, dbAsset.startMeasure, dbAsset.endMeasure)
       val endPoints = GeometryUtils.geometryEndpoints(points)
       PieceWiseLinearAsset(
         dbAsset.id, dbAsset.linkId, SideCode(dbAsset.sideCode), dbAsset.value, points, dbAsset.expired, dbAsset.startMeasure,
         dbAsset.endMeasure, Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime, dbAsset.createdBy,
-        dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.vvhTimeStamp, dbAsset.geomModifiedDate,
+        dbAsset.createdDateTime, dbAsset.typeId, roadLink.trafficDirection, dbAsset.timeStamp, dbAsset.geomModifiedDate,
         dbAsset.linkSource, roadLink.administrativeClass,  verifiedBy = dbAsset.verifiedBy, verifiedDate = dbAsset.verifiedDate, informationSource = dbAsset.informationSource)
     }
+  }
+
+  def toLinearAssetsOnMultipleLinks(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+    val mappedTopology = persistedLinearAssets.groupBy(_.linkId)
+    mappedTopology.flatMap(pair => {
+      val (linkId, assets) = pair
+      val roadLink = roadLinks.find(_.linkId == linkId).get
+      toLinearAsset(assets, roadLink)
+    }).toSeq
   }
 
   private def toSegment(persistedLinearAsset: PersistedLinearAsset) = {
@@ -427,8 +473,8 @@ class AssetFiller {
 
   private def latestTimestamp(linearAsset: PieceWiseLinearAsset, linearAssetO: Option[PieceWiseLinearAsset]) = {
     linearAssetO match {
-      case Some(lao) => Math.max(linearAsset.vvhTimeStamp, lao.vvhTimeStamp)
-      case _ => linearAsset.vvhTimeStamp
+      case Some(lao) => Math.max(linearAsset.timeStamp, lao.timeStamp)
+      case _ => linearAsset.timeStamp
     }
   }
 
@@ -487,22 +533,8 @@ class AssetFiller {
     }
   }
 
-  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      capSegmentsThatOverflowGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets,
-      droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      generateTwoSidedNonExistingLinearAssets(typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      updateValues
-    )
+  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val operations = getOperations(typeId, geometryChanged)
 
     val changeSet = changedSet match {
       case Some(change) => change
@@ -514,14 +546,14 @@ class AssetFiller {
                               valueAdjustments = Seq.empty[ValueAdjustment])
     }
 
-    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+    topology.foldLeft(Seq.empty[PersistedLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
-      val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
+      (existingAssets ++ adjustedAssets, assetAdjustments)
     }
   }
 
@@ -565,14 +597,14 @@ class AssetFiller {
 
     val changeSet = assetId match {
       case 0 => changedSet
-      case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.vvhTimeStamp)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode), asset.typeId)))
+      case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.timeStamp)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, SideCode.apply(newSideCode), asset.typeId)))
     }
 
     (PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode,
       value = asset.value, startMeasure = newStart, endMeasure = newEnd,
       createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
       modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
-      vvhTimeStamp = projection.vvhTimeStamp, geomModifiedDate = None, linkSource = asset.linkSource, verifiedBy = asset.verifiedBy, verifiedDate = asset.verifiedDate,
+      timeStamp = projection.timeStamp, geomModifiedDate = None, linkSource = asset.linkSource, verifiedBy = asset.verifiedBy, verifiedDate = asset.verifiedDate,
       informationSource = asset.informationSource), changeSet)
   }
 }

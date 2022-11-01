@@ -59,8 +59,8 @@
     ];
 
     var linkStatusRules = [
-      new StyleRule().where('constructionType').is(1).use({ stroke: { color: '#ff9900' } }),
-      new StyleRule().where('constructionType').is(3).use({ stroke: { color: '#cc99ff'} })
+      new StyleRule().where('constructionType').is(2).use({ stroke: { color: '#ff9900' } }),
+      new StyleRule().where('constructionType').is(1).use({ stroke: { color: '#cc99ff'} })
     ];
 
     var linkTypeRules = [
@@ -70,7 +70,8 @@
       new StyleRule().where('linkType').isIn([8, 9]).use({ stroke: { color: '#888'}, icon: { src: 'images/link-properties/arrow-drop-grey.svg' } }),
       new StyleRule().where('linkType').isIn([7, 10, 11, 12]).use({ stroke: { color: '#1b0'}, icon: { src: 'images/link-properties/arrow-drop-green.svg' } }),
       new StyleRule().where('linkType').isIn([13, 21]).use({ stroke: { color: '#f5d'}, icon: { src: 'images/link-properties/arrow-drop-pink.svg' } }),
-      new StyleRule().where('linkType').isIn([14, 15]).use({ stroke: { color: '#9d57df'}, icon: { src: 'images/link-properties/arrow-drop-lilac.svg' } })
+      new StyleRule().where('linkType').isIn([14, 15]).use({ stroke: { color: '#9d57df'}, icon: { src: 'images/link-properties/arrow-drop-lilac.svg' } }),
+      new StyleRule().where('linkType').isIn([22]).use({ stroke: { color: '#5dfac5'}, icon: { src: 'images/link-properties/arrow-drop-mint.svg' } })
     ];
     var unknownLinkTypeDefaultRules = [
       new StyleRule().where('linkType').is(99).use({ stroke: { color: '#000', opacity: 0.6}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })

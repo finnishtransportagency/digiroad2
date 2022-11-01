@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
-import java.util.Date
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHChangeInfoClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao, RoadLinkDAO}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddress, RoadSide, Track}
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -25,8 +25,8 @@ import org.scalatest.{BeforeAndAfter, Tag}
 
 import scala.concurrent.Promise
 
-case class LinearAssetFromApi(id: Option[Long], linkId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
-case class DirectionalTrafficSignFromApi(id: Long, linkId: Long, lon: Double, lat: Double, mValue: Double, floating: Boolean, vvhTimeStamp: Long, municipalityCode: Int,
+case class LinearAssetFromApi(id: Option[Long], linkId: String, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
+case class DirectionalTrafficSignFromApi(id: Long, linkId: String, lon: Double, lat: Double, mValue: Double, floating: Boolean, timeStamp: Long, municipalityCode: Int,
                                          validityDirection: Int, text: Option[String], bearing: Option[Int], createdBy: Option[String] = None, createdAt: Option[DateTime] = None,
                                          modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, geometry: Seq[Point] = Nil)
 case class MassLinearAssetFromApi(geometry: Seq[Point], sideCode: Int, value: Option[Value], administrativeClass: Int)
@@ -50,100 +50,107 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
   val roadLinkGeometry = List(Point(374567.632,6677255.6,0.0), Point(374603.57,6677262.009,0.0), Point(374631.683,6677267.545,0.0), Point(374651.471,6677270.245,0.0), Point(374669.739,6677273.332,0.0), Point(374684.567,6677277.323,0.0))
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1)
+  val linkId1: String = LinkIdGenerator.generateRandom()
+  val linkId2: String = LinkIdGenerator.generateRandom()
+  val linkId3: String = LinkIdGenerator.generateRandom()
+  val linkId4: String = "dd8bdb73-b8b4-4c81-a404-1126c4f4e714:1"
+  val linkId5: String = "fbb3c1bd-432d-46fd-9588-00dec41042dd:1"
+  val linkId6: String = "d06dbdc7-366a-4ee3-a41f-c1d5010859ae:1"
+  val linkId7: String = "7cf9e493-151c-4afd-96a4-8a6880cf18e5:1"
+  val linkId8: String = "ef043f17-dadc-435e-9e3f-50a19c3c84f3:1"
 
-  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
-  when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
-  when(mockRoadLinkService.fetchByLinkId(1l))
-    .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchByLinkId(2l))
-    .thenReturn(Some(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchByLinkId(7478l))
-    .thenReturn(Some(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  private val vvhRoadlinksForBoundingBox = List(
-    VVHRoadlink(7478l, 235, Seq(Point(0, 0), Point(0, 10)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
+  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
+  when(mockRoadLinkClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+  when(mockRoadLinkService.fetchByLinkId(linkId1))
+    .thenReturn(Some(RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkId(linkId2))
+    .thenReturn(Some(RoadLinkFetched(linkId2, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkId(linkId3))
+    .thenReturn(Some(RoadLinkFetched(linkId3, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  private val fetchedRoadlinksForBoundingBox = List(
+    RoadLinkFetched(linkId3, 235, Seq(Point(0, 0), Point(0, 10)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
  
   when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Promise.successful(Nil).future)
-  when(mockRoadLinkService.fetchByLinkId(1611071l))
-    .thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchByLinkId(1611353))
-    .thenReturn(Some(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611071l, 1611070l, 1611069l)))
-    .thenReturn(Seq(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-                    VVHRoadlink(1611070l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-                    VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611374l)))
-    .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkId(linkId5))
+    .thenReturn(Some(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchByLinkId(linkId6))
+    .thenReturn(Some(RoadLinkFetched(linkId6, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinksByIds(Set(linkId5, linkId8, linkId7)))
+    .thenReturn(Seq(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+                    RoadLinkFetched(linkId8, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+                    RoadLinkFetched(linkId7, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinksByIds(Set(linkId4)))
+    .thenReturn(List(RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  def toRoadLink(l: VVHRoadlink) = {
+  def toRoadLink(l: RoadLinkFetched) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
   
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1l))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(2l))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(7478l))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1l))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(2l))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(7478l))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean]))
-    .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
-    .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
-    .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean]))
-    .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1611071l))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(1611353))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611353))
-    .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611374l)))
-    .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
-  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(2l))
-    .thenReturn(Some(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1l))
-    .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId1))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId2))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId2, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId3))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId3, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId1))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId2))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId2, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId3))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId3, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean]))
+    .thenReturn(fetchedRoadlinksForBoundingBox.map(toRoadLink))
+  when(mockRoadLinkService.getRoadLinksByBoundsAndMunicipalities(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
+    .thenReturn(fetchedRoadlinksForBoundingBox.map(toRoadLink))
+  when(mockRoadLinkService.getRoadLinksAndChanges(any[BoundingRectangle], any[Set[Int]],any[Boolean]))
+    .thenReturn((fetchedRoadlinksForBoundingBox.map(toRoadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean]))
+    .thenReturn((fetchedRoadlinksForBoundingBox.map(toRoadLink), Nil))
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId5))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkByLinkId(linkId6))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId6, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId6))
+    .thenReturn(Some(toRoadLink(RoadLinkFetched(linkId6, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
+  when(mockRoadLinkService.fetchRoadlinksByIds(Set(linkId4)))
+    .thenReturn(List(RoadLinkFetched(linkId4, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChanges(any[BoundingRectangle], any[Set[Int]], any[Boolean],any[Boolean])).thenReturn((fetchedRoadlinksForBoundingBox.map(toRoadLink), Nil))
+  when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId5)).thenReturn(Some(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId2))
+    .thenReturn(Some(RoadLinkFetched(linkId2, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId1))
+    .thenReturn(Some(RoadLinkFetched(linkId1, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1611071l, 1611070l, 1611069l))).thenReturn(Seq(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(1611070l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-    VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinksAndComplementaries(Set(linkId5, linkId8, linkId7))).thenReturn(Seq(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    RoadLinkFetched(linkId8, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    RoadLinkFetched(linkId7, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId5)).thenReturn(Some(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId5)).thenReturn(Some(RoadLinkFetched(linkId5, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   when(mockRoadAddressService.roadLinkWithRoadAddress(any[Seq[RoadLink]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.linearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.speedLimitWithRoadAddress(any[Seq[Seq[SpeedLimit]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
-  when(mockRoadAddressService.experimentalLinearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenReturn(Seq())
 
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(2l))
-    .thenReturn(Some(RoadLink(2l, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1l))
-    .thenReturn(Some(RoadLink(1l, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5)).thenReturn(Some(RoadLink(linkId5, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId2))
+    .thenReturn(Some(RoadLink(linkId2, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId1))
+    .thenReturn(Some(RoadLink(linkId1, Nil, 0, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
 
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5)).thenReturn(Some(RoadLink(linkId5, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
   val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockRoadLinkService)
-  val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
+  val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def eventbus: DigiroadEventBus = new DummyEventBus
     override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -166,7 +173,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testNumberOfLanesService = new NumberOfLanesService(mockRoadLinkService, new DummyEventBus)
   val testMassTransitLaneService = new MassTransitLaneService(mockRoadLinkService, new DummyEventBus)
 
-  addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
+  addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockRoadLinkClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
     testPavedRoadService, testRoadWidthService, linearTotalWeightLimitService = testLinearTotalWeightLimitService, numberOfLanesService = testNumberOfLanesService, massTransitLaneService = testMassTransitLaneService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
@@ -231,14 +238,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 7478014, "lat": 483655, "linkId": 2, "bearing": 0}"""
+    val requestPayload = s"""{"lon": 7478014, "lat": 483655, "linkId": "$linkId2", "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes, username = "silari") {
       status should equal(400)
     }
   }
 
   test("validate user rights when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 1, "bearing": 0}"""
+    val requestPayload = s"""{"lon": 0, "lat": 0, "linkId": "$linkId1", "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
       status should equal(401)
     }
@@ -313,7 +320,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  case class RoadLinkHelper(linkId: Long, points: Seq[Point],
+  case class RoadLinkHelper(linkId: String, points: Seq[Point],
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 

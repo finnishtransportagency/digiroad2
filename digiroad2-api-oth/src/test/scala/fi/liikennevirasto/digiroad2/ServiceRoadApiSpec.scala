@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.MaintenanceService
+import fi.liikennevirasto.digiroad2.util.LinkIdGenerator
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
@@ -15,13 +16,14 @@ import org.scalatest.mockito.MockitoSugar
 class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  val roadLink = RoadLink(100, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345), "MTKID" -> BigInt(1234), "VERTICALLEVEL" -> BigInt(1)))
+  val linkId = LinkIdGenerator.generateRandom()
+  val roadLink = RoadLink(linkId, List(Point(0.0, 0.0), Point(1.0, 0.0)), 10.0, Municipality, 5, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(345), "MTKID" -> BigInt(1234), "VERTICALLEVEL" -> BigInt(1)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockMaintenanceService = MockitoSugar.mock[MaintenanceService]
   val serviceRoadAPI = new ServiceRoadAPI(mockMaintenanceService, mockRoadLinkService, new OthSwagger)
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
-  when(mockMaintenanceService.getActiveMaintenanceRoadByPolygon(any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(DynamicValue(DynamicAssetValue(Seq()))), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockRoadLinkService.getRoadLinksByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(any[Set[String]], any[Boolean])).thenReturn(Seq(roadLink))
+  when(mockMaintenanceService.getActiveMaintenanceRoadByPolygon(any[Int])).thenReturn(Seq(PersistedLinearAsset(1, linkId, 1, Some(DynamicValue(DynamicAssetValue(Seq()))), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
    addServlet(serviceRoadAPI, "/*")
 

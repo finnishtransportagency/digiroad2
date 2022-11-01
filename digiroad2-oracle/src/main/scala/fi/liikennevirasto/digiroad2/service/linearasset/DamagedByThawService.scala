@@ -17,8 +17,4 @@ class DamagedByThawService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
     }
   }
 
-  override def publish(eventBus: DigiroadEventBus, changeSet: LinearAssetFiller.ChangeSet, projectedAssets: Seq[PersistedLinearAsset]): Unit = {
-    eventBus.publish("damagedByThaw:update", changeSet)
-    eventBus.publish("dynamicAsset:saveProjectedAssets", projectedAssets.filter(_.id == 0L))
-  }
 }

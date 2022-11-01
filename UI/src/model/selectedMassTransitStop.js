@@ -525,8 +525,8 @@
         return _.some(adminClassProperty.values, function(value){ return value.propertyValue === '1'; });
 
       //Get administration class from roadlink
-      var stopRoadlink = getRoadLink();
-      return stopRoadlink ? (stopRoadlink.getData().administrativeClass === 'State') : false;
+      var stopRoadLink = getRoadLink();
+      return stopRoadLink ? (stopRoadLink.getData().administrativeClass === 'State') : false;
     }
 
     function isAdministratorHSL(properties){
@@ -591,10 +591,10 @@
     }
 
     function hasRoadAddress() {
-      var stopRoadlink = getCurrentRoadLink();
+      var stopRoadLink = getCurrentRoadLink();
       var properties = getProperties();
-      if(stopRoadlink){
-        return !_.isUndefined(stopRoadlink.getData().roadNumber);
+      if(stopRoadLink){
+        return !_.isUndefined(stopRoadLink.getData().roadNumber);
       }
       var roadNumber = _.find(properties, function(property){
         return property.publicId === 'tie';

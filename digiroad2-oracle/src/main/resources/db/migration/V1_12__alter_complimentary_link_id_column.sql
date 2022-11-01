@@ -1,0 +1,1 @@
+ALTER TABLE roadlinkex ALTER COLUMN linkid TYPE VARCHAR(40);

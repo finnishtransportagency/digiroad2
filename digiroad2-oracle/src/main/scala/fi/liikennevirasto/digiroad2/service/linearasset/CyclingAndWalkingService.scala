@@ -22,7 +22,7 @@ class CyclingAndWalkingService(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
     if (specialCases.contains(singleChoiceId)) {
 
-      roadLinkServiceImpl.getRoadLinkAndComplementaryFromVVH(asset.linkId) match {
+      roadLinkServiceImpl.getRoadLinkAndComplementaryByLinkId(asset.linkId) match {
         case Some(roadLink) =>
           val functionalClass = roadLink.functionalClass
           val administrativeClass = roadLink.administrativeClass.value

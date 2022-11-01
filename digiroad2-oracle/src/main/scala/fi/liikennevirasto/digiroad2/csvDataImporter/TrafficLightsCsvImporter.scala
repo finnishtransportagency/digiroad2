@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import fi.liikennevirasto.digiroad2.asset.{PointAssetState, PointAssetStructure, SimplePointAssetProperty, State}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.RoadLinkClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.TrafficLight
 import fi.liikennevirasto.digiroad2.lane.LaneType
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
@@ -15,7 +15,7 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = PostGISDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   private val typePublicId = "trafficLight_type"
@@ -93,7 +93,7 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
     val (authorizationErrorMsg, parsedRowAndRoadLink) = (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
+        val roadLinks = roadLinkService.getClosestRoadlinkForCarTraffic(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
         if (roadLinks.isEmpty) {
           (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
         } else {

@@ -201,10 +201,7 @@
         if(self._assetTypeConfiguration.layerName === layer){
           $('ul[class=information-content]').empty();
 
-          if(self._assetTypeConfiguration.isVerifiable)
-            self.renderLinkToWorkList(layer);
-          if(self._assetTypeConfiguration.hasInaccurate)
-            self.renderInaccurateWorkList(layer);
+          renderLinktoLaneWorkList();
         }
       });
 
@@ -214,6 +211,11 @@
           reloadForm(rootElement);
         }
       });
+    };
+
+    var renderLinktoLaneWorkList = function renderLinktoWorkList() {
+        $('ul[class=information-content]').append('' +
+            '<li><button id="work-list-link-lanes" class="lane-work-list btn btn-tertiary" onclick=location.href="#work-list/laneChecklist">Tarkistettavien kaistojen lista</button></li>');
     };
 
     self.renderAvailableFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled, alreadyRendered) {
@@ -408,7 +410,7 @@
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(odd) && _.max(odd) == 9 || selectedAsset.isPromotionDirty()));
 
-      var selectedRoadLink = selectedAsset.getSelectedRoadlink();
+      var selectedRoadLink = selectedAsset.getSelectedRoadLink();
       var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary add-by-road-address">Lisää kaista tieosoitteen avulla</button>').click(function() {
         isAddByRoadAddressActive = true;
         selectedAsset.setInitialRoadFields();

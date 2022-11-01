@@ -39,6 +39,7 @@ Resources:
       Handler: AddJobToQueue.handler
       Role: !GetAtt BatchLambdaRole.Arn
       Runtime: nodejs14.x
+      Timeout: 30
 
   BatchLambdaRole:
     Type: AWS::IAM::Role
@@ -52,12 +53,13 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies:
-        - PolicyName: "dev-batch-lambda-policy"
+        - PolicyName: "batch-lambda-policy"
           PolicyDocument:
             Statement:
               - Effect: "Allow"
                 Resource: "*"
                 Action:
+                  - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                   - 'batch:DescribeJobs'

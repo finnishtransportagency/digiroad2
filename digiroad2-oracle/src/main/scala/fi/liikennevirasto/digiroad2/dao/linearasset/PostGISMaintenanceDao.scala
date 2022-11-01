@@ -7,7 +7,6 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.Queries.DynamicPropertyRow
 import fi.liikennevirasto.digiroad2.dao.{DynamicAssetRow, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -15,7 +14,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
 
-class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+class PostGISMaintenanceDao() {
 
   def fetchPotentialServiceRoads(includeFloating: Boolean = false, includeExpire: Boolean = false ): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else " and a.floating = '0'"
@@ -54,7 +53,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val value =  DynamicAssetValue(assetRowToProperty(assetRows))
 
       PersistedLinearAsset(id, row.linkId, row.sideCode, value = Some(DynamicValue(value)), row.startMeasure, row.endMeasure, row.createdBy,
-        row.createdDate, row.modifiedBy, row.modifiedDate, row.expired, row.typeId, row.vvhTimeStamp,
+        row.createdDate, row.modifiedBy, row.modifiedDate, row.expired, row.typeId, row.timeStamp,
         row.geomModifiedDate, LinkGeomSource.apply(row.linkSource), row.verifiedBy, row.verifiedDate, row.informationSource.map(info => InformationSource.apply(info)))
 
     }.toSeq
@@ -63,7 +62,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   implicit val getDynamicAssetRow = new GetResult[DynamicAssetRow] {
     def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
-      val linkId = r.nextLong()
+      val linkId = r.nextString()
       val sideCode = r.nextInt()
       val startMeasure = r.nextDouble()
       val endMeasure = r.nextDouble()
@@ -83,14 +82,14 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean
       val typeId = r.nextInt()
-      val vvhTimeStamp = r.nextLong()
+      val timeStamp = r.nextLong()
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
 
-      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
+      DynamicAssetRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, timeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource)
     }
   }
 
@@ -115,7 +114,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
     sqlu"update asset set valid_to = current_timestamp - INTERVAL'1 SECOND' where asset_type_id = $typeId".execute
   }
 
-  def expireMaintenanceAssetsByLinkids(linkIds: Seq[Long], typeId: Int): Unit = {
+  def expireMaintenanceAssetsByLinkids(linkIds: Seq[String], typeId: Int): Unit = {
     linkIds.foreach { linkId =>
       sqlu"""
           update asset set valid_to = current_timestamp - INTERVAL'1 SECOND'
@@ -134,7 +133,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
   /**
     * Creates new Maintenance asset. Return id of new asset. Used by MaintenanceService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
+  def createLinearAsset(typeId: Int, linkId: String, expired: Boolean, sideCode: Int, measures: Measures, username: String, timeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), area: Int): Long = {
@@ -147,7 +146,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, current_timestamp, $area);
 
        insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
 
        insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -158,7 +157,7 @@ class PostGISMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadL
       values ($id, $typeId, $username, current_timestamp, #$validTo, $area);
 
       insert into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $vvhTimeStamp, $linkSource);
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, current_timestamp, $timeStamp, $linkSource);
 
       insert into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId);

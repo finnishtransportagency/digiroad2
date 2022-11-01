@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.PersistedLane
 import scala.util.Try
 
 trait RoadLinkLike extends PolyLine{
-  def linkId: Long
+  def linkId: String
   def municipalityCode: Int
   def length: Double
   def administrativeClass: AdministrativeClass
@@ -17,10 +17,10 @@ trait RoadLinkLike extends PolyLine{
   def linkSource: LinkGeomSource
   def attributes: Map[String, Any]
   def constructionType: ConstructionType
-  def vvhTimeStamp: Long
+  def timeStamp: Long
 }
 
-case class RoadLinkProperties(linkId: Long,
+case class RoadLinkProperties(linkId: String,
                               functionalClass: Int,
                               linkType: LinkType,
                               trafficDirection: TrafficDirection,
@@ -28,9 +28,9 @@ case class RoadLinkProperties(linkId: Long,
                               modifiedAt: Option[String],
                               modifiedBy: Option[String])
 
-case class TinyRoadLink(linkId: Long)
+case class TinyRoadLink(linkId: String)
 
-case class RoadLink(linkId: Long, geometry: Seq[Point],
+case class RoadLink(linkId: String, geometry: Seq[Point],
                     length: Double, administrativeClass: AdministrativeClass,
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
@@ -42,7 +42,7 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
   def roadPartNumber: Option[String] = attributes.get("ROADPARTNUMBER").map(_.toString)
-  val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  val timeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
   def accessRightId: Option[String] = attributes.get("ACCESS_RIGHT_ID").map(_.toString)
   def privateRoadAssociation: Option[String] = attributes.get("PRIVATE_ROAD_ASSOCIATION").map(_.toString)
   def additionalInfo: Option[String] = attributes.get("ADDITIONAL_INFO").map(_.toString)
@@ -62,7 +62,6 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
       .orElse(Try(Right(getStringAttribute("ROADNAME_FI"))))
       .orElse(Try(Right(getStringAttribute("ROADNAME_SE"))))
-      .orElse(Try(Right(getStringAttribute("ROADNAME_SM"))))
       .toOption
   }
 
@@ -78,7 +77,7 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   }
 
   def isSimpleCarTrafficRoad: Boolean = {
-    val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
+    val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
     val constructionTypeAllowed: Seq[ConstructionType] = Seq(UnderConstruction, Planned)
 
     !(constructionTypeAllowed.contains(constructionType) || (roadLinkTypeAllowed.contains(linkType) && administrativeClass == State))
@@ -86,11 +85,22 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
 
   def roadNameIdentifier: Option[String] = {
     Try(getStringAttribute("ROADNAME_FI"))
-      .orElse(Try(getStringAttribute("ROADNAME_SE")))
-      .orElse(Try(getStringAttribute("ROADNAME_SM"))).toOption
+      .orElse(Try(getStringAttribute("ROADNAME_SE"))).toOption
   }
 
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]
+}
+
+sealed trait LinkId {
+  def value: String
+}
+
+object LinkId {
+  case object Unknown extends LinkId { def value = "99" }
+
+  def isUnknown(id: String): Boolean = {
+    id == null || id == Unknown.value
+  }
 }
 
 sealed trait SurfaceType {

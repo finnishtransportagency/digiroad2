@@ -3,15 +3,14 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane, SideCodesForLinkIds}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, RoadAddress, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinkIdGenerator, PolygonTools, RoadAddress, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -21,7 +20,6 @@ import org.scalatest.{FunSuite, Matchers}
 
 class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
@@ -31,14 +29,15 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLaneService = MockitoSugar.mock[LaneService]
 
-  val laneDao = new LaneDao(mockVVHClient, mockRoadLinkService)
-  val laneHistoryDao = new LaneHistoryDao(mockVVHClient, mockRoadLinkService)
+  val laneDao = new LaneDao()
+  val laneHistoryDao = new LaneHistoryDao()
+  val linkId: String = LinkIdGenerator.generateRandom()
   val roadLinkWithLinkSource = RoadLink(
-    1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
 
-  when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+  when(mockRoadLinkService.getRoadLinkByLinkId(any[String], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
 
   val lanePropertiesValues1 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(1))),
@@ -55,6 +54,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
                                    LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
                                    LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                                   )
+  val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
 
 
 
@@ -65,7 +65,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def dao: LaneDao = mockLaneDao
     override def historyDao: LaneHistoryDao = mockLaneHistoryDao
     override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
@@ -83,7 +82,6 @@ class LaneServiceSpec extends LaneTestSupporter {
 
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def vvhClient: VVHClient = mockVVHClient
     override def dao: LaneDao = laneDao
     override def historyDao: LaneHistoryDao = laneHistoryDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
@@ -97,7 +95,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Create new lane") {
     runWithRollback {
 
-      val newLane = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(100L), 1, usernameTest)
+      val newLane = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(linkId1), 1, usernameTest)
       newLane.length should be(1)
 
       val lane = laneDao.fetchLanesByIds( Set(newLane.head)).head
@@ -114,9 +112,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Create multiple lanes") {
     runWithRollback {
-      val newLane1 = PersistedLane(0, 100L, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
-      val newLane2 = PersistedLane(0, 100L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
-      val newLane3 = PersistedLane(0, 101L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val newLane1 = PersistedLane(0, linkId1, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val newLane2 = PersistedLane(0, linkId1, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
+      val newLane3 = PersistedLane(0, linkId2, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues1)
       val createdLanes = ServiceWithDao.createMultipleLanes(Seq(newLane1, newLane2, newLane3), usernameTest)
       createdLanes.length should be(3)
 
@@ -136,16 +134,16 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Fetch existing main lanes by linkId"){
     runWithRollback {
-      val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(100L), 1, usernameTest)
+      val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(linkId1), 1, usernameTest)
       newLane11.length should be(1)
 
-      val newLane12 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(100L), 1, usernameTest)
+      val newLane12 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(linkId1), 1, usernameTest)
       newLane12.length should be(1)
 
-      val newLane21 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(100L), 2, usernameTest)
+      val newLane21 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(linkId1), 2, usernameTest)
       newLane21.length should be(1)
 
-      val mockRoadLink = RoadLink(100L, Seq(), 1000, State, 2, TrafficDirection.AgainstDigitizing,
+      val mockRoadLink = RoadLink(linkId1, Seq(), 1000, State, 2, TrafficDirection.AgainstDigitizing,
         EnclosedTrafficArea, None, None)
 
       val existingLanes = ServiceWithDao.fetchExistingMainLanesByRoadLinks(Seq(mockRoadLink), Seq())
@@ -156,19 +154,19 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Fetch existing Lanes by linksId"){
     runWithRollback {
 
-      val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(100L), 1, usernameTest)
+      val newLane11 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(linkId1), 1, usernameTest)
       newLane11.length should be(1)
 
-      val newLane21 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(100L), 2, usernameTest)
+      val newLane21 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(linkId1), 2, usernameTest)
       newLane21.length should be(1)
 
-      val newLane22 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(100L), 2, usernameTest)
+      val newLane22 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)), Set(linkId1), 2, usernameTest)
       newLane22.length should be(1)
 
-      val existingLanes = ServiceWithDao.fetchExistingLanesByLinksIdAndSideCode(100L, 1)
+      val existingLanes = ServiceWithDao.fetchExistingLanesByLinksIdAndSideCode(linkId1, 1)
       existingLanes.length should be(1)
 
-      val existingLanesOtherSide = ServiceWithDao.fetchExistingLanesByLinksIdAndSideCode(100L, 2)
+      val existingLanesOtherSide = ServiceWithDao.fetchExistingLanesByLinksIdAndSideCode(linkId1, 2)
       existingLanesOtherSide.length should be(2)
 
     }
@@ -182,15 +180,15 @@ class LaneServiceSpec extends LaneTestSupporter {
                           )
 
 
-      val newLane1 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(100L), 1, usernameTest)
+      val newLane1 = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)), Set(linkId1), 1, usernameTest)
       newLane1.length should be(1)
 
-      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L))
-      val updatedLane = ServiceWithDao.update(Seq(NewLane(newLane1.head, 0, 500, 745, false, false, updateValues1)), Set(100L), 1, usernameTest, Seq(SideCodesForLinkIds(100L, 1)), allExistingLanes)
+      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1))
+      val updatedLane = ServiceWithDao.update(Seq(NewLane(newLane1.head, 0, 500, 745, false, false, updateValues1)), Set(linkId1), 1, usernameTest, Seq(SideCodesForLinkIds(linkId1, 1)), allExistingLanes)
       updatedLane.length should be(1)
 
       //Verify the presence one line with old data before the update on histories tables
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1), true)
       historyLanes.size should be(1)
 
       val oldLaneData = historyLanes.filter(_.oldId == newLane1.head).head
@@ -207,11 +205,11 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lanePropertiesWithDate = lanePropertiesValues2 ++ Seq( LaneProperty("start_date", Seq(LanePropertyValue("20.07.2020"))) )
       val lanePropertiesWithEmptyDate = lanePropertiesValues2 ++ Seq( LaneProperty("start_date", Seq()) )
 
-      val newLaneId = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesWithDate)), Set(100L), 1, usernameTest)
+      val newLaneId = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesWithDate)), Set(linkId1), 1, usernameTest)
       val createdLane = ServiceWithDao.getPersistedLanesByIds(newLaneId.toSet)
       createdLane.head.attributes.length should be(3)
 
-      val updatedLaneId = ServiceWithDao.update(Seq(NewLane(newLaneId.head, 0, 500, 745, false, false, lanePropertiesWithEmptyDate)), Set(100L), 1, usernameTest, Seq(SideCodesForLinkIds(100L, 1)), createdLane)
+      val updatedLaneId = ServiceWithDao.update(Seq(NewLane(newLaneId.head, 0, 500, 745, false, false, lanePropertiesWithEmptyDate)), Set(linkId1), 1, usernameTest, Seq(SideCodesForLinkIds(linkId1, 1)), createdLane)
       val updatedLane = ServiceWithDao.getPersistedLanesByIds(updatedLaneId.toSet)
       updatedLane.head.attributes.length should be(2)
     }
@@ -224,14 +222,14 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2))
 
       //Create initial lanes
-      val newMainLaneid = ServiceWithDao.create(mainLane1ToAdd, Set(100L), 1, usernameTest).head
-      val newSubLaneId = ServiceWithDao.create(subLane2ToAdd, Set(100L), 1, usernameTest).head
+      val newMainLaneid = ServiceWithDao.create(mainLane1ToAdd, Set(linkId1), 1, usernameTest).head
+      val newSubLaneId = ServiceWithDao.create(subLane2ToAdd, Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(2)
 
       val lane11 = currentLanes.filter(_.id == newMainLaneid).head
@@ -252,8 +250,8 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane11 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneid))
-      ServiceWithDao.processNewLanes((currentMainLane11 ++ subLane12ToExpire).toSet, Set(100L), 1, usernameTest, sideCodesForLinkIds)
-      val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      ServiceWithDao.processNewLanes((currentMainLane11 ++ subLane12ToExpire).toSet, Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
+      val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanesAfterDelete.size should be(1)
 
       val lane11AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneid).head
@@ -263,7 +261,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       //Verify the presence of the deleted lane on histories tables
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       historyLanes.size should be(1)
 
       val lane12AfterDelete = historyLanes.filter(_.oldId == newSubLaneId).head
@@ -282,14 +280,14 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2Splited = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues2)
 
       //create lanes 11, 12
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
-      val newSubLane2Id = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest).head
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+      val newSubLane2Id = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(2)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -309,9 +307,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and one sublane splited and stored only one part
       val currentMainLane11 = mainLane1.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane11, subLane2Splited), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(currentMainLane11, subLane2Splited), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       lanesAfterSplit.size should be(2)
 
       val lane11AfterSplit = lanesAfterSplit.filter(_.id == mainLane1Id).head
@@ -330,7 +328,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Verify the presence of the old splitted lane on histories tables
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       historyLanes.size should be(1)
 
       val historyLane12 = historyLanes.filter(_.oldId == newSubLane2Id).head
@@ -352,11 +350,11 @@ class LaneServiceSpec extends LaneTestSupporter {
       val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
       val subLane2Splited = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues2)
 
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
-      val subLane2SplitedId = ServiceWithDao.create(Seq(subLane2Splited), Set(100L), 1, usernameTest).head
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+      val subLane2SplitedId = ServiceWithDao.create(Seq(subLane2Splited), Set(linkId1), 1, usernameTest).head
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(2)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -381,12 +379,12 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitedA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues2)
       val subLane2SplitedB = NewLane(0, 250, 500, 745, false, false, lanePropertiesValues2)
 
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
-      val subLane2SplitedAId = ServiceWithDao.create(Seq(subLane2SplitedA), Set(100L), 1, usernameTest).head
-      val subLane2SplitedBId = ServiceWithDao.create(Seq(subLane2SplitedB), Set(100L), 1, usernameTest).head
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+      val subLane2SplitedAId = ServiceWithDao.create(Seq(subLane2SplitedA), Set(linkId1), 1, usernameTest).head
+      val subLane2SplitedBId = ServiceWithDao.create(Seq(subLane2SplitedB), Set(linkId1), 1, usernameTest).head
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(3)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -426,14 +424,14 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues2)
       val subLane2SplitB = NewLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
 
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
-      val newSubLane2Id = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest).head
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane), Set(linkId1), 1, usernameTest).head
+      val newSubLane2Id = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(2)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -453,9 +451,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and two sublanes splited and stored both
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2SplitA, subLane2SplitB), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2SplitA, subLane2SplitB), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       lanesAfterSplit.size should be(3)
 
       val lane11AfterSplit = lanesAfterSplit.filter(_.id == mainLane1Id).head
@@ -483,7 +481,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Verify the presence of the old splitted lanes on histories tables
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       historyLanes.size should be(2)
 
       historyLanes.filter(_.oldId == newSubLane2Id).foreach { historyLane2 =>
@@ -500,7 +498,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Update two lanes in one roadlink to only one lane") {
+  test("Replace two old split lanes with new full length additional lane") {
     runWithRollback {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(2))),
@@ -513,15 +511,15 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues2)
       val subLane2SplitB = NewLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
 
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
-      val newSubLane2SplitAId = ServiceWithDao.create(Seq(subLane2SplitA), Set(100L), 1, usernameTest).head
-      val newSubLane2SplitBId = ServiceWithDao.create(Seq(subLane2SplitB), Set(100L), 1, usernameTest).head
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane), Set(linkId1), 1, usernameTest).head
+      val newSubLane2SplitAId = ServiceWithDao.create(Seq(subLane2SplitA), Set(linkId1), 1, usernameTest).head
+      val newSubLane2SplitBId = ServiceWithDao.create(Seq(subLane2SplitB), Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(3)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -551,9 +549,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Simulation of sending a main lane, and one sublane not splitted
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      val expiredSubLane2A = subLane2SplitA.copy(id = newSubLane2SplitAId, isExpired = true)
+      val expiredSubLane2B = subLane2SplitB.copy(id = newSubLane2SplitBId, isExpired = true)
 
-      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, subLane2, expiredSubLane2A, expiredSubLane2B ), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
+
+      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       lanesAfterSplit.size should be(2)
 
       val lane1AfterSplit = lanesAfterSplit.filter(_.id == mainLane1Id).head
@@ -572,11 +573,11 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Verify the presence of the old splitted lanes on histories tables
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       historyLanes.size should be(2)
 
       val historylane2A = historyLanes.filter(_.oldId == newSubLane2SplitAId).head
-      historylane2A.newId should not be 0
+      historylane2A.newId should be (0)
       historylane2A.newId should not be mainLane1Id
       historylane2A.startMeasure should be(0)
       historylane2A.endMeasure should be(250.0)
@@ -586,7 +587,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       val historylane2B = historyLanes.filter(_.oldId == newSubLane2SplitBId).head
-      historylane2B.newId should not be 0
+      historylane2B.newId should be (0)
       historylane2B.newId should not be mainLane1Id
       historylane2B.startMeasure should be(250.0)
       historylane2B.endMeasure should be(500.0)
@@ -619,15 +620,15 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitA = NewLane(0, 0, 250, 745, false, false, lanePropertiesValues2)
       val subLane2SplitB = NewLane(0, 250, 500, 745, false, false, modifiedLaneProperties1)
 
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
-      val newSubLane2SplitAId = ServiceWithDao.create(Seq(subLane2SplitA), Set(100L), 1, usernameTest).head
-      val newSubLane2SplitBId = ServiceWithDao.create(Seq(subLane2SplitB), Set(100L), 1, usernameTest).head
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane), Set(linkId1), 1, usernameTest).head
+      val newSubLane2SplitAId = ServiceWithDao.create(Seq(subLane2SplitA), Set(linkId1), 1, usernameTest).head
+      val newSubLane2SplitBId = ServiceWithDao.create(Seq(subLane2SplitB), Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(3)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -657,9 +658,9 @@ class LaneServiceSpec extends LaneTestSupporter {
       val updatedSubLane2SplitA = NewLane(newSubLane2SplitAId, 0, 250, 745, false, false, modifiedLaneProperties1)
       val updatedSubLane2SplitB = NewLane(newSubLane2SplitBId, 250, 500, 745, false, false, modifiedLaneProperties2)
       val currentMainLane = mainLane.copy(id = mainLane1Id)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane2SplitA, updatedSubLane2SplitB), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane2SplitA, updatedSubLane2SplitB), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       lanesAfterSplit.size should be(3)
 
       val lane1AfterUpdate = lanesAfterSplit.filter(_.id == mainLane1Id).head
@@ -687,7 +688,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       //Verify the presence of the old splitted lanes attributes on histories tables
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       historyLanes.size should be(2)
 
       val historylane2A = historyLanes.filter(_.oldId == newSubLane2SplitAId).head
@@ -723,21 +724,21 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
       val subLane4 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues4)
 
-      val mainLaneId = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
-      val newSubLane2Id = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest).head
-      val newSubLane4Id = ServiceWithDao.create(Seq(subLane4), Set(100L), 1, usernameTest).head
+      val mainLaneId = ServiceWithDao.create(Seq(mainLane), Set(linkId1), 1, usernameTest).head
+      val newSubLane2Id = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest).head
+      val newSubLane4Id = ServiceWithDao.create(Seq(subLane4), Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
       // Delete the lane 12 and update 14 to new 12
       val updatedSubLane4 = NewLane(newSubLane4Id, 0, 500, 745, false, false, lanePropertiesValues4To2)
       val currentMainLane = mainLane.copy(id = mainLaneId)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
 
       //Validate the delete of old lane 12 and the movement of lane 14 to 12
-      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2, 4), true)
+      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2, 4), true)
       lanes.length should be(2)
       lanes.find(_.id == newSubLane2Id) should be(None)
       lanes.find(_.laneCode == 4) should be(None)
@@ -751,7 +752,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Confirm the expired lane 12 and old info of lane 14 (Now 12) in history table
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2, 4), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2, 4), true)
       historyLanes.length should be(2)
 
       val deletedSubLane2 = historyLanes.find(_.oldId == newSubLane2Id).head
@@ -781,14 +782,14 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2))
 
       //Create initial lanes
-      val newMainLaneId = ServiceWithDao.create(mainLane1ToAdd, Set(100L), 1, usernameTest).head
-      val newSubLaneId = ServiceWithDao.create(subLane2ToAdd, Set(100L), 1, usernameTest).head
+      val newMainLaneId = ServiceWithDao.create(mainLane1ToAdd, Set(linkId1), 1, usernameTest).head
+      val newSubLaneId = ServiceWithDao.create(subLane2ToAdd, Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(2)
 
       val lane1 = currentLanes.filter(_.id == newMainLaneId).head
@@ -807,8 +808,8 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane1 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneId))
-      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithSameProperties).toSet, Set(100L), 1, usernameTest, sideCodesForLinkIds)
-      val currentLanesAfterProcess = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithSameProperties).toSet, Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
+      val currentLanesAfterProcess = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanesAfterProcess.size should be(2)
 
       val lane1After = currentLanesAfterProcess.filter(_.id == newMainLaneId).head
@@ -822,7 +823,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       //Nothing changed so nothing will be in history
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       historyLanes.size should be(0)
     }
   }
@@ -839,15 +840,15 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2))
 
       //Create initial lanes
-      val newMainLaneId = ServiceWithDao.create(mainLane1ToAdd, Set(100L), 1, usernameTest).head
-      val newSubLaneId = ServiceWithDao.create(subLane2ToAdd, Set(100L), 1, usernameTest).head
+      val newMainLaneId = ServiceWithDao.create(mainLane1ToAdd, Set(linkId1), 1, usernameTest).head
+      val newSubLaneId = ServiceWithDao.create(subLane2ToAdd, Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(2)
 
       val lane1 = currentLanes.filter(_.id == newMainLaneId).head
@@ -866,8 +867,8 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane1 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneId))
-      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithDiffProperties).toSet, Set(100L), 1, usernameTest, sideCodesForLinkIds)
-      val currentLanesAfterProcess = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      ServiceWithDao.processNewLanes((currentMainLane1 ++ newSubLane2WithDiffProperties).toSet, Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
+      val currentLanesAfterProcess = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanesAfterProcess.size should be(2)
 
       val lane1After = currentLanesAfterProcess.filter(_.id == newMainLaneId).head
@@ -881,7 +882,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       //Verify history for old properties of lane 12
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
       historyLanes.size should be(1)
 
       val oldSubLane2 = historyLanes.find(_.oldId == newSubLaneId).head
@@ -901,18 +902,18 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2ToAdd = Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2))
 
       //Create initial lanes
-      val newMainLaneIdLink100 = ServiceWithDao.create(mainLane1ToAdd, Set(100L), 1, usernameTest).head
-      val newSubLaneIdLink100 = ServiceWithDao.create(subLane2ToAdd, Set(100L), 1, usernameTest).head
+      val newMainLaneIdLink100 = ServiceWithDao.create(mainLane1ToAdd, Set(linkId1), 1, usernameTest).head
+      val newSubLaneIdLink100 = ServiceWithDao.create(subLane2ToAdd, Set(linkId1), 1, usernameTest).head
 
-      val newMainLaneIdLink101 = ServiceWithDao.create(mainLane1ToAdd, Set(101L), 1, usernameTest).head
-      val newSubLaneIdLink101 = ServiceWithDao.create(subLane2ToAdd, Set(101L), 1, usernameTest).head
+      val newMainLaneIdLink101 = ServiceWithDao.create(mainLane1ToAdd, Set(linkId2), 1, usernameTest).head
+      val newSubLaneIdLink101 = ServiceWithDao.create(subLane2ToAdd, Set(linkId2), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
-      val sideCodeForLink101 = SideCodesForLinkIds(101L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
+      val sideCodeForLink101 = SideCodesForLinkIds(linkId2, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100, sideCodeForLink101)
 
       //Validate if initial lanes are correctly created
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1, linkId2), Seq(1, 2), false)
       currentLanes.size should be(4)
 
       val lane1Link100 = currentLanes.filter(_.id == newMainLaneIdLink100).head
@@ -941,8 +942,8 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       //Verify if the lane to delete was totally deleted from lane table
       val currentMainLane1 = Seq(mainLane1ToAdd.head.copy(id = newMainLaneIdLink100))
-      ServiceWithDao.processNewLanes((currentMainLane1 ++ subLane2ToExpireA ++ subLane2ToExpireB).toSet, Set(100L, 101L), 1, usernameTest, sideCodesForLinkIds)
-      val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(1, 2), false)
+      ServiceWithDao.processNewLanes((currentMainLane1 ++ subLane2ToExpireA ++ subLane2ToExpireB).toSet, Set(linkId1, linkId2), 1, usernameTest, sideCodesForLinkIds)
+      val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1, linkId2), Seq(1, 2), false)
       currentLanesAfterDelete.size should be(2)
 
       val lane1Link100AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneIdLink100).head
@@ -956,11 +957,11 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       //Verify the presence of the deleted lane on histories tables
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(1, 2), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1, linkId2), Seq(1, 2), true)
       historyLanes.size should be(2)
 
       val lane2Link100AfterDelete = historyLanes.filter(_.oldId == newSubLaneIdLink100).head
-      lane2Link100AfterDelete.linkId should be(100L)
+      lane2Link100AfterDelete.linkId should be(linkId1)
       lane2Link100AfterDelete.newId should be(0)
       lane2Link100AfterDelete.expired should be(true)
       lane2Link100AfterDelete.attributes.foreach{ laneProp =>
@@ -968,7 +969,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       val lane2Link101AfterDelete = historyLanes.filter(_.oldId == newSubLaneIdLink101).head
-      lane2Link101AfterDelete.linkId should be(101L)
+      lane2Link101AfterDelete.linkId should be(linkId2)
       lane2Link101AfterDelete.newId should be(0)
       lane2Link101AfterDelete.expired should be(true)
       lane2Link101AfterDelete.attributes.foreach{ laneProp =>
@@ -990,27 +991,27 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
       val subLane4 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues4)
 
-      val mainLaneIdLink100 = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
-      val newSubLane2IdLink100 = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest).head
-      val newSubLane4IdLink100 = ServiceWithDao.create(Seq(subLane4), Set(100L), 1, usernameTest).head
+      val mainLaneIdLink100 = ServiceWithDao.create(Seq(mainLane), Set(linkId1), 1, usernameTest).head
+      val newSubLane2IdLink100 = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest).head
+      val newSubLane4IdLink100 = ServiceWithDao.create(Seq(subLane4), Set(linkId1), 1, usernameTest).head
 
-      val mainLaneIdLink101 = ServiceWithDao.create(Seq(mainLane), Set(101L), 1, usernameTest).head
-      val newSubLane2IdLink101 = ServiceWithDao.create(Seq(subLane2), Set(101L), 1, usernameTest).head
-      val newSubLane4IdLink101 = ServiceWithDao.create(Seq(subLane4), Set(101L), 1, usernameTest).head
+      val mainLaneIdLink101 = ServiceWithDao.create(Seq(mainLane), Set(linkId2), 1, usernameTest).head
+      val newSubLane2IdLink101 = ServiceWithDao.create(Seq(subLane2), Set(linkId2), 1, usernameTest).head
+      val newSubLane4IdLink101 = ServiceWithDao.create(Seq(subLane4), Set(linkId2), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
-      val sideCodeForLink101 = SideCodesForLinkIds(101L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
+      val sideCodeForLink101 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100, sideCodeForLink101)
 
 
       // Delete the lane 12 and update 14 to new 12
       val updatedSubLane4 = NewLane(newSubLane4IdLink100, 0, 500, 745, false, false, lanePropertiesValues4To2)
       val currentMainLane = mainLane.copy(id = mainLaneIdLink100)
-      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(100L, 101L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(currentMainLane, updatedSubLane4), Set(linkId1, linkId2), 1, usernameTest, sideCodesForLinkIds)
 
 
       //Validate the delete of old lane 12 and the movement of lane 14 to 12
-      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(1, 2, 4), true)
+      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1, linkId2), Seq(1, 2, 4), true)
       lanes.length should be(4)
       lanes.find(lane => lane.id == newSubLane2IdLink100 || lane.id == newSubLane2IdLink101) should be(None)
       lanes.find(_.laneCode == 4) should be(None)
@@ -1031,11 +1032,11 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
       //Confirm the expired lane 12 and old info of lane 14 (Now 12) in history table
-      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(1, 2, 4), true)
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1, linkId2), Seq(1, 2, 4), true)
       historyLanes.length should be(4)
 
       val deletedSubLane2Link100 = historyLanes.find(_.oldId == newSubLane2IdLink100).head
-      deletedSubLane2Link100.linkId should be(100L)
+      deletedSubLane2Link100.linkId should be(linkId1)
       deletedSubLane2Link100.newId should be(newSubLane4IdLink100)
       deletedSubLane2Link100.attributes.foreach { laneProp =>
         lanePropertiesValues2.contains(laneProp) should be(true)
@@ -1045,7 +1046,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane2Link100.expired should be(true)
 
       val deletedSubLane4Link100 = historyLanes.find(_.oldId == newSubLane4IdLink100).head
-      deletedSubLane4Link100.linkId should be(100L)
+      deletedSubLane4Link100.linkId should be(linkId1)
       deletedSubLane4Link100.newId should be(0)
       deletedSubLane4Link100.attributes.foreach { laneProp =>
         lanePropertiesValues4.contains(laneProp) should be(true)
@@ -1055,7 +1056,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane4Link100.endMeasure should be(500.0)
 
       val deletedSubLane2Link101 = historyLanes.find(_.oldId == newSubLane2IdLink101).head
-      deletedSubLane2Link101.linkId should be(101L)
+      deletedSubLane2Link101.linkId should be(linkId2)
       deletedSubLane2Link101.newId should be(newSubLane4IdLink101)
       deletedSubLane2Link101.attributes.foreach { laneProp =>
         lanePropertiesValues2.contains(laneProp) should be(true)
@@ -1065,7 +1066,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane2Link101.expired should be(true)
 
       val deletedSubLane4Link101 = historyLanes.find(_.oldId == newSubLane4IdLink101).head
-      deletedSubLane4Link101.linkId should be(101L)
+      deletedSubLane4Link101.linkId should be(linkId2)
       deletedSubLane4Link101.newId should be(0)
       deletedSubLane4Link101.attributes.foreach { laneProp =>
         lanePropertiesValues4.contains(laneProp) should be(true)
@@ -1079,8 +1080,8 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Testing expiring lane by linkId"){
     runWithRollback {
       val laneToBeCreated = NewLane(0, 0, 100, 745, false, false, lanePropertiesValues1)
-      val createdLaneID = ServiceWithDao.create(Seq(laneToBeCreated), Set(100L), 2, usernameTest).head
-      laneDao.expireLanesByLinkId(Set(100L), usernameTest)
+      val createdLaneID = ServiceWithDao.create(Seq(laneToBeCreated), Set(linkId1), 2, usernameTest).head
+      laneDao.expireLanesByLinkId(Set(linkId1), usernameTest)
       val laneId = laneDao.fetchLanesByIds(Set(createdLaneID))
       laneId.head.expired should be(true)
     }
@@ -1090,8 +1091,8 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val mainLaneToBeCreated = NewLane(0, 0, 100, 745, isExpired = false, isDeleted = false, lanePropertiesValues1)
       val additionalLaneToBeCreated = NewLane(0, 0, 100, 745, isExpired = false, isDeleted = false, lanePropertiesValues2)
-      val createdMainLaneID = ServiceWithDao.create(Seq(mainLaneToBeCreated), Set(100L), 2, usernameTest).head
-      val createdAdditionalLaneID = ServiceWithDao.create(Seq(additionalLaneToBeCreated), Set(100L), 2, usernameTest).head
+      val createdMainLaneID = ServiceWithDao.create(Seq(mainLaneToBeCreated), Set(linkId1), 2, usernameTest).head
+      val createdAdditionalLaneID = ServiceWithDao.create(Seq(additionalLaneToBeCreated), Set(linkId1), 2, usernameTest).head
       laneDao.expireAdditionalLanes(usernameTest)
       val mainLane = laneDao.fetchLanesByIds(Set(createdMainLaneID))
       val additionalLane = laneDao.fetchLanesByIds(Set(createdAdditionalLaneID))
@@ -1106,17 +1107,17 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane21 = newLane1.copy(properties = lanePropertiesValues1)
       val dateAtThisMoment = DateTime.now()
 
-      ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest)
-      ServiceWithDao.create(Seq(newLane21), Set(100L), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane21), Set(linkId1), 2, usernameTest)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1135,18 +1136,18 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("4")))
       )
 
-      val lane1Id = ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest).head
-      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L))
-      ServiceWithDao.update(Seq(newLane1.copy(id = lane1Id, properties = newLanePropertiesValues11)), Set(100L), 1, usernameTest, Seq(SideCodesForLinkIds(100L, 2)), allExistingLanes)
+      val lane1Id = ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest).head
+      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1))
+      ServiceWithDao.update(Seq(newLane1.copy(id = lane1Id, properties = newLanePropertiesValues11)), Set(linkId1), 1, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1164,19 +1165,19 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane2 = newLane1.copy(id = 1L, properties = lanePropertiesValues2)
       val dateAtThisMoment = DateTime.now()
 
-      ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest)
-      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest).head
+      ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest)
+      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(linkId1), 2, usernameTest).head
 
       ServiceWithDao.deleteMultipleLanes(Set(lane2Id), usernameTest)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1193,24 +1194,24 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane4 = newLane2.copy(properties = lanePropertiesValues4)
       val dateAtThisMoment = DateTime.now()
 
-      ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest)
-      val lane4Id = ServiceWithDao.create(Seq(newLane4), Set(100L), 2, usernameTest).head
-      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L))
+      ServiceWithDao.create(Seq(newLane2), Set(linkId1), 2, usernameTest)
+      val lane4Id = ServiceWithDao.create(Seq(newLane4), Set(linkId1), 2, usernameTest).head
+      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1))
 
       val newLanePropertiesValuesOld4 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
-      ServiceWithDao.update(Seq(newLane4.copy(id = lane4Id, properties = newLanePropertiesValuesOld4)), Set(100L), 1, usernameTest, Seq(SideCodesForLinkIds(100L, 2)), allExistingLanes)
+      ServiceWithDao.update(Seq(newLane4.copy(id = lane4Id, properties = newLanePropertiesValuesOld4)), Set(linkId1), 1, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1230,21 +1231,21 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane2 = newLane1.copy(properties = lanePropertiesValues2)
       val dateAtThisMoment = DateTime.now()
 
-      ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest)
-      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest).head
-      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L))
+      ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest)
+      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(linkId1), 2, usernameTest).head
+      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1))
 
       val subLane2Split = NewLane(0, 0, 50, 745, false, false, lanePropertiesValues2)
-      ServiceWithDao.update(Seq(subLane2Split), Set(100L), 2, usernameTest, Seq(SideCodesForLinkIds(100L, 2)), allExistingLanes)
+      ServiceWithDao.update(Seq(subLane2Split), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1265,21 +1266,21 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane2 = newLane1.copy(properties = lanePropertiesValues2)
       val dateAtThisMoment = DateTime.now()
 
-      ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest)
-      ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane2), Set(linkId1), 2, usernameTest)
 
-      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L))
+      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1))
       val subLane2Split = NewLane(0, 0, 50, 745, false, false, lanePropertiesValues2)
-      val subLane2Id = ServiceWithDao.update(Seq(subLane2Split), Set(100L), 2, usernameTest, Seq(SideCodesForLinkIds(100L, 2)), allExistingLanes).head
+      val subLane2Id = ServiceWithDao.update(Seq(subLane2Split), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes).head
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1303,18 +1304,18 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane2SplitB = NewLane(0, 250, 500, 745, false, false, lanePropertiesValues2B)
 
       val dateAtThisMoment = DateTime.now()
-      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest).head
+      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(linkId1), 2, usernameTest).head
 
-      ServiceWithDao.createMultiLanesOnLink(Seq(lane2SplitA,lane2SplitB), Set(100L), 2, usernameTest)
+      ServiceWithDao.createMultiLanesOnLink(Seq(lane2SplitA,lane2SplitB), Set(linkId1), 2, usernameTest)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1342,26 +1343,26 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
       val newLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
 
-      val lane1Id = ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest).head
-      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(100L), 2, usernameTest).head
+      val lane1Id = ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest).head
+      val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(linkId1), 2, usernameTest).head
 
-      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L))
+      val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1))
 
       val lane1toLaneCode2 = newLane1.copy(id = lane1Id, newLaneCode = Some(2), properties = lanePropertiesValues2)
       val lane2toLaneCode1 = newLane2.copy(id = lane2Id, newLaneCode = Some(1), properties = lanePropertiesValues1)
 
-      val sideCodesForLinkIds = SideCodesForLinkIds(100L, 2)
+      val sideCodesForLinkIds = SideCodesForLinkIds(linkId1, 2)
 
-      val updatedIds = ServiceWithDao.update(Seq(lane1toLaneCode2, lane2toLaneCode1), Set(100L), 2,usernameTest, Seq(sideCodesForLinkIds), allExistingLanes)
+      val updatedIds = ServiceWithDao.update(Seq(lane1toLaneCode2, lane2toLaneCode1), Set(linkId1), 2,usernameTest, Seq(sideCodesForLinkIds), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1383,7 +1384,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   }
 
   test("Correctly create view only segmented lanes") {
-    val roadLink1 = RoadLink(1L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
+    val roadLink1 = RoadLink("1L", Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None)
 
     def constructPersistedLaneTowards(laneCode: Int, startMeasure: Double, endMeasure: Double, lanePropertiesValues: Seq[LaneProperty]) = {
@@ -1431,19 +1432,19 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane21 = newLane1.copy(properties = lanePropertiesValues1)
       val dateAtThisMoment = DateTime.now()
 
-      ServiceWithDao.create(Seq(newLane1), Set(100L), 2, usernameTest)
-      ServiceWithDao.create(Seq(newLane21), Set(101L), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane21), Set(linkId2), 2, usernameTest)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L,101L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1,linkId2), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )),
-          RoadLink(101L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map()))
+          RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map()))
       )
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1453,16 +1454,16 @@ class LaneServiceSpec extends LaneTestSupporter {
   }
   test("LaneCodes should be correct two digit codes") {
     val attributes = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))))
-    val laneTowardsDigitizing = PersistedLane(0, 100L, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
-    val laneAgainstDigitizing = PersistedLane(1, 101L, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
+    val laneTowardsDigitizing = PersistedLane(0, linkId1, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
+    val laneAgainstDigitizing = PersistedLane(1, linkId2, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
 
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), true)).thenReturn(
-      Seq(RoadLink(100L, Seq(Point(20.0, 20.0), Point(40, 40.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+    when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), true)).thenReturn(
+      Seq(RoadLink(linkId1, Seq(Point(20.0, 20.0), Point(40, 40.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
         "ROADNUMBER" -> 100
       ))))
 
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(101L), true)).thenReturn(
-      Seq(RoadLink(101L, Seq(Point(50.0, 50.0), Point(100.0, 100.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+    when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId2), true)).thenReturn(
+      Seq(RoadLink(linkId2, Seq(Point(50.0, 50.0), Point(100.0, 100.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
         "ROADNUMBER" -> 101
       ))))
 
@@ -1482,12 +1483,12 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Create three new split lanes") {
     runWithRollback {
       val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
-      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       initialLanes.size should be(1)
 
       val createdMainLane = NewLane(mainLane1Id, 0, 500, 745, false, false, lanePropertiesValues1)
@@ -1496,9 +1497,9 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitB = NewLane(0, 150, 350, 745, false, false, lanePropertiesValues2)
       val subLane2SplitC = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
 
-      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(4)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -1524,17 +1525,17 @@ class LaneServiceSpec extends LaneTestSupporter {
         }
       }
 
-      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(0)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1550,13 +1551,13 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
       val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
-      val sublane2Id = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest)
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+      val sublane2Id = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest)
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
-      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       initialLanes.size should be(2)
 
       val createdMainLane = NewLane(mainLane1Id, 0, 500, 745, false, false, lanePropertiesValues1)
@@ -1565,9 +1566,9 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitB = NewLane(0, 150, 350, 745, false, false, lanePropertiesValues2)
       val subLane2SplitC = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
 
-      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(4)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -1593,17 +1594,17 @@ class LaneServiceSpec extends LaneTestSupporter {
         }
       }
 
-      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1633,12 +1634,12 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitA = NewLane(0, 0, 150, 745, false, false, lanePropertiesValues2)
       val subLane2SplitB = NewLane(0, 150, 350, 745, false, false, lanePropertiesValues2)
       val subLane2SplitC = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
-      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(100L), 1, usernameTest)
+      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC), Set(linkId1), 1, usernameTest)
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
-      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       initialLanes.size should be(4)
 
       val existingMainLane1 = NewLane(laneIds(0), 0, 500, 745, false, false, lanePropertiesValues1)
@@ -1648,22 +1649,22 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newSubLane2SplitC1 = NewLane(0, 350, 450, 745, false, false, lanePropertiesValues2)
       val newSubLane2SplitC2 = NewLane(0, 450, 500, 745, false, false, lanePropertiesValues2)
 
-      ServiceWithDao.processNewLanes(Set(existingMainLane1, newSubLane2SplitA1, newSubLane2SplitA2, existingSubLane2SplitB, newSubLane2SplitC1, newSubLane2SplitC2), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(existingMainLane1, newSubLane2SplitA1, newSubLane2SplitA2, existingSubLane2SplitB, newSubLane2SplitC1, newSubLane2SplitC2), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(6)
 
-      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(4)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1701,12 +1702,12 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitC = NewLane(0, 200, 300, 745, false, false, lanePropertiesValues2)
       val subLane2SplitD = NewLane(0, 300, 400, 745, false, false, lanePropertiesValues2)
       val subLane2SplitE = NewLane(0, 400, 500, 745, false, false, lanePropertiesValues2)
-      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC, subLane2SplitD, subLane2SplitE), Set(100L), 1, usernameTest)
+      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC, subLane2SplitD, subLane2SplitE), Set(linkId1), 1, usernameTest)
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
-      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       initialLanes.size should be(6)
 
       val newPropertyValues1 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
@@ -1726,9 +1727,9 @@ class LaneServiceSpec extends LaneTestSupporter {
       val createdSubLane2SplitD = NewLane(laneIds(4), 300, 400, 745, false, false, lanePropertiesValues2)
       val createdSubLane2SplitE = NewLane(laneIds(5), 400, 500, 745, false, false, newPropertyValues2)
 
-      ServiceWithDao.processNewLanes(Set(createdMainLane, createdSubLane2SplitA, createdSubLane2SplitB, createdSubLane2SplitC, createdSubLane2SplitD, createdSubLane2SplitE), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(createdMainLane, createdSubLane2SplitA, createdSubLane2SplitB, createdSubLane2SplitC, createdSubLane2SplitD, createdSubLane2SplitE), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(6)
 
       val splitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
@@ -1758,17 +1759,17 @@ class LaneServiceSpec extends LaneTestSupporter {
           newPropertyValues2.contains(laneProp) should be(true)
       }
 
-      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1804,12 +1805,12 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitC = NewLane(0, 200, 300, 745, false, false, lanePropertiesValues2)
       val subLane2SplitD = NewLane(0, 300, 400, 745, false, false, lanePropertiesValues2)
       val subLane2SplitE = NewLane(0, 400, 500, 745, false, false, lanePropertiesValues2)
-      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC, subLane2SplitD, subLane2SplitE), Set(100L), 1, usernameTest)
+      val laneIds = ServiceWithDao.create(Seq(mainLane1, subLane2SplitA, subLane2SplitB, subLane2SplitC, subLane2SplitD, subLane2SplitE), Set(linkId1), 1, usernameTest)
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
-      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       initialLanes.size should be(6)
 
       val createdMainLane = NewLane(laneIds(0), 0, 500, 745, false, false, lanePropertiesValues1)
@@ -1819,9 +1820,9 @@ class LaneServiceSpec extends LaneTestSupporter {
       val createdSubLane2SplitD = NewLane(laneIds(4), 300, 400, 745, true, false, lanePropertiesValues2)
       val createdSubLane2SplitE = NewLane(laneIds(5), 400, 500, 745, true, false, lanePropertiesValues2)
 
-      ServiceWithDao.processNewLanes(Set(createdMainLane, createdSubLane2SplitA, createdSubLane2SplitB, createdSubLane2SplitC, createdSubLane2SplitD, createdSubLane2SplitE), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(createdMainLane, createdSubLane2SplitA, createdSubLane2SplitB, createdSubLane2SplitC, createdSubLane2SplitD, createdSubLane2SplitE), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(3)
 
       val currentSplitLanes = currentLanes.filter(_.laneCode == 2).sortBy(_.startMeasure)
@@ -1832,17 +1833,17 @@ class LaneServiceSpec extends LaneTestSupporter {
       currentSplitLanes(1).startMeasure should be(200)
       currentSplitLanes(1).endMeasure should be(300)
 
-      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1867,13 +1868,13 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
       val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
-      val subLane2Id = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest)
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+      val subLane2Id = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest)
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
-      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       initialLanes.size should be(2)
 
       val createdMainLane = NewLane(mainLane1Id, 0, 500, 745, false, false, lanePropertiesValues1)
@@ -1881,13 +1882,13 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitA = NewLane(0, 0, 150, 745, false, false, lanePropertiesValues2)
       val subLane2SplitB = NewLane(0, 150, 350, 745, false, false, lanePropertiesValues2)
 
-      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
       val subLane2SplitBs = NewLane(0, 150, 300, 745, false, false, lanePropertiesValues2)
 
-      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitBs), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitBs), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(3)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -1910,14 +1911,14 @@ class LaneServiceSpec extends LaneTestSupporter {
             lanePropertiesValues2.contains(laneProp) should be(true)
         }
       }
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 
@@ -1957,13 +1958,13 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
       val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
-      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(100L), 1, usernameTest).head
-      val sublane2Id = ServiceWithDao.create(Seq(subLane2), Set(100L), 1, usernameTest)
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+      val sublane2Id = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest)
 
-      val sideCodeForLink100 = SideCodesForLinkIds(100L, 1)
+      val sideCodeForLink100 = SideCodesForLinkIds(linkId1, 1)
       val sideCodesForLinkIds = Seq(sideCodeForLink100)
 
-      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val initialLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       initialLanes.size should be(2)
 
       val createdMainLane = NewLane(mainLane1Id, 0, 500, 745, false, false, lanePropertiesValues1)
@@ -1971,9 +1972,9 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2SplitA = NewLane(0, 0, 150, 745, false, false, lanePropertiesValues2)
       val subLane2SplitB = NewLane(0, 350, 500, 745, false, false, lanePropertiesValues2)
 
-      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB), Set(100L), 1, usernameTest, sideCodesForLinkIds)
+      ServiceWithDao.processNewLanes(Set(createdMainLane, subLane2SplitA, subLane2SplitB), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
 
-      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(1, 2), false)
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
       currentLanes.size should be(3)
 
       val lane1 = currentLanes.filter(_.id == mainLane1Id).head
@@ -1998,17 +1999,17 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
 
       // Three expired parts for the division of the big lane and one that is linked to the expired piece.
-      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(2), true)
+      val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(4)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
+        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
           "MUNICIPALITYCODE" -> BigInt(745),
           "ROADNUMBER" -> 100,
           "ROADNAME_FI" -> "Testitie",
-          "VIITE_ROAD_PART_NUMBER" -> 7,
-          "VIITE_ROAD_NUMBER" -> 100,
-          "VIITE_END_ADDR" -> 2000
+          "ROAD_PART_NUMBER" -> 7,
+          "ROAD_NUMBER" -> 100,
+          "END_ADDR" -> 2000
         )))
       )
 

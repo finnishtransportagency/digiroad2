@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 
 object PointAssetFiller {
 
-  case class AssetAdjustment(assetId: Long, lon: Double, lat: Double, linkId: Long, mValue: Double, floating: Boolean, vvhTimeStamp: Long)
+  case class AssetAdjustment(assetId: Long, lon: Double, lat: Double, linkId: String, mValue: Double, floating: Boolean, timeStamp: Long)
   private val MaxDistanceDiffAllowed = 3.0
 
   def correctRoadLinkAndGeometry(asset: PersistedPointAsset , roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]): Option[AssetAdjustment]={
@@ -35,7 +35,7 @@ object PointAssetFiller {
     newAssetPointOption match {
       case Some(newAssetPoint) =>
         val mValue = GeometryUtils.calculateLinearReferenceFromPoint(newAssetPoint, newRoadLink.geometry)
-        correctGeometry(asset.id, newRoadLink, mValue, changeInfo.vvhTimeStamp)
+        correctGeometry(asset.id, newRoadLink, mValue, changeInfo.timeStamp)
       case _ =>
         None
     }
@@ -52,9 +52,9 @@ object PointAssetFiller {
         }
 
         if (changeInfo.oldStartMeasure.getOrElse(0.0) - MaxDistanceDiffAllowed <= mValue && changeInfo.oldStartMeasure.getOrElse(0.0) >= mValue)
-          correctGeometry(asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
+          correctGeometry(asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse(0.0), changeInfo.timeStamp)
         else if (changeInfo.oldEndMeasure.getOrElse(0.0) + MaxDistanceDiffAllowed >= mValue && changeInfo.oldEndMeasure.getOrElse(0.0) <= mValue)
-          correctGeometry(asset.id, newRoadLink, changeInfo.newEndMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
+          correctGeometry(asset.id, newRoadLink, changeInfo.newEndMeasure.getOrElse(0.0), changeInfo.timeStamp)
         else if (changeInfo.oldStartMeasure.getOrElse(0.0) <= mValue &&  changeInfo.oldEndMeasure.getOrElse(0.0) >= mValue)
           correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustmentOption)
         else
@@ -67,8 +67,8 @@ object PointAssetFiller {
   def correctedPersistedAsset(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): Option[AssetAdjustment] = {
     val pointAssetLastChanges = changeInfos.
       filterNot(changeInfo => changeInfo.newId.isEmpty || changeInfo.oldId.isEmpty).
-      filter(changeInfo => changeInfo.oldId.getOrElse(0L) == asset.linkId && changeInfo.vvhTimeStamp > asset.vvhTimeStamp).
-      sortBy( _.vvhTimeStamp)
+      filter(changeInfo => changeInfo.oldId.getOrElse(0L) == asset.linkId && changeInfo.timeStamp > asset.timeStamp).
+      sortBy( _.timeStamp)
 
     pointAssetLastChanges.foldLeft(None: Option[AssetAdjustment]){
       (adjustment, changeInfo) =>
@@ -114,18 +114,18 @@ object PointAssetFiller {
       case Some(newRoadLink) =>
         adjustmentOption match {
           case Some(adjustment) =>
-            correctGeometry(asset.id, newRoadLink, calculateMvalue(adjustment.mValue, changeInfo), changeInfo.vvhTimeStamp)
+            correctGeometry(asset.id, newRoadLink, calculateMvalue(adjustment.mValue, changeInfo), changeInfo.timeStamp)
           case _ =>
-            correctGeometry(asset.id, newRoadLink, calculateMvalue(asset.mValue, changeInfo), changeInfo.vvhTimeStamp)
+            correctGeometry(asset.id, newRoadLink, calculateMvalue(asset.mValue, changeInfo), changeInfo.timeStamp)
         }
       case _ => None
     }
   }
 
-  private def correctGeometry(assetId: Long, roadLink: RoadLink, newMValue: Double, vvhTimeStamp: Long): Option[AssetAdjustment] = {
+  private def correctGeometry(assetId: Long, roadLink: RoadLink, newMValue: Double, timeStamp: Long): Option[AssetAdjustment] = {
     val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, newMValue)
     newAssetPoint match {
-      case Some(point) => Some(AssetAdjustment(assetId, point.x, point.y, roadLink.linkId, newMValue, floating = false, vvhTimeStamp))
+      case Some(point) => Some(AssetAdjustment(assetId, point.x, point.y, roadLink.linkId, newMValue, floating = false, timeStamp))
       case _ => None
     }
   }
