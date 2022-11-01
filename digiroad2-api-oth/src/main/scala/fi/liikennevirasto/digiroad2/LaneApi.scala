@@ -27,7 +27,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   case class ApiLane(laneCode: Int, track: Int, startAddressM: Long, endAddressM: Long)
   case class RangeParameters(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long,
                              startAddrM: Long, endAddrM: Long)
-  case class InvalidRoadNumberException() extends Exception
+  case class InvalidRoadNumberException(msg: String) extends Exception
 
   override protected def applicationDescription: String = "Lanes API"
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -84,8 +84,8 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         params
       }
       catch {
+        case invalidRoadNumberException: InvalidRoadNumberException => halt(BadRequest(invalidRoadNumberException.msg))
         case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
-        case _: InvalidRoadNumberException => halt(BadRequest("Invalid RoadNumber"))
       }
 
       lanesInRoadAddressRangeToApi(parameters)
@@ -110,7 +110,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   }
 //TODO add more validations
   def validateRangeParameters(parameters: RangeParameters): Unit = {
-    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw new InvalidRoadNumberException
+    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw InvalidRoadNumberException("Invalid road number. Road number must be in range 1 to 62999")
   }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
