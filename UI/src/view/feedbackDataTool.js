@@ -116,10 +116,8 @@
       });
 
       $(".feedback-message-asset").on("change keyup paste",function() {
-        console.log("launhed2");
-        $(".feedback-message-count .element").empty();
         var message = $('.feedback-message-asset')[0].innerText;
-        $(".feedback-message-count").text(`${message.length}/${MAX_CHARACTER_LENGTH}`);
+        $(".feedback-message-count").text(message.length+"/"+MAX_CHARACTER_LENGTH);
       });
       
       $('#phoneNumber').keyup(function() {
@@ -147,7 +145,7 @@
     var renderDialog = function(selectedAsset, layer) {
       var dialog = createFeedbackForm(selectedAsset, layer);
       $('#feedbackData').html(dialog);
-      $(".feedback-message-count").text(`${0}/${MAX_CHARACTER_LENGTH}`);
+      $(".feedback-message-count").text(0+"/"+MAX_CHARACTER_LENGTH);
     };
 
     var getData = function(){

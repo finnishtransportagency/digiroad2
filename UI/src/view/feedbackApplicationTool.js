@@ -9,7 +9,7 @@
            purge();
            renderConfirmDialog();
            $('#kidentifier').text(authorizationPolicy.username);
-           $(".feedback-message-count").text(`${0}/${MAX_CHARACTER_LENGTH}`);
+           $(".feedback-message-count").text(0+"/"+MAX_CHARACTER_LENGTH);
            bindEvents();
        };
 
@@ -86,7 +86,7 @@
            $(".feedback-message").on("change keyup paste",function() {
                console.log("launhed2");
                var message = $(".feedback-message").serializeArray();
-               $(".feedback-message-count").text(`${message[0].value.length}/${MAX_CHARACTER_LENGTH}`);
+               $(".feedback-message-count").text(message[0].value.length+"/"+MAX_CHARACTER_LENGTH);
            });
            
            eventbus.on("feedback:tooBig",function() {
