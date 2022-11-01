@@ -1,11 +1,15 @@
 (function (root) {
    root.FeedbackApplicationTool = function (authorizationPolicy, collection) {
 
+       
+       var MAX_CHARACTER_LENGTH = 3747;
+       
        var initialize = function(){
            eventbus.trigger('closeFeedBackData');
            purge();
            renderConfirmDialog();
            $('#kidentifier').text(authorizationPolicy.username);
+           $(".feedback-message-count").text(`${0}/${MAX_CHARACTER_LENGTH}`);
            bindEvents();
        };
 
@@ -78,6 +82,13 @@
                removeSpinner();
                new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
            });
+
+           $(".feedback-message").on("change keyup paste",function() {
+               console.log("launhed2");
+               var message = $(".feedback-message").serializeArray();
+               $(".feedback-message-count").text(`${message[0].value.length}/${MAX_CHARACTER_LENGTH}`);
+           });
+           
            eventbus.on("feedback:tooBig",function() {
                removeSpinner();
                new GenericConfirmPopup("Palaute oli liian pitkä. Maksimi merkki määrä on 3747", {type: 'alert',okCallback:reopen});
@@ -106,8 +117,10 @@
                             '<input type="text" name="headline" class="form-control">' +
 
                             '<label class="control-label">Palaute</label>' +
-                            '<textarea name="freeText" id="freetext" class="form-control feedback-message"></textarea>'+
-
+                            '<textarea maxlength="3747" name="freeText" id="freetext" class="form-control feedback-message"></textarea>'+
+                            '<label class="control-label">Merkkien määrä:</label>' +
+                            '<label id="feedback-message-count" class="feedback-message-count"></label>' +
+           
                             '<label class="control-label">K-tunnus</label>' +
                             '<label id="kidentifier"></label>'+
 

@@ -5,7 +5,7 @@
     me.layerName = layerName;
     me.authorizationPolicy = authorizationPolicy;
     me.eventCategory = eventCategory;
-
+    var MAX_CHARACTER_LENGTH = 3747;
     function events() {
       return _.map(arguments, function(argument) { return me.eventCategory + ':' + argument; }).join(' ');
     }
@@ -107,8 +107,7 @@
         var text = $('.feedback-message-asset')[0].innerText;
         if (formElements.valid()) {
           addSpinner();
-          console.log(text.length);
-          if (text.length<=3747){
+          if (text.length<=MAX_CHARACTER_LENGTH){
             me.collection.sendFeedbackData(values);
           }else{
             eventbus.trigger("feedback:tooBig");
@@ -116,6 +115,13 @@
         }
       });
 
+      $(".feedback-message-asset").on("change keyup paste",function() {
+        console.log("launhed2");
+        $(".feedback-message-count .element").empty();
+        var message = $('.feedback-message-asset')[0].innerText;
+        $(".feedback-message-count").text(`${message.length}/${MAX_CHARACTER_LENGTH}`);
+      });
+      
       $('#phoneNumber').keyup(function() {
         $(this).valid();
       });
@@ -141,6 +147,7 @@
     var renderDialog = function(selectedAsset, layer) {
       var dialog = createFeedbackForm(selectedAsset, layer);
       $('#feedbackData').html(dialog);
+      $(".feedback-message-count").text(`${0}/${MAX_CHARACTER_LENGTH}`);
     };
 
     var getData = function(){
@@ -199,6 +206,8 @@
         '<div class="form-element">' +
         '<label class="control-label">Palaute</label>' +
         '<div contenteditable="true" id="freeTextData" class="form-control feedback-message-asset"></div>'+
+          '<label class="control-label">Merkkien määrä:</label>' +
+          '<label id="feedback-message-count" class="feedback-message-count"></label>' +
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">K-tunnus</label>' +
