@@ -27,7 +27,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   case class ApiLane(laneCode: Int, track: Int, startAddressM: Long, endAddressM: Long)
   case class RangeParameters(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long,
                              startAddrM: Long, endAddrM: Long)
-  case class InvalidRoadNumberException(msg: String) extends Exception
+  case class InvalidRoadNumberException(msg: String) extends Exception(msg)
 
   override protected def applicationDescription: String = "Lanes API"
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -84,7 +84,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
         params
       }
       catch {
-        case invalidRoadNumberException: InvalidRoadNumberException => halt(BadRequest(invalidRoadNumberException.msg))
+        case invalidRoadNumberException: InvalidRoadNumberException => halt(BadRequest(invalidRoadNumberException.getMessage))
         case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
       }
 
