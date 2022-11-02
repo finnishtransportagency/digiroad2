@@ -715,7 +715,7 @@
                           {id: 1, label: 'Tieoikeus'},
                           {id: 2, label: 'Tiekunnan osakkuus'},
                           {id: 3, label: 'LiVin hallinnoimalla maa-alueella'},
-                          {id: 4, label: 'Kävelyn tai pyöräilyn väylä'},
+                          {id: 4, label: 'Kävelyn ja pyöräilyn väylä'},
                           {id: 6, label: 'Muu sopimus'},
                           {id: 9, label: 'Potentiaalinen käyttöoikeus'},
                           {id: 99, label: 'Tuntematon'}
