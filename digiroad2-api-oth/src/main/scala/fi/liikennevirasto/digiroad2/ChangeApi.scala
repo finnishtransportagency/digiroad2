@@ -97,7 +97,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         case "obstacles" => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
         case "warning_signs_group" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
         case "stop_sign" => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
-        case "lane_information" => laneChangesToGeoJson(laneService.getChanged(since, until, withAdjust, token, twoDigitLaneCodesInResult = true), withGeometry)
+        case "lane_information" => laneChangesToGeoJson(laneService.getChanged(since, until, withAdjust, token), withGeometry)
       }
     }
   }

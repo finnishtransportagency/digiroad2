@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLane
 import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.LaneUtils.pwLanesTwoDigitLaneCode
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddress, Track}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
@@ -106,7 +107,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val lanes = laneService.getLanesByRoadLinks(roadLinks)
 
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(_.attributes.contains("ROAD_NUMBER"))
-    val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithRoadAddress).flatten
+    val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
     val apiLanes = lanesToApiFormat(twoDigitLanes, roadLinks.groupBy(_.linkId).mapValues(_.head))
 
     apiLanes.map { apiLane =>
@@ -155,7 +156,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
       val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanesOnRoadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
 
-      val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithRoadAddress).flatten
+      val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
 
       val apiLanes = lanesToApiFormat(twoDigitLanes, correctLinks.groupBy(_.linkId).mapValues(_.head))
       apiLanes.map { apiLane =>

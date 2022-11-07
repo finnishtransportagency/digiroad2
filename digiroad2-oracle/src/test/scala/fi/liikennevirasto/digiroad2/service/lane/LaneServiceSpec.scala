@@ -1,16 +1,18 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane, SideCodesForLinkIds}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinkIdGenerator, PolygonTools, RoadAddress, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util.LaneUtils.persistedLanesTwoDigitLaneCode
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinkIdGenerator, PolygonTools, RoadAddress, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -28,6 +30,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLaneService = MockitoSugar.mock[LaneService]
+  val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
   val laneDao = new LaneDao()
   val laneHistoryDao = new LaneHistoryDao()
@@ -55,6 +58,17 @@ class LaneTestSupporter extends FunSuite with Matchers {
                                    LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                                   )
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
+  val roadlink1: RoadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
+    "MUNICIPALITYCODE" -> BigInt(745),
+    "ROADNUMBER" -> 100,
+    "ROADNAME_FI" -> "Testitie",
+    "ROAD_PART_NUMBER" -> 7,
+    "ROAD_NUMBER" -> 100,
+    "END_ADDR" -> 2000,
+    "SIDECODE" -> TowardsDigitizing.value
+  ))
+
+  val roadlink2: RoadLink = RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map())
 
 
 
@@ -69,6 +83,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
     override def roadAddressService: RoadAddressService = mockRoadAddressService
+    override def geometryTransform: GeometryTransform = mockGeometryTransform
 
   }
 
@@ -1110,16 +1125,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest)
       ServiceWithDao.create(Seq(newLane21), Set(linkId1), 2, usernameTest)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1138,18 +1144,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val lane1Id = ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest).head
       val allExistingLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1))
-      ServiceWithDao.update(Seq(newLane1.copy(id = lane1Id, properties = newLanePropertiesValues11)), Set(linkId1), 1, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
+      ServiceWithDao.update(Seq(newLane1.copy(id = lane1Id, properties = newLanePropertiesValues11)), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1170,16 +1167,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       ServiceWithDao.deleteMultipleLanes(Set(lane2Id), usernameTest)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1202,26 +1190,17 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
-      ServiceWithDao.update(Seq(newLane4.copy(id = lane4Id, properties = newLanePropertiesValuesOld4)), Set(linkId1), 1, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
+      ServiceWithDao.update(Seq(newLane4.copy(id = lane4Id, properties = newLanePropertiesValuesOld4)), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.LaneCodeTransfer))
       val laneCodeChanged = lanesChanged.filter(_.changeType == LaneChangeType.LaneCodeTransfer).head
       laneCodeChanged.lane.id should be(lane4Id)
-      laneCodeChanged.lane.laneCode should be(2)
-      laneCodeChanged.oldLane.get.laneCode should be(4)
+      laneCodeChanged.lane.laneCode should be(12)
+      laneCodeChanged.oldLane.get.laneCode should be(14)
     }
   }
 
@@ -1238,16 +1217,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2Split = NewLane(0, 0, 50, 745, false, false, lanePropertiesValues2)
       ServiceWithDao.update(Seq(subLane2Split), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1273,16 +1243,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val subLane2Split = NewLane(0, 0, 50, 745, false, false, lanePropertiesValues2)
       val subLane2Id = ServiceWithDao.update(Seq(subLane2Split), Set(linkId1), 2, usernameTest, Seq(SideCodesForLinkIds(linkId1, 2)), allExistingLanes).head
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1), token = Some("cGFnZU51bWJlcjoxLHJlY29yZE51bWJlcjoy"))
 
@@ -1308,16 +1269,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       ServiceWithDao.createMultiLanesOnLink(Seq(lane2SplitA,lane2SplitB), Set(linkId1), 2, usernameTest)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
@@ -1355,16 +1307,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val updatedIds = ServiceWithDao.update(Seq(lane1toLaneCode2, lane2toLaneCode1), Set(linkId1), 2,usernameTest, Seq(sideCodesForLinkIds), allExistingLanes)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val lanesChanged = ServiceWithDao.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.LaneCodeTransfer, LaneChangeType.LaneCodeTransfer))
@@ -1436,15 +1379,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       ServiceWithDao.create(Seq(newLane21), Set(linkId2), 2, usernameTest)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1,linkId2), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )),
-          RoadLink(linkId2, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map()))
+        Seq(roadlink1,roadlink2)
       )
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1455,7 +1390,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("LaneCodes should be correct two digit codes") {
     val attributes = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))))
     val laneTowardsDigitizing = PersistedLane(0, linkId1, SideCode.TowardsDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
-    val laneAgainstDigitizing = PersistedLane(1, linkId2, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
+    val laneAgainstDigitizing = PersistedLane(1, linkId1, SideCode.AgainstDigitizing.value, 1, 0, 0, 100, None, None, None, None, None, None, false, 0L, None, attributes)
 
     when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), true)).thenReturn(
       Seq(RoadLink(linkId1, Seq(Point(20.0, 20.0), Point(40, 40.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
@@ -1467,14 +1402,8 @@ class LaneServiceSpec extends LaneTestSupporter {
         "ROADNUMBER" -> 101
       ))))
 
-    when(mockVKMClient.coordToAddress(Point(20.0, 20.0, 0.0), Some(100), None)).thenReturn(RoadAddress(None, 100, 0, Track.Unknown, 0))
-    when(mockVKMClient.coordToAddress(Point(40.0, 40.0, 0.0), Some(100), None)).thenReturn(RoadAddress(None, 100, 0, Track.Unknown, 100))
-
-    when(mockVKMClient.coordToAddress(Point(50.0, 50.0, 0.0), Some(101), None)).thenReturn(RoadAddress(None, 101, 0, Track.Unknown, 0))
-    when(mockVKMClient.coordToAddress(Point(100.0, 100.0, 0.0), Some(101), None)).thenReturn(RoadAddress(None, 101, 0, Track.Unknown, 100))
-
-    val laneTowardsTwoDigit = ServiceWithDao.persistedLaneToTwoDigitLaneCode(laneTowardsDigitizing).get
-    val laneAgainstTwoDigit = ServiceWithDao.persistedLaneToTwoDigitLaneCode(laneAgainstDigitizing).get
+    val laneTowardsTwoDigit = persistedLanesTwoDigitLaneCode(Seq(laneTowardsDigitizing), Seq(roadlink1)).head
+    val laneAgainstTwoDigit = persistedLanesTwoDigitLaneCode(Seq(laneAgainstDigitizing), Seq(roadlink1)).head
 
     laneTowardsTwoDigit.laneCode should equal(11)
     laneAgainstTwoDigit.laneCode should equal(21)
@@ -1529,14 +1458,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       expiredLanes.size should be(0)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
+        Seq(roadlink1)
       )
 
       val dateAtThisMoment = DateTime.now()
@@ -1597,16 +1519,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1657,16 +1570,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(4)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1762,16 +1666,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1836,16 +1731,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -1911,16 +1797,7 @@ class LaneServiceSpec extends LaneTestSupporter {
             lanePropertiesValues2.contains(laneProp) should be(true)
         }
       }
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
@@ -2002,16 +1879,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(4)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(
-        Seq(RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
-          "MUNICIPALITYCODE" -> BigInt(745),
-          "ROADNUMBER" -> 100,
-          "ROADNAME_FI" -> "Testitie",
-          "ROAD_PART_NUMBER" -> 7,
-          "ROAD_NUMBER" -> 100,
-          "END_ADDR" -> 2000
-        )))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
       val laneChanges = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
