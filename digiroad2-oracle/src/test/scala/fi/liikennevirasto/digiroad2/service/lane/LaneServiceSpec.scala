@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
-import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneNumberOneDigit, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane, SideCodesForLinkIds}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneFiller, LaneProperty, LanePropertyValue, NewLane, PersistedLane, PieceWiseLane, SideCodesForLinkIds}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -60,11 +60,11 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   val roadlink1: RoadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
     "MUNICIPALITYCODE" -> BigInt(745),
-    "ROADNUMBER" -> 100,
+    "ROADNUMBER" -> 100L,
     "ROADNAME_FI" -> "Testitie",
-    "ROAD_PART_NUMBER" -> 7,
-    "ROAD_NUMBER" -> 100,
-    "END_ADDR" -> 2000,
+    "ROAD_PART_NUMBER" -> 7L,
+    "ROAD_NUMBER" -> 100L,
+    "END_ADDR" -> 2000L,
     "SIDECODE" -> TowardsDigitizing.value
   ))
 
@@ -1320,7 +1320,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
       val thrown = intercept[IllegalArgumentException] {
-        ServiceWithDao.validateStartDateOneDigit(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues), 2)
+        ServiceWithDao.validateStartDate(NewLane(0, 0, 500, 745, false, false, lanePropertiesValues), 2)
       }
       thrown.getMessage should be("Start Date attribute not found on additional lane!")
     }
@@ -1665,7 +1665,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
-
+      
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()

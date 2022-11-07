@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressServ
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
+import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -81,7 +82,7 @@ trait LaneOperations {
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
     val lanesWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets))
     val lanesWithAddressAndLinkType = lanesWithRoadAddress.map { lane =>
-      val linkType = roadLinks.find(_.linkId == lane.linkId).headOption match {
+      val linkType = filteredRoadLinks.find(_.linkId == lane.linkId).headOption match {
 
         case Some(roadLink) => roadLink.linkType.value
         case _ => UnknownLinkType.value
@@ -89,7 +90,7 @@ trait LaneOperations {
       lane.copy(attributes = lane.attributes + ("linkType" -> linkType))
     }
 
-    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithAddressAndLinkType, roadLinks.groupBy(_.linkId).mapValues(_.head)))
+    val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithAddressAndLinkType, filteredRoadLinks.groupBy(_.linkId).mapValues(_.head)))
     (partitionedLanes, roadLinksWithoutLanes)
   }
 
@@ -414,8 +415,16 @@ trait LaneOperations {
     val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linkIds)
 
-    val roadLinksWithRoadAddressInfo = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
-    //TODO Use road address info from history lane's HistoryCreatedDate date provided by VKM when VKM includes side code field
+    // Filter out walking and cycling road links for now
+    val roadLinksWithRoadAddressInfo = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(roadLink => {
+      val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
+      roadNumber match {
+        case None => false
+        case Some(rn) => isCarTrafficRoadAddress(rn)
+      }
+    })
+
+//TODO Use road address info from history lane's HistoryCreatedDate date provided by VKM when VKM includes side code field
     val historyLanesWithRoadAddress = historyLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
     val upToDateLanesWithRoadAddress = upToDateLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
 
@@ -617,14 +626,6 @@ trait LaneOperations {
       throw new IllegalArgumentException("Lane code attribute not found!")
   }
 
-  def validateStartDateOneDigit(newLane: NewLane, laneCode: Int): Unit = {
-    if (!LaneNumberOneDigit.isMainLane(laneCode)) {
-      val startDateValue = getPropertyValue(newLane.properties, "start_date")
-      if (startDateValue == None || startDateValue.toString.trim.isEmpty)
-        throw new IllegalArgumentException("Start Date attribute not found on additional lane!")
-    }
-  }
-
   def validateStartDate(newLane: NewLane, laneCode: Int): Unit = {
     if (!LaneNumber.isMainLane(laneCode)) {
       val startDateValue = getPropertyValue(newLane.properties, "start_date")
@@ -787,7 +788,7 @@ trait LaneOperations {
 
         newLanes.map { newLane =>
           val laneCode = getLaneCode(newLane)
-          validateStartDateOneDigit(newLane, laneCode.toInt)
+          validateStartDate(newLane, laneCode.toInt)
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
@@ -807,7 +808,7 @@ trait LaneOperations {
           newLanes.map { newLane =>
 
             val laneCode = getLaneCode(newLane)
-            validateStartDateOneDigit(newLane, laneCode.toInt)
+            validateStartDate(newLane, laneCode.toInt)
 
             val roadLink = if (groupedRoadLinks(linkId).nonEmpty)
                             groupedRoadLinks(linkId).head
