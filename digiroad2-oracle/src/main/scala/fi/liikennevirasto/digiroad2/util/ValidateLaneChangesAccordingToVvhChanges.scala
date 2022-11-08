@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, B
 import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, ServiceAccess, SideCode, SpecialTransportWithGate, SpecialTransportWithoutGate, TractorRoad}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.RoadLinkClient
-import fi.liikennevirasto.digiroad2.lane.{LaneNumberOneDigit, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -132,7 +132,7 @@ object ValidateLaneChangesAccordingToVvhChanges {
 
     val roadLinkIds = roadLinks.map(_.linkId)
     val allLanesOnRoadLinks = laneService.fetchAllLanesByLinkIds(roadLinkIds)
-    val mainLanesOnRoadLinks = allLanesOnRoadLinks.filter(lane => lane.laneCode == LaneNumberOneDigit.MainLane.laneCode)
+    val mainLanesOnRoadLinks = allLanesOnRoadLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
 
     val duplicateLanes = validateForDuplicateLanes(roadLinks, allLanesOnRoadLinks)
     val roadLinksWithInvalidAmountOfMl = validateMainLaneAmount(roadLinks, mainLanesOnRoadLinks)

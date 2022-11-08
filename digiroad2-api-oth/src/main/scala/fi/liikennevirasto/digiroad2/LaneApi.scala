@@ -1,18 +1,21 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.{getRoadLinksAndChangesWithPolygon}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.roadLinkService.getRoadLinksAndChangesWithPolygon
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{laneService, roadAddressService, roadLinkService}
+import fi.liikennevirasto.digiroad2.asset.WalkingAndCyclingPath
 import fi.liikennevirasto.digiroad2.client.{AddrWithIdentifier, VKMClient}
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner.{LaneWithContinuingLanes, getConnectedLanes, getLaneRoadIdentifierByUsingViiteRoadNumber, getStartingLanes}
 import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.pwLanesTwoDigitLaneCode
+import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddress, Track}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
+
 
 class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService)
   extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
@@ -25,6 +28,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   case class ApiLane(laneCode: Int, track: Int, startAddressM: Long, endAddressM: Long)
   case class RangeParameters(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long,
                              startAddrM: Long, endAddrM: Long)
+  case class InvalidRoadNumberException(msg: String) extends Exception(msg)
 
   override protected def applicationDescription: String = "Lanes API"
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -74,10 +78,14 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val endAddrM = params.getOrElse("end_addrm", halt(BadRequest("Missing parameters")))
 
       val parameters = try {
-        RangeParameters(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
+        val params = RangeParameters(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
           endRoadPartNumber.toLong, startAddrM.toLong, endAddrM.toLong)
+
+        validateRangeParameters(params)
+        params
       }
       catch {
+        case invalidRoadNumberException: InvalidRoadNumberException => halt(BadRequest(invalidRoadNumberException.getMessage))
         case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
       }
 
@@ -101,14 +109,25 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       }
     }
   }
+//TODO add more validations
+  def validateRangeParameters(parameters: RangeParameters): Unit = {
+    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw InvalidRoadNumberException("Invalid road number. Road number must be in range 1 to 62999")
+  }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
-    val lanes = laneService.getLanesByRoadLinks(roadLinks)
+    val roadLinksFiltered = roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
+    val lanes = laneService.getLanesByRoadLinks(roadLinksFiltered)
 
-    val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(_.attributes.contains("ROAD_NUMBER"))
+    val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
+      val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
+      roadNumber match {
+        case None => false
+        case Some(rn) => isCarTrafficRoadAddress(rn)
+      }
+    })
     val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
-    val apiLanes = lanesToApiFormat(twoDigitLanes, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val apiLanes = lanesToApiFormat(twoDigitLanes, roadLinksFiltered.groupBy(_.linkId).mapValues(_.head))
 
     apiLanes.map { apiLane =>
       Map("roadNumber" -> apiLane.roadNumber,
@@ -148,7 +167,8 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val polygon = polygonTools.createPolygonFromCoordinates(coordinatesAndIdentifiers)
 
       val roadLinks = getRoadLinksAndChangesWithPolygon(polygon)._1
-      val roadLinksWithRoadAddress = roadAddressService.roadLinkWithRoadAddress(roadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
+      val roadLinksFiltered = roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
+      val roadLinksWithRoadAddress = roadAddressService.roadLinkWithRoadAddress(roadLinksFiltered).filter(_.attributes.contains("ROAD_NUMBER"))
 
       val correctLinks = roadLinksWithRoadAddress.filter(roadLink => roadLink.attributes("ROAD_NUMBER") == params.roadNumber
         && (roadPartRange contains roadLink.attributes("ROAD_PART_NUMBER")) && roadLink.attributes("TRACK") == params.track.value)
