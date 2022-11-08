@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import org.joda.time.DateTime
 
@@ -97,6 +98,20 @@ object LaneNumber {
   def isValidLaneNumber (laneCode: Int): Boolean = {
     val lanesNumbers = values.filterNot(_ == Unknown)
     lanesNumbers.exists(x => x.againstDirection == laneCode || x.towardsDirection == laneCode || x.oneDigitLaneCode == laneCode) || MainLane.motorwayMaintenance == laneCode
+  }
+
+  def getTwoDigitLaneCode(roadAddressSideCode: SideCode, laneSideCode: SideCode, oneDigitLaneCode: Int): Int = {
+    val laneCodeFirstDigit = roadAddressSideCode match {
+      case TowardsDigitizing if laneSideCode == TowardsDigitizing => 1
+      case TowardsDigitizing if laneSideCode == AgainstDigitizing => 2
+
+      case AgainstDigitizing if laneSideCode == TowardsDigitizing => 2
+      case AgainstDigitizing if laneSideCode == AgainstDigitizing => 1
+      case _ if laneSideCode == BothDirections => 3
+    }
+    val twoDigitLaneCode = laneCodeFirstDigit.toString.concat(oneDigitLaneCode.toString).toInt
+
+    twoDigitLaneCode
   }
 
   case object MainLane extends LaneNumber {
