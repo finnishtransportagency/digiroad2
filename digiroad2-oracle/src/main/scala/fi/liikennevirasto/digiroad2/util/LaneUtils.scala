@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewLane, PersistedHistoryLane, PersistedLane, PieceWiseLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneNumber, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewLane, PersistedHistoryLane, PersistedLane, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -237,7 +237,7 @@ object LaneUtils {
       val roadLink = roadLinks.find(_.linkId == lane.linkId).get
       val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").asInstanceOf[Int])
       val laneSideCode = SideCode.apply(lane.sideCode)
-      val twoDigitLaneCode = getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, lane.laneCode)
+      val twoDigitLaneCode = LaneNumber.getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, lane.laneCode)
 
       lane.copy(laneCode = twoDigitLaneCode)
     })
@@ -248,7 +248,7 @@ object LaneUtils {
       val roadLink = roadLinks.find(_.linkId == lane.linkId).get
       val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").asInstanceOf[Int])
       val laneSideCode = SideCode.apply(lane.sideCode)
-      val twoDigitLaneCode = getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, lane.laneCode)
+      val twoDigitLaneCode = LaneNumber.getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, lane.laneCode)
 
       lane.copy(laneCode = twoDigitLaneCode)
     })
@@ -260,26 +260,12 @@ object LaneUtils {
       val roadAddressSideCode = SideCode.apply(lane.attributes("SIDECODE").asInstanceOf[Int])
       val laneSideCode = SideCode.apply(lane.sideCode)
       val oneDigitLaneCode = laneService.getLaneCode(lane)
-      val twoDigitLaneCode = getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, oneDigitLaneCode)
+      val twoDigitLaneCode = LaneNumber.getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, oneDigitLaneCode)
 
       val laneCodeAttribute = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(twoDigitLaneCode))))
       val newLaneAttributes = lane.laneAttributes.filterNot(_.publicId == "lane_code") ++ laneCodeAttribute
       lane.copy(laneAttributes = newLaneAttributes)
     })
-  }
-
-  def getTwoDigitLaneCode(roadAddressSideCode: SideCode, laneSideCode: SideCode, oneDigitLaneCode: Int): Int = {
-    val laneCodeFirstDigit = roadAddressSideCode match {
-      case TowardsDigitizing if laneSideCode == TowardsDigitizing => 1
-      case TowardsDigitizing if laneSideCode == AgainstDigitizing => 2
-
-      case AgainstDigitizing if laneSideCode == TowardsDigitizing => 2
-      case AgainstDigitizing if laneSideCode == AgainstDigitizing => 1
-      case _ if laneSideCode == BothDirections => 3
-    }
-    val twoDigitLaneCode = laneCodeFirstDigit.toString.concat(oneDigitLaneCode.toString).toInt
-
-    twoDigitLaneCode
   }
 
 }
