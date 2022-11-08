@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
 import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
@@ -33,7 +33,6 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def polygonTools: PolygonTools = new PolygonTools()
   override def vkmClient: VKMClient = new VKMClient
   override def roadAddressService: RoadAddressService = roadAddressServiceImpl
-  override def geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
 
 }
 
@@ -50,7 +49,6 @@ trait LaneOperations {
   def laneFiller: LaneFiller = new LaneFiller
   def vkmClient: VKMClient
   def roadAddressService: RoadAddressService
-  def geometryTransform: GeometryTransform
 
 
   val logger = LoggerFactory.getLogger(getClass)

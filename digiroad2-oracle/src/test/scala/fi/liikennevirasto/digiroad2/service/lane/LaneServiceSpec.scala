@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.persistedLanesTwoDigitLaneCode
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinkIdGenerator, PolygonTools, RoadAddress, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinkIdGenerator, PolygonTools, RoadAddress, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -30,7 +30,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockVKMClient = MockitoSugar.mock[VKMClient]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockLaneService = MockitoSugar.mock[LaneService]
-  val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
   val laneDao = new LaneDao()
   val laneHistoryDao = new LaneHistoryDao()
@@ -83,7 +82,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
     override def vkmClient: VKMClient = mockVKMClient
     override def roadAddressService: RoadAddressService = mockRoadAddressService
-    override def geometryTransform: GeometryTransform = mockGeometryTransform
 
   }
 
