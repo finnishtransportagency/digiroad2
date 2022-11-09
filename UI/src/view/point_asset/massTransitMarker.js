@@ -182,7 +182,7 @@
       return resultValues;
     }
 
-    var createStopTypeStyles = function(stopTypes, margin){
+    var createStopTypeStyles = function(stopTypes, margin, linkOutOfUse){
       var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       stopTypes.sort();
@@ -215,13 +215,14 @@
             anchorXUnits: 'pixels',
             anchorYUnits: 'pixels',
             src: srcImg,
-            scale: styleScale
+            scale: styleScale,
+            opacity: linkOutOfUse ? 0.3 : 1.0
           }))
         });
       });
     };
 
-    var createSelectionBackgroundStyle = function(stopTypes, text){
+    var createSelectionBackgroundStyle = function(stopTypes, text, linkOutOfUse){
       var groupOffset = groupOffsetForAsset();
       var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
       var background = createSelectionBackgroundImage(types, text);
@@ -232,12 +233,13 @@
           anchorYUnits: 'pixels',
           img: background.img,
           imgSize: [background.width,background.height],
-          scale: styleScale
+          scale: styleScale,
+          opacity: linkOutOfUse ? 0.3 : 1.0
         }))
       });
     };
 
-    var createStopBackgroundStyle = function(stopTypes, margin, validityPeriod){
+    var createStopBackgroundStyle = function(stopTypes, margin, validityPeriod, linkOutOfUse){
       var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
@@ -249,12 +251,13 @@
           anchorYUnits: 'pixels',
           img: background.img,
           imgSize: [background.width,background.height],
-          scale: styleScale
+          scale: styleScale,
+          opacity: linkOutOfUse ? 0.3 : 1.0
         }))
       });
     };
 
-    var createStickStyle = function(){
+    var createStickStyle = function(linkOutOfUse){
       var stickImage = createStickImage();
       return new ol.style.Style({
         image: new ol.style.Icon(({
@@ -263,7 +266,8 @@
           anchorYUnits: 'pixels',
           img: stickImage.img,
           imgSize: [stickImage.width,stickImage.height],
-          scale: styleScale
+          scale: styleScale,
+          opacity: linkOutOfUse ? 0.3 : 1.0
         }))
       });
     };
@@ -285,7 +289,7 @@
       });
     };
 
-    var createDirectionArrowStyle = function() {
+    var createDirectionArrowStyle = function(linkOutOfUse) {
       var basePath = 'src/resources/digiroad2/bundle/assetlayer/images/';
       var directionArrowSrc, rotation;
       var stopType = _.head(data.stopTypes);
@@ -300,7 +304,8 @@
         image: new ol.style.Icon(({
           src: directionArrowSrc,
           rotation: rotation,
-          scale: styleScale
+          scale: styleScale,
+          opacity: linkOutOfUse ? 0.3 : 1
         }))
       });
     };
@@ -350,6 +355,7 @@
       var direction = '';
       var nationalId = data.nationalId ? data.nationalId : '';
       var validityPeriod = !_.isUndefined(data.validityPeriod) ? data.validityPeriod : '';
+      var linkOutOfUse = data.constructionType == 4
       if(selectedMassTransitStopModel.exists()){
         if(selectedMassTransitStopModel.getId() == data.id){
             name = selectedMassTransitStopModel.getName();
@@ -373,17 +379,17 @@
         direction = '';
 
       var styles = [];
-      styles = styles.concat(createDirectionArrowStyle());
-      styles = styles.concat(createStickStyle());
+      styles = styles.concat(createDirectionArrowStyle(linkOutOfUse));
+      styles = styles.concat(createStickStyle(linkOutOfUse));
 
       /* Due the impact of the order of the concats*/
       if (!_.isEmpty(data.stopTypes) && selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
-        styles = styles.concat(createStopTypeStyles(data.stopTypes));
+        styles = styles.concat(createStopTypeStyles(data.stopTypes, null, linkOutOfUse));
       }
       else {
-        styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
-        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
-        styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
+        styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction, linkOutOfUse));
+        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod, linkOutOfUse));
+        styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN, linkOutOfUse));
         styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
       }
 
@@ -393,15 +399,16 @@
 
     var createDefaultMarkerStyles = function(){
       var validityPeriod = !_.isUndefined(data.validityPeriod) ? data.validityPeriod : '';
+      var linkOutOfUse = data.constructionType == 4;
       var styles = [];
-      styles = styles.concat(createDirectionArrowStyle());
-      styles = styles.concat(createStickStyle());
+      styles = styles.concat(createDirectionArrowStyle(linkOutOfUse));
+      styles = styles.concat(createStickStyle(linkOutOfUse));
 
       /* if it is a servicePoint don't add the background */
       if (!_.isEmpty(data.stopTypes) && !selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
-        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
+        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod, linkOutOfUse));
       }
-      styles = styles.concat(createStopTypeStyles(data.stopTypes));
+      styles = styles.concat(createStopTypeStyles(data.stopTypes, null, linkOutOfUse));
       styles = selectedMassTransitStopModel.isSuggested(data) ? styles.concat(createQuestionIconStyle(data, 5)) : styles;
       return styles;
     };

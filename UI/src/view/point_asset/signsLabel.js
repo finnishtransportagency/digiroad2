@@ -7,22 +7,24 @@
 
     this.MIN_DISTANCE = groupingDistance;
 
-    this.backgroundStyle = function (trafficSign, position) {
+    this.backgroundStyle = function (trafficSign, position, linkOutOfUse) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: me.getLabelProperty(trafficSign).findImage(),
           anchor : [0.48, position.y],
-          anchorYUnits: "pixels"
+          anchorYUnits: "pixels",
+          opacity: linkOutOfUse ? 0.3 : 1.0
         }))
       });
     };
 
-    this.getStickStyle = function () {
+    this.getStickStyle = function (linkOutOfUse) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: 'images/traffic-signs/trafficSignStick.png',
           anchor : [0.5, me.stickPosition.y],
-          anchorYUnits: "pixels"
+          anchorYUnits: "pixels",
+          opacity: linkOutOfUse ? 0.3 : 1.0
         }))
       });
     };
@@ -140,9 +142,9 @@
       return this.value / 100;
     };
 
-    this.getStyle = function (trafficSign, position) {
+    this.getStyle = function (trafficSign, position, linkOutOfUse) {
       var labelProperty = me.getLabelProperty(trafficSign);
-      return [me.backgroundStyle(trafficSign, position), new ol.style.Style({
+      return [me.backgroundStyle(trafficSign, position, linkOutOfUse), new ol.style.Style({
         text: new ol.style.Text({
           text: me.textStyle(trafficSign),
           fill: new ol.style.Fill({

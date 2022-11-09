@@ -461,11 +461,12 @@
           return _.map(assets, function (asset) {
             var values = me.getValue(asset);
             if (values !== undefined) {
+              var linkOutOfUse = asset.constructionType == 4
               var styles = [];
-              styles = styles.concat(me.getStickStyle());
+              styles = styles.concat(me.getStickStyle(linkOutOfUse));
               _.map(values, function(value){
                 imgPosition.y += me.getLabelProperty(value).getHeight();
-                styles = styles.concat(me.getStyle(value, imgPosition));
+                styles = styles.concat(me.getStyle(value, imgPosition, linkOutOfUse));
               });
 
               var suggestionInfo = getProperty(asset,"suggest_box");
