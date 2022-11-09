@@ -48,6 +48,10 @@
             new StyleRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 16 })
         ];
 
+        var linkStatusRules = [
+            new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3}})
+        ];
+
         var defaultStyleProvider = new StyleRuleProvider({stroke: {opacity: 0.65, rotation : '${rotation}'}});
 
         defaultStyleProvider.addRules([
@@ -65,6 +69,7 @@
             new StyleRule().where('zoomLevel').is(14).use({ pointRadius: 16 }),
             new StyleRule().where('zoomLevel').is(15).use({ pointRadius: 16 })
         ]);
+        defaultStyleProvider.addRules(linkStatusRules);
 
         var selectionProvider = new StyleRuleProvider({stroke: {opacity: 0.9, rotation : '${rotation}', color: '#00f'},
                                             icon: {src: 'images/link-properties/arrow-drop-blue.svg'}});
@@ -72,6 +77,7 @@
         selectionProvider.addRules(zoomLevelRules);
         selectionProvider.addRules(featureTypeRules);
         selectionProvider.addRules(signSizeRules);
+        selectionProvider.addRules(linkStatusRules);
 
         var getDefaultStyle = function () {
             return defaultStyleProvider;

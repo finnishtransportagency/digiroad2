@@ -79,6 +79,10 @@
       new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 8] } })
     ];
 
+    var linkStatusRules = [
+      new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
+    ];
+
     me.browsingStyleProvider = new StyleRuleProvider({});
     me.browsingStyleProvider.addRules(speedLimitStyleRules);
     me.browsingStyleProvider.addRules(speedLimitFeatureSizeRules);
@@ -87,6 +91,7 @@
     me.browsingStyleProvider.addRules(validityDirectionStyleRules);
     me.browsingStyleProvider.addRules(oneWayOverlayStyleRules);
     me.browsingStyleProvider.addRules(linkTypeSizeRules);
+    me.browsingStyleProvider.addRules(linkStatusRules);
 
     this.renderOverlays = function(linearAssets){
       var speedLimitsWithType = _.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'other' }); });

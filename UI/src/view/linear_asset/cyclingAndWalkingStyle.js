@@ -127,6 +127,10 @@
             new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 8] } })
         ];
 
+        var linkStatusRules = [
+            new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
+        ];
+
         me.browsingStyleProvider = new StyleRuleProvider({});
         me.browsingStyleProvider.addRules(linkStatusRules);
         me.browsingStyleProvider.addRules(cyclingAndWalkingSizeRules);
@@ -134,6 +138,7 @@
         me.browsingStyleProvider.addRules(cyclingAndWalkingStyleRules);
         me.browsingStyleProvider.addRules(overlayStyleRules);
         me.browsingStyleProvider.addRules(linkTypeSizeRules);
+        me.browsingStyleProvider.addRules(linkStatusRules);
 
     };
 })(this);
