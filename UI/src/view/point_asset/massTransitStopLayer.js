@@ -248,7 +248,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup) {
     var uiAsset = backendAsset;
-    uiAsset.constructionType = getConstructionType(uiAsset.linkId)
+    uiAsset.constructionType = getConstructionType(uiAsset.linkId);
     var lon = centroidLonLat.lon;
     var lat = centroidLonLat.lat;
     if (isSelected(uiAsset)) {

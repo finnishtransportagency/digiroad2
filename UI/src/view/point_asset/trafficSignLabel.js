@@ -461,7 +461,7 @@
           return _.map(assets, function (asset) {
             var values = me.getValue(asset);
             if (values !== undefined) {
-              var linkOutOfUse = asset.constructionType == 4
+              var linkOutOfUse = asset.constructionType == 4;
               var styles = [];
               styles = styles.concat(me.getStickStyle(linkOutOfUse));
               _.map(values, function(value){

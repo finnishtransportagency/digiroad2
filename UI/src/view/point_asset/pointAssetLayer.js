@@ -245,11 +245,11 @@
           var features = (!allowGrouping) ? _.map(assets, me.createFeature) : getGroupedFeatures(assets);
           selectControl.clear();
           me.vectorLayer.getSource().addFeatures(features);
+          var assetsWithConstructionType = _.map(assets, function(asset) {
+            asset.constructionType = obtainConstructionType(asset);
+            return asset;
+          });
           if(assetLabel)
-            var assetsWithConstructionType = _.map(assets, function(asset) {
-              asset.constructionType = obtainConstructionType(asset);
-              return asset;
-            })
             me.vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assetsWithConstructionType, zoomlevels.getViewZoom(map)));
           applySelection();
         }
@@ -285,7 +285,7 @@
     }
 
     function obtainConstructionType(asset) {
-      return selectedAsset.getConstructionType(asset.linkId)
+      return selectedAsset.getConstructionType(asset.linkId);
     }
 
     this.removeLayerFeatures = function() {

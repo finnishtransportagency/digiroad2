@@ -92,7 +92,8 @@
 
         var linkStatusRules = [
             new StyleRule().where('constructionType').is(2).use({ stroke: { color: '#ff9900'} }),
-            new StyleRule().where('constructionType').is(1).use({ stroke: { color: '#cc99ff'} })
+            new StyleRule().where('constructionType').is(1).use({ stroke: { color: '#cc99ff'} }),
+            new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
         ];
 
 
@@ -125,10 +126,6 @@
             new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).use({ stroke: {color: '#fff', lineCap: 'square', width: 4, lineDash: [1, 16] } }),
             new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: {color: '#fff', lineCap: 'square', width: 1, lineDash: [1, 8] } }),
             new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 8] } })
-        ];
-
-        var linkStatusRules = [
-            new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
         ];
 
         me.browsingStyleProvider = new StyleRuleProvider({});

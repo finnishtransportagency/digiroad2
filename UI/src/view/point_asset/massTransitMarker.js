@@ -355,7 +355,7 @@
       var direction = '';
       var nationalId = data.nationalId ? data.nationalId : '';
       var validityPeriod = !_.isUndefined(data.validityPeriod) ? data.validityPeriod : '';
-      var linkOutOfUse = data.constructionType == 4
+      var linkOutOfUse = data.constructionType == 4;
       if(selectedMassTransitStopModel.exists()){
         if(selectedMassTransitStopModel.getId() == data.id){
             name = selectedMassTransitStopModel.getName();
