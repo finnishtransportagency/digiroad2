@@ -138,8 +138,10 @@ trait LaneOperations {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
     if(adjust){
       val lanesMapped = lanes.groupBy(_.linkId)
-      val filledTopology = LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks"){
-        adjustLanes(roadLinks, lanesMapped, geometryChanged = false)
+      val filledTopology = withDynTransaction{
+        LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks"){
+          adjustLanes(roadLinks, lanesMapped, geometryChanged = false)
+        }
       }
       filledTopology
     }
@@ -155,9 +157,7 @@ trait LaneOperations {
         updateChangeSet(adjustmentsChangeSet)
         laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
       case false if counter <= 3 =>
-        withDynTransaction {
-          updateChangeSet(adjustmentsChangeSet)
-        }
+        updateChangeSet(adjustmentsChangeSet)
         adjustLanes(roadLinks, filledTopology.groupBy(_.linkId), geometryChanged, counter + 1)
     }
   }
