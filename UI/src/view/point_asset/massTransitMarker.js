@@ -384,7 +384,7 @@
 
       /* Due the impact of the order of the concats*/
       if (!_.isEmpty(data.stopTypes) && selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
-        styles = styles.concat(createStopTypeStyles(data.stopTypes, null, linkOutOfUse));
+        styles = styles.concat(createStopTypeStyles(data.stopTypes, 0, linkOutOfUse));
       }
       else {
         styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction, linkOutOfUse));
@@ -408,7 +408,7 @@
       if (!_.isEmpty(data.stopTypes) && !selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
         styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod, linkOutOfUse));
       }
-      styles = styles.concat(createStopTypeStyles(data.stopTypes, null, linkOutOfUse));
+      styles = styles.concat(createStopTypeStyles(data.stopTypes, 0, linkOutOfUse));
       styles = selectedMassTransitStopModel.isSuggested(data) ? styles.concat(createQuestionIconStyle(data, 5)) : styles;
       return styles;
     };

@@ -135,7 +135,6 @@
         me.browsingStyleProvider.addRules(cyclingAndWalkingStyleRules);
         me.browsingStyleProvider.addRules(overlayStyleRules);
         me.browsingStyleProvider.addRules(linkTypeSizeRules);
-        me.browsingStyleProvider.addRules(linkStatusRules);
 
     };
 })(this);
