@@ -103,7 +103,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
-    val lanes = laneService.getLanesByRoadLinks(roadLinks)
+    val lanes = laneService.getLanesByRoadLinks(roadLinks, adjust = false)
 
     val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(_.attributes.contains("ROAD_NUMBER"))
     val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithRoadAddress).flatten
@@ -152,7 +152,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val correctLinks = roadLinksWithRoadAddress.filter(roadLink => roadLink.attributes("ROAD_NUMBER") == params.roadNumber
         && (roadPartRange contains roadLink.attributes("ROAD_PART_NUMBER")) && roadLink.attributes("TRACK") == params.track.value)
 
-      val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks)
+      val lanesOnRoadLinks = laneService.getLanesByRoadLinks(correctLinks, adjust = false)
       val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanesOnRoadLinks).filter(_.attributes.contains("ROAD_NUMBER"))
 
       val twoDigitLanes = laneService.pieceWiseLanesToTwoDigitWithMassQuery(lanesWithRoadAddress).flatten

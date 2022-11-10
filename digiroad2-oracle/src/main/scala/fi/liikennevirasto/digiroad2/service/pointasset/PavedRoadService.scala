@@ -28,7 +28,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
 
     val existingAssets =
@@ -36,13 +36,17 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(PavedRoad.typeId, linkIds)
       }.filterNot(_.expired)
 
-    val groupedAssets = existingAssets.groupBy(_.linkId)
-    val adjustedAssets = withDynTransaction {
-      LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
-        adjustLinearAssets(roadLinks, groupedAssets, typeId)
+    if(adjust) {
+      val groupedAssets = existingAssets.groupBy(_.linkId)
+      val adjustedAssets = withDynTransaction {
+        LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
+          val filledTopology = adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+        }
       }
+      adjustedAssets
     }
-    adjustedAssets
+    else assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
   }
 
   def getPavedRoadAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
