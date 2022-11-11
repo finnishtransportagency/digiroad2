@@ -1391,7 +1391,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "startAddrMValue" -> extractLongValue(link.attributes, "START_ADDR"),
             "endAddrMValue" ->  extractLongValue(link.attributes, "END_ADDR"),
             "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS"),
-            "municipalityCode" -> extractIntValue(link.attributes, "municipalityCode")
+            "municipalityCode" -> extractIntValue(link.attributes, "municipalityCode"),
+            "constructionType" -> extractIntValue(link.attributes, "constructionType")
           )
         }
       }

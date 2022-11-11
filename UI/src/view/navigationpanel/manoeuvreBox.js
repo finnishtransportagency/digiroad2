@@ -10,6 +10,15 @@
         '</div>';
     }).join('');
 
+    var constructionTypeLabeling = '</div>' + [
+        '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+        '    <div class="legend-entry">',
+        '      <div class="label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
+        '      <div class="symbol linear construction-type-4"/>',
+        '    </div>',
+        '  </div>'
+      ].join('');
+
     var manoeuvreSignsCheckBox = [
       '<div class="check-box-container">' +
       '<input id="manoeuvreSignsCheckBox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
@@ -24,6 +33,7 @@
       '  </header>',
       '  <div class="panel-section panel-legend limit-legend">',
       manoeuvreLegendTemplate,
+      constructionTypeLabeling,
       manoeuvreSignsCheckBox,
       '  </div>',
       '</div>'].join('');

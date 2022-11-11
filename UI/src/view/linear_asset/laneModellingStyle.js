@@ -153,6 +153,10 @@
       new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 8] } })
     ];
 
+    var linkStatusRules = [
+      new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
+    ];
+
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.01, color: '#7f7f7c' }});
     me.browsingStyleProvider.addRules(laneModellingSizeRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
@@ -161,11 +165,13 @@
     me.browsingStyleProvider.addRules(trafficDirectionRulesForUnselectedLanes);
     me.browsingStyleProvider.addRules(trafficDirectionRulesForSelectedLane);
     me.browsingStyleProvider.addRules(linkTypeSizeRules);
+    me.browsingStyleProvider.addRules(linkStatusRules);
 
     me.browsingStyleProviderViewOnly = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProviderViewOnly.addRules(viewOnlyLaneModellingStyleRules);
     me.browsingStyleProviderViewOnly.addRules(laneModellingSizeRules);
     me.browsingStyleProviderViewOnly.addRules(featureTypeRules);
     me.browsingStyleProviderViewOnly.addRules(linkTypeSizeRules);
+    me.browsingStyleProviderViewOnly.addRules(linkStatusRules);
   };
 })(this);
