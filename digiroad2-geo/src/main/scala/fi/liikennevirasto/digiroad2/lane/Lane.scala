@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import org.joda.time.DateTime
@@ -40,7 +41,8 @@ case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Stri
 case class NewLane(id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
                    isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None, newLaneCode: Option[Int] = None )
 
-case class ViewOnlyLane(linkId: String, startMeasure: Double, endMeasure: Double, sideCode: Int, trafficDirection: TrafficDirection, geometry: Seq[Point], lanes: Seq[Int], linkType: Int)
+case class ViewOnlyLane(linkId: String, startMeasure: Double, endMeasure: Double, sideCode: Int, trafficDirection: TrafficDirection,
+                        geometry: Seq[Point], lanes: Seq[Int], linkType: Int, constructionType: Int = UnknownConstructionType.value)
 
 case class SideCodesForLinkIds(linkId: String, sideCode: Int)
 

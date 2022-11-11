@@ -43,7 +43,8 @@
            roadPartNumber: link.roadPartNumber,
            startAddrMValue: link.startAddrMValue,
            endAddrMValue: link.endAddrMValue,
-           isSelected: true
+           isSelected: true,
+           constructionType: link.constructionType
            };
            return _.merge({}, linearAsset, notSelectable, hasAssetAndType, options);
          } else
@@ -57,6 +58,7 @@
               roadLinkWithAsset.roadPartNumber = roadLink.roadPartNumber;
               roadLinkWithAsset.startAddrMValue = roadLink.startAddrMValue;
               roadLinkWithAsset.endAddrMValue = roadLink.endAddrMValue;
+              roadLinkWithAsset.constructionType = roadLink.constructionType;
               return _.merge({}, roadLinkWithAsset, {isSelected: true}, hasAssetAndType);
             });
         }
@@ -113,11 +115,19 @@
     ];
 
     var laneModellingStyleRules = [
-      new StyleRule().where('hasAsset').is(false).use({ stroke : { opacity: 0.7, color: '#7f7f7c'}}),
-      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).use({ stroke : { opacity: 0.7, color: '#ff0000' }}),
-      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).use({ stroke : { opacity: 0.7, color: '#11bb00' }}),
-      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).use({ stroke : { opacity: 0.7, color: '#ff0000', width: 3 }}),
-      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).use({ stroke : { opacity: 0.7, color: '#11bb00', width: 3 }})
+      new StyleRule().where('hasAsset').is(false).and('constructionType').isNot(4).use({ stroke : { opacity: 0.7, color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).and('constructionType').isNot(4).use({ stroke : { opacity: 0.7, color: '#ff0000' }}),
+      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).and('constructionType').isNot(4).use({ stroke : { opacity: 0.7, color: '#11bb00' }}),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).and('constructionType').isNot(4).use({ stroke : { opacity: 0.7, color: '#ff0000', width: 3 }}),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).and('constructionType').isNot(4).use({ stroke : { opacity: 0.7, color: '#11bb00', width: 3 }})
+    ];
+
+    var laneModellingStyleRulesForLinksOutOfUse = [
+      new StyleRule().where('hasAsset').is(false).and('constructionType').is(4).use({ stroke : { opacity: 0.3, color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).and('constructionType').is(4).use({ stroke : { opacity: 0.3, color: '#ff0000' }}),
+      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).and('constructionType').is(4).use({ stroke : { opacity: 0.3, color: '#11bb00' }}),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).and('constructionType').is(4).use({ stroke : { opacity: 0.3, color: '#ff0000', width: 3 }}),
+      new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).and('constructionType').is(4).use({ stroke : { opacity: 0.3, color: '#11bb00', width: 3 }})
     ];
 
     var laneModellingSizeRules = [
@@ -162,10 +172,10 @@
     me.browsingStyleProvider.addRules(featureTypeRules);
     me.browsingStyleProvider.addRules(overlayStyleRules);
     me.browsingStyleProvider.addRules(laneModellingStyleRules);
+    me.browsingStyleProvider.addRules(laneModellingStyleRulesForLinksOutOfUse);
     me.browsingStyleProvider.addRules(trafficDirectionRulesForUnselectedLanes);
     me.browsingStyleProvider.addRules(trafficDirectionRulesForSelectedLane);
     me.browsingStyleProvider.addRules(linkTypeSizeRules);
-    me.browsingStyleProvider.addRules(linkStatusRules);
 
     me.browsingStyleProviderViewOnly = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProviderViewOnly.addRules(viewOnlyLaneModellingStyleRules);
