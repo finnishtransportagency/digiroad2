@@ -15,7 +15,7 @@
 
       var walkwayLabel =
         '<div class="legend-entry">' +
-        '<div class="fat-label"> Kevyen liikenteen väylät </div>' +
+        '<div class="fat-label"> Kävelyn ja pyöräilyn väylät </div>' +
         '</div>';
 
       var specialAreasLabel =
@@ -36,10 +36,10 @@
         [4, '(Ic) Pääosin hiekoitettava, ohut lumipolanne sallittu'],
         [5, '(II) Pääosin lumipintainen'],
         [6, '(III) Pääosin lumipintainen, pisin toimenpideaika'],
-        [24, '(L) Kevyen liikenteen laatukäytävät'],
-        [7, '(K1) Melko vilkkaat kevyen liikenteen väylät'],
-        [8, '(K2) Kevyen liikenteen väylien perus talvihoitotaso'],
-        [9, 'Kevyen liikenteen väylät, joilla ei talvihoitoa'],
+        [24, '(L) Kävelyn ja pyöräilyn laatukäytävät'],
+        [7, '(K1) Melko vilkkaat kävelyn ja pyöräilyn väylät'],
+        [8, '(K2) Kävelyn ja pyöräilyn väylien perus talvihoitotaso'],
+        [9, 'Kävelyn ja pyöräilyn väylät, joilla ei talvihoitoa'],
         [10, 'Pääkadut ja vilkkaat väylät'],
         [11, 'Kokoojakadut'],
         [12, 'Tonttikadut']

@@ -2,12 +2,14 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneRoadAddressInfo, NewLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneNumber, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewLane, PersistedHistoryLane, PersistedLane, PieceWiseLane}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
@@ -33,7 +35,6 @@ object LaneUtils {
   lazy val roadLinkClient: RoadLinkClient = { new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint) }
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build()) }
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
-
 
   lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 
@@ -230,5 +231,41 @@ object LaneUtils {
     )
   }
 
+  //road link's attributes must include road address info
+  def persistedHistoryLanesToTwoDigitLaneCode(lanes: Seq[PersistedHistoryLane], roadLinks: Seq[RoadLink]): Seq[PersistedHistoryLane] = {
+    lanes.map(lane => {
+      val roadLink = roadLinks.find(_.linkId == lane.linkId).get
+      val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").asInstanceOf[Int])
+      val laneSideCode = SideCode.apply(lane.sideCode)
+      val twoDigitLaneCode = LaneNumber.getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, lane.laneCode)
+
+      lane.copy(laneCode = twoDigitLaneCode)
+    })
+  }
+  //road link's attributes must include road address info
+  def persistedLanesTwoDigitLaneCode(lanes: Seq[PersistedLane], roadLinks: Seq[RoadLink]): Seq[PersistedLane] = {
+    lanes.map(lane => {
+      val roadLink = roadLinks.find(_.linkId == lane.linkId).get
+      val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").asInstanceOf[Int])
+      val laneSideCode = SideCode.apply(lane.sideCode)
+      val twoDigitLaneCode = LaneNumber.getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, lane.laneCode)
+
+      lane.copy(laneCode = twoDigitLaneCode)
+    })
+  }
+
+  //lane's attributes must include road address info
+  def pwLanesTwoDigitLaneCode(lanes: Seq[PieceWiseLane]): Seq[PieceWiseLane] = {
+    lanes.map(lane => {
+      val roadAddressSideCode = SideCode.apply(lane.attributes("SIDECODE").asInstanceOf[Int])
+      val laneSideCode = SideCode.apply(lane.sideCode)
+      val oneDigitLaneCode = laneService.getLaneCode(lane)
+      val twoDigitLaneCode = LaneNumber.getTwoDigitLaneCode(roadAddressSideCode, laneSideCode, oneDigitLaneCode)
+
+      val laneCodeAttribute = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(twoDigitLaneCode))))
+      val newLaneAttributes = lane.laneAttributes.filterNot(_.publicId == "lane_code") ++ laneCodeAttribute
+      lane.copy(laneAttributes = newLaneAttributes)
+    })
+  }
 
 }
