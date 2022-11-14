@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
