@@ -52,7 +52,7 @@
             '<div class="symbol linear private-road"/>' +
           '</div>' +
           '<div class="legend-entry">' +
-            '<div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>' +
+            '<div class="label">Ei tiedossa tai kävelyn ja pyöräilyn väylä</div>' +
           '<div class="symbol linear unknown"/>' +
         '</div>' +
       '</div>');
@@ -66,7 +66,7 @@
       [5, '5'],
       [6, '6: Muu yksityistie'],
       [7, '7: Ajopolku'],
-      [8, '8: Kevyen liikenteen väylä']
+      [8, '8: Kävelyn ja pyöräilyn väylä']
     ];
     var functionalClassLegendEntries = _.map(functionalClasses, function(functionalClass) {
       return '<div class="legend-entry">' +
@@ -85,7 +85,7 @@
       [6, 'Kiertoliittymä'],
       [5, 'Ramppi'],
       [9, 'Jalankulkualue'],
-      [8, 'Kevyen liikenteen väylä'],
+      [8, 'Pyörätie tai yhdistetty pyörätie ja jalkakäytävä'],
       [11, '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>'],
       [12, 'Ajopolku'],
       [21, 'Huoltoaukko'],

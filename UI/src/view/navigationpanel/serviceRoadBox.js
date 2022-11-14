@@ -16,7 +16,7 @@
         [ 0, 'Tieoikeus'],
         [ 1, 'Tiekunnan osakkuus'],
         [ 2, 'LiVin hallinnoimalla maa-alueella'],
-        [ 3, 'Kevyen liikenteen väylä'],
+        [ 3, 'Kävelyn ja pyöräilyn väylä'],
         [ 4, 'Muu sopimus'],
         [ 5, 'Potentiaalinen käyttöoikeus'],
         [ 6, 'Tuntematon']

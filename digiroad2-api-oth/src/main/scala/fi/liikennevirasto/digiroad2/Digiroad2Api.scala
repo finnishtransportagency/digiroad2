@@ -2348,7 +2348,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         mapLightLane(usedService.getByZoomLevel( Some(LinkGeomSource.NormalLinkInterface)))
       } else {
         validateBoundingBox(boundingRectangle)
-        val (assets, roadLinksWithoutLanes) = usedService.getByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
+        val (assets, roadLinksWithoutLanes) = usedService.getByBoundingBox(boundingRectangle)
         mapLanes(assets) ++ Seq(roadLinkToApiWithLaneInfo(roadLinksWithoutLanes))
       }
 
@@ -2361,7 +2361,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val viewOnlyLanes = laneService.getViewOnlyByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
+      val viewOnlyLanes = laneService.getViewOnlyByBoundingBox(boundingRectangle)
       viewOnlyLanes.map { lane =>
         Map (
           "linkId" -> lane.linkId,

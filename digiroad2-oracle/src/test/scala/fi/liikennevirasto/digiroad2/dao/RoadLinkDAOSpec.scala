@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
