@@ -197,7 +197,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
       case 1 => "Tieoikeus"
       case 2 => "Tiekunnan osakkuus"
       case 3 => "LiVin hallinnoimalla maa-alueella"
-      case 4 => "Kevyen liikenteen väylä"
+      case 4 => "Kävelyn ja pyöräilyn väylä"
       case _ => "Tuntematon"
     }
   }

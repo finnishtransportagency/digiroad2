@@ -43,7 +43,7 @@
       [5, 'Kiertoliittymä'],
       [6, 'Ramppi'],
       [7, 'Levähdysalue'],
-      [8, 'Kevyen liikenteen väylä'],
+      [8, 'Kävelyn ja pyöräilyn väylä'],
       [9, 'Jalankulkualue'],
       [10, 'Huolto- tai pelastustie'],
       [11, 'Liitännäisliikennealue'],
@@ -70,7 +70,8 @@
     var constructionTypes= [
         [1, 'Suunnitteilla'], //Planned
         [2, 'Rakenteilla'], //Under Construction
-        [3, 'Käytössä'] //In Use
+        [3, 'Käytössä'], //In Use
+        [4, 'Väliaikaisesti poissa käytöstä'] //Temporarily out of use
     ];
 
     var linkSources= [

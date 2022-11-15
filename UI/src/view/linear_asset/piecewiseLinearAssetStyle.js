@@ -41,7 +41,10 @@
       new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').isIn([10, 9, 8]).use({ stroke: { width: 2 } }),
       new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 4 } })
     ];
-    
+
+    var linkStatusRules = [
+      new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
+    ];
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(expirationRules);
@@ -50,12 +53,14 @@
     me.browsingStyleProvider.addRules(featureTypeRules);
     me.browsingStyleProvider.addRules(questionMarkerStyleRules);
     me.browsingStyleProvider.addRules(linkTypeSizeRules);
+    me.browsingStyleProvider.addRules(linkStatusRules);
 
-    me.browsingStyleProviderReadOnly =  new StyleRuleProvider({ stroke : { opacity: 0.7 , color: '#439232'}});
+    me.browsingStyleProviderReadOnly =  new StyleRuleProvider({ stroke : { opacity: 0.3 , color: '#439232'}});
     me.browsingStyleProviderReadOnly.addRules(zoomLevelRules);
     me.browsingStyleProviderReadOnly.addRules(oneWayRules);
     me.browsingStyleProviderReadOnly.addRules(questionMarkerStyleRules);
     me.browsingStyleProviderReadOnly.addRules(linkTypeSizeRules);
+    me.browsingStyleProviderReadOnly.addRules(linkStatusRules);
   };
 })(this);
 

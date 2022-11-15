@@ -4,7 +4,7 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode}
-import fi.liikennevirasto.digiroad2.lane.LaneNumberOneDigit.MainLane
+import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.middleware.{AdditionalImportValue, UpdateOnlyStartDates}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -215,7 +215,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           })
 
         val mainLanes = laneService.fetchAllLanesByLinkIds(filteredRoadAddresses.map(_.linkId).toSeq, false)
-          .filter(_.laneCode == MainLane.laneCode)
+          .filter(lane => LaneNumber.isMainLane(lane.laneCode))
 
         val correctLanes = filteredRoadAddresses.flatMap(roadAddress => {
           val lanesOnLink = mainLanes.filter(_.linkId == roadAddress.linkId)

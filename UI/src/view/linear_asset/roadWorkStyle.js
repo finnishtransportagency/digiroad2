@@ -59,11 +59,16 @@
       new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 4 } })
     ];
 
+    var linkStatusRules = [
+      new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
+    ];
+
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(roadWorkStyleRules);
     me.browsingStyleProvider.addRules(roadWorkSizeRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
     me.browsingStyleProvider.addRules(linkTypeSizeRules);
+    me.browsingStyleProvider.addRules(linkStatusRules);
   };
 })(this);

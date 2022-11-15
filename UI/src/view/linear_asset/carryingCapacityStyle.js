@@ -63,17 +63,23 @@
       new StyleRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: { width: 4 } })
     ];
 
+    var linkStatusRules = [
+      new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
+    ];
+
     me.frostHeavingFactorStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.frostHeavingFactorStyle.addRules(frostHeavingFactorRules);
     me.frostHeavingFactorStyle.addRules(carryingCapacityFeatureSizeRules);
     me.frostHeavingFactorStyle.addRules(featureTypeRules);
     me.frostHeavingFactorStyle.addRules(linkTypeSizeRules);
+    me.frostHeavingFactorStyle.addRules(linkStatusRules);
 
     me.springCarryingCapacityStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.springCarryingCapacityStyle.addRules(springCarryingCapacityRules);
     me.springCarryingCapacityStyle.addRules(carryingCapacityFeatureSizeRules);
     me.springCarryingCapacityStyle.addRules(featureTypeRules);
     me.springCarryingCapacityStyle.addRules(linkTypeSizeRules);
+    me.springCarryingCapacityStyle.addRules(linkStatusRules);
 
   };
 })(this);
