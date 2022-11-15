@@ -63,7 +63,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     val newSpeedLimitsWithValue = filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
     val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
 
-    adjustmentsChangeSet.equals(changeSet.get) match {
+    adjustmentsChangeSet.isEmpty match {
       case true =>
         persistProjectedLimit(newSpeedLimitsWithValue)
         persistUnknown(unknownLimits)
