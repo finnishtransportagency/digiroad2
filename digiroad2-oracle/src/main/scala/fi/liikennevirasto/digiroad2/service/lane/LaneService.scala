@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
@@ -80,12 +81,12 @@ trait LaneOperations {
     val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
     val lanesWithRoadAddress = LogUtils.time(logger, "TEST LOG Get Viite road address for lanes")(roadAddressService.laneWithRoadAddress(linearAssets))
     val lanesWithAddressAndLinkType = lanesWithRoadAddress.map { lane =>
-      val linkType = filteredRoadLinks.find(_.linkId == lane.linkId).headOption match {
+      val (linkType, constructionType) = filteredRoadLinks.find(_.linkId == lane.linkId).headOption match {
 
-        case Some(roadLink) => roadLink.linkType.value
-        case _ => UnknownLinkType.value
+        case Some(roadLink) => (roadLink.linkType.value, roadLink.constructionType.value)
+        case _ => (UnknownLinkType.value, UnknownConstructionType.value)
       }
-      lane.copy(attributes = lane.attributes + ("linkType" -> linkType))
+      lane.copy(attributes = lane.attributes + ("linkType" -> linkType) + ("constructionType" -> constructionType))
     }
 
     val partitionedLanes = LogUtils.time(logger, "TEST LOG Partition lanes")(LanePartitioner.partition(lanesWithAddressAndLinkType, filteredRoadLinks.groupBy(_.linkId).mapValues(_.head)))
@@ -131,7 +132,8 @@ trait LaneOperations {
           val consideredLanes = lanes.filter(lane => lane.startMeasure <= startMeasure && lane.endMeasure >= endMeasure).map(_.laneCode)
           val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
 
-          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, roadLink.trafficDirection, geometry, consideredLanes, roadLink.linkType.value)
+          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, roadLink.trafficDirection, geometry, consideredLanes,
+            roadLink.linkType.value, roadLink.constructionType.value)
         }
     }.toSeq
   }
@@ -421,7 +423,7 @@ trait LaneOperations {
         case Some(rn) => isCarTrafficRoadAddress(rn)
       }
     })
-    
+
     //TODO Use road address info from history lane's HistoryCreatedDate date provided by VKM when VKM includes side code field
     val historyLanesWithRoadAddress = historyLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))
     val upToDateLanesWithRoadAddress = upToDateLanes.filter(lane => roadLinksWithRoadAddressInfo.map(_.linkId).contains(lane.linkId))

@@ -96,6 +96,10 @@
     var questionMarkerStyleRules = [
       new StyleRule().where(isSuggested).is(true).use({icon: {src: 'images/icons/questionMarker.png', scale: 0.7, anchor: [0.45, 1]}})
     ];
+
+    var linkStatusRules = [
+      new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3}, icon: { opacity: 0.3} })
+    ];
     
     var browseStyle = new StyleRuleProvider({});
     browseStyle.addRules(speedLimitStyleRules);
@@ -105,6 +109,7 @@
     browseStyle.addRules(validityDirectionStyleRules);
     browseStyle.addRules(oneWayOverlayStyleRules);
     browseStyle.addRules(questionMarkerStyleRules);
+    browseStyle.addRules(linkStatusRules);
 
     var selectionStyle = new StyleRuleProvider({ stroke: {opacity: 0.15}, graphic: {opacity: 0.3}});
     selectionStyle.addRules(speedLimitStyleRules);
@@ -115,6 +120,7 @@
     selectionStyle.addRules(oneWayOverlayStyleRules);
     selectionStyle.addRules([unknownLimitStyleRule]);
     selectionStyle.addRules(questionMarkerStyleRules);
+    selectionStyle.addRules(linkStatusRules);
 
     //History rules
     var typeSpecificStyleRulesHistory = [

@@ -42,9 +42,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("area" -> area))
   }
 
+  private def addConstructionTypeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("constructionType" -> roadLink.constructionType.value))
+  }
+
   private def enrichMaintenanceRoadAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val maintenanceRoadAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
-      addPolygonAreaAttribute
+      addPolygonAreaAttribute,
+      addConstructionTypeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
