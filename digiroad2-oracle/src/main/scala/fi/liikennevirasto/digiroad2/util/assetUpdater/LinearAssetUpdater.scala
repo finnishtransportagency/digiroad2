@@ -36,6 +36,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
+  //TODO Remove after bug in combine and fuse operations is fixed
+  def cleanRedundantMValueAdjustments(changeSet: ChangeSet, originalAssets: Seq[PersistedLinearAsset]): ChangeSet = {
+    val redundantFiltered = changeSet.adjustedMValues.filterNot(adjustment => {
+      val originalAsset = originalAssets.find(_.id == adjustment.assetId).get
+      originalAsset.startMeasure == adjustment.startMeasure && originalAsset.endMeasure == adjustment.endMeasure
+    })
+    changeSet.copy(adjustedMValues = redundantFiltered)
+  }
+
   def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
     try {
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
@@ -63,9 +72,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         logger.info("Finish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
       }
       val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-      val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
-
-      updateChangeSet(changeSet)
+      service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
       persistProjectedLinearAssets(projectedAssets.filter(_.id == 0L))
     } catch {
       case e => logger.error(s"Updating asset $typeId in municipality $municipality failed due to ${e.getMessage}.")

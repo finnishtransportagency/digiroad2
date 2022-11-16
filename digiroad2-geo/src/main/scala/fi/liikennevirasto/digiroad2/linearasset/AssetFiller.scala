@@ -225,6 +225,8 @@ class AssetFiller {
 
   protected def updateValuesWithoutChangeSet(roadLink: RoadLink, segments: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = segments
 
+  //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
+  //   causes an infinite loop when fillTopology is called recursively
   private def combine(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: PersistedLinearAsset, pseudoId: Long) = {
@@ -533,7 +535,8 @@ class AssetFiller {
     }
   }
 
-  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PersistedLinearAsset], ChangeSet) = {
+  def fillTopology(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]], typeId: Int,
+                   changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PersistedLinearAsset], ChangeSet) = {
     val operations = getOperations(typeId, geometryChanged)
 
     val changeSet = changedSet match {

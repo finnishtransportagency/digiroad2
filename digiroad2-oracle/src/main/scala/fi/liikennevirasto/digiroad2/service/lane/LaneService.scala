@@ -138,24 +138,31 @@ trait LaneOperations {
     }.toSeq
   }
 
-   def getLanesByRoadLinks(roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
+   def getLanesByRoadLinks(roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLane] = {
     val lanes = LogUtils.time(logger, "TEST LOG Fetch lanes from DB")(fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct))
-    val lanesMapped = lanes.groupBy(_.linkId)
-    val filledTopology = LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks")(adjustLanes(roadLinks, lanesMapped))
-
-    filledTopology
+    if(adjust){
+      val lanesMapped = lanes.groupBy(_.linkId)
+      val filledTopology = withDynTransaction{
+        LogUtils.time(logger, "Check for and adjust possible lane adjustments on " + roadLinks.size + " roadLinks"){
+          adjustLanes(roadLinks, lanesMapped, geometryChanged = false)
+        }
+      }
+      filledTopology
+    }
+    else laneFiller.toLPieceWiseLaneOnMultipleLinks(lanes, roadLinks)
   }
 
-  def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]]): Seq[PieceWiseLane] = {
-    val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, geometryChanged = false)
-    if(adjustmentsChangeSet.isEmpty) {
-      laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
-    }
-    else {
-      withDynTransaction {
+  def adjustLanes(roadLinks: Seq[RoadLink], lanes: Map[String, Seq[PersistedLane]], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLane] = {
+    val (filledTopology, adjustmentsChangeSet) = laneFiller.fillTopology(roadLinks, lanes, None, geometryChanged)
+
+    adjustmentsChangeSet.isEmpty match {
+      case true => laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
+      case false if counter > 3 =>
         updateChangeSet(adjustmentsChangeSet)
-      }
-      adjustLanes(roadLinks, filledTopology.groupBy(_.linkId))
+        laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
+      case false if counter <= 3 =>
+        updateChangeSet(adjustmentsChangeSet)
+        adjustLanes(roadLinks, filledTopology.groupBy(_.linkId), geometryChanged, counter + 1)
     }
   }
 

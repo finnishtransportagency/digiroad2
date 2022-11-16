@@ -117,7 +117,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def get(municipality: Int): Seq[SpeedLimit] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipality)
     withDynTransaction {
-      getByRoadLinks(roadLinks, changes, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarRoadOrCyclePedestrianPath})._1
+      getByRoadLinks(roadLinks, changes, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarRoadOrCyclePedestrianPath}, adjust = false)._1
     }
   }
 
@@ -225,26 +225,36 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       dao.getCurrentSpeedLimitsByLinkIds(Some(Set(roadLink.linkId)))
   }
 
-  private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false, roadFilterFunction: RoadLink => Boolean) = {
+  private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false,
+                             roadFilterFunction: RoadLink => Boolean, adjust: Boolean = true) = {
 
     val roadLinksFiltered = roadLinks.filter(roadFilterFunction)
     val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinksFiltered, showSpeedLimitsHistory)
     val speedLimits = (speedLimitLinks).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
 
-    val filledTopology = LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + SpeedLimitAsset.typeId) {
-        adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, speedLimits)
+    if(adjust) {
+      val filledTopology = LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + SpeedLimitAsset.typeId) {
+        adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, speedLimits, geometryChanged = false)
       }
-    (filledTopology, roadLinksByLinkId)
+      (filledTopology, roadLinksByLinkId)
+    }
+    else (speedLimitLinks, roadLinksByLinkId)
   }
 
-  def adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]]): Seq[SpeedLimit] = {
-    val (filledTopology, adjustmentsChangeSet) = fillTopology(roadLinksFiltered, speedLimits, geometryChanged = false)
+  def adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]],
+                                           changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[SpeedLimit] = {
+    val (filledTopology, adjustmentsChangeSet) = fillTopology(roadLinksFiltered, speedLimits, changeSet, geometryChanged)
     val generatedFilteredFromChangeSet = adjustmentsChangeSet.filterGeneratedAssets
-    if(generatedFilteredFromChangeSet.isEmpty) filledTopology
-    else {
-      speedLimitUpdater.updateChangeSet(generatedFilteredFromChangeSet)
-      adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, filledTopology.groupBy(_.linkId))
+
+    generatedFilteredFromChangeSet.isEmpty match {
+      case true => filledTopology
+      case false if counter > 3 =>
+        speedLimitUpdater.updateChangeSet(generatedFilteredFromChangeSet)
+        filledTopology
+      case false if counter <= 3 =>
+        speedLimitUpdater.updateChangeSet(generatedFilteredFromChangeSet)
+        adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, filledTopology.groupBy(_.linkId), None, geometryChanged, counter + 1)
     }
   }
 
@@ -442,7 +452,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def getByMunicpalityAndRoadLinks(municipality: Int): Seq[(SpeedLimit, RoadLink)] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipality)
     val speedLimits = withDynTransaction {
-      getByRoadLinks(roadLinks, changes, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad})._1
+      getByRoadLinks(roadLinks, changes, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad}, adjust = false)._1
     }
     speedLimits.map{ speedLimit => (speedLimit, roadLinks.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException))}
   }
