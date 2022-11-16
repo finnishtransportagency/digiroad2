@@ -77,7 +77,7 @@
     var redirectToLocation = function(result) {
       if (result.resultType.indexOf("Link-id")>-1){
         eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-        window.location.hash = "#linkProperty/" + coordinatesText.val();
+        window.location.hash = "#linkProperty/" + result.linkId;
       } else if (result.resultType.indexOf("SpeedLimit")>-1) {
         eventbus.once('layer:speedLimit:moved', function() {
           eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
