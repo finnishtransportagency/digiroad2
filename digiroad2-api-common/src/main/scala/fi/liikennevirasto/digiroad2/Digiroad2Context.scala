@@ -462,6 +462,10 @@ object Digiroad2Context {
     new LaneWorkListService()
   }
 
+  lazy val municipalityAssetMappingService: MunicipalityAssetMappingService = {
+    new MunicipalityAssetMappingService()
+  }
+
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkService, eventbus)
   }
