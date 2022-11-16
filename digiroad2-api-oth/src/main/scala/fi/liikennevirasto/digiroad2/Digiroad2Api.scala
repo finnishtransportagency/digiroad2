@@ -1146,7 +1146,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "startAddrMValue" -> lane.attributes.get("START_ADDR"),
           "endAddrMValue" ->  lane.attributes.get("END_ADDR"),
           "administrativeClass" -> lane.administrativeClass.value,
-          "linkType" -> lane.attributes.getOrElse("linkType", 99)
+          "linkType" -> lane.attributes.getOrElse("linkType", 99),
+          "constructionType" -> lane.attributes.getOrElse("constructionType", 99)
         )
       }
     }
@@ -1391,7 +1392,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "startAddrMValue" -> extractLongValue(link.attributes, "START_ADDR"),
             "endAddrMValue" ->  extractLongValue(link.attributes, "END_ADDR"),
             "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS"),
-            "municipalityCode" -> extractIntValue(link.attributes, "municipalityCode")
+            "municipalityCode" -> extractIntValue(link.attributes, "municipalityCode"),
+            "constructionType" -> extractIntValue(link.attributes, "constructionType")
           )
         }
       }
@@ -2346,7 +2348,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         mapLightLane(usedService.getByZoomLevel( Some(LinkGeomSource.NormalLinkInterface)))
       } else {
         validateBoundingBox(boundingRectangle)
-        val (assets, roadLinksWithoutLanes) = usedService.getByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
+        val (assets, roadLinksWithoutLanes) = usedService.getByBoundingBox(boundingRectangle)
         mapLanes(assets) ++ Seq(roadLinkToApiWithLaneInfo(roadLinksWithoutLanes))
       }
 
@@ -2359,7 +2361,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val viewOnlyLanes = laneService.getViewOnlyByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
+      val viewOnlyLanes = laneService.getViewOnlyByBoundingBox(boundingRectangle)
       viewOnlyLanes.map { lane =>
         Map (
           "linkId" -> lane.linkId,
@@ -2370,7 +2372,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "points" -> lane.geometry,
           "lanes" -> lane.lanes,
           "isViewOnly" -> true,
-          "linkType" -> lane.linkType
+          "linkType" -> lane.linkType,
+          "constructionType" -> lane.constructionType
         )
       }
     } getOrElse {

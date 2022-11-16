@@ -32,8 +32,9 @@
 
         var constructionTypeLegend = '<div class="panel-section panel-legend linear-asset-legend construction-type-legend">';
         var constructionTypes = [
-            {index: 1, text: 'Rakenteilla' }, //Under Construction
-            {index: 3, text: 'Suunnitteilla' } //Planned
+            {index: 1, text: 'Suunnitteilla' }, //Planned
+            {index: 2, text: 'Rakenteilla' }, //Under construction
+            {index: 4, text: 'Väliaikaisesti poissa käytöstä (haalennettu linkki)' } // Temporarily out of use
         ];
 
 
@@ -57,6 +58,8 @@
 
             return legend + constructionTypeLegend;
         };
+
+        this.constructionTypeLabeling = function () {};
 
         this.predicate = function () {
             return (!assetConfig.readOnly && assetConfig.authorizationPolicy.editModeAccess());

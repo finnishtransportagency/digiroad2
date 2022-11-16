@@ -104,6 +104,10 @@
       new StyleRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel').is(11).use({ stroke: {color: '#fff', lineCap: 'square', width: 2, lineDash: [1, 8] } })
     ];
 
+    var linkStatusRules = [
+      new StyleRule().where('constructionType').is(4).use({ stroke: { opacity: 0.3} })
+    ];
+
     this.getNewFeatureProperties = function(linearAssets){
       var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
         var hasAsset = me.hasValue(linearAsset);
@@ -132,6 +136,7 @@
     me.browsingStyleProvider.addRules(overlayStyleRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
     me.browsingStyleProvider.addRules(linkTypeSizeRules);
+    me.browsingStyleProvider.addRules(linkStatusRules);
 
     me.greenCareStyle = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.greenCareStyle.addRules(greenCareClassRules);
@@ -139,5 +144,6 @@
     me.greenCareStyle.addRules(greenCareClassImageSizeRules);
     me.greenCareStyle.addRules(featureTypeRules);
     me.greenCareStyle.addRules(linkTypeSizeRules);
+    me.greenCareStyle.addRules(linkStatusRules);
   };
 })(this);

@@ -254,7 +254,7 @@ Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen 
 
 -   Kohdeluokka ajopolku t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa ajopoluksi sek&auml; toiminnalliselta luokalta ett&auml; linkkityypilt&auml;
 -   Kohdeluokka ajotielle t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa toiminnallinen luokka muu yksityistie ja linkkityyppi yksiajoratainen tie
--   Kohdeluokka k&auml;vely- ja py&ouml;r&auml;tie t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa kevyen liikenteen v&auml;yl&auml;ksi sek&auml; toiminnalliselta luokalta ett&auml; linkkityypilt&auml;
+-   Kohdeluokka k&auml;vely- ja py&ouml;r&auml;tie t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa kävelyn ja pyöräilyn v&auml;yl&auml;ksi sek&auml; toiminnalliselta luokalta ett&auml; linkkityypilt&auml;
 
 Lis&auml;ksi kaikille uusille tielinkeille otetaan liikennevirran suunta -tieto Maanmittauslaitokselta VVH:n rajapinnasta. Jos Maanmittauslaitokselta tullutta tietoa liikennevirran suunnalle muokataan Digiroad-yll&auml;pitosovelluksessa, ei Maanmittauslaitoksen t&auml;st&auml; eri&auml;v&auml; tieto kumoa Digiroadissa olevaa tietoa (ns. override, tietokantaan tallennetaan MML:n tiedon korvaava tieto). N&auml;in varmistetaan, etteiv&auml;t yll&auml;pit&auml;jien tekem&auml;t muutokset kumoudu Maanmittauslaitoksen virheellisell&auml; tiedolla.
 

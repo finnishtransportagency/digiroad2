@@ -27,7 +27,7 @@
       {value: 5, text: 'Kiertoliittymä'},
       {value: 6, text: 'Ramppi'},
       {value: 7, text: 'Levähdysalue'},
-      {value: 8, text: 'Kevyen liikenteen väylä'},
+      {value: 8, text: 'Kävelyn ja pyöräilyn väylä'},
       {value: 9, text: 'Jalankulkualue'},
       {value: 10, text: 'Huolto- tai pelastustie'},
       {value: 11, text: 'Liitännäisliikennealue'},

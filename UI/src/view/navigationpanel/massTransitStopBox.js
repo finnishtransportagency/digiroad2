@@ -88,24 +88,28 @@
         '     <div class="symbol linear private-road"/>',
         '   </div>',
         '   <div class="legend-entry">',
-        '     <div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>',
+        '     <div class="label">Ei tiedossa tai kävelyn ja pyöräilyn väylä</div>',
         '     <div class="symbol linear unknown"/>',
         '   </div>',
         '  </div>'
       ].join('');
 
       var constructionTypePanel = [
-      '   <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+        '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+        '    <div class="legend-entry">',
+        '      <div class="label">Suunnitteilla</div>',
+        '      <div class="symbol linear construction-type-1"/>',
+        '    </div>',
         '    <div class="legend-entry">',
         '      <div class="label">Rakenteilla</div>',
-        '      <div class="symbol linear construction-type-1"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Suunnitteilla</div>',
-        '     <div class="symbol linear construction-type-3"/>',
-        '   </div>',
-        ' </div>'
-      ].join('');
+        '      <div class="symbol linear construction-type-2"/>',
+        '    </div>',
+        '    <div class="legend-entry">',
+        '      <div class="label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
+        '      <div class="symbol linear construction-type-4"/>',
+        '    </div>',
+        '  </div>'
+        ].join('');
 
       var massTransitStopPanel = '<div class="panel-section panel-legend limit-legend point-asset">';
       var pointAssetTypePanel = '<div class="panel-section panel-legend limit-legend point-asset service-points point-asset-legend">';

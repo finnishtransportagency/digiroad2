@@ -22,6 +22,7 @@
       exists: exists,
       isSelected: isSelected,
       getAdministrativeClass: getAdministrativeClass,
+      getConstructionType: getConstructionType,
       checkSelectedSign: checkSelectedSign,
       setPropertyByPublicId: setPropertyByPublicId,
       setPropertyByGroupedIdAndPublicId: setPropertyByGroupedIdAndPublicId,
@@ -162,6 +163,12 @@
       var administrativeClass = road ? road.getData().administrativeClass : null;
       return _.isNull(administrativeClass) || _.isUndefined(administrativeClass) ? undefined : administrativeClass;
 
+    }
+
+    function getConstructionType(linkId){
+      var road = roadCollection.getRoadLinkByLinkId(linkId);
+      var constructionType = road ? road.getData().constructionType : null;
+      return _.isNull(constructionType) || _.isUndefined(constructionType) ? undefined : constructionType;
     }
 
     function getMunicipalityCodeByLinkId(linkId){

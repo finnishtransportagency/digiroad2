@@ -93,6 +93,18 @@
     this.legendName = function () {};
     this.municipalityVerified = function () {};
 
+    this.constructionTypeLabeling = function() {
+
+      return [
+        '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+        '    <div class="legend-entry">',
+        '      <div class="label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
+        '      <div class="symbol linear construction-type-4"/>',
+        '    </div>',
+        '  </div>'
+      ].join('');
+    };
+
     this.predicate = function () {
       return authorizationPolicy.editModeAccess();
     };
@@ -102,6 +114,7 @@
         me.panel(),
         me.radioButton(),
         me.labeling(),
+        me.constructionTypeLabeling(),
         me.checkboxPanel(),
         me.walkingCyclingPanel(),
         me.bindExternalEventHandlers(),

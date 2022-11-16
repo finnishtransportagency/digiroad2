@@ -499,10 +499,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     speedLimit.copy(attributes = speedLimit.attributes ++ Map("municipalityCode" -> roadLink.municipalityCode))
   }
 
+  private def addConstructionTypeAttribute(speedLimit: SpeedLimit, roadLink: RoadLink): SpeedLimit = {
+    speedLimit.copy(attributes = speedLimit.attributes ++ Map("constructionType" -> roadLink.constructionType.value))
+  }
+
   private def enrichSpeedLimitAttributes(speedLimits: Seq[SpeedLimit], roadLinksForSpeedLimits: Map[String, RoadLink]): Seq[SpeedLimit] = {
     val speedLimitAttributeOperations: Seq[(SpeedLimit, RoadLink) => SpeedLimit] = Seq(
       addRoadAdministrationClassAttribute,
-      addMunicipalityCodeAttribute
+      addMunicipalityCodeAttribute,
+      addConstructionTypeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
