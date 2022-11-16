@@ -842,6 +842,10 @@
      return $.get("api/roadlinks/" + linkid);
     };
 
+    this.getRoadLinkByMmlIdToPromise = function(mmlId) {
+      return $.get('api/roadlinks/mml/' + mmlId);
+    };
+
     this.getStartLocationNameByCoordinates = function (startCoordinates) {
       return $.getJSON('api/userStartLocation?position=' + startCoordinates.lon + ',' + startCoordinates.lat);
     };
