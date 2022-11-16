@@ -43,6 +43,8 @@
     var searchById = function(input) {
       if (selectedLayer === 'massTransitStop') {
         return massTransitStopSearchByNationalId(input);
+      } else if (selectedLayer === 'linkProperty') {
+        return roadLinkSearchByMMLId(input);
       } else if (selectedLayer === 'speedLimit') {
         return speedLimitSearchById(input);
       } else {
@@ -81,19 +83,36 @@
      */
     var roadLinkSearchById= function(input) {
       return $.when(backend.getRoadLinkToPromise(input.text)).then(function(linkdata) {
-        var returnObject = [];
-        var resultType = selectedLayer === "linkProperty" ? "Link-id" : "Link-location";
-        if (_.get(linkdata, 'success')) {
-          var x = _.get(linkdata, 'middlePoint.x');
-          var y = _.get(linkdata, 'middlePoint.y');
-          var title = input.text + " (linkin ID)";
-          returnObject.push({title: title, lon: x, lat: y, resultType: resultType});
-        }
-
-        if (_.isEmpty(returnObject))
-          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-        return returnObject;
+        var title = input.text + " (linkin ID)";
+        return extractRoadLinkResult(linkdata, title);
       });
+    };
+
+    /**
+     * Link mml_id search
+     * @param input
+     * @returns {*}
+     */
+    var roadLinkSearchByMMLId= function(input) {
+      return $.when(backend.getRoadLinkByMmlIdToPromise(input.text)).then(function(linkdata) {
+        var title = input.text + " (linkin MML ID)";
+        return extractRoadLinkResult(linkdata, title);
+      });
+    };
+
+    var extractRoadLinkResult = function (linkdata, title) {
+      var returnObject = [];
+      var resultType = selectedLayer === "linkProperty" ? "Link-id" : "Link-location";
+      if (_.get(linkdata, 'success') || _.get(linkdata, 'id')) {
+        var linkId = _.get(linkdata, 'id');
+        var x = _.get(linkdata, 'middlePoint.x');
+        var y = _.get(linkdata, 'middlePoint.y');
+        returnObject.push({title: title, linkId: linkId, lon: x, lat: y, resultType: resultType});
+      }
+
+      if (_.isEmpty(returnObject))
+        return $.Deferred().reject('Haulla ei löytynyt tuloksia');
+      return returnObject;
     };
 
 
