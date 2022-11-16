@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.fillTopology
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -52,17 +53,32 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitsOnChangedLinks, changes, initChangeSet, speedLimitLinks)
 
     val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
+    handleChangesAndUnknowns(topology, speedLimits, Some(projectedChangeSet), oldRoadLinkIds, geometryChanged = true)
+  }
+
+  def handleChangesAndUnknowns(topology: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]],
+                               changeSet:Option[ChangeSet] = None, oldRoadLinkIds: Seq[String], geometryChanged: Boolean, counter: Int = 1): Seq[SpeedLimit] = {
+    val (filledTopology, adjustmentsChangeSet) = fillTopology(topology, speedLimits, changeSet, geometryChanged)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
-
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, Some(projectedChangeSet))
-
     val newSpeedLimitsWithValue = filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
-    // Expire all assets that are dropped or expired. No more floating speed limits.
-    updateChangeSet(changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ changeSet.droppedAssetIds, droppedAssetIds = Set()))
-    persistProjectedLimit(newSpeedLimitsWithValue)
-    purgeUnknown(changeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
     val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
-    persistUnknown(unknownLimits)
+
+    adjustmentsChangeSet.isEmpty match {
+      case true =>
+        persistProjectedLimit(newSpeedLimitsWithValue)
+        persistUnknown(unknownLimits)
+        filledTopology
+      case false if counter > 3 =>
+        updateChangeSet(adjustmentsChangeSet)
+        persistProjectedLimit(newSpeedLimitsWithValue)
+        purgeUnknown(adjustmentsChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
+        persistUnknown(unknownLimits)
+        filledTopology
+      case false if counter <= 3 =>
+        updateChangeSet(adjustmentsChangeSet)
+        purgeUnknown(adjustmentsChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
+        handleChangesAndUnknowns(topology, filledTopology.groupBy(_.linkId), None ,oldRoadLinkIds, geometryChanged, counter + 1)
+    }
   }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {

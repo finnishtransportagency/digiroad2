@@ -34,9 +34,7 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
         combinedAssets, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
       val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-      val (filledTopology, changeSet) = assetFiller.fillTopology(roads, groupedAssets, typeId, Some(changedSet))
-
-      updateChangeSet(changeSet)
+      service.adjustLinearAssets(roads, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
       logger.info(s"Updated maintenance roads in municipality $municipality.")
     } catch {

@@ -38,9 +38,7 @@ class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater
         logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
       }
       val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-      val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
-      updateChangeSet(changeSet)
-
+      service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
 
       logger.info(s"Updated asset $typeId in municipality $municipality.")
