@@ -22,7 +22,6 @@
     var manoeuvreSignsCheckBox = [
       '<div class="check-box-container">' +
       '<input id="manoeuvreSignsCheckBox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
-      '</div>' +
       '</div>'
     ].join('');
 
