@@ -41,7 +41,6 @@
       var speedLimitSignsCheckBox = [
         '<div class="check-box-container">' +
         '<input id="trafficSignsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
-        '</div>' +
         '</div>'
       ].join('');
 
