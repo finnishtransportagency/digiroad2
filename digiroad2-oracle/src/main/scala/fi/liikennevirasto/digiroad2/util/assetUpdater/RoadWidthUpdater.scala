@@ -40,10 +40,9 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         newRoadWidthAssets
 
       val groupedAssets = (existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
-      val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
-
-      updateChangeSet(changeSet)
+      service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
+
       logger.info(s"Updated road widths in municipality $municipality.")
     } catch {
       case e => logger.error(s"Updating road widths in municipality $municipality failed due to ${e.getMessage}.")

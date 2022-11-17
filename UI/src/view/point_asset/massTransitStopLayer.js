@@ -248,6 +248,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup) {
     var uiAsset = backendAsset;
+    uiAsset.constructionType = getConstructionType(uiAsset.linkId);
     var lon = centroidLonLat.lon;
     var lat = centroidLonLat.lat;
     if (isSelected(uiAsset)) {
@@ -263,6 +264,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     };
     return uiAsset;
   };
+
+  function getConstructionType(linkId){
+    var road = roadCollection.getRoadLinkByLinkId(linkId);
+    var constructionType = road ? road.getData().constructionType : null;
+    return _.isNull(constructionType) || _.isUndefined(constructionType) ? undefined : constructionType;
+  }
 
   var renderAssets = function(assetDatas) {
     assetLayer.setVisible(true);

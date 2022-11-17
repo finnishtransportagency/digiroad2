@@ -42,9 +42,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("area" -> area))
   }
 
+  private def addConstructionTypeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("constructionType" -> roadLink.constructionType.value))
+  }
+
   private def enrichMaintenanceRoadAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val maintenanceRoadAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
-      addPolygonAreaAttribute
+      addPolygonAreaAttribute,
+      addConstructionTypeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
@@ -112,7 +117,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLinearAsset] = {
 
     // Filter high functional classes from maintenance roads
     val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)
@@ -123,13 +128,17 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, linkIds).filterNot(_.expired)
       }
 
-    val groupedAssets = existingAssets.groupBy(_.linkId)
-    val adjustedAssets = withDynTransaction {
-      LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
-        adjustLinearAssets(roadLinks, groupedAssets, typeId)
+    if(adjust) {
+      val groupedAssets = existingAssets.groupBy(_.linkId)
+      val adjustedAssets = withDynTransaction {
+        LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
+          val filledTopology = adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
+          assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+        }
       }
+      adjustedAssets
     }
-    adjustedAssets
+    else assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
   }
 
   def getPotencialServiceAssets: Seq[PersistedLinearAsset] = {

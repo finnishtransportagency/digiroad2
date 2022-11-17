@@ -322,7 +322,8 @@ class RoadLinkDAO {
           from kgv_roadlink
           where #$filter and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
-                                                  ${ConstructionType.Planned.value})
+                                                  ${ConstructionType.Planned.value},
+                                                  ${ConstructionType.TemporarilyOutOfUse.value})
           """.as[RoadLinkFetched].list
    }
   }

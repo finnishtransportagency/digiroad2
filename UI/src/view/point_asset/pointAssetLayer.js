@@ -144,8 +144,10 @@
       var rotation = determineRotation(asset);
       var bearing = determineBearing(asset);
       var administrativeClass = obtainAdministrativeClass(asset);
+      var constructionType = obtainConstructionType(asset);
       var feature =  new ol.Feature({geometry : new ol.geom.Point([asset.lon, asset.lat])});
-      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing, administrativeClass: administrativeClass}, feature.getProperties());
+      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing, administrativeClass: administrativeClass,
+        constructionType: constructionType}, feature.getProperties());
       feature.setProperties(obj);
       return feature;
     };
@@ -243,8 +245,12 @@
           var features = (!allowGrouping) ? _.map(assets, me.createFeature) : getGroupedFeatures(assets);
           selectControl.clear();
           me.vectorLayer.getSource().addFeatures(features);
+          var assetsWithConstructionType = _.map(assets, function(asset) {
+            asset.constructionType = obtainConstructionType(asset);
+            return asset;
+          });
           if(assetLabel)
-            me.vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
+            me.vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assetsWithConstructionType, zoomlevels.getViewZoom(map)));
           applySelection();
         }
 
@@ -276,6 +282,10 @@
 
     function obtainAdministrativeClass(asset){
       return selectedAsset.getAdministrativeClass(asset.linkId);
+    }
+
+    function obtainConstructionType(asset) {
+      return selectedAsset.getConstructionType(asset.linkId);
     }
 
     this.removeLayerFeatures = function() {
@@ -372,7 +382,8 @@
 
     function handleChanged() {
       var asset = selectedAsset.get();
-      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset), administrativeClass: obtainAdministrativeClass(asset)});
+      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset),
+        administrativeClass: obtainAdministrativeClass(asset), constructionType: obtainConstructionType(asset)});
       _.find(me.vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
       var featureRedraw = _.find(me.vectorLayer.getSource().getFeatures(), function(feature) {
           return feature.getProperties().id === newAsset.id;
@@ -390,8 +401,10 @@
         var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         var administrativeClass = obtainAdministrativeClass(nearestLine);
+        var constructionType = obtainConstructionType(nearestLine);
 
-        var asset = me.createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
+        var asset = me.createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing,
+            administrativeClass, constructionType);
 
         me.vectorLayer.getSource().addFeature(me.createFeature(asset));
         selectedAsset.place(asset);

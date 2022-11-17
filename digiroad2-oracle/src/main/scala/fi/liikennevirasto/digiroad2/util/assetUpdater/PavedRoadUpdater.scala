@@ -36,9 +36,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
       val newAssets = newAndUpdatedPavedRoadAssets.filterNot(a => projectedAssets.exists(f => f.linkId == a.linkId)) ++ projectedAssets
 
       val groupedAssets = (existingAssets.filterNot(a => expiredIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-      val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
-
-      updateChangeSet(changeSet)
+      service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
       logger.info(s"Updated paved roads in municipality $municipality.")
     } catch {

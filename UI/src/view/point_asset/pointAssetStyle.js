@@ -14,7 +14,8 @@
       return [
           new StyleRule().where('propertyData').is(1).use({ icon: {  src: 'images/point-assets/point_blue.svg'} } ),
           new StyleRule().where('propertyData').is(2).use({ icon: { src: 'images/point-assets/point_green.svg'} } ),
-          new StyleRule().where('floating').is(true).use({ icon: {  src: 'images/point-assets/point_red.svg'} } )
+          new StyleRule().where('floating').is(true).use({ icon: {  src: 'images/point-assets/point_red.svg'} } ),
+          new StyleRule().where('constructionType').is(4).use({ icon: { opacity: 0.3}})
       ];
   };
 
@@ -31,7 +32,8 @@
                   scale : 0.75,
                   rotateWithView: true,
                   src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning-directional-traffic-sign.svg'
-              }})
+              }}),
+          new StyleRule().where('constructionType').is(4).use({ icon: { opacity: 0.3}})
       ];
   };
 
@@ -41,7 +43,8 @@
           new StyleRule().where('floating').is(true).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg'} } ),
           new StyleRule().where('validityDirection').is(1).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction.svg'} } ),
           new StyleRule().where('validityDirection').is(1).and('floating').is(true).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'} } ),
-          new StyleRule().where('bearing').isUndefined().use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'} } )
+          new StyleRule().where('bearing').isUndefined().use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'} } ),
+          new StyleRule().where('constructionType').is(4).use({ icon: { opacity: 0.3}})
       ];
   };
 
@@ -78,7 +81,8 @@
           new StyleRule().where(isOld).is(false).and(haveSameDirection).is(true).and('floating').is(false).and(hasMultiple).is(false).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg'}}),
           new StyleRule().where(isOld).is(false).and(haveSameDirection).is(true).and('floating').is(false).and(hasMultiple).is(true).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-for-multiple.svg'}}),
           new StyleRule().where(isOld).is(false).and(haveSameDirection).is(false).and('floating').is(true).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'}}),
-          new StyleRule().where(isOld).is(false).and(haveSameDirection).is(false).and('floating').is(false).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/no-direction-for-multiple.svg'}})
+          new StyleRule().where(isOld).is(false).and(haveSameDirection).is(false).and('floating').is(false).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/no-direction-for-multiple.svg'}}),
+          new StyleRule().where('constructionType').is(4).use({ icon: { opacity: 0.3}})
       ];
   };
 
@@ -93,7 +97,8 @@
               icon: {
                   src: 'images/point-assets/point_red.svg'
               }
-          })
+          }),
+          new StyleRule().where('constructionType').is(4).use({ icon: { opacity: 0.3}})
       ];
   };
 

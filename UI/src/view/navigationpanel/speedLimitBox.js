@@ -23,7 +23,7 @@
           '<div class="label">' + speedLimit + '</div>' +
           '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
           '</div>';
-      }).join('');
+      }).join('') + '</div>';
     };
 
     this.checkboxPanel = function () {
@@ -41,7 +41,6 @@
       var speedLimitSignsCheckBox = [
         '<div class="check-box-container">' +
         '<input id="trafficSignsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
-        '</div>' +
         '</div>'
       ].join('');
 
