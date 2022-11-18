@@ -5,6 +5,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.client.viite.ViiteClientException
+import org.slf4j.{Logger, LoggerFactory}
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -107,6 +109,8 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
     new VKMClient()
   }
 
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
     def againstDigitizing(addr: RoadAddressForLink) = {
@@ -123,9 +127,16 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
       RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
     }
 
-    val roadAddress = roadAddressService.getByLrmPosition(linkId, mValue)
+    val roadAddress =
+      try {
+        roadAddressService.getByLrmPosition(linkId, mValue)
+      } catch {
+        case vce: ViiteClientException =>
+          logger.error(s"Viite error with message ${vce.getMessage}")
+          None
+      }
 
-    //If there is no roadAddress in VIITE try to find it in VKM
+    //If there is no roadAddress in VIITE or VIITE query fails try to find it in VKM
     if(roadAddress.isEmpty && road.isDefined)
       return vkmClient.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
 
