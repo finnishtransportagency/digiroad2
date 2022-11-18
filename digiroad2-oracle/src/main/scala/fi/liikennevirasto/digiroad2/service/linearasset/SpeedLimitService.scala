@@ -243,17 +243,17 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]],
-                                           changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[SpeedLimit] = {
-    val (filledTopology, adjustmentsChangeSet) = fillTopology(roadLinksFiltered, speedLimits, changeSet, geometryChanged)
-    val generatedFilteredFromChangeSet = adjustmentsChangeSet.filterGeneratedAssets
+                        changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[SpeedLimit] = {
+    val (filledTopology, changedSet) = fillTopology(roadLinksFiltered, speedLimits, changeSet, geometryChanged)
+    val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
 
-    generatedFilteredFromChangeSet.isEmpty match {
+    cleanedChangeSet.isEmpty match {
       case true => filledTopology
       case false if counter > 3 =>
-        speedLimitUpdater.updateChangeSet(generatedFilteredFromChangeSet)
+        speedLimitUpdater.updateChangeSet(cleanedChangeSet)
         filledTopology
       case false if counter <= 3 =>
-        speedLimitUpdater.updateChangeSet(generatedFilteredFromChangeSet)
+        speedLimitUpdater.updateChangeSet(cleanedChangeSet)
         adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, filledTopology.groupBy(_.linkId), None, geometryChanged, counter + 1)
     }
   }
