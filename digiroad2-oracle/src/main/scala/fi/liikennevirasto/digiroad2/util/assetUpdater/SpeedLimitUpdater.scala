@@ -31,6 +31,15 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
 
+  //TODO Remove after bug in combine and fuse operations is fixed
+  def cleanRedundantMValueAdjustments(changeSet: ChangeSet, originalAssets: Seq[SpeedLimit]): ChangeSet = {
+    val redundantFiltered = changeSet.adjustedMValues.filterNot(adjustment => {
+      val originalAsset = originalAssets.find(_.id == adjustment.assetId).get
+      originalAsset.startMeasure == adjustment.startMeasure && originalAsset.endMeasure == adjustment.endMeasure
+    })
+    changeSet.copy(adjustedMValues = redundantFiltered)
+  }
+
   def updateByRoadLinks(municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
     val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
@@ -58,25 +67,26 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
   def handleChangesAndUnknowns(topology: Seq[RoadLink], speedLimits: Map[String, Seq[SpeedLimit]],
                                changeSet:Option[ChangeSet] = None, oldRoadLinkIds: Seq[String], geometryChanged: Boolean, counter: Int = 1): Seq[SpeedLimit] = {
-    val (filledTopology, adjustmentsChangeSet) = fillTopology(topology, speedLimits, changeSet, geometryChanged)
+    val (filledTopology, changedSet) = fillTopology(topology, speedLimits, changeSet, geometryChanged)
+    val cleanedChangeSet = cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
     val newSpeedLimitsWithValue = filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
     val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
 
-    adjustmentsChangeSet.isEmpty match {
+    cleanedChangeSet.isEmpty match {
       case true =>
         persistProjectedLimit(newSpeedLimitsWithValue)
         persistUnknown(unknownLimits)
         filledTopology
       case false if counter > 3 =>
-        updateChangeSet(adjustmentsChangeSet)
+        updateChangeSet(cleanedChangeSet)
         persistProjectedLimit(newSpeedLimitsWithValue)
-        purgeUnknown(adjustmentsChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
+        purgeUnknown(cleanedChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
         persistUnknown(unknownLimits)
         filledTopology
       case false if counter <= 3 =>
-        updateChangeSet(adjustmentsChangeSet)
-        purgeUnknown(adjustmentsChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
+        updateChangeSet(cleanedChangeSet)
+        purgeUnknown(cleanedChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
         handleChangesAndUnknowns(topology, filledTopology.groupBy(_.linkId), None ,oldRoadLinkIds, geometryChanged, counter + 1)
     }
   }
