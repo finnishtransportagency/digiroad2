@@ -70,7 +70,7 @@ object TrafficSignType {
     CompulsoryTrackMotorSledges, CompulsoryTrackRidersHorseback, FreeWidth, FreeHeight, HeightElectricLine, SignAppliesBothDirections, SignAppliesBothDirectionsVertical, SignAppliesArrowDirections,
     RegulationBeginsFromSign, RegulationEndsToTheSign, HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, ValidMultiplePeriod, TimeLimit, DistanceCompulsoryStop, DirectionOfPriorityRoad,
     CrossingLogTransportRoad, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee, ObligatoryUseOfParkingDisc, AdditionalPanelWithText,
-    DrivingInServicePurposesAllowed, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, Parking, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
+    DrivingInServicePurposesAllowed, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, Parking, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, AccessibleRoute,
     LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies,
     AdvanceDirectionSign, AdvanceDirectionSignSmall, AdvisorySignDetour, AdvisorySignDetourLarge, Detour, RouteToBeFollowed, InformationOnTrafficLanes, BiDirectionalInformationOnTrafficLanes,
     EndOfLane, AdvanceDirectionSignAbove, ExitSignAbove, DirectionSign, ExitSign, DirectionSignOnPrivateRoad, LocationSign, DirectionSignForDetourWithText, DirectionSignForDetour,
@@ -2128,7 +2128,7 @@ case object ItineraryForPedestrians extends InformationSignsType {
   override val NewLawCode = "F52"
 }
 
-case object ItineraryForHandicapped extends InformationSignsType {
+case object AccessibleRoute extends InformationSignsType {
   override val OTHvalue = 119
   override val TRvalue = 653 // UUSIASNR Value in TR
   override val OldLawCode: Option[Int] = Some(683)
