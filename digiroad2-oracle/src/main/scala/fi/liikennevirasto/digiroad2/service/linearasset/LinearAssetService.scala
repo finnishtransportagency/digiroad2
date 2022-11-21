@@ -259,7 +259,8 @@ trait LinearAssetOperations {
         filledTopology
       case false if counter <= 3 =>
         assetUpdater.updateChangeSet(adjustmentsChangeSet)
-        adjustLinearAssets(roadLinks, filledTopology.groupBy(_.linkId), typeId, None, geometryChanged, counter + 1)
+        val linearAssetsToAdjust = filledTopology.filterNot(_.id <= 0).groupBy(_.linkId)
+        adjustLinearAssets(roadLinks, linearAssetsToAdjust, typeId, None, geometryChanged, counter + 1)
     }
   }
 

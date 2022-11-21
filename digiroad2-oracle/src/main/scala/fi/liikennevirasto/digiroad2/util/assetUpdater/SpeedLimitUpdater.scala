@@ -87,7 +87,8 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       case false if counter <= 3 =>
         updateChangeSet(cleanedChangeSet)
         purgeUnknown(cleanedChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
-        handleChangesAndUnknowns(topology, filledTopology.groupBy(_.linkId), None ,oldRoadLinkIds, geometryChanged, counter + 1)
+        val speedLimitsToAdjust = filledTopology.filterNot(_.id <= 0).groupBy(_.linkId)
+        handleChangesAndUnknowns(topology, speedLimitsToAdjust, None ,oldRoadLinkIds, geometryChanged, counter + 1)
     }
   }
 
