@@ -204,9 +204,11 @@
         '<div class="form-element">' +
         '<label class="control-label">Palaute</label>' +
         '<div contenteditable="true" id="freeTextData" class="form-control feedback-message-asset"></div>'+
-          '<label class="control-label">Merkkien määrä:</label>' +
-          '<label id="feedback-message-count" class="feedback-message-count"></label>' +
         '</div>' +
+          '<div class="form-element">' +
+          '<label class="control-label">Merkkien määrä:</label>' +
+          '<span id="feedback-message-count" class="feedback-message-count"></span>' +
+          '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">K-tunnus</label>' +
         '<span id="kidentifier">'+me.authorizationPolicy.username+'</span>'+
