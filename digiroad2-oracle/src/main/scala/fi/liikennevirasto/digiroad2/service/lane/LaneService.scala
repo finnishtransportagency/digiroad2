@@ -107,6 +107,12 @@ trait LaneOperations {
     getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks)
   }
 
+ def getLanesByMunicipality(municipality: Int, newTransaction: Boolean = true): Seq[PersistedLane] = {
+   if(newTransaction) withDynTransaction {
+     dao.fetchLanesByMunicipality(municipality)
+   }
+   else dao.fetchLanesByMunicipality(municipality)
+ }
 
   /**
     * Use lanes measures to create segments with lanes with same link id and side code
