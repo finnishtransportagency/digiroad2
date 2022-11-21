@@ -120,6 +120,8 @@
       return roadTypePanel.concat(constructionTypePanel).concat(massTransitStopPanel).concat(pointAssetTypePanel);
     };
 
+    this.constructionTypeLabeling = function () {};
+
     this.checkboxPanel = function () {
       return [
         '  <div class="panel-section roadLink-complementary-checkbox">',
