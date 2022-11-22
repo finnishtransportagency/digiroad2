@@ -97,17 +97,17 @@
         applicationModel.setApplicationkState('normal');
         var formElements = $(this).closest('.modal-dialog').find('.form-horizontal');
         var values = formElements.serializeArray();
+        var text = $(".feedback-message-asset").serializeArray();
         values.push(
           {name: 'linkId',    value:  selectedData.linkId},
           {name: 'assetId',   value : selectedData.assetId },
           {name: 'assetName', value : selectedData.title},
           {name: 'typeId',    value : selectedData.typeId},
-          {name: 'freeText',  value: $('#freeTextData').html()});
+          {name: 'freeText',  value : text[0].value});
         
-        var text = $('.feedback-message-asset')[0].innerText;
         if (formElements.valid()) {
           addSpinner();
-          if (text.length<=MAX_CHARACTER_LENGTH){
+          if (text[0].value.length<=MAX_CHARACTER_LENGTH){
             me.collection.sendFeedbackData(values);
           }else{
             eventbus.trigger("feedback:tooBigDataTool");
@@ -116,8 +116,9 @@
       });
 
       $(".feedback-message-asset").on("change keyup paste",function() {
-        var message = $('.feedback-message-asset')[0].innerText;
-        $(".feedback-message-count").text(message.length+"/"+MAX_CHARACTER_LENGTH);
+        //var message = $('.feedback-message-asset')[0].innerText;
+        var message = $(".feedback-message-asset").serializeArray();
+        $(".feedback-message-count").text(message[0].value.length+"/"+MAX_CHARACTER_LENGTH);
       });
       
       $('#phoneNumber').keyup(function() {
@@ -203,7 +204,7 @@
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">Palaute</label>' +
-        '<div contenteditable="true" id="freeTextData" class="form-control feedback-message-asset"></div>'+
+          '<textarea maxlength='+ MAX_CHARACTER_LENGTH + ' name="freeText" id="freeTextData" class="form-control feedback-message-asset"></textarea>'+
         '</div>' +
           '<div class="form-element">' +
           '<label class="control-label">Merkkien määrä:</label>' +
