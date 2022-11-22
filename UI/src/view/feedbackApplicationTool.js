@@ -26,7 +26,7 @@
            saveCallback: function () {
                addSpinner();
                var message = $(".feedback-message").serializeArray();
-               if (message[0].value.length <= 3747) {
+               if (message[0].value.length <= MAX_CHARACTER_LENGTH) {
                    collection.sendFeedbackApplication(message);
                } else {
                    eventbus.trigger("feedback:tooBig");
@@ -84,7 +84,6 @@
            });
 
            $(".feedback-message").on("change keyup paste",function() {
-               console.log("launhed2");
                var message = $(".feedback-message").serializeArray();
                $(".feedback-message-count").text(message[0].value.length+"/"+MAX_CHARACTER_LENGTH);
            });
@@ -117,7 +116,7 @@
                             '<input type="text" name="headline" class="form-control">' +
 
                             '<label class="control-label">Palaute</label>' +
-                            '<textarea maxlength='+ MAX_CHARACTER_LENGTH +'name="freeText" id="freetext" class="form-control feedback-message"></textarea>'+
+                            '<textarea maxlength='+ MAX_CHARACTER_LENGTH + ' name="freeText" id="freetext" class="form-control feedback-message"></textarea>'+
                             '<label class="control-label">Merkkien määrä:</label>' +
                             '<label id="feedback-message-count" class="feedback-message-count"></label>' +
            
