@@ -116,7 +116,6 @@
       });
 
       $(".feedback-message-asset").on("change keyup paste",function() {
-        //var message = $('.feedback-message-asset')[0].innerText;
         var message = $(".feedback-message-asset").serializeArray();
         $(".feedback-message-count").text(message[0].value.length+"/"+MAX_CHARACTER_LENGTH);
       });
