@@ -5,7 +5,7 @@
     me.layerName = layerName;
     me.authorizationPolicy = authorizationPolicy;
     me.eventCategory = eventCategory;
-    var MAX_CHARACTER_LENGTH = 3747;
+    var MAX_CHARACTER_LENGTH = 3000;
     function events() {
       return _.map(arguments, function(argument) { return me.eventCategory + ':' + argument; }).join(' ');
     }
@@ -80,9 +80,9 @@
 
       eventbus.on(me.layerName + ':selected ' + me.layerName + ':cancelled' ,me.initFeedback);
 
-      eventbus.on("feedback:tooBig",function() {
+      eventbus.on("feedback:tooBigDataTool",function() {
         removeSpinner();
-        new GenericConfirmPopup("Palaute oli liian pitkä. Maksimi merkki määrä on 3747", {type: 'alert'});
+        new GenericConfirmPopup("Palaute oli liian pitkä. Maksimi merkki määrä on "+MAX_CHARACTER_LENGTH, {type: 'alert'});
       });
     };
 
@@ -103,14 +103,14 @@
           {name: 'assetName', value : selectedData.title},
           {name: 'typeId',    value : selectedData.typeId},
           {name: 'freeText',  value: $('#freeTextData').html()});
-
+        
         var text = $('.feedback-message-asset')[0].innerText;
         if (formElements.valid()) {
           addSpinner();
           if (text.length<=MAX_CHARACTER_LENGTH){
             me.collection.sendFeedbackData(values);
           }else{
-            eventbus.trigger("feedback:tooBig");
+            eventbus.trigger("feedback:tooBigDataTool");
           }
         }
       });
