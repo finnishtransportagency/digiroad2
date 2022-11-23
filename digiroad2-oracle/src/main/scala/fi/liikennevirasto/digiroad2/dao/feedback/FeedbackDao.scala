@@ -59,7 +59,7 @@ class FeedbackDao {
                 ${body},${status}, current_timestamp)""".execute
       id
     }else {
-      throw FeedBackError(s"Messages was too big")
+      throw FeedBackError(s"Message was too big")
     }
    
   }
