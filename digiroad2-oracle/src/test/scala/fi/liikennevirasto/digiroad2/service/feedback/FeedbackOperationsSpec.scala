@@ -110,7 +110,7 @@ class FeedbackOperationsSpec extends FunSuite with Matchers {
 
       val error = intercept[FeedBackError](service.insertFeedback("feedback_createdBy", feedbackbody))
 
-      error.msg should be("Messages was too big")
+      error.msg should be("Message was too big")
     }
   }
 
