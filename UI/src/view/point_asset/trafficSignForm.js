@@ -152,7 +152,7 @@
         var panels = cont.children().size();
 
         cont.find('.remove-panel').toggle(panels !== 1);
-        cont.find('.add-panel').prop("disabled", panels === 3);
+        cont.find('.add-panel').prop("disabled", panels === 5);
       }
 
       rootElement.find('button#change-validity-direction').on('click', function() {

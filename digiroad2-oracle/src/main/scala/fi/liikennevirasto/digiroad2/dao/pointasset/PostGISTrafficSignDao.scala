@@ -432,7 +432,7 @@ object PostGISTrafficSignDao {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
       case AdditionalPanelType =>
-        if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
+        if (propertyValues.size > 5) throw new IllegalArgumentException("A maximum of 5 " + propertyPublicId + " allowed per traffic sign.")
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
           val additionalPanel = value.asInstanceOf[AdditionalPanel]
