@@ -701,6 +701,9 @@ trait LaneOperations {
                   lane.startMeasure, lane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
                 moveToHistory(lane.id, None, false, false, username)
                 newLaneID = dao.updateEntryLane(persistedLaneToUpdate, username)
+                if(checkForExpireByEndDate(persistedLaneToUpdate)) {
+                  expireByEndDate(persistedLaneToUpdate, username)
+                }
               }
               newLaneID
             } else if (linkIds.size == 1 &&
@@ -719,7 +722,10 @@ trait LaneOperations {
 
               moveToHistory(oldLane.id, None, false, false, username)
               dao.updateEntryLane(persistedLaneToUpdate, username)
-
+              if(checkForExpireByEndDate(persistedLaneToUpdate)) {
+                expireByEndDate(persistedLaneToUpdate, username)
+              }
+              persistedLaneToUpdate.id
             } else {
               oldLane.id
             }
@@ -738,6 +744,11 @@ trait LaneOperations {
 
               moveToHistory(laneRelatedByLaneCode.id, None, false, false, username)
               dao.updateEntryLane(persistedLaneToUpdate, username)
+
+              if(checkForExpireByEndDate(persistedLaneToUpdate)) {
+                expireByEndDate(persistedLaneToUpdate, username)
+              }
+              persistedLaneToUpdate.id
             } else {
               laneRelatedByLaneCode.id
             }
@@ -785,6 +796,34 @@ trait LaneOperations {
     (maxMeasure - minMeasure) > minDistanceAllow
   }
 
+  def checkForExpireByEndDate(laneToCheck: PersistedLane): Boolean = {
+    val dateTimeNow = DateTime.now()
+    val endDatePropertyOption = laneToCheck.attributes.find(_.publicId == "end_date")
+    endDatePropertyOption match {
+      case Some(endDateProperty) if endDateProperty.values.nonEmpty =>
+        val endDate = endDateProperty.values.head.value.toString
+        val endDateTime = DateParser.stringToDate(endDate, DateParser.DatePropertyFormat)
+        endDateTime.isBefore(dateTimeNow) && !LaneNumber.isMainLane(laneToCheck.laneCode)
+      case _ => false
+    }
+  }
+
+  def expireByEndDate(laneToExpire: PersistedLane, username: String): Unit = {
+    if(LaneNumber.isMainLane(laneToExpire.laneCode)) throw new IllegalArgumentException("Main lane expire by end date not allowed")
+    val allLanesOnRoadLink = fetchAllLanesByLinkIds(Seq(laneToExpire.linkId), newTransaction = false)
+    val outerLanesOnSameSide = allLanesOnRoadLink.filter(lane => lane.linkId == laneToExpire.linkId &&
+      lane.sideCode == laneToExpire.sideCode && lane.laneCode > laneToExpire.laneCode)
+
+    moveToHistory(laneToExpire.id, None, expireHistoryLane = true, deleteFromLanes = true, username)
+    if (outerLanesOnSameSide.nonEmpty) {
+      outerLanesOnSameSide.foreach(outerLane => {
+        val newLaneCode = outerLane.laneCode - 2
+        moveToHistory(outerLane.id, None, expireHistoryLane = false, deleteFromLanes = false, username)
+        dao.updateLane(outerLane.copy(laneCode = newLaneCode), username)
+      })
+    }
+  }
+
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
@@ -807,7 +846,11 @@ trait LaneOperations {
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
                                       expired = false, timeStamp, None, newLane.properties)
 
-          createWithoutTransaction(laneToInsert, username)
+          val createdLaneId = createWithoutTransaction(laneToInsert, username)
+          if(checkForExpireByEndDate(laneToInsert)) {
+            expireByEndDate(laneToInsert.copy(id = createdLaneId), username)
+          }
+          createdLaneId
         }
 
       } else {
@@ -848,9 +891,11 @@ trait LaneOperations {
                 }
             }
 
-
-
-            createWithoutTransaction(laneToInsert, username)
+            val createdLaneId = createWithoutTransaction(laneToInsert, username)
+            if(checkForExpireByEndDate(laneToInsert)) {
+              expireByEndDate(laneToInsert.copy(id = createdLaneId), username)
+            }
+            createdLaneId
           }
         }
 
