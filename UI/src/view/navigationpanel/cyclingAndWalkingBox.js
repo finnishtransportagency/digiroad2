@@ -43,7 +43,7 @@
             var constructionTypeLegendEntries = _.map(enumerations.constructionTypes, function(constructionType) {
                 return !constructionType.visibleInLegend ? '' :
                   '<div class="legend-entry">' +
-                    '<div class="label">' + constructionType.text + '</div>' +
+                    '<div class="label">' + constructionType.legendText + '</div>' +
                     '<div class="symbol linear construction-type-' + constructionType.value + '" />' +
                     '</div>';
             }).join('')+ '</div>';
