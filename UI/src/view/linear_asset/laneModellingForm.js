@@ -376,7 +376,7 @@
       return preview();
     };
 
-    function checkForExpiringInnerLanes(selectedAsset, nextLaneNumber){
+    function innerLanesHaveEndDates(selectedAsset, nextLaneNumber){
       var selection = selectedAsset.selection;
       var allSelectedLanes = _.flatMap(selection, function(selectedLane) {
         if(selectedLane.id === 0) return selectedLane;
@@ -432,7 +432,7 @@
         }else{
           nextLaneNumber = parseInt(_.max(even)) + 2;
         }
-        if(checkForExpiringInnerLanes(selectedAsset, nextLaneNumber)) {
+        if(innerLanesHaveEndDates(selectedAsset, nextLaneNumber)) {
           GenericConfirmPopup(endDatePresentAlertMessage, endDatePresentAlertPopUpOptions);
         }
         selectedAsset.setNewLane(nextLaneNumber);
@@ -444,7 +444,7 @@
 
       var addRightLane = $('<li>').append($('<button class="btn btn-secondary add-to-right">Lisää kaista oikealle puolelle</button>').click(function() {
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
-        if(checkForExpiringInnerLanes(selectedAsset, nextLaneNumber)) {
+        if(innerLanesHaveEndDates(selectedAsset, nextLaneNumber)) {
           GenericConfirmPopup(endDatePresentAlertMessage, endDatePresentAlertPopUpOptions);
         }
         selectedAsset.setNewLane(nextLaneNumber);
