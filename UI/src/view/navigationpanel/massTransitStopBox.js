@@ -3,6 +3,7 @@
     ActionPanelBox.call(this);
     var me = this;
     var authorizationPolicy = new MassTransitStopAuthorizationPolicy();
+    var enumerations = new Enumerations();
 
     this.header = function () {
       return 'Joukkoliikenteen pysäkki';
@@ -73,43 +74,27 @@
     this.layerName = 'massTransitStop';
 
     this.labeling = function () {
-      var roadTypePanel =  [
-        '  <div class="panel-section panel-legend road-link-legend">',
-        '   <div class="legend-entry">',
-        '      <div class="label">Valtion omistama</div>',
-        '      <div class="symbol linear road"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Kunnan omistama</div>',
-        '     <div class="symbol linear street"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Yksityisen omistama</div>',
-        '     <div class="symbol linear private-road"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Ei tiedossa tai kävelyn ja pyöräilyn väylä</div>',
-        '     <div class="symbol linear unknown"/>',
-        '   </div>',
-        '  </div>'
-      ].join('');
+      var administrativeClassLegend =  [
+        '  <div class="panel-section panel-legend road-link-legend">'];
+      var administrativeClassLegendEntries = _.map(enumerations.administrativeClasses, function(administrativeClass) {
+        return '<div class="legend-entry">' +
+          '<div class="label">'+ administrativeClass.text +'</div>' +
+          '<div class="symbol linear administrative-class-' + administrativeClass.value + '" />' +
+          '</div>';
+      });
 
-      var constructionTypePanel = [
-        '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
-        '    <div class="legend-entry">',
-        '      <div class="label">Suunnitteilla</div>',
-        '      <div class="symbol linear construction-type-1"/>',
-        '    </div>',
-        '    <div class="legend-entry">',
-        '      <div class="label">Rakenteilla</div>',
-        '      <div class="symbol linear construction-type-2"/>',
-        '    </div>',
-        '    <div class="legend-entry">',
-        '      <div class="label">Väliaikaisesti poissa käytöstä (haalennettu linkki)</div>',
-        '      <div class="symbol linear construction-type-4"/>',
-        '    </div>',
-        '  </div>'
-        ].join('');
+      var admistrativeClassPanel = administrativeClassLegend.concat(administrativeClassLegendEntries).join('') + '</div>';
+
+      var constructionTypeLegend = '<div class="panel-section panel-legend linear-asset-legend construction-type-legend">';
+      var constructionTypeLegendEntries = _.map(enumerations.constructionTypes, function(constructionType) {
+        return !constructionType.visibleInLegend ? '' :
+          '<div class="legend-entry">' +
+          '<div class="label">' + constructionType.text + '</div>' +
+          '<div class="symbol linear construction-type-' + constructionType.value + '" />' +
+          '</div>';
+      }).join('')+ '</div>';
+
+      var constructionTypePanel = constructionTypeLegend.concat(constructionTypeLegendEntries);
 
       var massTransitStopPanel = '<div class="panel-section panel-legend limit-legend point-asset">';
       var pointAssetTypePanel = '<div class="panel-section panel-legend limit-legend point-asset service-points point-asset-legend">';
@@ -117,7 +102,7 @@
       massTransitStopPanel = massTransitStopPanel.concat(massTransitStopLegend.map(putLabel).join('')).concat('</div>');
       pointAssetTypePanel = pointAssetTypePanel.concat(pointAssetLegend.map(putLabel).join('')).concat('</div>');
 
-      return roadTypePanel.concat(constructionTypePanel).concat(massTransitStopPanel).concat(pointAssetTypePanel);
+      return admistrativeClassPanel.concat(constructionTypePanel).concat(massTransitStopPanel).concat(pointAssetTypePanel);
     };
 
     this.checkboxPanel = function () {

@@ -3,6 +3,7 @@
     var className = 'road-link';
     var title = 'Tielinkki';
     var authorizationPolicy = new AuthorizationPolicy();
+    var enumerations = new Enumerations();
 
     var roadLinkCheckBoxs = '<div class="panel-section checkbox-box">' +
           '<div class="check-box-container">' +
@@ -37,25 +38,15 @@
         '<div class="legend-container"></div>' +
       '</div>');
 
-    var administrativeClassLegend = $('' +
-      '<div class="panel-section panel-legend road-link-legend">' +
-        '<div class="legend-entry">' +
-          '<div class="label">Valtion omistama</div>' +
-            '<div class="symbol linear road"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Kunnan omistama</div>' +
-            '<div class="symbol linear street"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Yksityisen omistama</div>' +
-            '<div class="symbol linear private-road"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Ei tiedossa tai kävelyn ja pyöräilyn väylä</div>' +
-          '<div class="symbol linear unknown"/>' +
-        '</div>' +
-      '</div>');
+    var administrativeClassLegend = $('<div class="panel-section panel-legend road-link-legend"></div>');
+
+    var administrativeClassLegendEntries = _.map(enumerations.administrativeClasses, function(administrativeClass) {
+      return '<div class="legend-entry">' +
+        '<div class="label">'+ administrativeClass.text +'</div>' +
+        '<div class="symbol linear administrative-class-' + administrativeClass.value + '" />' +
+        '</div>';
+    }).join('');
+    administrativeClassLegend.append(administrativeClassLegendEntries);
 
     var functionalClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
     var functionalClasses = [
@@ -77,30 +68,18 @@
     functionalClassLegend.append(functionalClassLegendEntries);
 
     var linkTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend link-type-legend"></div>');
-    var linkTypes = [
-      [1, 'Moottoritie'],
-      [4, 'Moottoriliikennetie'],
-      [3, 'Yksiajoratainen tie'],
-      [2, 'Moniajoratainen tie'],
-      [6, 'Kiertoliittymä'],
-      [5, 'Ramppi'],
-      [9, 'Jalankulkualue'],
-      [8, 'Pyörätie tai yhdistetty pyörätie ja jalkakäytävä'],
-      [11, '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>'],
-      [12, 'Ajopolku'],
-      [21, 'Huoltoaukko'],
-      [14, 'Erikoiskuljetusyhteys ilman puomia'],
-      [15, 'Erikoiskuljetusyhteys puomilla'],
-      [13, 'Lautta tai lossi'],
-      [22, 'Kaksisuuntainen yksikaistainen tie']
 
-    ];
-    var linkTypeLegendEntries = _.map(linkTypes, function(linkType) {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + linkType[1] + '</div>' +
-        '<div class="symbol linear linear-asset-' + linkType[0] + '" />' +
+    var linkTypeLegendEntries = _.map(enumerations.linkTypes, function(linkType) {
+      return linkType.specialLegendRendering ? '':
+        '<div class="legend-entry">' +
+        '<div class="label">' + linkType.text + '</div>' +
+        '<div class="symbol linear linear-asset-' + linkType.value + '" />' +
         '</div>';
-    }).join('');
+      }).concat([
+        '<div class="legend-entry">' +
+        '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>' +
+        '<div class="symbol linear linear-asset-11" />'
+      ]).join('');
     linkTypeLegend.append(linkTypeLegendEntries);
 
     var verticalLevelLegend = $('<div class="panel-section panel-legend linear-asset-legend vertical-level-legend"></div>');
@@ -138,15 +117,11 @@
     };
 
     var constructionTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend construction-type-legend"></div>');
-    var constructionTypes = [
-      [1, 'Suunnitteilla'], //Planned
-      [2, 'Rakenteilla'], //Under construction
-      [4, 'Väliaikaisesti poissa käytöstä (haalennettu linkki)'] // Temporarily out of use
-    ];
-    var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
-      return '<div class="legend-entry">' +
-          '<div class="label">' + constructionType[1] + '</div>' +
-          '<div class="symbol linear construction-type-' + constructionType[0] + '" />' +
+    var constructionTypeLegendEntries = _.map(enumerations.constructionTypes, function(constructionType) {
+      return !constructionType.visibleInLegend ? '' :
+        '<div class="legend-entry">' +
+          '<div class="label">' + constructionType.legendText + '</div>' +
+          '<div class="symbol linear construction-type-' + constructionType.value + '" />' +
           '</div>';
     }).join('');
     constructionTypeLegend.append(constructionTypeLegendEntries);

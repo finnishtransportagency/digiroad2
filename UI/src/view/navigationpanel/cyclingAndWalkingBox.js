@@ -2,6 +2,7 @@
     root.CyclingAndWalkingBox = function (assetConfig) {
         LinearAssetBox.call(this, assetConfig);
         var me = this;
+        var enumerations = new Enumerations();
 
         this.legendName = function () {
             return 'linear-asset-legend cycling-and-walking';
@@ -30,15 +31,6 @@
             {index: 20, text: 'Lossi tai lautta'}
         ];
 
-        var constructionTypeLegend = '<div class="panel-section panel-legend linear-asset-legend construction-type-legend">';
-        var constructionTypes = [
-            {index: 1, text: 'Suunnitteilla' }, //Planned
-            {index: 2, text: 'Rakenteilla' }, //Under construction
-            {index: 4, text: 'Väliaikaisesti poissa käytöstä (haalennettu linkki)' } // Temporarily out of use
-        ];
-
-
-
         this.labeling = function () {
             var legend =  _.map(auxLegend, function(legend) {
                 return '<div class="legend-entry">' +
@@ -47,10 +39,12 @@
                     '</div>';
             }).join('')+' </div>';
 
-            var constructionTypeLegendEntries = _.map(constructionTypes, function(constructionType) {
-                return '<div class="legend-entry">' +
+            var constructionTypeLegend = '<div class="panel-section panel-legend linear-asset-legend construction-type-legend">';
+            var constructionTypeLegendEntries = _.map(enumerations.constructionTypes, function(constructionType) {
+                return !constructionType.visibleInLegend ? '' :
+                  '<div class="legend-entry">' +
                     '<div class="label">' + constructionType.text + '</div>' +
-                    '<div class="symbol linear construction-type-' + constructionType.index + '" />' +
+                    '<div class="symbol linear construction-type-' + constructionType.value + '" />' +
                     '</div>';
             }).join('')+ '</div>';
 

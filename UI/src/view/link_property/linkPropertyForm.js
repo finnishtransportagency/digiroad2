@@ -3,25 +3,8 @@
     var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var authorizationPolicy = new LinkPropertyAuthorizationPolicy();
+    var enumerations = new Enumerations();
     new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
-
-    var localizedAdministrativeClasses = {
-      Private: 'Yksityisen omistama',
-      Municipality: 'Kunnan omistama',
-      State: 'Valtion omistama'
-    };
-
-    var administrativeClasses = [
-      ['State', 'Valtion omistama'],
-      ['Municipality',  'Kunnan omistama'],
-      ['Private',  'Yksityisen omistama']
-    ];
-
-    var localizedTrafficDirections = {
-      BothDirections: 'Molempiin suuntiin',
-      AgainstDigitizing: 'Digitointisuuntaa vastaan',
-      TowardsDigitizing: 'Digitointisuuntaan'
-    };
 
     var additionalInfoIds = [
       [1, 'Tieto toimitettu, rajoituksia'],
@@ -35,26 +18,6 @@
       NotDelivered: 'Ei toimitettu'
     };
 
-    var linkTypes = [
-      [1, 'Moottoritie'],
-      [2, 'Moniajoratainen tie'],
-      [3, 'Yksiajoratainen tie'],
-      [4, 'Moottoriliikennetie'],
-      [5, 'Kiertoliittymä'],
-      [6, 'Ramppi'],
-      [7, 'Levähdysalue'],
-      [8, 'Kävelyn ja pyöräilyn väylä'],
-      [9, 'Jalankulkualue'],
-      [10, 'Huolto- tai pelastustie'],
-      [11, 'Liitännäisliikennealue'],
-      [12, 'Ajopolku'],
-      [13, 'Huoltoaukko'],
-      [14, 'Erikoiskuljetusyhteys ilman puomia'],
-      [15, 'Erikoiskuljetusyhteys puomilla'],
-      [21, 'Lautta/lossi'],
-      [22, 'Kaksisuuntainen yksikaistainen tie']
-    ];
-
     var verticalLevelTypes= [
       [-11, 'Tunneli'],
       [-3, 'Alikulku, taso 3'],
@@ -65,13 +28,6 @@
       [2, 'Silta, Taso 2'],
       [3, 'Silta, Taso 3'],
       [4, 'Silta, Taso 4']
-    ];
-
-    var constructionTypes= [
-        [1, 'Suunnitteilla'], //Planned
-        [2, 'Rakenteilla'], //Under Construction
-        [3, 'Käytössä'], //In Use
-        [4, 'Väliaikaisesti poissa käytöstä'] //Temporarily out of use
     ];
 
     var linkSources= [
@@ -95,9 +51,19 @@
       };
     };
 
+    var getLocalizedAdministrativeClass = function(administrativeClass) {
+      var localizedAdministrativeClass = _.find(enumerations.administrativeClasses, function(x) { return x.stringValue === administrativeClass; });
+      return localizedAdministrativeClass && localizedAdministrativeClass.text;
+    };
+
     var getLocalizedLinkType = function(linkType) {
-      var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
-      return localizedLinkType && localizedLinkType[1];
+      var localizedLinkType = _.find(enumerations.linkTypes, function(x) { return x.value === linkType; });
+      return localizedLinkType && localizedLinkType.text;
+    };
+
+    var getLocalizedTrafficDirection = function(trafficDirection) {
+      var localizedTrafficDirection = _.find(enumerations.trafficDirections, function(x) { return x.stringValue === trafficDirection; });
+      return localizedTrafficDirection && localizedTrafficDirection.text;
     };
 
     var getVerticalLevelType = function(verticalLevel) {
@@ -113,8 +79,9 @@
     };
 
     var getConstructionType = function(constructionTypeId){
-      var constructionType = _.find(constructionTypes, function(value) { return value[0] === constructionTypeId; });
-      return constructionType && constructionType[1];
+      var constructionType = _.find(enumerations.constructionTypes, function(constructionType) {
+        return constructionType.value === constructionTypeId; });
+      return constructionType && constructionType.text;
     };
 
     var getLinkSource = function(linkSourceId){
@@ -307,9 +274,9 @@
         roadNumber : linkProperty.roadNumber || '',
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
-        localizedAdministrativeClass : localizedAdministrativeClasses[linkProperty.administrativeClass] || 'Tuntematon',
+        localizedAdministrativeClass : getLocalizedAdministrativeClass(linkProperty.administrativeClass)|| 'Tuntematon',
         localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || '',
-        localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
+        localizedTrafficDirection : getLocalizedTrafficDirection(linkProperty.trafficDirection) || 'Tuntematon',
         localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
         addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
         addressNumbersLeft : addressNumberString(linkProperty.minAddressNumberLeft, linkProperty.maxAddressNumberLeft),
@@ -341,9 +308,9 @@
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(properties) {
         var linkProperty = constructLinkProperty(properties);
 
-        var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
-          var selected = key === linkProperty.trafficDirection ? " selected" : "";
-          return '<option value="' + key + '"' + selected + '>' + value + '</option>';
+        var trafficDirectionOptionTags = _.map(enumerations.trafficDirections, function(trafficDirection) {
+          var selected = trafficDirection.stringValue === linkProperty.trafficDirection ? " selected" : "";
+          return '<option value="' + trafficDirection.stringValue + '"' + selected + '>' + trafficDirection.text + '</option>';
         }).join('');
 
         var functionalClassOptionTags = _.map(functionalClasses, function(value) {
@@ -351,14 +318,16 @@
           return '<option value="' + value + '"' + selected + '>' + value + '</option>';
         }).join('');
 
-        var linkTypesOptionTags = _.map(linkTypes, function(value) {
-          var selected = value[0] === linkProperty.linkType ? " selected" : "";
-          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
+        var linkTypesOptionTags = _.map(enumerations.linkTypes, function(linkType) {
+          var selected = linkType.value === linkProperty.linkType ? " selected" : "";
+          return '<option value="' + linkType.value + '"' + selected + '>' + linkType.text + '</option>';
         }).join('');
 
-        var administrativeClassOptionTags = _.map(administrativeClasses, function(value) {
-          var selected = value[0] === linkProperty.administrativeClass ? " selected" : "";
-          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' ;
+        var administrativeClassOptionTags = _.map(enumerations.administrativeClasses, function(administrativeClass) {
+          var selected = administrativeClass.stringValue === linkProperty.administrativeClass ? " selected" : "";
+          return selected || administrativeClass.visibleInForm ?
+            '<option value="' + administrativeClass.stringValue + '"' + selected + '>' + administrativeClass.text + '</option>' :
+            '';
         }).join('');
 
         var additionalInfoOptionTags = _.map( additionalInfoIds, function(value) {
