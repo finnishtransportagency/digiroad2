@@ -94,7 +94,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def eventBus: DigiroadEventBus = mockEventBus
     override def withDynTransaction[T](f: => T): T = f
-    override val defaultKeys = mappings.keys.toList ::: externalIdMapping.keys.toList
+    override val defaultKeys = mappings.keys.toList ::: nationalIdMapping.keys.toList
 
     def defaultValues(assets: Map[String, Any]) : Map[String, Any]  = {
       defaultKeys.map { key => key -> assets.getOrElse(key, "") }.toMap
@@ -106,7 +106,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def eventBus: DigiroadEventBus = mockEventBus
     override def withDynTransaction[T](f: => T): T = f
-    override val defaultKeys = mappings.keys.toList ::: coordinateMappings.keys.toList ::: externalIdMapping.keys.toList
+    override val defaultKeys = mappings.keys.toList ::: coordinateMappings.keys.toList ::: nationalIdMapping.keys.toList
 
     def defaultValues(assets: Map[String, Any]) : Map[String, Any]  = {
       defaultKeys.map { key => key -> assets.getOrElse(key, "") }.toMap

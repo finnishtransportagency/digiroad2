@@ -973,7 +973,7 @@
     };
 
     this.withAssetData = function(assetData) {
-      self.getMassTransitStopByNationalId = function (externalId, callback) {
+      self.getMassTransitStopByNationalId = function (nationalId, callback) {
         callback(assetData);
       };
       self.updateAsset = function (id, data, successCallback) {
