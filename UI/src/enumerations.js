@@ -10,7 +10,7 @@
       SlipRoad: {value: 6, text: 'Ramppi'},
       RestArea: {value: 7, text: 'Levähdysalue', specialLegendRendering: true},
       PedestrianZone: {value: 9, text: 'Jalankulkualue'},
-      CycleOrPedestrianPath: {value: 8, text: 'Kävelyn ja pyöräilyn väylä'},
+      CycleOrPedestrianPath: {value: 8, text: 'Pyörätie tai yhdistetty pyörätie ja jalkakäytävä'},
       ServiceOrEmergencyRoad: {value: 10, text: 'Huolto- tai pelastustie', specialLegendRendering: true},
       EnclosedTrafficArea: {value: 11, text: 'Liitännäisliikennealue', specialLegendRendering: true},
       TractorRoad: {value: 12, text: 'Ajopolku'},
@@ -31,8 +31,9 @@
 
     this.administrativeClasses = {
       State: {value: 1, stringValue: 'State', text: 'Valtion omistama', visibleInForm: true},
-      Municipality: {value: 2, stringValue: 'Municipality', text:'Kunnan omistama', visibleInForm: true},
-      Private: {value: 3, stringValue: 'Private', text: 'Yksityisen omistama', visibleInForm: true}
+      Municipality: {value: 2, stringValue: 'Municipality', text: 'Kunnan omistama', visibleInForm: true},
+      Private: {value: 3, stringValue: 'Private', text: 'Yksityisen omistama', visibleInForm: true},
+      Unknown: {value: 99, stringValue: 'Unknown', text: 'Ei tiedossa', visibleInForm: false}
     };
 
     this.trafficDirections = {

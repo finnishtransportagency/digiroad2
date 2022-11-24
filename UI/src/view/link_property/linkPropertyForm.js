@@ -325,7 +325,7 @@
 
         var administrativeClassOptionTags = _.map(enumerations.administrativeClasses, function(administrativeClass) {
           var selected = administrativeClass.stringValue === linkProperty.administrativeClass ? " selected" : "";
-          return selected || administrativeClass.visibleInForm ?
+          return administrativeClass.visibleInForm ?
             '<option value="' + administrativeClass.stringValue + '"' + selected + '>' + administrativeClass.text + '</option>' :
             '';
         }).join('');
