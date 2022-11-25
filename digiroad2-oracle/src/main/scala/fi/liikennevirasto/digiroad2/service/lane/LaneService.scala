@@ -809,7 +809,7 @@ trait LaneOperations {
   }
 
   def expireByEndDate(laneToExpire: PersistedLane, username: String): Unit = {
-    if(LaneNumber.isMainLane(laneToExpire.laneCode)) throw new IllegalArgumentException("Main lane expire by end date not allowed")
+    if(LaneNumber.isMainLane(laneToExpire.laneCode)) throw new IllegalArgumentException("Main lane expire by end date not allowed. LaneId " + laneToExpire.id)
     val allLanesOnRoadLink = fetchAllLanesByLinkIds(Seq(laneToExpire.linkId), newTransaction = false)
     val outerLanesOnSameSide = allLanesOnRoadLink.filter(lane => lane.linkId == laneToExpire.linkId &&
       lane.sideCode == laneToExpire.sideCode && lane.laneCode > laneToExpire.laneCode)
