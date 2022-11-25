@@ -18,7 +18,7 @@ object LaneEndDateExpirer {
   lazy val roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   lazy val username = "LaneEndDateExpirer"
 
-  def checkForExpires(): Unit = {
+  def expireLanesByEndDates(): Unit = {
     withDynTransaction {
       val municipalities = Queries.getMunicipalities
       municipalities.foreach(municipality => {
