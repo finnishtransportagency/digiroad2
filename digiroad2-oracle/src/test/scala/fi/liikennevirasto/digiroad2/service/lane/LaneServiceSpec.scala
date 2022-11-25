@@ -1913,7 +1913,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Create and expire lane with passed end date immediatly") {
+  test("Create and expire lane with passed end date immediately") {
     runWithRollback {
       val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
       val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesPassedEndDate)
