@@ -1,32 +1,7 @@
 (function (root) {
     root.LaneWorkList = function () {
 
-        var linkTypes = {
-            1: 'Moottoritie',
-            2: 'Moniajoratainen tie',
-            3: 'Yksiajoratainen tie',
-            4: 'Moottoriliikennetie',
-            5: 'Kiertoliittymä',
-            6: 'Ramppi',
-            7: 'Levähdysalue',
-            8: 'Kävelyn ja pyöräilyn väylä',
-            9: 'Jalankulkualue',
-            10: 'Huolto- tai pelastustie',
-            11: 'Liitännäisliikennealue',
-            12: 'Ajopolku',
-            13: 'Huoltoaukko',
-            14: 'Erikoiskuljetusyhteys ilman puomia',
-            15: 'Erikoiskuljetusyhteys puomilla',
-            21: 'Lautta/lossi',
-            22: 'Kaksisuuntainen yksikaistainen tie',
-            99: 'Tuntematon'
-        };
-
-        var trafficDirections = {
-            2: 'Molempiin suuntiin',
-            3: 'Digitointisuuntaa vastaan',
-            4: 'Digitointisuuntaan'
-        };
+        var enumerations = new Enumerations();
 
         WorkListView.call(this);
         var me = this;
@@ -62,8 +37,11 @@
             };
 
             var changeToLinkInfo = function (item) {
-                var newValueLegend = (item.propertyName === "link_type") ? linkTypes[item.newValue] : trafficDirections[item.newValue];
-                var oldValueLegend = (item.propertyName === "link_type") ? linkTypes[item.oldValue] : trafficDirections[item.oldValue];
+                var collectionToSearch = item.propertyName === "link_type" ? enumerations.linkTypes : enumerations.trafficDirections;
+                var newValueObject = _.find(collectionToSearch, {value: item.newValue});
+                var newValueLegend = _.isObject(newValueObject) ? newValueObject.text : 'Tuntematon';
+                var oldValueObject = _.find(collectionToSearch, {value: item.oldValue});
+                var oldValueLegend = _.isObject(oldValueObject) ? oldValueObject.text : 'Tuntematon';
                 return $('<dd class="laneWorkListTextSize"/>')
                     .html("Vanha arvo: " + oldValueLegend + " (" + item.oldValue + ")" +
                         "<br> Uusi arvo: " + newValueLegend + " (" + item.newValue + ")" +
