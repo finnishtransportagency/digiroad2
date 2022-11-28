@@ -818,6 +818,7 @@ trait LaneOperations {
     if (outerLanesOnSameSide.nonEmpty) {
       outerLanesOnSameSide.foreach(outerLane => {
         val newLaneCode = outerLane.laneCode - 2
+        logger.info("Changing lane code due to inner lane expire on lane: " + outerLane.id + " old lane code: " + outerLane.laneCode + " new lane code: " + newLaneCode)
         moveToHistory(outerLane.id, None, expireHistoryLane = false, deleteFromLanes = false, username)
         dao.updateLane(outerLane.copy(laneCode = newLaneCode), username)
       })
