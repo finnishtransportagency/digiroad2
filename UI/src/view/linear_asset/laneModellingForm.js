@@ -383,20 +383,10 @@
         else return selectedAsset.getSelectedLanes(selectedLane);
       });
 
-      var isEven = nextLaneNumber % 2 === 0;
-      var sameSideLanes;
-      if(isEven){
-        sameSideLanes = _.filter(allSelectedLanes, function(lane){
-          var laneCode = getLaneCodeValue(lane);
-          return laneCode % 2 === 0;
-        });
-      }
-      else {
-        sameSideLanes = _.filter(allSelectedLanes, function(lane){
-          var laneCode = getLaneCodeValue(lane);
-          return laneCode % 2 !== 0;
-        });
-      }
+      var sameSideLanes = _.filter(allSelectedLanes, function (lane) {
+        var laneCode = getLaneCodeValue(lane);
+        return laneCode !== 1 && ((laneCode % 2) === (nextLaneNumber % 2));
+      });
 
       return _.some(sameSideLanes, function(lane) {
         var endDateProp = _.find(lane.properties, function(prop) {
