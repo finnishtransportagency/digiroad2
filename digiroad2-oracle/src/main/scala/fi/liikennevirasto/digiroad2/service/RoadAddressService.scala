@@ -129,7 +129,9 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    viiteClient.fetchAllByLinkIds(linkIds)
+    ClientUtils.retry(2){
+      viiteClient.fetchAllByLinkIds(linkIds)
+    }
   }
 
   /**
