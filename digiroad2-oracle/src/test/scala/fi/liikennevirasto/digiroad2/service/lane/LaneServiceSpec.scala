@@ -56,6 +56,13 @@ class LaneTestSupporter extends FunSuite with Matchers {
                                    LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
                                    LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
                                   )
+
+  val lanePropertiesPassedEndDate = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
+    LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+    LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().minusYears(1).toString("dd.MM.yyyy")))),
+    LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().minusMonths(1).toString("dd.MM.yyyy"))))
+  )
+
   val (linkId1, linkId2) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
   val roadlink1: RoadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(
     "MUNICIPALITYCODE" -> BigInt(745),
@@ -1905,4 +1912,124 @@ class LaneServiceSpec extends LaneTestSupporter {
       expired.lane.endMeasure should be(350)
     }
   }
+
+  test("Create and expire lane with passed end date immediately") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesPassedEndDate)
+
+
+      //create lane main lane 1
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+
+      val sideCodesForLinkIds = Seq(SideCodesForLinkIds(linkId1, 1))
+
+      //Validate if initial lanes are correctly created
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1), false)
+      currentLanes.size should be(1)
+
+      val lane1 = currentLanes.filter(_.id == mainLane1Id).head
+      lane1.id should be(mainLane1Id)
+      lane1.attributes.foreach { laneProp =>
+        lanePropertiesValues1.contains(laneProp) should be(true)
+      }
+
+      //Send created main lane and new lane 2 which has passed end date
+      val currentMainLane1 = mainLane1.copy(id = mainLane1Id)
+      ServiceWithDao.processNewLanes(Set(currentMainLane1, subLane2), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
+
+      val lanesAfterLane2CreationAndExpire = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
+      lanesAfterLane2CreationAndExpire.size should be(1)
+
+      val lane1After = lanesAfterLane2CreationAndExpire.filter(_.id == mainLane1Id).head
+      lane1After.id should be(mainLane1Id)
+      lane1After.attributes.foreach { laneProp =>
+        lanePropertiesValues1.contains(laneProp) should be(true)
+      }
+
+      //Verify that lane2 was created and moved to history
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
+      historyLanes.size should be(1)
+
+      val historyLane2 = historyLanes.head
+      historyLane2.newId should be (0)
+      historyLane2.startMeasure should be(0)
+      historyLane2.endMeasure should be(500)
+      historyLane2.expired should be(true)
+      historyLane2.attributes.foreach { laneProp =>
+        lanePropertiesPassedEndDate.contains(laneProp) should be(true)
+
+      }
+    }
+  }
+
+  test("Existing additional lane should be expired after end date is set to past") {
+    runWithRollback {
+      val mainLane1 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
+      val subLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
+
+
+      //create lane main lane 1 and sub lane 2
+      val mainLane1Id = ServiceWithDao.create(Seq(mainLane1), Set(linkId1), 1, usernameTest).head
+      val subLane2Id = ServiceWithDao.create(Seq(subLane2), Set(linkId1), 1, usernameTest).head
+
+      val sideCodesForLinkIds = Seq(SideCodesForLinkIds(linkId1, 1))
+
+      //Validate if initial lanes are correctly created
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1,2), false)
+      currentLanes.size should be(2)
+
+      val lane1 = currentLanes.filter(_.id == mainLane1Id).head
+      lane1.id should be(mainLane1Id)
+      lane1.attributes.foreach { laneProp =>
+        lanePropertiesValues1.contains(laneProp) should be(true)
+      }
+
+      val lane2 = currentLanes.filter(_.id == subLane2Id).head
+      lane2.id should be(subLane2Id)
+      lane2.attributes.foreach { laneProp =>
+        lanePropertiesValues2.contains(laneProp) should be(true)
+      }
+
+      //Send created main lane and updated lane 2 which has passed end date
+      val currentMainLane1 = mainLane1.copy(id = mainLane1Id)
+      val currentSubLane2 = subLane2.copy(id = subLane2Id, properties = lanePropertiesPassedEndDate)
+      ServiceWithDao.processNewLanes(Set(currentMainLane1, currentSubLane2), Set(linkId1), 1, usernameTest, sideCodesForLinkIds)
+
+      val lanesAfterLane2CreationAndExpire = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), false)
+      lanesAfterLane2CreationAndExpire.size should be(1)
+
+      val lane1After = lanesAfterLane2CreationAndExpire.filter(_.id == mainLane1Id).head
+      lane1After.id should be(mainLane1Id)
+      lane1After.attributes.foreach { laneProp =>
+        lanePropertiesValues1.contains(laneProp) should be(true)
+      }
+
+      //Verify that lane2 was created and moved to history
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(1, 2), true)
+      historyLanes.size should be(2)
+
+      //Two history lanes created, one for attribute update, one for expiring by end date
+      val historyLane2Update = historyLanes.find(lane => lane.oldId == subLane2Id && !lane.expired).get
+      val historyLane2Expire = historyLanes.find(lane => lane.oldId == subLane2Id && lane.expired).get
+
+      historyLane2Update.newId should be (0)
+      historyLane2Update.startMeasure should be(0)
+      historyLane2Update.endMeasure should be(500)
+      historyLane2Update.expired should be(false)
+      historyLane2Update.attributes.foreach { laneProp =>
+        lanePropertiesValues2.contains(laneProp) should be(true)
+      }
+
+      historyLane2Expire.newId should be (0)
+      historyLane2Expire.startMeasure should be(0)
+      historyLane2Expire.endMeasure should be(500)
+      historyLane2Expire.expired should be(true)
+      historyLane2Expire.attributes.foreach { laneProp =>
+        lanePropertiesPassedEndDate.contains(laneProp) should be(true)
+      }
+
+    }
+  }
+
 }
