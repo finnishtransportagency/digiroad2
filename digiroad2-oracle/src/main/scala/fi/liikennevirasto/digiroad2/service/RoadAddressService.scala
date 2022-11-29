@@ -16,7 +16,6 @@ import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-import java.net.SocketException
 import scala.compat.Platform.EOL
 
 case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
