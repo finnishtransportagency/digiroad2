@@ -112,12 +112,12 @@ object Queries {
 
   def pointGeometry(lon: Double, lat: Double): String ={s"POINT($lon $lat 0 0)"}
 
-  def insertAsset(assetId: Long, externalId: Long,
+  def insertAsset(assetId: Long, nationalId: Long,
                   assetTypeId: Long, bearing: Int,
                   creator: String, municipalityCode: Int) =
     sqlu"""
-      insert into asset(id, external_id, asset_type_id, bearing, valid_from, created_by, municipality_code)
-      values ($assetId, $externalId, $assetTypeId, $bearing, ${new LocalDate()}, $creator, $municipalityCode)
+      insert into asset(id, national_id, asset_type_id, bearing, valid_from, created_by, municipality_code)
+      values ($assetId, $nationalId, $assetTypeId, $bearing, ${new LocalDate()}, $creator, $municipalityCode)
     """
 
   def expireAsset(id: Long, username: String): Unit = {

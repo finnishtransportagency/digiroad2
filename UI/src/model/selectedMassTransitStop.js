@@ -627,7 +627,7 @@
       cancel: cancel,
       exists: exists,
       change: change,
-      changeByExternalId: changeByNationalId,
+      changeByNationalId: changeByNationalId,
       changeById:changeById,
       get: get,
       getId: getId,
