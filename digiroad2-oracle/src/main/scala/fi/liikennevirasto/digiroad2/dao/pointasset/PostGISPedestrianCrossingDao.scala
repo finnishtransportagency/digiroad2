@@ -25,7 +25,8 @@ case class PedestrianCrossingRow(id: Long, linkId: String,
                                  modifiedBy: Option[String] = None,
                                  modifiedAt: Option[DateTime] = None,
                                  expired: Boolean = false,
-                                 linkSource: LinkGeomSource)
+                                 linkSource: LinkGeomSource,
+                                 externalId: Option[String] = None)
 
 case class PedestrianCrossing(id: Long, linkId: String,
                               lon: Double, lat: Double,
@@ -38,7 +39,8 @@ case class PedestrianCrossing(id: Long, linkId: String,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None,
                               expired: Boolean = false,
-                              linkSource: LinkGeomSource) extends PersistedPoint
+                              linkSource: LinkGeomSource,
+                              externalId: Option[String] = None) extends PersistedPoint
 
 
 class PostGISPedestrianCrossingDao() {
@@ -107,16 +109,17 @@ class PostGISPedestrianCrossingDao() {
   }
 
   def create(crossing: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long, linkSource: LinkGeomSource,
-             createdByFromUpdate: Option[String] = Some(""),
-             createdDateTimeFromUpdate: Option[DateTime]): Long = {
+             createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime],
+             externalIdFromUpdate: Option[String]): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+
     sqlu"""
-        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, 200, $createdByFromUpdate, $createdDateTimeFromUpdate, ${municipality}, $username, current_timestamp);
+        insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
+        values ($id, $externalIdFromUpdate, 200, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
-        values ($lrmPositionId, ${mValue}, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
+        values ($lrmPositionId, $mValue, ${crossing.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
 
         insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);
@@ -160,7 +163,7 @@ class PostGISPedestrianCrossingDao() {
         when ev.name_fi is not null then ev.name_fi
           else null
          end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date,
-      case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source
+      case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source, a.external_id
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
@@ -179,7 +182,7 @@ class PostGISPedestrianCrossingDao() {
             when ev.name_fi is not null then ev.name_fi
             else null
           end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date,
-          case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source
+          case when a.valid_to <= current_timestamp then 1 else 0 end as expired, pos.link_source, a.external_id
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -221,8 +224,10 @@ class PostGISPedestrianCrossingDao() {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val expired = r.nextBoolean()
       val linkSource = r.nextInt()
+      val externalId = r.nextStringOption()
 
-      PedestrianCrossingRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
+      PedestrianCrossingRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property,
+        createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource), externalId)
     }
   }
 
@@ -254,7 +259,7 @@ class PostGISPedestrianCrossingDao() {
       id -> PedestrianCrossing(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
-        expired = row.expired, linkSource = row.linkSource)
+        expired = row.expired, linkSource = row.linkSource, externalId = row.externalId)
     }.values.toSeq
   }
 

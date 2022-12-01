@@ -23,7 +23,7 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
   }
 
   def withNationalId(id: Long)(query: String): String = {
-    query + s" and a.external_id = $id"
+    query + s" and a.national_id = $id"
   }
 
   def create(lon: Double, lat: Double, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int, withTransaction: Boolean = true): Long = {

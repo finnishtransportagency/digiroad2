@@ -38,7 +38,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISTrafficLightDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalId)
       case _ =>
         PostGISTrafficLightDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource)
     }
@@ -104,7 +104,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.timeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource, persistedStop.externalId)
   }
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingTrafficLight] = {

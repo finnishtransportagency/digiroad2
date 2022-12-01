@@ -38,7 +38,7 @@ case class ServicePoint(id: Long, nationalId: Long, stopTypes: Seq[Int],
                         municipalityCode: Int, lon: Double, lat: Double,
                         created: Modification, modified: Modification, propertyData: Seq[Property])
 
-case class ServicePointRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point],
+case class ServicePointRow(id: Long, nationalId: Long, assetTypeId: Long, point: Option[Point],
                            validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                            created: Modification, modified: Modification, municipalityCode: Int)
 
@@ -46,7 +46,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
   private implicit val getServicePointRow = new GetResult[ServicePointRow] {
     def apply(r: PositionedResult): ServicePointRow = {
       val id = r.nextLong
-      val externalId = r.nextLong
+      val nationalId = r.nextLong
       val assetTypeId = r.nextLong
       val validFrom = r.nextDateOption.map(new LocalDate(_))
       val validTo = r.nextDateOption.map(new LocalDate(_))
@@ -70,7 +70,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
 
-      ServicePointRow(id, externalId, assetTypeId, point, validFrom, validTo, property, created, modified, municipalityCode = municipalityCode)
+      ServicePointRow(id, nationalId, assetTypeId, point, validFrom, validTo, property, created, modified, municipalityCode = municipalityCode)
     }
   }
 
@@ -97,7 +97,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
 
   def fetchAsset(queryFilter: String => String): Seq[ServicePoint] = {
     val query = """
-        select a.id, a.external_id, a.asset_type_id,
+        select a.id, a.national_id, a.asset_type_id,
         a.valid_from, a.valid_to, geometry, a.municipality_code,
         p.id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
         case
@@ -131,7 +131,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
       val point = row.point.get
       val stopTypes = extractStopTypes(stopRows)
 
-      id -> ServicePoint(id = row.id, nationalId = row.externalId, stopTypes = stopTypes,
+      id -> ServicePoint(id = row.id, nationalId = row.nationalId, stopTypes = stopTypes,
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, created = row.created, modified = row.modified, propertyData = properties)
     }.values.toSeq
   }
@@ -148,7 +148,7 @@ class ServicePointBusStopDao extends MassTransitStopDao {
 
   def insertAsset(id: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int): Unit = {
     val pointGeometry =Queries.pointGeometry(lon,lat)
-    sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry) values (
+    sqlu"""insert into asset (id, national_id, asset_type_id, created_by, municipality_code, geometry) values (
            $id, nextval('national_bus_stop_id_seq'), $typeId, $creator, $municipalityCode,
            ST_GeomFromText($pointGeometry,3067)
     )
