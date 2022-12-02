@@ -52,19 +52,24 @@ class RoadLinkDAOSpec extends FunSuite {
       val validLinkIds = validLinks.map(_.linkId)
       validLinkIds should contain(linkId1)
       validLinkIds should contain(linkId2)
+      validLinkIds shouldNot contain(linkId3)
     }
   }
 
   test("only expired links are fetched") {
-    val linkId = LinkIdGenerator.generateRandom()
+    val (linkId1, linkId2, linkId3) = (LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom(), LinkIdGenerator.generateRandom())
     runWithRollback {
-      sqlu"""insert into kgv_roadlink (linkId, municipalitycode, constructiontype, shape, expired_date) values ($linkId, 235, ${ConstructionType.InUse.value},
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode, constructiontype, shape) values ($linkId1, 235, ${ConstructionType.InUse.value},
+            'SRID=3067;LINESTRING ZM(385935.666 6671107.833 19.858 0, 386028.217 6671112.363 20.596 92.661)'::geometry)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode, constructiontype, shape) values ($linkId2, 235, ${ConstructionType.InUse.value},
+            'SRID=3067;LINESTRING ZM(385935.666 6671107.833 19.85 0, 386028.217 6671112.363 20.596 92.661)'::geometry)""".execute
+      sqlu"""insert into kgv_roadlink (linkId, municipalitycode, constructiontype, shape, expired_date) values ($linkId3, 235, ${ConstructionType.InUse.value},
             'SRID=3067;LINESTRING ZM(385935.666 6671107.833 19.85 0, 386028.217 6671112.363 20.596 92.661)'::geometry, '2022-05-10 10:52:28.783')""".execute
       val expiredLinks = dao.fetchExpiredRoadLinks()
-      expiredLinks.foreach { link =>
-        link.expiredAt shouldNot be(None)
+      val expiredLinkIds = expiredLinks.map(_.linkId)
+      expiredLinkIds shouldNot contain (linkId1)
+      expiredLinkIds shouldNot contain (linkId2)
+      expiredLinkIds should contain (linkId3)
       }
     }
-  }
-  
 }

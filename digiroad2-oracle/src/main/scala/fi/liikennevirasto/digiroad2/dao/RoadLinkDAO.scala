@@ -149,7 +149,6 @@ class RoadLinkDAO {
       val toRight = r.nextLongOption()
       val surfaceType = r.nextInt()
       val length  = r.nextDouble()
-      val expiredAt = r.nextTimestampOption().map(new DateTime(_))
 
       val geometry = path.map(point => Point(point(0), point(1), point(2)))
       val geometryForApi = path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3)))
@@ -189,7 +188,7 @@ class RoadLinkDAO {
 
       RoadLinkFetched(linkId, municipality, geometry, AdministrativeClass.apply(administrativeClass),
         extractTrafficDirection(directionType), featureClass, modifiedAt, attributes,
-        ConstructionType.apply(constructionType), LinkGeomSource.NormalLinkInterface, length, expiredAt)
+        ConstructionType.apply(constructionType), LinkGeomSource.NormalLinkInterface, length)
     }
   }
 
@@ -323,7 +322,7 @@ class RoadLinkDAO {
       sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
-                 surfacetype, geometrylength, expired_date
+                 surfacetype, geometrylength
           from kgv_roadlink
           where #$filter
           and expired_date is null
@@ -339,7 +338,7 @@ class RoadLinkDAO {
     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
-                 surfacetype, geometrylength, expired_date
+                 surfacetype, geometrylength
           from kgv_roadlink
           where expired_date is not null
           """.as[RoadLinkFetched].list
