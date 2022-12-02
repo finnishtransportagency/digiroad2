@@ -326,7 +326,7 @@ class RoadLinkDAO {
                  surfacetype, geometrylength, expired_date
           from kgv_roadlink
           where #$filter
-          and expired_date isnull
+          and expired_date is null
           and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
                                                   ${ConstructionType.Planned.value},
@@ -341,7 +341,7 @@ class RoadLinkDAO {
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
                  surfacetype, geometrylength, expired_date
           from kgv_roadlink
-          where expired_date notnull
+          where expired_date is not null
           """.as[RoadLinkFetched].list
   }
 
@@ -382,7 +382,7 @@ class RoadLinkDAO {
       sql"""select linkid
           from kgv_roadlink
           where #$polygonFilter
-          and expired_date isnull
+          and expired_date is null
        """.as[String].list
     }
   }
