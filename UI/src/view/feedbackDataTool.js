@@ -5,7 +5,7 @@
     me.layerName = layerName;
     me.authorizationPolicy = authorizationPolicy;
     me.eventCategory = eventCategory;
-
+    var MAX_CHARACTER_LENGTH = 3000;
     function events() {
       return _.map(arguments, function(argument) { return me.eventCategory + ':' + argument; }).join(' ');
     }
@@ -79,6 +79,11 @@
       eventbus.on(me.layerName + ':unselected', me.closeFeedback);
 
       eventbus.on(me.layerName + ':selected ' + me.layerName + ':cancelled' ,me.initFeedback);
+
+      eventbus.on("feedback:tooBigDataTool",function() {
+        removeSpinner();
+        new GenericConfirmPopup("Palaute oli liian pitkä. Maksimi merkki määrä on "+MAX_CHARACTER_LENGTH, {type: 'alert'});
+      });
     };
 
     $(document).ready(function () {
@@ -92,19 +97,29 @@
         applicationModel.setApplicationkState('normal');
         var formElements = $(this).closest('.modal-dialog').find('.form-horizontal');
         var values = formElements.serializeArray();
+        var text = $(".feedback-message-asset").serializeArray();
         values.push(
           {name: 'linkId',    value:  selectedData.linkId},
           {name: 'assetId',   value : selectedData.assetId },
           {name: 'assetName', value : selectedData.title},
           {name: 'typeId',    value : selectedData.typeId},
-          {name: 'freeText',  value: $('#freeTextData').html()});
-
+          {name: 'freeText',  value : text[0].value});
+        
         if (formElements.valid()) {
           addSpinner();
-          me.collection.sendFeedbackData(values);
+          if (text[0].value.length<=MAX_CHARACTER_LENGTH){
+            me.collection.sendFeedbackData(values);
+          }else{
+            eventbus.trigger("feedback:tooBigDataTool");
+          }
         }
       });
 
+      $(".feedback-message-asset").on("change keyup paste",function() {
+        var message = $(".feedback-message-asset").serializeArray();
+        $(".feedback-message-count").text(message[0].value.length+"/"+MAX_CHARACTER_LENGTH);
+      });
+      
       $('#phoneNumber').keyup(function() {
         $(this).valid();
       });
@@ -130,6 +145,7 @@
     var renderDialog = function(selectedAsset, layer) {
       var dialog = createFeedbackForm(selectedAsset, layer);
       $('#feedbackData').html(dialog);
+      $(".feedback-message-count").text(0+"/"+MAX_CHARACTER_LENGTH);
     };
 
     var getData = function(){
@@ -187,8 +203,12 @@
         '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">Palaute</label>' +
-        '<div contenteditable="true" id="freeTextData" class="form-control"></div>'+
+          '<textarea maxlength='+ MAX_CHARACTER_LENGTH + ' name="freeText" id="freeTextData" class="form-control feedback-message-asset"></textarea>'+
         '</div>' +
+          '<div class="form-element">' +
+          '<label class="control-label">Merkkien määrä:</label>' +
+          '<span id="feedback-message-count" class="feedback-message-count"></span>' +
+          '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">K-tunnus</label>' +
         '<span id="kidentifier">'+me.authorizationPolicy.username+'</span>'+

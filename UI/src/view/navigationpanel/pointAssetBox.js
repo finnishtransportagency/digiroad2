@@ -2,6 +2,7 @@
   root.PointAssetBox = function (assetConfig) {
     ActionPanelBox.call(this);
     var me = this;
+    var enumerations = new Enumerations();
 
     this.header = function(){
       return assetConfig.title;
@@ -45,26 +46,16 @@
     };
 
     this.roadTypeLabeling = function() {
-      var roadTypePanel = [
-        '  <div class="panel-section panel-legend road-link-legend">',
-        '   <div class="legend-entry">',
-        '      <div class="label">Valtion omistama</div>',
-        '      <div class="symbol linear road"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Kunnan omistama</div>',
-        '     <div class="symbol linear street"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Yksityisen omistama</div>',
-        '     <div class="symbol linear private-road"/>',
-        '   </div>',
-        '   <div class="legend-entry">',
-        '     <div class="label">Ei tiedossa tai kävelyn ja pyöräilyn väylä</div>',
-        '     <div class="symbol linear unknown"/>',
-        '   </div>',
-        '  </div>'
-      ].join('');
+      var administrativeClassLegend =  [
+        '  <div class="panel-section panel-legend road-link-legend">'];
+      var administrativeClassLegendEntries = _.map(enumerations.administrativeClasses, function(administrativeClass) {
+        return '<div class="legend-entry">' +
+          '<div class="label">'+ administrativeClass.text +'</div>' +
+          '<div class="symbol linear administrative-class-' + administrativeClass.value + '" />' +
+          '</div>';
+      });
+
+      var admistrativeClassPanel = administrativeClassLegend.concat(administrativeClassLegendEntries).join('') + '</div>';
 
       var constructionTypePanel = [
         '  <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
@@ -83,7 +74,7 @@
         '  </div>'
         ].join('');
 
-      return roadTypePanel.concat(constructionTypePanel);
+      return admistrativeClassPanel.concat(constructionTypePanel);
     };
 
     this.checkboxPanel = function () {

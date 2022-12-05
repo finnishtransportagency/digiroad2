@@ -96,9 +96,6 @@
       },
       {
         label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 14, required: true
-      },
-      {
-        label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 15
       }
     ]
   };
@@ -137,6 +134,10 @@
 
       if (!_.some(info, function(field) { return _.head(field) === undefined; })) return true;
       return false;
+    }
+
+    function getLaneCodeValue(lane) {
+      return _.head(_.find(lane.properties, {'publicId': 'lane_code'}).values).value;
     }
 
     var AvailableForms = function(){
@@ -399,6 +400,27 @@
       return preview();
     };
 
+    function innerLanesHaveEndDates(selectedAsset, nextLaneNumber){
+      var selection = selectedAsset.selection;
+      var allSelectedLanes = _.flatMap(selection, function(selectedLane) {
+        if(selectedLane.id === 0) return selectedLane;
+        else return selectedAsset.getSelectedLanes(selectedLane);
+      });
+
+      var sameSideLanes = _.filter(allSelectedLanes, function (lane) {
+        var laneCode = getLaneCodeValue(lane);
+        return laneCode !== 1 && ((laneCode % 2) === (nextLaneNumber % 2));
+      });
+
+      return _.some(sameSideLanes, function(lane) {
+        var endDateProp = _.find(lane.properties, function(prop) {
+          return prop.publicId === 'end_date';
+        });
+        var laneCode = getLaneCodeValue(lane);
+        return laneCode < nextLaneNumber && endDateProp !== undefined;
+      });
+    }
+
     var createLaneButtons = function(selectedAsset){
       var laneAssets = selectedAsset.get();
       var laneNumbers = _.map(laneAssets, function (lane){
@@ -411,12 +433,21 @@
       var odd = _.last(numbersPartitioned);
       var even = _.head(numbersPartitioned);
 
+      var endDatePresentAlertPopUpOptions = {
+        type: "alert",
+        yesButtonLbl: 'Ok',
+      };
+      var endDatePresentAlertMessage = "Huomioi, että yhdellä tai useammalla valittujen tielinkkien sisemmistä kaistoista on asetettu loppupäivänmäärä";
+
       var addLeftLane = $('<li>').append($('<button class="btn btn-secondary add-to-left">Lisää kaista vasemmalle puolelle</button>').click(function() {
         var nextLaneNumber;
         if(_.isEmpty(even)){
           nextLaneNumber = 2;
         }else{
           nextLaneNumber = parseInt(_.max(even)) + 2;
+        }
+        if(innerLanesHaveEndDates(selectedAsset, nextLaneNumber)) {
+          GenericConfirmPopup(endDatePresentAlertMessage, endDatePresentAlertPopUpOptions);
         }
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
@@ -427,6 +458,9 @@
 
       var addRightLane = $('<li>').append($('<button class="btn btn-secondary add-to-right">Lisää kaista oikealle puolelle</button>').click(function() {
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
+        if(innerLanesHaveEndDates(selectedAsset, nextLaneNumber)) {
+          GenericConfirmPopup(endDatePresentAlertMessage, endDatePresentAlertPopUpOptions);
+        }
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
         newLaneStructure(nextLaneNumber);
@@ -586,10 +620,6 @@
         return notTooManyLanesOnEitherSide && isFullLength;
       }
 
-      function getLaneCodeValue(lane) {
-        return _.head(_.find(lane.properties, {'publicId': 'lane_code'}).values).value;
-      }
-
       var prepareLanesStructure = function () {
         if(_.isUndefined(selectedAsset.getLane(currentLaneNumber))){
           if(currentLaneNumber == "2"){
@@ -622,7 +652,7 @@
         var $startDateElement = body.find('#start_date' + sideCode);
         var $endDateElement = body.find('#end_date' + sideCode);
         if(!_.isEmpty($startDateElement) && !_.isEmpty($endDateElement))
-          dateutil.addTwoDependentDatePickers($startDateElement, $endDateElement);
+          dateutil.addTwoDependentDatePickersForLanes($startDateElement, $endDateElement);
       }
 
       var sideCodeClass = self.generateClassName(sideCode);

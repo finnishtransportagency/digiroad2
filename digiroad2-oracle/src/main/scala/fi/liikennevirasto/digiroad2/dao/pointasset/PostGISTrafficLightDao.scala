@@ -26,7 +26,8 @@ case class TrafficLightRow(id: Long, linkId: String,
                            createdAt: Option[DateTime] = None,
                            modifiedBy: Option[String] = None,
                            modifiedAt: Option[DateTime] = None,
-                           linkSource: LinkGeomSource)
+                           linkSource: LinkGeomSource,
+                           externalId: Option[String] = None)
 
 case class TrafficLight(id: Long, linkId: String,
                         lon: Double, lat: Double,
@@ -38,7 +39,8 @@ case class TrafficLight(id: Long, linkId: String,
                         createdAt: Option[DateTime] = None,
                         modifiedBy: Option[String] = None,
                         modifiedAt: Option[DateTime] = None,
-                        linkSource: LinkGeomSource) extends PersistedPointAsset
+                        linkSource: LinkGeomSource,
+                        externalId: Option[String] = None) extends PersistedPointAsset
 
 object PostGISTrafficLightDao {
   def fetchByFilter(queryFilter: String => String): Seq[TrafficLight] = {
@@ -59,7 +61,7 @@ object PostGISTrafficLightDao {
         	when tpv.grouped_id > 0 then tpv.grouped_id
         	else 0
         end as grouped_id,
-          a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source
+          a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source, a.external_id
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -102,7 +104,7 @@ object PostGISTrafficLightDao {
 
       id -> TrafficLight(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, timeStamp = row.timeStamp, municipalityCode = row.municipalityCode, properties,
-        createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, linkSource = row.linkSource)
+        createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, linkSource = row.linkSource, externalId = row.externalId)
     }.values.toSeq
   }
 
@@ -165,8 +167,10 @@ object PostGISTrafficLightDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
+      val externalId = r.nextStringOption()
 
-      TrafficLightRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
+      TrafficLightRow(id, linkId, point.x, point.y, mValue, floating, timeStamp, municipalityCode, property, createdBy,
+        createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource), externalId = externalId)
     }
   }
 
@@ -190,15 +194,17 @@ object PostGISTrafficLightDao {
     id
   }
 
-  def create(trafficLight: IncomingTrafficLight, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long, linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime]): Long = {
+  def create(trafficLight: IncomingTrafficLight, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long,
+             linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""),
+             createdDateTimeFromUpdate: Option[DateTime], externalIdFromUpdate: Option[String]): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-        insert into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, 280, $createdByFromUpdate, $createdDateTimeFromUpdate, ${municipality}, $username, current_timestamp);
+        insert into asset(id, external_id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
+        values ($id, $externalIdFromUpdate, 280, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, current_timestamp);
 
         insert into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
-        values ($lrmPositionId, ${mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
+        values ($lrmPositionId, $mValue, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value}, current_timestamp);
 
         insert into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId);

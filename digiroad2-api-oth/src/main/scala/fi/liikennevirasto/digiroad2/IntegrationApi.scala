@@ -75,7 +75,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing)
     }
 
-    def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = {
+    def extractNationalId(massTransitStop: PersistedMassTransitStop): (String, Long) = {
       "valtakunnallinen_id" -> massTransitStop.nationalId
     }
 
@@ -109,7 +109,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
             lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
             extractBearing(massTransitStop),
-            if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractExternalId(massTransitStop),
+            if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractNationalId(massTransitStop),
             extractFloating(massTransitStop),
             if(isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
             if(isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),

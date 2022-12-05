@@ -49,7 +49,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
 
   val minAdditionalPanels = 1
-  val maxAdditionalPanels = 3
+  val maxAdditionalPanels = 5
 
   private val longValueFieldMappings = coordinateMappings
 
@@ -129,7 +129,21 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     "lisakilpi teksti 3"-> "additionalPanelText3",
     "lisakilpi koko 3" -> "additionalPanelSize3",
     "lisakilpi kalvon tyyppi 3" -> "additionalPanelCoatingType3",
-    "lisakilpi lisakilven vari 3" -> "additionalPanelColor3"
+    "lisakilpi lisakilven vari 3" -> "additionalPanelColor3",
+    "lisakilpi 4" -> "additionalPanelType4",
+    "lisakilpi arvo 4" -> "additionalPanelValue4",
+    "lisakilpi lisatieto 4" -> "additionalPanelInfo4",
+    "lisakilpi teksti 4"-> "additionalPanelText4",
+    "lisakilpi koko 4" -> "additionalPanelSize4",
+    "lisakilpi kalvon tyyppi 4" -> "additionalPanelCoatingType4",
+    "lisakilpi lisakilven vari 4" -> "additionalPanelColor4",
+    "lisakilpi 5" -> "additionalPanelType5",
+    "lisakilpi arvo 5" -> "additionalPanelValue5",
+    "lisakilpi lisatieto 5" -> "additionalPanelInfo5",
+    "lisakilpi teksti 5"-> "additionalPanelText5",
+    "lisakilpi koko 5" -> "additionalPanelSize5",
+    "lisakilpi kalvon tyyppi 5" -> "additionalPanelCoatingType5",
+    "lisakilpi lisakilven vari 5" -> "additionalPanelColor5"
   )
 
   private val codeValueFieldMappings = Map(
