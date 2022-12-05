@@ -89,7 +89,7 @@
       {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 7, cssClass: 'admin-class'},
       {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 12, cssClass: 'lane-code'},
       {
-        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 13,
+        label: 'Kaistan tyyppi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 13,
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
@@ -267,6 +267,9 @@
             var selectedLinks = asset.selectedLinks;
             var publicId = field.publicId;
             var hasRoadAddress = hasRoadAddressInfo(selectedLinks);
+
+            // If lane has road address info and is cut, use lane's calculated road address start and end m-values
+            // Multiple lane selection for cut lanes is not supported currently and thus chaining road address values for cut lanes is not needed.
             var assetHasRoadAddressAndCut = hasRoadAddress && lanesAssets.isLaneFullLinkLength(asset);
             if(assetHasRoadAddressAndCut) lanesAssets.getAccurateAddressValues(asset);
 
