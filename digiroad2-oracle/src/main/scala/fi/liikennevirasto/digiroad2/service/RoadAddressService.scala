@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
@@ -14,6 +15,8 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimita
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
+import scala.compat.Platform.EOL
 
 case class RoadAddressForLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                               endDate: Option[DateTime] = None, linkId: String,
@@ -125,11 +128,10 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param linkIds The road link ids
     * @return
     */
-  //resolving_frozen_links batch used to keep crashing here because of Viite API GW limits, temporary fix implemented
-  //TODO Rollback this grouping fix after Viite has implemented API GW limitation work-around
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    val linkIdsSplit = linkIds.grouped(1000).toSeq
-    linkIdsSplit.flatMap(linkIdGroup => viiteClient.fetchAllByLinkIds(linkIdGroup))
+    ClientUtils.retry(2){
+      viiteClient.fetchAllByLinkIds(linkIds)
+    }
   }
 
   /**
@@ -151,11 +153,17 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       )
     } catch {
       case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        logger.error(s"Viite connection failing with message ${hhce.getMessage} and stacktrace: \n ${hhce.getStackTrace.mkString("", EOL, EOL)}")
+        logger.info("Failed to retrieve road address information, return links without it.")
         roadLinks
       case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
+        logger.error(s"Viite error with message ${vce.getMessage} and stacktrace: \n ${vce.getStackTrace.mkString("", EOL, EOL)}")
+        logger.info("Failed to retrieve road address information, return links without it.")
         roadLinks
+      case e: Exception =>
+        logger.error(s"Unknown error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
+        logger.info("Failed to retrieve road address information, return links without it.")
+        roadLinks  
     }
   }
 

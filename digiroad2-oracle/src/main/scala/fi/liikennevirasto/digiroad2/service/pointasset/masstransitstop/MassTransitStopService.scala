@@ -36,7 +36,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: String, 
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property], linkSource: LinkGeomSource, terminalId: Option[Long] = None) extends PersistedPointAsset with TimeStamps
 
-case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], linkId: String, bearing: Option[Int],
+case class MassTransitStopRow(id: Long, nationalId: Long, assetTypeId: Long, point: Option[Point], linkId: String, bearing: Option[Int],
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                               created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                               roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean, terminalId: Option[Long])
@@ -118,7 +118,7 @@ trait MassTransitStopService extends PointAssetOperations {
   val geometryTransform: GeometryTransform
 
   override def typeId: Int = 10
-  override val idField = "external_id"
+  override val idField = "national_id"
 
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T

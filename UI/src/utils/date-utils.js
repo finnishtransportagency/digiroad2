@@ -11,6 +11,10 @@
     weekdaysShort: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La']
   };
 
+  var fromDateString = function (s) {
+    return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
+  };
+
   dateutil.iso8601toFinnish = function (iso8601DateString) {
     return _.isString(iso8601DateString) ? moment(iso8601DateString, ISO_8601_DATE_FORMAT).format(FINNISH_DATE_FORMAT) : "";
   };
@@ -43,9 +47,6 @@
   };
 
   dateutil.addDependentDatePickers = function (fromElement, toElement, invElement) {
-    var fromDateString = function (s) {
-      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
-    };
     var from = fromDateString(fromElement.val());
     var to = fromDateString(toElement.val());
     var datePickers;
@@ -74,9 +75,6 @@
   };
 
   dateutil.addTwoDependentDatePickers = function (fromElement, toElement) {
-    var fromDateString = function (s) {
-      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
-    };
     var startDate = fromDateString(fromElement.val());
     var endDate = fromDateString(toElement.val());
     var datePickers;
@@ -100,10 +98,42 @@
     }
   };
 
-  dateutil.addDependentDatePicker = function (dateElement) {
-    var fromDateString = function (s) {
-      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
+  dateutil.addTwoDependentDatePickersForLanes = function (fromElement, toElement) {
+    var startDate = fromDateString(fromElement.val());
+    var endDate = fromDateString(toElement.val());
+    var datePickers;
+    var fromCallback = function () {
+      datePickers.endDate.setMinDate(datePickers.startDate.getDate());
+      fromElement.trigger('datechange');
     };
+    var toCallback = function () {
+      var selectedEndDate = datePickers.endDate.getDate();
+      var dateNow = new Date().setHours(0,0,0,0);
+      if(selectedEndDate < dateNow) {
+        var endDateAlertPopUpOptions = {
+          type: "alert",
+          yesButtonLbl: 'Ok',
+        };
+        var endDateAlertMessage = "Valittu kaistan loppupäivänmäärä on menneisyydessä. Kaista päätetään tallentaessa.";
+
+        GenericConfirmPopup(endDateAlertMessage, endDateAlertPopUpOptions);
+      }
+      datePickers.startDate.setMaxDate(datePickers.endDate.getDate());
+      toElement.trigger('datechange');
+    };
+    datePickers = {
+      startDate: dateutil.addNullableFinnishDatePicker(fromElement, fromCallback),
+      endDate: dateutil.addNullableFinnishDatePicker(toElement, toCallback)
+    };
+    if (startDate) {
+      datePickers.startDate.setMaxDate(endDate);
+    }
+    if (endDate) {
+      datePickers.endDate.setMinDate(startDate);
+    }
+  };
+
+  dateutil.addDependentDatePicker = function (dateElement) {
 
     var date = fromDateString(dateElement.val());
 

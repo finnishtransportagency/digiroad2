@@ -414,6 +414,7 @@
       _.forEach(lanesAfterPromotion, function (lane) {
         setPropertyByPublicId(lane, 'lane_type', null);
       });
+      removePropertyByPublicId(newMainLane, "end_date");
       self.selection = lanesAfterPromotion;
       reorganizeLanes(laneNumber);
       self.dirty = true;
@@ -439,6 +440,14 @@
       _.map(lane.properties, function (prop) {
         if (prop.publicId === propertyPublicId) {
           prop.values[0] = {value: propertyValue};
+        }
+      });
+    }
+
+    function removePropertyByPublicId(lane, propertyPublicId) {
+      _.map(lane.properties, function (prop) {
+        if (prop.publicId === propertyPublicId) {
+          prop.values = undefined;
         }
       });
     }

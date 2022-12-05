@@ -22,7 +22,7 @@ import scala.language.reflectiveCalls
 class MassTransitStopDao {
   val logger = LoggerFactory.getLogger(getClass)
   def typeId: Int = 10
-  val idField = "external_id"
+  val idField = "national_id"
 
   implicit val SetStringSeq: SetParameter[IndexedSeq[Any]] = new SetParameter[IndexedSeq[Any]] {
     def apply(seq: IndexedSeq[Any], p: PositionedParameters): Unit = {
@@ -33,7 +33,7 @@ class MassTransitStopDao {
   }
 
   def queryFetchPointAssets() : String = {
-    """ select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
+    """ select a.id, a.national_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
         lrm.adjusted_timestamp, p.id as p_id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
         case
@@ -67,7 +67,7 @@ class MassTransitStopDao {
         val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from asset a "
 
-        s"select id, external_id, asset_type_id, bearing, side_code, valid_from, valid_to, geometry, municipality_code, floating, "+
+        s"select id, national_id, asset_type_id, bearing, side_code, valid_from, valid_to, geometry, municipality_code, floating, "+
         s" adjusted_timestamp, p_id, public_id, property_type, required, max_value_length, value, display_value, lrm_id, start_measure, "+
         s" end_measure, link_id, created_date, created_by, modified_date, modified_by, position_wgs84, link_source, terminal_asset_id "+
         s" from ( ${queryFilter(query.replace("from asset a", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum "
@@ -132,7 +132,7 @@ class MassTransitStopDao {
       val timeStamp = row.lrmPosition.timeStamp
       val linkSource = row.lrmPosition.linkSource
 
-      id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, linkId = row.linkId, stopTypes = stopTypes,
+      id -> PersistedMassTransitStop(id = row.id, nationalId = row.nationalId, linkId = row.linkId, stopTypes = stopTypes,
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
         validityPeriod = validityPeriod, floating = row.persistedFloating, timeStamp = timeStamp, created = row.created, modified = row.modified,
@@ -149,7 +149,7 @@ class MassTransitStopDao {
   private implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
     def apply(r: PositionedResult) : MassTransitStopRow = {
       val id = r.nextLong
-      val externalId = r.nextLong
+      val nationalId = r.nextLong
       val assetTypeId = r.nextLong
       val bearing = r.nextIntOption
       val validityDirection = r.nextInt
@@ -183,7 +183,7 @@ class MassTransitStopDao {
       val wgsPoint = r.nextObjectOption().map(objectToPoint)
       val linkSource = r.nextInt
       val terminalId = r.nextLongOption
-      MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
+      MassTransitStopRow(id, nationalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
         lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, timeStamp, linkSource),
         municipalityCode = municipalityCode, persistedFloating = persistedFloating, terminalId = terminalId)
@@ -524,7 +524,7 @@ class MassTransitStopDao {
     val typeId = 10
     val pointGeometry =Queries.pointGeometry(lon,lat)
     sqlu"""
-           insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
+           insert into asset (id, national_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
            values ($id, $nationalId, $typeId, $bearing, $creator, $municipalityCode,
           ST_GeomFromText($pointGeometry,3067),
            $floating)
@@ -535,7 +535,7 @@ class MassTransitStopDao {
     val typeId = 10
     val pointGeometry =Queries.pointGeometry(lon,lat)
     sqlu"""
-           insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry, floating)
+           insert into asset (id, national_id, asset_type_id, created_by, municipality_code, geometry, floating)
            values ($id, $nationalId, $typeId, $creator, $municipalityCode,
            ST_GeomFromText($pointGeometry,3067),
            $floating)
@@ -608,7 +608,7 @@ class MassTransitStopDao {
 
   def getNationalIdByLiviId(liviId: String): Seq[Long] = {
     sql"""
-      select a.external_id
+      select a.national_id
       from text_property_value tp
       join asset a on a.id = tp.asset_id
       where tp.property_id = (select p.id from property p where p.public_id = 'yllapitajan_koodi')
@@ -617,7 +617,7 @@ class MassTransitStopDao {
 
   def getNationalIdsByPassengerId(passengerId: String): Seq[Long] = {
     sql"""
-      select a.external_id
+      select a.national_id
       from text_property_value tp
       join asset a on a.id = tp.asset_id
       where tp.property_id = (select p.id from property p where p.public_id = 'matkustajatunnus')
@@ -633,11 +633,11 @@ class MassTransitStopDao {
   }
 
   def withNationalId(nationalId: Long)(query: String): String = {
-    query + s" where a.external_id = $nationalId"
+    query + s" where a.national_id = $nationalId"
   }
 
   def withNationalIds(nationalIds: Seq[Long])(query: String): String = {
-    query + s" where a.external_id in (${nationalIds.mkString(",")})"
+    query + s" where a.national_id in (${nationalIds.mkString(",")})"
   }
 
   def countTerminalChildBusStops(assetId: Long): Int = {

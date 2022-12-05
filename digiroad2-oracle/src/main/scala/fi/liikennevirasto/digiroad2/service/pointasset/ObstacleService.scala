@@ -99,7 +99,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found"))  match {
       case old if old.lat != updatedAsset.lat || old.lon != updatedAsset.lon =>
         expireWithoutTransaction(id)
-        val newId = PostGISObstacleDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        val newId = PostGISObstacleDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalId)
         municipalityAssetMappingService.updateIdMappings(old.id, newId, newTransaction = false)
         newId
       case _ =>
@@ -131,7 +131,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.timeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, linkSource = persistedStop.linkSource)
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, linkSource = persistedStop.linkSource, externalId = persistedStop.externalId)
 
   }
 
