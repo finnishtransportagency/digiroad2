@@ -1,0 +1,17 @@
+# Git
+.gitignore
+.git/
+
+# IntelliJ IDEA
+.idea/
+*.idea
+
+# Development
+dist/
+node_modules/
+schemas/
+aws/
+.aws-sam/
+env*
+events/
+*.log

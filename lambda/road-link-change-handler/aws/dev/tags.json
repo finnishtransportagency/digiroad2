@@ -1,0 +1,18 @@
+[
+  {
+    "Key": "Environment",
+    "Value": "dev"
+  },
+  {
+    "Key": "Administrator",
+    "Value": "kehitys@digiroad.fi"
+  },
+  {
+    "Key": "System Owner",
+    "Value": "vayla"
+  },
+  {
+    "Key": "Project",
+    "Value": "digiroad2"
+  }
+]

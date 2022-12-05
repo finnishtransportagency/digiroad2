@@ -1,0 +1,192 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for resources that are used to fetch changes in road links.
+
+Parameters:
+  ApplicationName:
+    Description: Name of the application. Used when tagging the resources
+    Type: String
+  Environment:
+    Description: Environment where resources are created. Used when tagging the resources
+    Type: String
+    AllowedValues: ["dev", "qa", "prod"]
+  OrganizationPrefix:
+    Description: Prefix for organization
+    Type: String
+  ECRRepository:
+    Type: String
+    Description: Name of ECR repository
+  ECRImageTag:
+    Type: String
+    Description: ECR image tag name
+
+Conditions:
+  IsDev:
+    "Fn::Equals":
+      - !Ref Environment
+      - dev
+
+Resources:
+  ### S3 ###
+  ChangeBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+      ObjectLockEnabled: false
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteIncompleteMultipartUploads
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+            Status: Enabled
+      # TODO: NotificationConfiguration: -- add notification configuration to new object notify uploads
+      Tags:
+        - Key: Name
+          Value: !Sub ${ApplicationName}-${Environment}-road-link-change-bucket
+
+  ChangeBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DependsOn:
+      - LambdaRole
+    Properties:
+      Bucket: !Ref ChangeBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: LambdaPolicy
+            Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt LambdaRole.Arn
+            Action:
+              - s3:ListBucket   # Needed for defining time window for changes
+              - s3:PutObject    # Allows new object uploads
+            Resource:
+              - !GetAtt ChangeBucket.Arn
+              - !Join ['', [!GetAtt ChangeBucket.Arn, '/*']]
+          # TODO: Add permission for batch role to list and get objects
+
+
+  ### LAMBDA ###
+  Lambda:
+    DependsOn: LambdaRole
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Environment}-${ApplicationName}-road-link-change-handler"
+      Description: Lambda for fetching road link changes, saving them and generating change sets
+      MemorySize: 128 # Increase according to need
+      Timeout: 30     # Increase according to need
+      Role: !GetAtt LambdaRole.Arn
+      PackageType: Image
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:${ECRImageTag}
+      ImageConfig:
+        Command:
+          - index.handler
+      Environment:
+        Variables:
+          CHANGES_FROM:   ""  # For testing purposes
+          CHANGES_TO:     ""  # For testing purposes
+          CHANGE_BUCKET:  !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+      Tags:
+        - Key: Name
+          Value: !Sub ${ApplicationName}-${Environment}-road-link-change-lambda-role
+
+  StartLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt Lambda.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${Environment}-${ApplicationName}-start-road-link-change-handler-event
+
+
+  ### EVENTS ###
+
+  StartLambdaEvent:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${Environment}-${ApplicationName}-start-road-link-change-handler-event"
+      Description: "Scheduled event to start fetching of road link changes"
+      ScheduleExpression: "cron(0 1 ? * 1-5 *)" # Runs every weekday at 01:00 UTC
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt Lambda.Arn
+          Id: !Sub "${Environment}-${ApplicationName}-road-link-change-event-target"
+
+
+  # TODO: Add event to handle s3 put events
+
+  ### IAM ###
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Environment}-${ApplicationName}-road-link-change-handler-lambda-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+          - !If
+            - IsDev # Allows dev role to be assumed locally for testing purposes
+            - Effect: Allow
+              Principal:
+                AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+              Action: sts:AssumeRole
+              Condition:
+                StringLike:
+                  aws:PrincipalArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_DigiroadOthAdmin*"
+            - !Ref AWS::NoValue
+      Policies:
+        - PolicyName: PutS3ObjectToBucket
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub arn:aws:s3:::${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket/*
+        - PolicyName: ListS3BucketObjects
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub arn:aws:s3:::${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+      Tags:
+        - Key: Name
+          Value: !Sub ${ApplicationName}-${Environment}-road-link-change-lambda-role
+
+  CloudWatchAccessPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - LambdaRole
+    Properties:
+      PolicyName: !Sub ${Environment}-${ApplicationName}-CloudWatchAccessPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: '*'
+      Roles:
+        - !Ref LambdaRole
+
+  LambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: Lambda
+    Properties:
+      RetentionInDays: 180
+      LogGroupName: !Sub "/aws/lambda/${Lambda}"

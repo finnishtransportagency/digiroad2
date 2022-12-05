@@ -1,0 +1,1 @@
+# Tielinkkien muutosten kyselijä lambda
