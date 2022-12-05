@@ -364,6 +364,8 @@
       return getProperty(self.getLane(laneNumber, marker), 'properties');
     };
 
+    // Calculate accurate road address start and end m-values for additional lane. Get road link measures from main lane.
+    // A coefficient is needed because road address and geometry lengths don't match exactly
     this.getAccurateAddressValues = function(lane) {
       var mainLane = collection.getMainLaneByLinkIdAndSideCode(lane.linkId, lane.sideCode);
       var roadLinkLength = mainLane.endMeasure;

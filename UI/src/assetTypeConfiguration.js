@@ -1030,7 +1030,7 @@
               label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11, cssClass: 'lane-code'
             },
             {
-              label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
+              label: 'Kaistan tyyppi', required: 'required', type: 'single_choice', publicId: "lane_type",
               values: [
                 {id: 2, label: 'Ohituskaista'},
                 {id: 3, label: 'Kääntymiskaista oikealle'},
