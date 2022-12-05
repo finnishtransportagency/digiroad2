@@ -184,6 +184,15 @@ aws batch register-job-definition \
 --cli-input-json file://aws/cloud-formation/batchSystem/ProdBatchJobDefinition.json
 ```
 
+
+### Batch-Lambdan koodin päivitys
+```
+aws lambda update-function-code \
+-- function-name Batch-Add-Jobs-To-Queue-New \
+-- s3-bucket prod-batch-lambda-deployment-bucket \
+-- s3-key deployment_package.zip
+```
+
 ### Batch-Lambdan päivitys (tarvittaessa)
 ```
 aws cloudformation update-stack \
