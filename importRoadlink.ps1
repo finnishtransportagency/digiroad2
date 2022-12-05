@@ -15,8 +15,8 @@ $absolutePath = Get-Location
 $datasource = "postgresql://${sourceUser}:${sourcePassword}@localhost:${sourcePort}/${sourceDB}"
 $destinationpoint = "postgresql://digiroad2:${destinationPassword}@localhost:5432/digiroad2"
 
-$truncateroadlink   = "psql -c 'truncate roadlink;' ${destinationpoint}"
-$truncatecomplimentary  = "psql -c 'truncate roadlinkex;' ${destinationpoint}"
+$truncateroadlink   = "psql -c 'truncate kgv_roadlink;' ${destinationpoint}"
+$truncatecomplimentary  = "psql -c 'truncate qgis_roadlinkex;' ${destinationpoint}"
 
 $roadlink1 = "psql -c '\COPY (SELECT * FROM kgv_roadlink WHERE municipalitycode in (${municipalities})) TO ''${absolutePath}\tempSQL.sql'' (ENCODING ''UTF8'');' ${datasource}"
 $roadlink2 = "psql -c '\COPY kgv_roadlink FROM ''${absolutePath}\tempSQL.sql'';' ${destinationpoint}"
