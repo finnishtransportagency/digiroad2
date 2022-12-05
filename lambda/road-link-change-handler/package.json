@@ -4,9 +4,10 @@
   "description": "Lambda for fetching road link changes, saving them and generating change sets",
   "main": "index.js",
   "scripts": {
+    "test": "mocha --recursive --require mocha-suppress-logs",
     "compile": "tsc",
     "watch": "tsc -w --preserveWatchOutput",
-    "post-compile": "rm .dockerignore Dockerfile README.md tsconfig.json"
+    "post-compile": "rm .dockerignore Dockerfile README.md tsconfig.json && rm -r src test"
   },
   "author": "",
   "license": "ISC",
@@ -15,6 +16,9 @@
     "@types/aws-lambda": "^8.10.109",
     "@types/node": "^18.11.10",
     "aws-sdk": "^2.1266.0",
+    "chai": "^4.3.7",
+    "mocha": "^10.1.0",
+    "mocha-suppress-logs": "^0.3.1",
     "typescript": "^4.9.3"
   }
 }
