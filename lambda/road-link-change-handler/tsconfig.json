@@ -5,7 +5,11 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "removeComments": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitThis": true
   },
   "include": ["src/**/*.ts", "src/**/*.js"],
   "exclude": ["node_modules"]
