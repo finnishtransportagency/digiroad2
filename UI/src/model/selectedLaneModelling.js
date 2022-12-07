@@ -185,6 +185,11 @@
       return !_.isUndefined(lane);
     };
 
+    this.isLaneFullLinkLength = function(lane)  {
+      var selectedMainLane = self.getLane(1);
+      return lane.startMeasure !==  selectedMainLane.startMeasure || lane.endMeasure !== selectedMainLane.endMeasure;
+    };
+
     this.haveNewLane = function () {
       return _.some(self.selection, function(lane){
         return lane.id === 0;
@@ -357,6 +362,22 @@
 
     self.getValue = function(laneNumber, marker) {
       return getProperty(self.getLane(laneNumber, marker), 'properties');
+    };
+
+    // Calculate accurate road address start and end m-values for additional lane. Get road link measures from main lane.
+    this.getAddressValuesForCutLane = function(lane) {
+      var mainLane = collection.getMainLaneByLinkIdAndSideCode(lane.linkId, lane.sideCode);
+      var roadLinkLength = mainLane.endMeasure;
+
+      // A coefficient is needed because road address and geometry lengths don't match exactly. Coefficient tells
+      // how long is '1 road address meter' on current link's geometry
+      var coefficient = (mainLane.endAddrMValue - mainLane.startAddrMValue) / roadLinkLength;
+
+      var startAddressM = Math.round(mainLane.startAddrMValue + (coefficient * lane.startMeasure));
+      var endAddressM = Math.round(mainLane.endAddrMValue + (coefficient * (lane.endMeasure - roadLinkLength)));
+      lane.startAddrMValue = startAddressM;
+      lane.endAddrMValue = endAddressM;
+      return lane;
     };
 
     this.setNewLane = function(laneNumber) {
