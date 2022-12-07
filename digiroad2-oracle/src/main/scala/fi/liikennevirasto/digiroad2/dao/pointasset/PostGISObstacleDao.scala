@@ -125,12 +125,12 @@ object PostGISObstacleDao {
 
   def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[Obstacle] = {
     val recordLimit = token match {
-    case Some(tk) =>
-    val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
-    val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
-     s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
-     s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum"
+        val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
+          s" modified_by, modified_date, expired, link_source, external_id from ( ${queryFilter(query().replace("from", counter))} ) derivedAsset WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
     }
