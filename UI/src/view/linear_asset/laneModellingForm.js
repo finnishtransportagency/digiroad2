@@ -272,7 +272,7 @@
             // If lane has road address info and is cut, use lane's calculated road address start and end m-values
             // Multiple lane selection for cut lanes is not supported currently and thus chaining road address values for cut lanes is not needed.
             var assetHasRoadAddressAndCut = hasRoadAddress && lanesAssets.isLaneFullLinkLength(asset);
-            if(assetHasRoadAddressAndCut) lanesAssets.getAccurateAddressValues(asset);
+            if(assetHasRoadAddressAndCut) lanesAssets.getAddressValuesForCutLane(asset);
 
             switch (publicId) {
               case "roadNumber":
