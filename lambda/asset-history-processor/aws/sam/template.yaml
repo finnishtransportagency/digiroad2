@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda for local testing purposes
+
+Resources:
+  Lambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Lambda for processing Digiroad asset changes and saving them to change table
+      MemorySize: 128
+      Timeout: 30
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - index.handler
+    Metadata:
+      DockerTag: nodejs18.x-v1
+      DockerContext: ../../
+      Dockerfile: Dockerfile
