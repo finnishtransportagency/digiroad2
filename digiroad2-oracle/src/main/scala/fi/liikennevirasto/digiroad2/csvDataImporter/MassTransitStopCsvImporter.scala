@@ -62,7 +62,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   def roadLinkService: RoadLinkService
   def eventBus: DigiroadEventBus
 
-  class AssetNotFoundException(externalId: Long) extends RuntimeException
+  class AssetNotFoundException(nationalId: Long) extends RuntimeException
 
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
@@ -109,9 +109,9 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "roska-astia" -> "roska_astia") ++
     stopAdministratorProperty
 
-   protected val externalIdMapping = Map("valtakunnallinen id" -> "external_id")
+   protected val nationalIdMapping = Map("valtakunnallinen id" -> "national_id")
 
-  override val intValueFieldsMapping = externalIdMapping
+  override val intValueFieldsMapping = nationalIdMapping
 
   override val coordinateMappings = Map(
     "koordinaatti x" -> "maastokoordinaatti_x",
@@ -120,7 +120,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   override val longValueFieldsMapping = coordinateMappings
 
-  val optionalMappings = externalIdMapping ++ coordinateMappings
+  val optionalMappings = nationalIdMapping ++ coordinateMappings
 
   val mappings: Map[String, String] = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
 
@@ -135,12 +135,12 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] =
     throw new UnsupportedOperationException("Not Supported Method")
 
-  private def updateAssetByExternalId(externalId: Long, optPosition: Option[Position],properties: Seq[AssetProperty], user: User): MassTransitStopWithProperties = {
-    val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation, false)
+  private def updateAssetByNationalId(nationalId: Long, optPosition: Option[Position],properties: Seq[AssetProperty], user: User): MassTransitStopWithProperties = {
+    val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(nationalId, municipalityValidation, false)
     optionalAsset match {
       case Some(asset) =>
         massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, user.username, (_, _) => Unit, false)
-      case None => throw new AssetNotFoundException(externalId)
+      case None => throw new AssetNotFoundException(nationalId)
     }
   }
 
@@ -157,34 +157,34 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   case class CsvImportMassTransitStop(id: Long, floating: Boolean, roadLinkType: AdministrativeClass) extends FloatingAsset {}
 
-  private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String, optPosition: Option[Position]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
+  private def updateAssetByNationalIdLimitedByRoadType(nationalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String, optPosition: Option[Position]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
       val roadLink = roadLinkService.fetchByLinkId(stop.linkId)
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
       (CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
 
-    val optionalAsset = massTransitStopService.getByNationalId(externalId, municipalityValidation, massTransitStopTransformation)
+    val optionalAsset = massTransitStopService.getByNationalId(nationalId, municipalityValidation, massTransitStopTransformation)
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
         if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
         else Left(roadLinkType)
-      case None => throw new AssetNotFoundException(externalId)
+      case None => throw new AssetNotFoundException(nationalId)
     }
   }
 
-  def updateAsset(externalId: Long, optPosition: Option[Position], properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], user: User): ExcludedRoadLinkTypes = {
+  def updateAsset(nationalId: Long, optPosition: Option[Position], properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], user: User): ExcludedRoadLinkTypes = {
     // Remove livi-id from properties, we don't want to change is with CSV
     val propertiesWithoutLiviId = properties.filterNot(_.columnName == "yllapitajan_koodi")
     if (roadTypeLimitations.nonEmpty) {
-      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, propertiesWithoutLiviId, roadTypeLimitations, user.username, optPosition)
+      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByNationalIdLimitedByRoadType(nationalId, propertiesWithoutLiviId, roadTypeLimitations, user.username, optPosition)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
       }
     } else {
-      updateAssetByExternalId(externalId,  optPosition, propertiesWithoutLiviId, user)
+      updateAssetByNationalId(nationalId,  optPosition, propertiesWithoutLiviId, user)
       Nil
     }
   }
@@ -352,14 +352,14 @@ class Updater(roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: RoadLinkS
   override def roadLinkClient: RoadLinkClient = roadLinkClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def mandatoryFields: Set[String] = externalIdMapping.keySet
-  override val decisionFieldsMapping = externalIdMapping
-  override def mandatoryFieldsMapping: Map[String, String] = mappings ++ externalIdMapping
+  override def mandatoryFields: Set[String] = nationalIdMapping.keySet
+  override val decisionFieldsMapping = nationalIdMapping
+  override def mandatoryFieldsMapping: Map[String, String] = mappings ++ nationalIdMapping
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     println("Updating busStop")
-    val externalId = getPropertyValue(properties, "external_id").toString.toInt
-    updateAsset(externalId, None, properties.filterNot(_.columnName == "external_id"), roadTypeLimitations, user)
+    val nationalId = getPropertyValue(properties, "national_id").toString.toInt
+    updateAsset(nationalId, None, properties.filterNot(_.columnName == "national_id"), roadTypeLimitations, user)
       .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
   }
 }
@@ -420,16 +420,16 @@ class PositionUpdater (roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: 
   override def roadLinkClient: RoadLinkClient = roadLinkServiceImpl.roadLinkClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override val decisionFieldsMapping = coordinateMappings ++ externalIdMapping
-  override def mandatoryFields: Set[String] = coordinateMappings.keySet ++ externalIdMapping.keySet
-  override def mandatoryFieldsMapping:  Map[String, String] = mappings ++ coordinateMappings ++ externalIdMapping
+  override val decisionFieldsMapping = coordinateMappings ++ nationalIdMapping
+  override def mandatoryFields: Set[String] = coordinateMappings.keySet ++ nationalIdMapping.keySet
+  override def mandatoryFieldsMapping:  Map[String, String] = mappings ++ coordinateMappings ++ nationalIdMapping
 
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     println("Moving busStop")
     val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
     val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
-    val externalId = getPropertyValue(properties, "external_id").toString.toInt
+    val nationalId = getPropertyValue(properties, "national_id").toString.toInt
 
     val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations)
 
@@ -439,7 +439,7 @@ class PositionUpdater (roadLinkClientImpl: RoadLinkClient, roadLinkServiceImpl: 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
       val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
       val position = Some(Position(lon, lat, roadLink.head.linkId, Some(bearing)))
-      updateAsset(externalId, position, properties.filterNot(_.columnName == "external_id"), roadTypeLimitations, user)
+      updateAsset(nationalId, position, properties.filterNot(_.columnName == "national_id"), roadTypeLimitations, user)
         .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
     }
   }

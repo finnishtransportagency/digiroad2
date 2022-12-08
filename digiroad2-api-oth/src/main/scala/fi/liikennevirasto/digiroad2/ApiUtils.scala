@@ -1,17 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.awsService
-import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LogUtils}
 import org.joda.time.DateTime
 
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
 import org.json4s.DefaultFormats
 import org.json4s.native.Json
-import org.scalatra.{ActionResult, BadRequest, Found, Params}
+import org.scalatra.{ActionResult, BadRequest, Found, InternalServerError, Params}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
+import scala.compat.Platform.EOL
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,6 +26,8 @@ object ApiUtils {
     if (Digiroad2Properties.apiS3ObjectTTLSeconds != null) Digiroad2Properties.apiS3ObjectTTLSeconds.toInt
     else 300
 
+  def timer[R](operationName: String)(f: => R): R = LogUtils.time(logger, operationName)(f)
+  
   val MAX_WAIT_TIME_SECONDS: Int = 20
   val MAX_RESPONSE_SIZE_BYTES: Long = 1024 * 1024 * 10 // 10Mb in bytes
   val MAX_RETRIES: Int = 540 // 3 hours / 20sec per retry
@@ -60,8 +63,13 @@ object ApiUtils {
         redirectToUrl(preSignedUrl, queryId)
 
       case (None, false) =>
-        newQuery(workId, queryId, path, f, params, responseType)
-
+        try {
+          newQuery(workId, queryId, path, f, params, responseType)
+        } catch {
+          case e: Exception => 
+            logger.error(s"API LOG $queryId: error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
+            InternalServerError(s"Request with id $queryId failed.")
+        }
       case (Some(retry: String), false) =>
         val currentRetry = retry.toInt
         if (currentRetry <= MAX_RETRIES)
@@ -81,20 +89,25 @@ object ApiUtils {
   }
 
   def newQuery[T](workId: String, queryId: String, path: String, f: Params => T, params: Params, responseType: String): Any = {
-    val ret = Future { f(params) }
+    val ret = Future {
+      f(params) // In error situation this future does not get Promise.failed states.
+    }
     try {
       val response = Await.result(ret, Duration.apply(MAX_WAIT_TIME_SECONDS, TimeUnit.SECONDS))
+      
       response match {
         case _: ActionResult => response
         case _ =>
-          val responseString = formatResponse(response, responseType)
+          val responseString = formatResponse(response, responseType, queryId)
           val responseSize = responseString.getBytes("utf-8").length
           if (responseSize < MAX_RESPONSE_SIZE_BYTES) {
             logger.info(s"API LOG $queryId: Completed the query at ${DateTime.now} without any redirects.")
             response
           }
           else {
-            Future { s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType) }
+            Future {
+              s3Service.saveFileToS3(s3Bucket, workId, responseString, responseType)
+            }
             redirectToUrl(path, queryId, Some(1))
           }
       }
@@ -102,21 +115,27 @@ object ApiUtils {
       case _: TimeoutException =>
         Future { // Complete query and save results to s3 in future
           val finished = Await.result(ret, Duration.Inf)
-          val responseBody = formatResponse(finished,  responseType)
+          val responseBody = formatResponse(finished, responseType, queryId)
           s3Service.saveFileToS3(s3Bucket, workId, responseBody, responseType)
         }
         redirectToUrl(path, queryId, Some(1))
     }
   }
-
-  def formatResponse(content: Any, responseType: String): String = {
+  
+  def formatResponse(content: Any, responseType: String,queryId: String): String = {
     (content, responseType) match {
       case (response: Seq[_], "json") =>
-        Json(DefaultFormats).write(response.asInstanceOf[Seq[Map[String, Any]]])
+        timer(s"API LOG $queryId: convert to json"){
+          Json(DefaultFormats).write(response.asInstanceOf[Seq[Map[String, Any]]])
+        }
       case (response: Set[_], "json") =>
+        timer(s"API LOG $queryId: convert to json"){
         Json(DefaultFormats).write(response.asInstanceOf[Set[Map[String, Any]]])
+        }
       case (response: Map[_, _], "json") =>
+        timer(s"API LOG $queryId: convert to json"){
         Json(DefaultFormats).write(response.asInstanceOf[Map[String, Any]])
+        }
       case _ =>
         throw new NotImplementedError("Unrecognized response format")
     }

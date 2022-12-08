@@ -101,12 +101,12 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
         }
         val newProperty = Property(0, "liitetty_terminaaliin", PropertyTypes.ReadOnlyText, values = Seq(PropertyValue(terminalId.toString, displayValue)))
 
-        val terminalExternalId = terminalAssetOption.map(_.nationalId.toString) match {
+        val terminalNationalId = terminalAssetOption.map(_.nationalId.toString) match {
           case Some(extId) => Seq(PropertyValue(extId))
           case _ => Seq()
         }
 
-        val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalExternalId)
+        val newPropertyExtId = Property(0, "liitetty_terminaaliin_ulkoinen_tunnus", PropertyTypes.ReadOnlyText, values = terminalNationalId)
 
         (asset.copy(propertyData = addRoadAddressProperties(asset.propertyData ++ Seq(newProperty, newPropertyExtId))), false)
       case _ =>

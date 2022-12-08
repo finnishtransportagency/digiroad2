@@ -62,7 +62,8 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.timeStamp, persistedStop.municipalityCode, persistedStop.propertyData,
-      persistedStop.createdBy, persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
+      persistedStop.createdBy, persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt,
+      persistedStop.linkSource, persistedStop.externalId)
   }
 
   def createFromCoordinates(incomingRailwayCrossing: IncomingRailwayCrossing, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
@@ -124,7 +125,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if  old.lat != updatedAsset.lat || old.lon != updatedAsset.lon=>
         expireWithoutTransaction(id)
-        PostGISRailwayCrossingDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
+        PostGISRailwayCrossingDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, timeStamp.getOrElse(createTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt, old.externalId)
       case _ =>
         PostGISRailwayCrossingDao.update(id, setAssetPosition(updatedAsset,roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(timeStamp.getOrElse(createTimeStamp())), roadLink.linkSource)
     }

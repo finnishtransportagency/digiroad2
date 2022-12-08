@@ -1069,11 +1069,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(false))
       //Get all external ids from the working list
-      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
+      val nationalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
 
       //Should not find any external id of the asset with administration class changed
-      externalIds.foreach{ externalId =>
-        externalId.get("id") should not be (Some(8))
+      nationalIds.foreach{ nationalId =>
+        nationalId.get("id") should not be (Some(8))
       }
     }
   }
@@ -1088,10 +1088,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(true))
       //Get all external ids from the working list
-      val externalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
+      val nationalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
 
       //Should have the external id of the asset with administration class changed
-      externalIds.map(_.get("id")) should contain (Some(8))
+      nationalIds.map(_.get("id")) should contain (Some(8))
     }
   }
   def getLiviIdValue(properties: Seq[AbstractProperty]) = {

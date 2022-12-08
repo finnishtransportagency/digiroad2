@@ -1,0 +1,1 @@
+UPDATE enumerated_value SET name_fi = E'F53 Esteetön reitti', modified_date = current_timestamp, modified_by = E'db_migration_v1_18' WHERE property_id = (select id from property where public_id = 'trafficSigns_type') AND value = 119;

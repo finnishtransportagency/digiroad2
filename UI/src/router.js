@@ -246,7 +246,7 @@
         applicationModel.selectLayer('massTransitStop');
         var assetFound = function (massTransitStop) {
           eventbus.once('massTransitStops:available', function () {
-            models.selectedMassTransitStopModel.changeByExternalId(id);
+            models.selectedMassTransitStopModel.changeByNationalId(id);
           });
             // center and zoom only if request succeed
             // when calling MassServiceStopByNationalId
