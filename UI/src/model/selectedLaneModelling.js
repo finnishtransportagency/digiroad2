@@ -368,15 +368,25 @@
     this.getAddressValuesForCutLane = function(lane) {
       var mainLane = collection.getMainLaneByLinkIdAndSideCode(lane.linkId, lane.sideCode);
       var roadLinkLength = mainLane.endMeasure;
+      var roadAddressSideCode = mainLane.roadAddressSideCode;
 
       // A coefficient is needed because road address and geometry lengths don't match exactly. Coefficient tells
       // how long is '1 road address meter' on current link's geometry
       var coefficient = (mainLane.endAddrMValue - mainLane.startAddrMValue) / roadLinkLength;
 
-      var startAddressM = Math.round(mainLane.startAddrMValue + (coefficient * lane.startMeasure));
-      var endAddressM = Math.round(mainLane.endAddrMValue + (coefficient * (lane.endMeasure - roadLinkLength)));
-      lane.startAddrMValue = startAddressM;
-      lane.endAddrMValue = endAddressM;
+      // If road address side code is towards digitizing(2) startAddrMValue points to lane's start measure (southern end-point)
+      // and endAddrMValue points to lane's end measure (northern  end-point)
+      if (roadAddressSideCode === 2) {
+        lane.startAddrMValue = mainLane.startAddrMValue + Math.round(lane.startMeasure * coefficient);
+        lane.endAddrMValue = mainLane.startAddrMValue + Math.round(lane.endMeasure * coefficient);
+      }
+      // If road address side code is against digitizing(3) startAddrMValue points to lane's  end measure (northern end-point)
+      // and endAddrMValue points to lane's start measure (southern point)
+      else if (roadAddressSideCode === 3) {
+        lane.endAddrMValue = mainLane.endAddrMValue - Math.round(lane.startMeasure * coefficient);
+        lane.startAddrMValue = mainLane.endAddrMValue - Math.round(lane.endMeasure * coefficient);
+      }
+
       return lane;
     };
 
