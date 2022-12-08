@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for resources that are used to fetch changes in road links.
+
+Parameters:
+  ApplicationName:
+    Description: Name of the application. Used when tagging the resources
+    Type: String
+  Environment:
+    Description: Environment where resources are created. Used when tagging the resources
+    Type: String
+    AllowedValues: ["dev", "qa", "prod"]
+  ECRRepository:
+    Type: String
+    Description: Name of ECR repository
+  ECRImageTag:
+    Type: String
+    Description: ECR image tag name
+
+Conditions:
+  IsDev:
+    "Fn::Equals":
+      - !Ref Environment
+      - dev
+
+Resources:
+
+  ### SQS ###
+
+  SQSQueue:
+    Type: 'AWS::SQS::Queue'
+    DeletionPolicy: Retain
+    Properties:
+      DeduplicationScope: queue
+      FifoQueue: true
+      FifoThroughputLimit: perQueue
+      MessageRetentionPeriod: 345600
+      QueueName: !Sub ${Environment}-${ApplicationName}-change-queue.fifo
+      ReceiveMessageWaitTimeSeconds: 0
+      VisibilityTimeout: 120
+      DelaySeconds: 0
+      #RedrivePolicy:  # dead-letter queue functionality
+      #  deadLetterTargetArn: ""
+      #  maxReceiveCount: 3
+
+  SQSQueuePolicy:
+    Type: 'AWS::SQS::QueuePolicy'
+    Properties:
+      Queues:
+        - !Ref SQSQueue
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: OwnerStatement
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action:
+              - sqs:SendMessage
+              - sqs:DeleteMessage
+            Resource: !GetAtt SQSQueue.Arn
+          # TODO: Allow Digiroad to send messages
+          # TODO: Allow municipality api to send messages
+          - Sid: AllowLambdaAccess
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AWS::AccountId}:role/${Environment}-${ApplicationName}-asset-history-processor-lambda-role
+            Action:
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ChangeMessageVisibility
+            Resource: !GetAtt SQSQueue.Arn
+
+  ### LAMBDA ###
+  Lambda:
+    DependsOn: LambdaRole
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${Environment}-${ApplicationName}-asset-history-processor"
+      Description: Lambda for processing Digiroad asset changes and saving them to change table
+      MemorySize: 128 # Increase according to need
+      Timeout: 30     # Increase according to need
+      Role: !GetAtt LambdaRole.Arn
+      PackageType: Image
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:${ECRImageTag}
+      ImageConfig:
+        Command:
+          - index.handler
+      Tags:
+        - Key: Name
+          Value: !Sub ${ApplicationName}-${Environment}-asset-history-processor-lambda-role
+
+  LambdaEventSource:
+   Type: AWS::Lambda::EventSourceMapping
+   Properties:
+     Enabled: true
+     EventSourceArn: !GetAtt SQSQueue.Arn
+     FunctionName: !GetAtt Lambda.Arn
+     MaximumBatchingWindowInSeconds: 0
+     BatchSize: 1
+
+  ### IAM ###
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Environment}-${ApplicationName}-asset-history-processor-lambda-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+          - !If
+            - IsDev # Allows dev role to be assumed locally for testing purposes
+            - Effect: Allow
+              Principal:
+                AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+              Action: sts:AssumeRole
+              Condition:
+                StringLike:
+                  aws:PrincipalArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_DigiroadOthAdmin*"
+            - !Ref AWS::NoValue
+      Policies:
+        - PolicyName: ProcessSQSMessages
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ChangeMessageVisibility
+                Resource: !GetAtt SQSQueue.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub ${ApplicationName}-${Environment}-asset-history-processor-lambda-role
+
+  CloudWatchAccessPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - LambdaRole
+    Properties:
+      PolicyName: !Sub ${Environment}-${ApplicationName}-CloudWatchAccessPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: '*'
+      Roles:
+        - !Ref LambdaRole
+
+  LambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: Lambda
+    Properties:
+      RetentionInDays: 180
+      LogGroupName: !Sub "/aws/lambda/${Lambda}"
