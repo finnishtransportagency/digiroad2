@@ -1,0 +1,5 @@
+# Development
+node_modules/
+dist/
+.aws-sam/
+*.log
