@@ -28,11 +28,10 @@
     };
 
     self.getMainLaneByLinkIdAndSideCode = function(linkId, sideCode) {
-      return _.head(_.find(self.linearAssets, function(linearAssetGroup) {
-        return _.find(linearAssetGroup, function(lane) {
+      return _.find(_.flatten(self.linearAssets), function(lane) {
           var laneCode = _.head(Property.getPropertyByPublicId(lane.properties, 'lane_code').values).value;
-          return lane.linkId === linkId && laneCode === 1 && lane.sideCode === sideCode;});
-      }));
+          return lane.linkId === linkId && laneCode === 1 && lane.sideCode === sideCode;
+      });
     };
 
     self.fetchViewOnlyLanes = function(boundingBox, zoom) {

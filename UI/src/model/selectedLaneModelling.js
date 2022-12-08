@@ -368,15 +368,21 @@
     this.getAddressValuesForCutLane = function(lane) {
       var mainLane = collection.getMainLaneByLinkIdAndSideCode(lane.linkId, lane.sideCode);
       var roadLinkLength = mainLane.endMeasure;
+      var roadAddressSideCode = mainLane.roadAddressSideCode;
 
       // A coefficient is needed because road address and geometry lengths don't match exactly. Coefficient tells
       // how long is '1 road address meter' on current link's geometry
       var coefficient = (mainLane.endAddrMValue - mainLane.startAddrMValue) / roadLinkLength;
 
-      var startAddressM = Math.round(mainLane.startAddrMValue + (coefficient * lane.startMeasure));
-      var endAddressM = Math.round(mainLane.endAddrMValue + (coefficient * (lane.endMeasure - roadLinkLength)));
-      lane.startAddrMValue = startAddressM;
-      lane.endAddrMValue = endAddressM;
+      if(roadAddressSideCode === 3) {
+        lane.endAddrMValue = mainLane.endAddrMValue - Math.round(lane.startMeasure * coefficient);
+        lane.startAddrMValue = mainLane.endAddrMValue - Math.round(lane.endMeasure * coefficient);
+      }
+      else if(roadAddressSideCode === 2) {
+        lane.startAddrMValue = mainLane.startAddrMValue + Math.round(lane.startMeasure * coefficient);
+        lane.endAddrMValue = mainLane.startAddrMValue + Math.round(lane.endMeasure * coefficient);
+      }
+
       return lane;
     };
 
