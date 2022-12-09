@@ -90,8 +90,8 @@ Resources:
           - index.handler
       Environment:
         Variables:
-          CHANGES_FROM:   ""  # For testing purposes
-          CHANGES_TO:     ""  # For testing purposes
+          CHANGES_SINCE:  ""  # For testing purposes
+          CHANGES_UNTIL:  ""  # For testing purposes
           CHANGE_BUCKET:  !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
       Tags:
         - Key: Name
