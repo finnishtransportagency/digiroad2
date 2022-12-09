@@ -775,7 +775,7 @@
 
     var newLaneStructure = function (laneNumber) {
       var indexOfProperty = _.findIndex(defaultFormStructure.fields, {'publicId': 'lane_code'});
-      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 11};
+      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 12};
       currentFormStructure = defaultFormStructure;
     };
 
