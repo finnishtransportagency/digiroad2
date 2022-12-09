@@ -50,6 +50,17 @@ Laita lambdan käynnistävä EventBridge sääntö takaisin päälle siinä vaih
 aws events enable-rule --name dev-digiroad2-start-asset-history-processor-event
 ```
 
+### Luo kehitys pipeline
+*Huom.* Korvaa GitHubWebhookSecret oikealla arvolla
+```
+aws cloudformation create-stack \
+--stack-name [esim. dev-digiroad2-asset-history-pipeline] \ 
+--template-body file://aws/cloudformation/cicd/dev-cicd-template.yaml \
+--parameters file://aws/dev/cicd-parameter.json \
+--tags file://aws/dev/tags.json \
+--capabilities CAPABILITY_NAMED_IAM
+```
+
 
 # Kehitysympäristön päivitys
 
@@ -57,8 +68,18 @@ aws events enable-rule --name dev-digiroad2-start-asset-history-processor-event
 
 *HUOM.* Tarkista ennen jokaista update-stack komentoa parametritiedostojen sisältö.
 
+### Päivitä kehitys pipeline
+```
+aws cloudformation update-stack \
+--stack-name [esim. dev-digiroad2-asset-history-pipeline] \ 
+--template-body file://aws/cloudformation/cicd/dev-cicd-template.yaml \
+--parameters file://aws/dev/cicd-parameter.json \
+--tags file://aws/dev/tags.json \
+--capabilities CAPABILITY_NAMED_IAM
+```
+
 ### Päivitä resurssit
-*Huom.* Korvaa parametrit sisältävän tiedoston parametri "ECRImageTag" uudella ECRImageTag parametrin arvolla jos lambdan koodissa on tapahtunut muutoksia.
+*Huom.* Mikäli myös lambdan koodi halutaan päivittää, korvaa parametrit sisältävän tiedoston parametri "ECRImageTag" uudella ECRImageTag parametrin arvolla.
 ```
 aws cloudformation update-stack \
 --stack-name [esim. dev-digiroad2-asset-history-processor] \
