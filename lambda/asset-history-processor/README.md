@@ -6,8 +6,8 @@ Käsittelee jonoon (SQS) saapuneet muutostiedot ja tallentaa ne kantaan. Muutost
 
 | Ympäristö | Branch                    |
 |-----------|---------------------------|
-| dev       | dev-assetHistoryProsessor |
-| qa        | qa-assetHistoryProsessor  |
+| dev       | dev-assetHistoryProcessor |
+| qa        | qa-assetHistoryProcessor  |
 | prod      | master                    |
 
 ## Lambdojen testaaminen lokaalisti
