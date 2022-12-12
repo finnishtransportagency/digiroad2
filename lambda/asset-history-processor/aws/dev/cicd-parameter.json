@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "EcrRepositoryName",
-    "ParameterValue": "digiroad2-asset-history-processor-lambda"
+    "ParameterValue": "dev-digiroad2-asset-history-processor-lambda"
   },
   {
     "ParameterKey": "CodeBuildImage",

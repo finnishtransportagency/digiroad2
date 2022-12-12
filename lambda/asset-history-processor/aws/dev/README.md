@@ -13,7 +13,8 @@ cd lambda/asset-history-processor
 ```
 aws cloudformation create-stack \
 --stack-name [esim. dev-digiroad2-asset-history-processor-lambda-ecr] \
---template-body file://aws/cloudformation/ecr/dev.yaml \
+--template-body file://aws/cloudformation/ecr/ecr.yaml \
+--parameters ParameterKey=Environment,ParameterValue=dev \
 --tags file://aws/dev/tags.json
 ```
 

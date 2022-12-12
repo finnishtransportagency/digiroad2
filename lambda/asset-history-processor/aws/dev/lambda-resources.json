@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "ECRRepository",
-    "ParameterValue": "digiroad2-asset-history-processor-lambda"
+    "ParameterValue": "dev-digiroad2-asset-history-processor-lambda"
   },
   {
     "ParameterKey": "ECRImageTag",
