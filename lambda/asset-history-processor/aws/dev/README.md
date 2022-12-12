@@ -55,7 +55,7 @@ aws events enable-rule --name dev-digiroad2-start-asset-history-processor-event
 ```
 aws cloudformation create-stack \
 --stack-name [esim. dev-digiroad2-asset-history-pipeline] \ 
---template-body file://aws/cloudformation/cicd/dev-cicd-template.yaml \
+--template-body file://aws/cloudformation/cicd/cicd-stack.yaml \
 --parameters file://aws/dev/cicd-parameter.json \
 --tags file://aws/dev/tags.json \
 --capabilities CAPABILITY_NAMED_IAM
@@ -72,7 +72,7 @@ aws cloudformation create-stack \
 ```
 aws cloudformation update-stack \
 --stack-name [esim. dev-digiroad2-asset-history-pipeline] \ 
---template-body file://aws/cloudformation/cicd/dev-cicd-template.yaml \
+--template-body file://aws/cloudformation/cicd/cicd-stack.yaml \
 --parameters file://aws/dev/cicd-parameter.json \
 --tags file://aws/dev/tags.json \
 --capabilities CAPABILITY_NAMED_IAM
