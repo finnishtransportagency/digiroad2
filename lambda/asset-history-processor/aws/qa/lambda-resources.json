@@ -5,14 +5,14 @@
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "dev"
+    "ParameterValue": "qa"
   },
   {
     "ParameterKey": "ECRRepository",
-    "ParameterValue": "dev-digiroad2-asset-history-processor-lambda"
+    "ParameterValue": "qa-digiroad2-asset-history-processor-lambda"
   },
   {
     "ParameterKey": "ECRImageTag",
-    "ParameterValue": "latest"
+    "ParameterValue": "qa"
   }
 ]

@@ -14,8 +14,8 @@ Parameters:
   CodeBuildImage:
     Description: Image used for CodeBuild project
     Type: String
-  BuildSpecPath:
-    Description: Path to lambda function buildspec file in git repository
+  EcrTag:
+    Description: Tag used to mark current version
     Type: String
   LambdaName:
     Description: Name of lambda function updated with pipeline
@@ -185,9 +185,11 @@ Resources:
             Value: !Ref AWS::AccountId
           - Name: LAMBDA_NAME
             Value: !Ref LambdaName
+          - Name: ECR_TAG
+            Value: !Ref EcrTag
       Source:
         Type: CODEPIPELINE
-        BuildSpec: !Ref BuildSpecPath
+        BuildSpec: lambda/asset-history-processor/aws/codebuild/buildspec.yml
       Artifacts:
         Name: !Ref PipelineName
         Type: CODEPIPELINE
