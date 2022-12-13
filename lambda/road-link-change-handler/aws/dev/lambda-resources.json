@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "ECRRepository",
-    "ParameterValue": "digiroad2-road-link-change-lambda"
+    "ParameterValue": "dev-digiroad2-road-link-change-lambda"
   },
   {
     "ParameterKey": "ECRImageTag",
