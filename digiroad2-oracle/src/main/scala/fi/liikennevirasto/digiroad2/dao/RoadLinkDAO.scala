@@ -302,6 +302,10 @@ class RoadLinkDAO {
   def fetchWalkwaysByBoundsAndMunicipalities(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[RoadLinkFetched] = {
     getByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314))))
   }
+
+  def fetchExpiredRoadLinks(): Seq[RoadLinkFetched] = {
+    getExpiredRoadLinks()
+  }
   
   /**
     * Calls db operation to fetch roadlinks with given filter.
@@ -312,20 +316,32 @@ class RoadLinkDAO {
       getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
     } else Seq.empty[T]
   }
-  
- protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
-   LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
-     sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+
+  protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
+    LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
+      sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
                  verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
                  surfacetype, geometrylength
           from kgv_roadlink
-          where #$filter and constructiontype in (${ConstructionType.InUse.value},
+          where #$filter
+          and expired_date is null
+          and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
                                                   ${ConstructionType.Planned.value},
                                                   ${ConstructionType.TemporarilyOutOfUse.value})
           """.as[RoadLinkFetched].list
-   }
+    }
+  }
+
+  protected def getExpiredRoadLinks(): Seq[RoadLinkFetched] = {
+    sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
+                 roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
+                 verticalaccuracy, created_date, last_edited_date, from_left, to_left, from_right, to_right,
+                 surfacetype, geometrylength
+          from kgv_roadlink
+          where expired_date is not null
+          """.as[RoadLinkFetched].list
   }
 
   private def getByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
@@ -365,6 +381,7 @@ class RoadLinkDAO {
       sql"""select linkid
           from kgv_roadlink
           where #$polygonFilter
+          and expired_date is null
        """.as[String].list
     }
   }
