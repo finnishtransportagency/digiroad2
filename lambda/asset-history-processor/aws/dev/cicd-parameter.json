@@ -16,8 +16,8 @@
     "ParameterValue": "aws/codebuild/standard:5.0"
   },
   {
-    "ParameterKey": "BuildSpecPath",
-    "ParameterValue": "lambda/asset-history-processor/aws/codebuild/dev.yml"
+    "ParameterKey": "EcrTag",
+    "ParameterValue": "latest"
   },
   {
     "ParameterKey": "LambdaName",

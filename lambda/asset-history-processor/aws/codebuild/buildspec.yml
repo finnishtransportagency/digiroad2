@@ -11,14 +11,14 @@ phases:
       - echo Build started on `date`
       - cd lambda/asset-history-processor
       - echo Building the Docker image...
-      - docker build -t $ECR_REPOSITORY_NAME .
-      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:latest
-      - docker tag $ECR_REPOSITORY_NAME:latest $ECR_REPOSITORY_URI:$COMMIT_HASH
+      - docker build -t $ECR_REPOSITORY_NAME:$ECR_TAG .
+      - docker tag $ECR_REPOSITORY_NAME:$ECR_TAG $ECR_REPOSITORY_URI:$ECR_TAG
+      - docker tag $ECR_REPOSITORY_NAME:$ECR_TAG $ECR_REPOSITORY_URI:$COMMIT_HASH
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
-      - docker push $ECR_REPOSITORY_URI:latest
+      - docker push $ECR_REPOSITORY_URI:$ECR_TAG
       - docker push $ECR_REPOSITORY_URI:$COMMIT_HASH
       - echo Updating lambda function...
       - aws lambda update-function-code --function-name $LAMBDA_NAME --image-uri $ECR_REPOSITORY_URI:$COMMIT_HASH
