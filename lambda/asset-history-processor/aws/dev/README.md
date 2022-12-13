@@ -23,8 +23,8 @@ aws cloudformation create-stack \
 docker build -t asset-history-image .
 docker run asset-history-image
 aws ecr get-login-password --region [AWS_REGION] | docker login --username AWS --password-stdin [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com
-docker tag asset-history-image [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/digiroad2-asset-history-processor-lambda:latest
-docker push [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/digiroad2-asset-history-processor-lambda:latest
+docker tag asset-history-image [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/dev-digiroad2-asset-history-processor-lambda:latest
+docker push [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/dev-digiroad2-asset-history-processor-lambda:latest
 ```
 
 ### Luo tarvittavat resurssit
