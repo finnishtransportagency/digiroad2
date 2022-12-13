@@ -1,0 +1,42 @@
+[
+  {
+    "ParameterKey": "PipelineName",
+    "ParameterValue": "qa-digiroad2-asset-history-pipeline"
+  },
+  {
+    "ParameterKey": "ResourceStackName",
+    "ParameterValue": "qa-digiroad2-asset-history-processor"
+  },
+  {
+    "ParameterKey": "EcrRepositoryName",
+    "ParameterValue": "qa-digiroad2-asset-history-processor-lambda"
+  },
+  {
+    "ParameterKey": "CodeBuildImage",
+    "ParameterValue": "aws/codebuild/standard:5.0"
+  },
+  {
+    "ParameterKey": "EcrTag",
+    "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "LambdaName",
+    "ParameterValue": "qa-digiroad2-asset-history-processor"
+  },
+  {
+    "ParameterKey": "GitRepoName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "GitBranchName",
+    "ParameterValue": "qa-assetHistoryProcessor"
+  },
+  {
+    "ParameterKey": "GitHubOwner",
+    "ParameterValue": "finnishtransportagency"
+  },
+  {
+    "ParameterKey": "GitHubWebhookSecret",
+    "UsePreviousValue": true
+  }
+]

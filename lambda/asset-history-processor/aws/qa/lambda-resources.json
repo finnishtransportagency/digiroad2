@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "ECRRepository",
+    "ParameterValue": "qa-digiroad2-asset-history-processor-lambda"
+  },
+  {
+    "ParameterKey": "ECRImageTag",
+    "ParameterValue": "qa"
+  }
+]
