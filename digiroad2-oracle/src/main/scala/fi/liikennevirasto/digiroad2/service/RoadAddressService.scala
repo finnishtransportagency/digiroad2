@@ -143,7 +143,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     try {
       
-      val roadAddressLinks = LogUtils.time(logger,"TEST LOG Retrieve road address by link"){getAllByLinkIds(roadLinks.map(_.linkId))}
+      val roadAddressLinks = LogUtils.time(logger,"TEST LOG Retrieve road address by links"){getAllByLinkIds(roadLinks.map(_.linkId))}
       val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
       logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
       roadLinks.map(rl =>
