@@ -28,7 +28,8 @@ object LogUtils {
           case Some(lineFound) => s"at $lineFound"
           case _ => s""
         }
-        logger.error(s"$operationName failed. Operation run ${e.getClass.getName}: ${e.getMessage} $errorString")
+        val duration = System.currentTimeMillis() - begin
+        logger.error(s"$operationName failed,it took  $duration ms and in second ${duration / 1000}. Operation run ${e.getClass.getName}: ${e.getMessage} $errorString")
         throw e
     }
     
