@@ -129,8 +129,10 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    ClientUtils.retry(2){
-      viiteClient.fetchAllByLinkIds(linkIds)
+      ClientUtils.retry(2) {
+        LogUtils.time(logger,"TEST LOG Retrieve road address by links"){
+          viiteClient.fetchAllByLinkIds(linkIds)
+        }
     }
   }
 
@@ -143,7 +145,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     try {
       
-      val roadAddressLinks = LogUtils.time(logger,"TEST LOG Retrieve road address by links"){getAllByLinkIds(roadLinks.map(_.linkId))}
+      val roadAddressLinks = getAllByLinkIds(roadLinks.map(_.linkId))
       val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
       logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
       roadLinks.map(rl =>
