@@ -37,20 +37,6 @@ aws cloudformation create-stack \
 --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### Laita lambdan event ajastus pois päältä
-Disabloi lambdan käynnistävä EventBridge sääntö.
-*Huom.* Varmista että eventin nimi vastaa lambda-resources.yaml:lla luotua
-```
-aws events disable-rule --name dev-digiroad2-start-asset-history-processor-event
-```
-
-### Laita lambdan event ajastus päälle
-Laita lambdan käynnistävä EventBridge sääntö takaisin päälle siinä vaiheessa, kun lambdan toteutus on valmis.
-*Huom.* Varmista että eventin nimi vastaa lambda-resources.yaml:lla luotua
-```
-aws events enable-rule --name dev-digiroad2-start-asset-history-processor-event
-```
-
 ### Luo kehitys pipeline
 *Huom.* Korvaa GitHubWebhookSecret oikealla arvolla
 ```
