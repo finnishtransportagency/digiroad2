@@ -1,12 +1,18 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Elastic Container Repository template for Digiroad road link change handler dev environment
+Description: Elastic Container Repository template for Digiroad road link change handler
+
+Parameters:
+  Environment:
+    Description: Environment where resources are created. Used when tagging the resources
+    Type: String
+    AllowedValues: ["dev", "qa"]
 
 Resources:
   ECR:
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
     Properties:
-      RepositoryName: digiroad2-road-link-change-lambda
+      RepositoryName: !Sub ${Environment}-digiroad2-road-link-change-lambda
       ImageScanningConfiguration:
         ScanOnPush: true
       RepositoryPolicyText:
@@ -98,4 +104,4 @@ Resources:
           }
       Tags:
         - Key: Name
-          Value: digiroad2-road-link-change-lambda-dev-ecr-repo
+          Value: !Sub digiroad2-road-link-change-lambda-${Environment}-ecr-repo

@@ -5,7 +5,7 @@
   },
   {
     "ParameterKey": "Environment",
-    "ParameterValue": "dev"
+    "ParameterValue": "qa"
   },
   {
     "ParameterKey": "OrganizationPrefix",
@@ -13,10 +13,10 @@
   },
   {
     "ParameterKey": "ECRRepository",
-    "ParameterValue": "dev-digiroad2-road-link-change-lambda"
+    "ParameterValue": "qa-digiroad2-road-link-change-lambda"
   },
   {
     "ParameterKey": "ECRImageTag",
-    "ParameterValue": "latest"
+    "ParameterValue": "qa"
   }
 ]

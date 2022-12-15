@@ -1,0 +1,42 @@
+[
+  {
+    "ParameterKey": "PipelineName",
+    "ParameterValue": "qa-digiroad2-road-link-change-pipeline"
+  },
+  {
+    "ParameterKey": "EcrRepositoryName",
+    "ParameterValue": "qa-digiroad2-road-link-change-lambda"
+  },
+  {
+    "ParameterKey": "CodeBuildImage",
+    "ParameterValue": "aws/codebuild/standard:5.0"
+  },
+  {
+    "ParameterKey": "EcrTag",
+    "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "LambdaName",
+    "ParameterValue": "qa-digiroad2-road-link-change-handler"
+  },
+  {
+    "ParameterKey": "LambdaFolder",
+    "ParameterValue": "lambda/road-link-change-handler"
+  },
+  {
+    "ParameterKey": "GitRepoName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "GitBranchName",
+    "ParameterValue": "qa-lambdaRoadLinkChangeHandler"
+  },
+  {
+    "ParameterKey": "GitHubOwner",
+    "ParameterValue": "finnishtransportagency"
+  },
+  {
+    "ParameterKey": "GitHubWebhookSecret",
+    "UsePreviousValue": true
+  }
+]

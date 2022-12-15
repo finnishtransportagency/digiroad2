@@ -1,0 +1,248 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Template for lambda cicd"
+
+Parameters:
+  PipelineName:
+    Description: Pipeline name, no capital letter
+    Type: String
+  EcrRepositoryName:
+    Description: Name of ECR repository
+    Type: String
+  CodeBuildImage:
+    Description: Image used for CodeBuild project
+    Type: String
+  EcrTag:
+    Description: Tag used to mark current version
+    Type: String
+  LambdaName:
+    Description: Name of lambda function updated with pipeline
+    Type: String
+  LambdaFolder:
+    Description: Path to folder where lambda code is contained
+    Type: String
+  GitRepoName:
+    Description: The Git repository name
+    Type: String
+  GitBranchName:
+    Description: The Git branch name that pipeline should watch for changes
+    Type: String
+  GitHubOwner:
+    Description: The Git repository owner
+    Type: String
+  GitHubWebhookSecret:
+    Description: Personal access token that is needed to access the webhook of CodePipeline
+    Type: String
+    NoEcho: true
+    MinLength: 20
+
+Resources:
+
+  CodePipelineArtifactStoreBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub "${PipelineName}-artifact-bucket"
+      Tags:
+        - Key: Name
+          Value: !Sub ${PipelineName}-artifact-bucket
+
+  CodePipelineArtifactStoreBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CodePipelineArtifactStoreBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyUnEncryptedObjectUploads
+            Effect: Deny
+            Principal: '*'
+            Action: s3:PutObject
+            Resource: !Sub "${CodePipelineArtifactStoreBucket.Arn}/*"
+            Condition:
+              StringNotEquals:
+                s3:x-amz-server-side-encryption: 'aws:kms'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource: !Sub "${CodePipelineArtifactStoreBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  AppPipelineWebhook:
+    Type: AWS::CodePipeline::Webhook
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: !Ref GitHubWebhookSecret
+      Filters:
+        - JsonPath: $.ref
+          MatchEquals: 'refs/heads/{Branch}'
+      TargetPipeline: !Ref AppPipeline
+      TargetAction: SourceAction
+      Name: !Sub "${PipelineName}-webhook"
+      TargetPipelineVersion: !GetAtt AppPipeline.Version
+      RegisterWithThirdParty: true
+
+  AppPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Ref PipelineName
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodePipelineArtifactStoreBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Version: "1"
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitRepoName
+                Branch: !Ref GitBranchName
+                OAuthToken: !Ref GitHubWebhookSecret
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              InputArtifacts:
+                - Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuild
+              RunOrder: 1
+      Tags:
+        - Key: Name
+          Value: !Sub ${PipelineName}
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${PipelineName}-codepipeline-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: !Sub "${PipelineName}-codepipeline-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                Resource: !GetAtt CodeBuild.Arn
+              - Effect: Allow
+                Action:
+                  - cloudwatch:*
+                  - s3:*
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub ${PipelineName}-role
+
+  CodeBuild:
+    DependsOn:
+      - CodeBuildRole
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${PipelineName}-build"
+      Description: "Codebuild project for lambda"
+      ServiceRole: !Ref CodeBuildRole
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: !Ref CodeBuildImage
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ECR_REPOSITORY_NAME
+            Value: !Ref EcrRepositoryName
+          - Name: ECR_REPOSITORY_URI
+            Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}"
+          - Name: AWS_REGION
+            Value: !Ref AWS::Region
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+          - Name: LAMBDA_NAME
+            Value: !Ref LambdaName
+          - Name: LAMBDA_FOLDER
+            Value: !Ref LambdaFolder
+          - Name: ECR_TAG
+            Value: !Ref EcrTag
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub ${LambdaFolder}/aws/codebuild/buildspec.yml
+      Artifacts:
+        Name: !Ref PipelineName
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Name
+          Value: !Sub ${PipelineName}-build-project
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub "${PipelineName}-codebuild-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub "${PipelineName}-codebuild-policy"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - ecr:GetAuthorizationToken
+              - Effect: "Allow"
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepositoryName}*"
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:InitiateLayerUpload
+                  - ecr:CompleteLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+              - Effect: "Allow"
+                Resource: !Sub "arn:aws:s3:::${CodePipelineArtifactStoreBucket}/*"
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+              - Effect: "Allow"
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaName}"
+                Action:
+                  - lambda:UpdateFunctionCode
+      Tags:
+        - Key: Name
+          Value: !Sub ${PipelineName}-build-role
