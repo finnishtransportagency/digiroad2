@@ -23,8 +23,8 @@ aws cloudformation create-stack \
 docker build -t image .
 docker run image
 aws ecr get-login-password --region [AWS_REGION] | docker login --username AWS --password-stdin [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com
-docker tag image [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/digiroad2-road-link-change-lambda:latest
-docker push [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/digiroad2-road-link-change-lambda:latest
+docker tag image [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/dev-digiroad2-road-link-change-lambda:latest
+docker push [AWS_ACCOUNT_ID].dkr.ecr.[AWS_REGION].amazonaws.com/dev-digiroad2-road-link-change-lambda:latest
 ```
 
 ### Luo tarvittavat resurssit
@@ -51,12 +51,33 @@ Laita lambdan käynnistävä EventBridge sääntö takaisin päälle siinä vaih
 aws events enable-rule --name dev-digiroad2-start-road-link-change-handler-event
 ```
 
+### Luo kehitys pipeline
+*Huom.* Korvaa GitHubWebhookSecret oikealla arvolla
+```
+aws cloudformation create-stack \
+--stack-name [esim. dev-digiroad2-road-link-change-pipeline] \ 
+--template-body file://aws/cloudformation/cicd/cicd-stack.yaml \
+--parameters file://aws/dev/cicd-parameter.json \
+--tags file://aws/dev/tags.json \
+--capabilities CAPABILITY_NAMED_IAM
+```
+
 
 # Kehitysympäristön päivitys
 
 ## AWS CLI komennot
 
 *HUOM.* Tarkista ennen jokaista update-stack komentoa parametritiedostojen sisältö.
+
+### Päivitä kehitys pipeline
+```
+aws cloudformation update-stack \
+--stack-name [esim. dev-digiroad2-road-link-change-pipeline] \ 
+--template-body file://aws/cloudformation/cicd/cicd-stack.yaml \
+--parameters file://aws/dev/cicd-parameter.json \
+--tags file://aws/dev/tags.json \
+--capabilities CAPABILITY_NAMED_IAM
+```
 
 ### Päivitä resurssit
 *Huom.* Korvaa parametrit sisältävän tiedoston parametri "ECRImageTag" uudella ECRImageTag parametrin arvolla jos lambdan koodissa on tapahtunut muutoksia.
