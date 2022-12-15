@@ -24,6 +24,10 @@
     "ParameterValue": "qa-digiroad2-asset-history-processor"
   },
   {
+    "ParameterKey": "LambdaFolder",
+    "ParameterValue": "lambda/asset-history-processor"
+  },
+  {
     "ParameterKey": "GitRepoName",
     "ParameterValue": "digiroad2"
   },

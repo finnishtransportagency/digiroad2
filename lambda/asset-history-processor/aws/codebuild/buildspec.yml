@@ -9,7 +9,7 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - cd lambda/asset-history-processor
+      - cd $LAMBDA_FOLDER
       - echo Building the Docker image...
       - docker build -t $ECR_REPOSITORY_NAME:$ECR_TAG .
       - docker tag $ECR_REPOSITORY_NAME:$ECR_TAG $ECR_REPOSITORY_URI:$ECR_TAG
