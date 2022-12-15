@@ -18,7 +18,7 @@ aws cloudformation create-stack \
 --tags file://aws/qa/tags.json
 ```
 
-### Vie ensimmäinen palvelun image uuteen ECR repositoryyn tagilla "latest"
+### Vie ensimmäinen palvelun image uuteen ECR repositoryyn tagilla "qa"
 ```
 docker build -t asset-history-image .
 docker run asset-history-image
@@ -35,20 +35,6 @@ aws cloudformation create-stack \
 --parameters file://aws/qa/lambda-resources.json \
 --tags file://aws/qa/tags.json \
 --capabilities CAPABILITY_NAMED_IAM
-```
-
-### Laita lambdan event ajastus pois päältä
-Disabloi lambdan käynnistävä EventBridge sääntö.
-*Huom.* Varmista että eventin nimi vastaa lambda-resources.yaml:lla luotua
-```
-aws events disable-rule --name qa-digiroad2-start-asset-history-processor-event
-```
-
-### Laita lambdan event ajastus päälle
-Laita lambdan käynnistävä EventBridge sääntö takaisin päälle siinä vaiheessa, kun lambdan toteutus on valmis.
-*Huom.* Varmista että eventin nimi vastaa lambda-resources.yaml:lla luotua
-```
-aws events enable-rule --name qa-digiroad2-start-asset-history-processor-event
 ```
 
 ### Luo testi pipeline

@@ -20,6 +20,9 @@ Parameters:
   LambdaName:
     Description: Name of lambda function updated with pipeline
     Type: String
+  LambdaFolder:
+    Description: Path to folder where lambda code is contained
+    Type: String
   GitRepoName:
     Description: The Git repository name
     Type: String
@@ -185,11 +188,13 @@ Resources:
             Value: !Ref AWS::AccountId
           - Name: LAMBDA_NAME
             Value: !Ref LambdaName
+          - Name: LAMBDA_FOLDER
+            Value: !Ref LambdaFolder
           - Name: ECR_TAG
             Value: !Ref EcrTag
       Source:
         Type: CODEPIPELINE
-        BuildSpec: lambda/asset-history-processor/aws/codebuild/buildspec.yml
+        BuildSpec: !Sub ${LambdaFolder}/aws/codebuild/buildspec.yml
       Artifacts:
         Name: !Ref PipelineName
         Type: CODEPIPELINE
