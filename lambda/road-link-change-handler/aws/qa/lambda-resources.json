@@ -1,0 +1,22 @@
+[
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "OrganizationPrefix",
+    "ParameterValue": "vaylapilvi"
+  },
+  {
+    "ParameterKey": "ECRRepository",
+    "ParameterValue": "qa-digiroad2-road-link-change-lambda"
+  },
+  {
+    "ParameterKey": "ECRImageTag",
+    "ParameterValue": "qa"
+  }
+]
