@@ -18,7 +18,7 @@ aws cloudformation create-stack \
 --tags file://aws/qa/tags.json
 ```
 
-### Vie ensimmäinen palvelun image uuteen ECR repositoryyn tagilla "latest"
+### Vie ensimmäinen palvelun image uuteen ECR repositoryyn tagilla "qa"
 ```
 docker build -t asset-history-image .
 docker run asset-history-image
