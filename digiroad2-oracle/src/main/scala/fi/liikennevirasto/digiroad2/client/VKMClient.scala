@@ -31,9 +31,15 @@ class VKMClient {
   protected implicit val jsonFormats: Formats = DefaultFormats
   private def VkmRoad = "tie"
   private def VkmRoadPart = "osa"
+  private def VkmRoadPartEnd = "osa_loppu"
   private def VkmDistance = "etaisyys"
+  private def VkmDistanceEnd = "etaisyys_loppu"
   private def VkmTrackCodes = "ajorata"
   private def VkmTrackCode = "ajorata"
+  private def VkmLinkId = "link_id"
+  private def VkmLinkIdEnd = "link_id_loppu"
+  private def VkmKmtkId = "kmtk_id"
+  private def VkmKmtkIdEnd = "kmtk_id_loppu"
   private def VkmSearchRadius = "sade"
   private def VkmQueryIdentifier = "tunniste"
   private def VkmMunicipalityCode = "kuntakoodi"
@@ -92,10 +98,11 @@ class VKMClient {
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       val aux = response.getEntity.getContent
       val content:FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
-      if(content.features.head.properties.contains("virheet")){
-        return Right(VKMError(Map("error" -> content.features.head.properties("virheet")), url))
+      val (errorFeatures, okFeatures) = content.features.partition(_.properties.contains("virheet"))
+      if (errorFeatures.nonEmpty && okFeatures.isEmpty) {
+        return Right(VKMError(Map("error" -> errorFeatures.head.properties("virheet")), url))
       }
-      Left(content)
+      Left(content.copy(features = okFeatures))
     } catch {
       case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
     } finally {
@@ -123,6 +130,38 @@ class VKMClient {
   // Verifies all host names by simply returning true.
   object VerifiesAllHostNames extends HostnameVerifier {
     def verify(s: String, sslSession: SSLSession) = true
+  }
+
+  def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Set[String] = {
+    val params = Map(
+      VkmLinkId -> Some(startLinkId),
+      VkmLinkIdEnd -> Some(endLinkId),
+      VkmRoad -> Some(roadNumber)
+    )
+
+    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=6&" + urlParams(params)) match {
+      case Left(featureCollection) => featureCollection.features.map(_.properties(VkmKmtkId)).toSet
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+  }
+
+  // TODO VKM does not provide all road links when transforming road address range to roadLinks, only start and end links
+  //  Support for this is coming to VKM in January 2023, change implementation to use the feature when it's available.
+  def fetchStartAndEndLinkIdForAddrRange(roadAddressRange: RoadAddressRange): Option[(String, String)] = {
+    val params = Map(
+      VkmRoad -> Some(roadAddressRange.roadNumber),
+      VkmRoadPart -> Some(roadAddressRange.startRoadPartNumber),
+      VkmDistance -> Some(roadAddressRange.startAddrMValue),
+      VkmRoadPartEnd -> Some(roadAddressRange.endRoadPartNumber),
+      VkmDistanceEnd -> Some(roadAddressRange.endAddrMValue),
+      VkmTrackCode -> Some(roadAddressRange.track.value)
+    )
+
+    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=6&" + urlParams(params)) match {
+      case Left(featureCollection) =>
+        featureCollection.features.map(feature => (feature.properties(VkmLinkId), feature.properties(VkmLinkIdEnd))).headOption
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
   }
 
   def coordToAddressMassQuery(coords: Seq[MassQueryParams]): Map[String,RoadAddress] = {
