@@ -102,7 +102,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
 
     def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = {
-      "m_value" -> Some(massTransitStop.mValue)
+      "m_value" -> Some(doubleToDefaultPrecision(massTransitStop.mValue))
     }
 
     def extractLinkSource(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = {
@@ -114,10 +114,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       "features" -> input.map {
         case (massTransitStop: PersistedMassTransitStop) =>
           val isMassServicePoint = massTransitStop.stopTypes.head == 7
+          val longitude = doubleToDefaultPrecision(massTransitStop.lon)
+          val latitude = doubleToDefaultPrecision(massTransitStop.lat)
           Map(
           "type" -> "Feature",
           "id" -> massTransitStop.id,
-          "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
+          "geometry" -> Map("type" -> "Point", "coordinates" -> List(longitude, latitude)),
           "properties" -> Map(
             extractModifier(massTransitStop),
             latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
