@@ -117,7 +117,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def get(municipality: Int): Seq[SpeedLimit] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipality)
     withDynTransaction {
-      getByRoadLinks(roadLinks, changes, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarRoadOrCyclePedestrianPath}, adjust = false)._1
+      val speedLimits = getByRoadLinks(roadLinks, changes, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarRoadOrCyclePedestrianPath}, adjust = false)._1
+      speedLimits.map(speedLimit => {
+        val roadLink = roadLinks.find(_.linkId == speedLimit.linkId).get
+        val (startMeasure, endMeasure, geometry) = GeometryUtils.useRoadLinkMeasuresIfCloseEnough(speedLimit.startMeasure, speedLimit.endMeasure, roadLink)
+        speedLimit.copy(startMeasure = startMeasure, endMeasure = endMeasure, geometry = geometry)
+      })
     }
   }
 

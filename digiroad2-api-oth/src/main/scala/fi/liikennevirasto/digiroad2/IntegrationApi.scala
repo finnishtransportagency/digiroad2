@@ -23,6 +23,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
   val apiId = "integration-api"
+  val defaultDecimalPrecision = 3
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
@@ -31,7 +32,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     response.setHeader("Access-Control-Allow-Methods",  "OPTIONS,POST,GET");
     response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
   }
-  
+
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
       timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
@@ -43,6 +44,19 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     "muokannut_viimeksi" -> massTransitStop.modified.modifier
       .getOrElse(massTransitStop.created.modifier
         .getOrElse(""))
+  }
+
+  def doubleToDefaultPrecision(value: Double): Double = {
+    BigDecimal(value).setScale(defaultDecimalPrecision, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
+
+  def geometryToDefaultPrecision(geometry: Seq[Point]): Seq[Point] = {
+    geometry.map(point => {
+      val x = doubleToDefaultPrecision(point.x)
+      val y = doubleToDefaultPrecision(point.y)
+      val z = doubleToDefaultPrecision(point.z)
+      Point(x,y,z)
+    })
   }
 
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
@@ -162,13 +176,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
+      val defaultPrecisionGeometry = geometryToDefaultPrecision(speedLimit.geometry)
+
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
-        "points" -> speedLimit.geometry,
-        geometryWKTForLinearAssets(speedLimit.geometry),
+        "points" -> defaultPrecisionGeometry,
+        geometryWKTForLinearAssets(defaultPrecisionGeometry),
         "value" -> speedLimit.value.fold(0)(_.value),
-        "startMeasure" -> speedLimit.startMeasure,
-        "endMeasure" -> speedLimit.endMeasure,
+        "startMeasure" -> doubleToDefaultPrecision(speedLimit.startMeasure),
+        "endMeasure" -> doubleToDefaultPrecision(speedLimit.endMeasure),
         "linkId" -> speedLimit.linkId,
         latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
         lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
@@ -179,13 +195,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
     speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+      val defaultPrecisionGeometry = geometryToDefaultPrecision(speedLimit.geometry)
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
-        "points" -> speedLimit.geometry,
-        geometryWKTForLinearAssets(speedLimit.geometry),
+        "points" -> defaultPrecisionGeometry,
+        geometryWKTForLinearAssets(defaultPrecisionGeometry),
         "value" -> speedLimit.value.fold(0)(_.value),
-        "startMeasure" -> speedLimit.startMeasure,
-        "endMeasure" -> speedLimit.endMeasure,
+        "startMeasure" -> doubleToDefaultPrecision(speedLimit.startMeasure),
+        "endMeasure" -> doubleToDefaultPrecision(speedLimit.endMeasure),
         "linkId" -> speedLimit.linkId,
         latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
         lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
@@ -324,14 +341,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     val linearAssets: Seq[PieceWiseLinearAsset] = getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(asset => isUnknown(asset) || isSuggested(asset))
 
     linearAssets.map { asset =>
+      val defaultPrecisionGeometry = geometryToDefaultPrecision(asset.geometry)
       Map("id" -> asset.id,
-        "points" -> asset.geometry,
-        geometryWKTForLinearAssets(asset.geometry),
+        "points" -> defaultPrecisionGeometry,
+        geometryWKTForLinearAssets(defaultPrecisionGeometry),
         "value" -> valueToApi(asset.value),
         "side_code" -> asset.sideCode.value,
         "linkId" -> asset.linkId,
-        "startMeasure" -> asset.startMeasure,
-        "endMeasure" -> asset.endMeasure,
+        "startMeasure" -> doubleToDefaultPrecision(asset.startMeasure),
+        "endMeasure" -> doubleToDefaultPrecision(asset.endMeasure),
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
         "linkSource" -> asset.linkSource.value
@@ -340,13 +358,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def defaultMultiValueLinearAssetsMap(linearAsset: PieceWiseLinearAsset): Map[String, Any] = {
+    val defaultPrecisionGeometry = geometryToDefaultPrecision(linearAsset.geometry)
     Map("id" -> linearAsset.id,
-      "points" -> linearAsset.geometry,
-      geometryWKTForLinearAssets(linearAsset.geometry),
+      "points" -> defaultPrecisionGeometry,
+      geometryWKTForLinearAssets(defaultPrecisionGeometry),
       "side_code" -> linearAsset.sideCode.value,
       "linkId" -> linearAsset.linkId,
-      "startMeasure" -> linearAsset.startMeasure,
-      "endMeasure" -> linearAsset.endMeasure,
+      "startMeasure" -> doubleToDefaultPrecision(linearAsset.startMeasure),
+      "endMeasure" -> doubleToDefaultPrecision(linearAsset.endMeasure),
       latestModificationTime(linearAsset.createdDateTime, linearAsset.modifiedDateTime),
       lastModifiedBy(linearAsset.createdBy, linearAsset.modifiedBy),
       "linkSource" -> linearAsset.linkSource.value
@@ -553,11 +572,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
     crossings.filterNot(x => x.floating | isSuggested(x)).map { pedestrianCrossing =>
+      val longitude = doubleToDefaultPrecision(pedestrianCrossing.lon)
+      val latitude = doubleToDefaultPrecision(pedestrianCrossing.lat)
       Map("id" -> pedestrianCrossing.id,
-        "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
-        geometryWKTForPoints(pedestrianCrossing.lon, pedestrianCrossing.lat),
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
         "linkId" -> pedestrianCrossing.linkId,
-        "m_value" -> pedestrianCrossing.mValue,
+        "m_value" -> doubleToDefaultPrecision(pedestrianCrossing.mValue),
         latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt),
         lastModifiedBy(pedestrianCrossing.createdBy, pedestrianCrossing.modifiedBy),
         "linkSource" -> pedestrianCrossing.linkSource.value)
@@ -574,6 +595,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
 
     trafficLights.filterNot(x => x.floating | isSuggested(x)).map { trafficLight =>
+      val longitude = doubleToDefaultPrecision(trafficLight.lon)
+      val latitude = doubleToDefaultPrecision(trafficLight.lat)
       Map("id" -> trafficLight.id,
         "trafficLights" -> trafficLight.propertyData.groupBy(_.groupedId).map { case (_, properties) =>
         Map(
@@ -593,10 +616,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "kunta_id" -> getProperty( properties, "trafficLight_municipality_id"),
           "tila" -> getProperty( properties, "trafficLight_state")
         )},
-        "point" -> Point(trafficLight.lon, trafficLight.lat),
-        geometryWKTForPoints(trafficLight.lon, trafficLight.lat),
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
         "linkId" -> trafficLight.linkId,
-        "m_value" -> trafficLight.mValue,
+        "m_value" -> doubleToDefaultPrecision(trafficLight.mValue),
         latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt),
         lastModifiedBy(trafficLight.createdBy, trafficLight.modifiedBy),
         "linkSource" -> trafficLight.linkSource.value)
@@ -605,11 +628,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def directionalTrafficSignsToApi(directionalTrafficSign: Seq[DirectionalTrafficSign]): Seq[Map[String, Any]] = {
     directionalTrafficSign.filterNot(x => x.floating | isSuggested(x)).map { directionalTrafficSign =>
+      val longitude = doubleToDefaultPrecision(directionalTrafficSign.lon)
+      val latitude = doubleToDefaultPrecision(directionalTrafficSign.lat)
       Map("id" -> directionalTrafficSign.id,
-        "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
-        geometryWKTForPoints(directionalTrafficSign.lon, directionalTrafficSign.lat),
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
         "linkId" -> directionalTrafficSign.linkId,
-        "m_value" -> directionalTrafficSign.mValue,
+        "m_value" -> doubleToDefaultPrecision(directionalTrafficSign.mValue),
         "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
         "side_code" -> directionalTrafficSign.validityDirection,
         "text" -> directionalTrafficSign.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.split("\n").toSeq,
@@ -664,7 +689,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     if (geometry.nonEmpty)
     {
       val segments = geometry.zip(geometry.tail)
-      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2))
+      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2)).map(doubleToDefaultPrecision)
       val mValuedGeometry = geometry.zip(runningSum.toList)
       val wktString = mValuedGeometry.map {
         case (p, newM) => p.x +" " + p.y + " " + p.z + " " + newM
@@ -682,11 +707,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
     crossings.filterNot(x => x.floating | isSuggested(x)).map { railwayCrossing =>
+      val longitude = doubleToDefaultPrecision(railwayCrossing.lon)
+      val latitude = doubleToDefaultPrecision(railwayCrossing.lat)
       Map("id" -> railwayCrossing.id,
-        "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
-        geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
         "linkId" -> railwayCrossing.linkId,
-        "m_value" -> railwayCrossing.mValue,
+        "m_value" -> doubleToDefaultPrecision(railwayCrossing.mValue),
         "safetyEquipment" -> railwayCrossingService.getProperty(railwayCrossing.propertyData, "turvavarustus").map(_.propertyValue).getOrElse(""),
         "name" -> railwayCrossingService.getProperty(railwayCrossing.propertyData, "rautatien_tasoristeyksen_nimi").map(_.propertyValue).getOrElse(""),
         "railwayCrossingId" -> railwayCrossingService.getProperty(railwayCrossing.propertyData, "tasoristeystunnus").map(_.propertyValue).getOrElse(""),
@@ -698,11 +725,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def obstaclesToApi(obstacles: Seq[Obstacle]): Seq[Map[String, Any]] = {
     obstacles.filterNot(x => x.floating | isSuggested(x)).map { obstacle =>
+      val longitude = doubleToDefaultPrecision(obstacle.lon)
+      val latitude = doubleToDefaultPrecision(obstacle.lat)
       Map("id" -> obstacle.id,
-        "point" -> Point(obstacle.lon, obstacle.lat),
-        geometryWKTForPoints(obstacle.lon, obstacle.lat),
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
         "linkId" -> obstacle.linkId,
-        "m_value" -> obstacle.mValue,
+        "m_value" -> doubleToDefaultPrecision(obstacle.mValue),
         "obstacle_type" -> obstacleService.getProperty(obstacle.propertyData, "esterakennelma").map(_.propertyValue).getOrElse(""),
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
         lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy),
@@ -728,9 +757,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def servicePointsToApi(servicePoints: Set[ServicePoint]) = {
     servicePoints.map { asset =>
+      val longitude = doubleToDefaultPrecision(asset.lon)
+      val latitude = doubleToDefaultPrecision(asset.lat)
       Map("id" -> asset.id,
-        "point" -> Point(asset.lon, asset.lat),
-        geometryWKTForPoints(asset.lon, asset.lat),
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
         "services" -> asset.services,
         latestModificationTime(asset.createdAt, asset.modifiedAt),
         lastModifiedBy(asset.createdBy, asset.modifiedBy))
@@ -739,12 +770,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def trWeightLimitationsToApi(weightLimits: Seq[WeightLimit]): Seq[Map[String, Any]] = {
     weightLimits.filterNot(_.floating).map { weightLimit =>
+      val longitude = doubleToDefaultPrecision(weightLimit.lon)
+      val latitude = doubleToDefaultPrecision(weightLimit.lat)
       Map("id" -> weightLimit.id,
         "linkId" -> weightLimit.linkId,
-        "point" -> Point(weightLimit.lon, weightLimit.lat),
-        geometryWKTForPoints(weightLimit.lon, weightLimit.lat),
-        "m_value" -> weightLimit.mValue,
-        "value" -> weightLimit.limit,
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
+        "m_value" -> doubleToDefaultPrecision(weightLimit.mValue),
+        "value" -> doubleToDefaultPrecision(weightLimit.limit),
         latestModificationTime(weightLimit.createdAt, weightLimit.modifiedAt),
         lastModifiedBy(weightLimit.createdBy, weightLimit.modifiedBy),
         "linkSource" -> weightLimit.linkSource.value)
@@ -753,12 +786,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def trHeightLimitsToApi(heightLimits: Seq[HeightLimit]): Seq[Map[String, Any]] = {
     heightLimits.filterNot(_.floating).map { heightLimit =>
+      val longitude = doubleToDefaultPrecision(heightLimit.lon)
+      val latitude = doubleToDefaultPrecision(heightLimit.lat)
       Map("id" -> heightLimit.id,
         "linkId" -> heightLimit.linkId,
-        "point" -> Point(heightLimit.lon, heightLimit.lat),
-        geometryWKTForPoints(heightLimit.lon, heightLimit.lat),
-        "m_value" -> heightLimit.mValue,
-        "value" -> heightLimit.limit,
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
+        "m_value" -> doubleToDefaultPrecision(heightLimit.mValue),
+        "value" -> doubleToDefaultPrecision(heightLimit.limit),
         latestModificationTime(heightLimit.createdAt, heightLimit.modifiedAt),
         lastModifiedBy(heightLimit.createdBy, heightLimit.modifiedBy),
         "linkSource" -> heightLimit.linkSource.value)
@@ -767,12 +802,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def trWidthLimitsToApi(widthLimits: Seq[WidthLimit]): Seq[Map[String, Any]] = {
     widthLimits.filterNot(_.floating).map { widthLimit =>
+      val longitude = doubleToDefaultPrecision(widthLimit.lon)
+      val latitude = doubleToDefaultPrecision(widthLimit.lat)
       Map("id" -> widthLimit.id,
         "linkId" -> widthLimit.linkId,
-        "point" -> Point(widthLimit.lon, widthLimit.lat),
-        geometryWKTForPoints(widthLimit.lon, widthLimit.lat),
-        "m_value" -> widthLimit.mValue,
-        "value" -> widthLimit.limit,
+        "point" -> Point(longitude, latitude),
+        geometryWKTForPoints(longitude, latitude),
+        "m_value" -> doubleToDefaultPrecision(widthLimit.mValue),
+        "value" -> doubleToDefaultPrecision(widthLimit.limit),
         "reason" -> widthLimit.reason.value,
         latestModificationTime(widthLimit.createdAt, widthLimit.modifiedAt),
         lastModifiedBy(widthLimit.createdBy, widthLimit.modifiedBy),
@@ -798,11 +835,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
 
     trafficSigns.filterNot(x => x.floating | isSuggested(x)).map{ trafficSign =>
+      val longitude = doubleToDefaultPrecision(trafficSign.lon)
+      val latitude = doubleToDefaultPrecision(trafficSign.lat)
      Map( "id" -> trafficSign.id,
-          "point" -> Point(trafficSign.lon, trafficSign.lat),
-          geometryWKTForPoints(trafficSign.lon, trafficSign.lat),
+          "point" -> Point(longitude, latitude),
+          geometryWKTForPoints(longitude, latitude),
           "linkId" -> trafficSign.linkId,
-          "m_value" -> trafficSign.mValue,
+          "m_value" -> doubleToDefaultPrecision(trafficSign.mValue),
           latestModificationTime(trafficSign.createdAt, trafficSign.modifiedAt),
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
