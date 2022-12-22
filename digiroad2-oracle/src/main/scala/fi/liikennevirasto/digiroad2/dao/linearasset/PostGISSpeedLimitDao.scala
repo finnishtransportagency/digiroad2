@@ -10,14 +10,14 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
+class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends DynamicLinearAssetDao {
   def MassQueryThreshold = 500
   case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
 
@@ -60,7 +60,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     }
   }
 
-  private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedSpeedLimit] = {
+  private def fetchByLinkIds(linkIds: Seq[String], queryFilter: String) : Seq[PersistedLinearAsset] = {
     val speedLimitRows = MassQuery.withStringIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,
@@ -79,7 +79,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     groupSpeedLimitsResult(speedLimitRows)
   }
 
-  def groupSpeedLimitsResult(speedLimitRows: Seq[SpeedLimitRow]) : Seq[PersistedSpeedLimit] = {
+  def groupSpeedLimitsResult(speedLimitRows: Seq[SpeedLimitRow]) : Seq[PersistedLinearAsset] = {
     val groupedSpeedLimit = speedLimitRows.groupBy(_.id)
     groupedSpeedLimit.keys.map { assetId =>
       val rows = groupedSpeedLimit(assetId)
@@ -96,37 +96,49 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
         case _ => None
       }
 
-      PersistedSpeedLimit(asset.id, asset.linkId, asset.sideCode, speedLimitValue,
-        asset.startMeasure, asset.endMeasure, asset.modifiedBy, asset.modifiedDate, asset.createdBy,
-        asset.createdDate, asset.timeStamp, asset.geomModifiedDate, asset.expired, asset.linkSource)
+      PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value, speedLimitValue,
+        asset.startMeasure, asset.endMeasure, asset.createdBy,
+        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired,
+        SpeedLimitAsset.typeId,asset.timeStamp,  asset.geomModifiedDate, asset.linkSource,
+        None, None, None)
     }.toSeq
   }
 
-  def fetchSpeedLimitsByLinkIds(linkIds: Seq[String]): Seq[SpeedLimit] = {
+  def fetchSpeedLimitsByLinkIds(linkIds: Seq[String]): Seq[PieceWiseLinearAsset] = {
 
     val queryFilter = "AND (valid_to IS NULL OR valid_to > current_timestamp)"
     fetchByLinkIds(linkIds, queryFilter).map {persisted =>
-        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value, Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.timeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
+        PieceWiseLinearAsset(persisted.id, persisted.linkId, SideCode(persisted.sideCode), persisted.value, Seq(Point(0.0, 0.0)), persisted.expired,
+          persisted.startMeasure, persisted.endMeasure, Set(Point(0.0, 0.0)),persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
+          persisted.typeId, SideCode.toTrafficDirection(SideCode(persisted.sideCode)), persisted.timeStamp, persisted.geomModifiedDate,
+          persisted.linkSource, Unknown, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
+
+          //TrafficDirection.UnknownDirection,  persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.timeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
     }
   }
 
-  private def fetchSpeedLimitsByLinkId(linkId: String): Seq[SpeedLimit] = fetchSpeedLimitsByLinkIds(Seq(linkId))
 
-  private def fetchHistorySpeedLimitsByLinkIds(linkIds: Seq[String]): Seq[SpeedLimit] = {
+  private def fetchSpeedLimitsByLinkId(linkId: String): Seq[PieceWiseLinearAsset] = fetchSpeedLimitsByLinkIds(Seq(linkId))
+
+  private def fetchHistorySpeedLimitsByLinkIds(linkIds: Seq[String]): Seq[PieceWiseLinearAsset] = {
     val queryFilter = "AND (valid_to IS NOT NULL AND valid_to < current_timestamp)"
 
     fetchByLinkIds(linkIds, queryFilter).map {
       case (persisted) =>
-        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value, Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.timeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
+        PieceWiseLinearAsset(persisted.id, persisted.linkId, SideCode(persisted.sideCode), persisted.value, Seq(Point(0.0, 0.0)), persisted.expired,
+          persisted.startMeasure, persisted.endMeasure, Set(Point(0.0, 0.0)),persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
+          persisted.typeId, SideCode.toTrafficDirection(SideCode(persisted.sideCode)), persisted.timeStamp, persisted.geomModifiedDate,
+          persisted.linkSource, Unknown, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
+
     }
   }
 
   /**
     * Returns speed limits by asset id. Used by SpeedLimitService.loadSpeedLimit.
     */
-  def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = getSpeedLimitLinksByIds(Set(id))
+  def getSpeedLimitLinksById(id: Long): Seq[PieceWiseLinearAsset] = getSpeedLimitLinksByIds(Set(id))
 
-  def getSpeedLimitLinksByIds(ids: Set[Long]): Seq[SpeedLimit] = {
+  def getSpeedLimitLinksByIds(ids: Set[Long]): Seq[PieceWiseLinearAsset] = {
     val speedLimitRows = MassQuery.withIds(ids) { idTableName =>
       sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired,
             a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source, p.public_id
@@ -145,13 +157,17 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     val speedLimits = groupSpeedLimitsResult(speedLimitRows)
     val roadLinksWithComplementaryByLinkId = roadLinkService.fetchRoadlinksAndComplementaries(speedLimits.map(_.linkId).toSet)
 
-    speedLimits.map {speedLimit =>
-      val roadLinkFetched = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, roadLinkFetched.trafficDirection, speedLimit.value, GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.timeStamp, speedLimit.geomModifiedDate, linkSource = roadLinkFetched.linkSource)
+    speedLimits.map {persisted =>
+      val roadLinkFetched = roadLinksWithComplementaryByLinkId.find(_.linkId == persisted.linkId).getOrElse(throw new NoSuchElementException)
+      PieceWiseLinearAsset(persisted.id, persisted.linkId, SideCode(persisted.sideCode), persisted.value, GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, persisted.startMeasure, persisted.endMeasure), persisted.expired,
+        persisted.startMeasure, persisted.endMeasure, Set(Point(0.0, 0.0)),persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
+        persisted.typeId, SideCode.toTrafficDirection(SideCode(persisted.sideCode)), persisted.timeStamp, persisted.geomModifiedDate,
+        roadLinkFetched.linkSource, Unknown, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
+
     }
   }
 
-  def getPersistedSpeedLimitByIds(ids: Set[Long]): Seq[PersistedSpeedLimit] = {
+  def getPersistedSpeedLimitByIds(ids: Set[Long]): Seq[PersistedLinearAsset] = {
     val speedLimitRows = MassQuery.withIds(ids) { idTableName =>
       sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired,
             a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source, p.public_id
@@ -172,20 +188,20 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
   /**
     * Returns speed limits that match a set of link ids.
     */
-  def getCurrentSpeedLimitsByLinkIds(linkIds: Option[Set[String]]): Seq[SpeedLimit] = {
+  def getCurrentSpeedLimitsByLinkIds(linkIds: Option[Set[String]]): Seq[PieceWiseLinearAsset] = {
 
     linkIds.map { linkId =>
       linkId.isEmpty match {
-        case true => Seq.empty[SpeedLimit]
+        case true => Seq.empty[PieceWiseLinearAsset]
         case false => fetchSpeedLimitsByLinkIds(linkId.toSeq)
       }
-    }.getOrElse(Seq.empty[SpeedLimit])
+    }.getOrElse(Seq.empty[PieceWiseLinearAsset])
   }
 
   /**
     * Returns speed limit by asset id. Used by SpeedLimitService.separate.
     */
-  def getPersistedSpeedLimit(id: Long): Option[PersistedSpeedLimit] = {
+  def getPersistedSpeedLimit(id: Long): Option[PersistedLinearAsset] = {
     val speedLimitRows = sql"""
       select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure,a.modified_by,
              a.modified_date, case when a.valid_to <= current_timestamp then 1 else 0 end as expired, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source, p.public_id
@@ -286,8 +302,8 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     * Returns only car traffic roads as a topology and speed limits that match these road links.
     * Used by SpeedLimitService.get (by bounding box and a list of municipalities) and SpeedLimitService.get (by municipality)
     */
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): (Seq[SpeedLimit], Seq[RoadLink]) = {
-    var speedLimitLinks: Seq[SpeedLimit] = Seq()
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): (Seq[PieceWiseLinearAsset], Seq[RoadLink]) = {
+    var speedLimitLinks: Seq[PieceWiseLinearAsset] = Seq()
     if (showSpeedLimitsHistory) {
       speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
     } else {
@@ -296,7 +312,7 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     (speedLimitLinks, roadLinks)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String]): Seq[PersistedSpeedLimit] = {
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String]): Seq[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'generated_in_update')"
     val recordLimit = token match {
       case Some(tk) =>
@@ -620,12 +636,10 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) {
     }
   }
 
-  private def createGeometryForSegment(topology: Seq[RoadLink])(segment: SpeedLimit) = {
+  private def createGeometryForSegment(topology: Seq[RoadLink])(segment: PieceWiseLinearAsset) = {
     val roadLink = topology.find(_.linkId == segment.linkId).get
     val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMeasure, segment.endMeasure)
-    SpeedLimit(segment.id, segment.linkId, segment.sideCode, roadLink.trafficDirection, segment.value, geometry, segment.startMeasure,
-      segment.endMeasure, segment.modifiedBy, segment.modifiedDateTime, segment.createdBy, segment.createdDateTime, segment.timeStamp,
-      segment.geomModifiedDate, linkSource = roadLink.linkSource)
+    segment.copy(geometry = geometry, endpoints = geometry.toSet)
   }
 
   /**
