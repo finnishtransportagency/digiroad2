@@ -138,7 +138,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   when(mockRoadAddressService.roadLinkWithRoadAddress(any[Seq[RoadLink]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.linearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
-  when(mockRoadAddressService.speedLimitWithRoadAddress(any[Seq[Seq[SpeedLimit]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
+  when(mockRoadAddressService.speedLimitWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
 
   when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId5)).thenReturn(Some(RoadLink(linkId5, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
   when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId2))

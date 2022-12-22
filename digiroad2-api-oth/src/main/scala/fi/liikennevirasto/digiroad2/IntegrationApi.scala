@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, Width
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
 import org.joda.time.DateTime
@@ -160,13 +160,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
-  def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
+  def speedLimitsToApi(speedLimits: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
+
     speedLimits.map { speedLimit =>
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.geometry,
         geometryWKTForLinearAssets(speedLimit.geometry),
-        "value" -> speedLimit.value.fold(0)(_.value),
+        "value" -> speedLimitService.getSpeedLimitValue(speedLimit.value).get.value,
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "linkId" -> speedLimit.linkId,
@@ -177,13 +178,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
-    speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedLinearAsset]) = {
+
+    speedLimits.map { case ChangedLinearAsset(speedLimit, link) =>
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.geometry,
         geometryWKTForLinearAssets(speedLimit.geometry),
-        "value" -> speedLimit.value.fold(0)(_.value),
+        "value" -> speedLimitService.getSpeedLimitValue(speedLimit.value).get.value,
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "linkId" -> speedLimit.linkId,
