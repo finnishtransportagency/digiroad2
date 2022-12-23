@@ -246,7 +246,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param speedLimits
     * @return
     */
-  def speedLimitWithRoadAddress(speedLimits: Seq[Seq[SpeedLimit]]): Seq[Seq[SpeedLimit]] = {
+  def speedLimitWithRoadAddress(speedLimits: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] = {
     try {
       val addressData = groupRoadAddress(getAllByLinkIds(speedLimits.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
       speedLimits.map(

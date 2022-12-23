@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SpeedLimit, SpeedLimitValue}
+import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, SpeedLimit, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -42,8 +42,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(linkId, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, linkId, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = PieceWiseLinearAsset(1, linkId, SideCode.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+        false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
 
       val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
 
@@ -54,13 +55,15 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
+
   test("when existing two speed limit traffic signs at on speed limit, and one sign it's ok the other not") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(linkId, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, linkId, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = PieceWiseLinearAsset(1, linkId, SideCode.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+        false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
 
       val trafficSigns =
         Seq(
@@ -82,8 +85,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(linkId, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, linkId, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+        false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
 
       val trafficSigns =
         Seq(
@@ -104,8 +108,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(linkId, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, linkId, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+        false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
 
       val trafficSigns =
         Seq(
@@ -127,12 +132,12 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-            0, 90, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-          SpeedLimit(2, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0)),
-            90, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+        Seq(PieceWiseLinearAsset(1, linkIdForTests, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(90.0, 0.0)),
+            false, 0.0, 90.0, Set(Point(0.0, 0.0), Point(90.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+          PieceWiseLinearAsset(2, linkIdForTests, SideCode.TowardsDigitizing, Some(SpeedLimitValue(80)), Seq(Point(90.0, 0.0), Point(200.0, 0.0)),
+            false, 90.0, 200.0, Set(Point(90.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -153,11 +158,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val linkIdForTests = LinkIdGenerator.generateRandom()
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+      val speedLimitsSeq = Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+          false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+          0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -178,11 +181,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val linkIdForTests = LinkIdGenerator.generateRandom()
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+      val speedLimitsSeq = Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+          false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+          0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -202,11 +203,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val linkIdForTests = LinkIdGenerator.generateRandom()
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+      val speedLimitsSeq = Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+            false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -228,10 +227,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+        Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+            false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -253,10 +251,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+        Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+            false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -278,10 +275,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+        Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+            false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -302,10 +298,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+        Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+            false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
@@ -326,10 +321,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val roadLink = RoadLink(linkIdForTests, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val speedLimitsSeq =
-        Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
-            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-        )
+        Seq(PieceWiseLinearAsset(1, linkId, SideCode.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0), Point(200.0, 0.0)),
+            false, 0.0, 200.0, Set(Point(0.0, 0.0), Point(200.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+            0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
       val trafficSigns =
         Seq(
