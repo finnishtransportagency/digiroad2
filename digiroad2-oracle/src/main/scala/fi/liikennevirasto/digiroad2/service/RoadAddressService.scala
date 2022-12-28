@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{ClientUtils, Track}
+import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
@@ -129,8 +129,10 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    ClientUtils.retry(2){
-      viiteClient.fetchAllByLinkIds(linkIds)
+      ClientUtils.retry(2) {
+        LogUtils.time(logger,"TEST LOG Retrieve road address by links"){
+          viiteClient.fetchAllByLinkIds(linkIds)
+        }
     }
   }
 
@@ -142,6 +144,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     */
   def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     try {
+      
       val roadAddressLinks = getAllByLinkIds(roadLinks.map(_.linkId))
       val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
       logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
