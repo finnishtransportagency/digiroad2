@@ -181,7 +181,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val roadPartNumber = lanes.head.attributes("ROAD_PART_NUMBER").asInstanceOf[Long]
       val track = lanes.head.attributes("TRACK").asInstanceOf[Int]
       val startAddrM = lanes.minBy(_.attributes("START_ADDR").asInstanceOf[Long]).attributes("START_ADDR").asInstanceOf[Long]
-      val endAddrM = lanes.minBy(_.attributes("END_ADDR").asInstanceOf[Long]).attributes("END_ADDR").asInstanceOf[Long]
+      val endAddrM = lanes.maxBy(_.attributes("END_ADDR").asInstanceOf[Long]).attributes("END_ADDR").asInstanceOf[Long]
 
       HomogenizedLane(laneCode, laneType, roadNumber, roadPartNumber, track, startAddrM, endAddrM)
     }))

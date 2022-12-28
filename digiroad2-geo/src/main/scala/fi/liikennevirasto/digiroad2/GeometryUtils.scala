@@ -17,6 +17,12 @@ object GeometryUtils {
     else false
   }
 
+  def sharedPointExists(points1: Set[Point], points2: Set[Point]): Boolean = {
+    points1.exists(point1 => {
+      points2.exists(point2 => point1.distance2DTo(point2) < DefaultEpsilon)
+    })
+  }
+
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
