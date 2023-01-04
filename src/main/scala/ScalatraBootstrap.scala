@@ -55,7 +55,7 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new ServiceRoadAPI( Digiroad2Context.maintenanceRoadService, 
                                       Digiroad2Context.roadLinkService, swagger),
                           s"/externalApi/livi/*")
-    context.mount(new LaneApi(swagger, Digiroad2Context.roadLinkService, Digiroad2Context.roadAddressService), 
+    context.mount(new LaneApi(swagger, Digiroad2Context.roadLinkService, Digiroad2Context.roadAddressService, Digiroad2Context.geometryTransform),
                           s"/externalApi/lanes/*")
   }
 }
