@@ -70,7 +70,7 @@ object RoadSide {
   case object Across extends RoadSide { def value = 9 }
   case object Unknown extends RoadSide { def value = 0 }
 }
-
+case class RoadAddressRange(roadNumber: Long, track: Track, startRoadPartNumber: Long, endRoadPartNumber: Long, startAddrMValue: Long, endAddrMValue: Long)
 case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, addrM: Int)
 object RoadAddress {
   lazy val routeRoadNumbers: Seq[Int] = 1 to 39
@@ -110,6 +110,14 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  def getLinkIdsInRoadAddressRange(roadAddressRange: RoadAddressRange): Set[String] = {
+    val startAndEndLinkIdOption = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
+    startAndEndLinkIdOption match {
+      case Some((startLinkId, endLinkId)) => vkmClient.fetchLinkIdsBetweenTwoRoadLinks(startLinkId, endLinkId, roadAddressRange.roadNumber)
+      case _ => throw new RoadAddressException(s"Could not fetch start and end link id for RoadAddressRange: $roadAddressRange")
+    }
+  }
 
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
