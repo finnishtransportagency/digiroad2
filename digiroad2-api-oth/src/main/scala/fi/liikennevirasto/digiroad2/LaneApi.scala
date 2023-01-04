@@ -22,7 +22,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   lazy val polygonTools = new PolygonTools
   val apiId = "lane-api"
 
-  val geometryTransform = new GeometryTransform(roadAddressService)
+  lazy val geometryTransform = new GeometryTransform(roadAddressService)
   case class HomogenizedLane(laneCode: Long, laneTypeCode: Long, roadNumber: Long, roadPartNumber: Long, track: Long, startAddressM: Long, endAddressM: Long)
   case class InvalidRoadNumberException(msg: String) extends Exception(msg)
 
