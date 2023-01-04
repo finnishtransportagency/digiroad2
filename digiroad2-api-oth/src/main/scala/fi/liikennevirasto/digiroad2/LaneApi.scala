@@ -16,12 +16,13 @@ import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
 
 
-class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService, val geometryTransform: GeometryTransform)
+class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService)
   extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   lazy val vkmClient = new VKMClient
   lazy val polygonTools = new PolygonTools
   val apiId = "lane-api"
 
+  lazy val geometryTransform = new GeometryTransform(roadAddressService)
   case class HomogenizedLane(laneCode: Long, laneTypeCode: Long, roadNumber: Long, roadPartNumber: Long, track: Long, startAddressM: Long, endAddressM: Long)
   case class InvalidRoadNumberException(msg: String) extends Exception(msg)
 

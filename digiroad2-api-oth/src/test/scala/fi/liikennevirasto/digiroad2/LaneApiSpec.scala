@@ -17,7 +17,9 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
-  private val laneApi = new LaneApi(new OthSwagger, mockRoadLinkService, mockRoadAddressService, mockGeometryTransform)
+  private val laneApi = new LaneApi(new OthSwagger, mockRoadLinkService, mockRoadAddressService) {
+    override lazy val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
   addServlet(laneApi, "/*")
 
   val linkId1 = LinkIdGenerator.generateRandom()
