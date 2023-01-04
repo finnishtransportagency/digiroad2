@@ -319,6 +319,10 @@ object Digiroad2Context {
     new RoadAddressService(viiteClient)
   }
 
+  lazy val geometryTransform: GeometryTransform = {
+    new GeometryTransform(roadAddressService)
+  }
+
   lazy val assetService: AssetService = {
     new AssetService(eventbus)
   }

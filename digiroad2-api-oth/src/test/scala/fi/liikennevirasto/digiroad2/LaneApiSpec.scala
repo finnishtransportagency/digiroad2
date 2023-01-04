@@ -17,7 +17,7 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
-  private val laneApi = new LaneApi(new OthSwagger, mockRoadLinkService, mockRoadAddressService)
+  private val laneApi = new LaneApi(new OthSwagger, mockRoadLinkService, mockRoadAddressService, mockGeometryTransform)
   addServlet(laneApi, "/*")
 
   val linkId1 = LinkIdGenerator.generateRandom()
@@ -162,6 +162,8 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("lanes in road address range Api requires valid parameters"){
+    when(mockGeometryTransform.getLinkIdsInRoadAddressRange(any[RoadAddressRange])).thenReturn(Set.empty[String])
+
     get("/lanes_in_range") {
       status should equal(400)
     }
