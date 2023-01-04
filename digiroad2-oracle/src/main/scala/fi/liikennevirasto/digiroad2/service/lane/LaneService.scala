@@ -659,7 +659,7 @@ trait LaneOperations {
           val correctStartAddrMValue = endAddrMValue - Math.round(lane.endMeasure * coefficient)
           val correctEndAddrMValue = endAddrMValue - Math.round(lane.startMeasure * coefficient)
           (correctStartAddrMValue, correctEndAddrMValue)
-        case SideCode.Unknown => throw new RoadAddressException(s"Lane $lane.id missing road address side code")
+        case _ => throw new RoadAddressException(s"Lane $lane.id missing road address side code")
       }
 
       val newAttributes = lane.attributes.map {
