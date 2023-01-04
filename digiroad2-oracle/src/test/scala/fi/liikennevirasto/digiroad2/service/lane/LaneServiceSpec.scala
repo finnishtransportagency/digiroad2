@@ -1169,8 +1169,8 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       ServiceWithDao.create(Seq(newLane1), Set(linkId1), 2, usernameTest)
       val lane2Id = ServiceWithDao.create(Seq(newLane2), Set(linkId1), 2, usernameTest).head
-
-      ServiceWithDao.deleteMultipleLanes(Set(lane2Id), usernameTest)
+      val persistedLane2 = ServiceWithDao.fetchAllLanesByLinkIds(Seq(linkId1)).find(_.id == lane2Id).get
+      ServiceWithDao.deleteMultipleLanes(Seq(persistedLane2), usernameTest)
 
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 

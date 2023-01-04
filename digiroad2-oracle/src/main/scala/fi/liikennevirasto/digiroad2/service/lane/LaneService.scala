@@ -965,12 +965,21 @@ trait LaneOperations {
 
   /**
     * Delete lanes with specified laneIds
-    * @param laneIds  lanes codes to delete
+    * @param lanesToExpire  existing lanes to be expired
     * @param username username of the one who expired the lanes
     */
-  def deleteMultipleLanes(laneIds: Set[Long], username: String): Seq[Long] = {
-    if (laneIds.nonEmpty) {
-      laneIds.map(moveToHistory(_, None, true, true, username)).toSeq
+  def deleteMultipleLanes(lanesToExpire: Seq[PersistedLane], username: String): Seq[Long] = {
+    if (lanesToExpire.nonEmpty) {
+      lanesToExpire.map(laneToExpire => {
+        // If lane which is to be expired has no end_date property, give current date as end_date
+        if(!laneToExpire.attributes.exists(laneProp => laneProp.publicId == "end_date" && laneProp.values.nonEmpty)) {
+          val date = DateTime.now().toString("D.M.YYYY")
+          moveToHistory(laneToExpire.id, None, expireHistoryLane = false, deleteFromLanes = false, username)
+          dao.updateEntryLane(laneToExpire.copy(attributes = laneToExpire.attributes :+
+            LaneProperty("end_date", Seq(LanePropertyValue(date)))), username)
+        }
+        moveToHistory(laneToExpire.id, None, expireHistoryLane = true, deleteFromLanes = true, username)
+      })
     } else
       Seq()
   }
@@ -993,11 +1002,12 @@ trait LaneOperations {
     withDynTransaction {
       val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
       val actionsLanes = separateNewLanesInActions(newLanes, linkIds, sideCode, allExistingLanes, sideCodesForLinks)
-      val laneIdsToBeDeleted = actionsLanes.lanesToDelete.map(_.id)
+      val laneIdsToBeExpired = actionsLanes.lanesToDelete.map(_.id)
+      val existingLanesToBeExpired = allExistingLanes.filter(existingLane => laneIdsToBeExpired.contains(existingLane.id))
 
       create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username, sideCodesForLinks) ++
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username, sideCodesForLinks, allExistingLanes) ++
-      deleteMultipleLanes(laneIdsToBeDeleted, username) ++
+      deleteMultipleLanes(existingLanesToBeExpired, username) ++
       createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
     }
   }
