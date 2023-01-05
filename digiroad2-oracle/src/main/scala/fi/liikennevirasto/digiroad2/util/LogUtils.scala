@@ -14,12 +14,8 @@ object LogUtils {
       val urlString = if (url.isDefined) {
         s"URL: ${url.get}"
       } else ""
-      if (noFilter) {
-        logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
-      } else {
-        if (duration >= timeLoggingThresholdInMs) {
-          logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, ${urlString}")
-        }
+      if (noFilter || duration >= timeLoggingThresholdInMs) {
+        logger.info(s"$operationName completed in $duration ms and in second ${duration / 1000}, $urlString")
       }
       result
     } catch {
@@ -28,7 +24,8 @@ object LogUtils {
           case Some(lineFound) => s"at $lineFound"
           case _ => s""
         }
-        logger.error(s"$operationName failed. Operation run ${e.getClass.getName}: ${e.getMessage} $errorString")
+        val duration = System.currentTimeMillis() - begin
+        logger.error(s"$operationName failed at $duration ms. Operation run ${e.getClass.getName}: ${e.getMessage} $errorString")
         throw e
     }
     

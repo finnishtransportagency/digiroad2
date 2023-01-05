@@ -82,7 +82,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddressForLink] = {
-    ClientUtils.retry(2){
+    ClientUtils.retry(2, logger){
       viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
     }
   }
@@ -129,7 +129,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-      ClientUtils.retry(2) {
+      ClientUtils.retry(2, logger) {
         LogUtils.time(logger,"TEST LOG Retrieve road address by links"){
           viiteClient.fetchAllByLinkIds(linkIds)
         }
