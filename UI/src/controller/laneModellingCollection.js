@@ -27,6 +27,13 @@
       });
     };
 
+    self.getMainLaneByLinkIdAndSideCode = function(linkId, sideCode) {
+      return _.find(_.flatten(self.linearAssets), function(lane) {
+          var laneCode = _.head(Property.getPropertyByPublicId(lane.properties, 'lane_code').values).value;
+          return lane.linkId === linkId && laneCode === 1 && lane.sideCode === sideCode;
+      });
+    };
+
     self.fetchViewOnlyLanes = function(boundingBox, zoom) {
       return backend.getViewOnlyLanesByBoundingBox(boundingBox, zoom, isWalkingCyclingActive).then(function(lanes) {
         eventbus.trigger('fetchedViewOnly', lanes);
