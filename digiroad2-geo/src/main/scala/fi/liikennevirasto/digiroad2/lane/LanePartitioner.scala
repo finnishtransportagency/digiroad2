@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.lane
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 
@@ -27,7 +27,7 @@ object LanePartitioner {
     val continuingLanes = lanes.filter(potentialLane => {
       val potentialLaneLink = roadLinks(potentialLane.linkId)
       val potentialLaneRoadIdentifier = getLaneRoadIdentifierByUsingViiteRoadNumber(potentialLane, potentialLaneLink)
-      val continuingEndPoints = potentialLane.endpoints.map(_.round()).exists(lane.endpoints.map(_.round()).contains)
+      val continuingEndPoints = GeometryUtils.sharedPointExists(lane.endpoints, potentialLane.endpoints)
       val sameLaneCode = potentialLane.laneAttributes.find(_.publicId == "lane_code") == lane.laneAttributes.find(_.publicId == "lane_code")
 
       potentialLane.id != lane.id && laneRoadIdentifier == potentialLaneRoadIdentifier && continuingEndPoints && sameLaneCode
