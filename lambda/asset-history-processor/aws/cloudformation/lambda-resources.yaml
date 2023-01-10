@@ -15,6 +15,9 @@ Parameters:
   ECRImageTag:
     Type: String
     Description: ECR image tag name
+  NetworkStackName:
+    Description: Name of network stack
+    Type: String
 
 Conditions:
   IsDev:
@@ -72,7 +75,30 @@ Resources:
               - sqs:ChangeMessageVisibility
             Resource: !GetAtt SQSQueue.Arn
 
+  ### SECURITY GROUP ###
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${ApplicationName}-${Environment}-asset-history-lambda-sg'
+      GroupName: !Sub '${ApplicationName}-${Environment}-asset-history-lambda-sg'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: '-1'
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: '-1'
+      VpcId:
+        Fn::ImportValue:
+          !Sub '${NetworkStackName}-VPC-Id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationName}-${Environment}-asset-history-lambda-sg'
+
+
   ### LAMBDA ###
+
   Lambda:
     DependsOn: LambdaRole
     Type: AWS::Lambda::Function
@@ -88,6 +114,14 @@ Resources:
       ImageConfig:
         Command:
           - index.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt SecurityGroup.GroupId
+        SubnetIds:
+          - Fn::ImportValue:
+              !Sub '${NetworkStackName}-Subnet1-Id'
+          - Fn::ImportValue:
+              !Sub '${NetworkStackName}-Subnet2-Id'
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-asset-history-processor-lambda-role
@@ -136,6 +170,16 @@ Resources:
                   - sqs:GetQueueAttributes
                   - sqs:ChangeMessageVisibility
                 Resource: !GetAtt SQSQueue.Arn
+        - PolicyName: LambdaVpcAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                Resource: '*'
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-asset-history-processor-lambda-role

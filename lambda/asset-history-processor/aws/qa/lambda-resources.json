@@ -14,5 +14,9 @@
   {
     "ParameterKey": "ECRImageTag",
     "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "DigiroadTest"
   }
 ]

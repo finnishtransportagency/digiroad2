@@ -14,5 +14,9 @@
   {
     "ParameterKey": "ECRImageTag",
     "ParameterValue": "latest"
+  },
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
   }
 ]
