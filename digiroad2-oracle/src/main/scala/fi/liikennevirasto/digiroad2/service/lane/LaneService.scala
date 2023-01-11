@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress, RoadAddressException}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress, RoadAddressException, RoadAddressRange}
 import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
@@ -54,6 +54,7 @@ trait LaneOperations {
 
 
   val logger = LoggerFactory.getLogger(getClass)
+  lazy val geometryTransform = new GeometryTransform(roadAddressService)
 
   case class ActionsPerLanes(lanesToDelete: Set[NewLane] = Set(),
                              lanesToUpdate: Set[NewLane] = Set(),
@@ -638,6 +639,24 @@ trait LaneOperations {
       laneCodeValue.asInstanceOf[Int]
     else
       throw new IllegalArgumentException("Lane code attribute not found!")
+  }
+
+  def getLanesInRoadAddressRange(roadAddressRange: RoadAddressRange): (Seq[PieceWiseLane], Map[String, RoadLink]) = {
+    val linkIds = geometryTransform.getLinkIdsInRoadAddressRange(roadAddressRange)
+
+    val roadLinksInRange = roadLinkService.getRoadLinksByLinkIds(linkIds)
+    val roadLinksFiltered = roadLinksInRange.filter(_.functionalClass != WalkingAndCyclingPath.value)
+    val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
+    val lanes = getLanesByRoadLinks(roadLinksFiltered, adjust = false)
+    val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
+      val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
+      roadNumber match {
+        case None => false
+        case Some(rn) => isCarTrafficRoadAddress(rn)
+      }
+    })
+
+    (lanesWithRoadAddress, roadLinksGrouped)
   }
 
   def calculateAccurateAddrMValuesForCutLanes(lanes :Seq[PieceWiseLane], roadLinks: Map[String, RoadLink]) : Seq[PieceWiseLane] = {
