@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{ConstructionType, LinkGeomSource, Mot
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddressRange, Track}
 import org.mockito.ArgumentMatchers.any
@@ -17,8 +18,11 @@ class LaneApiSpec extends FunSuite with ScalatraSuite {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
-  private val laneApi = new LaneApi(new OthSwagger, mockRoadLinkService, mockRoadAddressService) {
+  private val laneServiceMock = new LaneService(mockRoadLinkService, new DummyEventBus, mockRoadAddressService){
     override lazy val geometryTransform: GeometryTransform = mockGeometryTransform
+  }
+  private val laneApi = new LaneApi(new OthSwagger, mockRoadLinkService, mockRoadAddressService) {
+    override lazy val laneService = laneServiceMock
   }
   addServlet(laneApi, "/*")
 

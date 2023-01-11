@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.Digiroad2Context.laneService
 import fi.liikennevirasto.digiroad2.asset.WalkingAndCyclingPath
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.lane.LanePartitioner.LaneWithContinuingLanes
 import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.pwLanesTwoDigitLaneCode
 import fi.liikennevirasto.digiroad2.util.RoadAddress.{isCarTrafficRoadAddress, roadPartNumberRange}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, PolygonTools, RoadAddressRange, Track}
+import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddressRange, Track}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
@@ -20,9 +20,9 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   lazy val vkmClient = new VKMClient
   lazy val polygonTools = new PolygonTools
+  lazy val laneService = new LaneService(roadLinkService, new DummyEventBus, roadAddressService)
   val apiId = "lane-api"
 
-  lazy val geometryTransform = new GeometryTransform(roadAddressService)
   case class HomogenizedLane(laneCode: Long, laneTypeCode: Long, roadNumber: Long, roadPartNumber: Long, track: Long, startAddressM: Long, endAddressM: Long)
   case class InvalidRoadAddressRangeParamaterException(msg: String) extends Exception(msg)
 
