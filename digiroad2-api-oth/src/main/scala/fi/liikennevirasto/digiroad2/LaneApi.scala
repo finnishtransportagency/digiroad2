@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.{LanePartitioner, PieceWiseLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.pwLanesTwoDigitLaneCode
-import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
+import fi.liikennevirasto.digiroad2.util.RoadAddress.{isCarTrafficRoadAddress, roadPartNumberRange}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, PolygonTools, RoadAddressRange, Track}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
@@ -24,7 +24,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
 
   lazy val geometryTransform = new GeometryTransform(roadAddressService)
   case class HomogenizedLane(laneCode: Long, laneTypeCode: Long, roadNumber: Long, roadPartNumber: Long, track: Long, startAddressM: Long, endAddressM: Long)
-  case class InvalidRoadNumberException(msg: String) extends Exception(msg)
+  case class InvalidRoadAddressRangeParamaterException(msg: String) extends Exception(msg)
 
   override protected def applicationDescription: String = "Lanes API"
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -40,7 +40,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     (apiOperation[Long]("getLanesInRoadAddressRange")
       .parameters(
         queryParam[Int]("road_number").description("Road Number for the range"),
-        queryParam[Int]("track").description("Track code for search"),
+        queryParam[Int]("track").description("Track code for search").optional,
         queryParam[Int]("start_part").description("Starting road part number for search"),
         queryParam[Int]("start_addrm").description("Starting distance on starting roadPart for search"),
         queryParam[Int]("end_part").description("Ending road part number for search"),
@@ -67,21 +67,23 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     contentType = formats("json") + "; charset=utf-8"
     ApiUtils.avoidRestrictions(apiId + "_range", request, params) { params =>
       val roadNumber = params.getOrElse("road_number", halt(BadRequest("Missing parameters")))
-      val track = params.getOrElse("track", halt(BadRequest("Missing parameters")))
+      val track = params.get("track")
       val startRoadPartNumber = params.getOrElse("start_part", halt(BadRequest("Missing parameters")))
       val startAddrM = params.getOrElse("start_addrm", halt(BadRequest("Missing parameters")))
       val endRoadPartNumber = params.getOrElse("end_part", halt(BadRequest("Missing parameters")))
       val endAddrM = params.getOrElse("end_addrm", halt(BadRequest("Missing parameters")))
 
       val parameters = try {
-        val params = RoadAddressRange(roadNumber.toLong, Track(track.toInt), startRoadPartNumber.toLong,
+        val trackParam = if(track.isDefined) Some(Track(track.get.toInt))
+        else None
+        val params = RoadAddressRange(roadNumber.toLong, trackParam, startRoadPartNumber.toLong,
           endRoadPartNumber.toLong, startAddrM.toLong, endAddrM.toLong)
 
         validateRangeParameters(params)
         params
       }
       catch {
-        case invalidRoadNumberException: InvalidRoadNumberException => halt(BadRequest(invalidRoadNumberException.getMessage))
+        case invalidRoadNumberException: InvalidRoadAddressRangeParamaterException => halt(BadRequest(invalidRoadNumberException.getMessage))
         case _: NumberFormatException => halt(BadRequest("Invalid parameters"))
       }
 
@@ -105,9 +107,14 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       }
     }
   }
-//TODO add more validations
+
   def validateRangeParameters(parameters: RoadAddressRange): Unit = {
-    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw InvalidRoadNumberException("Invalid road number. Road number must be in range 1 to 62999")
+    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw InvalidRoadAddressRangeParamaterException("Invalid road number. Road number must be in range 1 to 62999")
+    if (parameters.track.contains(Track.Unknown)) throw InvalidRoadAddressRangeParamaterException("Invalid track number, allowed Track values are: 0, 1, 2")
+    if (parameters.startRoadPartNumber > parameters.endRoadPartNumber) throw InvalidRoadAddressRangeParamaterException("Start part number must be smaller than end part number")
+    if (!roadPartNumberRange.contains(parameters.startRoadPartNumber) ||
+      !roadPartNumberRange.contains(parameters.endRoadPartNumber)) throw InvalidRoadAddressRangeParamaterException("Road part numbers must be in range 1 - 1000")
+    if(parameters.startAddrMValue >= parameters.endAddrMValue) throw InvalidRoadAddressRangeParamaterException("StartAddrM value must be less than EndAddrM value")
   }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
@@ -125,29 +132,17 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     })
     val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
     val homogenousLanes = homogenizeTwoDigitLanes(twoDigitLanes, roadLinksGrouped)
-    lanesToApi(homogenousLanes)
+    homogenizedLanesToApi(homogenousLanes)
   }
 
   def lanesInRoadAddressRangeToApi(roadAddressRange: RoadAddressRange): Seq[Map[String, Any]] = {
-    val linkIds = geometryTransform.getLinkIdsInRoadAddressRange(roadAddressRange)
-    val roadLinksInRange = roadLinkService.getRoadLinksByLinkIds(linkIds)
-    val roadLinksFiltered = roadLinksInRange.filter(_.functionalClass != WalkingAndCyclingPath.value)
-    val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
-    val lanes = laneService.getLanesByRoadLinks(roadLinksFiltered, adjust = false)
-    val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
-      val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
-      roadNumber match {
-        case None => false
-        case Some(rn) => isCarTrafficRoadAddress(rn)
-      }
-    })
-
+    val (lanesWithRoadAddress, roadLinksGrouped) = laneService.getLanesInRoadAddressRange(roadAddressRange)
     val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
     val homogenousLanes = homogenizeTwoDigitLanes(twoDigitLanes, roadLinksGrouped)
-    lanesToApi(homogenousLanes)
+    homogenizedLanesToApi(homogenousLanes)
   }
 
-  def lanesToApi(lanes: Seq[HomogenizedLane]): Seq[Map[String, Any]] = {
+  def homogenizedLanesToApi(lanes: Seq[HomogenizedLane]): Seq[Map[String, Any]] = {
     lanes.sortBy(lane => (lane.roadNumber, lane.roadPartNumber, lane.track)).map(lane => {
       Map(
         "roadNumber" -> lane.roadNumber,
@@ -168,7 +163,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val groupedAndConnectedLanes = lanesGroupedByAttributes.map(laneGroup => {
       val lanesWithContinuingLanes = laneGroup.map(lane => {
         val identifier = LanePartitioner.getLaneRoadIdentifierByUsingViiteRoadNumber(lane, roadLinks(lane.linkId))
-        val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, identifier, laneGroup, roadLinks)
+        val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, identifier, laneGroup, roadLinks, sideCodesCorrected = true)
         LaneWithContinuingLanes(lane, continuingLanes)
       })
       LanePartitioner.getConnectedGroups(lanesWithContinuingLanes)
