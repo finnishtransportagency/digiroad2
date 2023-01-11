@@ -22,7 +22,8 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   def maintenanceDAO: PostGISMaintenanceDao = new PostGISMaintenanceDao()
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
-  override def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+  override def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), showSpeedLimitsHistory: Boolean = false,
+                                roadFilterFunction: RoadLink => Boolean = _ => true): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksByBoundsAndMunicipalities(bounds, municipalities)
     val linearAssets = getByRoadLinks(typeId, roadLinks)
     val assetsWithAttributes = enrichMaintenanceRoadAttributes(linearAssets, roadLinks)
@@ -117,7 +118,8 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showSpeedLimitsHistory: Boolean = false,
+                                        roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
     // Filter high functional classes from maintenance roads
     val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)

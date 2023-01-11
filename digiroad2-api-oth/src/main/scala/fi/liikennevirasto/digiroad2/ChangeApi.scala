@@ -83,7 +83,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
 
       params("assetType") match {
-        case "speed_limits" => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust, token))
+        case "speed_limits" => speedLimitsToGeoJson(since, speedLimitService.getChanged(SpeedLimitAsset.typeId, since, until, withAdjust, token))
         case "total_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TotalWeightLimit.typeId, since, until, withAdjust, token))
         case "trailer_truck_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust, token))
         case "axle_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust, token))

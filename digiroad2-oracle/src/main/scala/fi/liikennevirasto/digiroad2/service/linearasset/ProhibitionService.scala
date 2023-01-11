@@ -54,7 +54,8 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }.filterNot(_.expired)
   }
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showSpeedLimitsHistory: Boolean = false,
+                                        roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
 
     val existingAssets =

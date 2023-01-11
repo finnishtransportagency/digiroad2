@@ -89,9 +89,10 @@ trait LinearAssetOperations {
     * @param municipalities
     * @return
     */
-  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), showSpeedLimitsHistory: Boolean = false,
+                       roadFilterFunction: RoadLink => Boolean = _ => true): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksByBoundsAndMunicipalities(bounds, municipalities)
-    val linearAssets = getByRoadLinks(typeId, roadLinks)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, showSpeedLimitsHistory = showSpeedLimitsHistory, roadFilterFunction = roadFilterFunction)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
@@ -157,9 +158,9 @@ trait LinearAssetOperations {
     * @param municipality
     * @return
     */
-  def getByMunicipality(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
+  def getByMunicipality(typeId: Int, municipality: Int, roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(municipality)
-    getByRoadLinks(typeId, roadLinks, adjust = false)
+    getByRoadLinks(typeId, roadLinks, adjust = false, roadFilterFunction = roadFilterFunction)
   }
 
   def getByMunicipalityAndRoadLinks(typeId: Int, municipality: Int): Seq[(PieceWiseLinearAsset, RoadLink)] = {
@@ -230,7 +231,8 @@ trait LinearAssetOperations {
     existingAssets
   }
 
-  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLinearAsset] = {
+  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showSpeedLimitsHistory: Boolean = false,
+                               roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
     if (adjust){

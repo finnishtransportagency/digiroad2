@@ -28,7 +28,8 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true): Seq[PieceWiseLinearAsset] = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showSpeedLimitsHistory: Boolean = false,
+                                        roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
 
     val existingAssets =

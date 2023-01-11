@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService, service: SpeedLimitService) {
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
-  val dao = service.dao
+  val dao = service.speedLimitDao
   val logger = LoggerFactory.getLogger(getClass)
 
   def updateSpeedLimits() = {
@@ -41,7 +41,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def updateByRoadLinks(municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
-    val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
+    val speedLimitLinks = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val oldSpeedLimits = dao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet))
@@ -62,7 +62,7 @@ class SpeedLimitUpdater(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitsOnChangedLinks, changes, initChangeSet, speedLimitLinks)
 
     val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
-    handleChangesAndUnknowns(topology, speedLimits, Some(projectedChangeSet), oldRoadLinkIds, geometryChanged = true)
+    handleChangesAndUnknowns(roadLinks, speedLimits, Some(projectedChangeSet), oldRoadLinkIds, geometryChanged = true)
   }
 
   def handleChangesAndUnknowns(topology: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],

@@ -302,14 +302,12 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
     * Returns only car traffic roads as a topology and speed limits that match these road links.
     * Used by SpeedLimitService.get (by bounding box and a list of municipalities) and SpeedLimitService.get (by municipality)
     */
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): (Seq[PieceWiseLinearAsset], Seq[RoadLink]) = {
-    var speedLimitLinks: Seq[PieceWiseLinearAsset] = Seq()
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): Seq[PieceWiseLinearAsset] = {
     if (showSpeedLimitsHistory) {
-      speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
+      fetchHistorySpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
     } else {
-      speedLimitLinks = fetchSpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
+      fetchSpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
     }
-    (speedLimitLinks, roadLinks)
   }
 
   def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String]): Seq[PersistedLinearAsset] = {

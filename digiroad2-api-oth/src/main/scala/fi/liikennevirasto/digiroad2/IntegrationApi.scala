@@ -892,7 +892,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
       val assetType = params("assetType")
       assetType match {
-        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until, withAdjust))
+        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(SpeedLimitAsset.typeId, since, until, withAdjust))
         case _ => BadRequest("Invalid asset type")
       }
     }
@@ -933,7 +933,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         val assetType = params("assetType")
         assetType match {
           case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
-          case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
+          case "speed_limits" => speedLimitsToApi(speedLimitService.getByMunicipality(SpeedLimitAsset.typeId, municipalityNumber, roadFilterFunction = {roadLinkFilter: RoadLink => roadLinkFilter.isCarRoadOrCyclePedestrianPath}))
           case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
           case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
           case "axle_weight_limits" => sevenRestrictionToApi(AxleWeightLimit.typeId, municipalityNumber)
