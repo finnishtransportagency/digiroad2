@@ -40,7 +40,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     (apiOperation[Long]("getLanesInRoadAddressRange")
       .parameters(
         queryParam[Int]("road_number").description("Road Number for the range"),
-        queryParam[Int]("track").description("Track code for search"),
+        queryParam[Int]("track").description("Track code for search").optional,
         queryParam[Int]("start_part").description("Starting road part number for search"),
         queryParam[Int]("start_addrm").description("Starting distance on starting roadPart for search"),
         queryParam[Int]("end_part").description("Ending road part number for search"),
