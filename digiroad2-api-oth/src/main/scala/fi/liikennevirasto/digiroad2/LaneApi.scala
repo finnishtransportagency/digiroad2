@@ -9,11 +9,13 @@ import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.pwLanesTwoDigitLaneCode
 import fi.liikennevirasto.digiroad2.util.RoadAddress.{isCarTrafficRoadAddress, roadPartNumberRange}
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddressRange, Track}
+import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddressException, RoadAddressRange, Track}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
+
+import scala.collection.mutable
 
 
 class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService)
@@ -117,7 +119,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     if(parameters.startAddrMValue >= parameters.endAddrMValue) throw InvalidRoadAddressRangeParamaterException("StartAddrM value must be less than EndAddrM value")
   }
 
-  def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+  def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[mutable.LinkedHashMap[String, Long]] = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
     val roadLinksFiltered = roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
@@ -135,16 +137,20 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     homogenizedLanesToApi(homogenousLanes)
   }
 
-  def lanesInRoadAddressRangeToApi(roadAddressRange: RoadAddressRange): Seq[Map[String, Any]] = {
-    val (lanesWithRoadAddress, roadLinksGrouped) = laneService.getLanesInRoadAddressRange(roadAddressRange)
+  def lanesInRoadAddressRangeToApi(roadAddressRange: RoadAddressRange): Seq[mutable.LinkedHashMap[String, Long]] = {
+    val (lanesWithRoadAddress, roadLinksGrouped) = try {
+      laneService.getLanesInRoadAddressRange(roadAddressRange)
+    } catch {
+      case rae: RoadAddressException => halt(BadRequest("Could not fetch lanes for given road address range, check that given road address range is valid"))
+    }
     val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
     val homogenousLanes = homogenizeTwoDigitLanes(twoDigitLanes, roadLinksGrouped)
     homogenizedLanesToApi(homogenousLanes)
   }
 
-  def homogenizedLanesToApi(lanes: Seq[HomogenizedLane]): Seq[Map[String, Any]] = {
+  def homogenizedLanesToApi(lanes: Seq[HomogenizedLane]): Seq[mutable.LinkedHashMap[String, Long]] = {
     lanes.sortBy(lane => (lane.roadNumber, lane.roadPartNumber, lane.track)).map(lane => {
-      Map(
+      mutable.LinkedHashMap(
         "roadNumber" -> lane.roadNumber,
         "roadPartNumber" -> lane.roadPartNumber,
         "track" -> lane.track,
