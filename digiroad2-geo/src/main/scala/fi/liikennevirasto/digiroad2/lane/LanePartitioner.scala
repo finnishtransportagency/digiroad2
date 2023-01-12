@@ -23,7 +23,7 @@ object LanePartitioner {
   //Returns lanes continuing from from given lane
   def getContinuingWithIdentifier(lane: PieceWiseLane, laneRoadIdentifier: String,
                                   lanes: Seq[PieceWiseLane], roadLinks: Map[String, RoadLink],
-                                  SideCodesCorrected: Boolean = false): Seq[PieceWiseLane] = {
+                                  sideCodesCorrected: Boolean = false): Seq[PieceWiseLane] = {
     val continuingLanes = lanes.filter(potentialLane => {
       val potentialLaneLink = roadLinks(potentialLane.linkId)
       val potentialLaneRoadIdentifier = getLaneRoadIdentifierByUsingViiteRoadNumber(potentialLane, potentialLaneLink)
@@ -33,7 +33,7 @@ object LanePartitioner {
       potentialLane.id != lane.id && laneRoadIdentifier == potentialLaneRoadIdentifier && continuingEndPoints && sameLaneCode
     })
 
-    if (SideCodesCorrected) continuingLanes
+    if (sideCodesCorrected) continuingLanes
     else continuingLanes.filter(_.sideCode == lane.sideCode)
   }
 
