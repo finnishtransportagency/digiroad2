@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.client.viite.ViiteClientException
 import org.slf4j.{Logger, LoggerFactory}
 /**
@@ -156,6 +157,35 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
     }
 
     (address, roadSide )
+  }
+
+  /**
+    * @param roadLinkLength Length of road link
+    * @param addrSideCode SideCode of the road address for link, i.e. which way road address grows relative to digitizing direction
+    * @param addrStartMValue Road address distance from road link's start point (Point determined by road address growth direction NOT digitizing direction)
+    * @param addrEndMValue Road address distance from road link's end point (Point determined by road address growth direction NOT digitizing direction)
+    * @param assetStartMValue Start M-Value on road link for cut asset
+    * @param assetEndMValue End M-Value on road link for cut asset
+    * @return Road address start and end distance on cut asset
+    */
+  def getAddressMValuesForCutAssets(roadLinkLength: Double, addrSideCode: SideCode, addrStartMValue: Int, addrEndMValue: Int,
+                                    assetStartMValue: Double, assetEndMValue: Double): (Int, Int) = {
+
+    // Coefficient is needed for determining address m-value on specific asset measure, because
+    // road address length is not equal to roadlink length
+    val coefficient = (addrEndMValue - addrStartMValue) / roadLinkLength
+
+    addrSideCode match {
+      case TowardsDigitizing =>
+        val startAddrMValue = addrStartMValue + Math.round(assetStartMValue * coefficient).toInt
+        val endAddrMValue = addrStartMValue + Math.round(assetEndMValue * coefficient).toInt
+        (startAddrMValue, endAddrMValue)
+      case AgainstDigitizing =>
+        val startAddrMValue = addrEndMValue - Math.round(assetEndMValue * coefficient).toInt
+        val endAddrMValue = addrEndMValue - Math.round(assetStartMValue * coefficient).toInt
+        (startAddrMValue, endAddrMValue)
+      case _ => throw new RoadAddressException("Invalid road address side code")
+    }
   }
 }
 

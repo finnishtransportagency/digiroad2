@@ -2,14 +2,15 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneProperty, PersistedLane}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, RoadLink, SpeedLimitValue, Value}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, PersistedLane}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.ChangedRoadlink
 import fi.liikennevirasto.digiroad2.service.lane.LaneChange
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
+import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import fi.liikennevirasto.digiroad2.vallu.ValluStoreStopChangeMessage._
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.{describeEquipments, describeReachability, transformToISODate}
 import org.joda.time.DateTime
@@ -18,11 +19,11 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
-import scala.util.Try
 
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
   protected implicit val jsonFormats: Formats = DefaultFormats
+  lazy val geometryTransform: GeometryTransform = new GeometryTransform(Digiroad2Context.roadAddressService)
   val apiId = "change-api"
 
   before() {
@@ -554,18 +555,18 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
     def mapLaneAddressInfo(lane: PersistedLane, roadLink: RoadLink): Map[String, Any] = {
       try {
-        val roadStartAddr = roadLink.attributes("START_ADDR").toString.toDouble
-        val roadEndAddr = roadLink.attributes("END_ADDR").toString.toDouble
+        val roadStartAddr = roadLink.attributes("START_ADDR").toString.toInt
+        val roadEndAddr = roadLink.attributes("END_ADDR").toString.toInt
+        val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").toString.toInt)
 
-        val laneStartAddr = roadStartAddr + lane.startMeasure
-        val laneEndAddr = roadEndAddr - (roadLink.length - lane.endMeasure)
-
+        val (laneStartAddr, laneEndAddr) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode, roadStartAddr, roadEndAddr,
+          lane.startMeasure, lane.endMeasure)
         Map(
           "roadNumber" -> roadLink.attributes("ROAD_NUMBER"),
           "roadPart" -> roadLink.attributes("ROAD_PART_NUMBER"),
           "roadTrack" -> roadLink.attributes("TRACK"),
-          "roadStartAddr" -> laneStartAddr.toInt,
-          "roadEndAddr" -> laneEndAddr.toInt
+          "roadStartAddr" -> laneStartAddr,
+          "roadEndAddr" -> laneEndAddr
         )
       }
       catch {
@@ -588,27 +589,29 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       val lane = laneChange.lane
       val oldLane = laneChange.oldLane.get
 
-      val roadStartAddr = roadLink.attributes("START_ADDR").toString.toDouble
-      val roadEndAddr = roadLink.attributes("END_ADDR").toString.toDouble
+      val roadStartAddr = roadLink.attributes("START_ADDR").toString.toInt
+      val roadEndAddr = roadLink.attributes("END_ADDR").toString.toInt
+      val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").toString.toInt)
 
-      val laneStartAddr = (roadStartAddr + lane.startMeasure).toInt
-      val laneEndAddr = (roadEndAddr - (roadLink.length - lane.endMeasure)).toInt
+      val (laneStartAddrM, laneEndAddrM) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
+        roadStartAddr, roadEndAddr, lane.startMeasure, lane.endMeasure)
 
-      val oldLaneStartAddr = (roadStartAddr + oldLane.startMeasure).toInt
-      val oldLaneEndAddr = (roadEndAddr - (roadLink.length - oldLane.endMeasure)).toInt
+      val (oldLaneStartAddrM, oldLaneEndAddrM) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
+        roadStartAddr, roadEndAddr, oldLane.startMeasure, oldLane.endMeasure)
 
-      if(laneStartAddr > oldLaneStartAddr){
-        ((oldLaneStartAddr, oldLane.startMeasure), (laneStartAddr, lane.startMeasure))
-      } else if(oldLaneStartAddr > laneStartAddr){
-        ((laneStartAddr, lane.startMeasure), (oldLaneStartAddr, oldLane.startMeasure))
-      } else if(laneEndAddr > oldLaneEndAddr){
-        ((oldLaneEndAddr, oldLane.endMeasure), (laneEndAddr, lane.endMeasure))
+
+      if(laneStartAddrM > oldLaneStartAddrM){
+        ((oldLaneStartAddrM, oldLane.startMeasure), (laneStartAddrM, lane.startMeasure))
+      } else if(oldLaneStartAddrM > laneStartAddrM){
+        ((laneStartAddrM, lane.startMeasure), (oldLaneStartAddrM, oldLane.startMeasure))
+      } else if(laneEndAddrM > oldLaneEndAddrM){
+        ((oldLaneEndAddrM, oldLane.endMeasure), (laneEndAddrM, lane.endMeasure))
       }else{
-        ((laneEndAddr, lane.endMeasure), (oldLaneEndAddr, oldLane.endMeasure))
+        ((laneEndAddrM, lane.endMeasure), (oldLaneEndAddrM, oldLane.endMeasure))
       }
     }
 
-    def generateCommondFiledsWithDiffSource(laneToUseOnCreates: PersistedLane, modifiedAt: Option[String] = None,
+    def generateCommonFieldsWithDiffSource(laneToUseOnCreates: PersistedLane, modifiedAt: Option[String] = None,
                                             modifiedBy: Option[String]  = None) = {
 
       Map("createdAt" -> laneToUseOnCreates.createdDateTime.map(DateTimePropertyFormat.print(_)),
@@ -642,13 +645,13 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             Seq(Map("newId" -> lane.id,
               "newLaneNumber" -> lane.laneCode,
               "newLaneType" -> laneType)
-              ++ generateCommondFiledsWithDiffSource(lane))
+              ++ generateCommonFieldsWithDiffSource(lane))
 
           case LaneChangeType.Expired =>
             Seq(Map("oldId" -> lane.id,
               "oldLaneNumber" -> lane.laneCode,
               "oldLaneType" -> laneType)
-              ++ generateCommondFiledsWithDiffSource(lane, lane.expiredDateTime.map(DateTimePropertyFormat.print(_)), lane.expiredBy))
+              ++ generateCommonFieldsWithDiffSource(lane, lane.expiredDateTime.map(DateTimePropertyFormat.print(_)), lane.expiredBy))
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
             val oldLane = laneChange.oldLane.get
@@ -660,7 +663,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "newId" -> lane.id,
               "newLaneNumber" -> lane.laneCode,
               "newLaneType" -> laneType)
-              ++ generateCommondFiledsWithDiffSource(lane, lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)), lane.modifiedBy))
+              ++ generateCommonFieldsWithDiffSource(lane, lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)), lane.modifiedBy))
 
           case LaneChangeType.Divided =>
             val oldLane = laneChange.oldLane.get
@@ -671,10 +674,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "oldLaneType" -> oldLaneType,
               "newId" -> lane.id,
               "newLaneNumber" -> lane.laneCode,
-              "newLaneType" -> laneType) ++ generateCommondFiledsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy))
+              "newLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy))
 
           case LaneChangeType.Lengthened | LaneChangeType.Shortened =>
             val oldLane = laneChange.oldLane.get
+            val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
 
             val ((segmentStartAddr, startM), (segmentEndAddr, endM)) = getDifferentSegmentAddressesAndMeasures(laneChange)
             val sameSegmentLaneAddressInfo = if(laneChange.changeType == LaneChangeType.Lengthened) mapLaneAddressInfo(oldLane, laneChange.roadLink.get) else mapLaneAddressInfo(lane, laneChange.roadLink.get)
@@ -683,10 +687,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               if (laneChange.changeType == LaneChangeType.Lengthened) {
                 Map("newId" -> lane.id,
                   "newLaneNumber" -> lane.laneCode,
-                  "newLaneType" -> laneType) ++ generateCommondFiledsWithDiffSource(lane)
+                  "newLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(lane)
               } else {
                 Map("oldId" -> oldLane.id,
-                  "oldLaneNumber" -> oldLane.laneCode) ++ generateCommondFiledsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
+                  "oldLaneNumber" -> oldLane.laneCode,
+                  "oldLaneType" -> oldLaneType) ++ generateCommonFieldsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
               }
             }
 
@@ -716,7 +721,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "oldLaneNumber" -> oldLane.laneCode,
               "newId" -> lane.id,
               "newLaneNumber" -> lane.laneCode,
-              "newLaneType" -> laneType) ++ sameSegmentLaneAddressInfo ++ generateCommondFiledsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
+              "newLaneType" -> laneType) ++ sameSegmentLaneAddressInfo ++ generateCommonFieldsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
 
             //if there is a LaneCodeTransfer type than the sameSegment will already be made on the LaneCodeTransfer case
             if(laneChanges.exists(lc => lc.changeType == LaneChangeType.LaneCodeTransfer && lc.lane.id == lane.id))
