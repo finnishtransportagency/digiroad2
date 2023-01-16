@@ -31,9 +31,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
       adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
-    val linearAssets = Map.empty[String, Seq[PersistedLinearAsset]]
-    val adjustedAssets = assetFiller.fillTopology(topology, linearAssets, 30, Some(changeSet), geometryChanged = false)._1
-    val filledTopology = assetFiller.toLinearAsset(adjustedAssets, topology.head)
+    val linearAssets = Map.empty[String, Seq[PieceWiseLinearAsset]]
+    val filledTopology = assetFiller.fillTopology(topology, linearAssets, 30, Some(changeSet), geometryChanged = false)._1
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
@@ -48,7 +47,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      linkId1 -> Seq(PersistedLinearAsset(1l, linkId1, 1, Some(NumericValue(1)), 10.0, 15.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
+      linkId1 -> Seq(PieceWiseLinearAsset(1l, linkId1, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(10.0, 0.0), Point(15.0, 0.0)), false, 10.0, 15.0,
+        Set(Point(10.0, 0.0), Point(15.0, 0.0)), None, None, None, None, 110, TrafficDirection.BothDirections, 0, None, linkSource = NormalLinkInterface, Municipality, Map(), None, None, None)))
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
@@ -61,11 +61,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
-      linkId1 -> Seq(PersistedLinearAsset(1l, linkId1, 1, Some(NumericValue(1)), 0.0, 15.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
+      linkId1 -> Seq(PieceWiseLinearAsset(1l, linkId1, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0.0, 0.0), Point(15.0, 0.0)), false, 0.0, 15.0,
+        Set(Point(0.0, 0.0), Point(15.0, 0.0)), None, None, None, None, 110, TrafficDirection.BothDirections, 0, None, linkSource = NormalLinkInterface, Municipality, Map(), None, None, None)))
 
-    val (persistedLinearAssets, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
-    val filledTopology = assetFiller.toLinearAssetsOnMultipleLinks(persistedLinearAssets, topology)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
+    println(filledTopology.head)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(1))))
@@ -85,12 +86,15 @@ class AssetFillerSpec extends FunSuite with Matchers {
       RoadLink(linkId2, Seq(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.TowardsDigitizing, Motorway, None, None)
     )
+    val assets = assetFiller.toLinearAssetsOnMultipleLinks(Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(2l, linkId2, 2, Some(NumericValue(1)), 0.0, 5.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(3l, linkId2, 2, Some(NumericValue(1)), 7.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(4l, linkId2, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology).sortBy(_.id)
+
+
     val linearAssets = Map(
-      linkId1 -> Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)),
-      linkId2 -> Seq(
-        PersistedLinearAsset(2l, linkId2, 2, Some(NumericValue(1)), 0.0, 5.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
-        PersistedLinearAsset(3l, linkId2, 2, Some(NumericValue(1)), 7.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
-        PersistedLinearAsset(4l, linkId2, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)
+      linkId1 -> Seq(assets(0)),
+      linkId2 -> Seq(assets(1), assets(2), assets(3)
       )
     )
 
@@ -98,9 +102,9 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     filledTopology should have size 2
 
-    filledTopology.filter(_.linkId == linkId2).map(_.sideCode) should be(Seq(BothDirections.value))
+    filledTopology.filter(_.linkId == linkId2).map(_.sideCode) should be(Seq(BothDirections))
 
-    filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections.value))
+    filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 1l).map(_.linkId) should be(Seq(linkId1))
 
     changeSet.adjustedSideCodes should be(Seq(
@@ -113,11 +117,14 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
-    val linearAssets = Map(
-      linkId1 -> Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val (persistedFilledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
-    val filledTopology = assetFiller.toLinearAssetsOnMultipleLinks(persistedFilledTopology, topology)
+    val assets = assetFiller.toLinearAssetsOnMultipleLinks(Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)),
+      topology)
+
+    val linearAssets = Map(
+      linkId1 -> assets)
+
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
     filledTopology should have size 1
 
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(BothDirections))
@@ -133,10 +140,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.BothDirections.value, None, 0.0, 10.0, Some("guy"),
       None, None, None, expired = false, 100, 0, None, linkSource = NormalLinkInterface, None, None, None)
-        )
+        ), oldRoadLink)
     val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId3), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
@@ -149,7 +156,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
 
     output.length should be(3)
-    output.head._1.sideCode should be (SideCode.BothDirections.value)
+    output.head._1.sideCode should be (SideCode.BothDirections)
     output.head._1.startMeasure should be(0.0)
     output.head._1.endMeasure should be(3.0)
     output.last._1.endMeasure should be(3.0)
@@ -161,12 +168,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.TowardsDigitizing.value, None, 0.0, 10.0, Some("guy"),
         None, None, None, expired = false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
         PersistedLinearAsset(2, linkId1, SideCode.AgainstDigitizing.value, None, 0.0, 10.0, Some("guy"),
         None, None, None, expired = false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), oldRoadLink)
 
     val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -177,8 +184,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
       assetFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
-    output.head._1.sideCode should be (SideCode.TowardsDigitizing.value)
-    output.last._1.sideCode should be (SideCode.AgainstDigitizing.value)
+    output.head._1.sideCode should be (SideCode.TowardsDigitizing)
+    output.last._1.sideCode should be (SideCode.AgainstDigitizing)
     output.head._1.startMeasure should be(0.0)
     output.head._1.endMeasure should be(3.0)
     output.last._1.startMeasure should be(0.0)
@@ -189,8 +196,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output2.length should be(3)
-    output2.head._1.sideCode should be (SideCode.AgainstDigitizing.value)
-    output2.last._1.sideCode should be (SideCode.TowardsDigitizing.value)
+    output2.head._1.sideCode should be (SideCode.AgainstDigitizing)
+    output2.last._1.sideCode should be (SideCode.TowardsDigitizing)
     output2.head._1.startMeasure should be(0.0)
     output2.head._1.endMeasure should be(3.0)
     output2.last._1.startMeasure should be(0.0)
@@ -203,10 +210,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.TowardsDigitizing.value, None, 0.0, 9.0, Some("guy"),
         None, None, None, expired = false, 130, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), oldRoadLink)
 
     val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -219,8 +226,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
           ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil) )._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
-    output.head.sideCode should be (SideCode.TowardsDigitizing.value)
-    output.last.sideCode should be (SideCode.AgainstDigitizing.value)
+    output.head.sideCode should be (SideCode.TowardsDigitizing)
+    output.last.sideCode should be (SideCode.AgainstDigitizing)
     output.head.startMeasure should be(0.0)
     output.head.endMeasure should be(3.0)
     output.last.startMeasure should be(1.0)
@@ -231,12 +238,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
   test("drop segments less than 2 meters"){
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 1.9, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.BothDirections.value, Some(NumericValue(2)), 8.0, 10.0, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLink)
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 140)
     changeSet.droppedAssetIds should have size 1
@@ -246,10 +253,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
   test("Don't drop segments less than 2 meters on a road link with length less that 2 meters"){
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 1.9, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLink)
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 140)
     filledTopology should have size 1
@@ -263,12 +270,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.TowardsDigitizing.value, None, 1.0, 10.0, Some("guy"),
         None, None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.AgainstDigitizing.value, None, 0.0, 9.0, Some("guy"),
         None, None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), oldRoadLink)
 
     val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -281,30 +288,30 @@ class AssetFillerSpec extends FunSuite with Matchers {
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.timeStamp.get),
           ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
-    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
-    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)
-    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
-    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
-    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)
-    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
-    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
-    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.endMeasure == 3.0) should be (true)
+    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.TowardsDigitizing).forall(_.startMeasure == 1.0) should be (true)
+    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.AgainstDigitizing).forall(_.startMeasure == 0.0) should be (true)
+    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.TowardsDigitizing).forall(_.endMeasure == 3.0) should be (true)
+    output.filter(o => o.linkId == linkId1 && o.sideCode == SideCode.AgainstDigitizing).forall(_.endMeasure == 3.0) should be (true)
+    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.AgainstDigitizing).forall(_.startMeasure == 0.0) should be (true)
+    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.TowardsDigitizing).forall(_.startMeasure == 1.0) should be (true)
+    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.AgainstDigitizing).forall(_.endMeasure == 3.0) should be (true)
+    output.filter(o => o.linkId == linkId3 && o.sideCode == SideCode.TowardsDigitizing).forall(_.endMeasure == 3.0) should be (true)
     output.length should be (6)
   }
 
   test("combine two segments with same value in same RoadLink") {
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 4.5, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.BothDirections.value, Some(NumericValue(2)), 4.5, 10.0, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface,None, None, None)
-    )
+    ), roadLink)
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 140)
     filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections.value))
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
     filledTopology.map(_.typeId) should be(List(140))
     filledTopology.map(_.startMeasure) should be(List(0.0))
@@ -318,16 +325,16 @@ class AssetFillerSpec extends FunSuite with Matchers {
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     )
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 0.0, 10.0, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 0.0, 10.0, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLinks.head)
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
     filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections.value))
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
     filledTopology.map(_.createdBy) should be(Seq(Some("guy")))
     filledTopology.map(_.typeId) should be(List(140))
@@ -343,14 +350,14 @@ class AssetFillerSpec extends FunSuite with Matchers {
   test("adjustSegments with None value") {
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
     TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.BothDirections.value, None, 0.0, 4.5, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.BothDirections.value, None, 4.5, 9.0, Some("guy"),
         Some(DateTime.now().minusDays(2)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(3, linkId1, SideCode.BothDirections.value, None, 9.0, 15.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLink)
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 160)
     filledTopology.length should be (1)
     filledTopology.head.id should be (1)
@@ -365,14 +372,14 @@ class AssetFillerSpec extends FunSuite with Matchers {
   test("adjustSegments with value") {
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.BothDirections.value, Some(NumericValue(10)), 0.0, 4.5, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.BothDirections.value, Some(NumericValue(10)), 4.5, 9.0, Some("guy"),
         Some(DateTime.now().minusDays(2)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(3, linkId1, SideCode.BothDirections.value, Some(NumericValue(10)), 9.0, 15.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLink)
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 160)
     filledTopology.length should be (1)
     filledTopology.head.id should be (1)
@@ -384,10 +391,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
     changeSet.expiredAssetIds should be (Set(2,3))
   }
 
-  test("adjust Segments with diferent direction") {
+  test("adjust Segments with different direction") {
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 0.0, 5.0, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 5.0, 10.0, Some("guy"),
@@ -396,7 +403,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
         Some(DateTime.now().minusDays(3)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(4, linkId1, SideCode.TowardsDigitizing.value, Some(NumericValue(20)), 4.0, 10.0, Some("guy"),
         Some(DateTime.now().minusDays(4)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLink)
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 180)
     filledTopology.length should be (2)
     filledTopology.head.startMeasure should be (0.0)
@@ -413,12 +420,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
   test("combine segments into one") {
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 0.0, 10.0, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(3, linkId1, SideCode.TowardsDigitizing.value, Some(NumericValue(10)), 0.0, 10.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLink)
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 180)
     filledTopology.length should be (1)
     filledTopology.head.startMeasure should be (0.0)
@@ -428,12 +435,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
   test("combine segments into one with none value") {
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
+    val assets = assetFiller.toLinearAsset(Seq(
       PersistedLinearAsset(1, linkId1, SideCode.AgainstDigitizing.value, None, 0.0, 10.0, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(3, linkId1, SideCode.TowardsDigitizing.value, None, 0.0, 10.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), roadLink)
     val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 180)
     filledTopology.length should be (1)
     filledTopology.head.startMeasure should be (0.0)
@@ -773,9 +780,9 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val randomLinkId = generateRandomLinkId()
     val rl = RoadLink(randomLinkId, Seq(Point(0.0, 0.0), Point(0.0, 85.398)), 85.398, AdministrativeClass.apply(1), 1, TrafficDirection.BothDirections, LinkType.apply(1), modifiedAt = None, modifiedBy = None, attributes=Map())
     val assets = makeAssetsList(randomLinkId)
-    val linearAssets = assets.map( a =>
+    val linearAssets = assetFiller.toLinearAsset(assets.map( a =>
       PersistedLinearAsset(a._1, a._2, a._3, a._4, a._5, a._6, Option("k123"), None, Option("k345"), Option(DateTime.parse(a._8.dropRight(6), DateParser.DateTimePropertyFormatMs)), expired=false, 100, a._7, None, linkSource = NormalLinkInterface, None, None, None)
-    )
+    ), rl)
     val (outputAssets, changeSet) = assetFiller.fillTopology(Seq(rl), linearAssets.groupBy(_.linkId), 110)
     changeSet.adjustedMValues.size == 1 should be (true)
     outputAssets.size should be (1)
