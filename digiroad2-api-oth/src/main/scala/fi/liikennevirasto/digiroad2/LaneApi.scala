@@ -116,7 +116,9 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     if (parameters.startRoadPartNumber > parameters.endRoadPartNumber) throw InvalidRoadAddressRangeParamaterException("Start part number must be smaller than end part number")
     if (!roadPartNumberRange.contains(parameters.startRoadPartNumber) ||
       !roadPartNumberRange.contains(parameters.endRoadPartNumber)) throw InvalidRoadAddressRangeParamaterException("Road part numbers must be in range 1 - 1000")
-    if(parameters.startAddrMValue >= parameters.endAddrMValue) throw InvalidRoadAddressRangeParamaterException("StartAddrM value must be less than EndAddrM value")
+    if(parameters.startAddrMValue >= parameters.endAddrMValue && parameters.startRoadPartNumber == parameters.endRoadPartNumber) {
+      throw InvalidRoadAddressRangeParamaterException("StartAddrM value must be less than EndAddrM value if both are on the same road part")
+    }
   }
 
   def lanesInMunicipalityToApi(municipalityNumber: Int): Seq[mutable.LinkedHashMap[String, Long]] = {
