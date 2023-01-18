@@ -1063,6 +1063,20 @@ trait LaneOperations {
   def separateNewLanesInActions(newLanes: Set[NewLane], linkIds: Set[String], sideCode: Int,
                                 allExistingLanes: Seq[PersistedLane], sideCodesForLinkIds: Seq[SideCodesForLinkIds]): ActionsPerLanes = {
 
+    // Exclude lanes which will be replaced in Update operation from deletion
+    // This prevents them from being moved to history twice
+    def filterReplacedLaneFromDeletion(actionsPerLanes: ActionsPerLanes) : ActionsPerLanes = {
+      val lanesToDelete = actionsPerLanes.lanesToDelete
+      val replacementLanes = actionsPerLanes.lanesToUpdate.filter(_.id == 0)
+      val replacementLaneCodes = replacementLanes.map(replacementLane => getLaneCode(replacementLane))
+      val filteredLanesToBeDeleted = lanesToDelete.filterNot(laneToBeDeleted => {
+        val laneToBeDeletedLaneCode = getLaneCode(laneToBeDeleted)
+        replacementLaneCodes.contains(laneToBeDeletedLaneCode)
+      })
+
+      actionsPerLanes.copy(lanesToDelete = filteredLanesToBeDeleted)
+    }
+
     val lanesOnLinksBySideCodes = sideCodesForLinkIds.flatMap(sideCodeForLink => {
       allExistingLanes.filter(lane => lane.linkId == sideCodeForLink.linkId && lane.sideCode == sideCodeForLink.sideCode)
     })
@@ -1106,7 +1120,7 @@ trait LaneOperations {
             }
         }
 
-    resultWithAllActions
+    filterReplacedLaneFromDeletion(resultWithAllActions)
   }
 
   def createMultiLanesOnLink(updateNewLanes: Seq[NewLane], linkIds: Set[String], sideCode: Int, username: String): Seq[Long] = {
