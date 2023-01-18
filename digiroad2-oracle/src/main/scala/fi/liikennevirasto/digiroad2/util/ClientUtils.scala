@@ -6,7 +6,7 @@ import scala.annotation.tailrec
 object ClientUtils {
 
   @tailrec
-  def retry[T](retries: Int, logger: Logger,exponentToLoop: Int =1,firstRun : Boolean= true, commentForFailing : String = "")(fn: => T): T = {
+  def retry[T](retries: Int, logger: Logger,exponentToLoop: Int =1, firstRun : Boolean= true, commentForFailing : String = "")(fn: => T): T = {
     var exponent = exponentToLoop
     try {
       fn
@@ -21,7 +21,7 @@ object ClientUtils {
         if (retries > 1){
           Thread.sleep(500*exponent) // wait before making new request
           exponent+=1
-          retry(retries - 1, logger,exponent,firstRun = false)(fn)
+          retry(retries - 1, logger,exponent, firstRun = false)(fn)
         }
         else throw e
       
