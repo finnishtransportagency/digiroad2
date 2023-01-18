@@ -17,7 +17,8 @@ class AssetFiller {
 
     val fillOperations: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
-      capSegmentsThatOverflowGeometry,
+      //capSegmentsThatOverflowGeometry,
+      capToGeometry,
       expireOverlappingSegments,
       combine,
       fuse,
@@ -144,11 +145,12 @@ class AssetFiller {
     }
   }
 
-  private def expireSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def expireSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
     val expiredAssetIds = segmentsOutsideGeometry.map(_.id).toSet
     (segmentsWithinGeometry, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
   }
+
 
   private def capSegmentsThatOverflowGeometry(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length + MaxAllowedError)
@@ -157,20 +159,30 @@ class AssetFiller {
     (validSegments ++ cappedSegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
   }
 
-  private def droppedSegmentWrongDirection(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def capToGeometry(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
+    val cappedSegments = overflowingSegments.map { s =>
+      (s.copy(geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, Math.min(s.startMeasure, linkLength), linkLength), endMeasure = linkLength),
+        MValueAdjustment(s.id, roadLink.linkId, Math.min(s.startMeasure, linkLength), linkLength))
+    }
+    (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
+  }
+
+  protected def droppedSegmentWrongDirection(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       (segments, changeSet)
     } else {
       val droppedAssetIds = (roadLink.trafficDirection match {
-        case TrafficDirection.TowardsDigitizing => segments.filter(s => s.sideCode == SideCode.AgainstDigitizing.value)
-        case _ => segments.filter(s => s.sideCode == SideCode.TowardsDigitizing.value)
+        case TrafficDirection.TowardsDigitizing => segments.filter(s => s.sideCode == SideCode.AgainstDigitizing)
+        case _ => segments.filter(s => s.sideCode == SideCode.TowardsDigitizing)
       }).map(_.id)
 
       (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds++ droppedAssetIds))
     }
   }
 
-  private def adjustSegmentSideCodes(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def adjustSegmentSideCodes(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val oneWayTrafficDirection =
       (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) ||
         (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
@@ -182,6 +194,7 @@ class AssetFiller {
       (twoSided ++ adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
     }
   }
+
 
   private def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
@@ -216,7 +229,7 @@ class AssetFiller {
 
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
   //   causes an infinite loop when fillTopology is called recursively
-  private def combine(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def combine(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: PieceWiseLinearAsset, pseudoId: Long) = {
       asset.id match {
@@ -312,6 +325,7 @@ class AssetFiller {
         processed ++ Seq(modified)
       }
     }
+
     val assets = segments.zipWithIndex.map(n => replaceUnknownAssetIds(n._1, 0L-n._2))
     val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure)).distinct.sorted
     if (pointsOfInterest.length < 2)
@@ -324,6 +338,7 @@ class AssetFiller {
     val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
     val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
     val updatedAssetsAndMValueAdjustments = updateGeometry(combinedSegment, roadLink)
+    val mValueAdjustments = updatedAssetsAndMValueAdjustments.flatMap(_._2)
     val changedSideCodes = combinedSegment.filter(cl =>
       assets.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
       map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode.value), sl.typeId))
@@ -464,20 +479,21 @@ class AssetFiller {
       (segments, changeSet)
   }
 
-  private def dropShortSegments(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def dropShortSegments(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val (shortSegments, linearSegments) = assets.partition(a => (a.endMeasure - a.startMeasure) < MinAllowedLength && roadLink.length >= MinAllowedLength )
     val droppedAssetIds = shortSegments.map(_.id).toSet
     (linearSegments, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
   }
 
-  private def latestTimestamp(linearAsset: PieceWiseLinearAsset, linearAssetO: Option[PieceWiseLinearAsset]) = {
+
+  protected def latestTimestamp(linearAsset: PieceWiseLinearAsset, linearAssetO: Option[PieceWiseLinearAsset]) = {
     linearAssetO match {
       case Some(lao) => Math.max(linearAsset.timeStamp, lao.timeStamp)
       case _ => linearAsset.timeStamp
     }
   }
 
-  private def modifiedSort(left: PieceWiseLinearAsset, right: PieceWiseLinearAsset) = {
+  protected def modifiedSort(left: PieceWiseLinearAsset, right: PieceWiseLinearAsset) = {
     val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
     val rightStamp = right.modifiedDateTime.orElse(right.createdDateTime)
     (leftStamp, rightStamp) match {
@@ -495,7 +511,7 @@ class AssetFiller {
     * @param changeSet Changes done previously
     * @return List of linear assets and a change set
     */
-  private def fuse(roadLink: RoadLink, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def fuse(roadLink: RoadLink, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val sortedList = linearAssets.sortBy(_.startMeasure)
     if (linearAssets.nonEmpty) {
       val origin = sortedList.head
