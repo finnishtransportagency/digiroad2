@@ -1,14 +1,23 @@
 {
   "Records": [
     {
-      "messageId": "11d6ee51-4cc7-4302-9e22-7cd8afdaadf5",
+      "messageId": "11d6ee51-4cc7-4302-9e22-7cd8afdaadf1",
       "receiptHandle": "AQEBBX8nesZEXmkhsmZeyIE8iQAMig7qw...",
-      "body": "Added new asset message",
+      "body": {
+        "editDate": "2023-01-16T13:44:09.466Z",
+        "editBy": "testUser",
+        "changeType": 1,
+        "assetTypeId": 220,
+        "id": 619131,
+        "startMValue": 26.938699013996725,
+        "linkId": "fb364c3c-bb55-4d70-896f-aab5c9ba4c81:1",
+        "sideCode": 1
+      },
       "attributes": {
         "ApproximateReceiveCount": "1",
         "SentTimestamp": "1573251510774",
         "SequenceNumber": "18849496460467696128",
-        "MessageGroupId": "1",
+        "MessageGroupId": "220",
         "SenderId": "AIDAIO23YVJENQZJOL4VO",
         "MessageDeduplicationId": "1",
         "ApproximateFirstReceiveTimestamp": "1573251510774"
@@ -20,14 +29,26 @@
       "awsRegion": "eu-west-1"
     },
     {
-      "messageId": "11d6ee51-4cc7-4302-9e22-7cd8afdaadf5",
+      "messageId": "11d6ee51-4cc7-4302-9e22-7cd8afdaadf2",
       "receiptHandle": "AQEBBX8nesZEXmkhsmZeyIE8iQAMig7qw...",
-      "body": "Deleted asset message",
+      "body": {
+        "editDate": "2023-01-15T12:27:19.466Z",
+        "editBy": "testUser",
+        "changeType": 2,
+        "assetTypeId": 20,
+        "id": 200304,
+        "startMValue": 54,
+        "endMValue": 84.121,
+        "linkId": "b0115e5b-e96f-4970-a587-286488917872:1",
+        "sideCode": 1,
+        "value": 50,
+        "valueType": "int"
+      },
       "attributes": {
         "ApproximateReceiveCount": "1",
         "SentTimestamp": "1573251510774",
         "SequenceNumber": "18849496460467696128",
-        "MessageGroupId": "1",
+        "MessageGroupId": "20",
         "SenderId": "AIDAIO23YVJENQZJOL4VO",
         "MessageDeduplicationId": "1",
         "ApproximateFirstReceiveTimestamp": "1573251510774"
@@ -39,14 +60,26 @@
       "awsRegion": "eu-west-1"
     },
     {
-      "messageId": "11d6ee51-4cc7-4302-9e22-7cd8afdaadf5",
+      "messageId": "11d6ee51-4cc7-4302-9e22-7cd8afdaadf3",
       "receiptHandle": "AQEBBX8nesZEXmkhsmZeyIE8iQAMig7qw...",
-      "body": "Changed asset message",
+      "body": {
+        "editDate": "2023-01-15T15:27:19.466Z",
+        "editBy": "testUser",
+        "changeType": 3,
+        "assetTypeId": 20,
+        "id": 200304,
+        "startMValue": 54,
+        "endMValue": 84.121,
+        "linkId": "b0115e5b-e96f-4970-a587-286488917872:1",
+        "sideCode": 1,
+        "value": 50,
+        "valueType": "int"
+      },
       "attributes": {
         "ApproximateReceiveCount": "1",
         "SentTimestamp": "1573251510774",
         "SequenceNumber": "18849496460467696128",
-        "MessageGroupId": "1",
+        "MessageGroupId": "20",
         "SenderId": "AIDAIO23YVJENQZJOL4VO",
         "MessageDeduplicationId": "1",
         "ApproximateFirstReceiveTimestamp": "1573251510774"

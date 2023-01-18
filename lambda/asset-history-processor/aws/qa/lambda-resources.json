@@ -14,5 +14,29 @@
   {
     "ParameterKey": "ECRImageTag",
     "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "DigiroadTest"
+  },
+  {
+    "ParameterKey": "LambdaEventEnabled",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "PgHost",
+    "ParameterValue": "rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com"
+  },
+  {
+    "ParameterKey": "PgPort",
+    "ParameterValue": "5432"
+  },
+  {
+    "ParameterKey": "PgDatabase",
+    "ParameterValue": "digiroadtest"
+  },
+  {
+    "ParameterKey": "PgUser",
+    "ParameterValue": "digiroadtest"
   }
 ]

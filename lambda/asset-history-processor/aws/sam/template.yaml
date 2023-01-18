@@ -13,6 +13,13 @@ Resources:
       ImageConfig:
         Command:
           - index.handler
+      Environment:
+        Variables:
+          PG_HOST: "host.docker.internal"
+          PG_PORT: "5432"
+          PG_DATABASE: "digiroad2"
+          PG_USER: "digiroad2"
+          PG_PW: "digiroad2"
     Metadata:
       DockerTag: nodejs18.x-v1
       DockerContext: ../../
