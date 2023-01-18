@@ -401,11 +401,14 @@ class AssetFiller {
 
   def toLinearAssetsOnMultipleLinks(PersistedLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val mappedTopology = PersistedLinearAssets.groupBy(_.linkId)
-    mappedTopology.flatMap(pair => {
+    val assets = mappedTopology.flatMap(pair => {
       val (linkId, assets) = pair
-      val roadLink = roadLinks.find(_.linkId == linkId).get
-      toLinearAsset(assets, roadLink)
+      roadLinks.find(_.linkId == linkId).getOrElse(None) match {
+        case Some(roadLink: RoadLink) => toLinearAsset(assets, roadLink)
+        case _ => None
+      }
     }).toSeq
+    assets.collect{case asset: PieceWiseLinearAsset => asset}
   }
 
   private def toSegment(PieceWiseLinearAsset: PieceWiseLinearAsset) = {

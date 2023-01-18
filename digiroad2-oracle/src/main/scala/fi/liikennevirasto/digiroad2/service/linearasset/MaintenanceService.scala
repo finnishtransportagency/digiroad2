@@ -129,18 +129,17 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       withDynTransaction {
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, linkIds).filterNot(_.expired)
       }
-
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
     if(adjust) {
-      val groupedAssets = existingAssets.groupBy(_.linkId)
+      val groupedAssets = linearAssets.groupBy(_.linkId)
       val adjustedAssets = withDynTransaction {
         LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
-          val filledTopology = adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
-          assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
         }
       }
       adjustedAssets
     }
-    else assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+    else linearAssets
   }
 
   def getPotencialServiceAssets: Seq[PersistedLinearAsset] = {
@@ -150,24 +149,25 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   def getByZoomLevel :Seq[Seq[PieceWiseLinearAsset]] = {
-    val linearAssets  = getPotencialServiceAssets
-    val roadLinks = roadLinkService.getRoadLinksByLinkIds(linearAssets.map(_.linkId).toSet)
+    val potentialAssets  = getPotencialServiceAssets
+    val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
-    val pieceWiseFilledTopology = assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
-    LinearAssetPartitioner.partition(pieceWiseFilledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
-    val linearAssets  = getPotencialServiceAssets
-    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIds(linearAssets.map(_.linkId).toSet)
+    val potentialAssets  = getPotencialServiceAssets
+    val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
-    val pieceWiseFilledTopology = assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
-    LinearAssetPartitioner.partition(pieceWiseFilledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
+    LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={
     val unchecked = withDynTransaction {
       maintenanceDAO.getUncheckedMaintenanceRoad(areas)
+
 
     }.groupBy(_._2).mapValues(x => x.map(_._1))
     Map("Unchecked" -> unchecked )
