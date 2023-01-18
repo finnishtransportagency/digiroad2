@@ -15,7 +15,7 @@ object ClientUtils {
         logger.error(s"TEST LOG Query failed (retries left: ${retries - 1}). Error: ${e.getMessage}")
         
         if (firstRun && commentForFailing.nonEmpty) {
-          logger.info(commentForFailing)
+          logger.error(commentForFailing)
         }
         
         if (retries > 1){
