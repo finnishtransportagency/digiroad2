@@ -92,7 +92,7 @@ trait LinearAssetOperations {
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), showSpeedLimitsHistory: Boolean = false,
                        roadFilterFunction: RoadLink => Boolean = _ => true): Seq[Seq[PieceWiseLinearAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksByBoundsAndMunicipalities(bounds, municipalities)
-    val linearAssets = getByRoadLinks(typeId, roadLinks, showSpeedLimitsHistory = showSpeedLimitsHistory, roadFilterFunction = roadFilterFunction)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, showHistory = showSpeedLimitsHistory, roadFilterFunction = roadFilterFunction)
     val assetsWithAttributes = enrichLinearAssetAttributes(linearAssets, roadLinks)
     LinearAssetPartitioner.partition(assetsWithAttributes, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
@@ -231,26 +231,26 @@ trait LinearAssetOperations {
     existingAssets
   }
 
-  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showSpeedLimitsHistory: Boolean = false,
+  protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean = false,
                                roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
     if (adjust){
-      val groupedAssets = existingAssets.groupBy(_.linkId)
+      val groupedAssets = linearAssets.groupBy(_.linkId)
       val adjustedAssets = withDynTransaction {
         LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId){
-          val filledTopology = adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
-          assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
         }
       }
       adjustedAssets
     }
-    else assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+    else linearAssets
   }
 
 
-  def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PersistedLinearAsset]],
-                         typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PersistedLinearAsset] = {
+  def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
+                         typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val assetUpdater = getAssetUpdater(typeId)
     val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks, linearAssets,  typeId, changeSet, geometryChanged)
     val adjustmentsChangeSet = assetUpdater.cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)

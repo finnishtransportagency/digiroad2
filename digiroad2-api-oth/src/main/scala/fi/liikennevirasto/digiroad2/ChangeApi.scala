@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneProperty, Persiste
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, RoadLink, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedRoadlink
 import fi.liikennevirasto.digiroad2.service.lane.LaneChange
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
+import fi.liikennevirasto.digiroad2.service.linearasset.ChangedLinearAsset
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 import fi.liikennevirasto.digiroad2.vallu.ValluStoreStopChangeMessage._
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.{describeEquipments, describeReachability, transformToISODate}

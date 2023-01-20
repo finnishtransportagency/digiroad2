@@ -17,7 +17,6 @@ class AssetFiller {
 
     val fillOperations: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
-      //capSegmentsThatOverflowGeometry,
       capToGeometry,
       expireOverlappingSegments,
       combine,
@@ -149,14 +148,6 @@ class AssetFiller {
     val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
     val expiredAssetIds = segmentsOutsideGeometry.map(_.id).toSet
     (segmentsWithinGeometry, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
-  }
-
-
-  private def capSegmentsThatOverflowGeometry(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val (validSegments, overflowingSegments) = assets.partition(_.endMeasure <= roadLink.length + MaxAllowedError)
-    val cappedSegments = overflowingSegments.map { x => x.copy(endMeasure = roadLink.length)}
-    val mValueAdjustments = cappedSegments.map { x => MValueAdjustment(x.id, x.linkId, x.startMeasure, x.endMeasure) }
-    (validSegments ++ cappedSegments, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
   }
 
   protected def capToGeometry(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
@@ -298,12 +289,12 @@ class AssetFiller {
       }
       Seq()
     }
-    def updateGeometry(limits: Seq[PieceWiseLinearAsset], roadLink: RoadLink): (Seq[(PieceWiseLinearAsset, Option[MValueAdjustment])]) = {
-      limits.map { sl =>
-        val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, sl.startMeasure, sl.endMeasure)
-        GeometryUtils.withinTolerance(newGeom, sl.geometry, MaxAllowedMValueError) match {
-          case true => (sl, None)
-          case false => (sl.copy(geometry = newGeom), Option(MValueAdjustment(sl.id, sl.linkId, sl.startMeasure, sl.endMeasure)))
+    def updateGeometry(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLink): (Seq[(PieceWiseLinearAsset, Option[MValueAdjustment])]) = {
+      assets.map { asset =>
+        val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+        GeometryUtils.withinTolerance(newGeom, asset.geometry, MaxAllowedMValueError) match {
+          case true => (asset, None)
+          case false => (asset.copy(geometry = newGeom) , Option(MValueAdjustment(asset.id, asset.linkId, asset.startMeasure, asset.endMeasure)))
         }
       }
     }
@@ -338,7 +329,6 @@ class AssetFiller {
     val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
     val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
     val updatedAssetsAndMValueAdjustments = updateGeometry(combinedSegment, roadLink)
-    val mValueAdjustments = updatedAssetsAndMValueAdjustments.flatMap(_._2)
     val changedSideCodes = combinedSegment.filter(cl =>
       assets.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
       map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode.value), sl.typeId))
@@ -404,7 +394,7 @@ class AssetFiller {
     val assets = mappedTopology.flatMap(pair => {
       val (linkId, assets) = pair
       roadLinks.find(_.linkId == linkId).getOrElse(None) match {
-        case Some(roadLink: RoadLink) => toLinearAsset(assets, roadLink)
+        case roadLink: RoadLink => toLinearAsset(assets, roadLink)
         case _ => None
       }
     }).toSeq

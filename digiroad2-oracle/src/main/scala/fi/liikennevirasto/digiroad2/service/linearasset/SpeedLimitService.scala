@@ -1,36 +1,27 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import java.util.NoSuchElementException
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, PostGISAssetDao}
+import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, generateUnknownSpeedLimitsForLink}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.fillTopology
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
+import fi.liikennevirasto.digiroad2.util.LogUtils
 import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.speedLimitUpdater
-import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, LogUtils, PolygonTools}
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 
-case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
+import java.util.NoSuchElementException
+
 
 class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) extends DynamicLinearAssetService(roadLinkService, eventbus) {
   val speedLimitDao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(roadLinkService)
   val inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
   private val RECORD_NUMBER = 4000
-
-  lazy val manoeuvreService = {
-    new ManoeuvreService(roadLinkService, eventbus)
-  }
 
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, eventbus)
@@ -44,7 +35,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     getLinksWithLength(id, newTransaction).foreach(vvhLink => municipalityValidation(vvhLink._4, vvhLink._6))
   }
 
-  def getSpeedLimitValue(optionalValue: Option[Value]) = {
+  def getSpeedLimitValue(optionalValue: Option[Value]): Option[SpeedLimitValue] = {
     optionalValue match {
       case Some(SpeedLimitValue(_,_)) => Option(optionalValue.get.asInstanceOf[SpeedLimitValue])
       case _ => None
@@ -73,7 +64,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     getSpeedLimitAssetsByIds(Set(id), newTransaction).headOption
   }
 
-  def getPersistedSpeedLimitByIds(ids: Set[Long], newTransaction: Boolean = true):  Seq[PersistedLinearAsset] = {
+  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true):  Seq[PersistedLinearAsset] = {
     if (newTransaction)
       withDynTransaction {
         speedLimitDao.getPersistedSpeedLimitByIds(ids)
@@ -83,10 +74,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   def getPersistedSpeedLimitById(id: Long, newTransaction: Boolean = true): Option[PersistedLinearAsset] = {
-    getPersistedSpeedLimitByIds(Set(id), newTransaction).headOption
+    getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), newTransaction).headOption
   }
 
-  def updateByExpiration(id: Long, expired: Boolean, username: String, newTransaction: Boolean = true):Option[Long] = {
+  override def expireAsset(typeId: Int, id: Long, username: String, expired: Boolean, newTransaction: Boolean = true):Option[Long] = {
     if (newTransaction)
       withDynTransaction {
         speedLimitDao.updateExpiration(id, expired, username)
@@ -185,12 +176,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(roadLink.linkId)))
   }
 
-  override def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showSpeedLimitsHistory: Boolean,
-                             roadFilterFunction: RoadLink => Boolean) = {
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean,
+                              roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
     withDynTransaction {
       val roadLinksFiltered = roadLinks.filter(roadFilterFunction)
-      val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinksFiltered, showSpeedLimitsHistory)
+      val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinksFiltered, showHistory)
       val speedLimits = speedLimitLinks.groupBy(_.linkId)
 
       if (adjust) {
@@ -203,9 +194,9 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
 
-  def adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
+  def adjustSpeedLimitsAndGenerateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
                         changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, changedSet) = fillTopology(roadLinksFiltered, speedLimits, changeSet, geometryChanged)
+    val (filledTopology, changedSet) = fillTopology(roadLinks, speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
     val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
 
     cleanedChangeSet.isEmpty match {
@@ -216,7 +207,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       case false if counter <= 3 =>
         speedLimitUpdater.updateChangeSet(cleanedChangeSet)
         val speedLimitsToAdjust = filledTopology.filterNot(speedLimit => speedLimit.id <= 0 && speedLimit.value.isEmpty).groupBy(_.linkId)
-        adjustSpeedLimitsAndGenerateUnknowns(roadLinksFiltered, speedLimitsToAdjust, None, geometryChanged, counter + 1)
+        adjustSpeedLimitsAndGenerateUnknowns(roadLinks, speedLimitsToAdjust, None, geometryChanged, counter + 1)
     }
   }
 
@@ -304,7 +295,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   /**
     * Saves speed limit values when speed limit is split to two parts in UI (scissors icon). Used by Digiroad2Api /speedlimits/:speedLimitId/split POST endpoint.
     */
-  def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[PieceWiseLinearAsset] = {
+  def splitSpeedLimit(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[PieceWiseLinearAsset] = {
     withDynTransaction {
       getPersistedSpeedLimitById(id, newTransaction = false) match {
         case Some(speedLimit) =>
@@ -313,7 +304,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
           val (newId ,idUpdated) = split(speedLimit, roadLink, splitMeasure, existingValue, createdValue, username)
 
-          val assets = getPersistedSpeedLimitByIds(Set(idUpdated, newId), newTransaction = false)
+          val assets = getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(idUpdated, newId), newTransaction = false)
 
           val speedLimits = assets.map{ persisted =>
             val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, persisted.startMeasure, persisted.endMeasure)
@@ -367,7 +358,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   /**
     * Saves speed limit values when speed limit is separated to two sides in UI. Used by Digiroad2Api /speedlimits/:speedLimitId/separate POST endpoint.
     */
-  def separate(id: Long, valueTowardsDigitization: SpeedLimitValue, valueAgainstDigitization: SpeedLimitValue, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[PieceWiseLinearAsset] = {
+  def separateSpeedLimit(id: Long, valueTowardsDigitization: SpeedLimitValue, valueAgainstDigitization: SpeedLimitValue, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[PieceWiseLinearAsset] = {
     val speedLimit = getPersistedSpeedLimitById(id)
       .map(toPieceWiseLinearAsset(_))
       .map(isSeparableValidation)
@@ -375,7 +366,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
 
     validateMunicipalities(id, municipalityValidation)
 
-    updateByExpiration(id, expired = true, username)
+    expireAsset(SpeedLimitAsset.typeId, id, username, expired = true)
 
     val(newId1, newId2) = withDynTransaction {
       (speedLimitDao.createSpeedLimit(speedLimit.createdBy.getOrElse(username), speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), SideCode.TowardsDigitizing, valueTowardsDigitization, None, createdDate = speedLimit.createdDateTime , modifiedBy = Some(username), modifiedAt = Some(DateTime.now()), linkSource = speedLimit.linkSource).get,

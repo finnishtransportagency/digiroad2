@@ -54,7 +54,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }.filterNot(_.expired)
   }
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showSpeedLimitsHistory: Boolean = false,
+  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean = false,
                                         roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
 
@@ -63,17 +63,18 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         dao.fetchProhibitionsByLinkIds(typeId, linkIds)
       }.filterNot(_.expired)
 
-    if (adjust) {
-      val groupedAssets = existingAssets.groupBy(_.linkId)
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+
+    if(adjust) {
+      val groupedAssets = linearAssets.groupBy(_.linkId)
       val adjustedAssets = withDynTransaction {
         LogUtils.time(logger, "Check for and adjust possible linearAsset adjustments on " + roadLinks.size + " roadLinks. TypeID: " + typeId) {
-          val filledTopology = adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
-          assetFiller.toLinearAssetsOnMultipleLinks(filledTopology, roadLinks)
+          adjustLinearAssets(roadLinks, groupedAssets, typeId, geometryChanged = false)
         }
       }
       adjustedAssets
     }
-    else assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks)
+    else linearAssets
   }
 
   override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, timeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, Width
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
 import org.joda.time.DateTime

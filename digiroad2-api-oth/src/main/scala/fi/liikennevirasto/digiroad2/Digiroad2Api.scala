@@ -1556,7 +1556,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     optionalValue match {
       case Some(values) =>
         val updatedIds = speedLimitService.updateValues(ids, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
-        val createdIds = speedLimitService.create(newLimits, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).toSet //check
+        val createdIds = speedLimitService.create(newLimits, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).toSet
         speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
@@ -1564,7 +1564,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
-    speedLimitService.split(params("speedLimitId").toLong,
+    speedLimitService.splitSpeedLimit(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
@@ -1574,11 +1574,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
-    speedLimitService.separate(params("speedLimitId").toLong,
+    speedLimitService.separateSpeedLimit(params("speedLimitId").toLong,
       (parsedBody \ "valueTowardsDigitization").extract[SpeedLimitValue],
       (parsedBody \ "valueAgainstDigitization").extract[SpeedLimitValue],
       user.username,
-      validateUserAccess(user, Some(SpeedLimitAsset.typeId))_) //check
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)))
   }
 
   post("/speedlimits") {
@@ -1592,7 +1592,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     speedLimitService.create(Seq(newLimit),
       (parsedBody \ "value").extract[SpeedLimitValue],
       user.username,
-      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).headOption match { //check
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).headOption match {
       case Some(id) => speedLimitService.getSpeedLimitById(id)
       case _ => BadRequest("Speed limit creation failed")
     }
