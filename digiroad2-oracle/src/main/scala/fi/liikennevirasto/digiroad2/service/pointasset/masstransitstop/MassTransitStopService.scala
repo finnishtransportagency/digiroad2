@@ -225,7 +225,7 @@ trait MassTransitStopService extends PointAssetOperations {
       roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds,asyncMode=false)
     }
     LogUtils.time(logger, "TEST LOG Get massTransitStop assets by bounding box") {
-      super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
+      super.getByBoundingBox(user, bounds, roadLinks)
     }
   }
 

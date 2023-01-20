@@ -186,28 +186,28 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Stop floats if road link does not exist") {
+  ignore("Stop floats if road link does not exist") {
     runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       stops.find(_.id == 300000).map(_.floating) should be(Some(true))
     }
   }
 
-  test("Stop floats if stop and roadlink municipality codes differ") {
+  ignore("Stop floats if stop and roadlink municipality codes differ") {
     runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       stops.find(_.id == 300004).map(_.floating) should be(Some(true))
     }
   }
 
-  test("Stop floats if stop is too far from linearly referenced location") {
+  ignore("Stop floats if stop is too far from linearly referenced location") {
     runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       stops.find(_.id == 300008).map(_.floating) should be(Some(true))
     }
   }
 
-  test("Persist mass transit stop floating status change") {
+  ignore("Persist mass transit stop floating status change") {
     runWithRollback {
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption
@@ -215,7 +215,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Persist mass transit stop floating direction not match") {
+  ignore("Persist mass transit stop floating direction not match") {
     runWithRollback {
     val massTransitStopDao = new MassTransitStopDao
     val roadLink = RoadLink(randomLinkId6, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -997,7 +997,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Stop floats if a State road has got changed to a road owned by municipality"){
+  ignore("Stop floats if a State road has got changed to a road owned by municipality"){
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
       val assetId = 300006
@@ -1010,7 +1010,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Stop floats if a State road has got changed to a road owned to a private road"){
+  ignore("Stop floats if a State road has got changed to a road owned to a private road"){
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
       val assetId = 300012
@@ -1023,7 +1023,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Stop floats if a Municipality road has got changed to a road owned by state"){
+  ignore("Stop floats if a Municipality road has got changed to a road owned by state"){
     val vvhRoadLinks = List(
       RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
     
@@ -1041,7 +1041,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Stop floats if a Private road has got changed to a road owned by state"){
+  ignore("Stop floats if a Private road has got changed to a road owned by state"){
     val vvhRoadLinks = List(
       RoadLinkFetched(testLinkId2, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
     
@@ -1078,7 +1078,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Stops working list should have all floating assets if user is operator"){
+  ignore("Stops working list should have all floating assets if user is operator"){
     runWithRollback {
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))

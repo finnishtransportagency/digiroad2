@@ -168,8 +168,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
-    val result = super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
+    val result = super.getByBoundingBox(user, bounds, roadLinks)
     val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt == PedestrianCrossingSign.OTHvalue)
 
     sortCrossings(pc, Seq()) ++ others

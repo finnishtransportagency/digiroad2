@@ -123,7 +123,7 @@ trait  PointAssetOperations{
   def createTimeStamp(offsetHours:Int=5): Long = LinearAssetUtils.createTimeStamp(offsetHours)
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds,asyncMode=false)
-    getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
+    getByBoundingBox(user, bounds, roadLinks)
   }
 
   def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = { throw new UnsupportedOperationException("Not Supported Method") }
@@ -159,34 +159,12 @@ trait  PointAssetOperations{
     }
   }
 
-  protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
-                       adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {
+  protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink]): Seq[PersistedAsset] = {
 
     withDynTransaction {
       val boundingBoxFilter = PostGISDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
-      val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
-
-      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.map { persistedAsset: PersistedAsset =>
-        val (floating, assetFloatingReason) = isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-        adjustment(roadLinks, changeInfo, persistedAsset, floating, assetFloatingReason)  match {
-          case Some(adjustment) =>
-            adjustment
-          case _ =>
-            if (floating && !persistedAsset.floating) {
-              val logger = LoggerFactory.getLogger(getClass)
-              val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-              logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
-            }
-            AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, assetFloatingReason)
-        }
-      }
-      assetsBeforeUpdate.foreach { asset =>
-        if (asset.asset.floating != asset.persistedFloating) {
-          updateFloating(asset.asset.id, asset.asset.floating, asset.floatingReason)
-        }
-      }
-      assetsBeforeUpdate.map(_.asset)
+      fetchPointAssets(withFilter(filter), roadLinks)
     }
   }
 

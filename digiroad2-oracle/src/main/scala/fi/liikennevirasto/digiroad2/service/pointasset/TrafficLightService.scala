@@ -80,8 +80,8 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
-    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
+    super.getByBoundingBox(user, bounds, roadLinks)
   }
 
   private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {

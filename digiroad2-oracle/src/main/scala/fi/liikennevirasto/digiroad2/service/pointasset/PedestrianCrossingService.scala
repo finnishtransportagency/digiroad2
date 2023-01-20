@@ -104,8 +104,8 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
-    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation)).filterNot(_.expired)
+    val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChanges(bounds,asyncMode = false)
+    super.getByBoundingBox(user, bounds, roadLinks).filterNot(_.expired)
   }
 
   private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
