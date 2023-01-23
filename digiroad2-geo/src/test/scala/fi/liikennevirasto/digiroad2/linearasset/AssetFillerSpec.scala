@@ -66,7 +66,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
-    println(filledTopology.head)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(1))))

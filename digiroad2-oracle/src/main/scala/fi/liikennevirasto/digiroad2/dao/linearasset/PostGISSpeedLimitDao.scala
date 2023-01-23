@@ -112,8 +112,6 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
           persisted.startMeasure, persisted.endMeasure, Set(Point(0.0, 0.0)),persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
           persisted.typeId, SideCode.toTrafficDirection(SideCode(persisted.sideCode)), persisted.timeStamp, persisted.geomModifiedDate,
           persisted.linkSource, Unknown, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
-
-          //TrafficDirection.UnknownDirection,  persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.timeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
     }
   }
 

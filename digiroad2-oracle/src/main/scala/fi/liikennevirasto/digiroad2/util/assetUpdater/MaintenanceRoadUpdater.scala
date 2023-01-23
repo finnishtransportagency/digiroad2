@@ -10,37 +10,8 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
   override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
-    //try {
-      val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)
+    val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)
     super.updateByRoadLinks(typeId, municipality, roads, changes)
-/*      val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
-      val linkIds = roads.map(_.linkId)
-      val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-      val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, linkIds ++ removedLinkIds, includeFloating = false).filterNot(_.expired)
-
-      val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
-      val projectableTargetRoadLinks = roads.filter(
-        rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-
-      val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
-
-      val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-        expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
-        adjustedMValues = Seq.empty[MValueAdjustment],
-        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-        valueAdjustments = Seq.empty[ValueAdjustment])
-
-      val (newAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-        combinedAssets, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
-
-      val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-      service.adjustLinearAssets(roads, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
-      persistProjectedLinearAssets(newAssets.filter(_.id == 0))
-      logger.info(s"Updated maintenance roads in municipality $municipality.")
-    } catch {
-      case e => logger.error(s"Updating maintenance roads  in municipality $municipality failed due to ${e.getMessage}.")
-    }*/
   }
 
 

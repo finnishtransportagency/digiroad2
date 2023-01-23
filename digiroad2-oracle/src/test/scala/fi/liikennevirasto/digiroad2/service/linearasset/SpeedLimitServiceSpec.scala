@@ -364,8 +364,8 @@ val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
       towards.length should be (3)
       against.length should be (3)
 
-      //towards.forall(sl=> sl.value.get.value == 80) should be (true)
-      //against.forall(sl=> sl.value.get.value == 60) should be (true)
+      towards.forall(sl=> provider.getSpeedLimitValue(sl.value).get.value == 80) should be (true)
+      against.forall(sl=> provider.getSpeedLimitValue(sl.value).get.value == 60) should be (true)
 
       dynamicSession.rollback()
     }
