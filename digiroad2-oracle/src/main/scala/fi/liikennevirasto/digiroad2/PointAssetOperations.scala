@@ -253,21 +253,12 @@ trait  PointAssetOperations{
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(municipalityCode)
-    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(mapRoadLinks, roadLinks, Seq(), (_, _, _, _, _) => None, withMunicipality(municipalityCode))
+    getByMunicipality(withMunicipality(municipalityCode) _)
   }
 
-  protected def getByMunicipality[T](mapRoadLinks: Map[String, RoadLink], roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
-            adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate], withFilter: String => String): Seq[PersistedAsset] = {
-
-    def linkIdToRoadLink(linkId: String): Option[RoadLinkLike] =
-      mapRoadLinks.get(linkId)
-
+  protected def getByMunicipality(withFilter: String => String): Seq[PersistedAsset] = {
     withDynTransaction {
       fetchPointAssets(withFilter)
-        .map(withFloatingUpdate(adjustPersistedAsset(setFloating, linkIdToRoadLink, changeInfo, roadLinks, adjustment)))
-        .toList
     }
   }
 

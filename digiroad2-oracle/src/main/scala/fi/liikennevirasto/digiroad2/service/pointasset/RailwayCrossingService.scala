@@ -52,12 +52,6 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
                              Some(adjustment.mValue), Some(adjustment.timeStamp))
   }
 
-  override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChanges(municipalityCode)
-    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation), withMunicipality(municipalityCode))
-  }
-
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
