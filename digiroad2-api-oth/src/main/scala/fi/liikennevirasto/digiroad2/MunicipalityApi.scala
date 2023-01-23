@@ -144,12 +144,12 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
     }
   }
 
-  private def validatePoint(properties: Map[String, String]): List[FeatureStatus] = {
+  private def validatePoint(properties: Map[String, Any]): List[FeatureStatus] = {
     val assetType = properties("type")
 
     val status = assetType match {
       case "obstacle" =>
-        properties.get("class") match {
+        properties.get("class").asInstanceOf[Option[String]] match {
           case Some(value) if Set(1, 2).contains(value.toInt) => FeatureStatus.Inserted
           case _ => FeatureStatus.WrongMandatoryValue
         }
@@ -157,10 +157,10 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
     List(status)
   }
 
-  private def validateLinearAssets(properties: Map[String, String]): List[FeatureStatus] = {
-    val speedLimit = properties.get("speedLimit")
-    val pavementClass = properties.get("pavementClass")
-    val sideCode = properties.get("sideCode")
+  private def validateLinearAssets(properties: Map[String, Any]): List[FeatureStatus] = {
+    val speedLimit = properties.get("speedLimit").asInstanceOf[Option[String]]
+    val pavementClass = properties.get("pavementClass").asInstanceOf[Option[String]]
+    val sideCode = properties.get("sideCode").asInstanceOf[Option[String]]
 
     val speedlimitStatus = speedLimit match {
       case Some(value) if !Set("20", "30", "40", "50", "60", "70", "80", "90", "100", "120").contains(value) => FeatureStatus.WrongMandatoryValue
@@ -180,18 +180,18 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
     List(speedlimitStatus, pavementClassStatus, sideCodeStatus)
   }
 
-  private def updatePoint(properties: Map[String, String], link: RoadLink, assetType: String, assetCoordinates: List[Double]): Unit = {
+  private def updatePoint(properties: Map[String, Any], link: RoadLink, assetType: String, assetCoordinates: List[Double]): Unit = {
     assetType match {
       case "obstacle" =>
-        val obstacleType = Set(SimplePointAssetProperty(obstacleService.typePublicId, Seq(PropertyValue(properties("class")))))
+        val obstacleType = Set(SimplePointAssetProperty(obstacleService.typePublicId, Seq(PropertyValue(properties("class").asInstanceOf[String]))))
         val newObstacle = IncomingObstacle(assetCoordinates.head, assetCoordinates(1), link.linkId, obstacleType)
         obstacleService.createFromCoordinates(newObstacle, link, AwsUser, false)
     }
   }
 
-  private def updateLinearAssets(properties: Map[String, String], links: Seq[RoadLink]) = {
-    val speedLimit = properties.get("speedLimit")
-    val pavementClass = properties.get("pavementClass")
+  private def updateLinearAssets(properties: Map[String, Any], links: Seq[RoadLink]) = {
+    val speedLimit = properties.get("speedLimit").asInstanceOf[Option[String]]
+    val pavementClass = properties.get("pavementClass").asInstanceOf[Option[String]]
     val timeStamp = LinearAssetUtils.createTimeStamp()
 
     links.foreach { link =>
@@ -201,11 +201,11 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
           val speedLimitsOnRoadLink = speedLimitService.getExistingAssetByRoadLink(link, false)
 
           if (speedLimitsOnRoadLink.isEmpty) {
-            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, speedLimitValue, properties("sideCode").toInt, timeStamp, None)
+            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, speedLimitValue, properties("sideCode").asInstanceOf[String].toInt, timeStamp, None)
             speedLimitService.createMultiple(Seq(newSpeedLimitAsset), AwsUser, timeStamp, (_, _) => Unit)
           } else
             speedLimitsOnRoadLink.foreach { sl =>
-              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, speedLimitValue, properties("sideCode").toInt,timeStamp, None)
+              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, speedLimitValue, properties("sideCode").asInstanceOf[String].toInt,timeStamp, None)
               speedLimitService.updateFromMunicipalityApi(sl.id, Seq(newSpeedLimitAsset), AwsUser, false)
             }
         case None =>
@@ -217,7 +217,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
 
           val duplicate = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(link.linkId), false)
           if(duplicate.isEmpty) {
-            val newPavementClassAsset = NewLinearAsset(link.linkId, 0, link.length, pavementClassValue, properties("sideCode").toInt, timeStamp, None)
+            val newPavementClassAsset = NewLinearAsset(link.linkId, 0, link.length, pavementClassValue, properties("sideCode").asInstanceOf[String].toInt, timeStamp, None)
             pavedRoadService.createWithoutTransaction(PavedRoad.typeId, newPavementClassAsset.linkId, newPavementClassAsset.value, newPavementClassAsset.sideCode, Measures(newPavementClassAsset.startMeasure, newPavementClassAsset.endMeasure), AwsUser, timeStamp, None, informationSource = Some(MunicipalityMaintenainer.value))
           } else {
             pavedRoadService.updateWithoutTransaction(Seq(duplicate.head.id), pavementClassValue, AwsUser)
@@ -258,7 +258,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
             }
             val featureStatus = linkIdValidationStatus :: propertiesStatus
 
-            insertFeatureAndUpdateDataset(dataset.datasetId, featureId, featureStatus)
+            insertFeatureAndUpdateDataset(dataset.datasetId, featureId.asInstanceOf[String], featureStatus)
             None
 
           case None => awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.ErrorsFeatures.value)
@@ -287,7 +287,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
         properties.get("id") match {
           case Some(id) =>
             val featureId = id
-            val status = awsDao.getFeatureStatus(featureId, dataset.datasetId)
+            val status = awsDao.getFeatureStatus(featureId.asInstanceOf[String], dataset.datasetId)
             if (status == FeatureStatus.Inserted.value.toString) {
 
               val assetTypeGeometry = feature.geometry.`type`
@@ -300,13 +300,13 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
 
                     updateLinearAssets(properties, links)
                 }
-                  awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
+                  awsDao.updateFeatureStatus(featureId.asInstanceOf[String], FeatureStatus.Processed.value)
 
                 case "Point" =>
                   val assetCoordinates = feature.geometry.coordinates.head
                   val link = vvhRoadLinksIds.find(road => road.linkId == featureRoadlinks.head).get
-                  updatePoint(properties, link, assetType, assetCoordinates)
-                  awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
+                  updatePoint(properties, link, assetType.asInstanceOf[String], assetCoordinates)
+                  awsDao.updateFeatureStatus(featureId.asInstanceOf[String], FeatureStatus.Processed.value)
               }
             }
           case None =>

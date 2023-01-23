@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.util.{ClientUtils, Track}
+import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.conn.HttpHostConnectException
 import org.joda.time.DateTime
@@ -82,7 +82,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddressForLink] = {
-    ClientUtils.retry(2){
+    ClientUtils.retry(2, logger){
       viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
     }
   }
@@ -129,8 +129,11 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @return
     */
   def getAllByLinkIds(linkIds: Seq[String]): Seq[RoadAddressForLink] = {
-    ClientUtils.retry(2){
-      viiteClient.fetchAllByLinkIds(linkIds)
+    val linksString2 = s"[${linkIds.map(id => s""""$id"""").mkString(",")}]"
+      ClientUtils.retry(5, logger, commentForFailing = s"JSON payload for failing: $linksString2") {
+        LogUtils.time(logger,"TEST LOG Retrieve road address by links"){
+          viiteClient.fetchAllByLinkIds(linkIds)
+        }
     }
   }
 
@@ -140,11 +143,12 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param roadLinks The road link sequence
     * @return
     */
-  def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+  def roadLinkWithRoadAddress(roadLinks: Seq[RoadLink], logComment: String = ""): Seq[RoadLink] = {
     try {
+      
       val roadAddressLinks = getAllByLinkIds(roadLinks.map(_.linkId))
       val addressData = groupRoadAddress(roadAddressLinks).map(a => (a.linkId, a)).toMap
-      logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
+      logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links. ${logComment}")
       roadLinks.map(rl =>
         if (addressData.contains(rl.linkId))
           rl.copy(attributes = rl.attributes ++ roadAddressAttributes(addressData(rl.linkId)))
@@ -154,15 +158,15 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     } catch {
       case hhce: HttpHostConnectException =>
         logger.error(s"Viite connection failing with message ${hhce.getMessage} and stacktrace: \n ${hhce.getStackTrace.mkString("", EOL, EOL)}")
-        logger.info("Failed to retrieve road address information, return links without it.")
+        logger.info(s"Failed to retrieve road address information, return links without it. ${logComment}")
         roadLinks
       case vce: ViiteClientException =>
         logger.error(s"Viite error with message ${vce.getMessage} and stacktrace: \n ${vce.getStackTrace.mkString("", EOL, EOL)}")
-        logger.info("Failed to retrieve road address information, return links without it.")
+        logger.info(s"Failed to retrieve road address information, return links without it. ${logComment}")
         roadLinks
       case e: Exception =>
         logger.error(s"Unknown error with message ${e.getMessage} and stacktrace: \n ${e.getStackTrace.mkString("", EOL, EOL)}")
-        logger.info("Failed to retrieve road address information, return links without it.")
+        logger.info(s"Failed to retrieve road address information, return links without it. ${logComment}")
         roadLinks  
     }
   }

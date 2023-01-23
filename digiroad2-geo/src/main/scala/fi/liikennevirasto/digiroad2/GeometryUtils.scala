@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 
 object GeometryUtils {
 
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
+  final private val adjustmentTolerance = 2.0
 
   def getDefaultEpsilon(): Double = {
     DefaultEpsilon
@@ -15,6 +16,31 @@ object GeometryUtils {
     val difference = math.abs(measure2 - measure1)
     if(difference < tolerance) true
     else false
+  }
+
+  def sharedPointExists(points1: Set[Point], points2: Set[Point]): Boolean = {
+    points1.exists(point1 => {
+      points2.exists(point2 => point1.distance2DTo(point2) <= DefaultEpsilon)
+    })
+  }
+  
+  // Use roadLink measures and geometry if measures are within tolerance from road link end points,
+  // ensures connected geometry between assets in IntegrationApi responses
+  // TODO Possibly not needed after fillTopology methods are fixed to adjust and save all m-value deviations
+  def useRoadLinkMeasuresIfCloseEnough(startMeasure: Double, endMeasure: Double, roadLink: RoadLink): (Double, Double, Seq[Point]) = {
+    val startMeasureWithinTolerance = areMeasuresCloseEnough(startMeasure, 0.0, adjustmentTolerance)
+    val endMeasureWithinTolerance = areMeasuresCloseEnough(endMeasure, roadLink.length, adjustmentTolerance)
+
+    (startMeasureWithinTolerance, endMeasureWithinTolerance) match {
+      // Asset covers whole road link, and thus shares geometry with road link
+      case (true, true) => (0.0, roadLink.length, roadLink.geometry)
+      // Asset end measure was close enough to road link length, calculate new geometry with end measure being road link length
+      case (false, true) => (startMeasure, roadLink.length, truncateGeometry3D(roadLink.geometry, startMeasure, roadLink.length))
+      // Asset start measure was close enough to road link start (0.0), calculate new geometry with start measure being 0.0
+      case (true, false) => (0.0, endMeasure, truncateGeometry3D(roadLink.geometry, 0.0, endMeasure))
+      // Asset start and end measures are not close enough to road link end points, use original measures and geometry
+      case (false, false) => (startMeasure, endMeasure, truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure))
+    }
   }
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {

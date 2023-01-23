@@ -1,0 +1,1 @@
+ALTER TABLE kgv_roadlink ADD CONSTRAINT expired_date_constraint CHECK (expired_date <= current_timestamp);

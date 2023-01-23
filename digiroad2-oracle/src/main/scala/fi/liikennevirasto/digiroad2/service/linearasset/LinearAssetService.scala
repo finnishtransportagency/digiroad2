@@ -160,7 +160,12 @@ trait LinearAssetOperations {
     */
   def getByMunicipality(typeId: Int, municipality: Int, roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(municipality)
-    getByRoadLinks(typeId, roadLinks, adjust = false, roadFilterFunction = roadFilterFunction)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, adjust = false, roadFilterFunction = roadFilterFunction)
+    linearAssets.map(asset => {
+      val roadLink = roadLinks.find(_.linkId == asset.linkId).get
+      val (startMeasure, endMeasure, geometry) = GeometryUtils.useRoadLinkMeasuresIfCloseEnough(asset.startMeasure, asset.endMeasure, roadLink)
+      asset.copy(startMeasure = startMeasure, endMeasure = endMeasure, geometry = geometry)
+    })
   }
 
   def getByMunicipalityAndRoadLinks(typeId: Int, municipality: Int): Seq[(PieceWiseLinearAsset, RoadLink)] = {
