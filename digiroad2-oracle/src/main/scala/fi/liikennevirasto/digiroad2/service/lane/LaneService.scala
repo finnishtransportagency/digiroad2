@@ -14,8 +14,8 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
-import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
+>>>>>>>>> Temporary merge branch 2
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory

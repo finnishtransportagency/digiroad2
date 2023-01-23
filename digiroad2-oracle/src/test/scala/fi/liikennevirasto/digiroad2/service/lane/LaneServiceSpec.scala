@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.persistedLanesTwoDigitLaneCode
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinkIdGenerator, PolygonTools, RoadAddress, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinkIdGenerator, PolygonTools, RoadAddress, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
@@ -1670,7 +1670,6 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val expiredLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(linkId1), Seq(2), true)
       expiredLanes.size should be(3)
-
       when(mockRoadLinkService.getRoadLinksByLinkIds(Set(linkId1), false)).thenReturn(Seq(roadlink1))
 
       val dateAtThisMoment = DateTime.now()
