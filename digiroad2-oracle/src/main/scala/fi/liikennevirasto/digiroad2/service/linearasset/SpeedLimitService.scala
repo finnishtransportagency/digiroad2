@@ -160,7 +160,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
 
-  protected def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[String, RoadLink]): Seq[UnknownSpeedLimit] = {
+  protected def createUnknownLimits(speedLimits: Seq[PieceWiseLinearAsset], roadLinksByLinkId: Map[String, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByLinkId(limit.linkId)

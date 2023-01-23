@@ -293,7 +293,7 @@ object SpeedLimitFiller extends AssetFiller {
     * For debugging; print speed limit relevant data
     * @param speedLimit speedlimit to print
     */
-  def printSL(speedLimit: SpeedLimit) = {
+  def printSL(speedLimit: PieceWiseLinearAsset) = {
     val ids = "%d (%d)".format(speedLimit.id, speedLimit.linkId)
     val dir = speedLimit.sideCode match {
       case SideCode.BothDirections => "⇅"
@@ -301,7 +301,7 @@ object SpeedLimitFiller extends AssetFiller {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.timeStamp.toString)
+    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.timeStamp.toString)
     if (speedLimit.expired) {
       println("N/A")
     } else {

@@ -580,22 +580,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     DateTime.parse(string, dateTimePropertyFormat)
   }
 
-  def printSL(speedLimit: SpeedLimit): Unit = {
-    val ids = s"%d (${speedLimit.linkId})".format(speedLimit.id)
-    val dir = speedLimit.sideCode match {
-      case SideCode.BothDirections => "⇅"
-      case SideCode.TowardsDigitizing => "↑"
-      case SideCode.AgainstDigitizing => "↓"
-      case _ => "?"
-    }
-    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
-    if (speedLimit.expired) {
-      println("N/A")
-    } else {
-      println("%s %s %s".format(ids, dir, details))
-    }
-  }
-
   test("should return sensible geometry on combinable entries") {
     val linkId = generateRandomLinkId()
     val rLink = roadLink(linkId, Seq(Point(0.0, 0.0), Point(66.463, 0.0)))

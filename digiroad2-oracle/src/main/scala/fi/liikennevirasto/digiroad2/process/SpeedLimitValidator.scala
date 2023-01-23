@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, SpeedLimit, SpeedLimitValue}
+import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 

@@ -1265,7 +1265,7 @@ val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     }
   }
 
-  def printSL(speedLimit: SpeedLimit) = {
+  def printSL(speedLimit: PieceWiseLinearAsset) = {
     val ids = s"%d (${speedLimit.linkId})".format(speedLimit.id)
     val dir = speedLimit.sideCode match {
       case SideCode.BothDirections => "⇅"
@@ -1273,7 +1273,7 @@ val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
+    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(SpeedLimitValue(0)), speedLimit.startMeasure, speedLimit.endMeasure)
     if (speedLimit.expired) {
       println("N/A")
     } else {
@@ -1397,7 +1397,7 @@ val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
 
       verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), Seq(), Set(asset), Seq()))
-      val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
+      val captor = ArgumentCaptor.forClass(classOf[Seq[PieceWiseLinearAsset]])
       verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
       verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", (Set(), Seq(oldLinkId)))
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
