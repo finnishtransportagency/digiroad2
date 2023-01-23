@@ -225,7 +225,7 @@ trait MassTransitStopService extends PointAssetOperations {
       roadLinkService.getRoadLinksWithComplementaryByBoundsAndMunicipalities(bounds,asyncMode=false)
     }
     LogUtils.time(logger, "TEST LOG Get massTransitStop assets by bounding box") {
-      super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
+      super.getByBoundingBox(user, bounds, roadLinks)
     }
   }
 
@@ -438,8 +438,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getByMunicipality(municipalityCode: Int, withEnrich: Boolean): Seq[PersistedAsset] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(municipalityCode)
-    val mapRoadLinks = roadLinks.map(roadLink => roadLink.linkId -> roadLink).toMap
-    val assets = super.getByMunicipality(mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject), withMunicipality(municipalityCode))
+    val assets = super.getByMunicipality(municipalityCode)
 
     if(withEnrich)
       withDynSession{
