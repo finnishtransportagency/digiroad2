@@ -1062,11 +1062,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Stops working list shouldn't have floating assets with floating reason RoadOwnerChanged if user is not operator"){
     runWithRollback {
       val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
       RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
-      //GetBoundingBox will set assets  to floating
-      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      //Set assets manually to floating
+      RollbackMassTransitStopService.updateFloating(assetId, floating = true, floatingReason = None)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(false))
       //Get all external ids from the working list
       val nationalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
@@ -1078,14 +1077,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  ignore("Stops working list should have all floating assets if user is operator"){
+  test("Stops working list should have all floating assets if user is operator"){
     runWithRollback {
       val assetId = 300012
-      val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
       RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
-      //GetBoundingBox will set assets  to floating
-      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
+      //Set assets manually to floating
+      RollbackMassTransitStopService.updateFloating(assetId, floating = true, floatingReason = None)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(true))
       //Get all external ids from the working list
       val nationalIds = workingList.map(m => m._2.map(a => a._2).flatten).flatten
