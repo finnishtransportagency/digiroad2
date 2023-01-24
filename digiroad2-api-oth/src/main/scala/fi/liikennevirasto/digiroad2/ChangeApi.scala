@@ -26,6 +26,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
   lazy val geometryTransform: GeometryTransform = new GeometryTransform(Digiroad2Context.roadAddressService)
   val apiId = "change-api"
 
+  case class ChangedSegment(startMeasure: Double, startAddrM: Int, endMeasure: Double, endAddrM: Int, segmentChangeType: LaneChangeType)
+
   before() {
     contentType = formats("json")
   }
@@ -583,46 +585,216 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
     }
 
-    //get address and measures of the different segment between the lanes
-    def getDifferentSegmentAddressesAndMeasures(laneChange: LaneChange) = {
+    /**
+      *
+      * @param laneChange laneChange for shortened or lengthened lane
+      * @return Optional M-values and road address values for segments. 1st element of tuple is for digitizing
+      *         direction start segment, 2nd is for end segment. Returns None for segment in question if
+      *         that end of lane was not changed.
+      */
+    def getChangedSegmentMeasures(laneChange: LaneChange): (Option[ChangedSegment], Option[ChangedSegment]) = {
       val roadLink = laneChange.roadLink.get
       val lane = laneChange.lane
       val oldLane = laneChange.oldLane.get
 
-      val roadStartAddr = roadLink.attributes("START_ADDR").toString.toInt
-      val roadEndAddr = roadLink.attributes("END_ADDR").toString.toInt
+      val roadLinkStartAddr = roadLink.attributes("START_ADDR").toString.toInt
+      val roadLinkEndAddr = roadLink.attributes("END_ADDR").toString.toInt
       val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").toString.toInt)
 
       val (laneStartAddrM, laneEndAddrM) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
-        roadStartAddr, roadEndAddr, lane.startMeasure, lane.endMeasure)
+        roadLinkStartAddr, roadLinkEndAddr, lane.startMeasure, lane.endMeasure)
 
       val (oldLaneStartAddrM, oldLaneEndAddrM) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
-        roadStartAddr, roadEndAddr, oldLane.startMeasure, oldLane.endMeasure)
+        roadLinkStartAddr, roadLinkEndAddr, oldLane.startMeasure, oldLane.endMeasure)
 
 
-      if(laneStartAddrM > oldLaneStartAddrM){
-        ((oldLaneStartAddrM, oldLane.startMeasure), (laneStartAddrM, lane.startMeasure))
-      } else if(oldLaneStartAddrM > laneStartAddrM){
-        ((laneStartAddrM, lane.startMeasure), (oldLaneStartAddrM, oldLane.startMeasure))
-      } else if(laneEndAddrM > oldLaneEndAddrM){
-        ((oldLaneEndAddrM, oldLane.endMeasure), (laneEndAddrM, lane.endMeasure))
-      }else{
-        ((laneEndAddrM, lane.endMeasure), (oldLaneEndAddrM, oldLane.endMeasure))
+      val cutFromStart = lane.startMeasure > oldLane.startMeasure
+      val cutFromEnd = lane.endMeasure < oldLane.endMeasure
+      val lenghtenedFromStart = lane.startMeasure < oldLane.startMeasure
+      val lenghtenedFromEnd = lane.endMeasure > oldLane.endMeasure
+
+      (cutFromStart, cutFromEnd, lenghtenedFromStart, lenghtenedFromEnd) match {
+        // Lane cut from digitizing direction start
+        case (true, false, false, false) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneStartAddrM, lane.startMeasure, laneStartAddrM, LaneChangeType.Expired))
+              val endSegmentChange = None
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, laneEndAddrM, lane.startMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
+              val endSegmentChange = None
+              (startSegmentChange, endSegmentChange)
+          }
+
+        // Lane cut from digitizing direction end
+        case (false, true, false, false) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = None
+              val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneEndAddrM, oldLane.endMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = None
+              val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneStartAddrM, oldLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Expired))
+              (startSegmentChange, endSegmentChange)
+          }
+
+        // Lane cut from both ends
+        case (true, true, false, false) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneStartAddrM, lane.startMeasure, laneStartAddrM, LaneChangeType.Expired))
+              val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneEndAddrM, oldLane.endMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneEndAddrM, lane.startMeasure, laneEndAddrM, LaneChangeType.Expired))
+              val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneStartAddrM, oldLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Expired))
+              (startSegmentChange, endSegmentChange)
+
+          }
+
+        // Lane lengthened from digitizing direction start
+        case (false, false, true, false) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(lane.startMeasure, laneStartAddrM, oldLane.startMeasure, oldLaneStartAddrM, LaneChangeType.Add))
+              val endSegmentChange = None
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(lane.startMeasure, oldLaneEndAddrM, oldLane.startMeasure, laneEndAddrM, LaneChangeType.Add))
+              val endSegmentChange = None
+              (startSegmentChange, endSegmentChange)
+          }
+
+        // Lane lengthened from digitizing direction end
+        case (false, false, false, true) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = None
+              val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, oldLaneEndAddrM, lane.endMeasure, laneEndAddrM, LaneChangeType.Add))
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = None
+              val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, laneStartAddrM, lane.endMeasure, oldLaneStartAddrM, LaneChangeType.Add))
+              (startSegmentChange, endSegmentChange)
+          }
+
+        // Lane lengthened from both ends
+        case (false, false, true, true) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(lane.startMeasure, laneStartAddrM, oldLane.startMeasure, oldLaneStartAddrM, LaneChangeType.Add))
+              val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, oldLaneEndAddrM, lane.endMeasure, laneEndAddrM, LaneChangeType.Add))
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(lane.startMeasure, oldLaneEndAddrM, oldLane.startMeasure, laneEndAddrM, LaneChangeType.Add))
+              val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, laneStartAddrM, lane.endMeasure, oldLaneStartAddrM, LaneChangeType.Add))
+              (startSegmentChange, endSegmentChange)
+          }
+
+        // Lane cut from digitizing direction start and lengthened from end
+        case (true, false, false, true) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneStartAddrM, lane.startMeasure, laneStartAddrM, LaneChangeType.Expired))
+              val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, oldLaneEndAddrM, lane.endMeasure, laneEndAddrM, LaneChangeType.Add))
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneEndAddrM, lane.startMeasure, laneEndAddrM, LaneChangeType.Expired))
+              val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, laneStartAddrM, lane.endMeasure, oldLaneStartAddrM, LaneChangeType.Add))
+              (startSegmentChange, endSegmentChange)
+          }
+
+        // Lane cut from digitizing direction end and lengthened from start
+        case (false, true, true, false) =>
+          roadAddressSideCode match {
+            case SideCode.TowardsDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(lane.startMeasure, laneStartAddrM, oldLane.startMeasure, oldLaneStartAddrM, LaneChangeType.Add))
+              val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneEndAddrM, oldLane.endMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
+              (startSegmentChange, endSegmentChange)
+            case SideCode.AgainstDigitizing =>
+              val startSegmentChange = Some(ChangedSegment(lane.startMeasure, oldLaneEndAddrM, oldLane.startMeasure, laneEndAddrM, LaneChangeType.Add))
+              val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneStartAddrM, oldLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Expired))
+              (startSegmentChange, endSegmentChange)
+          }
       }
     }
 
     def generateCommonFieldsWithDiffSource(laneToUseOnCreates: PersistedLane, modifiedAt: Option[String] = None,
-                                            modifiedBy: Option[String]  = None) = {
+                                            modifiedBy: Option[String] = None, expiredAt: Option[String] = None,
+                                           expiredBy: Option[String] = None): Map[String, String] = {
 
-      Map("createdAt" -> laneToUseOnCreates.createdDateTime.map(DateTimePropertyFormat.print(_)),
-        "createdBy" -> laneToUseOnCreates.createdBy,
+      Map("createdAt" -> laneToUseOnCreates.createdDateTime.map(DateTimePropertyFormat.print(_)).getOrElse(""),
+        "createdBy" -> laneToUseOnCreates.createdBy.getOrElse(""),
         "modifiedAt" -> modifiedAt.getOrElse(""),
-        "modifiedBy" -> modifiedBy.getOrElse("")
+        "modifiedBy" -> modifiedBy.getOrElse(""),
+        "expiredAt" -> expiredAt.getOrElse(""),
+        "expiredBy" -> expiredBy.getOrElse("")
       )
     }
 
+    def generateCommonModifiedFields(lane: PersistedLane, oldLane: PersistedLane): Map[String, Any] = {
+      val laneType = laneService.getPropertyValue(lane.attributes, "lane_type")
+      val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
+
+      Map("oldId" -> oldLane.id,
+        "oldLaneNumber" -> oldLane.laneCode,
+        "oldLaneType" -> oldLaneType,
+        "newId" -> lane.id,
+        "newLaneNumber" -> lane.laneCode,
+        "newLaneType" -> laneType)
+    }
+
+    // Generate response fields for segment of lane which was added or expired in change
+    def generateShortenedOrLengthenedSegmentFields(changedSegment: ChangedSegment, laneChange: LaneChange,
+                                                  sameSegmentLaneAddressInfo: Map[String, Any]): Seq[Map[String, Any]] = {
+      val newLane = laneChange.lane
+      val oldLane = laneChange.oldLane.get
+
+      val laneAttributesForSegment = if (changedSegment.segmentChangeType == LaneChangeType.Add) newLane.attributes
+      else oldLane.attributes
+
+      val startDate = decodePropertyValue(laneService.getPropertyValue(laneAttributesForSegment, "start_date"))
+      val endDate = decodePropertyValue(laneService.getPropertyValue(laneAttributesForSegment, "end_date"))
+      val laneType = decodePropertyValue(laneService.getPropertyValue(laneAttributesForSegment, "lane_type"))
+
+
+      val segmentModificationMap = changedSegment.segmentChangeType match {
+        case LaneChangeType.Expired =>
+          Map("oldId" -> oldLane.id,
+            "oldLaneNumber" -> oldLane.laneCode,
+            "oldLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(oldLane,
+            expiredAt = oldLane.expiredDateTime.map(DateTimePropertyFormat.print(_)), expiredBy = oldLane.expiredBy)
+        case LaneChangeType.Add =>
+          Map("newId" -> newLane.id,
+            "newLaneNumber" -> newLane.laneCode,
+            "newLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(newLane)
+
+      }
+
+     Seq(Map("type" -> "Feature",
+        "changeType" -> {
+          changedSegment.segmentChangeType match {
+            case LaneChangeType.Add => "Add"
+            case LaneChangeType.Expired => "Expire"
+          }
+        },
+        "geometry" -> getGeometryMap(laneChange.roadLink.get),
+        "startDate" -> startDate,
+        "endDate" -> endDate,
+        "linkId" -> laneChange.roadLink.get.linkId,
+        "startMeasure" -> changedSegment.startMeasure,
+        "endMeasure" -> changedSegment.endMeasure,
+        "roadNumber" -> sameSegmentLaneAddressInfo("roadNumber"),
+        "roadPart" -> sameSegmentLaneAddressInfo("roadPart"),
+        "roadTrack" -> sameSegmentLaneAddressInfo("roadTrack"),
+        "roadStartAddr" -> changedSegment.startAddrM,
+        "roadEndAddr" -> changedSegment.endAddrM) ++ segmentModificationMap)
+    }
+
     Map("type" -> "FeatureCollection",
-      "features" -> laneChanges.flatMap{ laneChange =>
+      "features" -> laneChanges.map{ laneChange =>
         val lane = laneChange.lane
         val laneAttributes = lane.attributes
 
@@ -632,7 +804,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         val laneType = laneService.getPropertyValue(laneAttributes, "lane_type")
 
         val commonJson = Map("type" -> "Feature",
-          "changeType" -> {if(laneChange.changeType == LaneChangeType.Add) "Add" else "Modify"},
+          "changeType" -> {laneChange.changeType match {
+            case LaneChangeType.Add => "Add"
+            case LaneChangeType.Expired => "Expire"
+            case _ => "Modify"
+          }},
           "geometry" -> getGeometryMap(laneChange.roadLink.get),
           "startDate" -> startDate,
           "endDate" -> endDate,
@@ -651,88 +827,57 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             Seq(Map("oldId" -> lane.id,
               "oldLaneNumber" -> lane.laneCode,
               "oldLaneType" -> laneType)
-              ++ generateCommonFieldsWithDiffSource(lane, lane.expiredDateTime.map(DateTimePropertyFormat.print(_)), lane.expiredBy))
+              ++ generateCommonFieldsWithDiffSource(lane, expiredAt = lane.expiredDateTime.map(DateTimePropertyFormat.print(_)), expiredBy = lane.expiredBy))
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
             val oldLane = laneChange.oldLane.get
-            val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
-
-            Seq(Map("oldId" -> oldLane.id,
-              "oldLaneNumber" -> laneChange.oldLane.get.laneCode,
-              "oldLaneType" -> oldLaneType,
-              "newId" -> lane.id,
-              "newLaneNumber" -> lane.laneCode,
-              "newLaneType" -> laneType)
-              ++ generateCommonFieldsWithDiffSource(lane, lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)), lane.modifiedBy))
+            Seq(generateCommonModifiedFields(lane, oldLane) ++
+              generateCommonFieldsWithDiffSource(lane, modifiedAt = lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)), modifiedBy = lane.modifiedBy))
 
           case LaneChangeType.Divided =>
             val oldLane = laneChange.oldLane.get
-            val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
+            Seq(generateCommonModifiedFields(lane, oldLane) ++
+              generateCommonFieldsWithDiffSource(oldLane, modifiedAt = lane.createdDateTime.map(DateTimePropertyFormat.print(_)), modifiedBy = lane.createdBy))
 
-            Seq(Map("oldId" -> oldLane.id,
-              "oldLaneNumber" -> oldLane.laneCode,
-              "oldLaneType" -> oldLaneType,
-              "newId" -> lane.id,
-              "newLaneNumber" -> lane.laneCode,
-              "newLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy))
-
-          case LaneChangeType.Lengthened | LaneChangeType.Shortened =>
+          case LaneChangeType.Shortened | LaneChangeType.Lengthened =>
             val oldLane = laneChange.oldLane.get
             val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
 
-            val ((segmentStartAddr, startM), (segmentEndAddr, endM)) = getDifferentSegmentAddressesAndMeasures(laneChange)
-            val sameSegmentLaneAddressInfo = if(laneChange.changeType == LaneChangeType.Lengthened) mapLaneAddressInfo(oldLane, laneChange.roadLink.get) else mapLaneAddressInfo(lane, laneChange.roadLink.get)
+            val (startSegmentChange, endSegmentChange) = getChangedSegmentMeasures(laneChange)
+            val sameSegmentLaneAddressInfo = mapLaneAddressInfo(lane, laneChange.roadLink.get)
 
-            val segmentModificationMap = {
-              if (laneChange.changeType == LaneChangeType.Lengthened) {
-                Map("newId" -> lane.id,
-                  "newLaneNumber" -> lane.laneCode,
-                  "newLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(lane)
-              } else {
-                Map("oldId" -> oldLane.id,
-                  "oldLaneNumber" -> oldLane.laneCode,
-                  "oldLaneType" -> oldLaneType) ++ generateCommonFieldsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
-              }
+            val startSegmentMap = startSegmentChange match {
+              case Some(segment: ChangedSegment) => generateShortenedOrLengthenedSegmentFields(segment, laneChange, sameSegmentLaneAddressInfo)
+              case None => Seq()
             }
 
-            val segmentMap = Map("type" -> "Feature",
-              "changeType" -> {if(laneChange.changeType == LaneChangeType.Lengthened) "Add" else "Modify"},
-              "geometry" -> getGeometryMap(laneChange.roadLink.get),
-              "startDate" -> startDate,
-              "endDate" -> endDate,
-              "linkId" -> lane.linkId,
-              "startMeasure" -> startM,
-              "endMeasure" -> endM,
-              "roadNumber" -> sameSegmentLaneAddressInfo("roadNumber"),
-              "roadPart" -> sameSegmentLaneAddressInfo("roadPart"),
-              "roadTrack" -> sameSegmentLaneAddressInfo("roadTrack"),
-              "roadStartAddr" -> segmentStartAddr,
-              "roadEndAddr" -> segmentEndAddr) ++ segmentModificationMap
+            val endSegmentMap = endSegmentChange match {
+              case Some(segment: ChangedSegment) => generateShortenedOrLengthenedSegmentFields(segment, laneChange, sameSegmentLaneAddressInfo)
+              case None => Seq()
+            }
 
-            val sameSegmentMap = Map("type" -> "Feature",
+            val sameSegmentMap = Seq(Map("type" -> "Feature",
               "changeType" -> "Modify",
               "geometry" -> getGeometryMap(laneChange.roadLink.get),
               "startDate" -> startDate,
               "endDate" -> endDate,
               "linkId" -> lane.linkId,
-              "startMeasure" -> {if(laneChange.changeType == LaneChangeType.Lengthened) oldLane.startMeasure else lane.startMeasure},
-              "endMeasure" -> {if(laneChange.changeType == LaneChangeType.Lengthened) oldLane.endMeasure else lane.endMeasure},
+              "startMeasure" -> lane.startMeasure,
+              "endMeasure" -> lane.endMeasure,
               "oldId" -> oldLane.id,
               "oldLaneNumber" -> oldLane.laneCode,
+              "oldLaneType" -> oldLaneType,
               "newId" -> lane.id,
               "newLaneNumber" -> lane.laneCode,
-              "newLaneType" -> laneType) ++ sameSegmentLaneAddressInfo ++ generateCommonFieldsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
+              "newLaneType" -> laneType) ++ sameSegmentLaneAddressInfo ++
+              generateCommonFieldsWithDiffSource(oldLane, modifiedAt = lane.createdDateTime.map(DateTimePropertyFormat.print(_)), modifiedBy = lane.createdBy))
 
-            //if there is a LaneCodeTransfer type than the sameSegment will already be made on the LaneCodeTransfer case
-            if(laneChanges.exists(lc => lc.changeType == LaneChangeType.LaneCodeTransfer && lc.lane.id == lane.id))
-              Seq(segmentMap + ("modifiedAt" -> oldLane.expiredDateTime.map(DateTimePropertyFormat.print(_)), "modifiedBy" -> oldLane.expiredBy))
-            else
-              Seq(sameSegmentMap, segmentMap)
+              sameSegmentMap ++ startSegmentMap ++ endSegmentMap
 
           case _ => Seq()
         }
 
-        if(laneChange.changeType == LaneChangeType.Lengthened || laneChange.changeType == LaneChangeType.Shortened){
+        if(laneChange.changeType == LaneChangeType.Shortened | laneChange.changeType == LaneChangeType.Lengthened){
           json
         }else{
           json.map(_ ++ commonJson)
