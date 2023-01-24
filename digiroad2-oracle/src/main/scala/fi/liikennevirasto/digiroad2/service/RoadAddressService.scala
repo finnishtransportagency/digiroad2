@@ -244,32 +244,6 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }
   }
 
-  /**
-    * Returns the given speed limits with road address attributes
-    *
-    * @param speedLimits
-    * @return
-    */
-  def speedLimitWithRoadAddress(speedLimits: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] = {
-    try {
-      val addressData = groupRoadAddress(getAllByLinkIds(speedLimits.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
-      speedLimits.map(
-        _.map(pwa =>
-          if (addressData.contains(pwa.linkId))
-            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
-          else
-            pwa
-        ))
-    } catch {
-      case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
-        speedLimits
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
-        speedLimits
-    }
-  }
-
   private def roadAddressAttributes(roadAddress: RoadAddressForLink) = {
     Map(
       "ROAD_NUMBER" -> roadAddress.roadNumber,

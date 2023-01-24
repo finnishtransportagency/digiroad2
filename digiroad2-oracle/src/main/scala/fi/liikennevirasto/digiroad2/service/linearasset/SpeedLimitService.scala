@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.LogUtils
-import fi.liikennevirasto.digiroad2.util.assetUpdater.LinearAssetUpdateProcess.speedLimitUpdater
+import fi.liikennevirasto.digiroad2.util.assetUpdater.SpeedLimitUpdater
 import org.joda.time.DateTime
 
 import java.util.NoSuchElementException
@@ -22,6 +22,7 @@ import java.util.NoSuchElementException
 class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) extends DynamicLinearAssetService(roadLinkService, eventbus) {
   val speedLimitDao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(roadLinkService)
   val inaccurateAssetDao: InaccurateAssetDAO = new InaccurateAssetDAO()
+  val speedLimitUpdater = new SpeedLimitUpdater(this)
   private val RECORD_NUMBER = 4000
 
   lazy val trafficSignService: TrafficSignService = {
@@ -178,10 +179,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   }
 
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean,
-                              roadFilterFunction: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
+                              roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
     withDynTransaction {
-      val roadLinksFiltered = roadLinks.filter(roadFilterFunction)
+      val roadLinksFiltered = roadLinks.filter(roadLinkFilter)
       val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinksFiltered, showHistory)
       val speedLimits = speedLimitLinks.groupBy(_.linkId)
 
