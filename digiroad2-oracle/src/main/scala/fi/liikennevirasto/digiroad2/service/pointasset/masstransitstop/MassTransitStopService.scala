@@ -437,8 +437,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int, withEnrich: Boolean): Seq[PersistedAsset] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryByMunicipalityUsingCache(municipalityCode)
-    val assets = super.getByMunicipality(municipalityCode)
+    val assets = super.getByMunicipality(withMunicipality(municipalityCode) _)
 
     if(withEnrich)
       withDynSession{
