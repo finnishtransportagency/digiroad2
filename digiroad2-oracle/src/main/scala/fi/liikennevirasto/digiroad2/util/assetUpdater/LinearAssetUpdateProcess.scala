@@ -67,7 +67,6 @@ object LinearAssetUpdateProcess {
       case _ => new DynamicLinearAssetUpdater(getDynamicLinearAssetService(typeId))
     }
   }
-  lazy val speedLimitUpdater = new SpeedLimitUpdater(speedLimitService)
 
   def main(args: Array[String]): Unit = {
     val batchMode = Digiroad2Properties.batchMode
