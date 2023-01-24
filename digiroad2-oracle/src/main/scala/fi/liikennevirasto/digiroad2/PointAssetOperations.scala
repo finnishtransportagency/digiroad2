@@ -258,7 +258,7 @@ trait  PointAssetOperations{
 
   protected def getByMunicipality(withFilter: String => String): Seq[PersistedAsset] = {
     withDynTransaction {
-      fetchPointAssets(withFilter)
+      fetchPointAssets(withFilter).toList
     }
   }
 
