@@ -8,7 +8,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
-import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.util.{ClientUtils, LogUtils, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
@@ -241,32 +241,6 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       case vce: ViiteClientException =>
         logger.error(s"Viite error with message ${vce.getMessage}")
         pieceWiseLanes
-    }
-  }
-
-  /**
-    * Returns the given speed limits with road address attributes
-    *
-    * @param speedLimits
-    * @return
-    */
-  def speedLimitWithRoadAddress(speedLimits: Seq[Seq[SpeedLimit]]): Seq[Seq[SpeedLimit]] = {
-    try {
-      val addressData = groupRoadAddress(getAllByLinkIds(speedLimits.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
-      speedLimits.map(
-        _.map(pwa =>
-          if (addressData.contains(pwa.linkId))
-            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
-          else
-            pwa
-        ))
-    } catch {
-      case hhce: HttpHostConnectException =>
-        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
-        speedLimits
-      case vce: ViiteClientException =>
-        logger.error(s"Viite error with message ${vce.getMessage}")
-        speedLimits
     }
   }
 

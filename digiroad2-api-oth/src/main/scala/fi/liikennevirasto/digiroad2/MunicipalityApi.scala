@@ -206,7 +206,7 @@ class MunicipalityApi(val roadLinkClient: RoadLinkClient,
           } else
             speedLimitsOnRoadLink.foreach { sl =>
               val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, speedLimitValue, properties("sideCode").asInstanceOf[String].toInt,timeStamp, None)
-              speedLimitService.update(sl.id, Seq(newSpeedLimitAsset), AwsUser, false)
+              speedLimitService.updateFromMunicipalityApi(sl.id, Seq(newSpeedLimitAsset), AwsUser, false)
             }
         case None =>
       }
