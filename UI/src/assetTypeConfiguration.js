@@ -1022,14 +1022,15 @@
             {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1, cssClass: 'road-number'},
             {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2, cssClass: 'road-part-number'},
             {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3, cssClass: 'track'},
-            {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4, cssClass: 'start-addr-m'},
-            {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5, cssClass: 'end-addr-m'},
-            {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6, cssClass: 'admin-class'},
+            {label: 'Alkuetäisyys', type: 'read_only_number', publicId: "startAddrMValue", weight: 4, cssClass: 'start-addr-m'},
+            {label: 'Loppuetäisyys', type: 'read_only_number', publicId: "endAddrMValue", weight: 5, cssClass: 'end-addr-m'},
+            {label: 'Pituus', type: 'read_only_number', publicId: "addrLenght", weight: 6, cssClass: 'addr-lenght'},
+            {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 7, cssClass: 'admin-class'},
             {
               label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11, cssClass: 'lane-code'
             },
             {
-              label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
+              label: 'Kaistan tyyppi', required: 'required', type: 'single_choice', publicId: "lane_type",
               values: [
                 {id: 2, label: 'Ohituskaista'},
                 {id: 3, label: 'Kääntymiskaista oikealle'},

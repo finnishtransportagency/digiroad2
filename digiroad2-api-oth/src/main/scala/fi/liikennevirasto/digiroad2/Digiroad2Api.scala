@@ -1145,6 +1145,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "track" -> lane.attributes.get("TRACK"),
           "startAddrMValue" -> lane.attributes.get("START_ADDR"),
           "endAddrMValue" ->  lane.attributes.get("END_ADDR"),
+          "roadAddressSideCode" -> lane.attributes.get("SIDECODE"),
           "administrativeClass" -> lane.administrativeClass.value,
           "linkType" -> lane.attributes.getOrElse("linkType", 99),
           "constructionType" -> lane.attributes.getOrElse("constructionType", 99)

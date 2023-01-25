@@ -31,9 +31,15 @@ class VKMClient {
   protected implicit val jsonFormats: Formats = DefaultFormats
   private def VkmRoad = "tie"
   private def VkmRoadPart = "osa"
+  private def VkmRoadPartEnd = "osa_loppu"
   private def VkmDistance = "etaisyys"
+  private def VkmDistanceEnd = "etaisyys_loppu"
   private def VkmTrackCodes = "ajorata"
   private def VkmTrackCode = "ajorata"
+  private def VkmLinkId = "link_id"
+  private def VkmLinkIdEnd = "link_id_loppu"
+  private def VkmKmtkId = "kmtk_id"
+  private def VkmKmtkIdEnd = "kmtk_id_loppu"
   private def VkmSearchRadius = "sade"
   private def VkmQueryIdentifier = "tunniste"
   private def VkmMunicipalityCode = "kuntakoodi"
@@ -92,12 +98,15 @@ class VKMClient {
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       val aux = response.getEntity.getContent
       val content:FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
-      if(content.features.head.properties.contains("virheet")){
-        return Right(VKMError(Map("error" -> content.features.head.properties("virheet")), url))
+      val (errorFeatures, okFeatures) = content.features.partition(_.properties.contains("virheet"))
+      if (errorFeatures.nonEmpty && okFeatures.isEmpty) {
+        return Right(VKMError(Map("error" -> errorFeatures.head.properties("virheet")), url))
       }
-      Left(content)
+      Left(content.copy(features = okFeatures))
     } catch {
-      case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
+      case e: Exception =>
+        logger.error(e.getMessage)
+        Right(VKMError(Map("error" -> e.getMessage), url))
     } finally {
       response.close()
     }
@@ -123,6 +132,43 @@ class VKMClient {
   // Verifies all host names by simply returning true.
   object VerifiesAllHostNames extends HostnameVerifier {
     def verify(s: String, sslSession: SSLSession) = true
+  }
+
+  def fetchLinkIdsBetweenTwoRoadLinks(startLinkId: String, endLinkId: String, roadNumber: Long): Set[String] = {
+    val params = Map(
+      VkmLinkId -> Some(startLinkId),
+      VkmLinkIdEnd -> Some(endLinkId),
+      VkmRoad -> Some(roadNumber)
+    )
+
+    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=6&" + urlParams(params)) match {
+      case Left(featureCollection) => featureCollection.features.map(_.properties(VkmKmtkId).asInstanceOf[String]).toSet
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
+  }
+
+  // TODO VKM does not provide all road links when transforming road address range to roadLinks, only start and end links
+  //  Support for this is coming to VKM in early 2023, change implementation to use the feature when it's available.
+  //  KmtkId not supported as of January 2023, use linkID for now
+  def fetchStartAndEndLinkIdForAddrRange(roadAddressRange: RoadAddressRange): Set[(String, String)] = {
+    val params = Map(
+      VkmRoad -> Some(roadAddressRange.roadNumber),
+      VkmRoadPart -> Some(roadAddressRange.startRoadPartNumber),
+      VkmDistance -> Some(roadAddressRange.startAddrMValue),
+      VkmRoadPartEnd -> Some(roadAddressRange.endRoadPartNumber),
+      VkmDistanceEnd -> Some(roadAddressRange.endAddrMValue),
+      VkmTrackCode -> {
+        if(roadAddressRange.track.isDefined) Some(roadAddressRange.track.get.value)
+        else None
+      }
+    )
+
+    request(vkmBaseUrl + "muunna?valihaku=true&palautusarvot=6&" + urlParams(params)) match {
+      case Left(featureCollection) =>
+        featureCollection.features.map(feature => (feature.properties(VkmLinkId).asInstanceOf[BigInt].toString(),
+          feature.properties(VkmLinkIdEnd).asInstanceOf[BigInt].toString())).toSet
+      case Right(error) => throw new RoadAddressException(error.toString)
+    }
   }
 
   def coordToAddressMassQuery(coords: Seq[MassQueryParams]): Map[String,RoadAddress] = {
@@ -250,12 +296,12 @@ class VKMClient {
 
   private def mapMassQueryFields(data: Feature): Option[Map[String, RoadAddress]] = {
     try{
-      val municipalityCode = data.properties.get(VkmMunicipalityCode)
+      val municipalityCode = data.properties.get(VkmMunicipalityCode).asInstanceOf[Option[String]]
       val road = validateAndConvertToInt(VkmRoad, data.properties)
       val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
       val track = validateAndConvertToInt(VkmTrackCode, data.properties)
       val mValue = validateAndConvertToInt(VkmDistance, data.properties)
-      val queryIdentifier = data.properties(VkmQueryIdentifier)
+      val queryIdentifier = data.properties(VkmQueryIdentifier).asInstanceOf[String]
       if (Track.apply(track).eq(Track.Unknown)) {
         throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
       }
@@ -269,7 +315,7 @@ class VKMClient {
   }
 
   private def mapFields(data: Feature) = {
-    val municipalityCode = data.properties.get(VkmMunicipalityCode)
+    val municipalityCode = data.properties.get(VkmMunicipalityCode).asInstanceOf[Option[String]]
     val road = validateAndConvertToInt(VkmRoad, data.properties)
     val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
     val track = validateAndConvertToInt(VkmTrackCode, data.properties)
@@ -286,9 +332,9 @@ class VKMClient {
       data.features.map {
         addr =>
           val queryIdentifier = addr.properties(VkmQueryIdentifier)
-          val x = addr.properties("x").toDouble
-          val y = addr.properties("y").toDouble
-          PointWithIdentifier(queryIdentifier, Point(x,y))
+          val x = addr.properties("x").asInstanceOf[String].toDouble
+          val y = addr.properties("y").asInstanceOf[String].toDouble
+          PointWithIdentifier(queryIdentifier.asInstanceOf[String], Point(x,y))
       }
     } catch {
       case ex: Exception => throw new RoadAddressException("Could not convert response from VKM: %s".format(ex.getMessage))
@@ -300,8 +346,8 @@ class VKMClient {
     try {
       data.features.map {
         addr =>
-          val x = addr.properties("x").toDouble
-          val y = addr.properties("y").toDouble
+          val x = addr.properties("x").asInstanceOf[String].toDouble
+          val y = addr.properties("y").asInstanceOf[String].toDouble
           Point(x,y)
       }
     } catch {
@@ -309,8 +355,8 @@ class VKMClient {
     }
   }
 
-  private def validateAndConvertToInt(fieldName: String, map: Map[String, String]) = {
-    def value = map.get(fieldName)
+  private def validateAndConvertToInt(fieldName: String, map: Map[String, Any]) = {
+    def value = map.get(fieldName).asInstanceOf[Option[String]]
     if (value.isEmpty) {
       throw new RoadAddressException(
         "Missing mandatory field in response: %s".format(

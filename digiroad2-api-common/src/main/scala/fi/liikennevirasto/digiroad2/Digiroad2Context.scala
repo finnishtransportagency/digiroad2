@@ -21,6 +21,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, GeometryTransform, JsonSerializer}
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
 
@@ -304,7 +305,10 @@ object Digiroad2Context {
   }
 
   lazy val viiteClient: SearchViiteClient = {
-    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint, HttpClientBuilder.create().build())
+    new SearchViiteClient(Digiroad2Properties.viiteRestApiEndPoint,
+      HttpClientBuilder.create().setDefaultRequestConfig(
+        RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()
+      ).build())
   }
 
   lazy val linearAssetDao: PostGISLinearAssetDao = {

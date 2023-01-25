@@ -83,28 +83,29 @@
       {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1, cssClass: 'road-number'},
       {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2, cssClass: 'road-part-number'},
       {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3, cssClass: 'track'},
-      {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4, cssClass: 'start-addr-m'},
-      {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5, cssClass: 'end-addr-m'},
-      {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6, cssClass: 'admin-class'},
-      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11, cssClass: 'lane-code'},
+      {label: 'Alkuetäisyys', type: 'read_only_number', publicId: "startAddrMValue", weight: 4, cssClass: 'start-addr-m'},
+      {label: 'Loppuetäisyys', type: 'read_only_number', publicId: "endAddrMValue", weight: 5, cssClass: 'end-addr-m'},
+      {label: 'Pituus', type: 'read_only_number', publicId: "addrLenght", weight: 6, cssClass: 'addr-lenght'},
+      {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 7, cssClass: 'admin-class'},
+      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 12, cssClass: 'lane-code'},
       {
-        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 12,
+        label: 'Kaistan tyyppi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 13,
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
       },
       {
-        label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13, required: true
+        label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 14, required: true
       }
     ]
   };
 
   var roadAddressFormStructure = {
     fields : [
-      {label: 'Osa', required: 'required', type: 'number', publicId: "startRoadPartNumber", weight: 7},
-      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "startDistance", weight: 8},
-      {label: 'Osa', required: 'required', type: 'number', publicId: "endRoadPartNumber", weight: 9},
-      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "endDistance", weight: 10}
+      {label: 'Osa', required: 'required', type: 'number', publicId: "startRoadPartNumber", weight: 8},
+      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "startDistance", weight: 9},
+      {label: 'Osa', required: 'required', type: 'number', publicId: "endRoadPartNumber", weight: 10},
+      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "endDistance", weight: 11}
     ]
   };
 
@@ -268,6 +269,11 @@
             var publicId = field.publicId;
             var hasRoadAddress = hasRoadAddressInfo(selectedLinks);
 
+            // If lane has road address info and is cut, use lane's calculated road address start and end m-values
+            // Multiple lane selection for cut lanes is not supported currently and thus chaining road address values for cut lanes is not needed.
+            var assetHasRoadAddressAndCut = hasRoadAddress && lanesAssets.isLaneFullLinkLength(asset);
+            if(assetHasRoadAddressAndCut) lanesAssets.getAddressValuesForCutLane(asset);
+
             switch (publicId) {
               case "roadNumber":
               case "roadPartNumber":
@@ -276,15 +282,33 @@
                 }
                 break;
               case "startAddrMValue":
-                if (hasRoadAddress) {
+                if (assetHasRoadAddressAndCut) {
+                  value = asset.startAddrMValue;
+                }
+                else if (hasRoadAddress) {
                   roadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
                   value = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
                 }
                 break;
               case "endAddrMValue":
-                if (hasRoadAddress) {
+                if (assetHasRoadAddressAndCut) {
+                  value = asset.endAddrMValue;
+                }
+                else if (hasRoadAddress) {
                   roadPartNumber = Math.max.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
                   value = Math.max.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                }
+                break;
+              case "addrLenght":
+                if (assetHasRoadAddressAndCut) {
+                  value = asset.endAddrMValue - asset.startAddrMValue;
+                }
+                else if (hasRoadAddress) {
+                  var startRoadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  var endRoadPartNumber = Math.max.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  var selectionStartAddrM = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, startRoadPartNumber, "startAddrMValue"));
+                  var selectionEndAddrM = Math.max.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, endRoadPartNumber, "endAddrMValue"));
+                  value = selectionEndAddrM - selectionStartAddrM;
                 }
                 break;
               case "administrativeClass":
@@ -751,7 +775,7 @@
 
     var newLaneStructure = function (laneNumber) {
       var indexOfProperty = _.findIndex(defaultFormStructure.fields, {'publicId': 'lane_code'});
-      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 11};
+      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 12};
       currentFormStructure = defaultFormStructure;
     };
 
