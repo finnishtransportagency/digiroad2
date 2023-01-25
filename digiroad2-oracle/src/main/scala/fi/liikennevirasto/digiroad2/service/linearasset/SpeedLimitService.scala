@@ -119,7 +119,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
         PieceWiseLinearAsset(persisted.id, persisted.linkId, SideCode(persisted.sideCode), persisted.value, GeometryUtils.truncateGeometry3D(roadLinkFetched.geometry, persisted.startMeasure, persisted.endMeasure), persisted.expired,
           persisted.startMeasure, persisted.endMeasure, Set(Point(0.0, 0.0)), persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
           persisted.typeId, SideCode.toTrafficDirection(SideCode(persisted.sideCode)), persisted.timeStamp, persisted.geomModifiedDate,
-          roadLinkFetched.linkSource, Unknown, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource),
+          roadLinkFetched.linkSource, roadLinkFetched.administrativeClass, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource),
         roadLinkFetched)
     }
   }
@@ -313,7 +313,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
             PieceWiseLinearAsset(persisted.id, persisted.linkId, SideCode(persisted.sideCode), persisted.value, geometry, persisted.expired,
               persisted.startMeasure, persisted.endMeasure, geometry.toSet, persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
               persisted.typeId, roadLink.trafficDirection, persisted.timeStamp, persisted.geomModifiedDate,
-              persisted.linkSource, Unknown, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
+              persisted.linkSource, roadLink.administrativeClass, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
 
           }
           speedLimits.filter(asset => asset.id == idUpdated || asset.id == newId)
@@ -347,7 +347,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     PieceWiseLinearAsset(persisted.id, persisted.linkId, SideCode(persisted.sideCode), persisted.value, geometry, persisted.expired,
       persisted.startMeasure, persisted.endMeasure, geometry.toSet, persisted.modifiedBy, persisted.modifiedDateTime, persisted.createdBy, persisted.createdDateTime,
       persisted.typeId, roadLink.trafficDirection, persisted.timeStamp, persisted.geomModifiedDate,
-      persisted.linkSource, Unknown, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
+      persisted.linkSource, roadLink.administrativeClass, Map(), persisted.verifiedBy, persisted.verifiedDate, persisted.informationSource)
 
   }
 

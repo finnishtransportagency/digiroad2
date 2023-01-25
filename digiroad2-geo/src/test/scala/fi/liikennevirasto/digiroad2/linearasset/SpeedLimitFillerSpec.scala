@@ -239,6 +239,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
+    filledTopology.head.startMeasure should be(0.0)
+    filledTopology.head.endMeasure should be(100.0)
   }
 
   test("project speed limits to new geometry, case 1 - single speed, both directions") {
