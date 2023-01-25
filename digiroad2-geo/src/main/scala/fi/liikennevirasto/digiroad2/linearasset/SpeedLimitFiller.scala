@@ -120,9 +120,9 @@ object SpeedLimitFiller extends AssetFiller {
       remainders.map { segment =>
         val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
         PieceWiseLinearAsset(0, roadLink.linkId, SideCode.BothDirections, None, geometry, false,
-          segment._1, segment._1, geometry.toSet, None, None, None, None,
+          segment._1, segment._2, geometry.toSet, None, None, None, None,
           SpeedLimitAsset.typeId, roadLink.trafficDirection, 0, None,
-          roadLink.linkSource, Unknown, Map(), None, None, None)
+          roadLink.linkSource, roadLink.administrativeClass, Map(), None, None, None)
       }
     } else
       Seq()
@@ -359,6 +359,6 @@ object SpeedLimitFiller extends AssetFiller {
     (PieceWiseLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode, asset.value, geometry, false,
       newStart, newEnd, geometry.toSet, asset.modifiedBy, asset.modifiedDateTime, asset.createdBy, asset.createdDateTime,
       SpeedLimitAsset.typeId, newDirection, projection.timeStamp, None,
-      asset.linkSource, Unknown, Map(), None, None, None), changeSet)
+      asset.linkSource, to.administrativeClass, Map(), None, None, None), changeSet)
   }
 }
