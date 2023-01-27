@@ -66,8 +66,8 @@ Talleta endpoint tiedostoon file://aws/cloud-formation/task-definition/prod-task
 aws cloudformation create-stack \
 --stack-name [esim. digiroad-prod-api-s3] \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://aws/cloud-formation/s3/digiroad2-api-s3.yaml \
---parameters file://aws/cloud-formation/s3/PROD-api-s3-parameter.json
+--template-body file://aws/cloud-formation/s3/digiroad2-s3.yaml \
+--parameters file://aws/cloud-formation/s3/PROD-s3-parameter.json
 ```
 
 ### Luo task-definition
@@ -201,6 +201,17 @@ aws cloudformation update-stack \
 --parameters file://aws/cloud-formation/batchSystem/batchLambda/prod-batch-lambda-parameter.json \
 --capabilities CAPABILITY_NAMED_IAM
 ```
+
+### S3 ja task definition task role päivitys (tarvittaessa)
+
+```
+aws cloudformation update-stack \
+--stack-name [esim. digiroad-prod-api-s3] \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://aws/cloud-formation/s3/digiroad2-s3.yaml \
+--parameters file://aws/cloud-formation/s3/PROD-s3-parameter.json
+```
+
 ## Vanhan imagen laittaminen takaisin
 Muokkaa aws/cloud-formation/task-definition/prod-create-taskdefinition.yaml ContainerDefinitions kohtaa Image. Vaihda :prod -> @digest siihen docker digest(esim sha256:b1ff5c8586) jonka kehitystiimi on toimittanut. Konaisuudessa Image kohdassa kuuluisi olla !Sub '${RepositoryURL}@sha256:b1ff5c8586esimerkki'.
 Luo uusi task definition versio tästä:
