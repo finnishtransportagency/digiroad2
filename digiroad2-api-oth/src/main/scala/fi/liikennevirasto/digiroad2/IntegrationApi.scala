@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, Width
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, LinearAssetOperations, Manoeuvre}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
 import org.joda.time.DateTime
@@ -174,7 +174,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     massTransitStopService.getByMunicipality(municipalityNumber)
   }
 
-  def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
+  def speedLimitsToApi(speedLimits: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
+
     speedLimits.map { speedLimit =>
       val defaultPrecisionGeometry = geometryToDefaultPrecision(speedLimit.geometry)
 
@@ -182,7 +183,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> defaultPrecisionGeometry,
         geometryWKTForLinearAssets(defaultPrecisionGeometry),
-        "value" -> speedLimit.value.fold(0)(_.value),
+        "value" -> speedLimitService.getSpeedLimitValue(speedLimit.value).get.value,
         "startMeasure" -> doubleToDefaultPrecision(speedLimit.startMeasure),
         "endMeasure" -> doubleToDefaultPrecision(speedLimit.endMeasure),
         "linkId" -> speedLimit.linkId,
@@ -193,14 +194,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
-    speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedLinearAsset]) = {
+
+    speedLimits.map { case ChangedLinearAsset(speedLimit, link) =>
       val defaultPrecisionGeometry = geometryToDefaultPrecision(speedLimit.geometry)
       Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> defaultPrecisionGeometry,
         geometryWKTForLinearAssets(defaultPrecisionGeometry),
-        "value" -> speedLimit.value.fold(0)(_.value),
+        "value" -> speedLimitService.getSpeedLimitValue(speedLimit.value).get.value,
         "startMeasure" -> doubleToDefaultPrecision(speedLimit.startMeasure),
         "endMeasure" -> doubleToDefaultPrecision(speedLimit.endMeasure),
         "linkId" -> speedLimit.linkId,
@@ -929,7 +931,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
       val assetType = params("assetType")
       assetType match {
-        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until, withAdjust))
+        case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(SpeedLimitAsset.typeId, since, until, withAdjust))
         case _ => BadRequest("Invalid asset type")
       }
     }
@@ -970,7 +972,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         val assetType = params("assetType")
         assetType match {
           case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
-          case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
+          case "speed_limits" => speedLimitsToApi(speedLimitService.getByMunicipality(SpeedLimitAsset.typeId, municipalityNumber, roadLinkFilter = {roadLinkFilter: RoadLink => roadLinkFilter.isCarRoadOrCyclePedestrianPath}))
           case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
           case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
           case "axle_weight_limits" => sevenRestrictionToApi(AxleWeightLimit.typeId, municipalityNumber)

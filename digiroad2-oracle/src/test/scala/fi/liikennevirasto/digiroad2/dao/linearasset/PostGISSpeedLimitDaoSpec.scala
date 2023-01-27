@@ -67,7 +67,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
-      speedLimits._1.map(_.id) should equal(Seq(300103))
+      speedLimits.map(_.id) should equal(Seq(300103))
     }
   }
 
@@ -81,7 +81,7 @@ class PostGISSpeedLimitDaoSpec extends FunSuite with Matchers {
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
-      speedLimits._1.map(_.id) should equal(Seq(300103))
+      speedLimits.map(_.id) should equal(Seq(300103))
     }
   }
 

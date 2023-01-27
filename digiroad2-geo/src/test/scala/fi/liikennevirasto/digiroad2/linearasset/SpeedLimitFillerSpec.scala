@@ -33,14 +33,15 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("drop speedlimit segments less than 2 meters"){
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
-      SpeedLimit(1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0),
-        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-    SpeedLimit(2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(1.0, 0.0),
-      Point(3.0, 0.0)), 2.0, 4.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-    )
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0), Point(1.9, 0.0)),
+      false, 0.0, 1.9, Set(Point(0.0, 0.0), Point(1.9, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(1.0, 0.0), Point(3.0, 0.0)),
+      false, 2.0, 4.0, Set(Point(1.0, 0.0), Point(3.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val assets = Seq(speedLimit1, speedLimit2)
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
     filledTopology should have size 2
     filledTopology.map(_.id) should not contain (1)
     changeSet.expiredAssetIds should have size 1
@@ -50,12 +51,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("Don't drop speedlimit segments less than 2 meters on a road link with length less that 2 meters"){
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-    val assets = Seq(
-      SpeedLimit(1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0),
-        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
-    )
+    val speedLimit = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0), Point(1.9, 0.0)),
+      false, 0.0, 1.9, Set(Point(0.0, 0.0), Point(1.9, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val assets = Seq(speedLimit)
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.id) should be (Seq(1))
     changeSet.droppedAssetIds should have size 0
@@ -64,18 +65,22 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("drop segment outside of link geometry") {
     val topology = Seq(
       roadLink(linkId2, Seq(Point(1.0, 0.0), Point(2.0, 0.0))))
-    val speedLimits = Map(linkId2 -> Seq(
-      SpeedLimit(1, linkId2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 2.15, 2.35, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    val speedLimit = PieceWiseLinearAsset(1, linkId2, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)),
+      false, 2.15, 2.35, Set(Point(1.0, 0.0), Point(2.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimits = Map(linkId2 -> Seq(speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     changeSet.expiredAssetIds should be(Set(1))
   }
 
   test("adjust speed limit to cover whole link when its the only speed limit to refer to the link") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-    val speedLimits = Map(linkId1 -> Seq(
-      SpeedLimit(1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    val speedLimit = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0), Point(1.9, 0.0)),
+      false, 0.0, 1.9, Set(Point(0.0, 0.0), Point(1.9, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimits = Map(linkId1 -> Seq(speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology.length should be(1)
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
@@ -86,15 +91,15 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.9, 0.0)),
+      false, 0.0, 1.9, Set(Point(0.0, 0.0), Point(1.9, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(1.9, 0.0)),
+      false, 0.0, 1.9, Set(Point(0.0, 0.0), Point(1.9, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
-      linkId1 -> Seq(
-        SpeedLimit(
-          1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-        SpeedLimit(
-          2, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      linkId1 -> Seq(speedLimit1, speedLimit2))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 2
     filledTopology.map(_.geometry) should be(Seq(
       Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
@@ -108,10 +113,14 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("cap speed limit to road link geometry") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0))))
-    val speedLimits = Map(linkId1 -> Seq(
-      SpeedLimit(1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(90.0, 0.0)), 0.0, 90.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(90.0, 0.0), Point(110.0, 0.0)), 90.0, 110.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(90.0, 0.0)),
+      false, 0.0, 90.0, Set(Point(0.0, 0.0), Point(90.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(90.0, 0.0), Point(110.0, 0.0)),
+      false, 90.0, 110.0, Set(Point(90.0, 0.0), Point(110.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimits = Map(linkId1 -> Seq(speedLimit1, speedLimit2))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology.length should be(2)
 
     filledTopology.find(_.id == 2).map(_.geometry) should be(Some(Seq(Point(90.0, 0.0), Point(100.0, 0.0))))
@@ -123,20 +132,28 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("drop short speed limit") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.00, 0.0))))
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.04, 0.0), Point(100.0, 0.0)),
+      false, 0.04, 100.0, Set(Point(0.04, 0.0), Point(100.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(0.04, 0.0)),
+      false, 0.0, 0.04, Set(Point(0.0, 0.0), Point(0.04, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
-      linkId1 -> Seq(SpeedLimit(1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(0.04, 0.0)), 0.0, 0.04, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-        SpeedLimit(2, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(0.04, 0.0), Point(100.0, 0.0)), 0.04, 100.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      linkId1 -> Seq(speedLimit1, speedLimit2))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
-    changeSet.expiredAssetIds should be(Set(1))
+    changeSet.expiredAssetIds should be(Set(speedLimit2.id))
   }
 
   test("do not drop short speed limit if it fills the road length") {
   val topology = Seq(
-    roadLink(linkId1, Seq(Point(0.0, 0.0), Point(0.4, 0.0))))
+    roadLink(linkId1, Seq(Point(0.0, 0.0), Point(0.04, 0.0))))
+    val speedLimit = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(0.04, 0.0)),
+      false, 0.0, 0.04, Set(Point(0.0, 0.0), Point(0.04, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
   val speedLimits = Map(
-    linkId1 -> Seq(SpeedLimit(1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-  val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    linkId1 -> Seq(speedLimit))
+  val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
   filledTopology should have size 1
   changeSet.droppedAssetIds should be(Set())
 }
@@ -144,20 +161,26 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("should not drop adjusted short speed limit") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(1.0, 0.0))))
+    val speedLimit = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(0.04, 0.0)),
+      false, 0.0, 0.04, Set(Point(0.0, 0.0), Point(0.04, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
-      linkId1 -> Seq(SpeedLimit(1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      linkId1 -> Seq(speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
-    filledTopology.map(_.id) should be(Seq(1))
+    filledTopology.map(_.id) should be(Seq(speedLimit.id))
     changeSet.droppedAssetIds shouldBe empty
   }
 
   test("adjust side code of a speed limit") {
     val topology = Seq(
-      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(1.0, 0.0))))
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(1.9, 0.0))))
+    val speedLimit = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.9, 0.0)),
+      false, 0.0, 1.9, Set(Point(0.0, 0.0), Point(1.9, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
-      linkId1 -> Seq(SpeedLimit(1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      linkId1 -> Seq(speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 1
@@ -167,10 +190,15 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("adjust one-way speed limits on one-way road link into two-way speed limits") {
     val topology = Seq(
       oneWayRoadLink(linkId1, Seq(Point(0.0, 0.0), Point(2.0, 0.0)), TrafficDirection.TowardsDigitizing))
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
+      false, 0.0, 1.0, Set(Point(0.0, 0.0), Point(1.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)),
+      false, 1.0, 2.0, Set(Point(1.0, 0.0), Point(2.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
-      linkId1 -> Seq(SpeedLimit(1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-        SpeedLimit(2, linkId1, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, 2.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      linkId1 -> Seq(speedLimit1, speedLimit2))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections, SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 2
@@ -179,26 +207,25 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
   test("merge speed limits with same value on shared road link") {
     val topology = Seq(
-      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(1.0, 0.0))))
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0))))
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
+      false, 0.0, 1.0, Set(Point(0.0, 0.0), Point(1.0, 0.0)), Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(40)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)),
+      false, 1.0, 2.0, Set(Point(1.0, 0.0), Point(2.0, 0.0)), Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(2.0, 0.0), Point(3.0, 0.0)),
+      false, 2.0, 3.0, Set(Point(2.0, 0.0), Point(3.0, 0.0)), Some("latest modifier"), Some(DateTime.now().minus(100)), None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(
-        SpeedLimit(
-          1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-          Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, Some("one"), Some(DateTime.now().minus(1000)), 0, None, linkSource = NormalLinkInterface),
-        SpeedLimit(
-          2, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-          Seq(Point(0.2, 0.0), Point(0.55, 0.0)), 0.2, 0.55, Some("one else"), Some(DateTime.now().minus(500)),
-          Some("one"), Some(DateTime.now().minus(1000)), 0, None, linkSource = NormalLinkInterface),
-        SpeedLimit(
-          3, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-          Seq(Point(0.55, 0.0), Point(1.0, 0.0)), 0.55, 1.0, Some("random guy"), Some(DateTime.now().minus(450)),
-          Some("one"), Some(DateTime.now().minus(1100)), 0, None, linkSource = NormalLinkInterface)))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+        speedLimit1, speedLimit2, speedLimit3))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(SpeedLimitValue(40))))
-    filledTopology.map(_.modifiedBy) should be (Seq(Some("random guy"))) // latest modification should show
-    changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, linkId1, 0.0, 1.0)))
+    filledTopology.map(_.modifiedBy) should be (Seq(Some("latest modifier"))) // latest modification should show
+    changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, linkId1, 0.0, 3.0)))
     changeSet.adjustedSideCodes should be(List())
     changeSet.expiredAssetIds should be(Set(1, 2))
   }
@@ -206,27 +233,28 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   test("create unknown speed limit on empty segments") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), State))
-    val speedLimits = Map.empty[String, Seq[SpeedLimit]]
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    val speedLimits = Map.empty[String, Seq[PieceWiseLinearAsset]]
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
+    filledTopology.head.startMeasure should be(0.0)
+    filledTopology.head.endMeasure should be(100.0)
   }
 
   test("project speed limits to new geometry, case 1 - single speed, both directions") {
-    val oldRoadLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
-    val newLink1 = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
-    val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
-    val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val oldRoadLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(90.0, 0.0)))
+    val newLink1 = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(20.0, 0.0)))
+    val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(20.0, 0.0)))
+    val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(50.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
-    val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
-    val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
-      ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
-      ChangeInfo(Some(linkId1), Some(linkId3), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    val speedLimit = Seq(PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(90.0, 0.0)),
+      false, 0.0, 90.0, Set(Point(0.0, 0.0), Point(90.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
+    val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(20.0), Some(0.0), Some(20.0), Some(1440000)),
+      ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(20.0), Some(40.0), Some(0.0), Some(20.0), Some(1440000)),
+      ChangeInfo(Some(linkId1), Some(linkId3), 23, 6, Some(40.0), Some(90.0), Some(0.0), Some(50.0), Some(1440000))
     )
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
@@ -235,7 +263,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     output.length should be(3)
     output.head._1.trafficDirection should be (TrafficDirection.BothDirections)
     output.head._1.startMeasure should be(0.0)
-    output.head._1.endMeasure should be(3.0)
+    output.head._1.endMeasure should be(20.0)
   }
 
   test("project speed limits to new geometry, case 2 - different speeds to different directions") {
@@ -245,12 +273,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
     val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
+      PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
+        false, 0.0, 10.0, Set(Point(0.0, 0.0), Point(10.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
+        false, 0.0, 10.0, Set(Point(0.0, 0.0), Point(10.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
     val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -284,22 +312,21 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   }
 
   test("project speed limits to new geometry, case 3 - speed changes in the middle of the roadlink") {
-    val oldRoadLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
-    val newLink1 = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
-    val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
-    val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
+    val oldRoadLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(110.0, 0.0)))
+    val newLink1 = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(20.0, 0.0)))
+    val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(80.0, 0.0)))
+    val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
-    val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
-
-    val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
-      ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
-      ChangeInfo(Some(linkId1), Some(linkId3), 23, 6, Some(7.0), Some(10.0), Some(3.0), Some(0.0), Some(1440000))
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(90.0, 0.0)),
+      false, 0.0, 90.0, Set(Point(0.0, 0.0), Point(90.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(90.0, 0.0), Point(110.0, 0.0)),
+      false, 90.0, 110.0, Set(Point(90.0, 0.0), Point(110.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit = Seq(speedLimit1, speedLimit2)
+    val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(20.0), Some(0.0), Some(20.0), Some(1440000)),
+      ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(20.0), Some(100.0), Some(0.0), Some(80.0), Some(1440000)),
+      ChangeInfo(Some(linkId1), Some(linkId3), 23, 6, Some(100.0), Some(110.0), Some(0.0), Some(10.0), Some(1440000))
     )
 
     val output = changes flatMap { change =>
@@ -310,10 +337,10 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.head.startMeasure should be(0.0)
-    output.head.endMeasure should be(3.0)
+    output.head.endMeasure should be(20.0)
     output.head.value should be(Some(SpeedLimitValue(40)))
     output.last.startMeasure should be(0.0)
-    output.last.endMeasure should be(3.0)
+    output.last.endMeasure should be(10.0)
     output.last.value should be(Some(SpeedLimitValue(50)))
     output.length should be (4)
   }
@@ -325,12 +352,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
     val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(0.0, 0.0), Point(7.5, 0.0)), 0.0, 7.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(7.5, 0.0), Point(10.0, 0.0)), 7.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
+      PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(7.5, 0.0)),
+        false, 0.0, 7.5, Set(Point(0.0, 0.0), Point(7.5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(7.5, 0.0), Point(10.0, 0.0)),
+        false, 7.5, 10.0, Set(Point(7.5, 0.0), Point(10.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
     val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -359,18 +386,18 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val linkmap = Map(linkId1 -> newLink1, linkId2 -> newLink2, linkId3 -> newLink3)
     val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        3, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(30)),
-        Seq(Point(0.0, 0.0), Point(4.5, 0.0)), 0.0, 4.5, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        4, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(4.5, 0.0), Point(10.0, 0.0)), 4.5, 10.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
+      PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(4.5, 0.0)),
+        false, 0.0, 4.5, Set(Point(0.0, 0.0), Point(4.5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(4.5, 0.0), Point(10.0, 0.0)),
+        false, 4.5, 10.0, Set(Point(4.5, 0.0), Point(10.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(3, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(30)), Seq(Point(0.0, 0.0), Point(4.5, 0.0)),
+        false, 0.0, 4.5, Set(Point(0.0, 0.0), Point(4.5, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(4, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(60)), Seq(Point(4.5, 0.0), Point(10.0, 0.0)),
+        false, 4.5, 10.0, Set(Point(4.5, 0.0), Point(10.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
     val changes = Seq(ChangeInfo(Some(linkId1), Some(linkId1), 2l, 5, Some(0.0), Some(3.0), Some(0.0), Some(3.0), Some(1440000)),
       ChangeInfo(Some(linkId1), Some(linkId2), 22, 6, Some(3.0), Some(7.0), Some(0.0), Some(4.0), Some(1440000)),
@@ -406,12 +433,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val newLink3 = roadLink(newLinkId3, Seq(Point(0.0, 0.0), Point(6.56875041, 0.0)))
     val linkmap = Map(newLinkId1 -> newLink1, newLinkId2 -> newLink2, newLinkId3 -> newLink3)
     val speedLimit = Seq(
-      SpeedLimit(
-        1, oldRoadLink.linkId, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(0.0, 0.0), Point(54.825, 0.0)), 0.0, 54.825, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(54.825, 0.0), Point(171.027, 0.0)), 54.825, 171.027, None, None, None, None, 0, None, linkSource = NormalLinkInterface))
+      PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(54.825, 0.0)),
+        false, 0.0, 54.825, Set(Point(0.0, 0.0), Point(54.825, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(54.825, 0.0), Point(171.027, 0.0)),
+        false, 54.825, 171.027, Set(Point(54.825, 0.0), Point(171.027, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
     val changes = Seq(ChangeInfo(Some(oldRoadLink.linkId), Some(newLink2.linkId), 2l, 5, Some(113.53850795), Some(171.02731386), Some(0.0), Some(57.4888233), Some(1461844024000L)),
       ChangeInfo(Some(oldRoadLink.linkId), Some(newLink1.linkId), 2l, 6, Some(6.56875026), Some(113.53850795), Some(0.0), Some(106.96978931), Some(1461844024000L)),
@@ -436,39 +463,39 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val bdgreen = Option(DateTime.now().minusDays(2))
     val sdgreen = Option(DateTime.now().minusDays(1))
     val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(26.67, 0.0), Point(43.33, 0.0)), 26.67, 43.33, None, None, Some("blue bd"), bdblue, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), bdred, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        3, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(50.0, 0.0), Point(60.0, 0.0)), 50.0, 60.0, None, None, Some("green bd"), bdgreen, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        4, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(16.67, 0.0), Point(33.33, 0.0)), 16.67, 33.33, None, None, Some("blue td"), sdblue, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        5, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(23.33, 0.0), Point(36.67, 0.0)), 23.33, 36.67, None, None, Some("blue ad"), sdblue, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        6, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(0.0, 0.0), Point(16.67, 0.0)), 0.0, 16.67, None, None, Some("red td"), sdred1, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        7, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, 10.0, None, None, Some("red ad"), sdred2, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        8, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(10.0, 0.0), Point(23.33, 0.0)), 10.0, 23.33, None, None, Some("red ad"), sdred3, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        9, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(33.33, 0.0), Point(50.0, 0.0)), 33.33, 50.0, None, None, Some("green bd"), sdgreen, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        10, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(40)),
-        Seq(Point(36.67, 0.0), Point(50.0, 0.0)), 36.67, 50.0, None, None, Some("green bd"), sdgreen, 0, None, linkSource = NormalLinkInterface)
+      PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(60)), Seq(Point(26.67, 0.0), Point(43.33, 0.0)),
+        false, 26.67, 43.33, Set(Point(26.67, 0.0), Point(43.33, 0.0)), None, None, Some("blue bd"), bdblue, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(10.0, 0.0), Point(26.67, 0.0)),
+        false, 10.0, 26.67, Set(Point(10.0, 0.0), Point(26.67, 0.0)), None, None, Some("red bd"), bdred, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(3, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(50.0, 0.0), Point(60, 0.0)),
+        false, 50.0, 60.0, Set(Point(50.0, 0.0), Point(60, 0.0)), None, None, Some("green bd"), bdgreen, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(4, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(60)), Seq(Point(16.67, 0.0), Point(33.33, 0.0)),
+        false, 16.67, 33.33, Set(Point(16.67, 0.0), Point(33.33, 0.0)), None, None, Some("blue td"), sdblue, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(5, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(60)), Seq(Point(23.33, 0.0), Point(36.67, 0.0)),
+        false, 23.33, 36.67, Set(Point(23.33, 0.0), Point(36.67, 0.0)), None, None, Some("blue ad"), sdblue, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(6, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(16.67, 0.0)),
+        false, 0.0, 16.67, Set(Point(0.0, 0.0), Point(16.67, 0.0)), None, None, Some("red td"), sdred1, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(7, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(50)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
+        false, 0.0, 10.0, Set(Point(0.0, 0.0), Point(10.0, 0.0)), None, None, Some("red ad"), sdred2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(8, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(50)), Seq(Point(10.0, 0.0), Point(23.33, 0.0)),
+        false, 10.0, 23.33, Set(Point(10.0, 0.0), Point(23.33, 0.0)), None, None, Some("red ad"), sdred3, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(9, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(33.33, 0.0), Point(50.0, 0.0)),
+        false, 33.33, 50.0, Set(Point(33.33, 0.0), Point(50.0, 0.0)), None, None, Some("green bd"), sdgreen, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(10, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(40)), Seq(Point(36.67, 0.0), Point(50.0, 0.0)),
+        false, 36.67, 50.0, Set(Point(36.67, 0.0), Point(50.0, 0.0)), None, None, Some("green bd"), sdgreen, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     )
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
 
     changeSet.expiredAssetIds should have size 4
     filledTopology.count(_.id != 0) should be (6)
@@ -480,7 +507,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     var topology = filledTopology
     while (counter < 100 && unstable) {
       counter = counter + 1
-      val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> topology.map(sl => sl.copy(id = sl.id+1))))
+      val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> topology.map(sl => sl.copy(id = sl.id+1))), SpeedLimitAsset.typeId)
       unstable = refill.size != topology.size || !refill.forall(sl => topology.find(_.id == sl.id-1).get.copy(id = sl.id).equals(sl))
       topology = refill
     }
@@ -495,14 +522,14 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val edit1 = Option(DateTime.now().minusDays(7))
     val edit2 = Option(DateTime.now().minusDays(6))
     val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.67, None, None, Some("red bd"), edit2, 0, None, linkSource = NormalLinkInterface))
+      PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(60)), Seq(Point(0.0, 0.0), Point(50.0, 0.0)),
+        false, 0.0, 50.0, Set(Point(0.0, 0.0), Point(50.0, 0.0)), None, None, Some("blue bd"), edit1, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(10.00, 0.0), Point(26.67, 0.0)),
+        false, 10.0, 26.67, Set(Point(10.00, 0.0), Point(26.67, 0.0)), None, None, Some("red bd"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
 
     changeSet.droppedAssetIds should be (Set())
     filledTopology.length should be (3)
@@ -518,7 +545,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     oldLink2.endMeasure should be (26.67)
     oldLink2.value should be (Some(SpeedLimitValue(50)))
 
-    val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> filledTopology))
+    val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> filledTopology), SpeedLimitAsset.typeId)
     refill should have size 3
     newChangeSet.adjustedMValues should have size 0
   }
@@ -529,18 +556,17 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val edit1 = Option(DateTime.now().minusDays(7))
     val edit2 = Option(DateTime.now().minusDays(6))
     val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(0.0, 0.0), Point(50.0, 0.0)), 0.0, 50.0, None, None, Some("blue bd"), edit1, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        2, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(10.00, 0.0), Point(26.67, 0.0)), 10.0, 26.7, None, None, Some("red bd"), edit2, 1, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        3, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(26.8, 0.0), Point(50, 0.0)), 26.74, 50, None, None, Some("red bd"), edit2, 0, None, linkSource = NormalLinkInterface)
-    )
+      PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(60)), Seq(Point(0.0, 0.0), Point(50.0, 0.0)),
+        false, 0.0, 50.0, Set(Point(0.0, 0.0), Point(50.0, 0.0)), None, None, Some("blue bd"), edit1, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(10.00, 0.0), Point(26.67, 0.0)),
+        false, 10.0, 26.67, Set(Point(10.00, 0.0), Point(26.67, 0.0)), None, None, Some("red bd"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(3, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(26.8, 0.0), Point(50, 0.0)),
+        false, 26.74, 50, Set(Point(26.8, 0.0), Point(50, 0.0)), None, None, Some("red bd"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
     changeSet.expiredAssetIds should be (Set(3))
     filledTopology.length should be (2)
     val oldLink0 = filledTopology.find(_.startMeasure==0.0).get
@@ -556,33 +582,24 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     DateTime.parse(string, dateTimePropertyFormat)
   }
 
-  def printSL(speedLimit: SpeedLimit): Unit = {
-    val ids = s"%d (${speedLimit.linkId})".format(speedLimit.id)
-    val dir = speedLimit.sideCode match {
-      case SideCode.BothDirections => "⇅"
-      case SideCode.TowardsDigitizing => "↑"
-      case SideCode.AgainstDigitizing => "↓"
-      case _ => "?"
-    }
-    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
-    if (speedLimit.expired) {
-      println("N/A")
-    } else {
-      println("%s %s %s".format(ids, dir, details))
-    }
-  }
-
   test("should return sensible geometry on combinable entries") {
     val linkId = generateRandomLinkId()
     val rLink = roadLink(linkId, Seq(Point(0.0, 0.0), Point(66.463, 0.0)))
     val speedLimit = Seq(
-      SpeedLimit(1183653,linkId,SideCode.apply(2),TrafficDirection.apply(1),Option(SpeedLimitValue(100)),Seq(),42.545,66.463,None,None,Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56")), linkSource = NormalLinkInterface),
-      SpeedLimit(1204429,linkId,SideCode.apply(3),TrafficDirection.apply(1),Option(SpeedLimitValue(100)),Seq(),42.545,66.463,None,None,Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59")), linkSource = NormalLinkInterface),
-      SpeedLimit(1232110,linkId,SideCode.apply(2),TrafficDirection.apply(1),Option(SpeedLimitValue(80)),Seq(),0,42.545,None,None,Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02")), linkSource = NormalLinkInterface),
-      SpeedLimit(1868563,linkId,SideCode.apply(3),TrafficDirection.apply(1),Option(SpeedLimitValue(80)),Seq(),0,42.545,Option(AutoGeneratedUsername.generatedInUpdate),Option(parse("14.6.2016 16:10")),Option(AutoGeneratedUsername.splitSpeedLimitPrefix + "1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")), linkSource = NormalLinkInterface)
-    )
+      PieceWiseLinearAsset(1, linkId, SideCode.apply(2), Option(SpeedLimitValue(100)), Seq(),
+        false, 42.545,66.463, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId, SideCode.apply(3), Option(SpeedLimitValue(100)), Seq(),
+        false, 42.545,66.463, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(3, linkId, SideCode.apply(2), Option(SpeedLimitValue(80)), Seq(),
+        false, 0,42.545, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(4, linkId, SideCode.apply(3), Option(SpeedLimitValue(80)), Seq(),
+        false, 0,42.545, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
     changeSet.expiredAssetIds should have size (2)
     changeSet.adjustedSideCodes should have size (2)
   }
@@ -591,12 +608,17 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val linkId = generateRandomLinkId()
     val rLink = roadLink(linkId, Seq(Point(0.0, 0.0), Point(323.203, 0.0)))
     val speedLimit = Seq(
-      SpeedLimit(1271877,linkId,SideCode.apply(3),TrafficDirection.apply(1),Option(SpeedLimitValue(60)),Seq(),0,199.502,None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 15:11")),0,Option(parse("28.10.2014 15:11")), linkSource = NormalLinkInterface),
-      SpeedLimit(2102779,linkId,SideCode.apply(2),TrafficDirection.apply(1),Option(SpeedLimitValue(60)),Seq(),0,323.203,None,None,Option(AutoGeneratedUsername.splitSpeedLimitPrefix + "1266969"),Option(parse("02.07.2015 12:12")),0,Option(parse("02.07.2015 12:12")), linkSource = NormalLinkInterface),
-      SpeedLimit(1988786,linkId,SideCode.apply(3),TrafficDirection.apply(1),Option(SpeedLimitValue(80)),Seq(),199.502,323.203,None,None,Option(AutoGeneratedUsername.splitSpeedLimitPrefix + "1228070"),Option(parse("02.07.2015 11:44")),0,Option(parse("02.07.2015 11:44")), linkSource = NormalLinkInterface)
-    )
+      PieceWiseLinearAsset(1, linkId, SideCode.apply(3), Option(SpeedLimitValue(60)), Seq(),
+        false, 0,199.502, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId, SideCode.apply(2), Option(SpeedLimitValue(60)), Seq(),
+        false, 0,323.203, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(3, linkId, SideCode.apply(3), Option(SpeedLimitValue(80)), Seq(),
+        false, 199.502,323.203, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
     changeSet.droppedAssetIds should have size (0)
   }
 
@@ -606,13 +628,20 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val geom1 = GeometryUtils.truncateGeometry3D(rLink.geometry, 42.545,66.463)
     val geom2 = GeometryUtils.truncateGeometry3D(rLink.geometry, 0, 42.545)
     val speedLimit = Seq(
-      SpeedLimit(1183653,linkId,SideCode.apply(2),TrafficDirection.apply(1),Option(SpeedLimitValue(100)),geom1,42.545,66.463,None,None,Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")),0,Option(parse("28.10.2014 14:56")), linkSource = NormalLinkInterface),
-      SpeedLimit(1204429,linkId,SideCode.apply(3),TrafficDirection.apply(1),Option(SpeedLimitValue(80)),geom1,42.545,66.463,None,None,Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:59")),0,Option(parse("28.10.2014 14:59")), linkSource = NormalLinkInterface),
-      SpeedLimit(1232110,linkId,SideCode.apply(3),TrafficDirection.apply(1),Option(SpeedLimitValue(100)),geom2,0,42.545,None,None,Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 15:02")),0,Option(parse("28.10.2014 15:02")), linkSource = NormalLinkInterface),
-      SpeedLimit(1868563,linkId,SideCode.apply(2),TrafficDirection.apply(1),Option(SpeedLimitValue(80)),geom2,0,42.545,Option(AutoGeneratedUsername.generatedInUpdate),Option(parse("14.6.2016 16:10")),Option(AutoGeneratedUsername.splitSpeedLimitPrefix + "1183653"),Option(parse("2.7.2015 10:58")),0,Option(parse("2.7.2015 10:58")), linkSource = NormalLinkInterface)
-    )
+      PieceWiseLinearAsset(1, linkId, SideCode.apply(2), Option(SpeedLimitValue(100)), geom1,
+        false, 42.545,66.463, geom1.toSet, None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId, SideCode.apply(3), Option(SpeedLimitValue(80)), geom1,
+        false, 42.545,66.463, geom1.toSet, None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(3, linkId, SideCode.apply(3), Option(SpeedLimitValue(100)), geom2,
+        false, 0,42.545, geom2.toSet, None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(4, linkId, SideCode.apply(2), Option(SpeedLimitValue(80)), geom2,
+        false, 0,42.545, geom2.toSet, None, None, Option(AutoGeneratedUsername.dr1Conversion),Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
     changeSet.droppedAssetIds should have size (0)
     changeSet.adjustedSideCodes should have size (0)
     changeSet.adjustedMValues should have size (0)
@@ -624,18 +653,17 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val edit1 = Option(DateTime.now().minusDays(7))
     val edit2 = Option(DateTime.now().minusDays(6))
     val speedLimit = Seq(
-      SpeedLimit(
-        1, linkId1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(0.0, 0.0), Point(30.0, 0.0)), 0.0, 30.0, None, None, Some("blue bd"), edit1, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        0, linkId1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)),
-        Seq(Point(30.00, 0.0), Point(50.0, 0.0)), 30.0, 50.0, None, None, Some("red td"), edit2, 0, None, linkSource = NormalLinkInterface),
-      SpeedLimit(
-        0, linkId1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)),
-        Seq(Point(30.0, 0.0), Point(50.0, 0.0)), 30.0, 50.0, None, None, Some("blue ad"), edit2, 0, None, linkSource = NormalLinkInterface)
-    )
+      PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(60)), Seq(Point(0.0, 0.0), Point(30.0, 0.0)),
+        false, 0.0, 30.0, Set(Point(0.0, 0.0), Point(30.0, 0.0)), None, None, Some("blue bd"), edit1, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(2, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(50)), Seq(Point(30.00, 0.0), Point(50.0, 0.0)),
+        false, 30.0, 50.0, Set(Point(30.00, 0.0), Point(50.0, 0.0)), None, None, Some("red td"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None),
+      PieceWiseLinearAsset(3, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(60)), Seq(Point(30.0, 0.0), Point(50.0, 0.0)),
+        false, 30.0, 50.0, Set(Point(30.0, 0.0), Point(50.0, 0.0)), None, None, Some("blue ad"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+        0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
 
     filledTopology.length should be (3)
     val oldLink1 = filledTopology.find(_.value.contains(SpeedLimitValue(50))).get

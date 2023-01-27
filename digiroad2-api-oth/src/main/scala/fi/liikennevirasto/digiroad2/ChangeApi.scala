@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneProperty, Persiste
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, RoadLink, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedRoadlink
 import fi.liikennevirasto.digiroad2.service.lane.LaneChange
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
+import fi.liikennevirasto.digiroad2.service.linearasset.ChangedLinearAsset
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 import fi.liikennevirasto.digiroad2.vallu.ValluStoreStopChangeMessage._
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.{describeEquipments, describeReachability, transformToISODate}
@@ -83,7 +83,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
 
       params("assetType") match {
-        case "speed_limits" => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust, token))
+        case "speed_limits" => speedLimitsToGeoJson(since, speedLimitService.getChanged(SpeedLimitAsset.typeId, since, until, withAdjust, token))
         case "total_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TotalWeightLimit.typeId, since, until, withAdjust, token))
         case "trailer_truck_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust, token))
         case "axle_weight_limits" => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust, token))
@@ -113,11 +113,18 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     }
   }
 
-  private def speedLimitsToGeoJson(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) =
+  private def speedLimitsToGeoJson(since: DateTime, changedAssets: Seq[ChangedLinearAsset]) = {
+
+    val speedLimitsWithValue = changedAssets.map { changedAsset =>
+      val speedLimitValue = speedLimitService.getSpeedLimitValue(changedAsset.linearAsset.value)
+      val speedLimitWithValue = changedAsset.linearAsset.copy(value = speedLimitValue)
+      ChangedLinearAsset(speedLimitWithValue, changedAsset.link)
+      }
+
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        speedLimits.filterNot(x => x.speedLimit.value.nonEmpty && x.speedLimit.value.get.isSuggested).map { case ChangedSpeedLimit(speedLimit, link) =>
+        speedLimitsWithValue.filterNot(x => x.linearAsset.value.nonEmpty && speedLimitService.getSpeedLimitValue(x.linearAsset.value).get.isSuggested).map { case ChangedLinearAsset(speedLimit, link) =>
           Map(
             "type" -> "Feature",
             "id" -> speedLimit.id,
@@ -127,7 +134,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             ),
             "properties" ->
               Map(
-                "value" -> speedLimit.value.map(_.value),
+                "value" -> speedLimitService.getSpeedLimitValue(speedLimit.value).get.value,
                 "link" -> Map(
                   "type" -> "Feature",
                   "id" -> link.linkId,
@@ -160,6 +167,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
           )
         }
     )
+  }
 
   private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Map[String, Any] = {
     def mapValues(value: Option[Value]): Seq[(String, Any)] = {
