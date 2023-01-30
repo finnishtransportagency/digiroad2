@@ -1,0 +1,37 @@
+[
+  {
+    "changeType": "replace",
+    "old": [
+      {
+        "linkId": "oldLink:1",
+        "linkLength": 100.0,
+        "geometry":  "LINESTRING ZM()",
+        "roadClass": 12121,
+        "adminClass": 2,
+        "municipality": 235,
+        "trafficDirection": 0
+      }
+    ],
+    "new": [
+      {
+        "linkId": "newLink:1",
+        "linkLength": 105.0,
+        "geometry":  "LINESTRING ZM()",
+        "roadClass": 12121,
+        "adminClass": 2,
+        "municipality": 235,
+        "trafficDirection": 0
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId": "oldLink:1",
+        "newLinkId": "newLink:1",
+        "oldFromMValue": 0.0,
+        "oldToMValue": 100.0,
+        "newFromMValue": 0.0,
+        "newToMValue": 105.0
+      }
+    ]
+  }
+]

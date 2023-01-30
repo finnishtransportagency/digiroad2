@@ -1,0 +1,54 @@
+[
+  {
+    "changeType": "merge",
+    "old": [
+      {
+        "linkId": "oldLink1:1",
+        "linkLength": 50.0,
+        "geometry":  "LINESTRING ZM()",
+        "roadClass": 12121,
+        "adminClass": 2,
+        "municipality": 235,
+        "trafficDirection": 0
+      },
+      {
+        "linkId": "oldLink2:1",
+        "linkLength": 100.0,
+        "geometry":  "LINESTRING ZM()",
+        "roadClass": 12121,
+        "adminClass": 2,
+        "municipality": 235,
+        "trafficDirection": 1
+      }
+    ],
+    "new": [
+      {
+        "linkId": "newLink:1",
+        "linkLength": 150,
+        "geometry":  "LINESTRING ZM()",
+        "roadClass": 12121,
+        "adminClass": 2,
+        "municipality": 235,
+        "trafficDirection": 1
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId": "oldLink1:1",
+        "newLinkId": "newLink:1",
+        "oldFromMValue": 0.0,
+        "oldToMValue": 50.0,
+        "newFromMValue": 100.0,
+        "newToMValue": 150.0
+      },
+      {
+        "oldLinkId": "oldLink2:1",
+        "newLinkId": "newLink:1",
+        "oldFromMValue": 0.0,
+        "oldToMValue": 100.0,
+        "newFromMValue": 0.0,
+        "newToMValue": 100.0
+      }
+    ]
+  }
+]
