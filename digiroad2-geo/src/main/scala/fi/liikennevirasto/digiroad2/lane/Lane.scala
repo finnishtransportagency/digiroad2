@@ -37,7 +37,7 @@ case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Stri
                                 createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
                                 timeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty],
-                                historyCreatedDate: DateTime, historyCreatedBy: String)
+                                historyCreatedDate: DateTime, historyCreatedBy: String, changeEventOrderNumber: Option[Int])
 
 case class NewLane(id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
                    isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None, newLaneCode: Option[Int] = None )

@@ -19,6 +19,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
+import scala.collection.mutable
 
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
@@ -537,7 +538,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         }
     )
 
-  def laneChangesToGeoJson(laneChanges: Seq[LaneChange], withGeometry: Boolean = false): Map[String, Any] = {
+  def laneChangesToGeoJson(laneChanges: Seq[LaneChange], withGeometry: Boolean = false): mutable.LinkedHashMap[String, Any] = {
     def decodePropertyValue(value: Any): String = {
       value match {
         case v: String => v
@@ -555,7 +556,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
     }
 
-    def mapLaneAddressInfo(lane: PersistedLane, roadLink: RoadLink): Map[String, Any] = {
+    def mapLaneAddressInfo(lane: PersistedLane, roadLink: RoadLink): mutable.LinkedHashMap[String, Any] = {
       try {
         val roadStartAddr = roadLink.attributes("START_ADDR").toString.toInt
         val roadEndAddr = roadLink.attributes("END_ADDR").toString.toInt
@@ -563,7 +564,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
         val (laneStartAddr, laneEndAddr) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode, roadStartAddr, roadEndAddr,
           lane.startMeasure, lane.endMeasure)
-        Map(
+        mutable.LinkedHashMap(
           "roadNumber" -> roadLink.attributes("ROAD_NUMBER"),
           "roadPart" -> roadLink.attributes("ROAD_PART_NUMBER"),
           "roadTrack" -> roadLink.attributes("TRACK"),
@@ -574,13 +575,13 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       catch {
         case nfe: NumberFormatException =>
           logger.error(nfe.getMessage)
-          Map()
+          mutable.LinkedHashMap()
         case nsee: NoSuchElementException =>
           logger.error(nsee.getMessage)
-          Map()
+          mutable.LinkedHashMap()
         case e: Exception =>
           logger.error(e.getMessage)
-          Map()
+          mutable.LinkedHashMap()
       }
 
     }
@@ -721,24 +722,21 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
     }
 
-    def generateCommonFieldsWithDiffSource(laneToUseOnCreates: PersistedLane, modifiedAt: Option[String] = None,
-                                            modifiedBy: Option[String] = None, expiredAt: Option[String] = None,
-                                           expiredBy: Option[String] = None): Map[String, String] = {
+    def generateCommonFields(changedAt: Option[DateTime], changedBy: Option[String], historyEventOrderNumber: Option[Int]): mutable.LinkedHashMap[String, Any] = {
+      val changedAtString = if(changedAt.nonEmpty) DateTimePropertyFormat.print(changedAt.get) else ""
+      val changedByString = if(changedBy.nonEmpty) changedBy.get else ""
 
-      Map("createdAt" -> laneToUseOnCreates.createdDateTime.map(DateTimePropertyFormat.print(_)).getOrElse(""),
-        "createdBy" -> laneToUseOnCreates.createdBy.getOrElse(""),
-        "modifiedAt" -> modifiedAt.getOrElse(""),
-        "modifiedBy" -> modifiedBy.getOrElse(""),
-        "expiredAt" -> expiredAt.getOrElse(""),
-        "expiredBy" -> expiredBy.getOrElse("")
-      )
+      mutable.LinkedHashMap("changedAt" -> changedAtString,
+        "changedBy" -> changedByString,
+        "historyEventOrderNumber" -> historyEventOrderNumber.getOrElse("").toString)
     }
 
-    def generateCommonModifiedFields(lane: PersistedLane, oldLane: PersistedLane): Map[String, Any] = {
+    // Generate common fields for "Modified" changes
+    def generateCommonModifiedFields(lane: PersistedLane, oldLane: PersistedLane): mutable.LinkedHashMap[String, Any] = {
       val laneType = laneService.getPropertyValue(lane.attributes, "lane_type")
       val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
 
-      Map("oldId" -> oldLane.id,
+      mutable.LinkedHashMap("oldId" -> oldLane.id,
         "oldLaneNumber" -> oldLane.laneCode,
         "oldLaneType" -> oldLaneType,
         "newId" -> lane.id,
@@ -748,7 +746,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
     // Generate response fields for segment of lane which was added or expired in change
     def generateShortenedOrLengthenedSegmentFields(changedSegment: ChangedSegment, laneChange: LaneChange,
-                                                  sameSegmentLaneAddressInfo: Map[String, Any]): Seq[Map[String, Any]] = {
+                                                  sameSegmentLaneAddressInfo: mutable.LinkedHashMap[String, Any]): mutable.LinkedHashMap[String, Any] = {
       val newLane = laneChange.lane
       val oldLane = laneChange.oldLane.get
 
@@ -762,18 +760,18 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
       val segmentModificationMap = changedSegment.segmentChangeType match {
         case LaneChangeType.Expired =>
-          Map("oldId" -> oldLane.id,
+          mutable.LinkedHashMap("oldId" -> oldLane.id,
             "oldLaneNumber" -> oldLane.laneCode,
-            "oldLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(oldLane,
-            expiredAt = oldLane.expiredDateTime.map(DateTimePropertyFormat.print(_)), expiredBy = oldLane.expiredBy)
+            "oldLaneType" -> laneType) ++
+            generateCommonFields(oldLane.expiredDateTime, oldLane.expiredBy, laneChange.historyEventOrderNumber)
         case LaneChangeType.Add =>
-          Map("newId" -> newLane.id,
+          mutable.LinkedHashMap("newId" -> newLane.id,
             "newLaneNumber" -> newLane.laneCode,
-            "newLaneType" -> laneType) ++ generateCommonFieldsWithDiffSource(newLane)
-
+            "newLaneType" -> laneType) ++
+            generateCommonFields(newLane.createdDateTime, newLane.createdBy, laneChange.historyEventOrderNumber)
       }
 
-     Seq(Map("type" -> "Feature",
+     mutable.LinkedHashMap("type" -> "Feature",
         "changeType" -> {
           changedSegment.segmentChangeType match {
             case LaneChangeType.Add => "Add"
@@ -790,20 +788,20 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         "roadPart" -> sameSegmentLaneAddressInfo("roadPart"),
         "roadTrack" -> sameSegmentLaneAddressInfo("roadTrack"),
         "roadStartAddr" -> changedSegment.startAddrM,
-        "roadEndAddr" -> changedSegment.endAddrM) ++ segmentModificationMap)
+        "roadEndAddr" -> changedSegment.endAddrM) ++ segmentModificationMap
     }
 
-    Map("type" -> "FeatureCollection",
-      "features" -> laneChanges.map{ laneChange =>
-        val lane = laneChange.lane
-        val laneAttributes = lane.attributes
+    mutable.LinkedHashMap("type" -> "FeatureCollection",
+      "features" -> laneChanges.flatMap{ laneChange =>
+        val newLane = laneChange.lane
+        val laneAttributes = newLane.attributes
 
         val startDate = decodePropertyValue(laneService.getPropertyValue(laneAttributes, "start_date"))
         val endDate = decodePropertyValue(laneService.getPropertyValue(laneAttributes, "end_date"))
 
         val laneType = laneService.getPropertyValue(laneAttributes, "lane_type")
 
-        val commonJson = Map("type" -> "Feature",
+        val commonJson = mutable.LinkedHashMap("type" -> "Feature",
           "changeType" -> {laneChange.changeType match {
             case LaneChangeType.Add => "Add"
             case LaneChangeType.Expired => "Expire"
@@ -812,76 +810,77 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
           "geometry" -> getGeometryMap(laneChange.roadLink.get),
           "startDate" -> startDate,
           "endDate" -> endDate,
-          "linkId" -> lane.linkId,
-          "startMeasure" -> lane.startMeasure,
-          "endMeasure" -> lane.endMeasure) ++ mapLaneAddressInfo(lane, laneChange.roadLink.get)
+          "linkId" -> newLane.linkId,
+          "startMeasure" -> newLane.startMeasure,
+          "endMeasure" -> newLane.endMeasure) ++ mapLaneAddressInfo(newLane, laneChange.roadLink.get)
 
         val json = laneChange.changeType match {
           case LaneChangeType.Add =>
-            Seq(Map("newId" -> lane.id,
-              "newLaneNumber" -> lane.laneCode,
-              "newLaneType" -> laneType)
-              ++ generateCommonFieldsWithDiffSource(lane))
+            Seq(commonJson ++ mutable.LinkedHashMap("newId" -> newLane.id,
+              "newLaneNumber" -> newLane.laneCode,
+              "newLaneType" -> laneType) ++
+              generateCommonFields(newLane.createdDateTime, newLane.createdBy, laneChange.historyEventOrderNumber)
+            )
 
           case LaneChangeType.Expired =>
-            Seq(Map("oldId" -> lane.id,
-              "oldLaneNumber" -> lane.laneCode,
-              "oldLaneType" -> laneType)
-              ++ generateCommonFieldsWithDiffSource(lane, expiredAt = lane.expiredDateTime.map(DateTimePropertyFormat.print(_)), expiredBy = lane.expiredBy))
+            Seq(commonJson ++ mutable.LinkedHashMap("oldId" -> newLane.id,
+              "oldLaneNumber" -> newLane.laneCode,
+              "oldLaneType" -> laneType) ++
+              generateCommonFields(newLane.expiredDateTime, newLane.expiredBy, laneChange.historyEventOrderNumber))
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
             val oldLane = laneChange.oldLane.get
-            Seq(generateCommonModifiedFields(lane, oldLane) ++
-              generateCommonFieldsWithDiffSource(lane, modifiedAt = lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)), modifiedBy = lane.modifiedBy))
+            Seq(commonJson ++ generateCommonModifiedFields(newLane, oldLane) ++
+              generateCommonFields(newLane.modifiedDateTime, newLane.modifiedBy, laneChange.historyEventOrderNumber))
 
           case LaneChangeType.Divided =>
             val oldLane = laneChange.oldLane.get
-            Seq(generateCommonModifiedFields(lane, oldLane) ++
-              generateCommonFieldsWithDiffSource(oldLane, modifiedAt = lane.createdDateTime.map(DateTimePropertyFormat.print(_)), modifiedBy = lane.createdBy))
+            Seq(commonJson ++ generateCommonModifiedFields(newLane, oldLane) ++
+              generateCommonFields(oldLane.expiredDateTime, oldLane.expiredBy, laneChange.historyEventOrderNumber))
 
           case LaneChangeType.Shortened | LaneChangeType.Lengthened =>
             val oldLane = laneChange.oldLane.get
             val oldLaneType = laneService.getPropertyValue(oldLane.attributes, "lane_type")
 
             val (startSegmentChange, endSegmentChange) = getChangedSegmentMeasures(laneChange)
-            val sameSegmentLaneAddressInfo = mapLaneAddressInfo(lane, laneChange.roadLink.get)
+            val sameSegmentLaneAddressInfo = laneChange.changeType match {
+              case LaneChangeType.Shortened => mapLaneAddressInfo(newLane, laneChange.roadLink.get)
+              case LaneChangeType.Lengthened => mapLaneAddressInfo(oldLane, laneChange.roadLink.get)
+            }
 
             val startSegmentMap = startSegmentChange match {
               case Some(segment: ChangedSegment) => generateShortenedOrLengthenedSegmentFields(segment, laneChange, sameSegmentLaneAddressInfo)
-              case None => Seq()
+              case None => Map.empty[String, Any]
             }
 
             val endSegmentMap = endSegmentChange match {
               case Some(segment: ChangedSegment) => generateShortenedOrLengthenedSegmentFields(segment, laneChange, sameSegmentLaneAddressInfo)
-              case None => Seq()
+              case None => mutable.LinkedHashMap.empty[String, Any]
             }
 
-            val sameSegmentMap = Seq(Map("type" -> "Feature",
+            val sameSegmentMap = mutable.LinkedHashMap("type" -> "Feature",
               "changeType" -> "Modify",
               "geometry" -> getGeometryMap(laneChange.roadLink.get),
               "startDate" -> startDate,
               "endDate" -> endDate,
-              "linkId" -> lane.linkId,
-              "startMeasure" -> lane.startMeasure,
-              "endMeasure" -> lane.endMeasure,
+              "linkId" -> newLane.linkId,
+              "startMeasure" -> newLane.startMeasure,
+              "endMeasure" -> newLane.endMeasure,
               "oldId" -> oldLane.id,
               "oldLaneNumber" -> oldLane.laneCode,
               "oldLaneType" -> oldLaneType,
-              "newId" -> lane.id,
-              "newLaneNumber" -> lane.laneCode,
-              "newLaneType" -> laneType) ++ sameSegmentLaneAddressInfo ++
-              generateCommonFieldsWithDiffSource(oldLane, modifiedAt = lane.createdDateTime.map(DateTimePropertyFormat.print(_)), modifiedBy = lane.createdBy))
+              "newId" -> newLane.id,
+              "newLaneNumber" -> newLane.laneCode,
+              "newLaneType" -> laneType) ++
+              sameSegmentLaneAddressInfo ++
+              generateCommonFields(newLane.createdDateTime, newLane.createdBy, laneChange.historyEventOrderNumber)
 
-              sameSegmentMap ++ startSegmentMap ++ endSegmentMap
+              Seq(sameSegmentMap, startSegmentMap, endSegmentMap)
 
           case _ => Seq()
         }
 
-        if(laneChange.changeType == LaneChangeType.Shortened | laneChange.changeType == LaneChangeType.Lengthened){
-          json
-        }else{
-          json.map(_ ++ commonJson)
-        }
+        json.filterNot(_.isEmpty)
       }
     )
   }
