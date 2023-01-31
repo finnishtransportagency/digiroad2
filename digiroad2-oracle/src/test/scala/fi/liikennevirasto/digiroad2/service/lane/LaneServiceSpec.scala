@@ -49,7 +49,8 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
   val lanePropertiesValues2 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(2))),
                                 LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-                                LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+                                LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+                                LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(10).toString("dd.MM.yyyy"))))
                               )
 
   val lanePropertiesValues4 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(4))),
@@ -222,12 +223,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Remove unused attributes from database") {
     runWithRollback {
-      val lanePropertiesWithDate = lanePropertiesValues2 ++ Seq( LaneProperty("start_date", Seq(LanePropertyValue("20.07.2020"))) )
-      val lanePropertiesWithEmptyDate = lanePropertiesValues2 ++ Seq( LaneProperty("start_date", Seq()) )
+      val lanePropertiesWithDate = lanePropertiesValues2
+      val lanePropertiesWithEmptyDate = lanePropertiesValues2 ++ Seq( LaneProperty("start_date", Seq()), LaneProperty("end_date", Seq()) )
 
       val newLaneId = ServiceWithDao.create(Seq(NewLane(0, 0, 500, 745, false, false, lanePropertiesWithDate)), Set(linkId1), 1, usernameTest)
       val createdLane = ServiceWithDao.getPersistedLanesByIds(newLaneId.toSet)
-      createdLane.head.attributes.length should be(3)
+      createdLane.head.attributes.length should be(4)
 
       val updatedLaneId = ServiceWithDao.update(Seq(NewLane(newLaneId.head, 0, 500, 745, false, false, lanePropertiesWithEmptyDate)), Set(linkId1), 1, usernameTest, Seq(SideCodesForLinkIds(linkId1, 1)), createdLane)
       val updatedLane = ServiceWithDao.getPersistedLanesByIds(updatedLaneId.toSet)
@@ -523,7 +524,8 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
-        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+        LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(11).toString("dd.MM.yyyy"))))
       )
 
       val mainLane = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues1)
@@ -624,13 +626,15 @@ class LaneServiceSpec extends LaneTestSupporter {
       val modifiedLaneProperties1 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("6"))),
-        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+        LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(10).toString("dd.MM.yyyy"))))
       )
 
       val modifiedLaneProperties2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("8"))),
-        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+        LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(10).toString("dd.MM.yyyy"))))
       )
 
       val modifiedLaneProperties1WithStartDate = modifiedLaneProperties1
@@ -852,7 +856,8 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val newLanePropertiesValues2 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
-        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+        LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(10).toString("dd.MM.yyyy"))))
       )
 
       //NewIncomeLanes to create
@@ -1262,7 +1267,8 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val lanePropertiesValues2B = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
-        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+        LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(10).toString("dd.MM.yyyy"))))
       )
 
       val newLane2 = NewLane(0, 0, 500, 745, false, false, lanePropertiesValues2)
@@ -1621,12 +1627,14 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val newPropertyValues1 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
-        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+        LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(10).toString("dd.MM.yyyy"))))
       )
 
       val newPropertyValues2 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
         LaneProperty("lane_type", Seq(LanePropertyValue("13"))),
-        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy"))))
+        LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))),
+        LaneProperty("end_date", Seq(LanePropertyValue(DateTime.now().plusDays(10).toString("dd.MM.yyyy"))))
       )
 
       val createdMainLane = NewLane(laneIds(0), 0, 500, 745, false, false, lanePropertiesValues1)

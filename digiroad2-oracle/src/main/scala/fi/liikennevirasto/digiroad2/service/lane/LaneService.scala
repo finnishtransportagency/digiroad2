@@ -491,7 +491,7 @@ trait LaneOperations {
 
         val (treatedLaneChanges, lanesNotTreated) = foldLeftParameters
         val laneAsPersistedLane = historyLaneToPersistedLane(lane)
-        val relevantLanes = lanesNotTreated.filterNot(historyLane => historyLane.id == lane.id || historyLane.expired)
+        val relevantLanes = lanesNotTreated.filterNot(historyLane => historyLane.id == lane.id)
 
         val laneChangeReturned = {
           if (relevantLanes.isEmpty) {
