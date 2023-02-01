@@ -261,7 +261,7 @@ class VKMClient {
       if (Track.apply(track).eq(Track.Unknown)) {
         throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
       }
-      Some(Map(queryIdentifier -> digiroad2.RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)))
+      Some(Map(queryIdentifier -> RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)))
     }
     catch {
       case rae: RoadAddressException =>
@@ -279,7 +279,7 @@ class VKMClient {
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
-    digiroad2.RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)
+    RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)
   }
 
   private def mapCoordinatesWithIdentifier(data: FeatureCollection): Seq[PointWithIdentifier] = {
