@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2.client
 
+import fi.liikennevirasto.digiroad2
+
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, Track, Vector3d}
 import org.apache.http.{HttpStatus, NameValuePair}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -259,7 +261,7 @@ class VKMClient {
       if (Track.apply(track).eq(Track.Unknown)) {
         throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
       }
-      Some(Map(queryIdentifier -> RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)))
+      Some(Map(queryIdentifier -> digiroad2.RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)))
     }
     catch {
       case rae: RoadAddressException =>
@@ -277,7 +279,7 @@ class VKMClient {
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
-    RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)
+    digiroad2.RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)
   }
 
   private def mapCoordinatesWithIdentifier(data: FeatureCollection): Seq[PointWithIdentifier] = {

@@ -1,12 +1,12 @@
   package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{Point, service}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
+import fi.liikennevirasto.digiroad2.{Point, Track}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 
 class GeometryTransformSpec extends FunSuite with Matchers {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]

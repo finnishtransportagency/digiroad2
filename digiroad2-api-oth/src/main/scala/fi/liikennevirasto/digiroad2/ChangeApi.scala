@@ -24,7 +24,6 @@ import scala.collection.mutable
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
   protected implicit val jsonFormats: Formats = DefaultFormats
-  lazy val geometryTransform: GeometryTransform = new GeometryTransform(Digiroad2Context.roadAddressService)
   val apiId = "change-api"
 
   case class ChangedSegment(startMeasure: Double, startAddrM: Int, endMeasure: Double, endAddrM: Int, segmentChangeType: LaneChangeType)
@@ -562,7 +561,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         val roadEndAddr = roadLink.attributes("END_ADDR").toString.toInt
         val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").toString.toInt)
 
-        val (laneStartAddr, laneEndAddr) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode, roadStartAddr, roadEndAddr,
+        val (laneStartAddr, laneEndAddr) = RoadAddress.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode, roadStartAddr, roadEndAddr,
           lane.startMeasure, lane.endMeasure)
         mutable.LinkedHashMap(
           "roadNumber" -> roadLink.attributes("ROAD_NUMBER"),
@@ -602,10 +601,10 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       val roadLinkEndAddr = roadLink.attributes("END_ADDR").toString.toInt
       val roadAddressSideCode = SideCode.apply(roadLink.attributes("SIDECODE").toString.toInt)
 
-      val (laneStartAddrM, laneEndAddrM) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
+      val (laneStartAddrM, laneEndAddrM) = RoadAddress.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
         roadLinkStartAddr, roadLinkEndAddr, lane.startMeasure, lane.endMeasure)
 
-      val (oldLaneStartAddrM, oldLaneEndAddrM) = geometryTransform.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
+      val (oldLaneStartAddrM, oldLaneEndAddrM) = RoadAddress.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
         roadLinkStartAddr, roadLinkEndAddr, oldLane.startMeasure, oldLane.endMeasure)
 
 

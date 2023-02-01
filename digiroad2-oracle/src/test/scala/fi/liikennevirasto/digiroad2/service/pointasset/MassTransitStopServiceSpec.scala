@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
+import fi.liikennevirasto.digiroad2
+
 import java.text.SimpleDateFormat
 import java.util.Date
 import fi.liikennevirasto.digiroad2._
@@ -10,7 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddress, RoadSide, TestTransactions, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadSide, TestTransactions}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentMatchers._
@@ -236,7 +238,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Fetch mass transit stop by national id") {
 
     runWithRollback {
-      val roadAddress = RoadAddress(None, 0, 0, Track.Unknown, 0)
+      val roadAddress = digiroad2.RoadAddress(None, 0, 0, Track.Unknown, 0)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((roadAddress , RoadSide.Right))
       val (stop, showStatusCode, municipalityCode) = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755)
       stop.map(_.floating) should be(Some(true))
@@ -246,7 +248,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Get properties") {
-    when(mockGeometryTransform.resolveAddressAndLocation(Point(374675.043988335, 6677274.14596169), 69, 109.0, testLinkId1, 2, road = None)).thenReturn((RoadAddress(Some("1"),1,1,Track(1),1),RoadSide(1)))
+    when(mockGeometryTransform.resolveAddressAndLocation(Point(374675.043988335, 6677274.14596169), 69, 109.0, testLinkId1, 2, road = None)).thenReturn((digiroad2.RoadAddress(Some("1"),1,1,Track(1),1),RoadSide(1)))
     runWithRollback {
       val massTransitStop = RollbackMassTransitStopService.getMassTransitStopByNationalId(2)._1.map { stop =>
         Map("id" -> stop.id,
@@ -264,7 +266,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Fetching mass transit stop with id requires no rights") {
-    when(mockGeometryTransform.resolveAddressAndLocation(Point(374780.259160265, 6677546.84962279), 30, 113.0, randomLinkId4, 3, road = None)).thenReturn((RoadAddress(Some("1"),1,1,Track(1),1),RoadSide(1)))
+    when(mockGeometryTransform.resolveAddressAndLocation(Point(374780.259160265, 6677546.84962279), 30, 113.0, randomLinkId4, 3, road = None)).thenReturn((digiroad2.RoadAddress(Some("1"),1,1,Track(1),1),RoadSide(1)))
     runWithRollback {
       val stop =  RollbackMassTransitStopService.getMassTransitStopByNationalId(85755)
       stop._1.get.id should be (300008)
@@ -475,7 +477,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       )
 
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+        (digiroad2.RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
       )
       val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
@@ -562,7 +564,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Create new mass transit stop with Central ELY administration") {
     runWithRollback {
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(None, 1, 1, Track.Combined, 0), RoadSide.Left)
+        (digiroad2.RoadAddress(None, 1, 1, Track.Combined, 0), RoadSide.Left)
       )
       val massTransitStopDao = new MassTransitStopDao
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
@@ -595,7 +597,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(None, 1, 1, Track.Combined, 0), RoadSide.Left)
+        (digiroad2.RoadAddress(None, 1, 1, Track.Combined, 0), RoadSide.Left)
       )
 
       val properties = List(
@@ -646,7 +648,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
 
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(None, 1, 1, Track.Combined, 0), RoadSide.Left)
+        (digiroad2.RoadAddress(None, 1, 1, Track.Combined, 0), RoadSide.Left)
       )
       val roadLink = RoadLink(randomLinkId1, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
       when(mockRoadLinkService.getRoadLinkByLinkId(randomLinkId1)).thenReturn(Some(roadLink))
@@ -684,7 +686,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+        (digiroad2.RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
       )
       val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
@@ -717,7 +719,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
 
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+        (digiroad2.RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
       )
 
       val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
@@ -748,7 +750,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       )
 
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
-        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+        (digiroad2.RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
       )
       val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
@@ -769,7 +771,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]]
-      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+      )).thenReturn((digiroad2.RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
       val service = RollbackMassTransitStopService
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -802,7 +804,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]]
-      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+      )).thenReturn((digiroad2.RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
 
       val service = RollbackMassTransitStopService
       val stop = service.getById(id).get
@@ -835,7 +837,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]]
-      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+      )).thenReturn((digiroad2.RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
       val service = RollbackMassTransitStopService
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -1100,7 +1102,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Updating an existing stop should not create a new Livi ID") {
      
     runWithRollback {
-      val rad = RoadAddress(Some("235"), 110, 10, Track.Combined, 108)
+      val rad = digiroad2.RoadAddress(Some("235"), 110, 10, Track.Combined, 108)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((rad, RoadSide.Right))
       sqlu"""update asset set floating='1' where id = 300008""".execute
       sqlu"""update text_property_value set value_fi='livi114873' where asset_id = 300008 and value_fi = 'OTHJ85755'""".execute
@@ -1231,7 +1233,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]]
-      )).thenReturn((RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
+      )).thenReturn((digiroad2.RoadAddress(Some("235"), 110, 10, Track.Combined, 108), RoadSide.Right))
       val service = RollbackMassTransitStopService
       val stop = service.getById(id).get
       val props = stop.propertyData

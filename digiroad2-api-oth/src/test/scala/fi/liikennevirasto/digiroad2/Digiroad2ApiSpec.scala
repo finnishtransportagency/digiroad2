@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStop, MassTransitStopService, MassTransitStopWithProperties}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadSide}
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._

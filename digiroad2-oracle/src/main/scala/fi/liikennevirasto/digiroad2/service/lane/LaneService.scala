@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
+import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
@@ -14,8 +15,7 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddress}
-import fi.liikennevirasto.digiroad2.util.RoadAddress.isCarTrafficRoadAddress
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory

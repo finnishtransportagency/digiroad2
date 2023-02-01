@@ -4,7 +4,6 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode}
-import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.middleware.{AdditionalImportValue, UpdateOnlyStartDates}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -12,7 +11,7 @@ import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.getRoadAddressToProcess
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, Parallel, RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, LogUtils, Parallel}
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory

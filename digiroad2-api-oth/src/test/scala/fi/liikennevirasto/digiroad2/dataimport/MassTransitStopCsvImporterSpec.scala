@@ -14,13 +14,14 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.csvDataImporter.{Creator, MassTransitStopCsvImporter, MassTransitStopCsvOperation, PositionUpdater, Updater}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadSide}
 import org.mockito.ArgumentMatchers
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, TrafficDirection, Unknown}
 import fi.liikennevirasto.digiroad2.client.{FeatureClass, RoadLinkClient, RoadLinkFetched}
@@ -170,7 +171,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       override val geometryTransform: GeometryTransform = mockGeometryTransform
     }
 
-    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0) , RoadSide.Right))
+    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((digiroad2.RoadAddress(None, 0, 0, Track.Unknown, 0) , RoadSide.Right))
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
     stops.foreach { case (id, administrativeClass) =>
       when(mockMassTransitStopService.getByNationalId(ArgumentMatchers.eq(id), anyObject(), anyObject(), anyBoolean())).thenAnswer(new Answer[Option[Object]] {
@@ -333,7 +334,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     "vyohyketieto" -> ("InfoZone", "InfoZone ready")
   )
 
-  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0) , RoadSide.Right))
+  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[String], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((digiroad2.RoadAddress(None, 0, 0, Track.Unknown, 0) , RoadSide.Right))
 
   when(mockService.getByNationalId(ArgumentMatchers.eq(1), anyObject(), anyObject(), anyBoolean())).thenAnswer(new Answer[Option[Object]] {
     override def answer(invocation: InvocationOnMock): Option[Object] = {
