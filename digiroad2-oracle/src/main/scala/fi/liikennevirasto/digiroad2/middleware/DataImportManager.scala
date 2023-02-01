@@ -59,8 +59,6 @@ class DataImportManager(roadLinkClient: RoadLinkClient, roadLinkService: RoadLin
         pedestrianCrossingCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
       case ServicePoints.layerName =>
         servicePointCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
-      case Lanes.layerName =>
-        lanesCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId, importedInfo.additionalImportInfo.head)
       case _ =>
     }
   }

@@ -284,6 +284,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     (result, createdLaneIds)
   }
 
+  // No need for lane CSV-import as of 01.02.2023. Option to import lane information is hidden on UI, and backend
+  // method call is removed from DataImportManager in order to avoid accidental removal of current lane information.
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, updateOnlyStartDates: AdditionalImportValue): Unit = {
     try {
       val result = processing(inputStream, user, updateOnlyStartDates.asInstanceOf[UpdateOnlyStartDates], fileName)
