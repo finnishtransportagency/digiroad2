@@ -22,10 +22,6 @@ import org.slf4j.LoggerFactory
 
 import java.security.InvalidParameterException
 
-
-case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink], historyEventOrderNumber: Option[Int])
-case class ChangedSegment(startMeasure: Double, startAddrM: Int, endMeasure: Double, endAddrM: Int, segmentChangeType: LaneChangeType)
-
 class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, roadAddressServiceImpl: RoadAddressService) extends LaneOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: LaneDao = new LaneDao()
@@ -570,118 +566,16 @@ trait LaneOperations {
     val (oldLaneStartAddrM, oldLaneEndAddrM) = RoadAddress.getAddressMValuesForCutAssets(roadLink.length, roadAddressSideCode,
       roadLinkStartAddr, roadLinkEndAddr, oldLane.startMeasure, oldLane.endMeasure)
 
+    val startSegmentChangeType = LaneSegmentMeasuresChangeType.getDigitizingStartChangeType(lane, oldLane)
+    val endSegmentChangeType = LaneSegmentMeasuresChangeType.getDigitizingEndChangeType(lane, oldLane)
 
-    val cutFromStart = lane.startMeasure > oldLane.startMeasure
-    val cutFromEnd = lane.endMeasure < oldLane.endMeasure
-    val lenghtenedFromStart = lane.startMeasure < oldLane.startMeasure
-    val lenghtenedFromEnd = lane.endMeasure > oldLane.endMeasure
+    val startSegmentChange = startSegmentChangeType.map(_.segmentMeasuresAndAddressM(lane, oldLane, laneStartAddrM,
+      laneEndAddrM, oldLaneStartAddrM, oldLaneEndAddrM, roadAddressSideCode))
+    val endSegmentChange = endSegmentChangeType.map(_.segmentMeasuresAndAddressM(lane, oldLane, laneStartAddrM,
+      laneEndAddrM, oldLaneStartAddrM, oldLaneEndAddrM, roadAddressSideCode))
 
-    (cutFromStart, cutFromEnd, lenghtenedFromStart, lenghtenedFromEnd) match {
-      // Lane cut from digitizing direction start
-      case (true, false, false, false) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneStartAddrM, lane.startMeasure, laneStartAddrM, LaneChangeType.Expired))
-            val endSegmentChange = None
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, laneEndAddrM, lane.startMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
-            val endSegmentChange = None
-            (startSegmentChange, endSegmentChange)
-        }
+    (startSegmentChange, endSegmentChange)
 
-      // Lane cut from digitizing direction end
-      case (false, true, false, false) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = None
-            val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneEndAddrM, oldLane.endMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = None
-            val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneStartAddrM, oldLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Expired))
-            (startSegmentChange, endSegmentChange)
-        }
-
-      // Lane cut from both ends
-      case (true, true, false, false) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneStartAddrM, lane.startMeasure, laneStartAddrM, LaneChangeType.Expired))
-            val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneEndAddrM, oldLane.endMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneEndAddrM, lane.startMeasure, laneEndAddrM, LaneChangeType.Expired))
-            val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneStartAddrM, oldLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Expired))
-            (startSegmentChange, endSegmentChange)
-
-        }
-
-      // Lane lengthened from digitizing direction start
-      case (false, false, true, false) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(lane.startMeasure, laneStartAddrM, oldLane.startMeasure, oldLaneStartAddrM, LaneChangeType.Add))
-            val endSegmentChange = None
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(lane.startMeasure, oldLaneEndAddrM, oldLane.startMeasure, laneEndAddrM, LaneChangeType.Add))
-            val endSegmentChange = None
-            (startSegmentChange, endSegmentChange)
-        }
-
-      // Lane lengthened from digitizing direction end
-      case (false, false, false, true) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = None
-            val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, oldLaneEndAddrM, lane.endMeasure, laneEndAddrM, LaneChangeType.Add))
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = None
-            val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, laneStartAddrM, lane.endMeasure, oldLaneStartAddrM, LaneChangeType.Add))
-            (startSegmentChange, endSegmentChange)
-        }
-
-      // Lane lengthened from both ends
-      case (false, false, true, true) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(lane.startMeasure, laneStartAddrM, oldLane.startMeasure, oldLaneStartAddrM, LaneChangeType.Add))
-            val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, oldLaneEndAddrM, lane.endMeasure, laneEndAddrM, LaneChangeType.Add))
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(lane.startMeasure, oldLaneEndAddrM, oldLane.startMeasure, laneEndAddrM, LaneChangeType.Add))
-            val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, laneStartAddrM, lane.endMeasure, oldLaneStartAddrM, LaneChangeType.Add))
-            (startSegmentChange, endSegmentChange)
-        }
-
-      // Lane cut from digitizing direction start and lengthened from end
-      case (true, false, false, true) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneStartAddrM, lane.startMeasure, laneStartAddrM, LaneChangeType.Expired))
-            val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, oldLaneEndAddrM, lane.endMeasure, laneEndAddrM, LaneChangeType.Add))
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(oldLane.startMeasure, oldLaneEndAddrM, lane.startMeasure, laneEndAddrM, LaneChangeType.Expired))
-            val endSegmentChange = Some(ChangedSegment(oldLane.endMeasure, laneStartAddrM, lane.endMeasure, oldLaneStartAddrM, LaneChangeType.Add))
-            (startSegmentChange, endSegmentChange)
-        }
-
-      // Lane cut from digitizing direction end and lengthened from start
-      case (false, true, true, false) =>
-        roadAddressSideCode match {
-          case SideCode.TowardsDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(lane.startMeasure, laneStartAddrM, oldLane.startMeasure, oldLaneStartAddrM, LaneChangeType.Add))
-            val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneEndAddrM, oldLane.endMeasure, oldLaneEndAddrM, LaneChangeType.Expired))
-            (startSegmentChange, endSegmentChange)
-          case SideCode.AgainstDigitizing =>
-            val startSegmentChange = Some(ChangedSegment(lane.startMeasure, oldLaneEndAddrM, oldLane.startMeasure, laneEndAddrM, LaneChangeType.Add))
-            val endSegmentChange = Some(ChangedSegment(lane.endMeasure, laneStartAddrM, oldLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Expired))
-            (startSegmentChange, endSegmentChange)
-        }
-    }
   }
 
   def persistedLanesToPwLanesWithAddress(lanes: Seq[PersistedLane], roadLinks: Seq[RoadLink]): Seq[PieceWiseLane] = {
