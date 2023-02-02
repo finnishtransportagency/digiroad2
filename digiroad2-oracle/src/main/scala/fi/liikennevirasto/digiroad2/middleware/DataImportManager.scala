@@ -37,7 +37,6 @@ class DataImportManager(roadLinkClient: RoadLinkClient, roadLinkService: RoadLin
   lazy val pedestrianCrossingCsvImporter: PedestrianCrossingCsvImporter = new PedestrianCrossingCsvImporter(roadLinkService, eventBus)
   lazy val railwayCrossingCsvImporter: RailwayCrossingCsvImporter = new RailwayCrossingCsvImporter(roadLinkService, eventBus)
   lazy val servicePointCsvImporter: ServicePointCsvImporter = new ServicePointCsvImporter(roadLinkService, eventBus)
-  lazy val lanesCsvImporter: LanesCsvImporter = new LanesCsvImporter(roadLinkService, eventBus)
 
   def importer(importedInfo: CsvDataImporterInfo) {
     importedInfo.assetTypeName match {
