@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CloudFormation template to create S3 bucket and ECS task definition task role
+Description: CloudFormation template to create S3 buckets and ECS task definition task role
 
 Parameters:
   ApplicationName:
@@ -28,6 +28,10 @@ Resources:
           - Id: DeleteAfterOneDay
             Status: Enabled
             ExpirationInDays: 1
+          - Id: DeleteIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
@@ -71,6 +75,57 @@ Resources:
               - ${BucketArn}/*
               - BucketArn: !GetAtt ApiBucket.Arn
 
+  DailyAdjustmentsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub ${Environment}-${Owner}-${ApplicationName}-daily-adjustments
+      ObjectLockEnabled: false
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteAfterSixMonths
+            Status: Enabled
+            ExpirationInDays: 180
+          - Id: DeleteIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 2
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ApplicationName}-${Environment}-api-store-bucket
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Project
+          Value: !Ref Project
+
+  DailyAdjustmentsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DailyAdjustmentsBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ECSTaskRolePolicy
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt ECSTaskDefinitionTaskRole.Arn
+            Action:
+              - s3:GetObject
+              - s3:GetObjectTagging
+              - s3:PutObject
+              - s3:PutObjectTagging
+              - s3:ListBucket
+            Resource:
+              - !GetAtt DailyAdjustmentsBucket.Arn
+              - !Join ['', [!GetAtt DailyAdjustmentsBucket.Arn, '/*']]
+
   ECSTaskDefinitionTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -96,3 +151,15 @@ Resources:
                 Resource: !Sub
                   - ${BucketArn}/*
                   - BucketArn: !GetAtt ApiBucket.Arn
+        - PolicyName: AccessDailyAdjustmentReportBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject*
+                  - s3:PutObject*
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DailyAdjustmentsBucket.Arn
+                  - !Join ['', [!GetAtt DailyAdjustmentsBucket.Arn, '/*']]

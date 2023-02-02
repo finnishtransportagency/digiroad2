@@ -24,8 +24,8 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
   val service = new SpeedLimitService(mockEventBus, mockRoadLinkService)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  object TestSpeedLimitUpdater extends SpeedLimitUpdater(mockEventBus, mockRoadLinkService, service) {
-    override val dao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkService)
+  object TestSpeedLimitUpdater extends SpeedLimitUpdater(service) {
+    override val speedLimitDao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkService)
   }
 
   test("Should map the speed limit of an old link to three new links") {
@@ -57,7 +57,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
         administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 25)))
       service.create(Seq(NewLimit(oldLinkId, 0.0, 25.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq())
-      TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, newRoadLinks, changeInfo)
+      TestSpeedLimitUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, municipalityCode, newRoadLinks, changeInfo)
       newRoadLinks.sortBy(_.linkId).foreach { roadLink =>
         val asset = service.getExistingAssetByRoadLink(roadLink, false)
         asset.head.linkId should be(roadLink.linkId)
@@ -98,7 +98,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
       service.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId2, 0.0, 10.0),
         NewLimit(oldLinkId2, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq())
-      TestSpeedLimitUpdater.updateByRoadLinks(municipalityCode, Seq(newRoadLink), changeInfo)
+      TestSpeedLimitUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, municipalityCode, Seq(newRoadLink), changeInfo)
       val newAsset = service.getExistingAssetByRoadLink(newRoadLink, false).head
       newAsset.linkId should be(newRoadLink.linkId)
       newAsset.expired should be(false)

@@ -3,8 +3,9 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.VKMClient
+import fi.liikennevirasto.digiroad2.client.{MassQueryParams, VKMClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
@@ -15,6 +16,8 @@ import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddressRange}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress}
 import org.joda.time.DateTime
@@ -50,6 +53,7 @@ trait LaneOperations {
 
 
   val logger = LoggerFactory.getLogger(getClass)
+  lazy val geometryTransform = new GeometryTransform(roadAddressService)
 
   case class ActionsPerLanes(lanesToDelete: Set[NewLane] = Set(),
                              lanesToUpdate: Set[NewLane] = Set(),
@@ -661,6 +665,56 @@ trait LaneOperations {
       laneCodeValue.asInstanceOf[Int]
     else
       throw new IllegalArgumentException("Lane code attribute not found!")
+  }
+
+  def getLanesInRoadAddressRange(roadAddressRange: RoadAddressRange): (Seq[PieceWiseLane], Map[String, RoadLink]) = {
+    val linkIds = geometryTransform.getLinkIdsInRoadAddressRange(roadAddressRange)
+
+    val roadLinksInRange = roadLinkService.getRoadLinksByLinkIds(linkIds)
+    val roadLinksFiltered = roadLinksInRange.filter(_.functionalClass != WalkingAndCyclingPath.value)
+    val roadLinksGrouped = roadLinksFiltered.groupBy(_.linkId).mapValues(_.head)
+    val lanes = getLanesByRoadLinks(roadLinksFiltered, adjust = false)
+    val lanesWithRoadAddress = roadAddressService.laneWithRoadAddress(lanes).filter(roadLink => {
+      val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
+      roadNumber match {
+        case None => false
+        case Some(rn) => isCarTrafficRoadAddress(rn)
+      }
+    })
+
+    (lanesWithRoadAddress, roadLinksGrouped)
+  }
+
+  def calculateAccurateAddrMValuesForCutLanes(lanes :Seq[PieceWiseLane], roadLinks: Map[String, RoadLink]) : Seq[PieceWiseLane] = {
+    lanes.map(lane => {
+      val roadLink = roadLinks(lane.linkId)
+      val roadAddressSideCodeValue = lane.attributes.getOrElse("SIDECODE", 99).asInstanceOf[Int]
+      val roadAddressSideCode = SideCode.apply(roadAddressSideCodeValue)
+
+      val startAddrMValue = lane.attributes("START_ADDR").asInstanceOf[Long]
+      val endAddrMValue = lane.attributes("END_ADDR").asInstanceOf[Long]
+
+      val coefficient = (endAddrMValue - startAddrMValue) / roadLink.length
+      val (newStartAddrMValue, newEndAddrMValue) = roadAddressSideCode match {
+        case TowardsDigitizing =>
+          val correctStartAddrMValue = startAddrMValue + Math.round(lane.startMeasure * coefficient)
+          val correctEndAddrMValue = startAddrMValue + Math.round(lane.endMeasure * coefficient)
+          (correctStartAddrMValue, correctEndAddrMValue)
+        case AgainstDigitizing =>
+          val correctStartAddrMValue = endAddrMValue - Math.round(lane.endMeasure * coefficient)
+          val correctEndAddrMValue = endAddrMValue - Math.round(lane.startMeasure * coefficient)
+          (correctStartAddrMValue, correctEndAddrMValue)
+        case _ => throw new RoadAddressException(s"Lane $lane.id missing road address side code")
+      }
+
+      val newAttributes = lane.attributes.map {
+        case ("START_ADDR", _) => "START_ADDR" -> newStartAddrMValue
+        case ("END_ADDR", _) => "END_ADDR" -> newEndAddrMValue
+        case (key: String, value: Any) => key -> value
+      }
+
+      lane.copy(attributes = newAttributes)
+    })
   }
 
   def validateStartDate(newLane: NewLane, laneCode: Int): Unit = {

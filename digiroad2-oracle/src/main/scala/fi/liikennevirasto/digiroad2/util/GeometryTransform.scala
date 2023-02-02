@@ -39,7 +39,7 @@ object RoadSide {
   case object Across extends RoadSide { def value = 9 }
   case object Unknown extends RoadSide { def value = 0 }
 }
-
+case class RoadAddressRange(roadNumber: Long, track: Option[Track], startRoadPartNumber: Long, endRoadPartNumber: Long, startAddrMValue: Long, endAddrMValue: Long)
 /**
   * A class to transform ETRS89-FI coordinates to road network addresses
   */
@@ -52,6 +52,19 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  def getLinkIdsInRoadAddressRange(roadAddressRange: RoadAddressRange): Set[String] = {
+    val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
+    if (startAndEndLinkIdsForAllSegments.isEmpty) {
+      throw new RoadAddressException(s"Could not fetch start and end link id for RoadAddressRange: $roadAddressRange")
+    } else {
+      startAndEndLinkIdsForAllSegments.flatMap(linkIds => {
+        val startLinkId = linkIds._1
+        val endLinkId = linkIds._2
+        vkmClient.fetchLinkIdsBetweenTwoRoadLinks(startLinkId, endLinkId, roadAddressRange.roadNumber)
+      })
+    }
+  }
 
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
