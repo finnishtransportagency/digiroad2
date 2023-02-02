@@ -17,9 +17,8 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressServ
 import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils, LinearAssetUtils, LogUtils, PolygonTools, RoadAddressRange}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, LinearAssetUtils, LogUtils, PolygonTools}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
