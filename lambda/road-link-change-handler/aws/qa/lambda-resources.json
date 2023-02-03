@@ -18,5 +18,21 @@
   {
     "ParameterKey": "ECRImageTag",
     "ParameterValue": "qa"
+  },
+  {
+    "ParameterKey": "VkmApi",
+    "ParameterValue": "https://devapi.testivaylapilvi.fi/viitekehysmuunnin/"
+  },
+  {
+    "ParameterKey": "VkmApiKeySSM",
+    "ParameterValue": "/apikey/dev.vkm.apikey"
+  },
+  {
+    "ParameterKey": "KgvApi",
+    "ParameterValue": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+  },
+  {
+    "ParameterKey": "KgvApiKeySSM",
+    "ParameterValue": "/qa/apikey/kgv.apikey"
   }
 ]

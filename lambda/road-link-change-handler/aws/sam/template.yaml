@@ -18,6 +18,10 @@ Resources:
           CHANGES_SINCE: ""
           CHANGES_UNTIL: ""
           CHANGE_BUCKET: ""
+          VKM_API_URL: ""
+          VKM_API_KEY: ""
+          KGV_API_URL: ""
+          KGV_API_KEY: ""
     Metadata:
       DockerTag: nodejs18.x-v1
       DockerContext: ../../

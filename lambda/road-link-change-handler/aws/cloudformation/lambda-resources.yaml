@@ -13,11 +13,23 @@ Parameters:
     Description: Prefix for organization
     Type: String
   ECRRepository:
-    Type: String
     Description: Name of ECR repository
-  ECRImageTag:
     Type: String
+  ECRImageTag:
     Description: ECR image tag name
+    Type: String
+  VkmApi:
+    Description: VKM api url
+    Type: String
+  VkmApiKeySSM:
+    Description: VKM api key location in Parameter Store
+    Type: String
+  KgvApi:
+    Description: VKM api url
+    Type: String
+  KgvApiKeySSM:
+    Description: KGV api key location in Parameter Store
+    Type: String
 
 Conditions:
   IsDev:
@@ -93,6 +105,10 @@ Resources:
           CHANGES_SINCE:  ""  # For testing purposes
           CHANGES_UNTIL:  ""  # For testing purposes
           CHANGE_BUCKET:  !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+          VKM_API_URL:    !Ref VkmApi
+          VKM_API_KEY:    !Ref VkmApiKeySSM
+          KGV_API_URL:    !Ref KgvApi
+          KGV_API_KEY:    !Ref KgvApiKeySSM
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-road-link-change-lambda-role
@@ -162,6 +178,16 @@ Resources:
                 Action:
                   - s3:ListBucket
                 Resource: !Sub arn:aws:s3:::${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+        - PolicyName: FetchParameterFromSSM
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource:
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${VkmApiKeySSM}
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${KgvApiKeySSM}
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-road-link-change-lambda-role
