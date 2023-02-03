@@ -6,7 +6,8 @@ import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, Piece
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddressRange, Track}
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LinkIdGenerator, RoadAddressRange}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite

@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2.client
 
+import fi.liikennevirasto.digiroad2
+
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util._
-import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, RoadAddress, RoadAddressException, Track, Vector3d}
 import org.apache.http.{HttpStatus, NameValuePair}
 import org.apache.http.client.config.{CookieSpecs, RequestConfig}
 import org.apache.http.client.entity.UrlEncodedFormEntity

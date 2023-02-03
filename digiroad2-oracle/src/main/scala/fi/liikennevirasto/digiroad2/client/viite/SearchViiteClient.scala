@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.client.viite
 
+import fi.liikennevirasto.digiroad2.Track
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.service.RoadAddressForLink
-import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.CloseableHttpClient
 import org.json4s.jackson.Serialization
