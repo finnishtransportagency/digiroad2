@@ -1370,7 +1370,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val speedLimits = if(params("withRoadAddress").toBoolean) roadAddressService.speedLimitWithRoadAddress(speedLimitService.get(boundingRectangle, municipalities)) else speedLimitService.get(boundingRectangle, municipalities)
+      val speedLimits = if(params("withRoadAddress").toBoolean) roadAddressService.linearAssetWithRoadAddress(
+        speedLimitService.getByBoundingBox(SpeedLimitAsset.typeId, boundingRectangle, municipalities, roadLinkFilter = {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad}))
+      else speedLimitService.getByBoundingBox(SpeedLimitAsset.typeId, boundingRectangle, municipalities, roadLinkFilter = {roadLinkFilter: RoadLink => roadLinkFilter.isCarTrafficRoad})
       speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
@@ -1378,7 +1380,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "linkId" -> link.linkId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value.map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
+            "value" -> speedLimitService.getSpeedLimitValue(link.value).map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
             "points" -> link.geometry,
             "startMeasure" -> link.startMeasure,
             "endMeasure" -> link.endMeasure,
@@ -1417,7 +1419,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "linkId" -> link.linkId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value.map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
+            "value" -> speedLimitService.getSpeedLimitValue(link.value).map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
             "points" -> link.geometry,
             "startMeasure" -> link.startMeasure,
             "endMeasure" -> link.endMeasure,
@@ -1483,9 +1485,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case "State" => State
         case _ => Municipality
       }
-      speedLimitService.getInaccurateRecords(adminClass = Set(adminClass))
+      speedLimitService.getInaccurateRecords(typeId = SpeedLimitAsset.typeId, adminClass = Set(adminClass))
     } else
-      speedLimitService.getInaccurateRecords(municipalityCode, Set(Municipality))
+      speedLimitService.getInaccurateRecords(typeId = SpeedLimitAsset.typeId, municipalityCode, Set(Municipality))
   }
 
   get("/manoeuvre/inaccurates") {
@@ -1555,7 +1557,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     optionalValue match {
       case Some(values) =>
         val updatedIds = speedLimitService.updateValues(ids, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
-        val createdIds = speedLimitService.create(newLimits, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
+        val createdIds = speedLimitService.create(newLimits, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).toSet
         speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
@@ -1563,7 +1565,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
-    speedLimitService.split(params("speedLimitId").toLong,
+    speedLimitService.splitSpeedLimit(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
@@ -1573,7 +1575,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
-    speedLimitService.separate(params("speedLimitId").toLong,
+    speedLimitService.separateSpeedLimit(params("speedLimitId").toLong,
       (parsedBody \ "valueTowardsDigitization").extract[SpeedLimitValue],
       (parsedBody \ "valueAgainstDigitization").extract[SpeedLimitValue],
       user.username,
@@ -1591,7 +1593,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     speedLimitService.create(Seq(newLimit),
       (parsedBody \ "value").extract[SpeedLimitValue],
       user.username,
-      validateUserAccess(user, Some(SpeedLimitAsset.typeId))).headOption match {
+      validateUserAccess(user, Some(SpeedLimitAsset.typeId)) _).headOption match {
       case Some(id) => speedLimitService.getSpeedLimitById(id)
       case _ => BadRequest("Speed limit creation failed")
     }

@@ -447,7 +447,6 @@
       });
       removePropertyByPublicId(newMainLane, "end_date");
       self.selection = lanesAfterPromotion;
-      reorganizeLanes(laneNumber);
       self.dirty = true;
       self.promotionDirty = true;
     };
