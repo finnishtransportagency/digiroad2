@@ -2,9 +2,9 @@ package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, values}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import org.joda.time.DateTime
 
 trait Lane extends PolyLine{
@@ -15,6 +15,8 @@ trait Lane extends PolyLine{
   val geomModifiedDate: Option[DateTime]
   val laneAttributes: Seq[LaneProperty]
 }
+case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink], historyEventOrderNumber: Option[Int])
+case class ChangedSegment(startMeasure: Double, startAddrM: Int, endMeasure: Double, endAddrM: Int, segmentChangeType: LaneChangeType)
 
 case class LightLane ( value: Int, expired: Boolean,  sideCode: Int )
 
@@ -37,7 +39,7 @@ case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Stri
                                 createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
                                 timeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty],
-                                historyCreatedDate: DateTime, historyCreatedBy: String)
+                                historyCreatedDate: DateTime, historyCreatedBy: String, changeEventOrderNumber: Option[Int])
 
 case class NewLane(id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
                    isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty], sideCode:Option[Int]=None, newLaneCode: Option[Int] = None )
@@ -238,4 +240,74 @@ object LaneChangeType {
   case object AttributesChanged extends LaneChangeType {def value = 6; def description = "Some of the lane attributes are changed";}
   case object Divided extends LaneChangeType {def value = 7; def description = "The old lane is replaced with two or more lane pieces";}
   case object Unknown extends LaneChangeType {def value = 99; def description = "Unknown lane change";}
+}
+
+sealed trait LaneSegmentMeasuresChangeType {
+  def measureBoolean(newLane: PersistedLane, oldLane: PersistedLane): Boolean
+  def description: String
+  def segmentMeasuresAndAddressM(newLane: PersistedLane, oldLane: PersistedLane, laneStartAddrM: Int, laneEndAddrM: Int,
+                                 oldLaneStartAddrM: Int, oldLaneEndAddrM: Int, roadAddressSideCode: SideCode): ChangedSegment
+
+}
+object LaneSegmentMeasuresChangeType {
+  val digitizingStartChanges = Seq(ShortenedFromStart, LengthenedFromStart)
+  val digitizingEndChanges = Seq(ShortenedFromEnd, LengthenedFromEnd)
+
+  def getDigitizingStartChangeType(newLane: PersistedLane, oldLane: PersistedLane): Option[LaneSegmentMeasuresChangeType] = {
+    digitizingStartChanges.find(_.measureBoolean(newLane, oldLane))
+  }
+
+  def getDigitizingEndChangeType(newLane: PersistedLane, oldLane: PersistedLane): Option[LaneSegmentMeasuresChangeType] = {
+    digitizingEndChanges.find(_.measureBoolean(newLane, oldLane))
+  }
+
+  case object ShortenedFromStart extends LaneSegmentMeasuresChangeType {
+    def measureBoolean(newLane: PersistedLane, oldLane: PersistedLane): Boolean = newLane.startMeasure > oldLane.startMeasure
+    def description = "Lane cut from digitizing direction start"
+
+    def segmentMeasuresAndAddressM(newLane: PersistedLane, oldLane: PersistedLane, laneStartAddrM: Int, laneEndAddrM: Int,
+                                   oldLaneStartAddrM: Int, oldLaneEndAddrM: Int, roadAddressSideCode: SideCode): ChangedSegment = {
+      roadAddressSideCode match {
+        case SideCode.TowardsDigitizing => ChangedSegment(oldLane.startMeasure, oldLaneStartAddrM, newLane.startMeasure, laneStartAddrM, LaneChangeType.Expired)
+        case SideCode.AgainstDigitizing => ChangedSegment(oldLane.startMeasure, laneEndAddrM, newLane.startMeasure, oldLaneEndAddrM, LaneChangeType.Expired)
+      }
+    }
+  }
+  case object ShortenedFromEnd extends LaneSegmentMeasuresChangeType {
+    def measureBoolean(newLane: PersistedLane, oldLane: PersistedLane): Boolean = newLane.endMeasure < oldLane.endMeasure
+    def description = "Lane cut from digitizing direction end"
+
+    def segmentMeasuresAndAddressM(newLane: PersistedLane, oldLane: PersistedLane, laneStartAddrM: Int, laneEndAddrM: Int,
+                                   oldLaneStartAddrM: Int, oldLaneEndAddrM: Int, roadAddressSideCode: SideCode): ChangedSegment = {
+      roadAddressSideCode match {
+        case SideCode.TowardsDigitizing => ChangedSegment(newLane.endMeasure, laneEndAddrM, oldLane.endMeasure, oldLaneEndAddrM, LaneChangeType.Expired)
+        case SideCode.AgainstDigitizing => ChangedSegment(newLane.endMeasure, laneStartAddrM, oldLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Expired)
+      }
+    }
+  }
+  case object LengthenedFromStart extends LaneSegmentMeasuresChangeType {
+    def measureBoolean(newLane: PersistedLane, oldLane: PersistedLane): Boolean = newLane.startMeasure < oldLane.startMeasure
+    def description = "Lane lengthened from digitizing direction start"
+
+    def segmentMeasuresAndAddressM(newLane: PersistedLane, oldLane: PersistedLane, laneStartAddrM: Int, laneEndAddrM: Int,
+                                   oldLaneStartAddrM: Int, oldLaneEndAddrM: Int, roadAddressSideCode: SideCode): ChangedSegment = {
+      roadAddressSideCode match {
+        case SideCode.TowardsDigitizing => ChangedSegment(newLane.startMeasure, laneStartAddrM, oldLane.startMeasure, oldLaneStartAddrM, LaneChangeType.Add)
+        case SideCode.AgainstDigitizing => ChangedSegment(newLane.startMeasure, oldLaneEndAddrM, oldLane.startMeasure, laneEndAddrM, LaneChangeType.Add)
+      }
+    }
+  }
+  case object LengthenedFromEnd extends LaneSegmentMeasuresChangeType {
+    def measureBoolean(newLane: PersistedLane, oldLane: PersistedLane): Boolean = newLane.endMeasure > oldLane.endMeasure
+    def description = "Lane lengthened from digitizing direction end"
+
+    def segmentMeasuresAndAddressM(newLane: PersistedLane, oldLane: PersistedLane, laneStartAddrM: Int, laneEndAddrM: Int,
+                                   oldLaneStartAddrM: Int, oldLaneEndAddrM: Int, roadAddressSideCode: SideCode): ChangedSegment = {
+      roadAddressSideCode match {
+        case SideCode.TowardsDigitizing => ChangedSegment(oldLane.endMeasure, oldLaneEndAddrM, newLane.endMeasure, laneEndAddrM, LaneChangeType.Add)
+        case SideCode.AgainstDigitizing => ChangedSegment(oldLane.endMeasure, laneStartAddrM, newLane.endMeasure, oldLaneStartAddrM, LaneChangeType.Add)
+      }
+    }
+  }
+
 }

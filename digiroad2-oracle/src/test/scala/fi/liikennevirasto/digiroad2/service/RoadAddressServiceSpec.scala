@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.service
 
+import fi.liikennevirasto.digiroad2.Track
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, Track}
+import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator}
 import org.scalatest.{FunSuite, Matchers}
 
 class RoadAddressServiceSpec extends FunSuite with Matchers{

@@ -4,10 +4,9 @@ import java.io._
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import java.nio.file.Files.copy
-
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, Track}
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo 
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.service.AdditionalInformation
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
