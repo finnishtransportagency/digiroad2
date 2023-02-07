@@ -732,8 +732,18 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "startDate" -> startDate,
               "endDate" -> endDate,
               "linkId" -> newLane.linkId,
-              "startMeasure" -> newLane.startMeasure,
-              "endMeasure" -> newLane.endMeasure,
+              "startMeasure" -> {
+                laneChange.changeType match {
+                  case LaneChangeType.Shortened => newLane.startMeasure
+                  case LaneChangeType.Lengthened => oldLane.startMeasure
+                }
+              },
+              "endMeasure" -> {
+                laneChange.changeType match {
+                  case LaneChangeType.Shortened => newLane.endMeasure
+                  case LaneChangeType.Lengthened => oldLane.endMeasure
+                }
+              },
               "oldId" -> oldLane.id,
               "oldLaneNumber" -> oldLane.laneCode,
               "oldLaneType" -> oldLaneType,
