@@ -58,6 +58,7 @@ object RoadAddress {
   lazy val walkingCyclingRoadNumbers: Seq[Int] = 70001 to 99999
 
   lazy val carTrafficRoadNumbers: Seq[Int] = 1 to 62999
+  lazy val roadPartNumberRange: Seq[Int] = 1 to 1000
 
   def isCarTrafficRoadAddress(roadNumber: Long): Boolean = {
     carTrafficRoadNumbers.contains(roadNumber)

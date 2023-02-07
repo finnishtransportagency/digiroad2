@@ -39,7 +39,7 @@ object RoadSide {
   case object Across extends RoadSide { def value = 9 }
   case object Unknown extends RoadSide { def value = 0 }
 }
-
+case class RoadAddressRange(roadNumber: Long, track: Option[Track], startRoadPartNumber: Long, endRoadPartNumber: Long, startAddrMValue: Long, endAddrMValue: Long)
 /**
   * A class to transform ETRS89-FI coordinates to road network addresses
   */
