@@ -45,26 +45,28 @@ object ChangeType {
   case object Deletion extends ChangeType {
     def value: Int = 2
   }
-  
-  case object Merged extends ChangeType {
+
+  case object Divided extends ChangeType {
     def value: Int = 3
   }
 
-  case object Divided extends ChangeType {
+  case object Replaced extends ChangeType {
     def value: Int = 4
   }
-
-  case object Replaced extends ChangeType {
+  case object PropertyChange extends ChangeType {
     def value: Int = 5
   }
-  case object PropertyChange extends ChangeType {
-    def value: Int = 6
-  }
-
+  
+  /**
+    * For point asset
+    * */
   case object Move extends ChangeType {
     def value: Int = 7
   }
 
+  /**
+    * For point asset
+    * */
   case object Floating extends ChangeType {
     def value: Int = 8
   }
