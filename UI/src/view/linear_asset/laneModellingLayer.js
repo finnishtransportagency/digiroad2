@@ -15,6 +15,14 @@
     this.readOnlyLayer = laneReadOnlyLayer(params, map);
     me.vectorLayer.setZIndex(2);
 
+
+    var cutToolAlertPopUpOptions = {
+      type: "alert",
+      yesButtonLbl: 'Ok',
+    };
+    var alertMessageMainLanePromotion = "Kaistan katkaisu ei ole sallittu, kun lisäkaista on muutettu pääkaistaksi. Tallenna pääkaistan paikan muutos ensin.";
+    var alertMessageMultipleLinksSelected = "Kaistan katkaisu ei ole sallittu, kun useamman kuin yhden tielinkin kaistat ovat valittu";
+
     var LinearAssetCutter = function(eventListener, vectorLayer) {
       var scissorFeatures = [];
       //Max euclidean distance in geometry points allowed between mouse point and the closest linear asset point (the planned cut point).
@@ -179,14 +187,13 @@
         var nearestLinearAsset = getLanePieceToCut([mousePoint.x, mousePoint.y]);
         if (_.isUndefined(nearestLinearAsset)) return;
 
-        if (nearestLinearAsset.selectedLinks.length !== 1) {
-          var cutToolAlertPopUpOptions = {
-            type: "alert",
-            yesButtonLbl: 'Ok',
-          };
-          var alertMessage = "Kaistan katkaisu ei ole sallittu, kun useamman kuin yhden tielinkin kaistat ovat valittu";
+        if (selectedLane.promotionDirty) {
+          GenericConfirmPopup(alertMessageMainLanePromotion, cutToolAlertPopUpOptions);
+          return;
+        }
 
-          GenericConfirmPopup(alertMessage, cutToolAlertPopUpOptions);
+        if (nearestLinearAsset.selectedLinks.length !== 1) {
+          GenericConfirmPopup(alertMessageMultipleLinksSelected, cutToolAlertPopUpOptions);
           return;
         }
 
