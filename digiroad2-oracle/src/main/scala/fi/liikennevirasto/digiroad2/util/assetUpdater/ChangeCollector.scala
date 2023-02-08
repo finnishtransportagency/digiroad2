@@ -2,14 +2,15 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
+import org.slf4j.LoggerFactory
 
 sealed case class MValue(linkId: String, startMValue: Double, endMValue: Double, length: Double)
 
 sealed case class Asset(assetId: Long, value: Any, municipalityCode: Option[Int], sideCode: Int, geometry: Option[Seq[Point]],
-                        linkId: String, mValues: MValue, isPointAsset: Boolean = false) {
+                        linkId: String, mValue: MValue, isPointAsset: Boolean = false) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
-
+  val logger = LoggerFactory.getLogger(getClass)
   def geometryToString: String = {
     if (geometry.nonEmpty) {
       if (!isPointAsset) {
@@ -20,7 +21,8 @@ sealed case class Asset(assetId: Long, value: Any, municipalityCode: Option[Int]
       }
 
     } else {
-      throw new Exception("Asset does not have geometry")
+      logger.warn("Asset does not have geometry")
+      ""
     }
   }
 
@@ -71,6 +73,7 @@ object ChangeType {
 /**
   *
   * @param linkId     link where changes is happening TODO remove if not needed
+  * @param assetId    asset which is under samuutus TODO remove if not needed
   * @param changeType characteristic of change
   * @param before     situation before samuutus
   * @param after      after samuutus
