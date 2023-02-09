@@ -46,7 +46,7 @@ export async function replacementsForLinks(situationDate: string, oldLinkIds: st
     const promises = batches.map(batch => fetchReplacements(batch, situationDate, instance));
     const results = await Promise.allSettled(promises);
     const msgOnError = "Unable to fetch road links";
-    const succeeded = checkResultsForErrors(results, msgOnError) as PromiseFulfilledResult<QueryResult>[];
+    const succeeded = checkResultsForErrors(results, msgOnError) as QueryResult[];
     return extractReplacements(succeeded);
 }
 
@@ -61,10 +61,10 @@ async function fetchReplacements(linkIds: string[], date: string, instance: Axio
     }
 }
 
-function extractReplacements(results: PromiseFulfilledResult<QueryResult>[]): Array<ReplaceInfo> {
+function extractReplacements(results: QueryResult[]): Array<ReplaceInfo> {
     return results.map(result => {
-        const collection = result.value.featureCollection;
-        const ids = result.value.queryIds;
+        const collection = result.featureCollection;
+        const ids = result.queryIds;
         let previousIdIndex = 0;
         return collection.features.reduce((array: Array<ReplaceInfo>, feature: Feature) => {
             const properties = feature.properties;
@@ -77,7 +77,7 @@ function extractReplacements(results: PromiseFulfilledResult<QueryResult>[]): Ar
             }
             return array;
         }, []);
-    }).flat(1)
+    }).flat(1);
 }
 
 function propertiesToReplaceInfo(properties: Properties): ReplaceInfo {

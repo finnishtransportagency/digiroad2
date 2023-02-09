@@ -72,13 +72,14 @@ export async function postRequest(instance: AxiosInstance, url: string, data: ob
  * @param results
  * @param errorMsg
  */
-export function checkResultsForErrors(results: PromiseSettledResult<any>[], errorMsg: string): PromiseFulfilledResult<any>[] {
+export function checkResultsForErrors(results: PromiseSettledResult<any>[], errorMsg: string): any[] {
     const errors = results.filter(({ status }) => status === 'rejected') as PromiseRejectedResult[];
     if (errors.length > 0) {
         errors.forEach((error) => console.error(error) );
         throw new Error(errorMsg);
     }
-    return results as PromiseFulfilledResult<any>[];
+    const fulfilled = results as PromiseFulfilledResult<any>[];
+    return fulfilled.map(result => result.value);
 }
 
 function processErrorAndExtractMessage(error: any, url: string): string {

@@ -19,7 +19,7 @@ export async function fetchRoadLinksByLinkId(linkIds: string[]): Promise<KgvFeat
     const promises = batches.map(batch => fetchLinkVersions(batch, instance));
     const results = await Promise.allSettled(promises);
     const msgOnError = "Unable to fetch road links";
-    const succeeded = checkResultsForErrors(results, msgOnError) as PromiseFulfilledResult<KgvFeatureCollection>[];
+    const succeeded = checkResultsForErrors(results, msgOnError) as KgvFeatureCollection[];
     const links =  extractLinks(succeeded);
     if (links.length != uniqueIds.length) {
         const retrievedLinks = links.map(link => link.properties.id);
@@ -39,8 +39,8 @@ async function fetchLinkVersions(linkIds: string[], instance: AxiosInstance): Pr
     return await getRequest(instance, Path, params);
 }
 
-function extractLinks(results: PromiseFulfilledResult<KgvFeatureCollection>[]): Array<KgvFeature> {
-    return results.map(result => result.value.features).flat(1);
+function extractLinks(results: KgvFeatureCollection[]): Array<KgvFeature> {
+    return results.map(result => result.features).flat(1);
 }
 
 export function extractKeyProperties(link: KgvFeature): KeyProperties {
