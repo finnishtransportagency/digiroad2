@@ -15,8 +15,6 @@ Resources:
           - index.handler
       Environment:
         Variables:
-          CHANGES_SINCE: ""
-          CHANGES_UNTIL: ""
           CHANGE_BUCKET: ""
           VKM_API_URL: ""
           VKM_API_KEY: ""

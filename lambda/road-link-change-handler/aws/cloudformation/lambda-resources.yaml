@@ -102,8 +102,6 @@ Resources:
           - index.handler
       Environment:
         Variables:
-          CHANGES_SINCE:  ""  # For testing purposes
-          CHANGES_UNTIL:  ""  # For testing purposes
           CHANGE_BUCKET:  !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
           VKM_API_URL:    !Ref VkmApi
           VKM_API_KEY:    !Ref VkmApiKeySSM

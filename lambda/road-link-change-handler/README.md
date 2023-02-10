@@ -40,7 +40,7 @@ region = REGION
 
 ```sh
 sam build -t aws/sam/template.yaml --region REGION
-sam local invoke Lambda --profile RoadLinkChangeLambdaRole --region REGION --env-vars env.json --log-file debug.log
+sam local invoke Lambda --profile RoadLinkChangeLambdaRole --region REGION --env-vars env.json --log-file debug.log --event event.json
 ```
 
 - "sam build" muodostaa container imagen. Ajetaan aina muutoksien jälkeen.

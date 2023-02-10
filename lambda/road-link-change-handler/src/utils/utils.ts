@@ -1,9 +1,9 @@
 /**
- * Transforms date to string DD.MM.YYYY
+ * Transforms date to string DD.MM.YYYY in Helsinki time
  * @param date
  */
 export function dateToDateString(date: Date): string {
-    return `${ date.getDate() }.${ date.getMonth() + 1 }.${ date.getFullYear() }`;
+    return date.toLocaleDateString('fi-FI', {timeZone: 'Europe/Helsinki'});
 }
 
 /**
