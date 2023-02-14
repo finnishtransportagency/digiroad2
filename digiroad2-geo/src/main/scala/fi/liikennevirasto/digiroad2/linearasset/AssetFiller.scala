@@ -558,7 +558,7 @@ class AssetFiller {
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
   }
-
+  //TODO this might be in wrong place maybe linearAsset updater might be correct place
   private def calculateNewMValuesAndSideCode(asset: PersistedLinearAsset, projection: Projection, roadLinkLength: Double) = {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
@@ -588,7 +588,7 @@ class AssetFiller {
       }
     }
   }
-
+  //TODO this might be in wrong place maybe linearAsset updater might be correct place
   def projectLinearAsset(asset: PersistedLinearAsset, to: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLinearAsset, ChangeSet)= {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {

@@ -137,7 +137,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       SideCodeAdjustment(3l, SideCode.BothDirections, PavedRoad.typeId)))
   }
 
-  test("generate two-sided asset when two-way road link is half-covered") { // fail jos combine pois
+  test("generate two-sided asset when two-way road link is half-covered") {
     val topology = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
