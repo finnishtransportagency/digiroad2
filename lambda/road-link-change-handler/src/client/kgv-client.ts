@@ -48,15 +48,15 @@ export function extractKeyProperties(link: KgvFeature): KeyProperties {
         linkId:             link.properties.id,
         linkLength:         link.properties.horizontallength,
         geometry:           extractLinkGeometry(link.geometry),
-        roadClass:          link.properties.roadclass,
-        adminClass:         link.properties.adminclass,
-        municipality:       link.properties.municipalitycode,
-        trafficDirection:   link.properties.directiontype
+        roadClass:          Number(link.properties.roadclass),
+        adminClass:         link.properties.adminclass ? Number(link.properties.adminclass) : null,
+        municipality:       Number(link.properties.municipalitycode),
+        trafficDirection:   Number(link.properties.directiontype)
     }
 }
 
-function extractLinkGeometry(geometry: Geometry): string {
-    return `LINESTRING ZM (${geometry.coordinates.map(coord => coord.join(' ')).join(',')})`;
+export function extractLinkGeometry(geometry: Geometry): string {
+    return `SRID=3067;LINESTRING ZM(${geometry.coordinates.map(coord => coord.join(' ')).join(',')})`;
 }
 
 export interface KeyProperties {
@@ -64,7 +64,7 @@ export interface KeyProperties {
     linkLength              : number,
     geometry                : string,
     roadClass               : number,
-    adminClass              : number,
+    adminClass              : number | null,
     municipality            : number,
     trafficDirection        : number
 }
@@ -74,7 +74,7 @@ interface KgvFeatureCollection {
     features                : Array<KgvFeature>
 }
 
-interface KgvFeature {
+export interface KgvFeature {
     type                    : string,
     id                      : string,
     geometry                : Geometry,
@@ -90,11 +90,11 @@ interface Geometry {
 
 interface KgvProperties {
     id                      : string,
-    addressfromleft         : number,
-    addressfromright        : number,
-    addresstoleft           : number,
-    addresstoright          : number,
-    adminclass              : number,
+    addressfromleft         ?: number,
+    addressfromright        ?: number,
+    addresstoleft           ?: number,
+    addresstoright          ?: number,
+    adminclass              ?: number,
     datasource              : number,   /* Not used by Digiroad */
     directiontype           : number,
     endtime                 ?: string,  /* Not used by Digiroad */
