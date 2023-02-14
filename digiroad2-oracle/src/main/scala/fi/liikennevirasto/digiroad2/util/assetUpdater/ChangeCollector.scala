@@ -36,7 +36,7 @@ sealed trait ChangeType {
   def value: Int
 }
 
-object ChangeType {
+object ChangeTypeCollect {
   
   case object Creation extends ChangeType {
     def value: Int = 1
