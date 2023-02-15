@@ -16,11 +16,11 @@ class AssetFiller {
   def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
 
     val fillOperations: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
+      expireSegmentsOutsideGeometry, // add test
       capToGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse,
+      expireOverlappingSegments,// add test
+      combine,// add test
+      fuse,// add test
       dropShortSegments,
       adjustAssets,
       droppedSegmentWrongDirection,
@@ -220,6 +220,15 @@ class AssetFiller {
 
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
   //   causes an infinite loop when fillTopology is called recursively
+  /**
+    * Combine asset which are in same place. Value, startMValue and endMValue are same.
+    * asset 1 ----
+    * asset 2 ----
+    * @param roadLink
+    * @param segments
+    * @param changeSet
+    * @return
+    */
   protected def combine(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: PieceWiseLinearAsset, pseudoId: Long) = {

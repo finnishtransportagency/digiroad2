@@ -16,18 +16,47 @@ import scala.util.Random
 class AssetFillerSpec extends FunSuite with Matchers {
 
   object assetFiller extends AssetFiller {
-    override def combine(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    override def combine(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       super.combine(roadLink,segments,changeSet)
     }
-    override def fuse(roadLink: RoadLink, linearAssets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    override def fuse(roadLink: RoadLink, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       super.fuse(roadLink,linearAssets,changeSet)
     }
-    override def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    override def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       super.expireOverlappingSegments(roadLink,segments,changeSet)
     }
 
   }
 
+  case class Measure(startMeasure: Double, endMeasure: Double)
+  
+  def createAsset(id: Long, linkId1: String, measure: Measure, value: Option[Value]) = {
+    PieceWiseLinearAsset(id = id, linkId = linkId1, sideCode = SideCode.BothDirections, value = value, geometry = Nil, expired = false, startMeasure =  measure.startMeasure, endMeasure =  measure.endMeasure,
+      endpoints = Set(Point(measure.endMeasure,0.0)), modifiedBy = None, modifiedDateTime = None, createdBy = Some("guy"), 
+      createdDateTime = Some(DateTime.now()), typeId = 140, trafficDirection = TrafficDirection.BothDirections, timeStamp = 0L, 
+      geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
+  }
+  def createAssetWithAddDay(id: Long, linkId1: String, measure: Measure, value: Option[Value], addDay: Int = 0) = {
+    PieceWiseLinearAsset(id = id, linkId = linkId1, sideCode = SideCode.BothDirections, value = value, geometry = Nil, expired = false, startMeasure = measure.startMeasure, endMeasure = measure.endMeasure,
+      endpoints = Set(Point(measure.endMeasure, 0.0)), modifiedBy = None, modifiedDateTime = None, createdBy = Some("guy"),
+      createdDateTime = Some(DateTime.now().plusDays(addDay)), typeId = 140, trafficDirection = TrafficDirection.BothDirections, timeStamp = 0L,
+      geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
+  }
+  def createAsset(id: Long, linkId1: String, measure: Measure, sideCode: SideCode, value: Option[Value],trafficDirection:TrafficDirection = TrafficDirection.BothDirections) = {
+    PieceWiseLinearAsset(id = id, linkId = linkId1, sideCode = sideCode, value = value, geometry = Nil, expired = false, startMeasure = measure.startMeasure, endMeasure = measure.endMeasure,
+      endpoints = Set(Point(measure.endMeasure,0.0)), modifiedBy = None, modifiedDateTime = None, createdBy = Some("guy"),
+      createdDateTime = Some(DateTime.now()), typeId = 140, trafficDirection = trafficDirection, timeStamp = 0L,
+      geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
+  }
+  def createRoadLink(id: String, length: Double) = {
+    RoadLink(id, Seq(Point(0.0, 0.0), Point(length, 0.0)), length, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+  }
+
+  private def toSegment(persistedLinearAsset: PieceWiseLinearAsset) = {
+    (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
+  }
+  
   case class ChangeInfo(oldId: Option[String],
                         newId: Option[String],
                         mmlId: Long,
@@ -163,6 +192,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("project road lights to new geometry") {
+    val oldRoadLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     val newLink1 = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
@@ -292,6 +322,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("project mass transit lanes to new geometry") {
+    val oldRoadLink = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     val newLink1 = roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
     val newLink2 = roadLink(linkId2, Seq(Point(0.0, 0.0), Point(4.0, 0.0)))
     val newLink3 = roadLink(linkId3, Seq(Point(0.0, 0.0), Point(3.0, 0.0)))
@@ -325,31 +356,15 @@ class AssetFillerSpec extends FunSuite with Matchers {
     output.length should be (6)
   }
   
-  case class Measure(startMeasure:Double,endMeasure:Double) 
-  def createAsset(id:Long,linkId1:String,measure:Measure,value:Option[Value]) = {
-    PersistedLinearAsset(id, linkId1, SideCode.BothDirections.value, value, measure.startMeasure, measure.endMeasure, Some("guy"),
-      Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
-  }
-  def createAsset(id: Long, linkId1: String, measure: Measure,sideCode: SideCode, value:Option[Value]) = {
-    PersistedLinearAsset(id, linkId1, sideCode.value, value, measure.startMeasure, measure.endMeasure, Some("guy"),
-      Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
-  }
-  def createRoadLink(id: String,length:Double) = {
-    RoadLink(id, Seq(Point(0.0, 0.0), Point(length, 0.0)), length, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
-      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
-  }
-  private def toSegment(persistedLinearAsset: PersistedLinearAsset) = {
-    (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
-  }
   test("adjust two overlapping segments") {
     val roadLink = createRoadLink(linkId1,10)
     
     val assets = Seq(
-      createAsset(1,linkId1,Measure(0.0,4.0),Some(NumericValue(1))),
-      createAsset(2,linkId1,Measure(2.0,5.0),Some(NumericValue(3)))
+      createAssetWithAddDay(1,linkId1,Measure(0.0,4.0),Some(NumericValue(1)),addDay = 1),
+      createAssetWithAddDay(2,linkId1,Measure(3.0,5.0),Some(NumericValue(3)),addDay = 2)
     )
 
-    val (filledTopology, _) = assetFiller.expireOverlappingSegments(roadLink, assets, initChangeSet)
+    val (filledTopology, change) = assetFiller.expireOverlappingSegments(roadLink, assets, initChangeSet)
     
     filledTopology should have size 2
     GeometryUtils.overlap(toSegment(filledTopology.head), toSegment(filledTopology.last)).nonEmpty should be(false)
@@ -367,28 +382,22 @@ class AssetFillerSpec extends FunSuite with Matchers {
       PersistedLinearAsset(1, linkId1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 4.5, Some("guy"),
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2, linkId1, SideCode.BothDirections.value, Some(NumericValue(2)), 4.5, 10.0, Some("guy"),
-        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
-    )
-    
-    val (filledTopology1, changeSet1) = assetFiller.fuse(roadLink,  assets, initChangeSet)
-    filledTopology1 should have size 1
-    filledTopology1.map(_.sideCode) should be(Seq(SideCode.BothDirections.value))
-    filledTopology1.map(_.value) should be(Seq(Some(NumericValue(2))))
-    filledTopology1.map(_.typeId) should be(List(140))
-    filledTopology1.map(_.startMeasure) should be(List(0.0))
-    filledTopology1.map(_.endMeasure) should be(List(10.0))
-    changeSet1.adjustedMValues should have size 1
-    changeSet1.adjustedSideCodes should be(List())
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None))
+    ,roadLink)
 
+    val (fuseTest, fuseTestChangeSet) = assetFiller.fuse(roadLink,  assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 160)
-    testWholeProcess should have size 1
-    testWholeProcess.map(_.sideCode) should be(Seq(SideCode.BothDirections))
-    testWholeProcess.map(_.value) should be(Seq(Some(NumericValue(2))))
-    testWholeProcess.map(_.typeId) should be(List(140))
-    testWholeProcess.map(_.startMeasure) should be(List(0.0))
-    testWholeProcess.map(_.endMeasure) should be(List(10.0))
-    changeSet.adjustedMValues should have size 1
-    changeSet.adjustedSideCodes should be(List())
+
+    Seq((fuseTest, fuseTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+      item._1 should have size 1
+      item._1.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+      item._1.map(_.value) should be(Seq(Some(NumericValue(2))))
+      item._1.map(_.typeId) should be(List(140))
+      item._1.map(_.startMeasure) should be(List(0.0))
+      item._1.map(_.endMeasure) should be(List(10.0))
+      item._2.adjustedMValues should have size 1
+      item._2.adjustedSideCodes should be(List())
+    })
   }
 
   test("Merge asset when values are None and side code are sames, three consecutive") {
@@ -467,41 +476,58 @@ class AssetFillerSpec extends FunSuite with Matchers {
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     )
     
-    val assets = Seq(Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, Some(NumericValue(2))),
-      createAsset(1, linkId1, Measure(0.0, 10), SideCode.AgainstDigitizing, Some(NumericValue(2)))),
-      Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, None),
-        createAsset(1, linkId1, Measure(0.0, 10), SideCode.AgainstDigitizing, None)))
+    val assets = Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, Some(NumericValue(2)),TrafficDirection.BothDirections),
+      createAsset(2, linkId1, Measure(0.0, 10), SideCode.AgainstDigitizing, Some(NumericValue(2)),TrafficDirection.BothDirections))
     
-    assets.foreach(a => {
-      val (filledTopology1, changeSet1) = assetFiller.combine(roadLinks.head, a, initChangeSet)
-      filledTopology1 should have size 1
-      filledTopology1.map(_.sideCode) should be(Seq(SideCode.BothDirections.value))
-      filledTopology1.map(_.value) should be(Seq(Some(NumericValue(2))))
-      filledTopology1.map(_.createdBy) should be(Seq(Some("guy")))
-      filledTopology1.map(_.typeId) should be(List(140))
-      filledTopology1.map(_.startMeasure) should be(List(0.0))
-      filledTopology1.map(_.endMeasure) should be(List(10.0))
-      changeSet1.adjustedMValues should be(List())
-      changeSet1.adjustedSideCodes.length should be(1)
-      changeSet1.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
-      changeSet1.droppedAssetIds should be(Set())
-      changeSet1.expiredAssetIds.size should be(1)
+      val (combineTest, combineTestChangeSet) = assetFiller.combine(roadLinks.head, assets, initChangeSet)
+      val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
+    
+    Seq((combineTest,combineTestChangeSet),(testWholeProcess,changeSet)).foreach(item =>{
+      item._1 should have size 1
+      item._1.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+      item._1.map(_.value) should be(Seq(Some(NumericValue(2))))
+      item._1.map(_.createdBy) should be(Seq(Some("guy")))
+      item._1.map(_.typeId) should be(List(140))
+      item._1.map(_.startMeasure) should be(List(0.0))
+      item._1.map(_.endMeasure) should be(List(10.0))
+      item._2.adjustedMValues should be(List())
+      item._2.adjustedSideCodes.length should be(1)
+      item._2.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
+      item._2.droppedAssetIds should be(Set())
+      item._2.expiredAssetIds.size should be(1)
+    })
+  
+  }
 
-      val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> a), 140)
-      testWholeProcess should have size 1
-      testWholeProcess.map(_.sideCode) should be(Seq(SideCode.BothDirections.value))
-      testWholeProcess.map(_.value) should be(Seq(Some(NumericValue(2))))
-      testWholeProcess.map(_.createdBy) should be(Seq(Some("guy")))
-      testWholeProcess.map(_.typeId) should be(List(140))
-      testWholeProcess.map(_.startMeasure) should be(List(0.0))
-      testWholeProcess.map(_.endMeasure) should be(List(10.0))
-      changeSet.adjustedMValues should be(List())
-      changeSet.adjustedSideCodes.length should be(1)
-      changeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
-      changeSet.droppedAssetIds should be(Set())
-      changeSet.expiredAssetIds.size should be(1)
+  test("combine two segments in same place and same value None in RoadLink with different side code") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = 
+      Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections),
+        createAsset(2, linkId1, Measure(0.0, 10), SideCode.AgainstDigitizing, None, TrafficDirection.BothDirections))
+
+    val (combineTest, combineTestChangeSet) = assetFiller.combine(roadLinks.head, assets, initChangeSet)
+    val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
+
+    Seq((combineTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+      item._1 should have size 1
+      item._1.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+      item._1.map(_.value) should be(Seq(None))
+      item._1.map(_.createdBy) should be(Seq(Some("guy")))
+      item._1.map(_.typeId) should be(List(140))
+      item._1.map(_.startMeasure) should be(List(0.0))
+      item._1.map(_.endMeasure) should be(List(10.0))
+      item._2.adjustedMValues should be(List())
+      item._2.adjustedSideCodes.length should be(1)
+      item._2.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
+      item._2.droppedAssetIds should be(Set())
+      item._2.expiredAssetIds.size should be(1)
     })
   }
+  
 
   private def roadLink(linkId: String, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
