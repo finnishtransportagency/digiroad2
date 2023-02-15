@@ -59,13 +59,27 @@ class AssetFiller {
       endMeasure = adjustedEndMeasure.getOrElse(asset.endMeasure))
     (adjustedAsset, mValueAdjustments)
   }
-
+  
+  /**
+    *
+    * @param roadLink  which we are processing
+    * @param assets  assets in link
+    * @param changeSet record of changes for final saving stage
+    * @return assets and changeSet
+    */
   protected def expireSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val (segmentsWithinGeometry, segmentsOutsideGeometry) = assets.partition(_.startMeasure < roadLink.length)
     val expiredAssetIds = segmentsOutsideGeometry.map(_.id).toSet
     (segmentsWithinGeometry, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
   }
-
+  
+  /**
+    * 
+    * @param roadLink  which we are processing
+    * @param segments  assets in link
+    * @param changeSet record of changes for final saving stage
+    * @return assets and changeSet
+    */
   protected def capToGeometry(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val (overflowingSegments, passThroughSegments) = segments.partition(_.endMeasure - MaxAllowedMValueError > linkLength)
@@ -102,7 +116,7 @@ class AssetFiller {
     }
   }
 
-
+  //TODO should be moved into generator class or Object
   private def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
@@ -113,7 +127,7 @@ class AssetFiller {
     (segments ++ generatedLinearAssets, changeSet)
   }
 
-
+  //TODO should be moved into generator class or Object
   private def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val generated = if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       val lrmPositions: Seq[(Double, Double)] = segments
@@ -142,10 +156,10 @@ class AssetFiller {
     * asset 2 ----
     * to 
     * asset 1 ----
-    * @param roadLink
-    * @param segments
-    * @param changeSet
-    * @return
+    * @param roadLink which we are processing
+    * @param segments assets in link
+    * @param changeSet record of changes for final saving stage
+    * @return assets and changeSet
     */
   protected def combine(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
 
@@ -412,11 +426,12 @@ class AssetFiller {
   }
   /**
     *  Drop asset which are shorter than minimal length.
+    *
     * @see [[MinAllowedLength]]
-    * @param roadLink
-    * @param assets
-    * @param changeSet
-    * @return
+    * @param roadLink  which we are processing
+    * @param assets  assets in link
+    * @param changeSet record of changes for final saving stage
+    * @return assets and changeSet
     */
   protected def dropShortSegments(roadLink: RoadLink, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val (shortSegments, linearSegments) = assets.partition(a => (a.endMeasure - a.startMeasure) < MinAllowedLength && roadLink.length >= MinAllowedLength )
