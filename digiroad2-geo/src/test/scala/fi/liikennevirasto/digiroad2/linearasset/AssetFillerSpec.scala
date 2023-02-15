@@ -579,8 +579,45 @@ class AssetFillerSpec extends FunSuite with Matchers {
       item._2.expiredAssetIds.size should be(1)
     })
   }
-  
 
+  test("Adjust asset length when it is shorter than link, from end") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(11.0, 0.0)), 11.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections))
+
+    val (combineTest, combineTestChangeSet) = assetFiller.adjustAssets(roadLinks.head, assets, initChangeSet)
+    val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
+
+    Seq((combineTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+      val changeSet = item._2
+      changeSet.adjustedMValues.head.startMeasure should be(0)
+      changeSet.adjustedMValues.head.endMeasure should be(11)
+    })
+  }
+  
+  test("Do not adjust asset length when link difference is bigger than 2m") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(createAsset(1, linkId1, Measure(0, 11), SideCode.BothDirections, None, TrafficDirection.BothDirections))
+    
+    val (combineTest, combineTestChangeSet) = assetFiller.adjustAssets(roadLinks.head, assets, initChangeSet)
+    val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
+
+    Seq((combineTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+      val filledTopology = item._1
+      val changeSet = item._2
+      changeSet.adjustedMValues.size should be(0)
+      filledTopology.head.startMeasure should be(0)
+      filledTopology.head.endMeasure should be(11)
+    })
+  }
+  
   private def roadLink(linkId: String, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
     RoadLink(
