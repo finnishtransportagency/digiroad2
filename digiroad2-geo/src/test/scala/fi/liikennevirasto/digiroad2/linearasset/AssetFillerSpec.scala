@@ -419,10 +419,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None))
     ,roadLink)
 
-    val (fuseTest, fuseTestChangeSet) = assetFiller.fuse(roadLink,  assets, initChangeSet)
+    val (methodTest, methodTestChangeSet) = assetFiller.fuse(roadLink,  assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 160)
 
-    Seq((fuseTest, fuseTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
       item._1 should have size 1
       item._1.map(_.sideCode) should be(Seq(SideCode.BothDirections))
       item._1.map(_.value) should be(Seq(Some(NumericValue(2))))
@@ -446,9 +446,9 @@ class AssetFillerSpec extends FunSuite with Matchers {
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None)
     ), roadLink)
 
-    val (fuseTest, fuseTestChangeSet) = assetFiller.fuse(roadLink, assets, initChangeSet)
+    val (methodTest, methodTestChangeSet) = assetFiller.fuse(roadLink, assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(linkId1 -> assets), 160)
-    Seq((fuseTest, fuseTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
       val filledTopology = item._1
       val changeSet = item._2
       filledTopology.length should be(1)
