@@ -61,7 +61,7 @@ class AssetFiller {
   }
   
   /**
-    *
+    * Remove asset which is no longer in geometry
     * @param roadLink  which we are processing
     * @param assets  assets in link
     * @param changeSet record of changes for final saving stage
@@ -74,7 +74,7 @@ class AssetFiller {
   }
   
   /**
-    * 
+    * Remove part which is outside of geometry
     * @param roadLink  which we are processing
     * @param segments  assets in link
     * @param changeSet record of changes for final saving stage
