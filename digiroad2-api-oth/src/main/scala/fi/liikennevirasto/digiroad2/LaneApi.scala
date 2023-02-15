@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.LaneUtils.pwLanesTwoDigitLaneCode
+import fi.liikennevirasto.digiroad2.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, RoadAddressRange}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
@@ -110,7 +111,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
   }
 
   def validateRangeParameters(parameters: RoadAddressRange): Unit = {
-    if (!RoadAddress.isCarTrafficRoadAddress(parameters.roadNumber)) throw InvalidRoadAddressRangeParamaterException("Invalid road number. Road number must be in range 1 to 62999")
+    if (!isCarTrafficRoadAddress(parameters.roadNumber)) throw InvalidRoadAddressRangeParamaterException("Invalid road number. Road number must be in range 1 to 62999")
     if (parameters.track.contains(Track.Unknown)) throw InvalidRoadAddressRangeParamaterException("Invalid track number, allowed Track values are: 0, 1, 2")
     if (parameters.startRoadPartNumber > parameters.endRoadPartNumber) throw InvalidRoadAddressRangeParamaterException("Start part number must be smaller than end part number")
     if (!RoadAddress.roadPartNumberRange.contains(parameters.startRoadPartNumber) ||
@@ -130,7 +131,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
       val roadNumber = roadLink.attributes.get("ROAD_NUMBER").asInstanceOf[Option[Long]]
       roadNumber match {
         case None => false
-        case Some(rn) => RoadAddress.isCarTrafficRoadAddress(rn)
+        case Some(rn) => isCarTrafficRoadAddress(rn)
       }
     })
     val twoDigitLanes = pwLanesTwoDigitLaneCode(lanesWithRoadAddress)
@@ -170,7 +171,7 @@ class LaneApi(val swagger: Swagger, val roadLinkService: RoadLinkService, val ro
     val groupedAndConnectedLanes = lanesGroupedByAttributes.map(laneGroup => {
       val lanesWithContinuingLanes = laneGroup.map(lane => {
         val identifier = LanePartitioner.getLaneRoadIdentifierByUsingViiteRoadNumber(lane, roadLinks(lane.linkId))
-        val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, identifier, laneGroup, roadLinks, true)
+        val continuingLanes = LanePartitioner.getContinuingWithIdentifier(lane, identifier, laneGroup, roadLinks, sideCodesCorrected = true)
         LaneWithContinuingLanes(lane, continuingLanes)
       })
       LanePartitioner.getConnectedGroups(lanesWithContinuingLanes)

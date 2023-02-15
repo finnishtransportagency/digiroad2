@@ -23,7 +23,7 @@ object GeometryUtils {
       points2.exists(point2 => point1.distance2DTo(point2) <= DefaultEpsilon)
     })
   }
-  
+
   // Use roadLink measures and geometry if measures are within tolerance from road link end points,
   // ensures connected geometry between assets in IntegrationApi responses
   // TODO Possibly not needed after fillTopology methods are fixed to adjust and save all m-value deviations
