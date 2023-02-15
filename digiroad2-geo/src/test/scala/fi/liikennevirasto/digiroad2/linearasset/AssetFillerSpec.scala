@@ -531,22 +531,24 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val assets = Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, Some(NumericValue(2)),TrafficDirection.BothDirections),
       createAsset(2, linkId1, Measure(0.0, 10), SideCode.AgainstDigitizing, Some(NumericValue(2)),TrafficDirection.BothDirections))
     
-      val (combineTest, combineTestChangeSet) = assetFiller.combine(roadLinks.head, assets, initChangeSet)
+      val (methodTest, methodTestChangeSet) = assetFiller.combine(roadLinks.head, assets, initChangeSet)
       val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
     
-    Seq((combineTest,combineTestChangeSet),(testWholeProcess,changeSet)).foreach(item =>{
-      item._1 should have size 1
-      item._1.map(_.sideCode) should be(Seq(SideCode.BothDirections))
-      item._1.map(_.value) should be(Seq(Some(NumericValue(2))))
-      item._1.map(_.createdBy) should be(Seq(Some("guy")))
-      item._1.map(_.typeId) should be(List(140))
-      item._1.map(_.startMeasure) should be(List(0.0))
-      item._1.map(_.endMeasure) should be(List(10.0))
-      item._2.adjustedMValues should be(List())
-      item._2.adjustedSideCodes.length should be(1)
-      item._2.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
-      item._2.droppedAssetIds should be(Set())
-      item._2.expiredAssetIds.size should be(1)
+    Seq((methodTest,methodTestChangeSet),(testWholeProcess,changeSet)).foreach(item =>{
+      val filledTopology = item._1
+      val changeSet = item._2
+      filledTopology should have size 1
+      filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+      filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
+      filledTopology.map(_.createdBy) should be(Seq(Some("guy")))
+      filledTopology.map(_.typeId) should be(List(140))
+      filledTopology.map(_.startMeasure) should be(List(0.0))
+      filledTopology.map(_.endMeasure) should be(List(10.0))
+      changeSet.adjustedMValues should be(List())
+      changeSet.adjustedSideCodes.length should be(1)
+      changeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
+      changeSet.droppedAssetIds should be(Set())
+      changeSet.expiredAssetIds.size should be(1)
     })
   
   }
@@ -561,22 +563,24 @@ class AssetFillerSpec extends FunSuite with Matchers {
       Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections),
         createAsset(2, linkId1, Measure(0.0, 10), SideCode.AgainstDigitizing, None, TrafficDirection.BothDirections))
 
-    val (combineTest, combineTestChangeSet) = assetFiller.combine(roadLinks.head, assets, initChangeSet)
+    val (methodTest, methodTestChangeSet) = assetFiller.combine(roadLinks.head, assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
 
-    Seq((combineTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      item._1 should have size 1
-      item._1.map(_.sideCode) should be(Seq(SideCode.BothDirections))
-      item._1.map(_.value) should be(Seq(None))
-      item._1.map(_.createdBy) should be(Seq(Some("guy")))
-      item._1.map(_.typeId) should be(List(140))
-      item._1.map(_.startMeasure) should be(List(0.0))
-      item._1.map(_.endMeasure) should be(List(10.0))
-      item._2.adjustedMValues should be(List())
-      item._2.adjustedSideCodes.length should be(1)
-      item._2.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
-      item._2.droppedAssetIds should be(Set())
-      item._2.expiredAssetIds.size should be(1)
+    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+      val filledTopology = item._1
+      val changeSet = item._2
+      filledTopology should have size 1
+      filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+      filledTopology.map(_.value) should be(Seq(None))
+      filledTopology.map(_.createdBy) should be(Seq(Some("guy")))
+      filledTopology.map(_.typeId) should be(List(140))
+      filledTopology.map(_.startMeasure) should be(List(0.0))
+      filledTopology.map(_.endMeasure) should be(List(10.0))
+      changeSet.adjustedMValues should be(List())
+      changeSet.adjustedSideCodes.length should be(1)
+      changeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
+      changeSet.droppedAssetIds should be(Set())
+      changeSet.expiredAssetIds.size should be(1)
     })
   }
 
@@ -588,10 +592,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val assets = Seq(createAsset(1, linkId1, Measure(0.0, 10), SideCode.TowardsDigitizing, None, TrafficDirection.BothDirections))
 
-    val (combineTest, combineTestChangeSet) = assetFiller.adjustAssets(roadLinks.head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.adjustAssets(roadLinks.head, assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
 
-    Seq((combineTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+    Seq((methodTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
       val changeSet = item._2
       changeSet.adjustedMValues.head.startMeasure should be(0)
       changeSet.adjustedMValues.head.endMeasure should be(11)
@@ -606,10 +610,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val assets = Seq(createAsset(1, linkId1, Measure(0, 11), SideCode.BothDirections, None, TrafficDirection.BothDirections))
     
-    val (combineTest, combineTestChangeSet) = assetFiller.adjustAssets(roadLinks.head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = assetFiller.adjustAssets(roadLinks.head, assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks, Map(linkId1 -> assets), 140)
 
-    Seq((combineTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
+    Seq((methodTest, combineTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
       val filledTopology = item._1
       val changeSet = item._2
       changeSet.adjustedMValues.size should be(0)
