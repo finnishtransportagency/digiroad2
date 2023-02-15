@@ -137,9 +137,11 @@ class AssetFiller {
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
   //   causes an infinite loop when fillTopology is called recursively
   /**
-    * Combine asset which are in same place. Value, startMValue and endMValue are same.
+    * Combine asset which are in same place. Value, side code, startMValue and endMValue are same.
     * asset 1 ----
     * asset 2 ----
+    * to 
+    * asset 1 ----
     * @param roadLink
     * @param segments
     * @param changeSet
@@ -476,6 +478,12 @@ class AssetFiller {
     }
   }
   /**
+    * Finally adjust asset length by increasing endMValue.
+    * RoadLink -------
+    * Asset    ----
+    * to 
+    * RoadLink ------
+    * Asset    ------
     * @see [[adjustAsset]]
     * @param roadLink
     * @param linearAssets
