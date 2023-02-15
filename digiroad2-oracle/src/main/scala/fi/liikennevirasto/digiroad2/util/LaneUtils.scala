@@ -1,19 +1,16 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
+import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneEndPoints, LaneNumber, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewLane, PersistedHistoryLane, PersistedLane, PieceWiseLane}
+import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, Track}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
