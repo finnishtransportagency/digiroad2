@@ -149,7 +149,7 @@ class AssetFiller {
   protected def updateValuesWithoutChangeSet(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] = segments
 
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
-  //   causes an infinite loop when fillTopology is called recursively
+  //   causes an infinite loop when fillTopology is called recursively, this function might need total rework
   /**
     * Combine asset which are in same place. Value, side code, startMValue and endMValue are same.
     * asset 1 ----
