@@ -39,7 +39,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         newRoadWidthAssets.exists(b => b.linkId == a.linkId && b.sideCode == a.sideCode && b.startMeasure == a.startMeasure && b.endMeasure == a.endMeasure)) ++
         newRoadWidthAssets
 
-      val groupedAssets = (existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
+      val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks((existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets), roadLinks).groupBy(_.linkId)
       service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
 
