@@ -358,7 +358,7 @@ class VKMClient {
   }
 
   private def validateAndConvertToInt(fieldName: String, map: Map[String, Any]) = {
-    def value = map.get(fieldName).asInstanceOf[Option[String]]
+    def value = map.get(fieldName).asInstanceOf[Option[BigInt]]
     if (value.isEmpty) {
       throw new RoadAddressException(
         "Missing mandatory field in response: %s".format(
