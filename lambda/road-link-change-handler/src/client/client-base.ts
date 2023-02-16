@@ -32,7 +32,8 @@ export async function getRequest(instance: AxiosInstance, url: string, params: o
         const response = await instance.get(url, { params: params });
         return response.data;
     } catch (err) {
-        console.error(`Request ${instance.getUri() + url} with params ${JSON.stringify(params)} responded with error:`);
+        const queryParams = JSON.stringify(params).substring(0, 100);
+        console.error(`Request ${instance.getUri() + url} with params ${queryParams}... responded with error (retry: ${retry}):`);
         const errorMsg = processErrorAndExtractMessage(err, instance.getUri() + url);
         if (retry < MAX_RETRIES_PER_QUERY) {
             await exponentialTimeout(retry);
@@ -56,7 +57,8 @@ export async function postRequest(instance: AxiosInstance, url: string, data: ob
         const response = await instance.post(url, data);
         return response.data;
     } catch (err) {
-        console.error(`Request ${instance.getUri() + url} with data ${JSON.stringify(data)} responded with error:`);
+        const queryData = JSON.stringify(data).substring(0, 100);
+        console.error(`Request ${instance.getUri() + url} with data ${queryData} responded with error (retry: ${retry}):`);
         const errorMsg = processErrorAndExtractMessage(err, instance.getUri() + url);
         if (retry < MAX_RETRIES_PER_QUERY) {
             await exponentialTimeout(retry);
@@ -75,7 +77,7 @@ export async function postRequest(instance: AxiosInstance, url: string, data: ob
 export function checkResultsForErrors(results: PromiseSettledResult<any>[], errorMsg: string): any[] {
     const errors = results.filter(({ status }) => status === 'rejected') as PromiseRejectedResult[];
     if (errors.length > 0) {
-        errors.forEach((error) => console.error(error) );
+        errors.forEach((error) => console.error(error.reason) );
         throw new Error(errorMsg);
     }
     const fulfilled = results as PromiseFulfilledResult<any>[];
@@ -85,7 +87,7 @@ export function checkResultsForErrors(results: PromiseSettledResult<any>[], erro
 function processErrorAndExtractMessage(error: any, url: string): string {
     if (axios.isAxiosError(error)) {
         console.error(error.response?.data);
-        return `Error happened during fetch of ${url} (${error.response?.status}: ${error.response?.statusText})`;
+        return `Error happened during fetch of ${url} (${error.response?.status}: ${error.response?.statusText.substring(0, 100)})`;
     } else {
         console.error(error);
         return `Error happened during fetch of ${url}`;
