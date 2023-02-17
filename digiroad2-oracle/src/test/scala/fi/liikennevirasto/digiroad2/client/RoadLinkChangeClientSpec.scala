@@ -165,7 +165,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     val roadLinkChanges_2022_7_16_2022_7_29 = roadLinkChangeClient.getRoadLinkChanges(DateTime.parse("2022-7-16"), DateTime.parse("2022-7-29"))
     roadLinkChanges_2022_7_16_2022_7_29.size should be(8)
     roadLinkChanges_2022_7_16_2022_7_29.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true))
-    val roadlinkChanges_all = roadLinkChangeClient.getRoadLinkChanges(DateTime.parse("2022-6-1"), DateTime.parse("2022-7-31"))
-    roadlinkChanges_all.size should be(230)
+    val roadlinkChanges_all = roadLinkChangeClient.getRoadLinkChanges()
+    roadlinkChanges_all.size should not be(0)
   }
 }

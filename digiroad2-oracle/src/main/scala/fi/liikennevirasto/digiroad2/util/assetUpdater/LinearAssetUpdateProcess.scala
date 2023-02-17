@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkClient
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
+import org.slf4j.LoggerFactory
 
 import scala.sys.exit
 
@@ -24,6 +25,15 @@ object LinearAssetUpdateProcess {
   lazy val hazMatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
   lazy val roadWidthService = new RoadWidthService(roadLinkService, eventbus)
   lazy val speedLimitService = new SpeedLimitService(eventbus, roadLinkService)
+
+  //TODO remove this tester when LinearAssetUpdaters work with new change sets
+  private def testFetchChangesFromS3() = {
+    val roadLinkChangeClient = new RoadLinkChangeClient
+    val logger = LoggerFactory.getLogger(getClass)
+    val changes = roadLinkChangeClient.getRoadLinkChanges()
+    logger.info(s"fetched ${changes.size} changes")
+    changes.foreach(c => logger.info(c.toString))
+  }
 
   private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
@@ -110,6 +120,7 @@ object LinearAssetUpdateProcess {
         case "hazmat_prohibition" => getAssetUpdater(HazmatTransportProhibition.typeId).updateLinearAssets(HazmatTransportProhibition.typeId)
         case "road_width" => getAssetUpdater(RoadWidth.typeId).updateLinearAssets(RoadWidth.typeId)
         case "speed_limit" => speedLimitUpdater.updateSpeedLimits()
+        case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
     }
