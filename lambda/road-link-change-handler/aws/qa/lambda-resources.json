@@ -20,6 +20,14 @@
     "ParameterValue": "qa"
   },
   {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "DigiroadTest"
+  },
+  {
+    "ParameterKey": "BatchJobRoleArn",
+    "ParameterValue": "arn:aws:iam::475079312496:role/QA-digiroad2-JobRole"
+  },
+  {
     "ParameterKey": "VkmApi",
     "ParameterValue": "https://devapi.testivaylapilvi.fi/viitekehysmuunnin/"
   },
@@ -34,5 +42,21 @@
   {
     "ParameterKey": "KgvApiKeySSM",
     "ParameterValue": "/qa/apikey/kgv.apikey"
+  },
+  {
+    "ParameterKey": "PgHost",
+    "ParameterValue": "rdspg13test.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com"
+  },
+  {
+    "ParameterKey": "PgPort",
+    "ParameterValue": "5432"
+  },
+  {
+    "ParameterKey": "PgDatabase",
+    "ParameterValue": "digiroadtest"
+  },
+  {
+    "ParameterKey": "PgUser",
+    "ParameterValue": "digiroadtest"
   }
 ]
