@@ -17,7 +17,7 @@ case class LaneHistoryRow(id: Long, newId: Long, oldId: Long, linkId: String, si
                           startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                           modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean,
                           timeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime],
-                          historyCreatedDate: DateTime, historyCreatedBy: String)
+                          historyCreatedDate: DateTime, historyCreatedBy: String, changeEventOrderNumber: Option[Int])
 case class laneToHistoryLane(oldId: Long, historyId: Long, historyPositionId: Long)
 
 class LaneHistoryDao() {
@@ -45,9 +45,10 @@ class LaneHistoryDao() {
       val laneCode = r.nextInt()
       val historyCreatedDate = new DateTime(r.nextTimestamp())
       val historyCreatedBy = r.nextString()
+      val changeEventOrderNumber = r.nextIntOption()
 
       LaneHistoryRow(id, newId, oldId, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
-        expired, timeStamp, municipalityCode, laneCode, geomModifiedDate, historyCreatedDate, historyCreatedBy)
+        expired, timeStamp, municipalityCode, laneCode, geomModifiedDate, historyCreatedDate, historyCreatedBy, changeEventOrderNumber)
     }
   }
 
@@ -61,7 +62,7 @@ class LaneHistoryDao() {
     CASE WHEN l.valid_to <= current_timestamp THEN 1 ELSE 0 END AS expired,
     pos.adjusted_timestamp, pos.modified_date,
     la.name, la.value, l.municipality_code, l.lane_code,
-    l.history_created_date, l.history_created_by
+    l.history_created_date, l.history_created_by, l.event_order_number
     FROM LANE_HISTORY l
        JOIN LANE_HISTORY_LINK ll ON l.id = ll.lane_id
        JOIN LANE_HISTORY_POSITION pos ON ll.lane_position_id = pos.id
@@ -128,6 +129,7 @@ class LaneHistoryDao() {
   def insertHistoryLane(oldLaneId: Long, newLaneId: Option[Long], username: String): Long = {
     val laneHistoryId = Sequences.nextPrimaryKeySeqValue
     val laneHistoryPositionId = Sequences.nextPrimaryKeySeqValue
+    val changeEventOrderNumber = Sequences.nextLaneHistoryEventOrderNumberValue
     val newLaneIdToRelate = newLaneId match {
       case Some(id) => id
       case _ => 0
@@ -135,7 +137,7 @@ class LaneHistoryDao() {
 
     sqlu"""
         INSERT INTO LANE_HISTORY
-          SELECT $laneHistoryId, $newLaneIdToRelate, l.*, current_timestamp, $username FROM LANE l WHERE id = $oldLaneId
+          SELECT $laneHistoryId, $newLaneIdToRelate, l.*, current_timestamp, $username, $changeEventOrderNumber FROM LANE l WHERE id = $oldLaneId
       """.execute
 
     sqlu"""
@@ -190,7 +192,7 @@ class LaneHistoryDao() {
         createdBy = row.createdBy, createdDateTime = row.createdDate,
         modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired,
         timeStamp = row.timeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues,
-        row.historyCreatedDate, row.historyCreatedBy)
+        row.historyCreatedDate, row.historyCreatedBy, row.changeEventOrderNumber)
 
     }.values.toSeq
   }
@@ -249,7 +251,7 @@ class LaneHistoryDao() {
 
     val withAutoAdjustFilter = if (withAdjust) "" else "and (l.modified_by is null OR l.modified_by != 'generated_in_update')"
 
-    val filter = s"""WHERE ((l.HISTORY_CREATED_DATE > $querySinceDate and l.HISTORY_CREATED_DATE <= $queryUntilDate)
+    val filter = s"""WHERE ((l.HISTORY_CREATED_DATE > $querySinceDate and l.HISTORY_CREATED_DATE <= $queryUntilDate) and l.event_order_number is not null
                       $withAutoAdjustFilter)"""
 
     getHistoryLanesFilterQuery(withFilter(filter))

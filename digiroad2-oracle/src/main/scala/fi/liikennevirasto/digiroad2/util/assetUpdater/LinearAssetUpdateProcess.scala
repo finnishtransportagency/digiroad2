@@ -68,6 +68,7 @@ object LinearAssetUpdateProcess {
       case Prohibition.typeId => new ProhibitionUpdater(prohibitionService)
       case HazmatTransportProhibition.typeId => new HazMatTransportProhibitionUpdater(hazMatTransportProhibitionService)
       case RoadWidth.typeId => new RoadWidthUpdater(roadWidthService)
+      case SpeedLimitAsset.typeId => new SpeedLimitUpdater(speedLimitService)
       case NumberOfLanes.typeId => new LinearAssetUpdater(getLinearAssetService(typeId))
       case TrafficVolume.typeId => new LinearAssetUpdater(getLinearAssetService(typeId))
       case WinterSpeedLimit.typeId => new LinearAssetUpdater(getLinearAssetService(typeId))
@@ -76,7 +77,6 @@ object LinearAssetUpdateProcess {
       case _ => new DynamicLinearAssetUpdater(getDynamicLinearAssetService(typeId))
     }
   }
-  lazy val speedLimitUpdater = new SpeedLimitUpdater(eventbus, roadLinkService, speedLimitService)
 
   def main(args: Array[String]): Unit = {
     val batchMode = Digiroad2Properties.batchMode
@@ -119,7 +119,7 @@ object LinearAssetUpdateProcess {
         case "prohibition" => getAssetUpdater(Prohibition.typeId).updateLinearAssets(Prohibition.typeId)
         case "hazmat_prohibition" => getAssetUpdater(HazmatTransportProhibition.typeId).updateLinearAssets(HazmatTransportProhibition.typeId)
         case "road_width" => getAssetUpdater(RoadWidth.typeId).updateLinearAssets(RoadWidth.typeId)
-        case "speed_limit" => speedLimitUpdater.updateSpeedLimits()
+        case "speed_limit" => getAssetUpdater(SpeedLimitAsset.typeId).updateLinearAssets(SpeedLimitAsset.typeId)
         case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }

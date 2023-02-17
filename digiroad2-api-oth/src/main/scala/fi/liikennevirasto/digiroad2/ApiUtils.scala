@@ -12,6 +12,7 @@ import org.scalatra.{ActionResult, BadRequest, Found, InternalServerError, Param
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.compat.Platform.EOL
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
@@ -135,6 +136,10 @@ object ApiUtils {
       case (response: Map[_, _], "json") =>
         timer(s"API LOG $queryId: convert to json"){
         Json(DefaultFormats).write(response.asInstanceOf[Map[String, Any]])
+        }
+      case (response: mutable.LinkedHashMap[_, _], "json") =>
+        timer(s"API LOG $queryId: convert to json"){
+          Json(DefaultFormats).write(response.asInstanceOf[mutable.LinkedHashMap[String, Any]])
         }
       case _ =>
         throw new NotImplementedError("Unrecognized response format")
