@@ -17,7 +17,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   test("test json convert with whole set") {
-    changes.size should be(24)
+    changes.size should be(25)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {
@@ -83,6 +83,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceChange.replaceInfo.head.oldToMValue should be(186.0823591774)
     replaceChange.replaceInfo.head.newFromMValue should be(0)
     replaceChange.replaceInfo.head.newToMValue should be(186.0823591774)
+    replaceChange.replaceInfo.head.digitizationChange should be(false)
   }
 
   test("RoadLinkChange for 'split' contains correct info") {
@@ -138,6 +139,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.replaceInfo.head.oldToMValue should be(17.305)
     splitChange.replaceInfo.head.newFromMValue should be(0)
     splitChange.replaceInfo.head.newToMValue should be(17.305)
+    splitChange.replaceInfo.head.digitizationChange should be(false)
 
     splitChange.replaceInfo(1).oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
     splitChange.replaceInfo(1).newLinkId should be("d59dd3a9-a94d-4f26-b311-6b9b8361c717:1")
@@ -145,6 +147,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.replaceInfo(1).oldToMValue should be(121.673)
     splitChange.replaceInfo(1).newFromMValue should be(0)
     splitChange.replaceInfo(1).newToMValue should be(86.941)
+    splitChange.replaceInfo(1).digitizationChange should be(false)
 
     splitChange.replaceInfo.last.oldLinkId should be("c19bd6b4-9923-4ce9-a9cb-09779708913e:1")
     splitChange.replaceInfo.last.newLinkId should be("e92c98c9-5a62-4995-a9c0-e40ae0b65747:1")
@@ -152,20 +155,13 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.replaceInfo.last.oldToMValue should be(34.733)
     splitChange.replaceInfo.last.newFromMValue should be(0)
     splitChange.replaceInfo.last.newToMValue should be(17.432)
+    splitChange.replaceInfo.last.digitizationChange should be(false)
   }
 
   // ignored by default, used to test locally that the fetch and convert process works
   ignore("fetch changes from S3 and convert to RoadLinkChange") {
-    val roadLinkChanges_2022_6_20_2022_6_30 = roadLinkChangeClient.getRoadLinkChanges(DateTime.parse("2022-6-20"), DateTime.parse("2022-6-30"))
-    roadLinkChanges_2022_6_20_2022_6_30.size should be(197)
-    roadLinkChanges_2022_6_20_2022_6_30.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true))
-    val roadLinkChanges_2022_7_1_2022_7_15 = roadLinkChangeClient.getRoadLinkChanges(DateTime.parse("2022-7-1"), DateTime.parse("2022-7-15"))
-    roadLinkChanges_2022_7_1_2022_7_15.size should be(25)
-    roadLinkChanges_2022_7_1_2022_7_15.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true))
-    val roadLinkChanges_2022_7_16_2022_7_29 = roadLinkChangeClient.getRoadLinkChanges(DateTime.parse("2022-7-16"), DateTime.parse("2022-7-29"))
-    roadLinkChanges_2022_7_16_2022_7_29.size should be(8)
-    roadLinkChanges_2022_7_16_2022_7_29.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true))
     val roadlinkChanges_all = roadLinkChangeClient.getRoadLinkChanges()
     roadlinkChanges_all.size should not be(0)
+    roadlinkChanges_all.foreach(change => change.changeType.isInstanceOf[RoadLinkChangeType] should be(true))
   }
 }

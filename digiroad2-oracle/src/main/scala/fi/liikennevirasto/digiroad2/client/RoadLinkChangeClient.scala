@@ -112,7 +112,7 @@ class RoadLinkChangeClient {
     AdminClassSerializer + TrafficDirectionSerializer
 
   case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int, adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection)
-  case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double)
+  case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double, digitizationChange: Boolean)
   case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 
   def fetchLatestSuccessfulUpdateDate(): DateTime = {
