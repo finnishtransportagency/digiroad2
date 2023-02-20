@@ -36,7 +36,7 @@ sealed trait ChangeType {
   def value: Int
 }
 
-object ChangeTypeCollect {
+object ChangeTypeReport {
   
   case object Creation extends ChangeType {
     def value: Int = 1
@@ -73,9 +73,9 @@ object ChangeTypeCollect {
 }
 
 /**
-  *
+  * 
   * @param linkId     link where changes is happening TODO remove if not needed
-  * @param assetId    asset which is under samuutus TODO remove if not needed
+  * @param assetId    asset which is under samuutus, When there is more than one asset under samuutus (e.g merger or join) create new  [[ChangedAsset]] item for each asset.
   * @param changeType characteristic of change
   * @param before     situation before samuutus
   * @param after      after samuutus
