@@ -296,12 +296,12 @@
 
       if (isPedestrianOrCyclingRoadLink()) {
         var mandatorySignsDefaultValue = "70";
+        var allAllowedSigns = collection.signTypesAllowedInPedestrianCyclingLinks;
         /* get the correct index for group to be used in subSingleChoice */
         mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == mandatorySignsDefaultValue;});}), true);
 
         /* Only after get the correct index of the group (mainTypeDefaultValue) I can reset the values for the */
         /* correct one to be used in the 'main singleChoice field' */
-        var allAllowedSigns = collection.signTypesAllowedInPedestrianCyclingLinks;
         signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(val) {return _.includes(allAllowedSigns, val.propertyValue);});  });
         groups =  collection.getGroup(signTypes);
         groupKeys = _.keys(groups);
