@@ -151,10 +151,10 @@ class AssetFiller {
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
   //   causes an infinite loop when fillTopology is called recursively, this function might need total rework
   /**
-    * Combine asset which are in same place. Value, side code, startMValue and endMValue are same.
+    * Combine asset which are in same place. Value, side code, startMValue and endMValue are same. <br> <pre> 
     * asset 1 ----
     * asset 2 ----
-    * to 
+    *   to
     * asset 1 ----
     * @param roadLink which we are processing
     * @param segments assets in link
@@ -392,7 +392,7 @@ class AssetFiller {
     }
   }
   /**
-    * Adjust asset so it does not overlaps: 
+    * Adjust asset so it does not overlaps: <br> <pre> 
     * asset 1 -------
     * asset 2    -------
     *     to
@@ -401,8 +401,8 @@ class AssetFiller {
     * @see [[expireOverlappedRecursively]]
     * @param roadLink which we are processing
     * @param segments assets in link
-    * @param changeSet 
-    * @return
+    * @param changeSet record of changes for final saving stage
+    * @return assets and changeSet
     */
   protected def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     def isChanged(p : PieceWiseLinearAsset) : Boolean = {
@@ -493,17 +493,18 @@ class AssetFiller {
     }
   }
   /**
-    * Finally adjust asset length by increasing endMValue.
+    * Finally adjust asset length by increasing endMValue. <br> <pre> 
     * RoadLink -------
-    * Asset    ----
-    * to 
+    * Asset    ----    
+    * to                
     * RoadLink ------
-    * Asset    ------
+    * Asset    ------   
+    *
     * @see [[adjustAsset]]
-    * @param roadLink
-    * @param linearAssets
-    * @param changeSet
-    * @return
+    * @param roadLink  which we are processing
+    * @param linearAssets  assets in link
+    * @param changeSet record of changes for final saving stage
+    * @return assets and changeSet
     */
   protected def adjustAssets(roadLink: RoadLink, linearAssets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     linearAssets.foldLeft((Seq[PieceWiseLinearAsset](), changeSet)){
