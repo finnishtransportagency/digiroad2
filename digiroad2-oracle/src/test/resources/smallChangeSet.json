@@ -88,7 +88,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 186.0823591774,
         "newFromMValue": 0.0,
-        "newToMValue": 186.0823591774
+        "newToMValue": 186.0823591774,
+        "digitizationChange": false
       }
     ]
   },
@@ -121,7 +122,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 131.683,
         "newFromMValue": 0,
-        "newToMValue": 131.683
+        "newToMValue": 131.683,
+        "digitizationChange": false
       }
     ]
   },
@@ -163,7 +165,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 149.2528933749,
         "newFromMValue": 0.0,
-        "newToMValue": 149.2557779365
+        "newToMValue": 149.2557779365,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "41cca8ff-4644-41aa-8de1-2702f1a57f80:2",
@@ -171,7 +174,8 @@
         "oldFromMValue": 149.2528933749,
         "oldToMValue": 186.0823591774,
         "newFromMValue": 0.0,
-        "newToMValue": 36.8338564087
+        "newToMValue": 36.8338564087,
+        "digitizationChange": false
       }
     ]
   },
@@ -213,7 +217,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 156.867,
         "newFromMValue": 0,
-        "newToMValue": 156.867
+        "newToMValue": 156.867,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "3a832249-d3b9-4c22-9b08-c7e9cd98cbd7:1",
@@ -221,7 +226,8 @@
         "oldFromMValue": 156.867,
         "oldToMValue": 432.235,
         "newFromMValue": 0,
-        "newToMValue": 275.368
+        "newToMValue": 275.368,
+        "digitizationChange": false
       }
     ]
   },
@@ -272,7 +278,8 @@
         "oldFromMValue": 21.1620899565,
         "oldToMValue": 56.0610767139,
         "newFromMValue": 0.0,
-        "newToMValue": 34.9057365328
+        "newToMValue": 34.9057365328,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1",
@@ -280,7 +287,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 9.3336939748,
         "newFromMValue": 0.0,
-        "newToMValue": 9.333696213
+        "newToMValue": 9.333696213,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1",
@@ -288,7 +296,8 @@
         "oldFromMValue": 9.3336939748,
         "oldToMValue": 21.1620899565,
         "newFromMValue": 0.0,
-        "newToMValue": 11.8412127232
+        "newToMValue": 11.8412127232,
+        "digitizationChange": false
       }
     ]
   },
@@ -339,7 +348,8 @@
         "oldFromMValue": 162.199,
         "oldToMValue": 429.639,
         "newFromMValue": 0,
-        "newToMValue": 267.44
+        "newToMValue": 267.44,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "99ade73f-979b-480b-976a-197ad365440a:1",
@@ -347,7 +357,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 145.912,
         "newFromMValue": 0,
-        "newToMValue": 145.912
+        "newToMValue": 145.912,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "99ade73f-979b-480b-976a-197ad365440a:1",
@@ -355,7 +366,8 @@
         "oldFromMValue": 145.912,
         "oldToMValue": 162.199,
         "newFromMValue": 0,
-        "newToMValue": 16.286
+        "newToMValue": 16.286,
+        "digitizationChange": false
       }
     ]
   },
@@ -406,7 +418,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 17.305,
         "newFromMValue": 0,
-        "newToMValue": 17.305
+        "newToMValue": 17.305,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "c19bd6b4-9923-4ce9-a9cb-09779708913e:1",
@@ -414,7 +427,8 @@
         "oldFromMValue": 34.733,
         "oldToMValue": 121.673,
         "newFromMValue": 0,
-        "newToMValue": 86.941
+        "newToMValue": 86.941,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "c19bd6b4-9923-4ce9-a9cb-09779708913e:1",
@@ -422,7 +436,8 @@
         "oldFromMValue": 17.305,
         "oldToMValue": 34.733,
         "newFromMValue": 0,
-        "newToMValue": 17.432
+        "newToMValue": 17.432,
+        "digitizationChange": false
       }
     ]
   },
@@ -464,7 +479,8 @@
         "oldFromMValue": 10.233,
         "oldToMValue": 45.23,
         "newFromMValue": 0,
-        "newToMValue": 35.01
+        "newToMValue": 35.01,
+        "digitizationChange": false
       },
       {
         "oldLinkId": "609d430a-de96-4cb7-987c-3caa9c72c08d:1",
@@ -472,7 +488,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 10.233,
         "newFromMValue": 0,
-        "newToMValue": 13.906
+        "newToMValue": 13.906,
+        "digitizationChange": false
       }
     ]
   },
@@ -505,7 +522,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 23.4809669837,
         "newFromMValue": 0.0,
-        "newToMValue": 23.4762173445
+        "newToMValue": 23.4762173445,
+        "digitizationChange": false
       }
     ]
   },
@@ -538,7 +556,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 66.252976853,
         "newFromMValue": 23.4762173445,
-        "newToMValue": 89.7282531237
+        "newToMValue": 89.7282531237,
+        "digitizationChange": false
       }
     ]
   },
@@ -571,7 +590,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 18.082,
         "newFromMValue": 0,
-        "newToMValue": 18.082
+        "newToMValue": 18.082,
+        "digitizationChange": false
       }
     ]
   },
@@ -604,7 +624,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 18.701,
         "newFromMValue": 18.082077071919834,
-        "newToMValue": 36.783
+        "newToMValue": 36.783,
+        "digitizationChange": false
       }
     ]
   },
@@ -637,7 +658,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 43.3472350165,
         "newFromMValue": 580.2148170854,
-        "newToMValue": 623.5620521019
+        "newToMValue": 623.5620521019,
+        "digitizationChange": false
       }
     ]
   },
@@ -671,7 +693,8 @@
       "oldFromMValue": 0.0,
       "oldToMValue": 34.3842416867,
       "newFromMValue": 666.1528876503,
-      "newToMValue": 700.5371293371
+      "newToMValue": 700.5371293371,
+      "digitizationChange": false
     }
   ]
   },
@@ -704,7 +727,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 42.5908355484,
         "newFromMValue": 623.5620521019,
-        "newToMValue": 666.1528876503
+        "newToMValue": 666.1528876503,
+        "digitizationChange": false
       }
     ]
   },
@@ -737,7 +761,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 42.5908355484,
         "newFromMValue": 623.5620521019,
-        "newToMValue": 666.1528876503
+        "newToMValue": 666.1528876503,
+        "digitizationChange": false
       }
     ]
   },
@@ -770,7 +795,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 36.1893971432,
         "newFromMValue": 0.0,
-        "newToMValue": 45.6279392078
+        "newToMValue": 45.6279392078,
+        "digitizationChange": false
       }
     ]
   },
@@ -803,7 +829,8 @@
         "oldFromMValue": 0,
         "oldToMValue": 137.999,
         "newFromMValue": 0,
-        "newToMValue": 139.863
+        "newToMValue": 139.863,
+        "digitizationChange": false
       }
     ]
   },
@@ -836,7 +863,8 @@
         "oldFromMValue": 0.0,
         "oldToMValue": 39.567667457,
         "newFromMValue": 0.0,
-        "newToMValue": 38.529200796
+        "newToMValue": 38.529200796,
+        "digitizationChange": false
       }
     ]
   },
@@ -869,7 +897,42 @@
         "oldFromMValue": 0,
         "oldToMValue": 45.317,
         "newFromMValue": 0,
-        "newToMValue": 35.212
+        "newToMValue": 35.212,
+        "digitizationChange": false
+      }
+    ]
+  },
+  {
+    "changeType":"replace",
+    "old":{
+      "linkId":"6d283aeb-a0f5-4606-8154-c6702bd69f2e:1",
+      "linkLength":221.89182545,
+      "geometry":"SRID=3067;LINESTRING ZM(232543.193 6906970.423 88.04 0,232541.309 6907017.491 88.821 47.106,232540.112 6907043.849 89.234 73.491,232538.913 6907079.964 89.799 109.626,232537.202 6907102.555 89.886 132.281,232535.757 6907113.861 90.037 143.679,232491.721 6907136.159 90.982 193.039,232465.98 6907149.193 91.422 221.892)",
+      "roadClass":12316,
+      "adminClass":null,
+      "municipality":151,
+      "trafficDirection":0
+    },
+    "new":[
+      {
+        "linkId":"769e6848-e77b-44d3-9d38-e63cdc7b1677:1",
+        "linkLength":71.92372752,
+        "geometry":"SRID=3067;LINESTRING ZM(232603.495 6907098.826 89.721 0,232595.223 6907095.685 89.437 8.848,232583.328 6907095.194 89.52 20.753,232567.703 6907098.714 89.92 36.77,232553.302 6907105.219 89.732 52.572,232535.942 6907113.77 90.036 71.924)",
+        "roadClass":12316,
+        "adminClass":null,
+        "municipality":151,
+        "trafficDirection":0
+      }
+    ],
+    "replaceInfo": [
+      {
+        "oldLinkId":"6d283aeb-a0f5-4606-8154-c6702bd69f2e:1",
+        "newLinkId":"769e6848-e77b-44d3-9d38-e63cdc7b1677:1",
+        "oldFromMValue":139.393,
+        "oldToMValue":69.013,
+        "newFromMValue":64.364,
+        "newToMValue":71.924,
+        "digitizationChange": true
       }
     ]
   }
