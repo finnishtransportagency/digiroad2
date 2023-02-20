@@ -11,7 +11,7 @@ import org.json4s.jackson.parseJson
 import org.json4s.{CustomSerializer, _}
 import org.postgis.PGgeometry
 import org.slf4j.LoggerFactory
-import software.amazon.awssdk.services.s3.model._
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.io.Source.fromInputStream
@@ -36,7 +36,6 @@ object RoadLinkChangeType {
 class RoadLinkChangeClient {
   lazy val awsService = new AwsService
   lazy val s3Service: awsService.S3.type = awsService.S3
-  lazy val s3Client = s3Service.s3
   lazy val s3Bucket: String = Digiroad2Properties.roadLinkChangeS3BucketName
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -138,8 +137,7 @@ class RoadLinkChangeClient {
       }
     }
 
-    val request = ListObjectsV2Request.builder().bucket(s3Bucket).build()
-    val objects = s3Client.listObjectsV2(request).contents().asScala.toList
+    val objects = s3Service.listObjects(s3Bucket).asScala.toList
     objects.map(_.key()).filter(key => isValidKey(key))
   }
 
