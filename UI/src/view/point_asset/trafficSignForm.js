@@ -301,7 +301,8 @@
 
         /* Only after get the correct index of the group (mainTypeDefaultValue) I can reset the values for the */
         /* correct one to be used in the 'main singleChoice field' */
-        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(val) {return val.propertyValue == mandatorySignsDefaultValue;});  });
+        var allAllowedSigns = collection.signTypesAllowedInPedestrianCyclingLinks;
+        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(val) {return _.includes(allAllowedSigns, val.propertyValue);});  });
         groups =  collection.getGroup(signTypes);
         groupKeys = _.keys(groups);
 
