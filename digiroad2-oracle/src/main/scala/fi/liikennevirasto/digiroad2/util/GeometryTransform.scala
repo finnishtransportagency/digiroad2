@@ -3,42 +3,11 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.client.viite.ViiteClientException
+import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService}
+import fi.liikennevirasto.digiroad2.{Point, RoadAddress, RoadAddressException, Track}
 import org.slf4j.{Logger, LoggerFactory}
-/**
-  * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
-  * Left and Right are relative to the advancing direction (direction of growing m values)
-  */
-sealed trait Track {
-  def value: Int
-}
-object Track {
-  val values = Set(Combined, RightSide, LeftSide, Unknown)
 
-  def apply(intValue: Int): Track = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-
-  /**
-    * Switch left to right and vice versa
-    * @param track Track value to switch
-    * @return
-    */
-  def switch(track: Track) = {
-    track match {
-      case RightSide => LeftSide
-      case LeftSide => RightSide
-      case _ => track
-    }
-  }
-
-  case object Combined extends Track { def value = 0 }
-  case object RightSide extends Track { def value = 1 }
-  case object LeftSide extends Track { def value = 2 }
-  case object Unknown extends Track { def value = 99 }
-}
 
 /**
   * Road Side (fi: "puoli") tells the relation of an object and the track. For example, the side
@@ -70,34 +39,7 @@ object RoadSide {
   case object Across extends RoadSide { def value = 9 }
   case object Unknown extends RoadSide { def value = 0 }
 }
-
-case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, addrM: Int)
-object RoadAddress {
-  lazy val routeRoadNumbers: Seq[Int] = 1 to 39
-  lazy val mainRoadRoadNumbers: Seq[Int] =  40 to 99
-  lazy val connectingRoadRoadNumbers: Seq[Int] = 1000 to 19999
-  lazy val roundAboutAndDropletRoadNumbers: Seq[Int] = 20001 to 39999 //road part 1
-  lazy val roundAboutFreeRightSideRoadNumbers: Seq[Int] = 20001 to 39999 //road part 2-5
-  lazy val roundAboutDriveThroughLineRoadNumbers: Seq[Int] = 20001 to 39999 //road part 6-7
-  lazy val rampsAndJunctionsRoadNumbers: Seq[Int] = 20001 to 39999 // road part > 11
-  lazy val serviceAreaRoadNumbers: Seq[Int] = 20001 to 39999 // road part 995-999
-  lazy val serviceAccessRoadNumbers: Seq[Int] = 30000 to 39999 // road part 9
-  lazy val streetRoadNumbers: Seq[Int] = 40001 to 49999
-  lazy val privateRoadRoadNumbers: Seq[Int] = 50001 to 59999
-  lazy val winterRoadRoadNumbers: Seq[Int] = 60001 to 61999
-  lazy val tractorRoadRoadNumbers: Seq[Int] = 62001 to 62999
-  lazy val walkingCyclingRoadNumbers: Seq[Int] = 70001 to 99999
-
-  lazy val carTrafficRoadNumbers: Seq[Int] = 1 to 62999
-
-  def isCarTrafficRoadAddress(roadNumber: Long): Boolean = {
-    carTrafficRoadNumbers.contains(roadNumber)
-  }
-
-}
-class RoadAddressException(response: String) extends RuntimeException(response)
-class RoadPartReservedException(response: String) extends RoadAddressException(response)
-
+case class RoadAddressRange(roadNumber: Long, track: Option[Track], startRoadPartNumber: Long, endRoadPartNumber: Long, startAddrMValue: Long, endAddrMValue: Long)
 /**
   * A class to transform ETRS89-FI coordinates to road network addresses
   */
@@ -110,6 +52,19 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  def getLinkIdsInRoadAddressRange(roadAddressRange: RoadAddressRange): Set[String] = {
+    val startAndEndLinkIdsForAllSegments = vkmClient.fetchStartAndEndLinkIdForAddrRange(roadAddressRange)
+    if (startAndEndLinkIdsForAllSegments.isEmpty) {
+      throw new RoadAddressException(s"Could not fetch start and end link id for RoadAddressRange: $roadAddressRange")
+    } else {
+      startAndEndLinkIdsForAllSegments.flatMap(linkIds => {
+        val startLinkId = linkIds._1
+        val endLinkId = linkIds._2
+        vkmClient.fetchLinkIdsBetweenTwoRoadLinks(startLinkId, endLinkId, roadAddressRange.roadNumber)
+      })
+    }
+  }
 
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: String, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 

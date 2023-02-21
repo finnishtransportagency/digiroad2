@@ -20,4 +20,8 @@ object Sequences {
   def nextGroupedIdSeqValue = {
     nextGroupedId.as[Long].first
   }
+
+  def nextLaneHistoryEventOrderNumberValue: Long = {
+    nextLaneHistoryEventOrderNumber.as[Long].first
+  }
 }

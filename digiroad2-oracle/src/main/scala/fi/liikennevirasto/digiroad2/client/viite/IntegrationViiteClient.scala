@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.client.viite
 
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.Track
 import org.apache.http.impl.client.CloseableHttpClient
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat

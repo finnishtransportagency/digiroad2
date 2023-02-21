@@ -90,3 +90,4 @@ drop sequence if exists manoeuvre_id_seq cascade;
 drop sequence if exists national_bus_stop_id_seq cascade;
 drop sequence if exists primary_key_seq cascade;
 drop sequence if exists user_notification_seq cascade;
+drop sequence if exists lane_history_event_order_seq cascade;
