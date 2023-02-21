@@ -54,6 +54,18 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }.filterNot(_.expired)
   }
 
+  override def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val linkIds = roadLinks.map(_.linkId)
+    val existingAssets = if (newTransaction) {
+      withDynTransaction {
+        dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds)
+      }.filterNot(_.expired)
+    } else {
+      dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds).filterNot(_.expired)
+    }
+    existingAssets
+  }
+
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean = false,
                                         roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)

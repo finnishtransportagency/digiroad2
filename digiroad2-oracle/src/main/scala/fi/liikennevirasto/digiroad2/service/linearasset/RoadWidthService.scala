@@ -22,6 +22,29 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
+  override def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val linkIds = roadLinks.map(_.linkId)
+    val existingAssets = if (newTransaction) {
+      withDynTransaction {
+        dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds)
+      }.filterNot(_.expired)
+    } else {
+      dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds).filterNot(_.expired)
+    }
+    existingAssets
+  }
+
+  def getExpireAssetLastModificationsByLinkIds(roadLinks: Seq[String], newTransaction: Boolean = true): Seq[AssetLastModification] = {
+    val existingAssets = if (newTransaction) {
+      withDynTransaction {
+        dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, roadLinks)
+      }
+    } else {
+      dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, roadLinks)
+    }
+    existingAssets
+  }
+  
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean = false,
                                         roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
