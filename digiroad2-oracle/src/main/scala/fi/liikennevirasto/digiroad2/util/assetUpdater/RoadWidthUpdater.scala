@@ -15,7 +15,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       val linkIds = roadLinks.map(_.linkId)
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
       val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
-      val existingAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds ++ removedLinkIds)
+      val existingAssets = service.fetchExistingAssetsByLinksIds(typeId, roadLinks, removedLinkIds, newTransaction = false)
 
       val timing = System.currentTimeMillis
       val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
@@ -33,12 +33,16 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
       val (newRoadWidthAssets, changedSet) = service.getRoadWidthAssetChanges(existingAssets, projectedAssets, roadLinks, changes, newAssetIds =>
-        dao.fetchExpireAssetLastModificationsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, newAssetIds), changedSetProjected)
+        service.getExpireAssetLastModificationsByLinkIds(newAssetIds), changedSetProjected)
 
       val newAssets = assetsWithoutChangedLinks ++ projectedAssets.filterNot(a =>
         newRoadWidthAssets.exists(b => b.linkId == a.linkId && b.sideCode == a.sideCode && b.startMeasure == a.startMeasure && b.endMeasure == a.endMeasure)) ++
         newRoadWidthAssets
 
+      if (newAssets.nonEmpty) {
+        logger.info("Finish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
+      }
+      
       val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks((existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets), roadLinks).groupBy(_.linkId)
       service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
