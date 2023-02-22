@@ -408,6 +408,23 @@ trait LaneOperations {
     */
   def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[LaneChange] = {
 
+    //Sort changes by id and their created/modified/expired times and history event order number
+    def sortChangesByEventTimeAndOrderNumber(laneChanges: Seq[LaneChange]): Seq[LaneChange] = {
+      laneChanges.sortBy{ laneChange =>
+        val lane = laneChange.lane
+        val defaultTime = DateTime.now()
+
+        val changeEventDateTime = laneChange.changeType match {
+          case LaneChangeType.Add => lane.createdDateTime
+          case LaneChangeType.Lengthened | LaneChangeType.Shortened | LaneChangeType.AttributesChanged | LaneChangeType.LaneCodeTransfer => lane.modifiedDateTime
+          case LaneChangeType.Divided => laneChange.oldLane.get.expiredDateTime
+          case LaneChangeType.Expired => lane.expiredDateTime
+        }
+
+        (changeEventDateTime.getOrElse(defaultTime).getMillis, lane.id, laneChange.historyEventOrderNumber)
+      }
+    }
+
     val (upToDateLanes, historyLanes) = withDynTransaction {
       (dao.getLanesChangedSince(sinceDate, untilDate, withAutoAdjust),
         historyDao.getHistoryLanesChangedSince(sinceDate, untilDate, withAutoAdjust))
@@ -485,7 +502,7 @@ trait LaneOperations {
     val historyLaneChanges = twoDigitHistoryLanes.groupBy(_.oldId).flatMap{ case (_, lanes) =>
       val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == lanes.head.linkId)
 
-      val lanesSorted = lanes.sortBy(lane => - lane.changeEventOrderNumber.get)
+      val lanesSorted = lanes.sortBy(lane =>  lane.historyCreatedDate.getMillis)
       lanesSorted.foldLeft(Seq.empty[Option[LaneChange]], lanesSorted){ case (foldLeftParameters, lane) =>
 
         val (treatedLaneChanges, lanesNotTreated) = foldLeftParameters
@@ -532,7 +549,7 @@ trait LaneOperations {
     }
 
     val relevantLanesChanged = (upToDateLaneChanges ++ expiredLanes ++ historyLaneChanges).filter(_.roadLink.isDefined)
-    val sortedLanesChanged = relevantLanesChanged.sortBy(_.historyEventOrderNumber)
+    val sortedLanesChanged = sortChangesByEventTimeAndOrderNumber(relevantLanesChanged)
 
 
     token match {
@@ -1049,7 +1066,7 @@ trait LaneOperations {
       lanesToExpire.map(laneToExpire => {
         // If lane which is to be expired has no end_date property, give current date as end_date
         if(!laneToExpire.attributes.exists(laneProp => laneProp.publicId == "end_date" && laneProp.values.nonEmpty)) {
-          val date = DateTime.now().toString("D.M.YYYY")
+          val date = DateTime.now().toString("d.M.YYYY")
           moveToHistory(laneToExpire.id, None, expireHistoryLane = false, deleteFromLanes = false, username)
           dao.updateEntryLane(laneToExpire.copy(attributes = laneToExpire.attributes :+
             LaneProperty("end_date", Seq(LanePropertyValue(date)))), username)
