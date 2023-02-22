@@ -251,8 +251,7 @@ class LaneHistoryDao() {
 
     val withAutoAdjustFilter = if (withAdjust) "" else "and (l.modified_by is null OR l.modified_by != 'generated_in_update')"
 
-    val filter = s"""WHERE ((l.HISTORY_CREATED_DATE > $querySinceDate and l.HISTORY_CREATED_DATE <= $queryUntilDate) and l.event_order_number is not null
-                      $withAutoAdjustFilter)"""
+    val filter = s"""WHERE ((l.HISTORY_CREATED_DATE > $querySinceDate and l.HISTORY_CREATED_DATE <= $queryUntilDate) $withAutoAdjustFilter)"""
 
     getHistoryLanesFilterQuery(withFilter(filter))
   }
