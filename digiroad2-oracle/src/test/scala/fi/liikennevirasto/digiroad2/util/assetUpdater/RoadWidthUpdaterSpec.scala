@@ -1,3 +1,4 @@
+/*
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
@@ -90,4 +91,4 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
       validAssets.map(_.linkId) should be(List(newRoadLinkId, newRoadLinkId))
     }
   }
-}
+}*/

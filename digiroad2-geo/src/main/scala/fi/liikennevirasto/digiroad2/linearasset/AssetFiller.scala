@@ -14,20 +14,6 @@ class AssetFiller {
 
 
   def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
-
-    val fillOperations: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      capToGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse, 
-      dropShortSegments,
-      adjustAssets,
-      droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      updateValues
-    )
-
     val adjustmentAndNonExistingOperations: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       combine,
       fuse,
@@ -40,9 +26,7 @@ class AssetFiller {
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
       updateValues
     )
-
-    if(geometryChanged) fillOperations
-    else adjustmentAndNonExistingOperations
+    adjustmentAndNonExistingOperations
   }
 
   private def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLink): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
@@ -62,8 +46,9 @@ class AssetFiller {
   
   /**
     * Remove asset which is no longer in geometry
+    *
     * @param roadLink  which we are processing
-    * @param assets  assets in link
+    * @param assets    assets in link
     * @param changeSet record of changes for final saving stage
     * @return assets and changeSet
     */
@@ -531,6 +516,42 @@ class AssetFiller {
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+      (existingAssets ++ adjustedAssets, assetAdjustments)
+    }
+  }
+
+  def fillTopologyChangesGeometry(topology: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
+                   changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val fillOperations: Seq[(RoadLink, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+      expireSegmentsOutsideGeometry,
+      capToGeometry,
+      expireOverlappingSegments,
+      combine,
+      fuse,
+      dropShortSegments,
+      adjustAssets,
+      droppedSegmentWrongDirection,
+      adjustSegmentSideCodes,
+      updateValues
+    )
+
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
+    }
+
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingAssets, changeSet) = acc
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
+
+      val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
       (existingAssets ++ adjustedAssets, assetAdjustments)

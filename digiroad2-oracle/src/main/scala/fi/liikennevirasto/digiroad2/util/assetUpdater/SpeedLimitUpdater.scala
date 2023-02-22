@@ -16,8 +16,8 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   val speedLimitDao = service.speedLimitDao
 
 
-  override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Unit = {
-    val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
+   def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Unit = {
+  /*  val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val oldSpeedLimits = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet))
@@ -38,7 +38,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
       speedLimitsOnChangedLinks, changes, initChangeSet, speedLimitLinks)
 
     val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
-    handleChangesAndUnknowns(roadLinks, speedLimits, Some(projectedChangeSet), oldRoadLinkIds, geometryChanged = true)
+    handleChangesAndUnknowns(roadLinks, speedLimits, Some(projectedChangeSet), oldRoadLinkIds, geometryChanged = true)*/
   }
 
   def handleChangesAndUnknowns(topology: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],

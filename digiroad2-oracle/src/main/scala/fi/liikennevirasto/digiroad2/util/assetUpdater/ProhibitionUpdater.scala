@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater(service) {
 
-  override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
-    try {
+  def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
+/*    try {
       val linkIds = roadLinks.map(_.linkId)
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
       val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
@@ -38,13 +38,13 @@ class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater
         logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
       }
       val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks((existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks), roadLinks).groupBy(_.linkId)
-      service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
+      adjustLinearAssetsOnChangesGeometry(roadLinks, groupedAssets, typeId, Some(changedSet))
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
 
       logger.info(s"Updated asset $typeId in municipality $municipality.")
     } catch {
       case e => logger.error(s"Updating asset $typeId in municipality $municipality failed due to ${e.getMessage}.")
-    }
+    }*/
   }
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {

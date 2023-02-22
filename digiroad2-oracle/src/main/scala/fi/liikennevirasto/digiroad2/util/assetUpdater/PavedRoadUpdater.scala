@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
 
-  override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
-    try {
+  def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
+/*    try {
       val linkIds = roadLinks.map(_.linkId)
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
       val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
@@ -36,12 +36,12 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
       val newAssets = newAndUpdatedPavedRoadAssets.filterNot(a => projectedAssets.exists(f => f.linkId == a.linkId)) ++ projectedAssets
 
       val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks((existingAssets.filterNot(a => expiredIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks), roadLinks).groupBy(_.linkId)
-      service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
+      adjustLinearAssetsOnChangesGeometry(roadLinks, groupedAssets, typeId, Some(changedSet))
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
       logger.info(s"Updated paved roads in municipality $municipality.")
     } catch {
       case e => logger.error(s"Updating paved roads in municipality $municipality failed due to ${e.getMessage}.")
-    }
+    }*/
   }
 
 }

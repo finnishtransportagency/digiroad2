@@ -9,9 +9,9 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
-  override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
-    val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)
-    super.updateByRoadLinks(typeId, municipality, roads, changes)
+  def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
+  /*  val roads: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4)
+    super.updateByRoadLinks(typeId, municipality, roads, changes)*/
   }
 
 

@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpdater(service) {
 
-  override def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
-
+  def updateByRoadLink(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
+/*
     try {
       val linkIds = roadLinks.map(_.linkId)
       val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
@@ -40,13 +40,13 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
         newRoadWidthAssets
 
       val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks((existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets), roadLinks).groupBy(_.linkId)
-      service.adjustLinearAssets(roadLinks, groupedAssets, typeId, Some(changedSet), geometryChanged = true)
+      adjustLinearAssetsOnChangesGeometry(roadLinks, groupedAssets, typeId, Some(changedSet),)
       persistProjectedLinearAssets(newAssets.filter(_.id == 0))
 
       logger.info(s"Updated road widths in municipality $municipality.")
     } catch {
       case e => logger.error(s"Updating road widths in municipality $municipality failed due to ${e.getMessage}.")
-    }
+    }*/
   }
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
