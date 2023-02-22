@@ -1,24 +1,19 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove, Replace, Split}
-import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, _}
+import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.MTKClassWidth
+import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetService
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcProfile.capabilities.mutable
 
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
-import scala.util.Random
 
 class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
@@ -40,8 +35,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
   private def generateRandomLinkId(): String = s"${UUID.randomUUID()}}"
-
-  val (linkId1, linkId2, linkId3) = (generateRandomLinkId(), generateRandomLinkId(), generateRandomLinkId())
+  
   // pseudo geometry 
   val generateGeometry = (startpoint: Double, numberPoint: Long) => {
     val points = new ListBuffer[Point]
@@ -56,8 +50,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     oldLink = None,
     newLinks = Seq(RoadLinkInfo(
       linkId = newID,
-      linkLength = generateGeometry(0, 10)._2,
-      geometry = generateGeometry(0, 10)._1,
+      linkLength = generateGeometry(1, 10)._2,
+      geometry = generateGeometry(1, 10)._1,
       roadClass = MTKClassWidth.CarRoad_Ia.value,
       adminClass = Municipality,
       municipality = 0,
@@ -85,8 +79,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     newLinks = Seq(
       RoadLinkInfo(
         linkId = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1",
-        linkLength = generateGeometry(0, 9)._2,
-        geometry = generateGeometry(0, 9)._1,
+        linkLength = generateGeometry(1, 9)._2,
+        geometry = generateGeometry(1, 9)._1,
         roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
         municipality = 0,
@@ -112,23 +106,23 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       )),
     replaceInfo =
       List(
-        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", oldFromMValue = 0.0,oldToMValue = 9,   newFromMValue = 0.0, newToMValue = generateGeometry(0, 9)._2, false), // sort by oldFromMValue
+        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", oldFromMValue = 0.0,oldToMValue = 9,   newFromMValue = 0.0, newToMValue = generateGeometry(1, 9)._2, false), // sort by oldFromMValue
         ReplaceInfo(oldRoadLinkId, "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1", oldFromMValue = 9,  oldToMValue = 21,  newFromMValue = 0.0, newToMValue = generateGeometry(9, 11)._2, false),
         ReplaceInfo(oldRoadLinkId, "753279ca-5a4d-4713-8609-0bd35d6a30fa:1", oldFromMValue = 21, oldToMValue = 56,  newFromMValue = 0.0, newToMValue = generateGeometry(11, 56)._2, false))
   )
 
   val changeReplaceNewVersion = (oldRoadLinkId: String) => RoadLinkChange(
     changeType = RoadLinkChangeType.Replace,
-    oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generateGeometry(0, 9)._2,
-      geometry = generateGeometry(0, 9)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+    oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generateGeometry(1, 9)._2,
+      geometry = generateGeometry(1, 9)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
       adminClass = Municipality,
       municipality = 0,
       trafficDirection = TrafficDirection.BothDirections)),
     newLinks = Seq(
       RoadLinkInfo(
         linkId = oldRoadLinkId+":2",
-        linkLength = generateGeometry(0, 9)._2,
-        geometry = generateGeometry(0, 9)._1,
+        linkLength = generateGeometry(1, 9)._2,
+        geometry = generateGeometry(1, 9)._1,
         roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
         municipality = 0,
@@ -143,15 +137,15 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   val changeReplaceLenghened = (oldRoadLinkId: String) => RoadLinkChange(
     changeType = RoadLinkChangeType.Replace,
     oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generateGeometry(0, 5)._2,
-      geometry = generateGeometry(0, 5)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+      geometry = generateGeometry(1, 5)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
       adminClass = Municipality,
       municipality = 0,
       trafficDirection = TrafficDirection.BothDirections)),
     newLinks = Seq(
       RoadLinkInfo(
         linkId = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1",
-        linkLength = generateGeometry(0, 10)._2,
-        geometry = generateGeometry(0, 10)._1,
+        linkLength = generateGeometry(1, 10)._2,
+        geometry = generateGeometry(1, 10)._1,
         roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
         municipality = 0,
@@ -159,22 +153,23 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       )),
     replaceInfo =
       List(
-        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = 9, false))
+        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", 
+          oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = 9, false))
 
   )
 
   val changeReplaceShortened = (oldRoadLinkId: String) => RoadLinkChange(
     changeType = RoadLinkChangeType.Replace,
-    oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generateGeometry(0, 5)._2,
-      geometry = generateGeometry(0, 5)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+    oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generateGeometry(1, 5)._2,
+      geometry = generateGeometry(1, 5)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
       adminClass = Municipality,
       municipality = 0,
       trafficDirection = TrafficDirection.BothDirections)),
     newLinks = Seq(
       RoadLinkInfo(
         linkId = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1",
-        linkLength = generateGeometry(0, 1)._2,
-        geometry = generateGeometry(0, 1)._1,
+        linkLength = generateGeometry(1, 2)._2,
+        geometry = generateGeometry(1, 2)._1,
         roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
         municipality = 0,
@@ -182,22 +177,26 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       )),
     replaceInfo =
       List(
-        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = generateGeometry(0, 1)._2, false))
+        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", 
+          oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = generateGeometry(1, 2)._2, false))
 
   )
 
-  val changeReplaceMerge =() => Seq(RoadLinkChange(
+  val changeReplaceMerge = Seq(RoadLinkChange(
     changeType = RoadLinkChangeType.Replace,
-    oldLink = Some(RoadLinkInfo(linkId =  "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", linkLength = generateGeometry(0, 9)._2,
-      geometry = generateGeometry(0, 9)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+    oldLink = Some(RoadLinkInfo(
+      linkId =  "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1",
+      linkLength = generateGeometry(1, 4)._2,
+      geometry = generateGeometry(1, 4)._1,
+      roadClass = MTKClassWidth.CarRoad_Ia.value,
       adminClass = Municipality,
       municipality = 0,
       trafficDirection = TrafficDirection.BothDirections)),
     newLinks = Seq(
       RoadLinkInfo(
         linkId = "753279ca-5a4d-4713-8609-0bd35d6a30fa:1",
-        linkLength = generateGeometry(0, 9)._2,
-        geometry = generateGeometry(0, 9)._1,
+        linkLength = generateGeometry(1, 11)._2,
+        geometry = generateGeometry(1, 11)._1,
         roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
         municipality = 0,
@@ -210,16 +209,19 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   ),
     RoadLinkChange(
       changeType = RoadLinkChangeType.Replace,
-      oldLink = Some(RoadLinkInfo(linkId =  "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1", linkLength = generateGeometry(0, 9)._2,
-        geometry = generateGeometry(0, 9)._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+      oldLink = Some(RoadLinkInfo(
+        linkId =  "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1", 
+        linkLength = generateGeometry(4, 4)._2,
+        geometry = generateGeometry(4, 4)._1,
+        roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
         municipality = 0,
         trafficDirection = TrafficDirection.BothDirections)),
       newLinks = Seq(
         RoadLinkInfo(
           linkId = "753279ca-5a4d-4713-8609-0bd35d6a30fa:1",
-          linkLength = generateGeometry(0, 9)._2,
-          geometry = generateGeometry(0, 9)._1,
+          linkLength = generateGeometry(1, 11)._2,
+          geometry = generateGeometry(1, 11)._1,
           roadClass = MTKClassWidth.CarRoad_Ia.value,
           adminClass = Municipality,
           municipality = 0,
@@ -228,25 +230,119 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       replaceInfo =
         List(ReplaceInfo( "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1","753279ca-5a4d-4713-8609-0bd35d6a30fa:1" , oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 4.0, newToMValue = 10, false))
     )
-  
   )
-
-
+  
   test("case 1 links under asset is split") {
-    val testdata = changeReplaceNewVersion(generateRandomLinkId)
-    println(testdata)
+    
+    val linksid = generateRandomLinkId+":1"
+    val oldRoadLink = RoadLink( linksid, generateGeometry(1, 56)._1, generateGeometry(1, 56)._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeSplit(linksid)
+    
+    runWithRollback {
+      val id = service.createWithoutTransaction(EuropeanRoads.typeId, linksid, NumericValue(3), 1, Measures(0, generateGeometry(1, 56)._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val assetsBefore = service.getPersistedAssetsByIds(EuropeanRoads.typeId, Set(id), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, change.newLinks.map(_.linkId), false)
+      assetsAfter.size should be(3)
+      assetsAfter.head.linkId should be()
+      val sorted = assetsAfter.sortBy(_.startMeasure)
+      
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(9)
+
+      sorted(1).startMeasure should be(9)
+      sorted(2).endMeasure should be(11)
+
+      sorted(3).startMeasure should be(11)
+      sorted(4).endMeasure should be(56)
+      
+      assetsAfter.head.value.get should be(3) 
+    }
   }
 
   test("case 2 links under asset is merged") {
+    val linksid1 = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+    val linksid2 = "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1"
+    val oldRoadLink = RoadLink(linksid1, generateGeometry(1, 4)._1, generateGeometry(1, 4)._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val oldRoadLink2 = RoadLink(linksid2, generateGeometry(4, 4)._1, generateGeometry(4, 4)._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceMerge
 
+    runWithRollback {
+      val id1 = service.createWithoutTransaction(EuropeanRoads.typeId, linksid1, NumericValue(3), 1, Measures(0, generateGeometry(1, 4)._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(EuropeanRoads.typeId, linksid2, NumericValue(3), 1, Measures(0, generateGeometry(4, 4)._2), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(EuropeanRoads.typeId, Set(id1,id2), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
+      assetsAfter.size should be(1)
+      assetsAfter.head.linkId should be()
+      val sorted = assetsAfter.sortBy(_.startMeasure)
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(10)
+      assetsAfter.head.value.get should be(3)
+    }
   }
 
   test("case 3 links under asset is replaced with longer links") {
+    val linksid = generateRandomLinkId()
+    val oldRoadLink = RoadLink(linksid+":1", generateGeometry(1, 4)._1, generateGeometry(1, 4)._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceLenghened(linksid)
 
+    runWithRollback {
+      val id1 = service.createWithoutTransaction(EuropeanRoads.typeId, linksid, NumericValue(3), 1, Measures(0, generateGeometry(1, 4)._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(EuropeanRoads.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
+      assetsAfter.size should be(1)
+      assetsAfter.head.linkId should be()
+      val sorted = assetsAfter.sortBy(_.startMeasure)
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(9)
+      assetsAfter.head.value.get should be(3)
+    }
   }
 
-  test("case 4 links under asset is replaced with longer shorter") {
+  test("case 4 links under asset is replaced with shorter") {
+    val linksid = generateRandomLinkId()
+    val oldRoadLink = RoadLink(linksid+":1", generateGeometry(1, 4)._1, generateGeometry(1, 4)._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceShortened(linksid)
 
+    runWithRollback {
+      val id1 = service.createWithoutTransaction(EuropeanRoads.typeId, linksid, NumericValue(3), 1, Measures(0, generateGeometry(1, 4)._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+     
+      val assetsBefore = service.getPersistedAssetsByIds(EuropeanRoads.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
+      assetsAfter.size should be(1)
+      assetsAfter.head.linkId should be()
+      val sorted = assetsAfter.sortBy(_.startMeasure)
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(2)
+      assetsAfter.head.value.get should be(3)
+    }
   }
 
 
