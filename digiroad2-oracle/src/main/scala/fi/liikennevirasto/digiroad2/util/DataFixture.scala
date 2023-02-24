@@ -2152,7 +2152,8 @@ object DataFixture {
       "kauniainen_traffic_signs.sql",
       "kauniainen_maximum_x7_restrictions.sql",
       "user_notification_examples.sql",
-      "siilinjarvi_verificationService_test_data.sql"
+      "siilinjarvi_verificationService_test_data.sql",
+      "samuutus_test_links.sql"
     ))
   }
 
