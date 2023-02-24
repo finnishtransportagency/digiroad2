@@ -38,7 +38,7 @@
     };
 
     var isCarPedestrianCyclingRoad = function() {
-      return !_.isUndefined(data.linkType) && !_.includes([ 9, 21, 99], data.linkType);
+      return !_.isUndefined(data.linkType) && !_.includes([21, 99], data.linkType);
     };
 
     var cancel = function() {
@@ -212,7 +212,7 @@
     };
 
     this.isPedestrianOrCyclingRoadLink = function (roadLink) {
-      return roadLink.linkType === 8;
+      return roadLink.linkType === 8 || roadLink.linkType === 9;
     };
   };
 })(this);
