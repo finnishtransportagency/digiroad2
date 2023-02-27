@@ -103,7 +103,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
     val linearAssets = Map.empty[String, Seq[PieceWiseLinearAsset]]
-    val filledTopology = assetFiller.fillTopology(topology, linearAssets, 30, Some(changeSet), geometryChanged = false)._1
+    val filledTopology = assetFiller.fillTopology(topology.map(assetFiller.toRoadLinkForFiltopology), linearAssets, 30, Some(changeSet), geometryChanged = false)._1
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
