@@ -30,6 +30,11 @@ class AssetFiller {
       linkSource = roadLink.linkSource,linkType = roadLink.linkType,constructionType = roadLink.constructionType, geometry = roadLink.geometry )
   }
  
+  def printlnOperation(operationName:String)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
+    println(operationName)
+    println(s"side code adjuctment count: ${changeSet.adjustedSideCodes.size}")
+    (segments, changeSet)
+  }
   
   def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val adjustmentAndNonExistingOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
@@ -544,15 +549,25 @@ class AssetFiller {
                                   changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
+      printlnOperation("expireSegmentsOutsideGeometry"),
       capToGeometry,
+      printlnOperation("capToGeometry"),
       expireOverlappingSegments,
+      printlnOperation("expireOverlappingSegments"),
       combine,
+      printlnOperation("combine"),
       fuse,
+      printlnOperation("fuse"),
       dropShortSegments,
+      printlnOperation("dropShortSegments"),
       adjustAssets,
+      printlnOperation("adjustAssets"),
       droppedSegmentWrongDirection,
+      printlnOperation("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
-      updateValues
+      printlnOperation("adjustSegmentSideCodes"),
+      updateValues,
+      printlnOperation("updateValues")
     )
 
     val changeSet = changedSet match {
@@ -564,7 +579,8 @@ class AssetFiller {
         adjustedSideCodes = Seq.empty[SideCodeAdjustment],
         valueAdjustments = Seq.empty[ValueAdjustment])
     }
-
+    //There is some king of bug becouse it loop two time, combine method generate multiple uneended side code changes
+    // seems to be same duplication error
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
@@ -575,56 +591,4 @@ class AssetFiller {
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
   }
-  //TODO this might be in wrong place maybe linearAsset updater might be correct place
-  private def calculateNewMValuesAndSideCode(asset: PieceWiseLinearAsset, projection: Projection, roadLinkLength: Double) = {
-    val oldLength = projection.oldEnd - projection.oldStart
-    val newLength = projection.newEnd - projection.newStart
-
-    // Test if the direction has changed -> side code will be affected, too
-    if (GeometryUtils.isDirectionChangeProjection(projection)) {
-      val newSideCode = asset.sideCode match {
-        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing
-        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing
-        case _ => asset.sideCode
-      }
-      val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
-      val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
-      // Test if asset is affected by projection
-      if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd)
-        (asset.startMeasure, asset.endMeasure, newSideCode)
-      else
-        (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), newSideCode)
-    } else {
-      val newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
-      val newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
-      // Test if asset is affected by projection
-      if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
-        (asset.startMeasure, asset.endMeasure, asset.sideCode)
-      } else {
-        (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), asset.sideCode)
-      }
-    }
-  }
-  //TODO this might be in wrong place maybe linearAsset updater might be correct place
-/*  def projectLinearAsset(asset: PieceWiseLinearAsset, to: RoadLink, projection: Projection, changedSet: ChangeSet) : (PieceWiseLinearAsset, ChangeSet)= {
-    val newLinkId = to.linkId
-    val assetId = asset.linkId match {
-      case to.linkId => asset.id
-      case _ => 0
-    }
-    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(asset, projection, to.length)
-
-    val changeSet = assetId match {
-      case 0 => changedSet
-      case _ => changedSet.copy(adjustedVVHChanges =  changedSet.adjustedVVHChanges ++ Seq(VVHChangesAdjustment(assetId, newLinkId, newStart, newEnd, projection.timeStamp)), adjustedSideCodes = changedSet.adjustedSideCodes ++ Seq(SideCodeAdjustment(assetId, newSideCode, asset.typeId)))
-    }
-
-    val persisted = PersistedLinearAsset(id = assetId, linkId = newLinkId, sideCode = newSideCode.value,
-      value = asset.value, startMeasure = newStart, endMeasure = newEnd,
-      createdBy = asset.createdBy, createdDateTime = asset.createdDateTime, modifiedBy = asset.modifiedBy,
-      modifiedDateTime = asset.modifiedDateTime, expired = false, typeId = asset.typeId,
-      timeStamp = projection.timeStamp, geomModifiedDate = None, linkSource = asset.linkSource, verifiedBy = asset.verifiedBy, verifiedDate = asset.verifiedDate,
-      informationSource = asset.informationSource)
-    (toLinearAsset(Seq(persisted), to).head, changeSet)
-  }*/
 }

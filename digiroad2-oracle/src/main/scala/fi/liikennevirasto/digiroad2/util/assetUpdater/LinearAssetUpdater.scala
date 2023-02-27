@@ -187,7 +187,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       assets.flatMap(a => {
           convertToForCalculation(p,a).map(p1 => {
           val projected = projectAssetsConditionally(p1._2, assets, testAssetsContainSegment)
-          projectLinearAsset(a.copy(linkId = p1._1.linkId ), p1._1, projected.get, changeSets)
+          projectLinearAsset(a.copy(linkId = p1._1.linkId ), p1._1, projected.get, changeSets) // change how adjustment work or check if change is over 0.1 meter
         })
       })
     }).toSeq.flatten
@@ -266,9 +266,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     
     // TODO is there need validate whole asset network?
-    val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks, linearAssets, typeId, changeSet)
+    val (filledTopology, changedSet) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
     val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
- /*   adjustmentsChangeSet.isEmpty match { //  Validate that there is no infinity loop 
+   /* adjustmentsChangeSet.isEmpty match { //  Validate that there is no infinity loop 
       case true => filledTopology
       case false if counter > 3 =>
         updateChangeSet(adjustmentsChangeSet)
@@ -276,7 +276,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case false if counter <= 3 =>
         updateChangeSet(adjustmentsChangeSet)
         val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty)
-        adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust, typeId, None, counter + 1)
+        adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust.groupBy(_.linkId), typeId, None, counter + 1)
     }*/
 
     updateChangeSet(adjustmentsChangeSet)
