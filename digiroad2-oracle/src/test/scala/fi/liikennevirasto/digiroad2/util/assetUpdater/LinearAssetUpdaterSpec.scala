@@ -17,11 +17,11 @@ import scala.collection.mutable.ListBuffer
 
 class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val linearAssetDao = new PostGISLinearAssetDao()
-  val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
+  val mockDynamicLinearAssetDao: DynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val service = new LinearAssetService(mockRoadLinkService, mockEventBus)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
@@ -37,10 +37,10 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   private def generateRandomLinkId(): String = s"${UUID.randomUUID()}}"
   
   // pseudo geometry 
-  val generateGeometry = (startpoint: Double, numberPoint: Long) => {
+  val generateGeometry: (Double, Long) => (List[Point], Double) = (startPoint: Double, numberPoint: Long) => {
     val points = new ListBuffer[Point]
     for (i <- 1 to numberPoint.toInt) {
-      points.append(Point(i + startpoint, 0))
+      points.append(Point(i + startPoint, 0))
     }
     (points.toList, GeometryUtils.geometryLength(points))
   }
@@ -106,9 +106,12 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       )),
     replaceInfo =
       List(
-        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", oldFromMValue = 0.0,oldToMValue = 9,   newFromMValue = 0.0, newToMValue = generateGeometry(1, 9)._2, false), // sort by oldFromMValue
-        ReplaceInfo(oldRoadLinkId, "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1", oldFromMValue = 9,  oldToMValue = 21,  newFromMValue = 0.0, newToMValue = generateGeometry(9, 11)._2, false),
-        ReplaceInfo(oldRoadLinkId, "753279ca-5a4d-4713-8609-0bd35d6a30fa:1", oldFromMValue = 21, oldToMValue = 56,  newFromMValue = 0.0, newToMValue = generateGeometry(11, 56)._2, false))
+        ReplaceInfo(oldRoadLinkId, "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1",
+          oldFromMValue = 0.0,oldToMValue = 9,   newFromMValue = 0.0, newToMValue = generateGeometry(1, 9)._2, false), // sort by oldFromMValue
+        ReplaceInfo(oldRoadLinkId, "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1",
+          oldFromMValue = 9,  oldToMValue = 21,  newFromMValue = 0.0, newToMValue = generateGeometry(9, 11)._2, false),
+        ReplaceInfo(oldRoadLinkId, "753279ca-5a4d-4713-8609-0bd35d6a30fa:1",
+          oldFromMValue = 21, oldToMValue = 56,  newFromMValue = 0.0, newToMValue = generateGeometry(11, 56)._2, false))
   )
 
   val changeReplaceNewVersion = (oldRoadLinkId: String) => RoadLinkChange(
@@ -130,7 +133,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       )),
     replaceInfo =
       List(
-        ReplaceInfo(oldRoadLinkId, oldRoadLinkId+":2", oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = generateGeometry(0, 9)._2, false))
+        ReplaceInfo(oldRoadLinkId, oldRoadLinkId+":2", 
+          oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = generateGeometry(0, 9)._2, false))
 
   )
 
@@ -204,7 +208,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       )),
     replaceInfo =
       List(
-        ReplaceInfo( "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1","753279ca-5a4d-4713-8609-0bd35d6a30fa:1", oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = 4, false)
+        ReplaceInfo( "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1","753279ca-5a4d-4713-8609-0bd35d6a30fa:1", 
+          oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = 4, false)
       )
   ),
     RoadLinkChange(
@@ -228,7 +233,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
           trafficDirection = TrafficDirection.TowardsDigitizing
         )),
       replaceInfo =
-        List(ReplaceInfo( "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1","753279ca-5a4d-4713-8609-0bd35d6a30fa:1" , oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 4.0, newToMValue = 10, false))
+        List(ReplaceInfo( "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1","753279ca-5a4d-4713-8609-0bd35d6a30fa:1" ,
+          oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 4.0, newToMValue = 10, false))
     )
   )
   
@@ -249,7 +255,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, change.newLinks.map(_.linkId), false)
       assetsAfter.size should be(3)
-      assetsAfter.head.linkId should be()
       val sorted = assetsAfter.sortBy(_.startMeasure)
       
       sorted.head.startMeasure should be(0)
@@ -287,7 +292,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
       assetsAfter.size should be(1)
-      assetsAfter.head.linkId should be()
       val sorted = assetsAfter.sortBy(_.startMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(10)
@@ -312,7 +316,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
       assetsAfter.size should be(1)
-      assetsAfter.head.linkId should be()
       val sorted = assetsAfter.sortBy(_.startMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
@@ -337,7 +340,31 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
       assetsAfter.size should be(1)
-      assetsAfter.head.linkId should be()
+      val sorted = assetsAfter.sortBy(_.startMeasure)
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(2)
+      assetsAfter.head.value.get should be(3)
+    }
+  }
+  
+  test("case 6 links version is changes, move to new version") {
+    val linksid = generateRandomLinkId()
+    val oldRoadLink = RoadLink(linksid + ":1", generateGeometry(1, 4)._1, generateGeometry(1, 4)._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceNewVersion(linksid)
+
+    runWithRollback {
+      val id1 = service.createWithoutTransaction(EuropeanRoads.typeId, linksid, NumericValue(3), 1, Measures(0, generateGeometry(1, 4)._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(EuropeanRoads.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(EuropeanRoads.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
+      assetsAfter.size should be(1)
+      assetsAfter.head.linkId should be(linksid+":2")
       val sorted = assetsAfter.sortBy(_.startMeasure)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(2)
@@ -345,13 +372,29 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
+  test("case 5 asset retain all it old values, group 1 (position)") {
+    fail("Need to be implemented")
+  }
 
-  test("case 5 asset retain all it old values") {
+  test("case 5 asset retain all it old values,group 2, (position,value)") {
+    fail("Need to be implemented")
 
   }
 
-  test("case 6 links version is changes, move to new version") {
+  test("case 5 asset retain all it old values,group 3, (position,value, side code)") {
+    fail("Need to be implemented")
+  }
 
+  test("case 5 asset retain all it old values,group 4, (position,value, side code, validity period)") {
+    fail("Need to be implemented")
+  }
+
+  test("case 5 asset retain all it old values,group 4, (position,value, side code, validity period, exception)") {
+    fail("Need to be implemented")
+  }
+
+  test("case 5 asset retain all it old values,group 5, (external id)") {
+    fail("Need to be implemented")
   }
 
 
