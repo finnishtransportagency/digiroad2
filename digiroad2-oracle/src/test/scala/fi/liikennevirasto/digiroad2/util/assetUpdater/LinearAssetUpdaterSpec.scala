@@ -286,7 +286,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val id2 = service.createWithoutTransaction(EuropeanRoads.typeId, linksid2, NumericValue(3), 1, Measures(0, generateGeometry(4, 4)._2), "testuser", 0L, Some(oldRoadLink2), false, None, None)
 
       val assetsBefore = service.getPersistedAssetsByIds(EuropeanRoads.typeId, Set(id1,id2), false)
-      assetsBefore.size should be(1)
+      assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks2(EuropeanRoads.typeId, change)

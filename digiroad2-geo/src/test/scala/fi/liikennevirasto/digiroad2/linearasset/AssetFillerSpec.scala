@@ -123,7 +123,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val assets = assetFiller.toLinearAssetsOnMultipleLinks(Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(2l, linkId2, 2, Some(NumericValue(1)), 0.0, 5.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
       PersistedLinearAsset(3l, linkId2, 2, Some(NumericValue(1)), 7.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
-      PersistedLinearAsset(4l, linkId2, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology).sortBy(_.id)
+      PersistedLinearAsset(4l, linkId2, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), 
+      topology.map(assetFiller.toRoadLinkForFiltopology)).sortBy(_.id)
 
 
     val linearAssets = Map(

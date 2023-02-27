@@ -28,15 +28,15 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
     )
     val linearAssets = Map(
       linkId1 -> oneWayAssetFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)), 0.0, 10.0,
-        None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.head),
+        None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(oneWayAssetFiller.toRoadLinkForFiltopology).head),
       linkId2 -> oneWayAssetFiller.toLinearAsset(Seq(
         PersistedLinearAsset(2l, linkId2, 2, Some(NumericValue(1)), 0.0, 5.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
         PersistedLinearAsset(3l, linkId2, 2, Some(NumericValue(1)), 7.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None),
         PersistedLinearAsset(4l, linkId2, SideCode.BothDirections.value, Some(NumericValue(1)), 5.0, 7.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)
-      ), topology.last)
+      ), topology.map(oneWayAssetFiller.toRoadLinkForFiltopology).last)
     )
 
-    val (filledTopology, changeSet) = oneWayAssetFiller.fillTopology(topology, linearAssets, 110)
+    val (filledTopology, changeSet) = oneWayAssetFiller.fillTopology(topology.map(oneWayAssetFiller.toRoadLinkForFiltopology), linearAssets, 110)
 
     filledTopology should have size 4
 
@@ -65,7 +65,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
       linkId -> oneWayAssetFiller.toLinearAsset(Seq(PersistedLinearAsset(1l, linkId, TowardsDigitizing.value, Some(NumericValue(1)),
-        0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.head))
+        0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)), topology.map(oneWayAssetFiller.toRoadLinkForFiltopology).head))
 
     val changeSet = ChangeSet( droppedAssetIds = Set.empty[Long],
       expiredAssetIds = Set.empty[Long],
@@ -74,7 +74,7 @@ class OneWayAssetFillerSpec extends FunSuite with Matchers {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
 
-    val filledTopology = oneWayAssetFiller.fillTopology(topology, linearAssets, 110, Some(changeSet), geometryChanged = false)._1
+    val filledTopology = oneWayAssetFiller.fillTopology(topology.map(oneWayAssetFiller.toRoadLinkForFiltopology), linearAssets, 110, Some(changeSet), geometryChanged = false)._1
 
     filledTopology should have size 2
     filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))

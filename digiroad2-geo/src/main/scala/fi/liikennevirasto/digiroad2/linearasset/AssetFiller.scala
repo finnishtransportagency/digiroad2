@@ -2,13 +2,20 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, ConstructionType, CycleOrPedestrianPath, LinkGeomSource, LinkType, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SideCode, SpecialTransportWithGate, SpecialTransportWithoutGate, State, TractorRoad, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import org.joda.time.DateTime
 
 
-case class RoadLinkForFiltopology(linkId: String, length:Double, trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource, geometry: Seq[Point]){
-  
+case class RoadLinkForFiltopology(linkId: String, length:Double, trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource,
+                                  linkType:LinkType,constructionType:ConstructionType, geometry: Seq[Point]){
+  def isSimpleCarTrafficRoad: Boolean = {
+    val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, ServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
+    val constructionTypeAllowed: Seq[ConstructionType] = Seq(UnderConstruction, Planned)
+
+    !(constructionTypeAllowed.contains(constructionType) || (roadLinkTypeAllowed.contains(linkType) && administrativeClass == State))
+  }
 }
 
 class AssetFiller {
@@ -20,7 +27,7 @@ class AssetFiller {
 
   def toRoadLinkForFiltopology(roadLink: RoadLink): RoadLinkForFiltopology = {
     RoadLinkForFiltopology(linkId = roadLink.linkId,length =  roadLink.length,trafficDirection = roadLink.trafficDirection,administrativeClass = roadLink.administrativeClass,
-      linkSource = roadLink.linkSource, geometry = roadLink.geometry )
+      linkSource = roadLink.linkSource,linkType = roadLink.linkType,constructionType = roadLink.constructionType, geometry = roadLink.geometry )
   }
  
   

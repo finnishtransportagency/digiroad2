@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.fillTopology
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, toRoadLinkForFiltopology}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
@@ -43,7 +43,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
   def handleChangesAndUnknowns(topology: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
                                changeSet:Option[ChangeSet] = None, oldRoadLinkIds: Seq[String], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, changedSet) = fillTopology(topology, speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
+    val (filledTopology, changedSet) = fillTopology(topology.map(toRoadLinkForFiltopology), speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
     val cleanedChangeSet = cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
     val newSpeedLimitsWithValue = filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
