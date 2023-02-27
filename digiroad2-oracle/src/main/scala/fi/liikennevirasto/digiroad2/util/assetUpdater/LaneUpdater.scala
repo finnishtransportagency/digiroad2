@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkChangeType}
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.util.MainLanePopulationProcess
@@ -15,17 +15,20 @@ class LaneUpdater(roadLinkChangeClient: RoadLinkChangeClient, roadLinkService: R
   }
 
   def updateLanes(): Unit = {
-    val changes = roadLinkChangeClient.getRoadLinkChanges()
+    val roadLinkChanges = roadLinkChangeClient.getRoadLinkChanges()
+    handleChanges(roadLinkChanges)
+  }
 
-    val newLinkIds = changes.flatMap(_.newLinks.map(_.linkId))
-    val oldLinkIds = changes.flatMap(_.oldLink).map(_.linkId)
+  def handleChanges(roadLinkChanges: Seq[RoadLinkChange]): Unit = {
+    val newLinkIds = roadLinkChanges.flatMap(_.newLinks.map(_.linkId))
+    val oldLinkIds = roadLinkChanges.flatMap(_.oldLink).map(_.linkId)
 
     val lanesOnChangedLinks = laneService.fetchExistingLanesByLinkIds(oldLinkIds)
 
-    val deletionChanges = changes.filter(_.changeType == RoadLinkChangeType.Remove)
-    val addChanges = changes.filter(_.changeType == RoadLinkChangeType.Add)
-    val replacementChanges = changes.filter(_.changeType == RoadLinkChangeType.Replace)
-    val splitChanges = changes.filter(_.changeType == RoadLinkChangeType.Split)
+    val deletionChanges = roadLinkChanges.filter(_.changeType == RoadLinkChangeType.Remove)
+    val addChanges = roadLinkChanges.filter(_.changeType == RoadLinkChangeType.Add)
+    val replacementChanges = roadLinkChanges.filter(_.changeType == RoadLinkChangeType.Replace)
+    val splitChanges = roadLinkChanges.filter(_.changeType == RoadLinkChangeType.Split)
 
     val removedLinkIds = deletionChanges.map(_.oldLink.get.linkId)
     val removedLaneIds = lanesOnChangedLinks.filter(lane => removedLinkIds.contains(lane.linkId)).map(_.id)
