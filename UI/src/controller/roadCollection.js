@@ -215,7 +215,7 @@
     };
 
     this.isPedestrianOrCyclingRoadLink = function (roadLink) {
-      return roadLink.linkType === linkTypes.CycleOrPedestrianPath.value || linkTypes.PedestrianZone.value;
+      return roadLink.linkType === linkTypes.CycleOrPedestrianPath.value || roadLink.linkType === linkTypes.PedestrianZone.value;
     };
   };
 })(this);
