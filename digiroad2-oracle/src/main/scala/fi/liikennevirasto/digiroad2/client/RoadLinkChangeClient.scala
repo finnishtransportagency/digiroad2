@@ -34,11 +34,8 @@ object RoadLinkChangeType {
 }
 
 case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int, adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection)
-
 case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double, digitizationChange: Boolean)
-
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
-
 
 class RoadLinkChangeClient {
   lazy val awsService = new AwsService
@@ -117,7 +114,6 @@ class RoadLinkChangeClient {
 
   implicit val formats = DefaultFormats + changeItemSerializer + RoadLinkChangeTypeSerializer + GeometrySerializer +
     AdminClassSerializer + TrafficDirectionSerializer
-
 
   def fetchLatestSuccessfulUpdateDate(): DateTime = {
     // placeholder value as long as fetching this date from db is possible
