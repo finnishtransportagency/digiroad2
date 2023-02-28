@@ -565,6 +565,27 @@ class PostGISLinearAssetDao() {
   /**
     * Updates m-values in db. Used by PostGISLinearAssetDao.splitSpeedLimit, LinearAssetService.persistMValueAdjustments and LinearAssetService.split.
     */
+  def updateMValues(id: Long,linkId:String, linkMeasures: (Double, Double)): Unit = {
+    val (startMeasure, endMeasure) = linkMeasures
+    sqlu"""
+      update LRM_POSITION
+      set
+        link_id = $linkId,
+        start_measure = $startMeasure,
+        end_measure = $endMeasure,
+        modified_date = current_timestamp
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = $id)
+    """.execute
+  }
+
+  /**
+    * Updates m-values in db. Used by PostGISLinearAssetDao.splitSpeedLimit, LinearAssetService.persistMValueAdjustments and LinearAssetService.split.
+    */
   def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
@@ -585,12 +606,13 @@ class PostGISLinearAssetDao() {
   /**
     * Updates from Change Info in db.
     */
-  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
+  def updateMValuesChangeInfo(id: Long,linkId:String, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
     println("asset_id -> " + id)
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
       update LRM_POSITION
       set
+        link_id = $linkId,
         start_measure = $startMeasure,
         end_measure = $endMeasure,
         modified_date = current_timestamp,
