@@ -1,168 +1,170 @@
-import { S3, ListObjectsCommandInput, _Object, CompletedPart, CompleteMultipartUploadCommandOutput } from "@aws-sdk/client-s3";
-import { checkResultsForErrors } from "../client/client-base";
+import {S3, ListObjectsCommandInput, _Object, CompletedPart, CompleteMultipartUploadCommandOutput} from "@aws-sdk/client-s3";
+import {Event} from "../index";
+import {Utils} from "../utils/utils";
+import {S3ObjectUtils} from "../utils/s3-object-utils";
 
-const Client = new S3({ region: process.env.AWS_REGION });
+const S3Client = new S3({ region: process.env.AWS_REGION });
 
-const BucketName                = process.env.CHANGE_BUCKET;
 const MultiPartUploadLimitBytes = 1024 * 1024 * 100;    // 100Mb
 const ChunkSizeBytes            = 1024 * 1024 * 5;      // 5Mb
 
-/**
- * S3 Change set naming convention
- * since_until.json i.e. 2022-7-1_2022-7-31.json
- */
-export const S3ChangeSet = {
-    createKey(since: string, until: string): string {
-        function formatDate(date: string) {
-            const [day, month, year] = date.split(".");
-            return `${year}-${month}-${day}`;
-        }
-        return `${formatDate(since)}_${formatDate(until)}.json`;
-    },
-    extractUntilDateFromKey(objectKey: string): Date {
-        const dates = objectKey.replace(".json", "");
-        const [, until] = dates.split("_");
-        return new Date(until);
-    },
-    isValidKey(objectKey?: string): Boolean {
-        if (!objectKey) return false;
-        const dates = objectKey.replace(".json", "");
-        const [since, until] = dates.split("_");
-        return !isNaN(Date.parse(since)) && !isNaN(Date.parse(until));
-    }
-}
+export class S3Service {
+    bucketName: string;
 
-/**
- * Uploads change set to the S3 bucket specified in environment variables
- */
-export async function uploadToBucket(since: string, until: string, json: string): Promise<void> {
-    if (!BucketName) throw new Error("S3 Bucket not defined");
-    const operationStartTime = Date.now();
-    const objectKey = S3ChangeSet.createKey(since, until);
-    const estimatedFileSize = Buffer.byteLength(json, "utf-8");
-    try {
-        if (estimatedFileSize <= MultiPartUploadLimitBytes) {
-            await uploadObjectToBucket(objectKey, json);
+    constructor() {
+        if (!process.env.CHANGE_BUCKET) throw new Error("S3 Bucket not defined")
+        this.bucketName = process.env.CHANGE_BUCKET;
+    }
+
+    /**
+     * Uploads change set to the S3 bucket specified in environment variables
+     */
+    async uploadToBucket(since: string, until: string, json: string): Promise<void> {
+        const operationStartTime = Date.now();
+        const objectKey = S3ObjectUtils.createKey(since, until);
+        const estimatedFileSize = Buffer.byteLength(json, "utf-8");
+        try {
+            if (estimatedFileSize <= MultiPartUploadLimitBytes) {
+                await this.uploadObjectToBucket(objectKey, json);
+            } else {
+                console.info(`Using multipart upload for file size ${estimatedFileSize} (bytes)`);
+                await this.multipartUploadObjectToBucket(objectKey, estimatedFileSize, json);
+            }
+            console.info(`Saving object ${objectKey} to ${this.bucketName} took ${(Date.now() - operationStartTime) / 1000} seconds`);
+        } catch (e) {
+            console.error(e);
+            throw new Error(`Failed saving object ${objectKey} to ${this.bucketName} at ${(Date.now() - operationStartTime) / 1000} seconds`);
+        }
+    }
+
+    /**
+     * Determines timeframe to new change set.
+     * If since and until are defined in event and are valid dates, use them. Otherwise, determine timeframe from s3.
+     */
+    async getChangeTimeframe(event: Event): Promise<[string, string]> {
+        if (event.since && event.until) {
+            const sinceDate = Date.parse(event.since);
+            const untilDate = Date.parse(event.until);
+
+            // Return env dates if they are valid and since date is before until date
+            if(!isNaN(sinceDate) && !isNaN(untilDate) && sinceDate <= untilDate) {
+                return [Utils.dateToDateString(new Date(sinceDate)), Utils.dateToDateString(new Date(untilDate))];
+            }
+        }
+        const since = await this.getTimeOfLastFetchedChanges() ?? new Date("2022-05-10");
+        since.setDate(since.getDate() + 1);
+        const until = new Date();
+        until.setDate(until.getDate() - 1);
+        return [Utils.dateToDateString(since), Utils.dateToDateString(until)];
+    }
+
+    /**
+     * Returns until date of the latest change set or undefined if there is no change sets in the S3 bucket.
+     */
+    protected async getTimeOfLastFetchedChanges(): Promise<Date | undefined> {
+        const sortedKeys = await this.getBucketObjects();
+        const newestChangeSetID = sortedKeys[0];
+        if (newestChangeSetID) {
+            return  S3ObjectUtils.extractUntilDateFromKey(newestChangeSetID);
+        }
+        console.info("No change sets found");
+    }
+
+    protected async getBucketObjects(): Promise<string[]> {
+        const params: ListObjectsCommandInput = {
+            Bucket: this.bucketName
+        }
+        const objects = await this.listBucketObjects(params);
+        const objectKeys = objects.map(object => object.Key);
+        return S3ObjectUtils.sortKeysByUntilDate(objectKeys);
+    }
+
+    protected async listBucketObjects(params: ListObjectsCommandInput): Promise<_Object[]> {
+        const result = await S3Client.listObjects(params);
+        if (result.IsTruncated && result.Contents) {
+            params.Marker = result.NextMarker;
+            return result.Contents.concat(await this.listBucketObjects(params));
         } else {
-            console.info(`Using multipart upload for file size ${estimatedFileSize} (bytes)`);
-            await multipartUploadObjectToBucket(objectKey, estimatedFileSize, json);
+            return result.Contents ?? [];
         }
-        console.info(`Saving object ${objectKey} to ${BucketName} took ${(Date.now() - operationStartTime) / 1000} seconds`);
-    } catch (e) {
-        console.error(e);
-        throw new Error(`Failed saving object ${objectKey} to ${BucketName} at ${(Date.now() - operationStartTime) / 1000} seconds`);
     }
-}
 
-/**
- * Returns until date of the latest change set or undefined if there is no change sets in the S3 bucket.
- */
-export async function getTimeOfLastFetchedChanges(): Promise<Date | undefined> {
-    const sortedKeys = await getBucketObjects();
-    const newestChangeSetID = sortedKeys.pop();
-    if (newestChangeSetID) {
-        return  S3ChangeSet.extractUntilDateFromKey(newestChangeSetID);
+    protected async uploadObjectToBucket(key: string, data: string) {
+        const params = {
+            Bucket: this.bucketName,
+            Key: key,
+            Body: data,
+            ContentType: "application/json"
+        };
+        return await S3Client.putObject(params);
     }
-    console.info("No change sets found")
-}
 
-async function getBucketObjects(): Promise<string[]> {
-    if (!BucketName) throw new Error("S3 Bucket not defined");
-    const params: ListObjectsCommandInput = {
-        Bucket: BucketName
+    protected async multipartUploadObjectToBucket(key: string, dataSize: number, data: string): Promise<CompleteMultipartUploadCommandOutput> {
+        const chunks = this.dataToChunks(data, dataSize);
+        const uploadId = await this.createMultipartUpload(key);
+        const promises = chunks.map(part => this.uploadPart(uploadId, key, part.data, part.partNumber));
+        const results = await Promise.allSettled(promises);
+        const completedParts = Utils.checkResultsForErrors(results, "Unable to upload all parts") as CompletedPart[];
+        return await this.completeMultipartUpload(uploadId, key, completedParts);
     }
-    const objects = await listBucketObjects(params);
-    const objectKeys = objects.map(object => object.Key).filter(S3ChangeSet.isValidKey) as string[];
-    return objectKeys.sort((a, b) => {
-        return S3ChangeSet.extractUntilDateFromKey(a).getTime() - S3ChangeSet.extractUntilDateFromKey(b).getTime();
-    })
-}
 
-async function listBucketObjects(params: ListObjectsCommandInput): Promise<_Object[]> {
-    const result = await Client.listObjects(params);
-    if (result.IsTruncated && result.Contents) {
-        params.Marker = result.NextMarker;
-        return result.Contents.concat(await listBucketObjects(params));
-    } else {
-        return result.Contents ?? [];
+    protected dataToChunks(data: string, dataSize: number): Array<{partNumber: number, data: Buffer}> {
+        const numberOfParts = Math.ceil(dataSize / ChunkSizeBytes);
+        const buffer = Buffer.from(data, "utf-8");
+
+        const chunks: Array<{partNumber: number, data: Buffer}> = [];
+        for (let i = 0; i < numberOfParts; i++) {
+            const chunk = buffer.subarray(i * ChunkSizeBytes, i * ChunkSizeBytes + ChunkSizeBytes);
+            chunks.push({ partNumber: i + 1, data: chunk });
+        }
+        return chunks;
     }
-}
 
-async function uploadObjectToBucket(key: string, data: string) {
-    const params = {
-        Bucket: BucketName,
-        Key: key,
-        Body: data,
-        ContentType: "application/json"
-    };
-    return await Client.putObject(params);
-}
-
-async function multipartUploadObjectToBucket(key: string, dataSize: number, data: string): Promise<CompleteMultipartUploadCommandOutput> {
-    const chunks = dataToChunks(data, dataSize);
-    const uploadId = await createMultipartUpload(key);
-    const promises = chunks.map(part => uploadPart(uploadId, key, part.data, part.partNumber));
-    const results = await Promise.allSettled(promises);
-    const completedParts = checkResultsForErrors(results, "Unable to upload all parts") as CompletedPart[];
-    return await completeMultipartUpload(uploadId, key, completedParts);
-}
-
-function dataToChunks(data: string, dataSize: number): Array<{partNumber: number, data: Buffer}> {
-    const numberOfParts = Math.ceil(dataSize / ChunkSizeBytes);
-    const buffer = Buffer.from(data, "utf-8");
-
-    const chunks: Array<{partNumber: number, data: Buffer}> = [];
-    for (let i = 0; i < numberOfParts; i++) {
-        const chunk = buffer.subarray(i * ChunkSizeBytes, i * ChunkSizeBytes + ChunkSizeBytes);
-        chunks.push({ partNumber: i + 1, data: chunk });
+    /**
+     * Initiates a multipart upload and returns an upload ID.
+     */
+    protected async createMultipartUpload(key: string): Promise<string> {
+        const params = {
+            Bucket: this.bucketName,
+            Key: key
+        };
+        const { UploadId } = await S3Client.createMultipartUpload(params);
+        if (!!UploadId) {
+            return UploadId;
+        } else {
+            throw new Error("Unable to create multipart upload id");
+        }
     }
-    return chunks;
-}
 
-/**
- * Initiates a multipart upload and returns an upload ID.
- */
-async function createMultipartUpload(key: string): Promise<string> {
-    const params = {
-        Bucket: BucketName,
-        Key: key
-    };
-    const { UploadId } = await Client.createMultipartUpload(params);
-    if (!!UploadId) {
-        return UploadId;
-    } else {
-        throw new Error("Unable to create multipart upload id");
+    /**
+     * Tries to upload part to S3. In case of failure, retries three times before error is thrown.
+     */
+    protected async uploadPart(uploadId: string, key: string, data: Buffer, partNumber: number,
+                              retry: number = 0): Promise<CompletedPart> {
+        const params = {
+            Bucket: this.bucketName,
+            UploadId: uploadId,
+            Key: key,
+            PartNumber: partNumber,
+            Body: data
+        };
+        const { ETag } = await S3Client.uploadPart(params);
+        if (ETag) {
+            return { ETag: ETag, PartNumber: partNumber };
+        } else if (retry < 3) {
+            return this.uploadPart(uploadId, key, data, partNumber, retry + 1);
+        } else {
+            throw new Error(`Unable to upload part ${partNumber}`);
+        }
     }
-}
 
-/**
- * Tries to upload part to S3. In case of failure, retries three times before error is thrown.
- */
-async function uploadPart(uploadId: string, key: string, data: Buffer, partNumber: number,
-                          retry: number = 0): Promise<CompletedPart> {
-    const params = {
-        Bucket: BucketName,
-        UploadId: uploadId,
-        Key: key,
-        PartNumber: partNumber,
-        Body: data
-    };
-    const { ETag } = await Client.uploadPart(params);
-    if (ETag) {
-        return { ETag: ETag, PartNumber: partNumber };
-    } else if (retry < 3) {
-        return uploadPart(uploadId, key, data, partNumber, retry + 1);
-    } else {
-        throw new Error(`Unable to upload part ${partNumber}`);
+    protected async completeMultipartUpload(uploadId: string, key: string, completedParts: CompletedPart[]): Promise<CompleteMultipartUploadCommandOutput> {
+        const params = {
+            Bucket: this.bucketName,
+            UploadId: uploadId,
+            Key: key,
+            MultipartUpload: { Parts: completedParts }
+        };
+        return await S3Client.completeMultipartUpload(params);
     }
-}
-
-async function completeMultipartUpload(uploadId: string, key: string, completedParts: CompletedPart[]): Promise<CompleteMultipartUploadCommandOutput> {
-    const params = {
-        Bucket: BucketName,
-        UploadId: uploadId,
-        Key: key,
-        MultipartUpload: { Parts: completedParts }
-    };
-    return await Client.completeMultipartUpload(params);
 }

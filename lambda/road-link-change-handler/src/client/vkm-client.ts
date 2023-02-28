@@ -1,130 +1,176 @@
-import { AxiosInstance } from "axios";
-import { createInstance, getRequest, postRequest, checkResultsForErrors } from "./client-base";
-import { arrayToChucks } from "../utils/utils";
+import {AxiosInstance} from "axios";
+import {ClientBase} from "./client-base";
+import {Utils} from "../utils/utils";
 
-const VkmApiBase    = process.env.VKM_API_URL;
-const VkmApiKey     = process.env.VKM_API_KEY;
-const ConvertPath   = "muunna";
-const ChangesPath   = "tiekamu";
+export class VkmClient extends ClientBase {
+    private readonly url: string;
+    private readonly apiKey: string;
 
-const MaxBatchSize  = 100;
+    private readonly convertPath  = "muunna";
+    private readonly changesPath  = "tiekamu";
 
-/**
- * Fetch changes happened during time period
- * @param since
- * @param until
- */
-export async function fetchChanges(since: string, until: string): Promise<string[]> {
-    if (!VkmApiBase || !VkmApiKey) {
-        throw new Error("Either VKM_API_URL or VKM_API_KEY or both environment variables missing");
+    private readonly maxBatchSize = 100;
+
+    constructor() {
+        if (!process.env.VKM_API_URL || !process.env.VKM_API_KEY) {
+            throw new Error("Either VKM_API_URL, VKM_API_KEY or both environment variables missing");
+        }
+        super();
+        this.url    = process.env.VKM_API_URL;
+        this.apiKey = process.env.VKM_API_KEY;
     }
-    const instance = await createInstance(VkmApiBase, VkmApiKey);
-    // TODO: Add new parameters for filtering road address changes and for pagination of results(?)
-    const json = {
-        tilannepvm: since,
-        asti: until,
-        palautusarvot: "6"
-    };
-    const results = await getRequest(instance, ChangesPath, json);
-    // TODO: mapping of results
-    return [];
-}
 
-/**
- * Get new situation for changed link ids
- * @param situationDate Date witch situation is desired. Same as until date in fetchChanges
- * @param oldLinkIds    List of old link ids
- */
-export async function replacementsForLinks(situationDate: string, oldLinkIds: string[]): Promise<ReplaceInfo[]> {
-    if (!VkmApiBase || !VkmApiKey) {
-        throw new Error("Either VKM_API_URL, VKM_API_KEY or both environment variables missing");
-    }
-    const instance = await createInstance(VkmApiBase, VkmApiKey, "application/x-www-form-urlencoded; charset=UTF-8");
 
-    const uniqueIds = [...new Set(oldLinkIds)];
-    const batches = arrayToChucks(uniqueIds, MaxBatchSize);
-    const promises = batches.map(batch => fetchReplacements(batch, situationDate, instance));
-    const results = await Promise.allSettled(promises);
-    const msgOnError = "Unable to fetch road links";
-    const succeeded = checkResultsForErrors(results, msgOnError) as QueryResult[];
-    return extractReplacements(succeeded);
-}
-
-async function fetchReplacements(linkIds: string[], date: string, instance: AxiosInstance): Promise<QueryResult> {
-    const json = linkIds.map(linkId => {
-        return { kmtk_id: linkId, tilannepvm: date, palautusarvot: "6", valihaku: "true" };
-    });
-    const result = await postRequest(instance, ConvertPath, {json: JSON.stringify(json)});
-    return {
-        featureCollection: result,
-        queryIds: linkIds
-    }
-}
-
-function extractReplacements(results: QueryResult[]): Array<ReplaceInfo> {
-    return results.map(result => {
-        const collection = result.featureCollection;
-        const ids = result.queryIds;
-        let previousIdIndex = 0;
-        return collection.features.reduce((array: Array<ReplaceInfo>, feature: Feature) => {
-            const properties = feature.properties;
-            if (properties.hasOwnProperty('virheet')) {
-                previousIdIndex += 1;
-                console.error(`${ids[previousIdIndex]}: ${properties.virheet}`);
-            } else {
-                previousIdIndex = ids.indexOf(properties.kmtk_id_historia);
-                array.push(propertiesToReplaceInfo(properties));
-            }
+    /**
+     * Fetch changes happened during time period
+     * @param since
+     * @param until
+     */
+    async fetchChanges(since: string, until: string): Promise<string[]> {
+        const instance = await this.createInstance(this.url, this.apiKey);
+        // TODO: Add new parameters for filtering road address changes and for pagination of results(?)
+        const json = {
+            tilannepvm: since,
+            asti: until,
+            palautusarvot: "6"
+        };
+        const response = await this.getRequest(instance, this.changesPath, json) as TiekamuResponse;
+        return response.features.reduce((array: string[], feature: TiekamuFeature) => {
+            if (feature.properties.virheet) console.error(`Tiekamu responded with error: ${feature.properties.virheet}`);
+            else array.push(feature.properties.kmtk_id);
             return array;
         }, []);
-    }).flat(1);
-}
+    }
 
-function propertiesToReplaceInfo(properties: Properties): ReplaceInfo {
-    return {
-        oldLinkId:      properties.kmtk_id_historia,
-        newLinkId:      properties.kmtk_id,
-        oldFromMValue:  properties.m_arvo_alku_historia,
-        oldToMValue:    properties.m_arvo_loppu_historia,
-        newFromMValue:  properties.m_arvo,
-        newToMValue:    properties.m_arvo_loppu
+    /**
+     * Get new situation for changed link ids
+     */
+    async replacementsForLinks(since: string, until: string, oldLinkIds: string[]): Promise<ReplaceInfo[]> {
+        if (!oldLinkIds.length) return [];
+
+        const instance = await this.createInstance(this.url, this.apiKey, "application/x-www-form-urlencoded; charset=UTF-8");
+
+        const uniqueIds = [...new Set(oldLinkIds)];
+        const batches = Utils.arrayToChucks(uniqueIds, this.maxBatchSize);
+        const promises = batches.map(batch => this.fetchReplacements(batch, since, until, instance));
+        const results = await Promise.allSettled(promises);
+        const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as QueryResult[];
+        return this.extractReplacements(succeeded);
+    }
+
+    protected async fetchReplacements(linkIds: string[], since: string, until: string, instance: AxiosInstance): Promise<QueryResult> {
+        const json = linkIds.map(linkId => {
+            return {
+                kmtk_id: linkId,
+                tilannepvm: since,
+                palautusarvot: "6",
+                valihaku: "true" };
+        });
+        const result = await this.postRequest(instance, this.convertPath, {json: JSON.stringify(json)});
+        return {
+            featureCollection: result,
+            queryIds: linkIds
+        }
+    }
+
+    protected extractReplacements(results: QueryResult[]): Array<ReplaceInfo> {
+        return results.map(result => {
+            const collection = result.featureCollection;
+            const ids = result.queryIds;
+            let idIndex = 0;
+            return collection.features.reduce((array: Array<ReplaceInfo>, feature: VkmFeature) => {
+                const properties = feature.properties;
+                if (properties.hasOwnProperty('virheet')) {
+                    console.error(`${ids[idIndex]}: ${properties.virheet}`);
+                    idIndex += 1;
+                } else {
+                    if (properties.kmtk_id === properties.kmtk_id_historia) {
+                        console.error(`Skipping change. Kmtk_id and kmtk_id_historia are both: ${properties.kmtk_id}`);
+                    } else array.push(this.propertiesToReplaceInfo(properties));
+                    idIndex = ids.indexOf(properties.kmtk_id_historia) + 1;
+                }
+                return array;
+            }, []);
+        }).flat(1);
+    }
+
+    protected propertiesToReplaceInfo(properties: VkmProperties): ReplaceInfo {
+        return new ReplaceInfo(properties.kmtk_id_historia, properties.kmtk_id, properties.m_arvo_alku_historia,
+            properties.m_arvo_loppu_historia, properties.m_arvo, properties.m_arvo_loppu);
     }
 }
 
-export interface ReplaceInfo {
-    oldLinkId               ?: string,
-    newLinkId               ?: string,
-    oldFromMValue           ?: number,
-    oldToMValue             ?: number,
-    newFromMValue           ?: number,
-    newToMValue             ?: number
+export class ReplaceInfo {
+    oldLinkId           : string | null;
+    newLinkId           : string | null;
+    oldFromMValue       : number | null;
+    oldToMValue         : number | null;
+    newFromMValue       : number | null;
+    newToMValue         : number | null;
+    digitizationChange  : boolean;
+
+    constructor(oldId?: string, newId?: string, oldFromM?: number, oldToM?: number, newFromM?: number, newToM?: number) {
+        this.oldLinkId          = oldId ?? null;
+        this.newLinkId          = newId ?? null;
+        this.oldFromMValue      = oldFromM ?? null;
+        this.oldToMValue        = oldToM ?? null;
+        this.newFromMValue      = newFromM ?? null;
+        this.newToMValue        = newToM ?? null;
+        this.digitizationChange = ReplaceInfo.digitizationHasChanged(oldFromM, oldToM, newFromM, newToM);
+    }
+
+    private static digitizationHasChanged(oldStart?: number, oldEnd?: number,
+                                          newStart?: number, newEnd?: number): boolean {
+        if (oldStart == undefined || oldEnd == undefined || newStart == undefined || newEnd == undefined) return false;
+        return ((oldEnd - oldStart) * (newEnd - newStart)) < 0;
+    }
 }
 
 interface QueryResult {
-    featureCollection       : FeatureCollection,
-    queryIds                : Array<string>
+    featureCollection       : VkmResponse;
+    queryIds                : Array<string>;
 }
 
-interface FeatureCollection {
-    type                    : string,
-    features                : Array<Feature>
+interface VkmResponse {
+    type                    : string;
+    features                : Array<VkmFeature>;
 }
 
-interface Feature {
-    type                    : string,
-    geometry                : object,
-    properties              : Properties
+interface VkmFeature {
+    type                    : string;
+    geometry                : object;
+    properties              : VkmProperties;
 }
 
-interface Properties {
-    kmtk_id                 : string
-    kmtk_id_loppu           : string,
-    kmtk_id_historia        : string
-    m_arvo                  : number,
-    m_arvo_loppu            : number,
-    m_arvo_alku_historia    : number,
-    m_arvo_loppu_historia   : number,
-    vertikaalisuhde         : number,
-    vertikaalisuhde_loppu   : number,
-    virheet                 ?: string
+interface VkmProperties {
+    kmtk_id                 : string;
+    kmtk_id_loppu           : string;
+    kmtk_id_historia        : string;
+    m_arvo                  : number;
+    m_arvo_loppu            : number;
+    m_arvo_alku_historia    : number;
+    m_arvo_loppu_historia   : number;
+    vertikaalisuhde         : number;
+    vertikaalisuhde_loppu   : number;
+    virheet                 ?: string;
+}
+
+interface TiekamuResponse {
+    type                    : string;
+    features                : Array<TiekamuFeature>;
+}
+
+interface TiekamuFeature {
+    type                    : string;
+    geometry                : object;
+    properties              : TiekamuProperties;
+}
+
+interface TiekamuProperties {
+    kmtk_id                 : string;
+    link_id                 ?: number;
+    m_arvo                  : number;
+    m_arvo_loppu            : number;
+    loppupvm                : string;
+    virheet                 ?: string;
 }

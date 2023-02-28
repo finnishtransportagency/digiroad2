@@ -1,128 +1,193 @@
-import { AxiosInstance } from "axios";
-import { createInstance, getRequest, checkResultsForErrors } from "./client-base";
-import { arrayToChucks } from "../utils/utils";
+import {AxiosInstance} from "axios";
+import {ClientBase} from "./client-base";
+import {Utils} from "../utils/utils";
 
-const Url       = process.env.KGV_API_URL;
-const ApiKey    = process.env.KGV_API_KEY;
-const Path      = "keskilinjavarasto:road_links_versions/items";
+export class KgvClient extends ClientBase {
+    private readonly url: string;
+    private readonly apiKey: string;
 
-const MaxBatchSize  = 100;
+    private readonly path = "keskilinjavarasto:road_links_versions/items";
 
-export async function fetchRoadLinksByLinkId(linkIds: string[]): Promise<KgvFeature[]> {
-    if (!Url || !ApiKey) {
-        throw new Error("Either KGV_API_URL, KGV_API_KEY or both environment variables missing");
+    private readonly maxBatchSize = 100;
+
+    constructor() {
+        if (!process.env.KGV_API_URL || !process.env.KGV_API_KEY) {
+            throw new Error("Either KGV_API_URL, KGV_API_KEY or both environment variables missing");
+        }
+        super();
+        this.url    = process.env.KGV_API_URL;
+        this.apiKey = process.env.KGV_API_KEY;
     }
-    const instance = await createInstance(Url, ApiKey);
 
-    const uniqueIds = [...new Set(linkIds)];
-    const batches = arrayToChucks(uniqueIds, MaxBatchSize);
-    const promises = batches.map(batch => fetchLinkVersions(batch, instance));
-    const results = await Promise.allSettled(promises);
-    const msgOnError = "Unable to fetch road links";
-    const succeeded = checkResultsForErrors(results, msgOnError) as KgvFeatureCollection[];
-    const links =  extractLinks(succeeded);
-    if (links.length != uniqueIds.length) {
-        const retrievedLinks = links.map(link => link.properties.id);
-        uniqueIds.forEach(link => {
-            if (!retrievedLinks.includes(link)) throw new Error(`Unable to fetch link ${link}`);
-        });
+    async fetchRoadLinksByLinkId(linkIds: string[]): Promise<KgvLink[]> {
+        if (!linkIds.length) { return []; }
+
+        const instance = await this.createInstance(this.url, this.apiKey);
+        const uniqueIds = [...new Set(linkIds)];
+        const batches = Utils.arrayToChucks(uniqueIds, this.maxBatchSize);
+        const promises = batches.map(batch => this.fetchLinkVersions(batch, instance));
+        const results = await Promise.allSettled(promises);
+        const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as KgvFeatureCollection[];
+        const links = this.extractLinks(succeeded);
+        if (links.length != uniqueIds.length) {
+            const retrievedLinks = links.map(link => link.id);
+            uniqueIds.forEach(link => {
+                if (!retrievedLinks.includes(link)) throw new Error(`Unable to fetch link ${link}`);
+            });
+        }
+        return links;
     }
-    return links;
-}
 
-async function fetchLinkVersions(linkIds: string[], instance: AxiosInstance): Promise<KgvFeatureCollection> {
-    const params = {
-        "filter-lang": "cql-text",
-        "crs": "EPSG:3067",
-        "filter": `id in ('${linkIds.join("','")}')`
-    };
-    return await getRequest(instance, Path, params);
-}
+    protected async fetchLinkVersions(linkIds: string[], instance: AxiosInstance): Promise<KgvFeatureCollection> {
+        const params = {
+            "filter-lang": "cql-text",
+            "crs": "EPSG:3067",
+            "filter": `id in ('${linkIds.join("','")}')`
+        };
+        return await this.getRequest(instance, this.path, params);
+    }
 
-function extractLinks(results: KgvFeatureCollection[]): Array<KgvFeature> {
-    return results.map(result => result.features).flat(1);
-}
+    protected extractLinks(results: KgvFeatureCollection[]): Array<KgvLink> {
+        return results.map(result => result.features.map(feature => {
+            const props = feature.properties;
+            const geometry = this.extractLinkGeometry(feature.geometry);
+            return new KgvLink(props.id, geometry, props.sourceid, props.adminclass, props.municipalitycode,
+                props.roadclass, props.horizontallength, props.directiontype, props.roadnamefin, props.roadnameswe,
+                props.roadnamesme, props.roadnamesmn, props.roadnamesms, props.roadnumber, props.roadpartnumber,
+                props.surfacetype, props.lifecyclestatus, props.surfacerelation, props.xyaccuracy, props.zaccuracy,
+                props.geometryflip, props.addressfromleft, props.addresstoleft, props.addressfromright,
+                props.addresstoright, props.starttime, props.versionstarttime);
+        })).flat(1);
+    }
 
-export function extractKeyProperties(link: KgvFeature): KeyProperties {
-    return {
-        linkId:             link.properties.id,
-        linkLength:         link.properties.horizontallength,
-        geometry:           extractLinkGeometry(link.geometry),
-        roadClass:          Number(link.properties.roadclass),
-        adminClass:         link.properties.adminclass ? Number(link.properties.adminclass) : null,
-        municipality:       Number(link.properties.municipalitycode),
-        trafficDirection:   Number(link.properties.directiontype)
+    protected extractLinkGeometry(geometry: Geometry): string {
+        return `SRID=3067;LINESTRING ZM(${geometry.coordinates.map(coord => coord.join(' ')).join(',')})`;
     }
 }
 
-export function extractLinkGeometry(geometry: Geometry): string {
-    return `SRID=3067;LINESTRING ZM(${geometry.coordinates.map(coord => coord.join(' ')).join(',')})`;
-}
+export class KgvLink {
+    id: string;
+    sourceId: number | null;
+    adminClass: number | null;
+    municipality: number | null;
+    roadClass: number | null;
+    roadNameFin?: string;
+    roadNameSwe?: string;
+    roadNameSme?: string;
+    roadNameSmn?: string;
+    roadNameSms?: string;
+    roadNumber: number | null;
+    roadPartNumber: number | null;
+    surfaceType: number | null;
+    lifeCycleStatus: number | null;
+    directionType: number | null;
+    surfaceRelation: number | null;
+    xyAccuracy: number | null;
+    zAccuracy: number | null;
+    length: number | null;
+    geometryFlip: number | null;
+    fromLeft: number | null;
+    toLeft: number | null;
+    fromRight: number | null;
+    toRight: number | null;
+    startTime?: string;
+    versionStartTime?: string;
+    geometry: string;
 
-export interface KeyProperties {
-    linkId                  : string,
-    linkLength              : number,
-    geometry                : string,
-    roadClass               : number,
-    adminClass              : number | null,
-    municipality            : number,
-    trafficDirection        : number
+    constructor(id: string, geometry: string, sourceId?: number, adminClass?: number, municipality?: number,
+                length?: number, directionType?: number, roadClass?: number, nameFin?: string, nameSwe?: string,
+                nameSme?: string, nameSmn?: string, nameSms?: string, roadNumber?: number, roadPartNumber?: number,
+                surfaceType?: number, lifeCycleStatus?: number, surfaceRelation?: number, xyAccuracy?: number,
+                zAccuracy?: number, geomFlip?: boolean, fromLeft?: number, toLeft?: number, fromRight?: number,
+                toRight?: number, startTime?: string, versionStartTime?: string) {
+        this.id                 = id;
+        this.sourceId           = KgvLink.extractNumberOrNull(sourceId);
+        this.adminClass         = KgvLink.extractNumberOrNull(adminClass);
+        this.municipality       = KgvLink.extractNumberOrNull(municipality);
+        this.roadClass          = KgvLink.extractNumberOrNull(roadClass);
+        this.roadNameFin        = nameFin;
+        this.roadNameSwe        = nameSwe;
+        this.roadNameSme        = nameSme;
+        this.roadNameSmn        = nameSmn;
+        this.roadNameSms        = nameSms;
+        this.roadNumber         = KgvLink.extractNumberOrNull(roadNumber);
+        this.roadPartNumber     = KgvLink.extractNumberOrNull(roadPartNumber);
+        this.surfaceType        = KgvLink.extractNumberOrNull(surfaceType);
+        this.lifeCycleStatus    = KgvLink.extractNumberOrNull(lifeCycleStatus);
+        this.directionType      = KgvLink.extractNumberOrNull(directionType);
+        this.surfaceRelation    = KgvLink.extractNumberOrNull(surfaceRelation);
+        this.xyAccuracy         = KgvLink.extractNumberOrNull(xyAccuracy);
+        this.zAccuracy          = KgvLink.extractNumberOrNull(zAccuracy);
+        this.length             = KgvLink.extractNumberOrNull(length);
+        this.geometryFlip       = geomFlip == undefined ? null : JSON.parse(geomFlip.toString().toLowerCase()) ? 1 : 0;
+        this.fromLeft           = KgvLink.extractNumberOrNull(fromLeft);
+        this.toLeft             = KgvLink.extractNumberOrNull(toLeft);
+        this.fromRight          = KgvLink.extractNumberOrNull(fromRight);
+        this.toRight            = KgvLink.extractNumberOrNull(toRight);
+        this.startTime          = startTime;
+        this.versionStartTime   = versionStartTime;
+        this.geometry           = geometry;
+    }
+
+    private static extractNumberOrNull(property?: number): number | null {
+        return property != undefined ? Number(property) : null;
+    }
 }
 
 interface KgvFeatureCollection {
-    type                    : string,
-    features                : Array<KgvFeature>
+    type                    : string;
+    features                : Array<KgvFeature>;
 }
 
 export interface KgvFeature {
-    type                    : string,
-    id                      : string,
-    geometry                : Geometry,
-    geometry_name           : string,
-    properties              : KgvProperties,
-    bbox                    : Array<number>
+    type                    : string;
+    id                      : string;
+    geometry                : Geometry;
+    geometry_name           : string;
+    properties              : KgvProperties;
+    bbox                    ?: Array<number>;
 }
 
-interface Geometry {
-    type                    : string,
-    coordinates             : Array<number[]>
+export interface Geometry {
+    type                    : string;
+    coordinates             : Array<number[]>;
 }
 
 interface KgvProperties {
-    id                      : string,
-    addressfromleft         ?: number,
-    addressfromright        ?: number,
-    addresstoleft           ?: number,
-    addresstoright          ?: number,
-    adminclass              ?: number,
-    datasource              : number,   /* Not used by Digiroad */
-    directiontype           : number,
-    endtime                 ?: string,  /* Not used by Digiroad */
-    featureclass            : string,   /* Not used by Digiroad */
-    geometryflip            : boolean,
-    horizontallength        : number,
-    kmtkid                  : string,   /* Not used by Digiroad */
-    lifecyclestatus         : number,
-    municipalitycode        : number,
-    roadclass               : number,
-    roadnamefin             ?: string,
-    roadnamesme             ?: string,
-    roadnamesmn             ?: string,
-    roadnamesms             ?: string,
-    roadnameswe             ?: string,
-    roadnumber              ?: number,
-    roadpartnumber          ?: number,
-    sourceid                : number,
-    sourcemodificationtime  ?: string,  /* Not used by Digiroad */
-    starttime               : string,
-    state                   ?: number,  /* Not used by Digiroad */
-    surfacerelation         : number,
-    surfacetype             : number,
-    updatereason            ?: number,  /* Not used by Digiroad */
-    version                 : number,   /* Not used by Digiroad */
-    versionendtime          ?: string,  /* Not used by Digiroad */
-    versionstarttime        : string,
-    widthtype               ?: number,  /* Not used by Digiroad */
-    xyaccuracy              : number,
-    zaccuracy               : number
+    id                      : string;
+    addressfromleft         ?: number;
+    addressfromright        ?: number;
+    addresstoleft           ?: number;
+    addresstoright          ?: number;
+    adminclass              ?: number;
+    datasource              ?: number;  /* Not used by Digiroad */
+    directiontype           ?: number;
+    endtime                 ?: string;  /* Not used by Digiroad */
+    featureclass            ?: string;  /* Not used by Digiroad */
+    geometryflip            ?: boolean;
+    horizontallength        ?: number;
+    kmtkid                  : string;   /* Not used by Digiroad */
+    lifecyclestatus         ?: number;
+    municipalitycode        ?: number;
+    roadclass               ?: number;
+    roadnamefin             ?: string;
+    roadnamesme             ?: string;
+    roadnamesmn             ?: string;
+    roadnamesms             ?: string;
+    roadnameswe             ?: string;
+    roadnumber              ?: number;
+    roadpartnumber          ?: number;
+    sourceid                ?: number;
+    sourcemodificationtime  ?: string;  /* Not used by Digiroad */
+    starttime               ?: string;
+    state                   ?: number;  /* Not used by Digiroad */
+    surfacerelation         ?: number;
+    surfacetype             ?: number;
+    updatereason            ?: number;  /* Not used by Digiroad */
+    version                 : number;   /* Not used by Digiroad */
+    versionendtime          ?: string;  /* Not used by Digiroad */
+    versionstarttime        ?: string;
+    widthtype               ?: number;  /* Not used by Digiroad */
+    xyaccuracy              ?: number;
+    zaccuracy               ?: number;
 }
