@@ -438,6 +438,36 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     
     println("d")
   }
+  test("case 7, asset cover link only partially, from end") {
+    fail("Need to be implemented")
+  }
+  test("case 7, asset cover link only partially, from begin") {
+    fail("Need to be implemented")
+  }
+
+  test("case 8, link is removed") {
+    fail("Need to be implemented")
+  }
+  test("case 5, asset is in middle of link ") {
+    fail("Need to be implemented")
+  }
+
+  test("case 7, asset is split into multiple part, link split") {
+    fail("Need to be implemented")
+  }
+
+  test("case 7, asset is split into multiple part, link merged") {
+    fail("Need to be implemented")
+  }
+
+  test("case 7, asset is split into multiple part, link lenthened") {
+    fail("Need to be implemented")
+  }
+  test("case 7, asset is split into multiple part, link shortened") {
+    fail("Need to be implemented")
+  }
+
+
   test("case 5 asset retain all it old values, group 1 (position)") {
     fail("Need to be implemented")
   }
