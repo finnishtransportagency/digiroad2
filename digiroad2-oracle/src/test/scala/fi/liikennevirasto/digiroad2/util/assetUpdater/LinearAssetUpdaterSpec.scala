@@ -211,10 +211,12 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     )
   }
   def changeReplaceMerge(): Seq[RoadLinkChange] ={
-    val (oldLinkGeometry1, oldId1) = (generateGeometry(0, 4), "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
-    val (oldLinkGeometry2, oldId2) = (generateGeometry(4, 4), "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1")
+    val (oldLinkGeometry1, oldId1) = (generateGeometry(0, 6), "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
+    val (oldLinkGeometry2, oldId2) = (generateGeometry(6, 6), "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1")
     val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 11), "753279ca-5a4d-4713-8609-0bd35d6a30fa:1")
     
+    println(s"merged size ${oldLinkGeometry2._2+oldLinkGeometry1._2}")
+    println(s"new link size ${newLinkGeometry1._2}")
     Seq(RoadLinkChange(
       changeType = RoadLinkChangeType.Replace,
       oldLink = Some(RoadLinkInfo(
@@ -238,7 +240,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       replaceInfo =
         List(
           ReplaceInfo(oldId1,newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = 4, false)
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 0.0, newToMValue = 5, false)
         )
     ),
       RoadLinkChange(
@@ -263,7 +265,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
           )),
         replaceInfo =
           List(ReplaceInfo(oldId2, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 4.0, newToMValue = 11, false))
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 5.0, newToMValue = newLinkGeometry1._2, false))
       )
     )
   }
@@ -303,17 +305,20 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   test("case 2 links under asset is merged") {
     val linksid1 = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
     val linksid2 = "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1"
-    val oldRoadLink = RoadLink(linksid1, generateGeometry(0, 4)._1, generateGeometry(1, 4)._2, Municipality,
+    val linkGeometry1 = generateGeometry(0, 6)
+    val linkGeometry2 = generateGeometry(6, 6)
+    
+    val oldRoadLink = RoadLink(linksid1,linkGeometry1._1 , linkGeometry1._2, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-    val oldRoadLink2 = RoadLink(linksid2, generateGeometry(4, 4)._1, generateGeometry(4, 4)._2, Municipality,
+    val oldRoadLink2 = RoadLink(linksid2, linkGeometry2._1, linkGeometry2._2, Municipality,
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     val change = changeReplaceMerge
 
     runWithRollback {
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value, Measures(0, generateGeometry(1, 4)._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, generateGeometry(4, 4)._2), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value, Measures(0, linkGeometry1._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, linkGeometry2._2), "testuser", 0L, Some(oldRoadLink2), false, None, None)
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1,id2), false)
@@ -329,7 +334,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val sorted = assetsAfter.sortBy(_.startMeasure)
       sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
       sorted.head.startMeasure should be(0) 
-      sorted.head.endMeasure should be(11)
+      sorted.head.endMeasure should be(10)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
     }

@@ -203,9 +203,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val split = changes.split.map(p => {
       val assets = assetsAll.filter(_.linkId == p._1)
+      
+      // slicing logic here 
       assets.flatMap(a => {
         convertToForCalculation(p,a).map(p1 => {
-          projecting(changeSets, assets, a, p1,testNoAssetExistsOnTarget)
+          projecting(changeSets, assets, a, p1,testNoAssetExistsOnTarget) // seem to not split asset 
         })
       })
     }).toSeq.flatten
@@ -232,12 +234,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val mergedChangeSet =  shortened.map(_._2) ++ lengthened.map(_._2) ++ split.map(_._2)++merged.map(_._2)  ++updateVersion.map(_._2)
 
     val returnedChangeSet = mergedChangeSet.foldRight(changeSets) { (a, z) =>
-      a.adjustedMValues ++ z.adjustedMValues
-      a.adjustedVVHChanges ++ z.adjustedVVHChanges
-      a.adjustedSideCodes ++ z.adjustedSideCodes
-      a.expiredAssetIds ++ z.expiredAssetIds
-      a.valueAdjustments ++ z.valueAdjustments
-      a
+      a.copy(
+        adjustedMValues     = a.adjustedMValues     ++ z.adjustedMValues,
+        adjustedVVHChanges  = a.adjustedVVHChanges  ++ z.adjustedVVHChanges,
+        adjustedSideCodes   = a.adjustedSideCodes   ++ z.adjustedSideCodes,
+        expiredAssetIds     = a.expiredAssetIds     ++ z.expiredAssetIds,
+        valueAdjustments    = a.valueAdjustments    ++ z.valueAdjustments
+      )
     }
     (assets, returnedChangeSet)
   }
@@ -436,7 +439,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           println("condition status: ")
           println(condition(assets,from, to, oldStart, oldEnd))
           condition(assets,from, to, oldStart, oldEnd) match {
-            case true => Some(Projection(oldStart, oldEnd, newStart, newEnd))
+            case true => println(s"old Link:$from, asset: ${assets.head.id} start:$oldStart old:$oldEnd newstart:$newStart newend:$newEnd");Some(Projection(oldStart, oldEnd, newStart, newEnd))
             case false =>
               None
           }
@@ -501,7 +504,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
         (asset.startMeasure, asset.endMeasure, asset.sideCode)
       } else {
-        (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), asset.sideCode)
+        val start =  Math.min(roadLinkLength, Math.max(0.0, newStart))
+        val end = Math.max(0.0, Math.min(roadLinkLength, newEnd))
+        println(s"asset: ${asset.id}")
+        println(s"link length: $roadLinkLength")
+        println(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, new lenth $oldLength")
+        println(s"new start $start, new end $end, new lenth $newLength") 
+        (start,end , asset.sideCode)
       }
     }
   }
