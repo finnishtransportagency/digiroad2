@@ -431,8 +431,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def projectAssetsConditionally(change: CalculateMValueChangesInfo, assets: Seq[PersistedLinearAsset],
                                          condition: (Seq[PersistedLinearAsset],String, String, Double, Double) => Boolean): Option[Projection] = {
     (change.oldId,change.newId, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure) match {
-      case (Some(from),Some(to), Some(oldStart:Double), Some(oldEnd:Double),
-      Some(newStart:Double), Some(newEnd:Double)) =>
+      case (Some(from),Some(to), Some(oldStart:Double), Some(oldEnd:Double), Some(newStart:Double), Some(newEnd:Double)) =>
         {
           println("condition status: ")
           println(condition(assets,from, to, oldStart, oldEnd))
