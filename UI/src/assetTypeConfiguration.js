@@ -1433,7 +1433,7 @@
             /* number (int) */
             { types: [8, 30, 31, 32, 33, 34, 35, 174, 175, 176, 177, 290, 291, 292, 400], validate: function (someValue) { return /^-?\d+$/.test(someValue) ; }},
             /* decimal number */
-            { types: [45, 46, 138, 139, 148, 149, 308, 347, 348, 376], validate: function (someValue) { return /^\d*(,\d+)?$/.test(someValue) ; }},
+            { types: [45, 46, 138, 139, 148, 149, 308, 347, 348, 376], validate: function (someValue) { return /^\d+(,\d+)?$/.test(someValue) ; }},
             /* Number and special marks */
             { types: [49, 50, 145], validate: dateRestrictionValidator, regexToUse: /^([(]?)([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])([)]?)$/},
             /* Number and special marks extended */
