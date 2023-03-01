@@ -33,6 +33,9 @@ class AssetFiller {
   def printlnOperation(operationName:String)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
     println(operationName)
     println(s"side code adjuctment count: ${changeSet.adjustedSideCodes.size}")
+    println(s"mvalue adjuctment count: ${changeSet.adjustedMValues.size}")
+    println(s"vvh change adjuctment count: ${changeSet.adjustedVVHChanges.size}")
+    println(s"expire adjuctment count: ${changeSet.expiredAssetIds.size}")
     (segments, changeSet)
   }
   
