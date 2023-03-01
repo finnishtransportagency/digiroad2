@@ -4,10 +4,27 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.slf4j.LoggerFactory
 
-sealed case class MValue(linkId: String, startMValue: Double, endMValue: Double, length: Double)
+/**
+  *  For point like asset mark [[endMValue]] None
+  * @param linkId Road Link id
+  * @param startMValue start point
+  * @param endMValue end point
+  * @param sideCode                 
+  * @param length 
+  */
+sealed case class LinearReference(linkId: String, startMValue: Double, endMValue: Option[Double],sideCode: Int, length: Double)
 
-sealed case class Asset(assetId: Long, value: Any, municipalityCode: Option[Int], sideCode: Int, geometry: Option[Seq[Point]],
-                        linkId: String, mValue: MValue, isPointAsset: Boolean = false) {
+/**
+  * 
+  * @param assetId
+  * @param values values as string. Convert into json format. TODO add json formatter into class as needed.
+  * @param municipalityCode
+  * @param geometry
+  * @param linearReference Where asset is in. For floating use None.
+  * @param isPointAsset
+  */
+sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[Int], geometry: Option[Seq[Point]],
+                        linearReference: Option[LinearReference], isPointAsset: Boolean = false) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val logger = LoggerFactory.getLogger(getClass)
@@ -27,7 +44,9 @@ sealed case class Asset(assetId: Long, value: Any, municipalityCode: Option[Int]
   }
 
   def getUrl: String = {
-    s"""$directLink#linkProperty/$linkId"""
+    if (linearReference.nonEmpty) {
+      s"""$directLink#linkProperty/${linearReference.get.linkId}"""
+    }  else ""
   }
 
 }
