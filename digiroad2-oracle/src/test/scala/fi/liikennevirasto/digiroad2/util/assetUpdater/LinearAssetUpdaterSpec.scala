@@ -436,7 +436,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       changeReplaceLenghened(generateRandomLinkId()),
       changeSplit(generateRandomLinkId())) ++ changeReplaceMerge()
     
-    println("d")
   }
   test("case 7, asset cover link only partially, from end") {
     fail("Need to be implemented")
@@ -448,7 +447,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   test("case 8, link is removed") {
     fail("Need to be implemented")
   }
-  test("case 5, asset is in middle of link ") {
+  test("case 9, asset is in middle of link ") {
     fail("Need to be implemented")
   }
 
@@ -474,7 +473,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
   test("case 5 asset retain all it old values,group 2, (position,value, different value types)") {
     fail("Need to be implemented")
-
   }
 
   test("case 5 asset retain all it old values,group 3, (position,value, side code)") {
