@@ -1383,7 +1383,7 @@
         allowComplementaryLinks: true,
         newAsset: { validityDirection: 2, propertyData: [
           {'name': 'Liikenteenvastainen', 'propertyType': 'single_choice', 'publicId': "opposite_side_sign", values: [] },
-          {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 36} ] },
+          {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [] },
           {'name': 'Päämerkin teksti', 'propertyType': 'text', 'publicId': 'main_sign_text', values: []},
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
