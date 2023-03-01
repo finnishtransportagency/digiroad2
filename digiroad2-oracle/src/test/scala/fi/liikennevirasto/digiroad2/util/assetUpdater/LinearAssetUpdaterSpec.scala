@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkInfo, _}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
@@ -81,7 +82,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val (oldLinkGeometry,oldId)       =   (generateGeometry(0, 56),oldRoadLinkId)
     val (newLinkGeometry1,newLinkId1) =   (generateGeometry(0, 9),"c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
     val (newLinkGeometry2,newLinkId2) =   (generateGeometry(9, 11),"c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1")
-    val (newLinkGeometry3,newLinkId3) =   (generateGeometry(11, 57),"753279ca-5a4d-4713-8609-0bd35d6a30fa:1")
+    val (newLinkGeometry3,newLinkId3) =   (generateGeometry(11, 56),"753279ca-5a4d-4713-8609-0bd35d6a30fa:1")
     RoadLinkChange(
       changeType = RoadLinkChangeType.Split,
       oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
@@ -315,7 +316,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     val change = changeReplaceMerge
-
+    // extension happen in wrong place
     runWithRollback {
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value, Measures(0, linkGeometry1._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, linkGeometry2._2), "testuser", 0L, Some(oldRoadLink2), false, None, None)
@@ -324,7 +325,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1,id2), false)
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
-
       
       // code return asset which have startMvalue 4 and end mvalue 10
       // old implementaton lenthent only from end not in begind
@@ -437,6 +437,16 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       changeSplit(generateRandomLinkId())) ++ changeReplaceMerge()
     
   }
+
+  test("test calculator") {
+    val asset = AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2)
+    val projection = Projection(oldStart = 0, oldEnd = 5, newStart = 5, newEnd = 10, timeStamp = 0)
+    val newPosition = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(asset,projection,10)
+    
+    println(newPosition.toString())
+
+  }
+  
   test("case 7, asset cover link only partially, from end") {
     fail("Need to be implemented")
   }
