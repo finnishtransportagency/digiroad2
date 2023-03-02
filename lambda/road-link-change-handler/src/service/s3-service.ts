@@ -49,6 +49,8 @@ export class S3Service {
             // Return env dates if they are valid and since date is before until date
             if(!isNaN(sinceDate) && !isNaN(untilDate) && sinceDate <= untilDate) {
                 return [Utils.dateToDateString(new Date(sinceDate)), Utils.dateToDateString(new Date(untilDate))];
+            } else {
+                throw new Error(`Invalid dates provided (since: ${event.since}, until: ${event.until})`);
             }
         }
         const since = await this.getTimeOfLastFetchedChanges() ?? new Date("2022-05-10");

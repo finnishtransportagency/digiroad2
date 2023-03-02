@@ -1,5 +1,6 @@
 const sinon = require('sinon');
-const assert = require('chai').assert;
+const chai = require('chai').use(require('chai-as-promised'));
+const assert = chai.assert;
 
 const {S3Service} = require('../../dist/service/s3-service');
 
@@ -26,19 +27,10 @@ describe('S3 service', function() {
         assert.equal(until, "12.10.2022");
     });
 
-    it('Invalid dates provided in the event no S3 change sets', async function() {
+    it('Invalid dates provided in the event throws error', async function() {
         const testEvent = { since: "2022-10-24", until: "2022-10-12" };
-        sinon.stub(testService, 'getTimeOfLastFetchedChanges').returns(undefined);
-        const [since,] = await testService.getChangeTimeframe(testEvent);
-        assert.equal(since, "11.5.2022");
-    });
-
-    it('Invalid dates provided in the event', async function() {
-        const testEvent = { since: "2022-10-24", until: "2022-10-12" };
-        const lastChanges = new Date("2022-10-13");
-        sinon.stub(testService, 'getTimeOfLastFetchedChanges').returns(lastChanges);
-        const [since,] = await testService.getChangeTimeframe(testEvent);
-        assert.equal(since, "14.10.2022");
+        const expectedError = `Invalid dates provided (since: ${testEvent.since}, until: ${testEvent.until})`;
+        await assert.isRejected(testService.getChangeTimeframe(testEvent), expectedError);
     });
 
     it('No dates provided in the event and no S3 change sets', async function() {
