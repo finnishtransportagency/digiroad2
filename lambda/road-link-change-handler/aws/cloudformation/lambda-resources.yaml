@@ -13,11 +13,41 @@ Parameters:
     Description: Prefix for organization
     Type: String
   ECRRepository:
-    Type: String
     Description: Name of ECR repository
-  ECRImageTag:
     Type: String
+  ECRImageTag:
     Description: ECR image tag name
+    Type: String
+  NetworkStackName:
+    Description: Name of network stack
+    Type: String
+  BatchJobRoleArn:
+    Description: Batch job role arn
+    Type: String
+  VkmApi:
+    Description: VKM api url
+    Type: String
+  VkmApiKeySSM:
+    Description: VKM api key location in Parameter Store
+    Type: String
+  KgvApi:
+    Description: VKM api url
+    Type: String
+  KgvApiKeySSM:
+    Description: KGV api key location in Parameter Store
+    Type: String
+  PgHost:
+    Description: Database host
+    Type: String
+  PgPort:
+    Description: Database port
+    Type: String
+  PgDatabase:
+    Description: Database name
+    Type: String
+  PgUser:
+    Description: Database user
+    Type: String
 
 Conditions:
   IsDev:
@@ -69,7 +99,37 @@ Resources:
             Resource:
               - !GetAtt ChangeBucket.Arn
               - !Join ['', [!GetAtt ChangeBucket.Arn, '/*']]
-          # TODO: Add permission for batch role to list and get objects
+          - Sid: BatchPolicy
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Ref BatchJobRoleArn
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+            Resource:
+              - !GetAtt ChangeBucket.Arn
+              - !Join [ '', [ !GetAtt ChangeBucket.Arn, '/*' ] ]
+
+  ### SECURITY GROUP ###
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${ApplicationName}-${Environment}-road-link-change-lambda-sg'
+      GroupName: !Sub '${ApplicationName}-${Environment}-road-link-change-lambda-sg'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: '-1'
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: '-1'
+      VpcId:
+        Fn::ImportValue:
+          !Sub '${NetworkStackName}-VPC-Id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ApplicationName}-${Environment}-road-link-change-lambda-sg'
 
 
   ### LAMBDA ###
@@ -88,11 +148,26 @@ Resources:
       ImageConfig:
         Command:
           - index.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt SecurityGroup.GroupId
+        SubnetIds:
+          - Fn::ImportValue:
+              !Sub '${NetworkStackName}-Subnet1-Id'
+          - Fn::ImportValue:
+              !Sub '${NetworkStackName}-Subnet2-Id'
       Environment:
         Variables:
-          CHANGES_SINCE:  ""  # For testing purposes
-          CHANGES_UNTIL:  ""  # For testing purposes
           CHANGE_BUCKET:  !Sub ${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+          VKM_API_URL:    !Ref VkmApi
+          VKM_API_KEY:    !Ref VkmApiKeySSM
+          KGV_API_URL:    !Ref KgvApi
+          KGV_API_KEY:    !Ref KgvApiKeySSM
+          PG_HOST:        !Ref PgHost
+          PG_PORT:        !Ref PgPort
+          PG_DATABASE:    !Ref PgDatabase
+          PG_USER:        !Ref PgUser
+          PG_PW:          !Sub /${Environment}/bonecp.password
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-road-link-change-lambda-role
@@ -123,7 +198,6 @@ Resources:
   # TODO: Add event to handle s3 put events
 
   ### IAM ###
-
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -162,6 +236,27 @@ Resources:
                 Action:
                   - s3:ListBucket
                 Resource: !Sub arn:aws:s3:::${Environment}-${OrganizationPrefix}-${ApplicationName}-road-link-change-bucket
+        - PolicyName: FetchParameterFromSSM
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource:
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${VkmApiKeySSM}
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${KgvApiKeySSM}
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Environment}/bonecp.password
+        - PolicyName: LambdaVpcAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                Resource: '*'
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-road-link-change-lambda-role

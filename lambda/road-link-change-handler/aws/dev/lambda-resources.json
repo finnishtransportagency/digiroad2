@@ -18,5 +18,45 @@
   {
     "ParameterKey": "ECRImageTag",
     "ParameterValue": "latest"
+  },
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "Digiroad-OTH-kehitys"
+  },
+  {
+    "ParameterKey": "BatchJobRoleArn",
+    "ParameterValue": "arn:aws:iam::475079312496:role/DEV-digiroad2-JobRole"
+  },
+  {
+    "ParameterKey": "VkmApi",
+    "ParameterValue": "https://devapi.testivaylapilvi.fi/viitekehysmuunnin/"
+  },
+  {
+    "ParameterKey": "VkmApiKeySSM",
+    "ParameterValue": "/apikey/dev.vkm.apikey"
+  },
+  {
+    "ParameterKey": "KgvApi",
+    "ParameterValue": "https://api.testivaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+  },
+  {
+    "ParameterKey": "KgvApiKeySSM",
+    "ParameterValue": "/dev/apikey/kgv.apikey"
+  },
+  {
+    "ParameterKey": "PgHost",
+    "ParameterValue": "ddw6gldo8fiqt4.c8sq5c8rj3gu.eu-west-1.rds.amazonaws.com"
+  },
+  {
+    "ParameterKey": "PgPort",
+    "ParameterValue": "5432"
+  },
+  {
+    "ParameterKey": "PgDatabase",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "PgUser",
+    "ParameterValue": "digiroad2dbuser"
   }
 ]
