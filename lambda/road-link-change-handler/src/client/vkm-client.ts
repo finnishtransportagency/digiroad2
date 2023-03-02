@@ -1,4 +1,5 @@
 import {AxiosInstance} from "axios";
+import array from "lodash";
 import {ClientBase} from "./client-base";
 import {Utils} from "../utils/utils";
 
@@ -51,7 +52,7 @@ export class VkmClient extends ClientBase {
         const instance = await this.createInstance(this.url, this.apiKey, "application/x-www-form-urlencoded; charset=UTF-8");
 
         const uniqueIds = [...new Set(oldLinkIds)];
-        const batches = Utils.arrayToChucks(uniqueIds, this.maxBatchSize);
+        const batches = array.chunk(uniqueIds, this.maxBatchSize);
         const promises = batches.map(batch => this.fetchReplacements(batch, since, until, instance));
         const results = await Promise.allSettled(promises);
         const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as QueryResult[];
@@ -116,10 +117,10 @@ export class ReplaceInfo {
         this.oldToMValue        = oldToM ?? null;
         this.newFromMValue      = newFromM ?? null;
         this.newToMValue        = newToM ?? null;
-        this.digitizationChange = ReplaceInfo.digitizationHasChanged(oldFromM, oldToM, newFromM, newToM);
+        this.digitizationChange = this.digitizationHasChanged(oldFromM, oldToM, newFromM, newToM);
     }
 
-    private static digitizationHasChanged(oldStart?: number, oldEnd?: number,
+    protected digitizationHasChanged(oldStart?: number, oldEnd?: number,
                                           newStart?: number, newEnd?: number): boolean {
         if (oldStart == undefined || oldEnd == undefined || newStart == undefined || newEnd == undefined) return false;
         return ((oldEnd - oldStart) * (newEnd - newStart)) < 0;

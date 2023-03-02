@@ -14,23 +14,6 @@ describe('Utils', function() {
         assert.equal(summerNextDay, "22.6.2022");
     });
 
-    it('Split array to chunks', function () {
-        const array = [ '1', '2', '3', '4', '5', '6', '7', '8', '9', '10' ];
-        const chunkSize1 = 3;
-        const chunkSize2 = 5;
-
-        const chunked1 = Utils.arrayToChucks(array, chunkSize1);
-        const chunked2 = Utils.arrayToChucks(array, chunkSize2);
-
-        assert.equal(chunked1.length, 4);
-        assert.equal(chunked1[0].length, chunkSize1);
-        assert(chunked1[chunked2.length - 1].length <= chunkSize1);
-
-        assert.equal(chunked2.length, 2);
-        assert.equal(chunked2[0].length, chunkSize2);
-        assert(chunked2[chunked2.length - 1].length <= chunkSize2);
-    });
-
     it('Check promise results returns results when all promises succeed', async function () {
         const succeedingPromises = [
             new Promise((resolve) => resolve("1")),

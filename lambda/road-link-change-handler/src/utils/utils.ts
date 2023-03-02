@@ -17,19 +17,5 @@ export const Utils = {
         }
         const fulfilled = results as PromiseFulfilledResult<any>[];
         return fulfilled.map(result => result.value);
-    },
-
-    /**
-     * Splits array to smaller chunks
-     * @param array     Array containing strings
-     * @param chunkSize Maximum number of items in one array
-     */
-    arrayToChucks(array: string[], chunkSize: number): Array<string[]> {
-        const result = [];
-        for (let i = 0; i < array.length; i += chunkSize) {
-            result.push(array.slice(i, i + chunkSize));
-        }
-        return result;
     }
-
 }

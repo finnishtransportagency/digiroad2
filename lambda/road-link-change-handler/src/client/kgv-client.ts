@@ -1,4 +1,5 @@
 import {AxiosInstance} from "axios";
+import array from "lodash";
 import {ClientBase} from "./client-base";
 import {Utils} from "../utils/utils";
 
@@ -24,7 +25,7 @@ export class KgvClient extends ClientBase {
 
         const instance = await this.createInstance(this.url, this.apiKey);
         const uniqueIds = [...new Set(linkIds)];
-        const batches = Utils.arrayToChucks(uniqueIds, this.maxBatchSize);
+        const batches = array.chunk(uniqueIds, this.maxBatchSize);
         const promises = batches.map(batch => this.fetchLinkVersions(batch, instance));
         const results = await Promise.allSettled(promises);
         const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as KgvFeatureCollection[];
@@ -101,35 +102,35 @@ export class KgvLink {
                 zAccuracy?: number, geomFlip?: boolean, fromLeft?: number, toLeft?: number, fromRight?: number,
                 toRight?: number, startTime?: string, versionStartTime?: string) {
         this.id                 = id;
-        this.sourceId           = KgvLink.extractNumberOrNull(sourceId);
-        this.adminClass         = KgvLink.extractNumberOrNull(adminClass);
-        this.municipality       = KgvLink.extractNumberOrNull(municipality);
-        this.roadClass          = KgvLink.extractNumberOrNull(roadClass);
+        this.sourceId           = this.extractNumberOrNull(sourceId);
+        this.adminClass         = this.extractNumberOrNull(adminClass);
+        this.municipality       = this.extractNumberOrNull(municipality);
+        this.roadClass          = this.extractNumberOrNull(roadClass);
         this.roadNameFin        = nameFin;
         this.roadNameSwe        = nameSwe;
         this.roadNameSme        = nameSme;
         this.roadNameSmn        = nameSmn;
         this.roadNameSms        = nameSms;
-        this.roadNumber         = KgvLink.extractNumberOrNull(roadNumber);
-        this.roadPartNumber     = KgvLink.extractNumberOrNull(roadPartNumber);
-        this.surfaceType        = KgvLink.extractNumberOrNull(surfaceType);
-        this.lifeCycleStatus    = KgvLink.extractNumberOrNull(lifeCycleStatus);
-        this.directionType      = KgvLink.extractNumberOrNull(directionType);
-        this.surfaceRelation    = KgvLink.extractNumberOrNull(surfaceRelation);
-        this.xyAccuracy         = KgvLink.extractNumberOrNull(xyAccuracy);
-        this.zAccuracy          = KgvLink.extractNumberOrNull(zAccuracy);
-        this.length             = KgvLink.extractNumberOrNull(length);
+        this.roadNumber         = this.extractNumberOrNull(roadNumber);
+        this.roadPartNumber     = this.extractNumberOrNull(roadPartNumber);
+        this.surfaceType        = this.extractNumberOrNull(surfaceType);
+        this.lifeCycleStatus    = this.extractNumberOrNull(lifeCycleStatus);
+        this.directionType      = this.extractNumberOrNull(directionType);
+        this.surfaceRelation    = this.extractNumberOrNull(surfaceRelation);
+        this.xyAccuracy         = this.extractNumberOrNull(xyAccuracy);
+        this.zAccuracy          = this.extractNumberOrNull(zAccuracy);
+        this.length             = this.extractNumberOrNull(length);
         this.geometryFlip       = geomFlip == undefined ? null : JSON.parse(geomFlip.toString().toLowerCase()) ? 1 : 0;
-        this.fromLeft           = KgvLink.extractNumberOrNull(fromLeft);
-        this.toLeft             = KgvLink.extractNumberOrNull(toLeft);
-        this.fromRight          = KgvLink.extractNumberOrNull(fromRight);
-        this.toRight            = KgvLink.extractNumberOrNull(toRight);
+        this.fromLeft           = this.extractNumberOrNull(fromLeft);
+        this.toLeft             = this.extractNumberOrNull(toLeft);
+        this.fromRight          = this.extractNumberOrNull(fromRight);
+        this.toRight            = this.extractNumberOrNull(toRight);
         this.startTime          = startTime;
         this.versionStartTime   = versionStartTime;
         this.geometry           = geometry;
     }
 
-    private static extractNumberOrNull(property?: number): number | null {
+    protected extractNumberOrNull(property?: number): number | null {
         return property != undefined ? Number(property) : null;
     }
 }
