@@ -1,5 +1,6 @@
 (function(root) {
   var RoadLinkModel = function(data) {
+    var linkTypes = new Enumerations().linkTypes;
     var selected = false;
     var original = _.clone(data);
 
@@ -34,11 +35,12 @@
     };
 
     var isCarTrafficRoad = function() {
-      return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
+      return !_.isUndefined(data.linkType) && !_.includes(    [linkTypes.CycleOrPedestrianPath.value,
+        linkTypes.PedestrianZone.value, linkTypes.CableFerry.value, linkTypes.Unknown.value], data.linkType);
     };
 
     var isCarPedestrianCyclingRoad = function() {
-      return !_.isUndefined(data.linkType) && !_.includes([ 9, 21, 99], data.linkType);
+      return !_.isUndefined(data.linkType) && !_.includes([linkTypes.CableFerry.value, linkTypes.Unknown.value], data.linkType);
     };
 
     var cancel = function() {
@@ -71,6 +73,7 @@
     this.roadLinkGroups = [];
     this.roadLinkGroupsHistory = [];
     var me = this;
+    var linkTypes = new Enumerations().linkTypes;
 
     this.roadLinks = function() {
       return _.flatten(me.roadLinkGroups);
@@ -212,7 +215,7 @@
     };
 
     this.isPedestrianOrCyclingRoadLink = function (roadLink) {
-      return roadLink.linkType === 8;
+      return roadLink.linkType === linkTypes.CycleOrPedestrianPath.value || roadLink.linkType === linkTypes.PedestrianZone.value;
     };
   };
 })(this);

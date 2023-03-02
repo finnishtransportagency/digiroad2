@@ -18,7 +18,8 @@
       SpecialTransportWithoutGate: {value: 14, text: 'Erikoiskuljetusyhteys ilman puomia'},
       SpecialTransportWithGate: {value: 15, text: 'Erikoiskuljetusyhteys puomilla'},
       CableFerry: {value: 21, text: 'Lautta/lossi'},
-      BidirectionalLaneCarriageWay: {value: 22, text: 'Kaksisuuntainen yksikaistainen tie'}
+      BidirectionalLaneCarriageWay: {value: 22, text: 'Kaksisuuntainen yksikaistainen tie'},
+      Unknown: {value: 99, text: 'Tuntematon'}
     };
 
     this.constructionTypes = {
