@@ -23,18 +23,18 @@ export class ClientBase {
     /**
      * Get request. Each query is retried for maxRetriesPerQuery times in case of error.
      */
-    async getRequest(instance: AxiosInstance, url: string, params: object = {},
+    async getRequest(client: AxiosInstance, url: string, params: object = {},
                                      retry: number = 1): Promise<any> {
         try {
-            const response = await instance.get(url, { params: params });
+            const response = await client.get(url, { params: params });
             return response.data;
         } catch (err) {
             const queryParams = JSON.stringify(params).substring(0, 100);
-            console.error(`Request ${instance.getUri() + url} with params ${queryParams}... responded with error (retry: ${retry}):`);
-            const errorMsg = this.processErrorAndExtractMessage(err, instance.getUri() + url);
+            console.error(`Request ${client.getUri() + url} with params ${queryParams}... responded with error (retry: ${retry}):`);
+            const errorMsg = this.processErrorAndExtractMessage(err, client.getUri() + url);
             if (retry < this.maxRetriesPerQuery) {
                 await this.exponentialTimeout(retry);
-                return await this.getRequest(instance, url, params, retry + 1);
+                return await this.getRequest(client, url, params, retry + 1);
             } else {
                 throw new Error(errorMsg);
             }
@@ -45,17 +45,17 @@ export class ClientBase {
     /**
      * Post request. Each query is retried for maxRetriesPerQuery times in case of error.
      */
-    async postRequest(instance: AxiosInstance, url: string, data: object, retry: number = 1): Promise<any> {
+    async postRequest(client: AxiosInstance, url: string, data: object, retry: number = 1): Promise<any> {
         try {
-            const response = await instance.post(url, data);
+            const response = await client.post(url, data);
             return response.data;
         } catch (err) {
             const queryData = JSON.stringify(data).substring(0, 100);
-            console.error(`Request ${instance.getUri() + url} with data ${queryData} responded with error (retry: ${retry}):`);
-            const errorMsg = this.processErrorAndExtractMessage(err, instance.getUri() + url);
+            console.error(`Request ${client.getUri() + url} with data ${queryData} responded with error (retry: ${retry}):`);
+            const errorMsg = this.processErrorAndExtractMessage(err, client.getUri() + url);
             if (retry < this.maxRetriesPerQuery) {
                 await this.exponentialTimeout(retry);
-                return await this.postRequest(instance, url, data, retry + 1);
+                return await this.postRequest(client, url, data, retry + 1);
             } else {
                 throw new Error(errorMsg);
             }
