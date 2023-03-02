@@ -12,7 +12,7 @@ export class KgvClient extends ClientBase {
 
     constructor() {
         if (!process.env.KGV_API_URL || !process.env.KGV_API_KEY) {
-            throw new Error("Either KGV_API_URL, KGV_API_KEY or both environment variables missing");
+            throw new Error("Either KGV_API_URL, KGV_API_KEY or both environment variables are missing");
         }
         super();
         this.url    = process.env.KGV_API_URL;

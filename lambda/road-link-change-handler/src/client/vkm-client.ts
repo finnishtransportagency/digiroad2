@@ -13,7 +13,7 @@ export class VkmClient extends ClientBase {
 
     constructor() {
         if (!process.env.VKM_API_URL || !process.env.VKM_API_KEY) {
-            throw new Error("Either VKM_API_URL, VKM_API_KEY or both environment variables missing");
+            throw new Error("Either VKM_API_URL, VKM_API_KEY or both environment variables are missing");
         }
         super();
         this.url    = process.env.VKM_API_URL;
