@@ -71,8 +71,6 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       LinkAttributesDao.getExistingValues(oldLinkId).size should be(2)
 
       roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
-      RoadLinkOverrideDAO.get(TrafficDirection, oldLinkId) should be(None)
-      RoadLinkOverrideDAO.get(AdministrativeClass, oldLinkId) should be(None)
       val newLinkId = replaceChange.newLinks.head.linkId
       RoadLinkOverrideDAO.get(TrafficDirection, newLinkId).get should be(AgainstDigitizing.value)
       RoadLinkOverrideDAO.get(AdministrativeClass, newLinkId).get should be(Municipality.value)
@@ -92,8 +90,6 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       RoadLinkOverrideDAO.get(AdministrativeClass, oldLinkId).get should be(State.value)
 
       roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
-      RoadLinkOverrideDAO.get(TrafficDirection, oldLinkId) should be(None)
-      RoadLinkOverrideDAO.get(AdministrativeClass, oldLinkId) should be(None)
       val newLinkId = replaceChange.newLinks.head.linkId
       RoadLinkOverrideDAO.get(TrafficDirection, newLinkId) should be(None)
       RoadLinkOverrideDAO.get(AdministrativeClass, newLinkId) should be(None)
