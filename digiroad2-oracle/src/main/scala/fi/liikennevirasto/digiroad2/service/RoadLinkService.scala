@@ -578,28 +578,42 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * Returns incomplete links by municipalities (Incomplete link = road link with no functional class and link type saved in OTH).
     * Used by Digiroad2Api /roadLinks/incomplete GET endpoint.
     */
-  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[String]]] = {
+  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]], newSession: Boolean = true): Map[String, Map[String, Seq[String]]] = {
     case class IncompleteLink(linkId: String, municipality: String, administrativeClass: String)
     def toIncompleteLink(x: (String, String, Int)) = IncompleteLink(x._1, x._2, AdministrativeClass(x._3).toString)
 
-    withDynSession {
-      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
-      val incompleteLinksQuery = """
+
+    val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
+    val incompleteLinksQuery =
+      """
         select l.link_id, m.name_fi, l.administrative_class
         from incomplete_link l
         join municipality m on l.municipality_code = m.id
                                  """
 
-      val sql = optionalMunicipalities match {
-        case Some(municipalities) => incompleteLinksQuery + s" where l.municipality_code in ($municipalities)"
-        case _ => incompleteLinksQuery
-      }
+    val sql = optionalMunicipalities match {
+      case Some(municipalities) => incompleteLinksQuery + s" where l.municipality_code in ($municipalities)"
+      case _ => incompleteLinksQuery
+    }
 
+    if (newSession) {
+      withDynSession {
+        Q.queryNA[(String, String, Int)](sql).list
+          .map(toIncompleteLink)
+          .groupBy(_.municipality)
+          .mapValues {
+            _.groupBy(_.administrativeClass)
+              .mapValues(_.map(_.linkId))
+          }
+      }
+    } else {
       Q.queryNA[(String, String, Int)](sql).list
         .map(toIncompleteLink)
         .groupBy(_.municipality)
-        .mapValues { _.groupBy(_.administrativeClass)
-          .mapValues(_.map(_.linkId)) }
+        .mapValues {
+          _.groupBy(_.administrativeClass)
+            .mapValues(_.map(_.linkId))
+        }
     }
   }
 
