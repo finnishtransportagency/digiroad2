@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.FeatureClass.WinterRoads
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove}
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
@@ -121,15 +122,17 @@ class RoadLinkPropertyUpdater {
     val incompleteLinks = new ListBuffer[IncompleteLink]()
     changes.foreach { change =>
       change.newLinks foreach { newLink =>
-        var (functionalClassCreated, linkTypeCreated) = transferFunctionalClassAndLinkTypeFromOldLinks(change.oldLink, newLink)
-        if (!functionalClassCreated) {
-          functionalClassCreated = generateFunctionalClass(newLink)
-        }
-        if (!linkTypeCreated) {
-          linkTypeCreated = generateLinkType(newLink)
-        }
-        if (!(functionalClassCreated && linkTypeCreated)) {
-          incompleteLinks += IncompleteLink(newLink.linkId, newLink.municipality, newLink.adminClass)
+        if (KgvUtil.extractFeatureClass(newLink.roadClass) != WinterRoads) {
+          var (functionalClassCreated, linkTypeCreated) = transferFunctionalClassAndLinkTypeFromOldLinks(change.oldLink, newLink)
+          if (!functionalClassCreated) {
+            functionalClassCreated = generateFunctionalClass(newLink)
+          }
+          if (!linkTypeCreated) {
+            linkTypeCreated = generateLinkType(newLink)
+          }
+          if (!(functionalClassCreated && linkTypeCreated)) {
+            incompleteLinks += IncompleteLink(newLink.linkId, newLink.municipality, newLink.adminClass)
+          }
         }
       }
     }
