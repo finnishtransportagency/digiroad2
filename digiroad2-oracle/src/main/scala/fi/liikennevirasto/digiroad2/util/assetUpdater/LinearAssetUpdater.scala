@@ -206,10 +206,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     def mergeLoop() = {
       val linkUnderMerge = changes.merged.keys.toSet
+      
       val assetsUnderMerge = assetsAll.filter(p => linkUnderMerge.contains(p.linkId))
+      
       val valuesAndSideCodesAreSame = assetsUnderMerge.flatMap(_.value).toSet.size == 1 && assetsUnderMerge.map(_.sideCode).toSet.size == 1
+      
       val assetLengthStatus = assetsUnderMerge.map(p2 => isFullLinkLength(p2, changes.merged.find(_._1 == p2.linkId).get._2.head.oldLink.get.linkLength)).toSet
+      
       val allAreFullLinkLength = assetLengthStatus.size == 1 && assetLengthStatus.head
+      
       if (valuesAndSideCodesAreSame && allAreFullLinkLength) {
         val first = assetsUnderMerge.minBy(_.startMeasure)
         val mergerChangeForAsset = changes.merged.find(_._1 == first.linkId).get
@@ -219,6 +224,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val update = projection._2.copy(expiredAssetIds = projection._2.expiredAssetIds ++ assetsUnderMerge.map(_.id).filterNot(p => p == first.id))
         Seq((projection._1, update))
       } else {
+        val first = assetsUnderMerge.minBy(_.startMeasure)
+        val last = assetsUnderMerge.maxBy(_.endMeasure)
         // test situation where there is merger with splitted asset on different value and side code 
         assetsUnderMerge.flatMap(asset => {
           convertToForCalculation(changes.merged.find(_._1 == asset.linkId).get, asset).map(dataForCalculation => {
