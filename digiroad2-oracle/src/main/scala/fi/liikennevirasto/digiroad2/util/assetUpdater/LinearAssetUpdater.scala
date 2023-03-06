@@ -250,18 +250,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         } else {
           Seq.empty[(PersistedLinearAsset, ChangeSet)]
         }
-
-
       })
-      val returnedChangeSet = projected.foldRight(changeSets) { (a, z) =>
-        a._2.copy(
-          adjustedMValues = a._2.adjustedMValues ++ z.adjustedMValues,
-          adjustedVVHChanges = a._2.adjustedVVHChanges ++ z.adjustedVVHChanges,
-          adjustedSideCodes = a._2.adjustedSideCodes ++ z.adjustedSideCodes,
-          expiredAssetIds = a._2.expiredAssetIds ++ z.expiredAssetIds,
-          valueAdjustments = a._2.valueAdjustments ++ z.valueAdjustments
-        );
-      }
+      
+      val returnedChangeSet = foldChangeSet(projected.map(_._2),changeSets)
+      
       val update = returnedChangeSet.copy(expiredAssetIds = returnedChangeSet.expiredAssetIds ++ assets.map(_.id))
       // optimize so that there is no nested seq
       projected.map(p => (p._1, update))
@@ -298,20 +290,24 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val mergedChangeSet = shortened.map(_._2) ++ lengthened.map(_._2) ++ split.map(_._2) ++ merged.map(_._2) ++ updateVersion.map(_._2)
 
     //println(merged.map(_._2).toString())
-    val returnedChangeSet = mergedChangeSet.foldRight(changeSets) { (a, z) =>
-      a.copy(
-        adjustedMValues = a.adjustedMValues ++ z.adjustedMValues,
-        adjustedVVHChanges = a.adjustedVVHChanges ++ z.adjustedVVHChanges,
-        adjustedSideCodes = a.adjustedSideCodes ++ z.adjustedSideCodes,
-        expiredAssetIds = a.expiredAssetIds ++ z.expiredAssetIds,
-        valueAdjustments = a.valueAdjustments ++ z.valueAdjustments
-      );
-    }
+    val returnedChangeSet = foldChangeSet(mergedChangeSet,changeSets)
     //println(returnedChangeSet.toString)
 
     (assets, returnedChangeSet)
   }
 
+  def foldChangeSet (mergedChangeSet: Seq[ChangeSet],foldTo:ChangeSet):  ChangeSet ={
+    mergedChangeSet.foldLeft(foldTo) { (a, z) =>
+      a.copy(
+        adjustedMValues     = a.adjustedMValues     ++ z.adjustedMValues,
+        adjustedVVHChanges  = a.adjustedVVHChanges  ++ z.adjustedVVHChanges,
+        adjustedSideCodes   = a.adjustedSideCodes   ++ z.adjustedSideCodes,
+        expiredAssetIds     = a.expiredAssetIds     ++ z.expiredAssetIds,
+        valueAdjustments    = a.valueAdjustments    ++ z.valueAdjustments
+      );
+    }
+  } 
+  
   private def projecting(changeSets: ChangeSet, asset: PersistedLinearAsset, p1: CalculateMValueChangesInfo, condition: (PersistedLinearAsset, String, String, Double, Double) => Boolean) = {
     val projected = projectAssetsConditionally(p1, asset, condition)
     projectLinearAsset(asset.copy(linkId = p1.newId.get), LinkAndLength(p1.newId.get, p1.newLinksLength.get), projected.getOrElse(throw new Exception(s"Projection returned Nothing ,link: ${p1.newId}")), changeSets)
