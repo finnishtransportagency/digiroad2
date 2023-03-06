@@ -2308,8 +2308,6 @@ object DataFixture {
         MainLanePopulationProcess.initialProcess()
       case Some("redundant_traffic_direction_removal") =>
         withDynTransaction(redundantTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB())
-      case Some("update_incomplete_link_list") =>
-        UpdateIncompleteLinkList.runUpdate()
       case Some("refresh_road_link_cache") =>
         RefreshRoadLinkCache.refreshCache()
         exit()  //For a currently unknown reason refreshCache batch doesn't exit automatically upon completion
@@ -2331,7 +2329,7 @@ object DataFixture {
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite | change_lanes_according_to_VVH_changes |" +
-        " validate_lane_changes_according_to_VVH_changes | populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal | update_incomplete_link_list |" +
+        " validate_lane_changes_according_to_VVH_changes | populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal |" +
         " refresh_road_link_cache | lane_end_date_expirer |")
     }
   }
