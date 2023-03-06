@@ -33,7 +33,10 @@ class LaneUpdater(roadLinkChangeClient: RoadLinkChangeClient, roadLinkService: R
     val removedLinkIds = deletionChanges.map(_.oldLink.get.linkId)
     val removedLaneIds = lanesOnChangedLinks.filter(lane => removedLinkIds.contains(lane.linkId)).map(_.id)
     val addedLinkIds = addChanges.flatMap(_.newLinks.map(_.linkId))
-    val addedRoadLinks = roadLinkService.getRoadLinksByLinkIds(addedLinkIds.toSet)
+    val addedRoadLinks = if(addedLinkIds.nonEmpty) {
+      roadLinkService.getRoadLinksByLinkIds(addedLinkIds.toSet)
+    }
+    else Seq()
 
     //Move lanes from deleted links to history
     val expiredLaneIds = expireLanesOnDeletedLinks(removedLaneIds.toSet)
