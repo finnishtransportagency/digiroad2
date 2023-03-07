@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.LinkAttributesDao
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{IncompleteLinkDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{ComplementaryLinkDAO, RoadLinkDAO, RoadLinkOverrideDAO}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase.withDbConnection
@@ -561,41 +561,10 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     * Used by Digiroad2Api /roadLinks/incomplete GET endpoint.
     */
   def getIncompleteLinks(includedMunicipalities: Option[Set[Int]], newSession: Boolean = true): Map[String, Map[String, Seq[String]]] = {
-    case class IncompleteLink(linkId: String, municipality: String, administrativeClass: String)
-    def toIncompleteLink(x: (String, String, Int)) = IncompleteLink(x._1, x._2, AdministrativeClass(x._3).toString)
-
-
-    val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
-    val incompleteLinksQuery =
-      """
-        select l.link_id, m.name_fi, l.administrative_class
-        from incomplete_link l
-        join municipality m on l.municipality_code = m.id
-                                 """
-
-    val sql = optionalMunicipalities match {
-      case Some(municipalities) => incompleteLinksQuery + s" where l.municipality_code in ($municipalities)"
-      case _ => incompleteLinksQuery
-    }
-
     if (newSession) {
-      withDynSession {
-        Q.queryNA[(String, String, Int)](sql).list
-          .map(toIncompleteLink)
-          .groupBy(_.municipality)
-          .mapValues {
-            _.groupBy(_.administrativeClass)
-              .mapValues(_.map(_.linkId))
-          }
-      }
+      withDynSession(IncompleteLinkDao.getIncompleteLinks(includedMunicipalities))
     } else {
-      Q.queryNA[(String, String, Int)](sql).list
-        .map(toIncompleteLink)
-        .groupBy(_.municipality)
-        .mapValues {
-          _.groupBy(_.administrativeClass)
-            .mapValues(_.map(_.linkId))
-        }
+      IncompleteLinkDao.getIncompleteLinks(includedMunicipalities)
     }
   }
 
@@ -895,26 +864,10 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
   /**
-    * Updates incomplete road link list (incomplete = functional class or link type missing). Used by RoadLinkService.updateRoadLinkChanges.
+    * Updates incomplete road link list (incomplete = functional class or link type missing).
     */
   def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]): Unit = {
-
-    val insertLinkPropertyPS = dynamicSession.prepareStatement(
-      s"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)
-         |select nextval('primary_key_seq'), (?), (?), (?)
-         |where not exists (select * from incomplete_link where link_id = (?))""".stripMargin)
-    try {
-      incompleteLinks.foreach { incompleteLink =>
-        insertLinkPropertyPS.setString(1, incompleteLink.linkId)
-        insertLinkPropertyPS.setInt(2, incompleteLink.municipalityCode)
-        insertLinkPropertyPS.setInt(3, incompleteLink.administrativeClass.value)
-        insertLinkPropertyPS.setString(4, incompleteLink.linkId)
-        insertLinkPropertyPS.addBatch()
-      }
-      insertLinkPropertyPS.executeBatch()
-    } finally {
-      insertLinkPropertyPS.close()
-    }
+    IncompleteLinkDao.insertIncompleteLinks(incompleteLinks)
   }
 
 

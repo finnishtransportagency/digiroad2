@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass => AdminClassType}
 import fi.liikennevirasto.digiroad2.client.RoadLinkFetched
 import fi.liikennevirasto.digiroad2.postgis.{MassQuery, PostGISDatabase}
-import fi.liikennevirasto.digiroad2.service.{LinkProperties, LinkPropertiesEntries}
+import fi.liikennevirasto.digiroad2.service.{IncompleteLink, LinkProperties, LinkPropertiesEntries}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import slick.jdbc.StaticQuery.interpolation
@@ -166,6 +166,7 @@ object RoadLinkOverrideDAO{
   val AdministrativeClass = "administrative_class"
   val MasterDataAdministrativeClass = "master_data_administrative_class"
   val LinkAttributes = "road_link_attributes"
+  val IncompleteLinks = "incomplete_link"
 
   private def getDao(propertyName: String): RoadLinkOverrideDAO = {
     propertyName.toLowerCase match {
@@ -174,6 +175,7 @@ object RoadLinkOverrideDAO{
       case LinkType => LinkTypeDao
       case AdministrativeClass => AdministrativeClassDao
       case LinkAttributes => LinkAttributesDao
+      case IncompleteLinks => IncompleteLinkDao
     }
   }
 
@@ -534,6 +536,66 @@ object RoadLinkOverrideDAO{
 
     def getMasterDataValue(roadLinkFetched: RoadLinkFetched) = {
       throw new UnsupportedOperationException("Method getMasterDataValue is not supported for Link Attributes class")
+    }
+  }
+
+  case object IncompleteLinkDao extends RoadLinkOverrideDAO {
+
+    def table: String = IncompleteLinks
+    def column: String = IncompleteLinks
+
+    def getValue(linkProperty: LinkProperties): Int = {
+      throw new UnsupportedOperationException("Method getValue is not supported for incomplete links")
+    }
+
+    def getMasterDataValue(roadLinkFetched: RoadLinkFetched) = {
+      throw new UnsupportedOperationException("Method getMasterDataValue is not supported for imcomplete links")
+    }
+
+    def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[String]]] = {
+      case class IncompleteLink(linkId: String, municipality: String, administrativeClass: String)
+      def toIncompleteLink(x: (String, String, Int)) = IncompleteLink(x._1, x._2, AdminClassType(x._3).toString)
+
+      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
+      val incompleteLinksQuery =
+        """
+        select l.link_id, m.name_fi, l.administrative_class
+        from incomplete_link l
+        join municipality m on l.municipality_code = m.id
+                                 """
+
+      val sql = optionalMunicipalities match {
+        case Some(municipalities) => incompleteLinksQuery + s" where l.municipality_code in ($municipalities)"
+        case _ => incompleteLinksQuery
+      }
+
+        Q.queryNA[(String, String, Int)](sql).list
+          .map(toIncompleteLink)
+          .groupBy(_.municipality)
+          .mapValues {
+            _.groupBy(_.administrativeClass)
+              .mapValues(_.map(_.linkId))
+          }
+    }
+
+    def insertIncompleteLinks(incompleteLinks: Seq[IncompleteLink]): Unit = {
+
+      val insertLinkPropertyPS = dynamicSession.prepareStatement(
+        s"""insert into incomplete_link(id, link_id, municipality_code, administrative_class)
+           |select nextval('primary_key_seq'), (?), (?), (?)
+           |where not exists (select * from incomplete_link where link_id = (?))""".stripMargin)
+      try {
+        incompleteLinks.foreach { incompleteLink =>
+          insertLinkPropertyPS.setString(1, incompleteLink.linkId)
+          insertLinkPropertyPS.setInt(2, incompleteLink.municipalityCode)
+          insertLinkPropertyPS.setInt(3, incompleteLink.administrativeClass.value)
+          insertLinkPropertyPS.setString(4, incompleteLink.linkId)
+          insertLinkPropertyPS.addBatch()
+        }
+        insertLinkPropertyPS.executeBatch()
+      } finally {
+        insertLinkPropertyPS.close()
+      }
     }
   }
 }
