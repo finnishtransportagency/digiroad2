@@ -330,6 +330,66 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       )
     )
   }
+
+  def changeReplaceMergeLongerLink(): Seq[RoadLinkChange] = {
+    val (oldLinkGeometry1, oldId1) = (generateGeometry(0, 6), "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
+    val (oldLinkGeometry2, oldId2) = (generateGeometry(6, 6), "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1")
+    val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 15), "753279ca-5a4d-4713-8609-0bd35d6a30fa:1")
+
+    println(s"merged size ${oldLinkGeometry2._2 + oldLinkGeometry1._2}")
+    println(s"new link size ${newLinkGeometry1._2}")
+    Seq(RoadLinkChange(
+      changeType = RoadLinkChangeType.Replace,
+      oldLink = Some(RoadLinkInfo(
+        linkId = oldId1,
+        linkLength = oldLinkGeometry1._2,
+        geometry = oldLinkGeometry1._1,
+        roadClass = MTKClassWidth.CarRoad_Ia.value,
+        adminClass = Municipality,
+        municipality = 0,
+        trafficDirection = TrafficDirection.BothDirections)),
+      newLinks = Seq(
+        RoadLinkInfo(
+          linkId = newLinkId1,
+          linkLength = newLinkGeometry1._2,
+          geometry = newLinkGeometry1._1,
+          roadClass = MTKClassWidth.CarRoad_Ia.value,
+          adminClass = Municipality,
+          municipality = 0,
+          trafficDirection = TrafficDirection.BothDirections
+        )),
+      replaceInfo =
+        List(
+          ReplaceInfo(oldId1, newLinkId1,
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 0.0, newToMValue = 5, false)
+        )
+    ),
+      RoadLinkChange(
+        changeType = RoadLinkChangeType.Replace,
+        oldLink = Some(RoadLinkInfo(
+          linkId = oldId2,
+          linkLength = oldLinkGeometry2._2,
+          geometry = oldLinkGeometry2._1,
+          roadClass = MTKClassWidth.CarRoad_Ia.value,
+          adminClass = Municipality,
+          municipality = 0,
+          trafficDirection = TrafficDirection.BothDirections)),
+        newLinks = Seq(
+          RoadLinkInfo(
+            linkId = newLinkId1,
+            linkLength = newLinkGeometry1._2,
+            geometry = newLinkGeometry1._1,
+            roadClass = MTKClassWidth.CarRoad_Ia.value,
+            adminClass = Municipality,
+            municipality = 0,
+            trafficDirection = TrafficDirection.BothDirections
+          )),
+        replaceInfo =
+          List(ReplaceInfo(oldId2, newLinkId1,
+            oldFromMValue = 0.0, oldToMValue = 5, newFromMValue = 5.0, newToMValue = newLinkGeometry1._2, false))
+      )
+    )
+  }
   
   test("case 1 links under asset is split") {
     val linksid = generateRandomLinkId()
@@ -406,6 +466,43 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
       sorted.head.startMeasure should be(0) 
       sorted.head.endMeasure should be(10)
+      assetsAfter.head.value.isEmpty should be(false)
+      assetsAfter.head.value.get should be(NumericValue(3))
+    }
+  }
+
+  test("case 2.1 links under asset is merged, longer one") {
+    val linksid1 = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+    val linksid2 = "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1"
+    val linkGeometry1 = generateGeometry(0, 6)
+    val linkGeometry2 = generateGeometry(6, 6)
+
+    val oldRoadLink = RoadLink(linksid1, linkGeometry1._1, linkGeometry1._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val oldRoadLink2 = RoadLink(linksid2, linkGeometry2._1, linkGeometry2._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceMergeLongerLink()
+    // extension happen in wrong place
+    runWithRollback {
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value, Measures(0, linkGeometry1._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, linkGeometry2._2), "testuser", 0L, Some(oldRoadLink2), false, None, None)
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
+      assetsBefore.size should be(2)
+      assetsBefore.head.expired should be(false)
+
+      // code return asset which have startMvalue 4 and end mvalue 10
+      // old implementaton lenthent only from end not in begind
+      TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
+      assetsAfter.size should be(1)
+      val sorted = assetsAfter.sortBy(_.startMeasure)
+      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(14)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
     }
@@ -569,10 +666,20 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
   test("test calculator") {
-    val asset = AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2)
+    val asset = AssetLinearReference(id = 1, startMeasure = 5, endMeasure = 10, sideCode = 2)
     val projection = Projection(oldStart = 0, oldEnd = 5, newStart = 5, newEnd = 10, timeStamp = 0)
     val newPosition = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(asset,projection,10)
     
+    println(newPosition.toString())
+    fail("debug test")
+
+  }
+
+  test("test calculator splitted") {
+    val asset = AssetLinearReference(id = 1, startMeasure = 3, endMeasure = 5, sideCode = 2)
+    val projection = Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0)
+    val newPosition = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(asset, projection, 10)
+
     println(newPosition.toString())
     fail("debug test")
 
@@ -618,10 +725,10 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     runWithRollback {
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(newLink1, newLink2, newLink3).map(_.linkId), false)).thenReturn(Seq(newLink1, newLink2, newLink3))
-      val id = createAsset(Measures(0,20 ),NumericValue(3),oldRoadLink)
+      val id1 = createAsset(Measures(0,20 ),NumericValue(3),oldRoadLink)
       val id2 = createAsset(Measures(20,40 ),NumericValue(4),oldRoadLink)
       val id3 = createAsset(Measures(40,oldMaxLength ),NumericValue(5),oldRoadLink)
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id,id2,id3), false)
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1,id2,id3), false)
       assetsBefore.size should be(3)
       assetsBefore.head.expired should be(false)
 
@@ -630,17 +737,32 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsAfter.size should be(3)
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-     /* sorted.head.startMeasure should be(0)
-      sorted.head.endMeasure should be(8)
+      sorted.foreach(p => {
+        println(s"id: ${p.id} , value: ${p.value.get} , startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
 
-      sorted(1).startMeasure should be(0)
-      sorted(1).endMeasure should be(10)
+      sorted.size should be(4)
+      sorted.map(v => v.value.isEmpty should be(false))
+      val asset1 = sorted.find(_.id == id1).get
+      val asset2 = sorted.find(_.id == id2).get
+      val asset3 = sorted.find(_.id == id3).get
 
-      sorted(2).startMeasure should be(0)
-      sorted(2).endMeasure should be(55)
-      assetsAfter.map(v => v.value.isEmpty should be(false))
-      assetsAfter.map(v => v.value.get should be(NumericValue(3)))
-      */
+      // to link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+      println(s"testing: ${asset1.id}")
+      asset1.startMeasure should be(0)
+      asset1.endMeasure should be(3)
+      asset1.value.get should be(NumericValue(3))
+
+      println(s"testing: ${asset2.id}")
+      asset2.startMeasure should be(3)
+      asset2.endMeasure should be(5)
+      asset2.value.get should be(NumericValue(4))
+
+      println(s"testing: ${asset3.id}")
+      // to link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+      asset3.startMeasure should be(5)
+      asset3.endMeasure should be(8)
+      asset3.value.get should be(NumericValue(5))
     }
     
     fail("Need to be implemented")
@@ -667,9 +789,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     // extension happen in wrong place
     runWithRollback {
       val id1 = createAsset(Measures(0, 3), NumericValue(3), oldRoadLink)
-      val id2 = createAsset(Measures(3, oldMaxLength), NumericValue(5), oldRoadLink)
-      val id3 = createAsset(Measures(0, 3), NumericValue(3), oldRoadLink2)
-      val id4 = createAsset(Measures(3, oldMaxLength2), NumericValue(5), oldRoadLink2)
+      val id2 = createAsset(Measures(3, oldMaxLength), NumericValue(4), oldRoadLink)
+      val id3 = createAsset(Measures(0, 3), NumericValue(5), oldRoadLink2)
+      val id4 = createAsset(Measures(3, oldMaxLength2), NumericValue(6), oldRoadLink2)
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2, id3,id4), false)
       
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
@@ -680,17 +802,121 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       // code return asset which have startMvalue 4 and end mvalue 10
       // old implementaton lenthent only from end not in begind
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change)
-    /*  val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
-      assetsAfter.size should be(1)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
       val sorted = assetsAfter.sortBy(_.startMeasure)
-      sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
-      sorted.head.startMeasure should be(0)
-      sorted.head.endMeasure should be(10)
-      assetsAfter.head.value.isEmpty should be(false)
-      assetsAfter.head.value.get should be(NumericValue(3))*/
+
+      sorted.foreach(p=>{
+        println(s"id: ${p.id} , value: ${p.value.get} , startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+      println("dummy")
+
+      sorted.size should be(4)
+      sorted.map(v=>v.value.isEmpty should be(false))
+      val asset1 = sorted.find(_.id == id1).get
+      val asset2 = sorted.find(_.id == id2).get
+      val asset3 = sorted.find(_.id == id3).get
+      val asset4 = sorted.find(_.id == id4).get
+
+      // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+      println(s"testing: ${asset1.id}")
+      asset1.startMeasure should be(0)
+      asset1.endMeasure should be(3)
+      asset1.value.get should be(NumericValue(3))
+
+      println(s"testing: ${asset2.id}")
+      asset2.startMeasure should be(3)
+      asset2.endMeasure should be(5)
+      asset2.value.get should be(NumericValue(4))
+
+      println(s"testing: ${asset3.id}")
+      // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+      asset3.startMeasure should be(5)
+      asset3.endMeasure should be(8)
+      asset3.value.get should be(NumericValue(5))
+
+      println(s"testing: ${asset4.id}")
+      asset4.startMeasure should be(8)
+      asset4.endMeasure should be(10)
+      asset4.value.get should be(NumericValue(6))
       
     }
-    fail("Need to be implemented")
+    //fail("Need to be implemented")
+  }
+
+
+  test("case 7, asset is split into multiple part, link merged and link is longer") {
+    val linksid1 = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+    val linksid2 = "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1"
+    val linkGeometry1 = generateGeometry(0, 6)
+    val linkGeometry2 = generateGeometry(6, 6)
+
+    val oldRoadLink = RoadLink(linksid1, linkGeometry1._1, linkGeometry1._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val oldRoadLink2 = RoadLink(linksid2, linkGeometry2._1, linkGeometry2._2, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceMergeLongerLink()
+
+    val oldMaxLength = linkGeometry1._2
+    val oldMaxLength2 = linkGeometry2._2
+    val newMaxLength = change.head.newLinks.head.linkLength
+
+    // extension happen in wrong place
+    runWithRollback {
+      val id1 = createAsset(Measures(0, 3), NumericValue(3), oldRoadLink)
+      val id2 = createAsset(Measures(3, oldMaxLength), NumericValue(4), oldRoadLink)
+      val id3 = createAsset(Measures(0, 3), NumericValue(5), oldRoadLink2)
+      val id4 = createAsset(Measures(3, oldMaxLength2), NumericValue(6), oldRoadLink2)
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2, id3, id4), false)
+
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
+      assetsBefore.size should be(4)
+      assetsBefore.head.expired should be(false)
+
+      // code return asset which have startMvalue 4 and end mvalue 10
+      // old implementaton lenthent only from end not in begind
+      TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
+      val sorted = assetsAfter.sortBy(_.startMeasure)
+
+      sorted.foreach(p => {
+        println(s"id: ${p.id} , value: ${p.value.get} , startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+      println("dummy")
+
+      sorted.size should be(4)
+      sorted.map(v => v.value.isEmpty should be(false))
+      val asset1 = sorted.find(_.id == id1).get
+      val asset2 = sorted.find(_.id == id2).get
+      val asset3 = sorted.find(_.id == id3).get
+      val asset4 = sorted.find(_.id == id4).get
+
+      // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+      println(s"testing: ${asset1.id}")
+      asset1.startMeasure should be(0)
+      asset1.endMeasure should be(3)
+      asset1.value.get should be(NumericValue(3))
+
+      println(s"testing: ${asset2.id}")
+      asset2.startMeasure should be(3)
+      asset2.endMeasure should be(5)
+      asset2.value.get should be(NumericValue(4))
+
+      println(s"testing: ${asset3.id}")
+      // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+      asset3.startMeasure should be(5)
+      asset3.endMeasure should be(8) // here we extend two last part, need should we be doing it
+      asset3.value.get should be(NumericValue(5))
+
+      println(s"testing: ${asset4.id}")
+      asset4.startMeasure should be(8)
+      asset4.endMeasure should be(14)
+      asset4.value.get should be(NumericValue(6))
+
+    }
+    //fail("Need to be implemented")
   }
 
   test("case 7, asset is split into multiple part, link is longer") {
