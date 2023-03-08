@@ -78,6 +78,8 @@ object LinearAssetUpdateProcess {
     }
   }
 
+  lazy val roadLinkPropertyUpdater = new RoadLinkPropertyUpdater
+
   def main(args: Array[String]): Unit = {
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
@@ -120,6 +122,7 @@ object LinearAssetUpdateProcess {
         case "hazmat_prohibition" => getAssetUpdater(HazmatTransportProhibition.typeId).updateLinearAssets(HazmatTransportProhibition.typeId)
         case "road_width" => getAssetUpdater(RoadWidth.typeId).updateLinearAssets(RoadWidth.typeId)
         case "speed_limit" => getAssetUpdater(SpeedLimitAsset.typeId).updateLinearAssets(SpeedLimitAsset.typeId)
+        case "road_link_properties" => roadLinkPropertyUpdater.updateProperties()
         case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
