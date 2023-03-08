@@ -32,9 +32,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 case class IncompleteLink(linkId: String, municipalityCode: Int, administrativeClass: AdministrativeClass)
-case class AdjustedRoadLinksAndRoadLinkFetched(adjustedRoadLink:RoadLink, roadLinkFetched:RoadLinkFetched)
 case class RoadLinkSet(link: RoadLink, itNext: Option[RoadLink], itPrevious: Option[RoadLink])
-case class RoadLinkChangeSet(adjustedRoadLinks: Seq[AdjustedRoadLinksAndRoadLinkFetched], incompleteLinks: Seq[IncompleteLink], changes: Seq[ChangeInfo] = Nil, roadLinks: Seq[RoadLink] = Nil)
 case class ChangedRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 case class LinkProperties(linkId: String, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection,
                           administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[AdditionalInformation] = None,
