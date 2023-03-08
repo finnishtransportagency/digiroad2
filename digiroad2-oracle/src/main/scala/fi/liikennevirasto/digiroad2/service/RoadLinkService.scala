@@ -879,22 +879,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
   }
 
 
-  def roadLinkToMap(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): mutable.HashMap[String, RoadLinkSet] = {
-    val hashMap: mutable.HashMap[String, RoadLinkSet] = new mutable.HashMap()
-    val newChanges=changes.partition(c=>c.changeType ==ChangeType.New.value )._1
-
-    newChanges.foreach(change => {
-      val roadLinkFound = roadLinks.find(_.linkId == change.newId.get)
-      if (roadLinkFound.isDefined){
-        val (startPoint, endPoint) = GeometryUtils.geometryEndpoints(roadLinkFound.get.geometry)
-        val roadLinksAdjFirst = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, startPoint) && link != roadLinkFound.get)
-        val roadLinksAdjLast = roadLinks.find(link => GeometryUtils.areAdjacent(link.geometry, endPoint) && link != roadLinkFound.get)
-        hashMap.put(roadLinkFound.get.linkId, RoadLinkSet(roadLinkFound.get, roadLinksAdjFirst, roadLinksAdjLast))
-      }
-    })
-    hashMap
-  }
-
   def enrichFetchedRoadLinks(allFetchedRoadLinks: Seq[IRoadLinkFetched], includeHardShoulderRoads: Boolean = false): Seq[RoadLink] = {
     val featureClassesToExclude =
       if (includeHardShoulderRoads) Seq(FeatureClass.WinterRoads)
@@ -903,27 +887,6 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
     LogUtils.time(logger,"TEST LOG enrich roadLinkDataByLinkId, link count: " + filteredRoadLinks.size){getRoadLinkDataByLinkIds(filteredRoadLinks)}
   }
 
-  /**
-    * Uses old road link ids from change data to fetch their OTH overridden properties from db.
-    * Used by RoadLinkSErvice.fillIncompleteLinksWithPreviousLinkData.
-    */
-  def getOldRoadLinkPropertiesForChanges(changes: Seq[ChangeInfo]): Seq[RoadLinkProperties] = {
-    val oldLinkIds = changes.flatMap(_.oldId)
-    val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet)
-
-    oldLinkIds.map { linkId =>
-      val latestModification = propertyRows.latestModifications(linkId)
-      val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
-
-      RoadLinkProperties(linkId,
-        propertyRows.functionalClassValue(linkId),
-        propertyRows.linkTypeValue(linkId),
-        propertyRows.trafficDirectionValue(linkId).getOrElse(TrafficDirection.UnknownDirection),
-        propertyRows.administrativeClassValue(linkId).getOrElse(Unknown),
-        modifiedAt.map(DateTimePropertyFormat.print),
-        modifiedBy)
-    }
-  }
 
   /**
     * Passes fetched road links to adjustedRoadLinks to get road links. Used by RoadLinkService.enrichFetchedRoadLinks and UpdateIncompleteLinkList.
