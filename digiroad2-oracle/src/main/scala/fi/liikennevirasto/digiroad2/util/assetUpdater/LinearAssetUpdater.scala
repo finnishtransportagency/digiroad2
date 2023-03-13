@@ -18,6 +18,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.util.Try
 
 
@@ -237,9 +238,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val merged: Seq[(PersistedLinearAsset, ChangeSet)] = mergeLoop()
 
-    
-    def sliceLoop():  Seq[(PersistedLinearAsset, ChangeSet)]  = {
-      if (changes.split.nonEmpty){
+
+    def sliceLoop(): Seq[(PersistedLinearAsset, ChangeSet)] = {
+      if (changes.split.nonEmpty) {
         changes.split.map(change => {
           val linkWhichIsSplitted = change._1
           val assets = assetsAll.filter(p => linkWhichIsSplitted.contains(p.linkId))
@@ -249,19 +250,19 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
           val allAreFullLinkLength = assetLengthStatus.size == 1 && assetLengthStatus.head
           if (valuesAndSideCodesAreSame && allAreFullLinkLength) {
-              val assets = assetsAll.filter(_.linkId == change._1)
-              // check situation where there is split asset when link is split
-              val projected = change._2.head.replaceInfo.map(replaceInfo => { // slicing
-                assets.head.copy(id = 0, linkId = replaceInfo.oldLinkId, startMeasure = replaceInfo.oldFromMValue, endMeasure = replaceInfo.oldToMValue)
-              }).flatMap(asset => {
-                val mapping = convertToForCalculation(change, asset)
-                val findProjection = mapping.head
-                Seq(projecting(changeSets, asset, findProjection._2, testNoAssetExistsOnTarget))
-              })
-              val returnedChangeSet = foldChangeSet(projected.map(_._2), changeSets)
-              val update = returnedChangeSet.copy(expiredAssetIds = returnedChangeSet.expiredAssetIds ++ assets.map(_.id))
-              // optimize so that there is no nested seq
-              projected.map(p => (p._1, update))
+            val assets = assetsAll.filter(_.linkId == change._1)
+            // check situation where there is split asset when link is split
+            val projected = change._2.head.replaceInfo.map(replaceInfo => { // slicing
+              assets.head.copy(id = 0, linkId = replaceInfo.oldLinkId, startMeasure = replaceInfo.oldFromMValue, endMeasure = replaceInfo.oldToMValue)
+            }).flatMap(asset => {
+              val mapping = convertToForCalculation(change, asset)
+              val findProjection = mapping.head
+              Seq(projecting(changeSets, asset, findProjection._2, testNoAssetExistsOnTarget))
+            })
+            val returnedChangeSet = foldChangeSet(projected.map(_._2), changeSets)
+            val update = returnedChangeSet.copy(expiredAssetIds = returnedChangeSet.expiredAssetIds ++ assets.map(_.id))
+            // optimize so that there is no nested seq
+            projected.map(p => (p._1, update))
           } else {
             // select which asset goes to what part of new link
             // project independently these groupes
@@ -272,29 +273,62 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             // sliced part check where it fall
             // keep slicing untill all part fall into new links
 
+            // partition asset which endMeasure is greater than oldFromMValue
+            // slice these asset to end at oldFromMValue
+            // create new part which has startMValue as oldFromMValue
+            // shift these into next links
+            // Repeat operation on next links
+
             val assets = assetsAll.filter(_.linkId == change._1)
 
-           val test = assets.map(a=>{
-              val selectInfo = change._2.head.replaceInfo.find(r=>a.linkId == r.oldLinkId && a.endMeasure >= r.oldToMValue && a.startMeasure >= r.oldFromMValue ).get
+            def selectNearestReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
+              val condition = asset.linkId == replaceInfo.oldLinkId && asset.endMeasure >= replaceInfo.oldToMValue || asset.endMeasure <= replaceInfo.oldToMValue && asset.startMeasure >= replaceInfo.oldFromMValue
+              //println(s"Condition selectNearestReplaceInfo  status: $condition")
+              //println(s"evaluate asset ${asset.id} ,old link id: ${asset.linkId}")
+              //println(s"oldFrom: ${replaceInfo.oldFromMValue}, oldTo: ${replaceInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
+              if (!condition) {
+                condition
+              } else condition
+            }
 
-              (a,selectInfo)
-            })
-            
-            
-            change._2.head.replaceInfo.map(replaceInfo => {
-              val assetOverLink = assets.filter(a => a.linkId == replaceInfo.oldLinkId && a.endMeasure > replaceInfo.oldToMValue && a.startMeasure > replaceInfo.oldFromMValue )
-              
-              // find asset which over end 
+            def partitioner(asset: PersistedLinearAsset, change: (String, Seq[RoadLinkChange])): Boolean = {
+              // order list by oldToMValue and start looking for right replace info by looking first highest number
+              // and then checking lower number until correct one is found.
+              val sortedInfo = change._2.head.replaceInfo.sortBy(_.oldToMValue).reverse
+              val selectInfo = sortedInfo.find(selectNearestReplaceInfo(_, asset)).get
+              val condition = asset.endMeasure >= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
+              //println(s"Condition partitioner  status: $condition")
+              //println(s"evaluate asset ${asset.id} old link id: ${asset.linkId}")
+              //println(s"oldFrom: ${selectInfo.oldFromMValue}, oldTo: ${selectInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
+              if (condition) {
+                condition
+              } else condition
+            }
 
-              if (assetOverLink.nonEmpty){
-                println("2")
-              }
-              
-             
-              
-            })
+            def slicer(assets: Seq[PersistedLinearAsset], change: (String, Seq[RoadLinkChange]), cycle: Int = 0): Seq[PersistedLinearAsset] = {
+              val assetGoOver = assets.partition(partitioner(_, change))
+              val sliced = assetGoOver._1.flatMap(a1 => {
+                // order list by oldToMValue and start looking for right replace info by looking first highest number
+                // and then checking lower number until correct one is found.
+                val selectInfo = change._2.head.replaceInfo.sortBy(_.oldToMValue).reverse.find(r => a1.linkId == r.oldLinkId && a1.endMeasure >= r.oldToMValue && a1.startMeasure >= r.oldFromMValue).get
+                val shorted = a1.copy(endMeasure = selectInfo.oldToMValue)
+                val newPart = a1.copy(id = 0, startMeasure = selectInfo.oldToMValue)
 
-              assets.flatMap(asset => {
+                println(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
+                println(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
+                Seq(shorted, newPart)
+              })
+
+              val isThereTillOverAsset = sliced.partition(partitioner(_, change))._1
+              println(s"over link assets count: ${isThereTillOverAsset.size}")
+
+              sliced ++ assetGoOver._2
+
+            }
+
+            val sliced: Seq[PersistedLinearAsset] = slicer(assets, change).filter(p => p.endMeasure - p.startMeasure > 0)
+
+            sliced.flatMap(asset => {
               convertToForCalculation(change, asset).map(dataForCalculation => {
                 projecting(changeSets, asset, dataForCalculation._2, testNoAssetExistsOnTarget)
               })
@@ -335,7 +369,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     (assets, returnedChangeSet)
   }
-
+  
   def foldChangeSet (mergedChangeSet: Seq[ChangeSet],foldTo:ChangeSet):  ChangeSet ={
     mergedChangeSet.foldLeft(foldTo) { (a, z) =>
       a.copy(
@@ -356,20 +390,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val condition = replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
     println(s"Condition status: $condition")
     if(!condition){
-      println(s"evalute old link id: ${asset.linkId}")
+      println(s"evaluate asset ${asset.id}, old linkId: ${asset.linkId}")
       println(s"oldFrom: ${replaceInfo.oldFromMValue}, oldTo: ${replaceInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
       condition
     }else condition
-  }
-
-  def selectForSlicing(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
-    val condition = replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue >= asset.startMeasure && replaceInfo.oldToMValue <= asset.endMeasure
-    println(s"Condition status: $condition")
-    if (!condition) {
-      println(s"evalute old link id: ${asset.linkId}")
-      println(s"oldFrom: ${replaceInfo.oldFromMValue}, oldTo: ${replaceInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
-      condition
-    } else condition
   }
   
   private def convertToForCalculation(changes: (String, Seq[RoadLinkChange]), asset: PersistedLinearAsset) = {
@@ -413,7 +437,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                           typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     
     // TODO is there need validate whole asset network?
-/*     val (filledTopology, changedSet) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
+     val (filledTopology, changedSet) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
     val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
         adjustmentsChangeSet.isEmpty match { //  Validate that there is no infinity loop 
           case true => filledTopology
@@ -424,11 +448,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             updateChangeSet(adjustmentsChangeSet)
             val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty)
             adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust.groupBy(_.linkId), typeId, None, counter + 1)
-        }*/
+        }
 
-    updateChangeSet(changeSet.get)
-    (linearAssets.values.flatten.toSeq, changeSet.get)
-   // (filledTopology, adjustmentsChangeSet)
+    //updateChangeSet(changeSet.get)
+    //(linearAssets.values.flatten.toSeq, changeSet.get)
+    (filledTopology, adjustmentsChangeSet)
   }
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {

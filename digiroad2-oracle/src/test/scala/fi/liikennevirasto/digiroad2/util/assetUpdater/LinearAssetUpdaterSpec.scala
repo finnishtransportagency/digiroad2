@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkInfo, _}
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, RoadLink, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset, RoadLink, Value}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
@@ -130,7 +130,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
           ReplaceInfo(oldId, newLinkId2,
             oldFromMValue = 9, oldToMValue = 21, newFromMValue = 0.0, newToMValue = newLinkGeometry2._2, false),
           ReplaceInfo(oldId, newLinkId3,
-            oldFromMValue = 21, oldToMValue = 56, newFromMValue = 0.0, newToMValue = newLinkGeometry3._2, false))
+            oldFromMValue = 21, oldToMValue = 55, newFromMValue = 0.0, newToMValue = newLinkGeometry3._2, false))
     )
   }
 
@@ -160,6 +160,26 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
           ReplaceInfo(oldId, newLinkId1,
             oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
     )
+  }
+
+  case class LinearLocation(linkId:String,endMeasure:Double,startMeasure:Double)
+  test("debug test10"){
+    def selectForSlicing(replaceInfo: ReplaceInfo, asset: LinearLocation): Boolean = {
+      val condition = asset.linkId == replaceInfo.oldLinkId && asset.endMeasure >= replaceInfo.oldToMValue && asset.startMeasure >= replaceInfo.oldFromMValue
+      println(s"Condition status: $condition")
+      println(s"evaluate old link id: ${asset.linkId}")
+      println(s"oldFrom: ${replaceInfo.oldFromMValue}, oldTo: ${replaceInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
+      if (!condition) {
+        condition
+      } else condition
+    }
+    
+  val test =   selectForSlicing(ReplaceInfo(oldLinkId = "k", newLinkId = "k1", 
+      oldFromMValue = 0, oldToMValue = 9, newFromMValue = 0, newToMValue = 0, digitizationChange = true),
+      asset = LinearLocation(linkId = "k",startMeasure = 37, endMeasure = 46 ))
+    
+    println(test)
+    
   }
 
   def changeReplaceLenghenedFromEnd(oldRoadLinkId: String): RoadLinkChange = {
@@ -724,7 +744,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     
     runWithRollback {
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(newLink1, newLink2, newLink3).map(_.linkId), false)).thenReturn(Seq(newLink1, newLink2, newLink3))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(newLink2, newLink3).map(_.linkId), false)).thenReturn(Seq(newLink1, newLink2, newLink3))
       val id1 = createAsset(Measures(0,20 ),NumericValue(3),oldRoadLink)
       val id2 = createAsset(Measures(20,40 ),NumericValue(4),oldRoadLink)
       val id3 = createAsset(Measures(40,oldMaxLength ),NumericValue(5),oldRoadLink)
@@ -734,11 +754,25 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, change.newLinks.map(_.linkId), false)
-      assetsAfter.size should be(3)
+      //assetsAfter.size should be(3)
+      /*  unmerged
+      id: 650631, value: NumericValue(3) ,linkId: c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1 , startMeasure: 0.0, endMeasure: 8.0
+      id: 650637, value: NumericValue(3) ,linkId: c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1 , startMeasure: 0.0, endMeasure: 9.166666666666666
+      id: 650633, value: NumericValue(4) ,linkId: c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1 , startMeasure: 9.166666666666668, endMeasure: 10.0
+      id: 650639, value: NumericValue(4) ,linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 0.0, endMeasure: 30.735294117647058
+      id: 650635, value: NumericValue(5) ,linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 30.735294117647058, endMeasure: 55.0
+      
+      
+      Here we have one meter whole need to check out if we can allow it
+      id: 650731, value: NumericValue(3) , linkId: c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1 , startMeasure: 0.0, endMeasure: 8.0
+      id: 650737, value: NumericValue(3) , linkId: c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1 , startMeasure: 0.0, endMeasure: 9.166666666666666
+      id: 650739, value: NumericValue(4) , linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 0.0, endMeasure: 30.735294117647058
+      id: 650735, value: NumericValue(5) , linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 30.735294117647058, endMeasure: 55.0
+      */
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
       sorted.foreach(p => {
-        println(s"id: ${p.id} , value: ${p.value.get} , startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId} , startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
       })
 
       sorted.size should be(4)
