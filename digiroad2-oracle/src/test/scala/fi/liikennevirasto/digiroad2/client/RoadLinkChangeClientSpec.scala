@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.client
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{State, Unknown}
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, TowardsDigitizing, AgainstDigitizing}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, State, Unknown}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove, Replace, Split}
@@ -55,34 +55,34 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   test("RoadLinkChange for 'replace' contains correct info") {
     val replaceChange = changes(4)
     replaceChange.changeType should be(Replace)
-    replaceChange.oldLink.get.linkId should be("41cca8ff-4644-41aa-8de1-2702f1a57f80:1")
-    replaceChange.oldLink.get.linkLength should be(186.08235918)
-    replaceChange.oldLink.get.geometry.size should be(14)
-    replaceChange.oldLink.get.geometry.head should be(Point(361966.115, 6682342.526, 52.256))
-    replaceChange.oldLink.get.geometry.last should be(Point(361938.529, 6682516.719, 54.601))
-    replaceChange.oldLink.get.roadClass should be(12131)
-    replaceChange.oldLink.get.adminClass should be(State)
+    replaceChange.oldLink.get.linkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:1")
+    replaceChange.oldLink.get.linkLength should be(16.4646643)
+    replaceChange.oldLink.get.geometry.size should be(3)
+    replaceChange.oldLink.get.geometry.head should be(Point(367074.545, 6675175.568, 17.744))
+    replaceChange.oldLink.get.geometry.last should be(Point(367068.125, 6675190.727, 18.792))
+    replaceChange.oldLink.get.roadClass should be(12122)
+    replaceChange.oldLink.get.adminClass should be(Municipality)
     replaceChange.oldLink.get.municipality should be(49)
     replaceChange.oldLink.get.trafficDirection should be(BothDirections)
 
     replaceChange.newLinks.size should be(1)
-    replaceChange.newLinks.head.linkId should be("41cca8ff-4644-41aa-8de1-2702f1a57f80:2")
-    replaceChange.newLinks.head.linkLength should be(186.08235918)
-    replaceChange.newLinks.head.geometry.size should be(14)
-    replaceChange.newLinks.head.geometry.head should be(Point(361966.115, 6682342.526, 52.256))
-    replaceChange.newLinks.head.geometry.last should be(Point(361938.529, 6682516.719, 54.601))
-    replaceChange.newLinks.head.roadClass should be(12131)
-    replaceChange.newLinks.head.adminClass should be(State)
+    replaceChange.newLinks.head.linkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:2")
+    replaceChange.newLinks.head.linkLength should be(16.4646643)
+    replaceChange.newLinks.head.geometry.size should be(3)
+    replaceChange.newLinks.head.geometry.head should be(Point(367074.545, 6675175.568, 17.744))
+    replaceChange.newLinks.head.geometry.last should be(Point(367068.125, 6675190.727, 18.792))
+    replaceChange.newLinks.head.roadClass should be(12122)
+    replaceChange.newLinks.head.adminClass should be(Municipality)
     replaceChange.newLinks.head.municipality should be(49)
     replaceChange.newLinks.head.trafficDirection should be(BothDirections)
 
     replaceChange.replaceInfo.size should be(1)
-    replaceChange.replaceInfo.head.oldLinkId should be("41cca8ff-4644-41aa-8de1-2702f1a57f80:1")
-    replaceChange.replaceInfo.head.newLinkId should be("41cca8ff-4644-41aa-8de1-2702f1a57f80:2")
+    replaceChange.replaceInfo.head.oldLinkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:1")
+    replaceChange.replaceInfo.head.newLinkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:2")
     replaceChange.replaceInfo.head.oldFromMValue should be(0)
-    replaceChange.replaceInfo.head.oldToMValue should be(186.0823591774)
+    replaceChange.replaceInfo.head.oldToMValue should be(16.465)
     replaceChange.replaceInfo.head.newFromMValue should be(0)
-    replaceChange.replaceInfo.head.newToMValue should be(186.0823591774)
+    replaceChange.replaceInfo.head.newToMValue should be(16.465)
     replaceChange.replaceInfo.head.digitizationChange should be(false)
   }
 
