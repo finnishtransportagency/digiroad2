@@ -283,9 +283,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
             def selectNearestReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
               val condition = asset.linkId == replaceInfo.oldLinkId && asset.endMeasure >= replaceInfo.oldToMValue || asset.endMeasure <= replaceInfo.oldToMValue && asset.startMeasure >= replaceInfo.oldFromMValue
-              //println(s"Condition selectNearestReplaceInfo  status: $condition")
-              //println(s"evaluate asset ${asset.id} ,old link id: ${asset.linkId}")
-              //println(s"oldFrom: ${replaceInfo.oldFromMValue}, oldTo: ${replaceInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
+              println(s"Condition selectNearestReplaceInfo  status: $condition")
+              println(s"evaluate asset ${asset.id} ,old link id: ${asset.linkId}")
+              println(s"oldFrom: ${replaceInfo.oldFromMValue}, oldTo: ${replaceInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
               if (!condition) {
                 condition
               } else condition
@@ -297,9 +297,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
               val sortedInfo = change._2.head.replaceInfo.sortBy(_.oldToMValue).reverse
               val selectInfo = sortedInfo.find(selectNearestReplaceInfo(_, asset)).get
               val condition = asset.endMeasure >= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
-              //println(s"Condition partitioner  status: $condition")
-              //println(s"evaluate asset ${asset.id} old link id: ${asset.linkId}")
-              //println(s"oldFrom: ${selectInfo.oldFromMValue}, oldTo: ${selectInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
+              println(s"Condition partitioner  status: $condition")
+              println(s"evaluate asset ${asset.id} old link id: ${asset.linkId}")
+              println(s"oldFrom: ${selectInfo.oldFromMValue}, oldTo: ${selectInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
               if (condition) {
                 condition
               } else condition
@@ -313,20 +313,47 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                 val selectInfo = change._2.head.replaceInfo.sortBy(_.oldToMValue).reverse.find(r => a1.linkId == r.oldLinkId && a1.endMeasure >= r.oldToMValue && a1.startMeasure >= r.oldFromMValue).get
                 val shorted = a1.copy(endMeasure = selectInfo.oldToMValue)
                 val newPart = a1.copy(id = 0, startMeasure = selectInfo.oldToMValue)
+                val shortedLength = shorted.endMeasure - shorted.startMeasure
+                val newPartLength = newPart.endMeasure - newPart.startMeasure
+                
+                val shortedFilter = if (shortedLength > 0)  {
+                  Option(shorted)
+                } else {None}
+
+                val newPartFilter = if (newPartLength > 0) {
+                  Option(newPart)
+                } else {None}
 
                 println(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
                 println(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
-                Seq(shorted, newPart)
+
+                (shortedFilter,newPartFilter) match {
+                  case (None , None) => Seq()
+                  case (Some(shortedSome) , None) => Seq(shortedSome)
+                  case (None , Some(newParSome)) => Seq(newParSome)
+                  case (Some(shortedSome) , Some(newPartSome)) =>Seq(shortedSome, newPartSome)
+                }
+                
+                //Seq(shortedFilter.get, newPartFilter.get)
               })
+              //val partitionResult = sliced.partition(partitioner(_, change))
+              //val isThereTillOverAsset = partitionResult._1.filter(p => p.endMeasure - p.startMeasure > 0)
+              //println(s"over link assets count: ${isThereTillOverAsset.size}")
 
-              val isThereTillOverAsset = sliced.partition(partitioner(_, change))._1
-              println(s"over link assets count: ${isThereTillOverAsset.size}")
+              //if (cycle == 10) { // this is totally arbitrary
+              //  return sliced ++ assetGoOver._2
+             // }
 
-              sliced ++ assetGoOver._2
+              val data = (sliced ++ assetGoOver._2).filter(p => p.endMeasure - p.startMeasure > 0)
+             // if (isThereTillOverAsset.nonEmpty) {
+              //7  slicer(data, change, cycle + 1)
+              //} else data
+
+              (sliced ++ assetGoOver._2).filter(p => p.endMeasure - p.startMeasure > 0)
 
             }
 
-            val sliced: Seq[PersistedLinearAsset] = slicer(assets, change).filter(p => p.endMeasure - p.startMeasure > 0)
+            val sliced: Seq[PersistedLinearAsset] = slicer(assets, change)
 
             sliced.flatMap(asset => {
               convertToForCalculation(change, asset).map(dataForCalculation => {
@@ -711,9 +738,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         println(s"link length: $roadLinkLength")
         println(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure-asset.startMeasure}, old projection length $oldLength")
         println(s"new start $start, new end $end, new length ${end-start}, new projection length $newLength")
-        (start, end, asset.sideCode)
+        (roundMeasure(start), roundMeasure(end), asset.sideCode)
       }
     }
+  }
+
+  def roundMeasure(measure: Double, numberOfDecimals: Int = 3): Double = {
+    val exponentOfTen = Math.pow(10, numberOfDecimals)
+    Math.round(measure * exponentOfTen).toDouble / exponentOfTen
   }
 
   def projectLinearAsset(asset: PersistedLinearAsset, to: LinkAndLength, projection: Projection, changedSet: ChangeSet): (PersistedLinearAsset, ChangeSet) = {
