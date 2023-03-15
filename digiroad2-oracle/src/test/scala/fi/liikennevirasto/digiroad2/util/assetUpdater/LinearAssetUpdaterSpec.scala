@@ -710,17 +710,26 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val newPosition2 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
       AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 4, sideCode = 2), 
       Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10)
+    // from documention point of view asset should in same place, 
     
     println(s"new start: ${newPosition2._1}, new end: ${newPosition2._2}, side code: ${newPosition2._3}")
+
+    newPosition2._1 should be(2)
+    newPosition2._2 should be(4)
     
     println("-----")
-    println("link lenthened from end,  asset cover link only partially")
+    println("link lenthened from begind,  asset cover link only partially")
     val newPosition3 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
       AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 5, sideCode = 2),
       Projection(oldStart = 0, oldEnd = 5, newStart = 5, newEnd = 10, timeStamp = 0), 10)
 
     println(s"new start: ${newPosition3._1}, new end: ${newPosition3._2}, side code: ${newPosition3._3}")
 
+    newPosition3._1 should be(2)
+    newPosition3._2 should be(10)
+
+    // from documention point of view asset should here start should be two,
+    
     println("-----")
     println("link lenghend")
     val newPosition4 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
@@ -728,6 +737,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10)
 
     println(s"new start: ${newPosition4._1}, new end: ${newPosition4._2}, side code: ${newPosition4._3}")
+
+    newPosition4._1 should be(0)
+    newPosition4._2 should be(10)
     
     fail("debug test")
 
@@ -764,6 +776,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   // TODO what about situation where link is split or merge and replacing one is shorter or longer
   // TODO this implementation shift position of asset even when new splitted parts size is same
   // TODO need to check how feasible is implementation where there is no shifting 
+  // there is missing 2 meters part of link
   test("case 7, asset is split into multiple part, link split") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 56)
@@ -800,12 +813,13 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
         println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.get.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
       })
 
-      sorted.size should be(4)
+      sorted.size should be(5)
       sorted.map(v => v.value.isEmpty should be(false))
       val asset1 = sorted.head
       val asset2 = sorted(1)
       val asset3 = sorted(2)
       val asset4 = sorted(3)
+      val asset5 = sorted(4)
 
       // to link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
       println(s"testing: ${asset1.id}")
@@ -821,14 +835,20 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       println(s"testing: ${asset3.id}")
       // to link "753279ca-5a4d-4713-8609-0bd35d6a30fa:1"
       asset3.startMeasure should be(0)
-      asset3.endMeasure should be(20.676)
-      asset3.value.get should be(NumericValue(4))
+      asset3.endMeasure should be(2)
+      asset3.value.get should be(NumericValue(3))
       
       println(s"testing: ${asset4.id}")
       // to link "753279ca-5a4d-4713-8609-0bd35d6a30fa:1"
-      asset4.startMeasure should be(20.676)
-      asset4.endMeasure should be(37.0)
+      asset4.startMeasure should be(2)
+      asset4.endMeasure should be(22)
       asset4.value.get should be(NumericValue(5))
+      
+      println(s"testing: ${asset4.id}")
+      // to link "753279ca-5a4d-4713-8609-0bd35d6a30fa:1"
+      asset5.startMeasure should be(22)
+      asset5.endMeasure should be(37.0)
+      asset5.value.get should be(NumericValue(5))
     }
   }
 
