@@ -183,7 +183,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology))
     val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(projectedAssets, convertedLink).groupBy(_.linkId)
     val adjusted = adjustLinearAssetsOnChangesGeometry(convertedLink, groupedAssets, typeId, Some(changedSet))
-    persistProjectedLinearAssets(projectedAssets.filter(_.id == 0L))
+    persistProjectedLinearAssets(adjusted._1.map(convertToPersisted).filter(_.id == 0L))
 
   }
 
@@ -205,6 +205,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }).toSeq.flatten
 
     // these merge and slicing loop does not work if there is more than one merge or slicing per old link.
+    // check if it is possible scenario
     def mergeLoop(): Seq[(PersistedLinearAsset, ChangeSet)]  = {
       val linkUnderMerge = changes.merged.keys.toSet
       if (linkUnderMerge.nonEmpty){
@@ -261,18 +262,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             })
             val returnedChangeSet = foldChangeSet(projected.map(_._2), changeSets)
             val update = returnedChangeSet.copy(expiredAssetIds = returnedChangeSet.expiredAssetIds ++ assets.map(_.id))
-            // optimize so that there is no nested seq
+            // optimize so that there is no nested seq , check in end
             projected.map(p => (p._1, update))
           } else {
-            // select which asset goes to what part of new link
-            // project independently these groupes
-
+            
             // if asset fall totally into new link do notthing,
 
             // if asset fall partially, slice 
             // sliced part check where it fall
-            // keep slicing untill all part fall into new links
-
+            
             // partition asset which endMeasure is greater than oldFromMValue
             // slice these asset to end at oldFromMValue
             // create new part which has startMValue as oldFromMValue
@@ -318,11 +316,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                 
                 val shortedFilter = if (shortedLength > 0)  {
                   Option(shorted)
-                } else {None}
+                } else None
 
                 val newPartFilter = if (newPartLength > 0) {
                   Option(newPart)
-                } else {None}
+                } else None
 
                 println(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
                 println(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
@@ -344,12 +342,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
               //  return sliced ++ assetGoOver._2
              // }
 
-              val data = (sliced ++ assetGoOver._2).filter(p => p.endMeasure - p.startMeasure > 0)
+              //val data = (sliced ++ assetGoOver._2)
              // if (isThereTillOverAsset.nonEmpty) {
               //7  slicer(data, change, cycle + 1)
               //} else data
 
-              (sliced ++ assetGoOver._2).filter(p => p.endMeasure - p.startMeasure > 0)
+              (sliced ++ assetGoOver._2)
 
             }
 
@@ -431,7 +429,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
        // println(s"is full length: ${isFullLinkLength(asset, change.oldLink.get.linkLength)}")
       }
       println(s"is full length: ${isFullLinkLength(asset, change.oldLink.get.linkLength)}")
-      if (isFullLinkLength(asset, change.oldLink.get.linkLength)) {
+      if (isFullLinkLength(asset, change.oldLink.get.linkLength)) {// TODO convert this check to create boolean assetIsFullLink
+        //TODO CalculateNewMValue will you this boolean 
         (LinkAndLength(info.newLinkId, link.linkLength), CalculateMValueChangesInfo(
           asset.id,
           Some(info.oldLinkId),
@@ -481,6 +480,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     //(linearAssets.values.flatten.toSeq, changeSet.get)
     (filledTopology, adjustmentsChangeSet)
   }
+
+  def convertToPersisted(asset:PieceWiseLinearAsset): PersistedLinearAsset = {
+    PersistedLinearAsset(asset.id,asset.linkId,asset.sideCode.value,
+      asset.value,asset.startMeasure,asset.endMeasure,asset.createdBy,
+      asset.createdDateTime,asset.modifiedBy,asset.modifiedDateTime,asset.expired,asset.typeId,asset.timeStamp,
+      asset.geomModifiedDate,asset.linkSource,asset.verifiedBy,asset.verifiedDate,asset.informationSource)
+  }
+
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {
     dao.floatLinearAssets(changeSet.droppedAssetIds)
@@ -708,11 +715,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: Projection, roadLinkLength: Double) = {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
-   
-    val multipleNumber = Math.abs(newLength / oldLength)
-    val newStart = projection.newStart + (asset.startMeasure - projection.oldStart) * multipleNumber
-    val newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * multipleNumber
-    println(s"new start $newStart, new end $newEnd, multiple number ${multipleNumber}")
+    
+    val percentageNewFromOld = Math.abs(newLength / oldLength)
+    val diffFromStart  =  (asset.startMeasure - projection.oldStart)
+    val diffFromEnd  =  (asset.endMeasure - projection.oldEnd)
+    val newStart = projection.newStart + diffFromStart * percentageNewFromOld
+    val newEnd = projection.newEnd + (asset.endMeasure - projection.oldEnd) * percentageNewFromOld
+    println(s"new start $newStart, new end $newEnd, percentageNewFromOld number ${percentageNewFromOld},  " +
+      s"diffFromStart number ${diffFromStart},  diffFromEnd number ${diffFromEnd}")
     
     println("Directon changes: " + GeometryUtils.isDirectionChangeProjection(projection))
     // Test if the direction has changed -> side code will be affected, too
