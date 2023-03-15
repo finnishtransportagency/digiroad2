@@ -703,6 +703,36 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
   }
 
+  test("test calculator2") {
+
+    println("asset middle of link")
+    
+    val newPosition2 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
+      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 4, sideCode = 2), 
+      Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10)
+    
+    println(s"new start: ${newPosition2._1}, new end: ${newPosition2._2}, side code: ${newPosition2._3}")
+    
+    println("-----")
+    println("link lenthened from end,  asset cover link only partially")
+    val newPosition3 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
+      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 5, sideCode = 2),
+      Projection(oldStart = 0, oldEnd = 5, newStart = 5, newEnd = 10, timeStamp = 0), 10)
+
+    println(s"new start: ${newPosition3._1}, new end: ${newPosition3._2}, side code: ${newPosition3._3}")
+
+    println("-----")
+    println("link lenghend")
+    val newPosition4 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
+      AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2),
+      Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10)
+
+    println(s"new start: ${newPosition4._1}, new end: ${newPosition4._2}, side code: ${newPosition4._3}")
+    
+    fail("debug test")
+
+  }
+
   test("test calculator splitted") {
     val asset = AssetLinearReference(id = 1, startMeasure = 3, endMeasure = 5, sideCode = 2)
     val projection = Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0)
@@ -712,7 +742,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     fail("debug test")
 
   }
-  
+  // TODO adjust length to cover whole link
   test("case 7, asset cover link only partially, from end") {
     // recognize that asset is not whole links.
     fail("Need to be implemented")
@@ -724,6 +754,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   test("case 8, link is removed") {
     fail("Need to be implemented")
   }
+  // TODO not adjustment just move to new position
   test("case 9, asset is in middle of link ") {
     // is this possible scenarios ? 
     // is possible, how realistic is different thing
@@ -731,6 +762,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
   // TODO what about situation where link is split or merge and replacing one is shorter or longer
+  // TODO this implementation shift position of asset even when new splitted parts size is same
+  // TODO need to check how feasible is implementation where there is no shifting 
   test("case 7, asset is split into multiple part, link split") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 56)
@@ -753,21 +786,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, change.newLinks.map(_.linkId), false)
-      //assetsAfter.size should be(3)
-      /*  unmerged
-      id: 650631, value: NumericValue(3) ,linkId: c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1 , startMeasure: 0.0, endMeasure: 8.0
-      id: 650637, value: NumericValue(3) ,linkId: c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1 , startMeasure: 0.0, endMeasure: 9.166666666666666
-      id: 650633, value: NumericValue(4) ,linkId: c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1 , startMeasure: 9.166666666666668, endMeasure: 10.0
-      id: 650639, value: NumericValue(4) ,linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 0.0, endMeasure: 30.735294117647058
-      id: 650635, value: NumericValue(5) ,linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 30.735294117647058, endMeasure: 55.0
-      
-      
-      Here we have one meter whole need to check out if we can allow it
-      id: 650731, value: NumericValue(3) , linkId: c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1 , startMeasure: 0.0, endMeasure: 8.0
-      id: 650737, value: NumericValue(3) , linkId: c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1 , startMeasure: 0.0, endMeasure: 9.166666666666666
-      id: 650739, value: NumericValue(4) , linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 0.0, endMeasure: 30.735294117647058
-      id: 650735, value: NumericValue(5) , linkId: 753279ca-5a4d-4713-8609-0bd35d6a30fa:1 , startMeasure: 30.735294117647058, endMeasure: 55.0
-      */
       
       println("before")
       assetsBefore.sortBy(_.endMeasure).foreach(p => {
@@ -779,35 +797,39 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.foreach(p => {
         val link = roadLinks.find(_.linkId==p.linkId)
-        //println(s"link measure: ${link.get.length}")
         println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.get.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
       })
 
       sorted.size should be(4)
       sorted.map(v => v.value.isEmpty should be(false))
-      val asset1 = sorted.find(_.id == id1).get
-      val asset2 = sorted.find(_.id == id2).get
-      val asset3 = sorted.find(_.id == id3).get
+      val asset1 = sorted.head
+      val asset2 = sorted(1)
+      val asset3 = sorted(2)
+      val asset4 = sorted(3)
 
       // to link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
       println(s"testing: ${asset1.id}")
       asset1.startMeasure should be(0)
-      asset1.endMeasure should be(3)
+      asset1.endMeasure should be(8)
       asset1.value.get should be(NumericValue(3))
-
+      // to link "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1"
       println(s"testing: ${asset2.id}")
-      asset2.startMeasure should be(3)
-      asset2.endMeasure should be(5)
-      asset2.value.get should be(NumericValue(4))
+      asset2.startMeasure should be(0)
+      asset2.endMeasure should be(10)
+      asset2.value.get should be(NumericValue(3))
 
       println(s"testing: ${asset3.id}")
-      // to link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
-      asset3.startMeasure should be(5)
-      asset3.endMeasure should be(8)
-      asset3.value.get should be(NumericValue(5))
+      // to link "753279ca-5a4d-4713-8609-0bd35d6a30fa:1"
+      asset3.startMeasure should be(0)
+      asset3.endMeasure should be(20.676)
+      asset3.value.get should be(NumericValue(4))
+      
+      println(s"testing: ${asset4.id}")
+      // to link "753279ca-5a4d-4713-8609-0bd35d6a30fa:1"
+      asset4.startMeasure should be(20.676)
+      asset4.endMeasure should be(37.0)
+      asset4.value.get should be(NumericValue(5))
     }
-    
-    fail("Need to be implemented")
   }
 
   test("case 7, asset is split into multiple part, link merged") {
@@ -845,12 +867,18 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       // old implementaton lenthent only from end not in begind
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
-      val sorted = assetsAfter.sortBy(_.startMeasure)
-
-      sorted.foreach(p=>{
-        println(s"id: ${p.id} , value: ${p.value.get} , startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      println("before")
+      assetsBefore.sortBy(_.endMeasure).foreach(p => {
+        val link = oldRoadLink
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
       })
-      println("dummy")
+
+      println("after")
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+      sorted.foreach(p => {
+        //val link = roadLinks.find(_.linkId == p.linkId)
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${newMaxLength}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
 
       sorted.size should be(4)
       sorted.map(v=>v.value.isEmpty should be(false))
@@ -882,10 +910,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       asset4.value.get should be(NumericValue(6))
       
     }
-    //fail("Need to be implemented")
   }
-
-
+  
   test("case 7, asset is split into multiple part, link merged and link is longer") {
     val linksid1 = "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
     val linksid2 = "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1"
@@ -921,12 +947,18 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       // old implementaton lenthent only from end not in begind
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
-      val sorted = assetsAfter.sortBy(_.startMeasure)
 
-      sorted.foreach(p => {
-        println(s"id: ${p.id} , value: ${p.value.get} , startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      println("before")
+      assetsBefore.sortBy(_.endMeasure).foreach(p => {
+        val link = oldRoadLink
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
       })
-      println("dummy")
+
+      println("after")
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+      sorted.foreach(p => {
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${newMaxLength}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
 
       sorted.size should be(4)
       sorted.map(v => v.value.isEmpty should be(false))
@@ -949,14 +981,13 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       println(s"testing: ${asset3.id}")
       // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
       asset3.startMeasure should be(5)
-      asset3.endMeasure should be(8) // here we extend two last part, need should we be doing it
+      asset3.endMeasure should be(10.4) // here we extend two last part, need check should we be doing it
       asset3.value.get should be(NumericValue(5))
 
       println(s"testing: ${asset4.id}")
-      asset4.startMeasure should be(8)
+      asset4.startMeasure should be(10.4)
       asset4.endMeasure should be(14)
       asset4.value.get should be(NumericValue(6))
-
     }
     //fail("Need to be implemented")
   }
@@ -982,6 +1013,23 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
+
+      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
+
+
+      println("before")
+      assetsBefore.sortBy(_.endMeasure).foreach(p => {
+        val link = oldRoadLink
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+
+      println("after")
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+      sorted.foreach(p => {
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${newMaxLength}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+      
+      
 /*      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
       assetsAfter.size should be(1)
       val sorted = assetsAfter.sortBy(_.startMeasure)
