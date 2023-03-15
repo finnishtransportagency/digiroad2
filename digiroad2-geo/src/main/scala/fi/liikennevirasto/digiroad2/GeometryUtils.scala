@@ -109,7 +109,7 @@ object GeometryUtils {
       firstPoint + directionVector
     }
 
-    if (startMeasure > endMeasure) throw new IllegalArgumentException
+    if (startMeasure > endMeasure) throw new IllegalArgumentException(s"start measure is greater than end, start: ${startMeasure} end: ${endMeasure}")
     if (geometry.length == 1) throw new IllegalArgumentException
     if (geometry.isEmpty) return Nil
 
