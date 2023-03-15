@@ -78,6 +78,8 @@ object LinearAssetUpdateProcess {
     }
   }
 
+  lazy val roadLinkPropertyUpdater = new RoadLinkPropertyUpdater
+
   def main(args: Array[String]): Unit = {
     val batchMode = Digiroad2Properties.batchMode
     if (!batchMode) {
@@ -128,6 +130,8 @@ object LinearAssetUpdateProcess {
 
         //Käpy?  
         case "cycling_and_walking" => getAssetUpdater(CyclingAndWalking.typeId).updateLinearAssets(CyclingAndWalking.typeId)
+        
+        case "road_link_properties" => roadLinkPropertyUpdater.updateProperties()
 
 
         case _ => throw new IllegalArgumentException("Invalid asset name.")
