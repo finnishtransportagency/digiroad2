@@ -315,9 +315,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val assets = assetsAll.filter(_.linkId == oldId)
       change.changeType match {
         case RoadLinkChangeType.Replace =>
-          val isInMiddle = assets.size == 1 && isInMiddle(assets.head, oldLink.linkLength)
+          val isInMiddleEvaluetion = assets.size == 1 && isInMiddle(assets.head, oldLink.linkLength)
           assets.flatMap(asset => {
-            convertToForCalculation(change, asset, isInMiddle).map(dataForCalculation => {
+            convertToForCalculation(change, asset, isInMiddleEvaluetion).map(dataForCalculation => {
               projecting(changeSets, asset, dataForCalculation, testAssetsContainSegment)
             })
           })
@@ -650,7 +650,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                inMiddleOfLink:Boolean=false
                                
                                )
-  
+
   /**
     * calculator is based on old change info, does not totally work anymore. Need to add math for splitting and joining, work with lengthening and shortening.
     *
@@ -659,7 +659,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     * @param roadLinkLength
     * @return
     */
-  def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: Projection, roadLinkLength: Double,info:InfoForCalculation=InfoForCalculation()) = {
+  def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: Projection, roadLinkLength: Double, info: InfoForCalculation = InfoForCalculation()): (Double, Double, Int) = {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
 
@@ -667,19 +667,19 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     // TODO what is start point and endpoint
     // TODO is flipped
     // TODO is full length
-    
+
     val projectionStartDiff = projection.oldStart - projection.newStart
     val projectionEndDiff = projection.oldEnd - projection.newEnd
 
     val newStart = asset.startMeasure - projectionStartDiff
-    val newEnd = asset.endMeasure - projectionStartDiff 
-    
-    if (newStart>newEnd) {
+    val newEnd = asset.endMeasure - projectionStartDiff
+
+    if (newStart > newEnd) {
       throw new Exception(s"invalid meters start: ${newStart} , end ${newEnd}")
     }
-    
+
     println(s"new start $newStart, new end $newEnd, projectionStartDiff number $projectionStartDiff, projectionStartDiff number $projectionEndDiff")
-    
+
     println(s"Directon changes: ${GeometryUtils.isDirectionChangeProjection(projection)}")
     // Test if the direction has changed -> side code will be affected, too
     if (GeometryUtils.isDirectionChangeProjection(projection)) {
@@ -698,16 +698,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
         (asset.startMeasure, asset.endMeasure, asset.sideCode)
       } else {
-        
+
         val start = Math.min(roadLinkLength, Math.max(0.0, newStart)) // take new start if it is greater than zero and smaller than roadLinkLength
-        val end = Math.max(0.0, Math.min(roadLinkLength, newEnd))  // take new end if it is greater than zero and smaller than roadLinkLength
+        val end = Math.max(0.0, Math.min(roadLinkLength, newEnd)) // take new end if it is greater than zero and smaller than roadLinkLength
         //val start = newStart // take new start if it is greater than zero and smaller than roadLinkLength
         //val end = newEnd// take new end if it is greater than zero and smaller than roadLinkLength
-        
+
         println(s"asset: ${asset.id}")
         println(s"link length: $roadLinkLength")
-        println(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure-asset.startMeasure}, old projection length $oldLength")
-        println(s"new start $start, new end $end, new length ${end-start}, new projection length $newLength")
+        println(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}, old projection length $oldLength")
+        println(s"new start $start, new end $end, new length ${end - start}, new projection length $newLength")
         info match {
           case InfoForCalculation(true, false, false, false) => (0, roadLinkLength, asset.sideCode)
           case InfoForCalculation(false, true, false, false) => (asset.startMeasure, roundMeasure(end), asset.sideCode) //lenthen end
