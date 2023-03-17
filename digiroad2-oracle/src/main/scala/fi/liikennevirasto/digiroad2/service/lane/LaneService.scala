@@ -1,22 +1,19 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.RoadAddress.isCarTrafficRoadAddress
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
-import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane._
-import fi.liikennevirasto.digiroad2.linearasset.{LinkId, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressForLink, RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.ChangeLanesAccordingToVvhChanges.updateChangeSet
 import fi.liikennevirasto.digiroad2.util.LaneUtils.{persistedHistoryLanesToTwoDigitLaneCode, persistedLanesTwoDigitLaneCode}
 import fi.liikennevirasto.digiroad2.util._
+import fi.liikennevirasto.digiroad2.util.assetUpdater.LaneUpdater
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadAddress, RoadAddressException}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -163,10 +160,10 @@ trait LaneOperations {
     adjustmentsChangeSet.isEmpty match {
       case true => laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
       case false if counter > 3 =>
-        updateChangeSet(adjustmentsChangeSet)
+        LaneUpdater.updateChangeSet(adjustmentsChangeSet)
         laneFiller.toLPieceWiseLaneOnMultipleLinks(filledTopology, roadLinks)
       case false if counter <= 3 =>
-        updateChangeSet(adjustmentsChangeSet)
+        LaneUpdater.updateChangeSet(adjustmentsChangeSet)
         adjustLanes(roadLinks, filledTopology.groupBy(_.linkId), geometryChanged, counter + 1)
     }
   }

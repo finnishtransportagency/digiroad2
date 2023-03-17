@@ -2299,10 +2299,6 @@ object DataFixture {
         moveOldExpiredAssets()
       case Some("new_road_address_from_viite") =>
         newRoadAddressFromViite()
-      case Some("change_lanes_according_to_VVH_changes") =>
-        ChangeLanesAccordingToVvhChanges.process()
-      case Some("validate_lane_changes_according_to_VVH_changes") =>
-        ValidateLaneChangesAccordingToVvhChanges.process()
       case Some("populate_new_link_with_main_lanes") =>
         MainLanePopulationProcess.process()
       case Some("initial_main_lane_population") =>

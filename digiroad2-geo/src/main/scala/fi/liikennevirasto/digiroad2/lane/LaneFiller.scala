@@ -19,23 +19,26 @@ object LaneFiller {
   }
 
   case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double) extends baseAdjustment
-  case class VVHChangesAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, timeStamp: Long) extends baseAdjustment
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
 
   case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
-                        adjustedVVHChanges: Seq[VVHChangesAdjustment] = Seq.empty[VVHChangesAdjustment],
                         adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
                         expiredLaneIds: Set[Long] = Set.empty[Long],
                         generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane]) {
     def isEmpty: Boolean = {
         this.adjustedMValues.isEmpty &&
-        this.adjustedVVHChanges.isEmpty &&
         this.adjustedSideCodes.isEmpty &&
         this.expiredLaneIds.isEmpty &&
         this.generatedPersistedLanes.isEmpty
     }
   }
 
+  def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) =>
+    changeSet1.copy(adjustedMValues = changeSet1.adjustedMValues ++ changeSet2.adjustedMValues,
+      adjustedSideCodes = changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes,
+      expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
+      generatedPersistedLanes = changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes
+    )
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
 }
@@ -362,7 +365,7 @@ class LaneFiller {
 
     val returnSegments = if (resultingNumericalLimits.nonEmpty) cleanNumericalLimitIds(resultingNumericalLimits, Seq())
                          else Seq()
-    
+
     (returnSegments, changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
   }
