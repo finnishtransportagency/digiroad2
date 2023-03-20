@@ -21,7 +21,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
       val changedLinkIds = linkChanges.flatMap(change => change.oldLink).map(_.linkId).toSet
 
       val changedAssets = service.getPersistedAssetsByLinkIdsWithoutTransaction(changedLinkIds)
-      val updatedAssets = changedAssets.map(asset => {
+      changedAssets.map(asset => {
         val linkChange = linkChanges.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == asset.linkId).get
         correctPersistedAsset(asset, linkChange) match {
           case Some(adjustment) if adjustment.floating =>
@@ -32,7 +32,8 @@ class PointAssetUpdater(service: PointAssetOperations) {
             service.adjustmentOperation(asset, adjustment, link.get)
             Some(service.createOperation(asset, adjustment))
           case _ => None
-        }})
+        }
+      })
       Queries.updateLatestSuccessfulSamuutus(typeId)
     }
   }
@@ -47,7 +48,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
           case (Some(oldLink), Some(newLink)) =>
             val (floating, floatingReason) = shouldFloat(asset, Some(newLink), Some(oldLink))
             if (floating)   setAssetAsFloating(asset, floatingReason)
-            else            snapAssetToNewLink(asset, newLink)
+            else            snapAssetToNewLink(asset, newLink, oldLink)
           case _ => setAssetAsFloating(asset, Some(FloatingReason.NoRoadLinkFound))
         }
       case _ => None
@@ -66,8 +67,8 @@ class PointAssetUpdater(service: PointAssetOperations) {
     }
   }
 
-  private def snapAssetToNewLink(asset: PersistedPointAsset, link: RoadLinkInfo): Option[AssetUpdate] = {
-    if (asset.linkId.split(":").head == link.linkId.split(":").head)
+  private def snapAssetToNewLink(asset: PersistedPointAsset, link: RoadLinkInfo, oldLink: RoadLinkInfo): Option[AssetUpdate] = {
+    if (asset.linkId.split(":").head == link.linkId.split(":").head && link.linkLength == oldLink.linkLength)
       Some(AssetUpdate(asset.id, asset.lon, asset.lat, link.linkId, asset.mValue, DateTime.now().getMillis, floating = false))
     else {
       val oldLocation = Point(asset.lon, asset.lat)
