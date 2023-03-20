@@ -135,11 +135,11 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
 
 
   test("Link version has changed: asset is marked to new link without other adjustments") {
-    val oldLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:1"
-    val newLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:2"
+    val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
+    val newLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:2"
     val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
-    val asset = testPersistedPointAsset(1, 361945.5903231929, 6682479.948548384, 49, oldLinkId,
-      148.59150863874925, true, 0, NormalLinkInterface)
+    val asset = testPersistedPointAsset(1, 367830.31375169184, 6673995.872282351, 49, oldLinkId,
+      123.74459961959604, true, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
 
     corrected.nonEmpty should be(true)
@@ -151,11 +151,11 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
   test("New link has different municipality than asset: asset is marked as floating") {
-    val oldLinkId = "41cca8ff-4644-41aa-8de1-2702f1a57f80:1"
+    val oldLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:1"
     val assetMunicipality = 235 // New link is at municipality 49
     val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
-    val asset = testPersistedPointAsset(1, 361945.5903231929, 6682479.948548384, assetMunicipality, oldLinkId,
-      148.59150863874925, true, 0, NormalLinkInterface)
+    val asset = testPersistedPointAsset(1, 367830.31375169184, 6673995.872282351, assetMunicipality, oldLinkId,
+      123.74459961959604, true, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
 
     corrected.nonEmpty should be(true)
