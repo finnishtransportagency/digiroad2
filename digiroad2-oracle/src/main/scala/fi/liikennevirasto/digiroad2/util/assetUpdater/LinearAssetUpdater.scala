@@ -117,7 +117,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     change.changeType == RoadLinkChangeType.Replace
   }
   def recognizeVersionUpgrade(change: RoadLinkChange): Boolean = {
-    change.changeType == RoadLinkChangeType.Replace && checkId(change)
+    if (change.newLinks.size==1)
+    change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkLength == change.newLinks.head.linkLength && checkId(change)
+    else false
   }
   def checkId(change: RoadLinkChange): Boolean = {
     val oldId = splitLinkId(change.oldLink.get.linkId)._1
@@ -278,6 +280,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val oldId = oldLink.linkId
       val assets = assetsAll.filter(_.linkId == oldId)
       change.changeType match {
+        case RoadLinkChangeType.Replace if recognizeVersionUpgrade(change)  =>  Seq.empty[(PersistedLinearAsset, ChangeSet)] // TODO just update version
         case RoadLinkChangeType.Replace =>
           // TODO add check if asset is splitted or not then check is in middle,startFromEnd,startFromStart
           val isInMiddleEvaluetion = assets.size == 1 && isInMiddle(assets.head, oldLink.linkLength)
