@@ -84,55 +84,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   val isDeleted: RoadLinkChange => Boolean = (change: RoadLinkChange) => {
     change.changeType.value == RoadLinkChangeType.Remove.value
   }
-
-
-  case class GroupedChanges(added: Map[String, Seq[RoadLinkChange]],
-                            removed: Map[String, Seq[RoadLinkChange]],
-                            split: Map[String, Seq[RoadLinkChange]],
-                            merged: Map[String, Seq[RoadLinkChange]],
-                            lengthened: Map[String, Seq[RoadLinkChange]],
-                            shortened: Map[String, Seq[RoadLinkChange]],
-                            versionUpdate: Map[String, Seq[RoadLinkChange]]
-                           )
-
-
-/*  def groupChanges(changes: Seq[RoadLinkChange]): GroupedChanges = {
-    val groupedByChange = changes.groupBy(_.changeType)
-
-    def group(a: ((RoadLinkChangeType, Seq[RoadLinkChange])) => Boolean): Map[String, Seq[RoadLinkChange]] = {
-      // TODO redo this part of code, first group by old link id and then do filtering
-      // TODO this is not optimize for handling large data set. Here we might need convert this into normal for loop. 
-      Try(groupedByChange.filter(a).head._2.groupBy(_.oldLink.get.linkId)).getOrElse(Map.empty[String, Seq[RoadLinkChange]])
-    }
-
-    //group(recognizeMerger)
-    val add = group(recognizeAdd)
-    val remove = group(recognizeRemove)
-    val split = group(recognizeSplit)
-    val merger = group(recognizeMerger)
-    val lengthened = group(recognizeLengthening)
-    val shortened = group(recognizeShortening)
-    val versionUpdate = group(recognizeVersionUpgrade)
-    GroupedChanges(add, remove, split, merger, lengthened, shortened, versionUpdate)
-  }*/
-
+  
   def recognizeShortening(change: RoadLinkChange): Boolean = {
     change.changeType == RoadLinkChangeType.Replace && recognizeShorteningMeter(change)
   }
 
   def recognizeLengthening(change: RoadLinkChange): Boolean = {
     change.changeType == RoadLinkChangeType.Replace && recognizeLengtheningMeter(change)
-  }
-
-  def recognizeAdd(change: RoadLinkChange): Boolean = {
-    change.changeType == RoadLinkChangeType.Split
-  }
-
-  def recognizeRemove(change:RoadLinkChange): Boolean = {
-    change.changeType == RoadLinkChangeType.Remove
-  }
-  def recognizeSplit(change: RoadLinkChange): Boolean = {
-    change.changeType == RoadLinkChangeType.Split
   }
 
   def recognizeLengtheningMeter(change: RoadLinkChange): Boolean = {
@@ -321,6 +279,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val assets = assetsAll.filter(_.linkId == oldId)
       change.changeType match {
         case RoadLinkChangeType.Replace =>
+          // TODO add check if asset is splitted or not then check is in middle,startFromEnd,startFromStart
           val isInMiddleEvaluetion = assets.size == 1 && isInMiddle(assets.head, oldLink.linkLength)
           assets.flatMap(asset => {
             convertToForCalculation(change, asset, isInMiddleEvaluetion).map(dataForCalculation => {
@@ -328,8 +287,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             })
           })
         case RoadLinkChangeType.Split => sliceLoop(change, assetsAll, changeSets)
-        case RoadLinkChangeType.Remove => Seq.empty[(PersistedLinearAsset, ChangeSet)]
-        case RoadLinkChangeType.Add => Seq.empty[(PersistedLinearAsset, ChangeSet)]
+        case RoadLinkChangeType.Remove => Seq.empty[(PersistedLinearAsset, ChangeSet)] //TODO own remove method which can be override
+        case RoadLinkChangeType.Add => Seq.empty[(PersistedLinearAsset, ChangeSet)] //TODO own add method  which can be override
       }
     })
 
