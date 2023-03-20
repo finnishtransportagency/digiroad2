@@ -31,11 +31,11 @@ class AssetFiller {
   }
  
   def printlnOperation(operationName:String)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
-    println(operationName)
-    println(s"side code adjuctment count: ${changeSet.adjustedSideCodes.size}")
-    println(s"mvalue adjuctment count: ${changeSet.adjustedMValues.size}")
-    println(s"vvh change adjuctment count: ${changeSet.adjustedVVHChanges.size}")
-    println(s"expire adjuctment count: ${changeSet.expiredAssetIds.size}")
+    //println(operationName)
+    //println(s"side code adjuctment count: ${changeSet.adjustedSideCodes.size}") 
+    //println(s"mvalue adjuctment count: ${changeSet.adjustedMValues.size}")
+    //println(s"vvh change adjuctment count: ${changeSet.adjustedVVHChanges.size}")
+    //println(s"expire adjuctment count: ${changeSet.expiredAssetIds.size}")
     (segments, changeSet)
   }
   
@@ -550,7 +550,9 @@ class AssetFiller {
 
   def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                                   changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    //println("start running fillTopology")
     val fillOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+      printlnOperation("start running fillTopology state now"),
       expireSegmentsOutsideGeometry,
       printlnOperation("expireSegmentsOutsideGeometry"),
       capToGeometry,

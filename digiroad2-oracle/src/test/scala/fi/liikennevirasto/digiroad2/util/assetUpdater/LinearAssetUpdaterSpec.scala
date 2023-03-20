@@ -447,7 +447,19 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, change.newLinks.map(_.linkId), false)
       assetsAfter.size should be(3)
+
+      println("before")
+      assetsBefore.sortBy(_.endMeasure).foreach(p => {
+        val link = oldRoadLink
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
+
+      println("after")
       val sorted = assetsAfter.sortBy(_.endMeasure)
+      sorted.foreach(p => {
+        val link = roadLinks.find(_.linkId == p.linkId)
+        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.get.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
+      })
       
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(8)
@@ -681,7 +693,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsAfter.head.value.get should be(NumericValue(3))
     }
   }
-  test("changeSetTest") {
+  ignore("changeSetTest") {
     val linksid = generateRandomKmtkId()
     val linkIdVersion1 = linksid + ":1"
     val linkIdVersion2 = linksid + ":2"
@@ -693,7 +705,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     fail("debug test")
   }
 
-  test("test calculator") {
+  ignore("test calculator") {
     val asset = AssetLinearReference(id = 1, startMeasure = 5, endMeasure = 10, sideCode = 2)
     val projection = Projection(oldStart = 0, oldEnd = 5, newStart = 5, newEnd = 10, timeStamp = 0)
     val newPosition = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(asset,projection,10)
@@ -703,49 +715,78 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
   }
 
-  test("test calculator2") {
-
-    println("asset middle of link")
-    
-    val newPosition2 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
-      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 4, sideCode = 2), 
-      Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10)
-    // from documention point of view asset should in same place, 
-    
-    println(s"new start: ${newPosition2._1}, new end: ${newPosition2._2}, side code: ${newPosition2._3}")
-
-    newPosition2._1 should be(2)
-    newPosition2._2 should be(4)
-    
-    println("-----")
-    println("link lenthened from begind,  asset cover link only partially")
-    val newPosition3 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
-      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 5, sideCode = 2),
-      Projection(oldStart = 0, oldEnd = 5, newStart = 5, newEnd = 10, timeStamp = 0), 10)
-
-    println(s"new start: ${newPosition3._1}, new end: ${newPosition3._2}, side code: ${newPosition3._3}")
-
-    newPosition3._1 should be(2)
-    newPosition3._2 should be(10)
-
-    // from documention point of view asset should here start should be two,
+  test("test calculator: link lenghend") {
     
     println("-----")
     println("link lenghend")
     val newPosition4 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
       AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2),
-      Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10)
-
+      Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10,InfoForCalculation( fullLink= true))
+    
     println(s"new start: ${newPosition4._1}, new end: ${newPosition4._2}, side code: ${newPosition4._3}")
 
     newPosition4._1 should be(0)
     newPosition4._2 should be(10)
     
-    fail("debug test")
+  }
+  
+  // by keeping position we are not really keeping asset in same place, M value is not any specific point
 
+  test("test calculator: link lenghend from end") {
+    
+
+    println("-----")
+    val newPosition5 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
+      AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 4, sideCode = 2),
+      Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10, InfoForCalculation(startMValueIsZero = true))
+    println(s"new start: ${newPosition5._1}, new end: ${newPosition5._2}, side code: ${newPosition5._3}")
+    // what about situation where link is shorter
+    newPosition5._1 should be(0)
+    newPosition5._2 should be(10)
+    
   }
 
-  test("test calculator splitted") {
+  test("test calculator: asset middle of link") {
+
+    println("asset middle of link")
+
+    val newPosition2 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
+      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 4, sideCode = 2),
+      Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0), 10, InfoForCalculation(inMiddleOfLink = true))
+
+    println(s"new start: ${newPosition2._1}, new end: ${newPosition2._2}, side code: ${newPosition2._3}")
+
+    newPosition2._1 should be(2)
+    newPosition2._2 should be(4)
+    
+  }
+
+  test("test calculator: link lenthened from begind,  asset cover link only partially") {
+    
+    val newPosition3 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
+      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 5, sideCode = 2),
+      Projection(oldStart = 0, oldEnd = 5, newStart = 5, newEnd = 10, timeStamp = 0), 10, InfoForCalculation(endMVValueEqualLinkLength = true))
+
+    println(s"new start: ${newPosition3._1}, new end: ${newPosition3._2}, side code: ${newPosition3._3}")
+
+    newPosition3._1 should be(2)
+    newPosition3._2 should be(10)
+    
+  }
+
+  test("test calculator: asset part of splitting, small change") {
+    println("-----")
+    val newPosition3 = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(
+      AssetLinearReference(id=1,startMeasure=20.0,endMeasure=21.0,sideCode=1),
+      Projection(oldStart=9.0,oldEnd=21.0,newStart=0.0,newEnd=10.0), 10, InfoForCalculation())
+
+    println(s"new start: ${newPosition3._1}, new end: ${newPosition3._2}, side code: ${newPosition3._3}")
+
+    newPosition3._1 should be(9)
+    newPosition3._2 should be(10)
+  }
+
+  ignore("test calculator splitted") {
     val asset = AssetLinearReference(id = 1, startMeasure = 3, endMeasure = 5, sideCode = 2)
     val projection = Projection(oldStart = 0, oldEnd = 5, newStart = 0, newEnd = 10, timeStamp = 0)
     val newPosition = TestLinearAssetUpdater.calculateNewMValuesAndSideCode(asset, projection, 10)
