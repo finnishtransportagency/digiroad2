@@ -132,6 +132,10 @@
       {
         "name": "roadLinkChangeS3BucketName",
         "value": "prod-vaylapilvi-digiroad2-road-link-change-bucket"
+      },
+      {
+        "name": "samuutusReportsBucketName",
+        "value": "prod-vayla-digiroad2-samuutus-reports"
       }
     ],
     "logConfiguration": {

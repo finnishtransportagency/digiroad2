@@ -75,11 +75,11 @@ Resources:
               - ${BucketArn}/*
               - BucketArn: !GetAtt ApiBucket.Arn
 
-  DailyAdjustmentsBucket:
+  SamuutusReportsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub ${Environment}-${Owner}-${ApplicationName}-daily-adjustments
+      BucketName: !Sub ${Environment}-${Owner}-${ApplicationName}-samuutus-reports
       ObjectLockEnabled: false
       LifecycleConfiguration:
         Rules:
@@ -97,7 +97,7 @@ Resources:
         RestrictPublicBuckets: true
       Tags:
         - Key: Name
-          Value: !Sub ${ApplicationName}-${Environment}-api-store-bucket
+          Value: !Sub ${ApplicationName}-${Environment}-samuutus-reports
         - Key: Environment
           Value: !Ref Environment
         - Key: Owner
@@ -105,10 +105,10 @@ Resources:
         - Key: Project
           Value: !Ref Project
 
-  DailyAdjustmentsBucketPolicy:
+  SamuutusReportsBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref DailyAdjustmentsBucket
+      Bucket: !Ref SamuutusReportsBucket
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -123,8 +123,8 @@ Resources:
               - s3:PutObjectTagging
               - s3:ListBucket
             Resource:
-              - !GetAtt DailyAdjustmentsBucket.Arn
-              - !Join ['', [!GetAtt DailyAdjustmentsBucket.Arn, '/*']]
+              - !GetAtt SamuutusReportsBucket.Arn
+              - !Join ['', [!GetAtt SamuutusReportsBucket.Arn, '/*']]
 
   ECSTaskDefinitionTaskRole:
     Type: AWS::IAM::Role
@@ -151,7 +151,7 @@ Resources:
                 Resource: !Sub
                   - ${BucketArn}/*
                   - BucketArn: !GetAtt ApiBucket.Arn
-        - PolicyName: AccessDailyAdjustmentReportBucket
+        - PolicyName: AccessSamuutusReportsBucket
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -161,5 +161,5 @@ Resources:
                   - s3:PutObject*
                   - s3:ListBucket
                 Resource:
-                  - !GetAtt DailyAdjustmentsBucket.Arn
-                  - !Join ['', [!GetAtt DailyAdjustmentsBucket.Arn, '/*']]
+                  - !GetAtt SamuutusReportsBucket.Arn
+                  - !Join ['', [!GetAtt SamuutusReportsBucket.Arn, '/*']]
