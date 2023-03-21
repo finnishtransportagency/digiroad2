@@ -229,6 +229,16 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksByLinkIds(Set(linkId), newTransaction: Boolean).headOption
 
+  def getExpiredRoadLinkByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = {
+    val fetchedRoadLinks = roadLinkDAO.fetchExpiredRoadLink(linkId)
+    if (newTransaction)
+      withDynTransaction {
+        enrichFetchedRoadLinks(fetchedRoadLinks).headOption
+      }
+    else
+      enrichFetchedRoadLinks(fetchedRoadLinks).headOption
+  }
+
   /**
     * This method returns road links that have been changed within a specified time period.
     *
