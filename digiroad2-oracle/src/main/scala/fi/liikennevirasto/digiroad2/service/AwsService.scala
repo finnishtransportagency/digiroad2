@@ -20,6 +20,7 @@ class AwsService {
 
     def saveFileToS3(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
       val contentType = responseType match {
+        case "csv" => "text/csv"
         case _ => "application/json"
       }
       try {

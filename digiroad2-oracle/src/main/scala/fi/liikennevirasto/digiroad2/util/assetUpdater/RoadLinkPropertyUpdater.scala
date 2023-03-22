@@ -10,31 +10,36 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClass, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
-import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{AwsService, IncompleteLink, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
-
-import java.io.{BufferedWriter, File, FileWriter}
-import scala.collection.mutable.ListBuffer
 import org.json4s._
 import org.json4s.jackson.Serialization
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
-sealed trait PropertyChange {
+import java.io.StringWriter
+import scala.collection.mutable.ListBuffer
+
+sealed trait ReportedChange {
   def linkId: String
   def changeType: RoadLinkChangeType
 }
 
-case class AdministrativeClassChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Int, newValue: Option[Int]) extends PropertyChange
-case class TrafficDirectionChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Int, newValue: Option[Int]) extends PropertyChange
-case class RoadLinkAttributeChange(linkId: String, changeType: RoadLinkChangeType, oldValues: Map[String, String], newValues: Map[String, String]) extends PropertyChange
-case class FunctionalClassChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends PropertyChange
-case class LinkTypeChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends PropertyChange
+case class AdministrativeClassChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
+case class TrafficDirectionChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
+case class RoadLinkAttributeChange(linkId: String, changeType: RoadLinkChangeType, oldValues: Map[String, String], newValues: Map[String, String]) extends ReportedChange
+case class FunctionalClassChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends ReportedChange
+case class LinkTypeChange(linkId: String, changeType: RoadLinkChangeType, oldValue: Option[Int], newValue: Option[Int], source: String = "") extends ReportedChange
 
 class RoadLinkPropertyUpdater {
 
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), new DummyEventBus, new DummySerializer)
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
+  lazy val awsService = new AwsService
+  lazy val s3Service: awsService.S3.type = awsService.S3
+  lazy val s3Bucket: String = Digiroad2Properties.samuutusReportsBucketName
   implicit lazy val serializationFormats: Formats = DefaultFormats
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
@@ -137,7 +142,7 @@ class RoadLinkPropertyUpdater {
 
   def transferOrGenerateFunctionalClassesAndLinkTypes(changes: Seq[RoadLinkChange]) = {
     val incompleteLinks = new ListBuffer[IncompleteLink]()
-    val createdProperties = new ListBuffer[Option[PropertyChange]]()
+    val createdProperties = new ListBuffer[Option[ReportedChange]]()
     changes.foreach { change =>
       change.newLinks foreach { newLink =>
         if (KgvUtil.extractFeatureClass(newLink.roadClass) != WinterRoads) {
@@ -176,7 +181,7 @@ class RoadLinkPropertyUpdater {
       val oldAttributes = LinkAttributesDao.getExistingValues(linkId)
       RoadLinkAttributeChange(linkId, groupedChanges(linkId).head.changeType, oldAttributes, Map())
     })
-    val deletedProperties: Seq[PropertyChange] = deletedTrafficDirections ++ deletedAdministrativeClasses ++ deletedFunctionalClasses ++ deletedLinkTypes ++ deletedAttributes
+    val deletedProperties: Seq[ReportedChange] = deletedTrafficDirections ++ deletedAdministrativeClasses ++ deletedFunctionalClasses ++ deletedLinkTypes ++ deletedAttributes
 
     oldLinkIds.foreach { linkId =>
       TrafficDirectionDao.deleteValues(linkId)
@@ -189,7 +194,7 @@ class RoadLinkPropertyUpdater {
   }
 
   def transferOverriddenPropertiesAndPrivateRoadInfo(changes: Seq[RoadLinkChange]) = {
-    val transferredProperties = ListBuffer[PropertyChange]()
+    val transferredProperties = ListBuffer[ReportedChange]()
     changes.foreach { change =>
       val oldLink = change.oldLink.get
       val optionalOverriddenTrafficDirection = TrafficDirectionDao.getExistingValue(oldLink.linkId)
@@ -227,7 +232,7 @@ class RoadLinkPropertyUpdater {
     transferredProperties
   }
 
-  private def getCSVRow(linkId: String, changeType: RoadLinkChangeType, changes: Seq[PropertyChange]) = {
+  private def getCSVRow(linkId: String, changeType: RoadLinkChangeType, changes: Seq[ReportedChange]) = {
     val trafficDirectionChange = changes.find(_.isInstanceOf[TrafficDirectionChange])
     val (oldTrafficDirection, newTrafficDirection) = trafficDirectionChange match {
       case trChange: Some[TrafficDirectionChange] =>
@@ -291,10 +296,10 @@ class RoadLinkPropertyUpdater {
       newFunctionalClass, fcSource, oldLinkType, newLinkType, ltSource, oldAttributes, newAttributes)
   }
 
-  def generateCSV(changes: Seq[PropertyChange]) = {
+  def generateCSV(changes: Seq[ReportedChange]) = {
 
-    val outputFile = new File(s"roadLinkProperties_${DateTime.now().toString().substring(0, 10)}_${changes.size}contentRows.csv")
-    val csvWriter = new CSVWriter(new BufferedWriter(new FileWriter(outputFile)))
+    val stringWriter = new StringWriter()
+    val csvWriter = new CSVWriter(stringWriter)
     val labels = Seq("linkId", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
       "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes")
     csvWriter.writeRow(labels)
@@ -305,7 +310,19 @@ class RoadLinkPropertyUpdater {
       val csvRow = getCSVRow(linkId, changeType, propertyChangesForLink)
       csvWriter.writeRow(csvRow)
     }
-    csvWriter.close()
+    (stringWriter.toString, changes.size - 1)
+  }
+
+  def saveReportToS3(assetName: String, body: String, contentRowCount: Int) = {
+    val date = DateTime.now().toString("YYYY-MM-dd")
+    val path = s"${date}/${assetName}_${date}_${contentRowCount}content_rows.csv"
+    s3Service.saveFileToS3(s3Bucket, path, body, "csv")
+  }
+
+  def updateSamuutusSuccess() = {
+      sqlu"""INSERT INTO samuutus_success(asset_type_id, last_succesfull_samuutus)
+           VALUES (99, current_timestamp)
+      """.execute
   }
 
   def updateProperties() = {
@@ -318,6 +335,9 @@ class RoadLinkPropertyUpdater {
       val createdProperties = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges)
       val deletedProperties = removePropertiesFromOldLinks(removeChanges ++ otherChanges)
       val allChanges = transferredProperties ++ createdProperties ++ deletedProperties
+      val (reportBody, contentRowCount) = generateCSV(allChanges)
+      saveReportToS3("roadLinkProperties", reportBody, contentRowCount)
+      updateSamuutusSuccess()
     }
   }
 }
