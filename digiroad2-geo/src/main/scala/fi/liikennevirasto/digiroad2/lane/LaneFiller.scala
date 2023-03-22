@@ -20,16 +20,19 @@ object LaneFiller {
 
   case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double) extends baseAdjustment
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
+  case class LaneSplit(laneToCreate: PersistedLane, oldLane: PersistedLane)
 
   case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
                         adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
                         expiredLaneIds: Set[Long] = Set.empty[Long],
-                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane]) {
+                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane],
+                        splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit]) {
     def isEmpty: Boolean = {
-        this.adjustedMValues.isEmpty &&
+      this.adjustedMValues.isEmpty &&
         this.adjustedSideCodes.isEmpty &&
         this.expiredLaneIds.isEmpty &&
-        this.generatedPersistedLanes.isEmpty
+        this.generatedPersistedLanes.isEmpty &&
+        this.splitLanes.isEmpty
     }
   }
 
@@ -37,7 +40,8 @@ object LaneFiller {
     changeSet1.copy(adjustedMValues = changeSet1.adjustedMValues ++ changeSet2.adjustedMValues,
       adjustedSideCodes = changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes,
       expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
-      generatedPersistedLanes = changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes
+      generatedPersistedLanes = changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes,
+      splitLanes = changeSet1.splitLanes ++ changeSet2.splitLanes
     )
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
