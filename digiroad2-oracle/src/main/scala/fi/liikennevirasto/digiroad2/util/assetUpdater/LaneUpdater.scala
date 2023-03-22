@@ -170,7 +170,6 @@ object LaneUpdater {
 
     val lanesOnChangedLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
 
-    //TODO ChangeSet kuljettaminen
     val changeSets = roadLinkChanges.map(change => {
       change.changeType match {
         case RoadLinkChangeType.Add =>
@@ -194,7 +193,6 @@ object LaneUpdater {
           val oldRoadLink = roadLinkService.getRoadLinksByLinkIds(Set(oldRoadLinkId)).head
           val lanesOnOldLink = lanesOnChangedLinks.filter(_.linkId == oldRoadLink.linkId)
           fillSplitLinksWithExistingLanes(newRoadLinks, oldRoadLink, lanesOnOldLink, change)
-          ChangeSet()
       }
     })
 
@@ -203,6 +201,10 @@ object LaneUpdater {
     updateChangeSet(changeSet)
   }
 
+  def calculateAdditionalLanePositionsOnSplitLinks(newRoadLinks: Seq[RoadLink], oldAdditionalLanes: Seq[PersistedLane],
+                                                   change: RoadLinkChange): Seq[LaneSplit] = {
+    ???
+  }
 
   def moveMainLanesToNewSplitLinks(newRoadLinks: Seq[RoadLink], oldMainLanes: Seq[PersistedLane],
                                    change: RoadLinkChange): Seq[LaneSplit] = {
@@ -229,7 +231,7 @@ object LaneUpdater {
   def fillSplitLinksWithExistingLanes(newRoadLinks: Seq[RoadLink], oldRoadLink: RoadLink, lanesToUpdate: Seq[PersistedLane], change: RoadLinkChange): ChangeSet = {
     val (mainLanesOnOldLink, additionalLanesOnOldLink) = lanesToUpdate.partition(lane => isMainLane(lane.laneCode))
     val mainLaneSplits = moveMainLanesToNewSplitLinks(newRoadLinks, mainLanesOnOldLink, change)
-
+    val additionalLaneSplits = calculateAdditionalLanePositionsOnSplitLinks(newRoadLinks, additionalLanesOnOldLink, change)
     ???
   }
 
