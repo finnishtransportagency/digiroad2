@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, Municipality, SingleCarriageway, State, TractorRoad}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Replace, Split}
 import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkClient, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO._
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClass, FunctionalClass, LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, TestTransactions}
@@ -47,7 +47,23 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
         LinkAttributesDao.insertAttributeValueByChanges(linkId, "test", "ADDITIONAL_INFO", "1", LinearAssetUtils.createTimeStamp())
         LinkAttributesDao.getExistingValues(linkId).size should be(2)
       }
-      roadLinkPropertyUpdater.removePropertiesFromOldLinks(changesWithOldLink)
+      val reportedChanges = roadLinkPropertyUpdater.removePropertiesFromOldLinks(changesWithOldLink)
+      reportedChanges.map(_.linkId).toSet should be(oldLinkIds.toSet)
+      val trafficDirectionChanges = reportedChanges.filter(c => c.isInstanceOf[TrafficDirectionChange]).map(c => c.asInstanceOf[TrafficDirectionChange])
+      trafficDirectionChanges.map(_.oldValue).toSet should be(Set(2))
+      trafficDirectionChanges.map(_.newValue).toSet should be(Set(None))
+      val adminClassChanges = reportedChanges.filter(c => c.isInstanceOf[AdministrativeClassChange]).map(c => c.asInstanceOf[AdministrativeClassChange])
+      adminClassChanges.map(_.oldValue).toSet should be(Set(2))
+      adminClassChanges.map(_.newValue).toSet should be(Set(None))
+      val functionalClassChanges = reportedChanges.filter(c => c.isInstanceOf[FunctionalClassChange]).map(c => c.asInstanceOf[FunctionalClassChange])
+      functionalClassChanges.map(_.oldValue).toSet should be(Set(Some(7)))
+      functionalClassChanges.map(_.newValue).toSet should be(Set(None))
+      val linkTypeChanges = reportedChanges.filter(c => c.isInstanceOf[LinkTypeChange]).map(c => c.asInstanceOf[LinkTypeChange])
+      linkTypeChanges.map(_.oldValue).toSet should be(Set(Some(SingleCarriageway.value)))
+      linkTypeChanges.map(_.newValue).toSet should be(Set(None))
+      val attributeChanges = reportedChanges.filter(c => c.isInstanceOf[RoadLinkAttributeChange]).map(c => c.asInstanceOf[RoadLinkAttributeChange])
+      attributeChanges.map(_.oldValues).foreach(oldValue => (oldValue.get("ADDITIONAL_INFO") == Some("1") && oldValue.get("PRIVATE_ROAD_ASSOCIATION") == Some("test association")) should be(true))
+      attributeChanges.map(_.newValues).foreach(newValue => newValue should be(Map()))
       oldLinkIds.foreach { linkId =>
         RoadLinkOverrideDAO.get(TrafficDirection, linkId) should be(None)
         RoadLinkOverrideDAO.get(AdministrativeClass, linkId) should be(None)
@@ -75,7 +91,17 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       LinkAttributesDao.insertAttributeValueByChanges(oldLinkId, "test", "ADDITIONAL_INFO", "1", LinearAssetUtils.createTimeStamp())
       LinkAttributesDao.getExistingValues(oldLinkId).size should be(2)
 
-      roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      val reportedChanges = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      val trafficDirectionChange = reportedChanges.find(c => c.isInstanceOf[TrafficDirectionChange]).get.asInstanceOf[TrafficDirectionChange]
+      trafficDirectionChange.oldValue should be(AgainstDigitizing.value)
+      trafficDirectionChange.newValue should be(Some(AgainstDigitizing.value))
+      val adminClassChange = reportedChanges.find(c => c.isInstanceOf[AdministrativeClassChange]).get.asInstanceOf[AdministrativeClassChange]
+      adminClassChange.oldValue should be(Municipality.value)
+      adminClassChange.newValue should be(Some(Municipality.value))
+      val attributeChange = reportedChanges.find(c => c.isInstanceOf[RoadLinkAttributeChange]).get.asInstanceOf[RoadLinkAttributeChange]
+      attributeChange.oldValues should be(Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association"))
+      attributeChange.newValues should be(Map("ADDITIONAL_INFO" -> "1", "PRIVATE_ROAD_ASSOCIATION" -> "test association"))
+
       RoadLinkOverrideDAO.get(TrafficDirection, newLinkId).get should be(AgainstDigitizing.value)
       RoadLinkOverrideDAO.get(AdministrativeClass, newLinkId).get should be(Municipality.value)
       val privateRoadAttributes = LinkAttributesDao.getExistingValues(newLinkId)
@@ -98,7 +124,9 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       RoadLinkOverrideDAO.insert(AdministrativeClass, oldLinkId, Some("test"), State.value)
       RoadLinkOverrideDAO.get(AdministrativeClass, oldLinkId).get should be(State.value)
 
-      roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      val reportedChanges = roadLinkPropertyUpdater.transferOverriddenPropertiesAndPrivateRoadInfo(Seq(replaceChange))
+      reportedChanges.isEmpty should be(true)
+
       RoadLinkOverrideDAO.get(TrafficDirection, newLinkId) should be(None)
       RoadLinkOverrideDAO.get(AdministrativeClass, newLinkId) should be(None)
     }
@@ -122,7 +150,16 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       RoadLinkOverrideDAO.get(FunctionalClass, oldLinkId).get should be(7)
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), TractorRoad.value)
       RoadLinkOverrideDAO.get(LinkType, oldLinkId).get should be(TractorRoad.value)
-      roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
+      functionalClassChange.oldValue should be(Some(7))
+      functionalClassChange.newValue should be(Some(7))
+      functionalClassChange.source should be("oldLink")
+      val linkTypeChange = reportedChanges.find(c => c.isInstanceOf[LinkTypeChange]).get.asInstanceOf[LinkTypeChange]
+      linkTypeChange.oldValue should be(Some(TractorRoad.value))
+      linkTypeChange.newValue should be(Some(TractorRoad.value))
+      linkTypeChange.source should be("oldLink")
+
       newLinkIds.foreach { newLinkId =>
         RoadLinkOverrideDAO.get(FunctionalClass, newLinkId).get should be(7)
         RoadLinkOverrideDAO.get(LinkType, newLinkId).get should be(TractorRoad.value)
@@ -134,7 +171,15 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
   test("with no old link values, functional class and link type are generated for a new link with a suitable mtkClass") {
     runWithRollback {
       val cycleOrPedestrianPathAddChanges = changes.filter(c => c.changeType == Add && c.newLinks.forall(_.roadClass == 12314))
-      roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(cycleOrPedestrianPathAddChanges)
+      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(cycleOrPedestrianPathAddChanges)
+      val functionalClassChanges = reportedChanges.filter(c => c.isInstanceOf[FunctionalClassChange]).map(c => c.asInstanceOf[FunctionalClassChange])
+      functionalClassChanges.map(_.oldValue).toSet should be(Set(None))
+      functionalClassChanges.map(_.newValue).toSet should be(Set(Some(8)))
+      functionalClassChanges.map(_.source).toSet should be(Set("mtkClass"))
+      val linkTypeChanges = reportedChanges.filter(c => c.isInstanceOf[LinkTypeChange]).map(c => c.asInstanceOf[LinkTypeChange])
+      linkTypeChanges.map(_.oldValue).toSet should be(Set(None))
+      linkTypeChanges.map(_.newValue).toSet should be(Set(Some(CycleOrPedestrianPath.value)))
+      linkTypeChanges.map(_.source).toSet should be(Set("mtkClass"))
       cycleOrPedestrianPathAddChanges.foreach { changes =>
         val newLinkId = changes.newLinks.head.linkId
         RoadLinkOverrideDAO.get(FunctionalClass, newLinkId).get should be(8)
@@ -160,7 +205,15 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     runWithRollback {
       RoadLinkOverrideDAO.insert(FunctionalClass, oldLinkId, Some("test"), 7)
       RoadLinkOverrideDAO.get(FunctionalClass, oldLinkId).get should be(7)
-      roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
+      functionalClassChange.oldValue should be(Some(7))
+      functionalClassChange.newValue should be(Some(7))
+      functionalClassChange.source should be("oldLink")
+      val linkTypeChange = reportedChanges.find(c => c.isInstanceOf[LinkTypeChange]).get.asInstanceOf[LinkTypeChange]
+      linkTypeChange.oldValue should be(None)
+      linkTypeChange.newValue should be(Some(SingleCarriageway.value))
+      linkTypeChange.source should be("mtkClass")
       newLinkIds.foreach { newLinkId =>
         RoadLinkOverrideDAO.get(FunctionalClass, newLinkId).get should be(7)
         RoadLinkOverrideDAO.get(LinkType, newLinkId).get should be(SingleCarriageway.value)
@@ -185,7 +238,15 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
     runWithRollback {
       RoadLinkOverrideDAO.insert(LinkType, oldLinkId, Some("test"), TractorRoad.value)
       RoadLinkOverrideDAO.get(LinkType, oldLinkId).get should be(TractorRoad.value)
-      roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(singleCarriageWayChange))
+      val functionalClassChange = reportedChanges.find(c => c.isInstanceOf[FunctionalClassChange]).get.asInstanceOf[FunctionalClassChange]
+      functionalClassChange.oldValue should be(None)
+      functionalClassChange.newValue should be(Some(4))
+      functionalClassChange.source should be("mtkClass")
+      val linkTypeChange = reportedChanges.find(c => c.isInstanceOf[LinkTypeChange]).get.asInstanceOf[LinkTypeChange]
+      linkTypeChange.oldValue should be(Some(TractorRoad.value))
+      linkTypeChange.newValue should be(Some(TractorRoad.value))
+      linkTypeChange.source should be("oldLink")
       newLinkIds.foreach { newLinkId =>
         RoadLinkOverrideDAO.get(FunctionalClass, newLinkId).get should be(4)
         RoadLinkOverrideDAO.get(LinkType, newLinkId).get should be(TractorRoad.value)
@@ -208,7 +269,8 @@ class RoadLinkPropertyUpdaterSpec extends FunSuite with Matchers{
       List(ReplaceInfo(oldLinkId,newLinkId1,162.199,429.639,0.0,267.44,false), ReplaceInfo(oldLinkId,newLinkId2,0.0,145.912,0.0,145.912,false),
         ReplaceInfo(oldLinkId,newLinkId3,145.912,162.199,0.0,16.286,false)))
     runWithRollback {
-      roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(changeWithoutSuitableMtkClass))
+      val reportedChanges = roadLinkPropertyUpdater.transferOrGenerateFunctionalClassesAndLinkTypes(Seq(changeWithoutSuitableMtkClass))
+      reportedChanges.isEmpty should be(true)
       val incompleteLinksMap = roadLinkService.getIncompleteLinks(None, false)
       val incompleteLinks = incompleteLinksMap.get("Espoo").get("Municipality").toSet
       incompleteLinks should be(changeWithoutSuitableMtkClass.newLinks.map(_.linkId).toSet)
