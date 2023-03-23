@@ -47,4 +47,5 @@ insert into samuutus_success values (410,TO_TIMESTAMP('2022-05-17', 'YYYY-MM-DD'
 insert into samuutus_success values (420,TO_TIMESTAMP('2022-05-17', 'YYYY-MM-DD'));
 insert into samuutus_success values (430,TO_TIMESTAMP('2022-05-17', 'YYYY-MM-DD'));
 insert into samuutus_success values (440,TO_TIMESTAMP('2022-05-17', 'YYYY-MM-DD'));
-
+insert into samuutus_success values (450,TO_TIMESTAMP('2022-05-17', 'YYYY-MM-DD'));
+insert into samuutus_success values (460,TO_TIMESTAMP('2022-05-17', 'YYYY-MM-DD'));
