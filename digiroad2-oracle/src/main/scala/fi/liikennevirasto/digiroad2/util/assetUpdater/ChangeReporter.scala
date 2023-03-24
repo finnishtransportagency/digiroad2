@@ -205,18 +205,19 @@ object ChangeReporter {
 
     val (assetTypeId, changes) = (changeReport.assetType, changeReport.changes)
     val linkIds = changes.map(_.linkId).toSet
-    if (assetTypeId == RoadLinkProperties.typeId) {
-      val labels = Seq("linkId", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
-        "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes")
-      csvWriter.writeRow(labels)
-      linkIds.foreach { linkId =>
-        val propertyChangesForLink = changes.filter(_.linkId == linkId)
-        val changeType = propertyChangesForLink.head.changeType
-        val csvRow = getCSVRowForRoadLinkPropertyChanges(linkId, changeType.value, propertyChangesForLink)
-        csvWriter.writeRow(csvRow)
-      }
-    } else {
-      //implement logic for other assets
+    assetTypeId match {
+      case RoadLinkProperties.typeId =>
+        val labels = Seq("linkId", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
+          "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes")
+        csvWriter.writeRow(labels)
+        linkIds.foreach { linkId =>
+          val propertyChangesForLink = changes.filter(_.linkId == linkId)
+          val changeType = propertyChangesForLink.head.changeType
+          val csvRow = getCSVRowForRoadLinkPropertyChanges(linkId, changeType.value, propertyChangesForLink)
+          csvWriter.writeRow(csvRow)
+        }
+      case _ =>
+        //implement logic for other assets
     }
     (stringWriter.toString, linkIds.size)
   }
