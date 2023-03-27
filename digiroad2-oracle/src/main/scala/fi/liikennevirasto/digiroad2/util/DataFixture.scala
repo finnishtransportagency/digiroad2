@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.util.{Date, NoSuchElementException, Properties}
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit, RoadLinkProperties => RoadLinkPropertiesAsset, _}
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
@@ -2053,7 +2053,7 @@ object DataFixture {
     println(DateTime.now())
 
     val historyService = new HistoryService
-    val excludedAssetTypes = Seq(UnknownAssetTypeId, Lanes, MassTransitStopAsset)
+    val excludedAssetTypes = Seq(UnknownAssetTypeId, Lanes, MassTransitStopAsset, RoadLinkPropertiesAsset)
     val assetTypes = AssetTypeInfo.values.filterNot(excludedAssetTypes.contains)
     val yearGap = 2 //current and previous X years are to maintain (1 = until one year ago, 2 = until two years ago, etc.)
 
