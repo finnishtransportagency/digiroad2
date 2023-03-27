@@ -218,11 +218,15 @@ object ChangeReporter {
         val labels = Seq("linkId", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
           "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes")
         csvWriter.writeRow(labels)
+        val groupedChanges = changes.groupBy(_.linkId)
         linkIds.foreach { linkId =>
-          val propertyChangesForLink = changes.filter(_.linkId == linkId)
-          val changeType = propertyChangesForLink.head.changeType
-          val csvRow = getCSVRowForRoadLinkPropertyChanges(linkId, changeType.value, propertyChangesForLink)
-          csvWriter.writeRow(csvRow)
+          groupedChanges.get(linkId) match {
+            case Some(propertyChangesForLink) =>
+              val changeType = propertyChangesForLink.head.changeType
+              val csvRow = getCSVRowForRoadLinkPropertyChanges(linkId, changeType.value, propertyChangesForLink)
+              csvWriter.writeRow(csvRow)
+            case _ => //do nothing
+          }
         }
       case _ =>
         //implement logic for other assets
