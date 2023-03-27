@@ -104,6 +104,14 @@ sealed trait ReportedChange {
   def changeType: ChangeType
 }
 
+/**
+  *
+  * @param linkId link in which the changes have been applied
+  * @param changeType type of change
+  * @param oldValue old property value, optional for functional class and link type as new value can be generated
+  * @param newValue new property value, no value if the link is removed
+  * @param source source for new functionalClass or linkType, either "oldLink" or "mtkClass"
+  */
 case class AdministrativeClassChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
 case class TrafficDirectionChange(linkId: String, changeType: ChangeType, oldValue: Int, newValue: Option[Int]) extends ReportedChange
 case class RoadLinkAttributeChange(linkId: String, changeType: ChangeType, oldValues: Map[String, String], newValues: Map[String, String]) extends ReportedChange
@@ -114,7 +122,7 @@ case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Opti
 /**
   * 
   * @param linkId     link where changes is happening TODO remove if not needed
-  * @param assetId    asset which is under samuutus, When there is more than one asset under samuutus (e.g merger or join) create new  [[ChangedAsset]] item for each asset.
+  * @param assetId    asset which is under samuutus, When there is more than one asset under samuutus (e.g merger or split) create new  [[ChangedAsset]] item for each asset.
   * @param changeType characteristic of change
   * @param before     situation before samuutus
   * @param after      after samuutus
