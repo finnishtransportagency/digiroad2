@@ -444,9 +444,9 @@ class LaneDao(){
   }
 
   // TODO Kuinka käytetään uudeessa samuutuksessa adjustedTimestamp, lisää sideCode päivitys
-  def updateLanePositionAndModifiedDate(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, username: String ): Unit = {
+  def updateLanePositionAndModifiedDate(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: Int, username: String ): Unit = {
     sqlu"""UPDATE LANE_POSITION
-          SET start_measure = $startMeasure, end_measure = $endMeasure, link_id = $linkId, modified_date = current_timestamp
+          SET start_measure = $startMeasure, end_measure = $endMeasure, side_code = $sideCode, link_id = $linkId, modified_date = current_timestamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $laneId)
      """.execute
 

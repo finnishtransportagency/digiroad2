@@ -11,25 +11,19 @@ import fi.liikennevirasto.digiroad2.Point
 
 object LaneFiller {
 
-  trait baseAdjustment {
-    val laneId: Long
-    val linkId: String
-    val startMeasure: Double
-    val endMeasure: Double
-  }
-
-  case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double) extends baseAdjustment
+  // TODO MValueAdjustment ja SideCodeAdjustment korvaaminen LanePositionAdjustment fillTopologyssä.
+  case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double)
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
   case class LaneSplit(laneToCreate: PersistedLane, oldLane: PersistedLane)
-
-  case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
-                        adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
-                        expiredLaneIds: Set[Long] = Set.empty[Long],
-                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane],
-                        splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit]) {
+  case class LanePositionAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode)
+  case class ChangeSet(adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
+                       adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
+                       positionAdjustments: Seq[LanePositionAdjustment] = Seq.empty[LanePositionAdjustment],
+                       expiredLaneIds: Set[Long] = Set.empty[Long],
+                       generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane],
+                       splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit]) {
     def isEmpty: Boolean = {
-      this.adjustedMValues.isEmpty &&
-        this.adjustedSideCodes.isEmpty &&
+      this.positionAdjustments.isEmpty &&
         this.expiredLaneIds.isEmpty &&
         this.generatedPersistedLanes.isEmpty &&
         this.splitLanes.isEmpty
@@ -37,8 +31,7 @@ object LaneFiller {
   }
 
   def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) =>
-    changeSet1.copy(adjustedMValues = changeSet1.adjustedMValues ++ changeSet2.adjustedMValues,
-      adjustedSideCodes = changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes,
+    changeSet1.copy(positionAdjustments = changeSet1.positionAdjustments ++ changeSet2.positionAdjustments,
       expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
       generatedPersistedLanes = changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes,
       splitLanes = changeSet1.splitLanes ++ changeSet2.splitLanes
