@@ -142,6 +142,11 @@ object ChangeReporter {
   lazy val s3Service: awsService.S3.type = awsService.S3
   lazy val s3Bucket: String = Digiroad2Properties.samuutusReportsBucketName
   implicit lazy val serializationFormats: Formats = DefaultFormats
+  def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
+
+  def getUrl(linkId: String) = {
+    s"""$directLink#linkProperty/${linkId}"""
+  }
 
   private def getCSVRowForRoadLinkPropertyChanges(linkId: String, changeType: Int, changes: Seq[ReportedChange]) = {
     val trafficDirectionChange = changes.find(_.isInstanceOf[TrafficDirectionChange])
@@ -203,7 +208,8 @@ object ChangeReporter {
 
       case _ => (null, null)
     }
-    Seq(linkId, changeType, oldTrafficDirection, newTrafficDirection, oldAdminClass, newAdminClass, oldFunctionalClass,
+    val url = getUrl(linkId)
+    Seq(linkId, url, changeType, oldTrafficDirection, newTrafficDirection, oldAdminClass, newAdminClass, oldFunctionalClass,
       newFunctionalClass, fcSource, oldLinkType, newLinkType, ltSource, oldAttributes, newAttributes)
   }
 
@@ -215,7 +221,7 @@ object ChangeReporter {
     val linkIds = changes.map(_.linkId).toSet
     assetTypeId match {
       case RoadLinkProperties.typeId =>
-        val labels = Seq("linkId", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
+        val labels = Seq("linkId", "url", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
           "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes")
         csvWriter.writeRow(labels)
         val groupedChanges = changes.groupBy(_.linkId)
