@@ -202,61 +202,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
             oldFromMValue = 0.0, oldToMValue = oldLinkGeometry._2, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
     )
   }
-  // double check this possibility
-  def changeReplaceLenghenedFromBegind(oldRoadLinkId: String): RoadLinkChange = {
-    val (oldLinkGeometry, oldId) = (generateGeometry(5, 5), oldRoadLinkId)
-    val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 10), "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
-
-    RoadLinkChange(
-      changeType = RoadLinkChangeType.Replace,
-      oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
-        geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
-        adminClass = Municipality,
-        municipality = 0,
-        trafficDirection = TrafficDirection.BothDirections)),
-      newLinks = Seq(
-        RoadLinkInfo(
-          linkId = newLinkId1,
-          linkLength = newLinkGeometry1._2,
-          geometry = newLinkGeometry1._1,
-          roadClass = MTKClassWidth.CarRoad_Ia.value,
-          adminClass = Municipality,
-          municipality = 0,
-          trafficDirection = TrafficDirection.BothDirections
-        )),
-      replaceInfo =
-        List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = 9, newFromMValue = 5, newToMValue = 9, digitizationChange = false))
-    )
-  }
-  def changeReplaceShortenedFromBegind(oldRoadLinkId: String): RoadLinkChange = {
-    val (oldLinkGeometry, oldId) = (generateGeometry(0, 10), oldRoadLinkId)
-    val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 5), "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
-
-    RoadLinkChange(
-      changeType = RoadLinkChangeType.Replace,
-      oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
-        geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
-        adminClass = Municipality,
-        municipality = 0,
-        trafficDirection = TrafficDirection.BothDirections)),
-      newLinks = Seq(
-        RoadLinkInfo(
-          linkId = newLinkId1,
-          linkLength = newLinkGeometry1._2,
-          geometry = newLinkGeometry1._1,
-          roadClass = MTKClassWidth.CarRoad_Ia.value,
-          adminClass = Municipality,
-          municipality = 0,
-          trafficDirection = TrafficDirection.BothDirections
-        )),
-      replaceInfo =
-        List(
-          ReplaceInfo(oldRoadLinkId, newLinkId1,
-            oldFromMValue = 0.0, oldToMValue = oldLinkGeometry._2, newFromMValue = 2, newToMValue = newLinkGeometry1._2, false))
-    )
-  }
+  
   def changeReplaceMerge2(): (Seq[RoadLinkChange],Seq[RoadLink]) ={
     val oldIds = Seq("41a67ca5-886f-44ff-a9ca-92d7d9bea129:1","7ce91531-42e8-424b-a528-b72af5cb1180:1",
       "9d23b85a-d7bf-4c6f-83ff-aa391ff4879f:1","b05075a5-45e1-447e-9813-752ba3e07fe5:1")
@@ -281,9 +227,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val (oldLinkGeometry1, oldId1) = (generateGeometry(0, 6), "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
     val (oldLinkGeometry2, oldId2) = (generateGeometry(6, 6), "c63d66e9-89fe-4b18-8f5b-f9f2121e3db7:1")
     val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 15), "753279ca-5a4d-4713-8609-0bd35d6a30fa:1")
-
-    println(s"merged size ${oldLinkGeometry2._2 + oldLinkGeometry1._2}")
-    println(s"new link size ${newLinkGeometry1._2}")
     Seq(RoadLinkChange(
       changeType = RoadLinkChangeType.Replace,
       oldLink = Some(RoadLinkInfo(
@@ -354,20 +297,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, change.newLinks.map(_.linkId), false)
       assetsAfter.size should be(3)
-
-      println("before")
-      assetsBefore.sortBy(_.endMeasure).foreach(p => {
-        val link = oldRoadLink
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-
-      println("after")
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      sorted.foreach(p => {
-        val link = roadLinks.find(_.linkId == p.linkId)
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.get.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-      
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9.334)
 
@@ -401,19 +331,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change._1)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("524c67d9-b8af-4070-a4a1-52d7aec0526c:1"), false)
-      //assetsAfter.size should be(1)
-
-      assetsBefore.sortBy(_.endMeasure).foreach(p => {
-        val link = Seq(oldRoadLink,oldRoadLink2).find(_.linkId==p.linkId).get
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-
-      println("after")
+      assetsAfter.size should be(1)
+      
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      sorted.foreach(p => {
-        val link = change._1.head.newLinks.find(_.linkId == p.linkId)
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.get.linkLength}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
       
       sorted.head.linkId should be(change._1.head.replaceInfo.head.newLinkId)
       sorted.head.startMeasure should be(0) 
@@ -449,17 +369,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1"), false)
       assetsAfter.size should be(1)
-      println("before")
-      assetsBefore.sortBy(_.endMeasure).foreach(p => {
-        val link = Seq(oldRoadLink,oldRoadLink2).find(_.linkId == p.linkId).get
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
+  
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      println("after")
-      sorted.foreach(p => {
-        val link = change.head.newLinks.head.linkLength
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
+
       sorted.head.linkId should be(change.head.replaceInfo.head.newLinkId)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(14)
@@ -487,17 +399,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"), false)
       assetsAfter.size should be(1)
-      println("before")
-      assetsBefore.sortBy(_.endMeasure).foreach(p => {
-        val link = Seq(oldRoadLink).find(_.linkId == p.linkId).get
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
+ 
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      println("after")
-      sorted.foreach(p => {
-        val link = change.newLinks.head.linkLength
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
+      
       sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(9)
@@ -525,18 +429,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByIds(TrafficVolume.typeId, Seq(id1).toSet, false)
       assetsAfter.size should be(1)
-
-      println("before")
-      assetsBefore.sortBy(_.endMeasure).foreach(p => {
-        val link = Seq(oldRoadLink).find(_.linkId == p.linkId).get
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
+      
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      println("after")
-      sorted.foreach(p => {
-        val link = change.newLinks.head.linkLength
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
+   
       sorted.head.linkId should be(change.replaceInfo.head.newLinkId)
       sorted.head.startMeasure should be(0)
       sorted.head.endMeasure should be(4)
@@ -583,8 +478,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2),
       ProjectionForSamuutus(
         oldStart=0, oldEnd= 10, newStart= 0, newEnd= 20), 20)
-    
-    println(s"new start: ${newPosition4._1}, new end: ${newPosition4._2}, side code: ${newPosition4._3}")
 
     newPosition4._1 should be(0)
     newPosition4._2 should be(10)
@@ -597,7 +490,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 10, sideCode = 2),
       ProjectionForSamuutus(
         oldStart = 0, oldEnd = 10, newStart = 0, newEnd = 20), 20)
-    println(s"new start: ${newPosition5._1}, new end: ${newPosition5._2}, side code: ${newPosition5._3}")
+    
     newPosition5._1 should be(0)
     newPosition5._2 should be(20)
 
@@ -620,7 +513,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2),
       ProjectionForSamuutus(
         oldStart = 0, oldEnd = 10, newStart = 0, newEnd = 20), 20)
-    println(s"new start: ${newPosition5._1}, new end: ${newPosition5._2}, side code: ${newPosition5._3}")
+    
     newPosition5._1 should be(0)
     newPosition5._2 should be(10)
   }
@@ -631,7 +524,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 10, sideCode = 2),
       ProjectionForSamuutus(
         oldStart = 0, oldEnd = 10, newStart = 0, newEnd = 5), 5)
-    println(s"new start: ${newPosition5._1}, new end: ${newPosition5._2}, side code: ${newPosition5._3}")
+    
     newPosition5._1 should be(0)
     newPosition5._2 should be(5)
   }
@@ -643,8 +536,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       ProjectionForSamuutus(
         oldStart=0, oldEnd= 10, newStart= 0, newEnd= 20), 20)
 
-    println(s"new start: ${newPosition2._1}, new end: ${newPosition2._2}, side code: ${newPosition2._3}")
-
     newPosition2._1 should be(4)
     newPosition2._2 should be(8)
     
@@ -655,7 +546,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 10, sideCode = 2),
       ProjectionForSamuutus(
         oldStart=0, oldEnd= 10, newStart= 0, newEnd= 20), 20)
-    println(s"new start: ${newPosition3._1}, new end: ${newPosition3._2}, side code: ${newPosition3._3}")
 
     newPosition3._1 should be(4)
     newPosition3._2 should be(20)
@@ -702,18 +592,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, change.newLinks.map(_.linkId), false)
       
-      println("before")
-      assetsBefore.sortBy(_.endMeasure).foreach(p => {
-        val link = oldRoadLink
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-
-      println("after")
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      sorted.foreach(p => {
-        val link = roadLinks.find(_.linkId==p.linkId)
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.get.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
 
       sorted.size should be(4)
       sorted.map(v => v.value.isEmpty should be(false))
@@ -722,21 +601,18 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val asset3 = sorted(2)
       val asset4 = sorted(3)
       
-      println(s"testing: ${asset1.id}")
       asset1.startMeasure should be(0)
       asset1.endMeasure should be(9.334)
       asset1.value.get should be(NumericValue(3))
-      println(s"testing: ${asset2.id}")
+      
       asset2.startMeasure should be(0)
       asset2.endMeasure should be(11.841212723230687)
       asset2.value.get should be(NumericValue(3))
-
-      println(s"testing: ${asset3.id}")
+      
       asset3.startMeasure should be(0)
       asset3.endMeasure should be(18.842)
       asset3.value.get should be(NumericValue(4))
       
-      println(s"testing: ${asset4.id}")
       asset4.startMeasure should be(18.842)
       asset4.endMeasure should be(34.906)
       asset4.value.get should be(NumericValue(5))
@@ -752,7 +628,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val change = changeReplaceMerge()
       val oldRoadLink = change._2.find(_.linkId == linksid1).get
       val oldRoadLink2 = change._2.find(_.linkId == linksid2).get
-      // when getting links from database it give more precise measure than smallChangSet
       val oldMaxLength = 23.48096698
       val oldMaxLength2 = 66.25297685
       val newMaxLength = change._1.head.newLinks.head.linkLength
@@ -768,48 +643,29 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
       assetsBefore.size should be(4)
       assetsBefore.head.expired should be(false)
-// validate result
-      // code return asset which have startMvalue 4 and end mvalue 10
-      // old implementaton lenthent only from end not in begind
+      
       TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, change._1)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("524c67d9-b8af-4070-a4a1-52d7aec0526c:1"), false)
-      println("before")
-      assetsBefore.sortBy(_.endMeasure).foreach(p => {
-        val link = Seq(oldRoadLink,oldRoadLink2).find(_.linkId==p.linkId).get
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-      println("after")
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      sorted.foreach(p => {
-        //val link = roadLinks.find(_.linkId == p.linkId)
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${newMaxLength}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-
       sorted.size should be(4)
       sorted.map(v=>v.value.isEmpty should be(false))
       val asset1 = sorted.find(_.id == id1).get
       val asset2 = sorted.find(_.id == id2).get
       val asset3 = sorted.find(_.id == id3).get
       val asset4 = sorted.find(_.id == id4).get
-
-      // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
-      println(s"testing: ${asset1.id}")
+      
       asset1.startMeasure should be(0)
       asset1.endMeasure should be(9.998)
       asset1.value.get should be(NumericValue(3))
-
-      println(s"testing: ${asset2.id}")
+      
       asset2.startMeasure should be(9.998)
       asset2.endMeasure should be(23.476)
       asset2.value.get should be(NumericValue(4))
-
-      println(s"testing: ${asset3.id}")
-      // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
+      
       asset3.startMeasure should be(23.476)
       asset3.endMeasure should be(53.476)
       asset3.value.get should be(NumericValue(5))
-
-      println(s"testing: ${asset4.id}")
+      
       asset4.startMeasure should be(53.476)
       asset4.endMeasure should be(89.728)
       asset4.value.get should be(NumericValue(6))

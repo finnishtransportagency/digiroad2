@@ -188,14 +188,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
           }
         })
-        (sliced ++ assetGoOver._2.filterNot(a => sliced.map(_.id).toSet.contains(a.id)))
+        sliced ++ assetGoOver._2.filterNot(a => sliced.map(_.id).toSet.contains(a.id))
       }
 
       val sliced: Seq[PersistedLinearAsset] = slicer(assets, change)
 
       sliced.flatMap(asset => {
         convertToForCalculation(change, asset).map(dataForCalculation => {
-          projecting(changeSets, asset, (dataForCalculation._1))
+          projecting(changeSets, asset, (dataForCalculation))
         })
       })
     }
@@ -470,7 +470,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   }
 
-  private def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: ProjectionForSamuutus, roadLinkLength: Double, newStart: Double, newEnd: Double) = {
+  def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: ProjectionForSamuutus, newLinksLength: Double) = {
     val newSideCode = sideCodeSwitch(asset.sideCode)
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
@@ -480,11 +480,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * factor
     val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * factor
     logger.debug(s"new start $newStart, new end $newEnd, factor number $factor")
+    
     if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
       (asset.startMeasure, asset.endMeasure, newSideCode)
     } else {
-      val start = Math.min(roadLinkLength, Math.max(0.0, newStart))
-      val end = Math.max(0.0, Math.min(roadLinkLength, newEnd))
+      
+      val start = Math.min(newLinksLength, Math.max(0.0, newStart))
+      val end = Math.max(0.0, Math.min(newLinksLength, newEnd))
       
       if (end - start <= 0) {
         logger.warn(s"new size is zero")
@@ -520,7 +522,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       case to.linkId => asset.id
       case _ => 0
     }
-    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
+    val (newStart, newEnd, newSideCode) = calculateNewMValues(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
 
     val changeSet = assetId match {
       case 0 => changedSet
