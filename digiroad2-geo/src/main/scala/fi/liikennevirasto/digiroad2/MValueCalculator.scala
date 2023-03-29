@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.SideCode
 
 sealed case class AssetLinearReference(id: Long, startMeasure: Double, endMeasure: Double, sideCode: Int)
-sealed case  class ProjectionForSamuutus(timeStamp: Long = 0, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double)
 
 object MValueCalculator {
   
