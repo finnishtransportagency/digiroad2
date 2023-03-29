@@ -216,6 +216,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           })
         case RoadLinkChangeType.Split => sliceLoop(change, assetsAll, changeSets)
         case RoadLinkChangeType.Add => operationForNewLink(change, assetsAll, changeSets) //TODO own add method  which can be override
+        case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
       }
     })
     

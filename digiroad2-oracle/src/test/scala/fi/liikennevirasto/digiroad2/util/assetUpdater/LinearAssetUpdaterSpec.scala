@@ -85,7 +85,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   def changeRemove (oldRoadLinkId: String): RoadLinkChange = {
     val generatedGeometry = generateGeometry(0, 10)
     RoadLinkChange(
-      changeType = RoadLinkChangeType.Add,
+      changeType = RoadLinkChangeType.Remove,
       oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generatedGeometry._2,
         geometry = generatedGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
         adminClass = Municipality,
