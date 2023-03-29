@@ -17,6 +17,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
+  // TODO remove this method
   def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
 /*    try {
       val linkIds = roadLinks.map(_.linkId)
