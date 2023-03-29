@@ -289,6 +289,45 @@ object SpeedLimitFiller extends AssetFiller {
     }
   }
 
+  override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
+                                           changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val operations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+      expireSegmentsOutsideGeometry,
+      combine,
+      fuse,
+      adjustSegmentMValues,
+      capToGeometry,
+      adjustLopsidedLimit,
+      droppedSegmentWrongDirection,
+      adjustSegmentSideCodes,
+      dropShortSegments,
+      fillHoles,
+      clean
+    )
+
+    val changeSet = changedSet match {
+      case Some(change) => change
+      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
+    }
+
+    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingSegments, changeSet) = acc
+      val segments = linearAssets.getOrElse(roadLink.linkId, Nil)
+      val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
+
+      val (adjustedSegments, segmentAdjustments) = operations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
+      }
+      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
+      (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
+    }
+  }
+
   /**
     * For debugging; print speed limit relevant data
     * @param speedLimit speedlimit to print

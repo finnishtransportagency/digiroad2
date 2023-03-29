@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.RoadLinkChange
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -14,7 +15,14 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUpdater(service) {
 
   val speedLimitDao = service.speedLimitDao
-  
+
+  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+    // TODO here logic to generate speedlimi road
+    // hint fillNewRoadLinksWithPreviousSpeedLimitData
+
+    Seq.empty[(PersistedLinearAsset, ChangeSet)]
+  }
+  // TODO standardize speedlimit
    def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Unit = {
   /*  val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
@@ -40,6 +48,27 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     handleChangesAndUnknowns(roadLinks, speedLimits, Some(projectedChangeSet), oldRoadLinkIds, geometryChanged = true)*/
   }
 
+
+  
+  // TODO check override
+  override def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
+                                                   typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+
+    val (filledTopology, changedSetUpdated) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
+    val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSetUpdated, linearAssets.values.flatten.toSeq)
+    adjustmentsChangeSet.isEmpty match { // TODO fix this hack
+      case true => filledTopology
+      case false if counter > 3 =>
+        updateChangeSet(adjustmentsChangeSet)
+        filledTopology
+      case false if counter <= 3 =>
+        updateChangeSet(adjustmentsChangeSet)
+        val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty)
+        adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust.groupBy(_.linkId), typeId, None, counter + 1)
+    }
+
+    (filledTopology, changedSetUpdated)
+  }
   def handleChangesAndUnknowns(topology: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
                                changeSet:Option[ChangeSet] = None, oldRoadLinkIds: Seq[String], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val (filledTopology, changedSet) = fillTopology(topology.map(toRoadLinkForFiltopology), speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
