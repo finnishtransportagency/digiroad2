@@ -15,24 +15,15 @@ import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
-import scala.util.Try
-
-case class InfoForCalculation(fullLink: Boolean = false,
-                              endMVValueEqualLinkLength: Boolean = false,
-                              startMValueIsZero: Boolean = false,
-                              inMiddleOfLink: Boolean = false)
-
-case class ProjectionForSamuutus(timeStamp: Long = 0, oldGeometry:List[Point], newGeometry:List[Point])
+case class ProjectionForSamuutus(timeStamp: Long = 0, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double)
 
 case class CalculateMValueChangesInfo(assetId: Long, oldId: Option[String], newId: Option[String],
                                       oldLinksLength: Option[Double],
-                                      oldLinkGeometry:List[Point],
                                       newLinksLength: Option[Double],
-                                      newLinkGeometry:List[Point]) {}
+                                      oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double
+                                     ) {}
 
 case class AssetLinearReference(id: Long, startMeasure: Double, endMeasure: Double, sideCode: Int)
 
@@ -48,7 +39,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val logger = LoggerFactory.getLogger(getClass)
   val roadLinkChangeClient = new RoadLinkChangeClient
-  
+
   def updateLinearAssets(typeId: Int) = {
     withDynTransaction {
       val latesSuccess = Queries.getLatestSuccessfulSamuutus(typeId)
@@ -82,10 +73,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val split = linkId.split(":")
     (split(0), split(1).toInt)
   }
-  
+
   def recognizeVersionUpgrade(change: RoadLinkChange): Boolean = {
-    if (change.newLinks.size==1)
-    change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkLength == change.newLinks.head.linkLength && checkId(change)
+    if (change.newLinks.size == 1)
+      change.changeType == RoadLinkChangeType.Replace && change.oldLink.get.linkLength == change.newLinks.head.linkLength && checkId(change)
     else false
   }
   def checkId(change: RoadLinkChange): Boolean = {
@@ -120,20 +111,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   }
   
-  def isInMiddle(asset: PersistedLinearAsset, linkMeasure: Double): Boolean = {
-    asset.startMeasure > 0 && asset.endMeasure < linkMeasure
-  }
-  def isPartiallySlicedFromStart(asset: PersistedLinearAsset, linkMeasure: Double): Boolean = {
-    asset.startMeasure  != 0 && asset.endMeasure == linkMeasure
-  }
-  def isPartiallySlicedFromEnd(asset: PersistedLinearAsset, linkMeasure: Double): Boolean = {
-    asset.startMeasure  == 0 && asset.endMeasure < linkMeasure
-  }
   def isFullLinkLength(asset: PersistedLinearAsset, linkMeasure: Double): Boolean = {
-   asset.startMeasure == 0 && asset.endMeasure == linkMeasure
+    asset.startMeasure == 0 && asset.endMeasure == linkMeasure
   }
-  
-  def sliceLoop(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset],changeSets:ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+
+  def sliceLoop(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
     val linkWhichIsSplitted = change.oldLink.get.linkId
     val assets = assetsAll.filter(p => linkWhichIsSplitted.contains(p.linkId))
 
@@ -148,7 +130,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }).flatMap(asset => {
         val mapping = convertToForCalculation(change, asset)
         val findProjection = mapping.head
-        Seq(projecting(changeSets, asset, (findProjection._1,InfoForCalculation())))
+        Seq(projecting(changeSets, asset, findProjection))
       })
       val returnedChangeSet = foldChangeSet(projected.map(_._2), changeSets)
       val update = returnedChangeSet.copy(expiredAssetIds = returnedChangeSet.expiredAssetIds ++ assets.map(_.id))
@@ -196,8 +178,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
             Option(newPart)
           } else None
 
-          println(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
-          println(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
+          logger.debug(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
+          logger.debug(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
 
           (shortedFilter, newPartFilter) match {
             case (None, None) => Seq()
@@ -212,8 +194,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val sliced: Seq[PersistedLinearAsset] = slicer(assets, change)
 
       sliced.flatMap(asset => {
-        convertToForCalculation(change, asset,true).map(dataForCalculation => {
-          projecting(changeSets, asset, (dataForCalculation._1,InfoForCalculation()))
+        convertToForCalculation(change, asset).map(dataForCalculation => {
+          projecting(changeSets, asset, (dataForCalculation._1))
         })
       })
     }
@@ -225,11 +207,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val oldId = oldLink.linkId
       val assets = assetsAll.filter(_.linkId == oldId)
       change.changeType match {
-      //  case RoadLinkChangeType.Replace if recognizeVersionUpgrade(change)  =>  Seq.empty[(PersistedLinearAsset, ChangeSet)] // TODO just update version
+        //  case RoadLinkChangeType.Replace if recognizeVersionUpgrade(change)  =>  Seq.empty[(PersistedLinearAsset, ChangeSet)] // TODO just update version
         case RoadLinkChangeType.Replace =>
-          val isSliced = if (assets.size >1) true else false
           assets.flatMap(asset => {
-            convertToForCalculation(change, asset,isSliced).map(dataForCalculation => {
+            convertToForCalculation(change, asset).map(dataForCalculation => {
               projecting(changeSets, asset, dataForCalculation)
             })
           })
@@ -238,128 +219,95 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }
     })
     
-   /* result.map(_._1).groupBy(_.linkId).map(link=>{
-      val assetsOrdered = link._2.sortBy(_.endMeasure)
-      // chect for consetive of similar values and side code in each link, 
-      // merger these and expire old.
-      // order by link id and then by endmeasure
-    })*/
-    
-    (result.map(_._1), foldChangeSet(result.map(_._2),changeSets))
+    (result.map(_._1), foldChangeSet(result.map(_._2), changeSets))
   }
-  
+
   def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
-  
-  def foldChangeSet (mergedChangeSet: Seq[ChangeSet],foldTo:ChangeSet):  ChangeSet ={
+
+  def foldChangeSet(mergedChangeSet: Seq[ChangeSet], foldTo: ChangeSet): ChangeSet = {
     mergedChangeSet.foldLeft(foldTo) { (a, z) =>
       a.copy(
-        adjustedMValues     = a.adjustedMValues     ++ z.adjustedMValues,
-        adjustedVVHChanges  = a.adjustedVVHChanges  ++ z.adjustedVVHChanges,
-        adjustedSideCodes   = a.adjustedSideCodes   ++ z.adjustedSideCodes,
-        expiredAssetIds     = a.expiredAssetIds     ++ z.expiredAssetIds,
-        valueAdjustments    = a.valueAdjustments    ++ z.valueAdjustments
+        adjustedMValues = a.adjustedMValues ++ z.adjustedMValues,
+        adjustedVVHChanges = a.adjustedVVHChanges ++ z.adjustedVVHChanges,
+        adjustedSideCodes = a.adjustedSideCodes ++ z.adjustedSideCodes,
+        expiredAssetIds = a.expiredAssetIds ++ z.expiredAssetIds,
+        valueAdjustments = a.valueAdjustments ++ z.valueAdjustments
       );
     }
-  } 
-  
-  private def projecting(changeSets: ChangeSet, asset: PersistedLinearAsset, p1: (CalculateMValueChangesInfo,InfoForCalculation)) = {
-    val info = p1._1
-    val additionalInfo = p1._2
+  }
+
+  private def projecting(changeSets: ChangeSet, asset: PersistedLinearAsset, info: CalculateMValueChangesInfo) = {
     projectLinearAsset(asset.copy(linkId = info.newId.get), LinkAndLength(info.newId.get, info.newLinksLength.get),
-      ProjectionForSamuutus(timeStamp = LinearAssetUtils.createTimeStamp(),
-        oldGeometry = info.oldLinkGeometry,
-        newGeometry = info.newLinkGeometry),additionalInfo, changeSets)
+      ProjectionForSamuutus(LinearAssetUtils.createTimeStamp(), 
+        info.oldStart, info.oldEnd, info.newStart, info.newEnd
+      ), changeSets)
   }
   def selectCorrectReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
-    val condition = replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
-    println(s"Condition status: $condition")
-    if(!condition){
-      println(s"evaluate asset ${asset.id}, old linkId: ${asset.linkId}")
-      println(s"oldFrom: ${replaceInfo.oldFromMValue}, oldTo: ${replaceInfo.oldToMValue}, asset start: ${asset.startMeasure}, asset end: ${asset.endMeasure}")
-      condition
-    } else condition
+   replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
   }
-  
-  private def convertToForCalculation(changes: RoadLinkChange, asset: PersistedLinearAsset,isSliced:Boolean = false) = {
-      val info = changes.replaceInfo.find(selectCorrectReplaceInfo(_,asset)).getOrElse(throw new Exception("Did not found replace info for asset"))
-      val link = changes.newLinks.find(_.linkId == info.newLinkId).get
-    
-      val (isPartiallySlicedFromEndB,isPartiallySlicedFromStartB,isInMiddleB) = (
-        isPartiallySlicedFromEnd(asset,changes.oldLink.get.linkLength),
-        isPartiallySlicedFromStart(asset,changes.oldLink.get.linkLength),
-        isInMiddle(asset, changes.oldLink.get.linkLength))
-      
-      val additionalInfo = if (isFullLinkLength(asset, changes.oldLink.get.linkLength)) {InfoForCalculation(fullLink = true) }else {
-        if(!isSliced){
-          (isPartiallySlicedFromEndB, isPartiallySlicedFromStartB, isInMiddleB) match {
-            case (false, true, false) => InfoForCalculation(endMVValueEqualLinkLength = true)
-            case (true, false, false) => InfoForCalculation(startMValueIsZero = true)
-            case (false, false, true) => InfoForCalculation(inMiddleOfLink = true)
-            case _ => InfoForCalculation()
-          }
-        } else {
-          InfoForCalculation()
-        }
-      }
-       Some((CalculateMValueChangesInfo(
-          asset.id,
-          Some(info.oldLinkId),
-          Some(info.newLinkId),
-          Some(changes.oldLink.get.linkLength),
-          changes.oldLink.get.geometry,
-          Some(link.linkLength),
-          link.geometry
-        ),additionalInfo))
+
+  private def convertToForCalculation(changes: RoadLinkChange, asset: PersistedLinearAsset) = {
+    val info = changes.replaceInfo.find(selectCorrectReplaceInfo(_, asset)).getOrElse(throw new Exception("Did not found replace info for asset"))
+    val link = changes.newLinks.find(_.linkId == info.newLinkId).get
+    Some(CalculateMValueChangesInfo(
+      asset.id,
+      Some(info.oldLinkId),
+      Some(info.newLinkId),
+      Some(changes.oldLink.get.linkLength),
+      Some(link.linkLength),
+      info.oldFromMValue,
+      info.oldToMValue,
+      info.newFromMValue,
+      info.newToMValue
+    ))
   }
   def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                                           typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    
-    // TODO is there need validate whole asset network?
-     val (filledTopology, changedSet) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
-    val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
-        adjustmentsChangeSet.isEmpty match { //  Validate that there is no infinity loop 
-          case true => filledTopology
-          case false if counter > 3 =>
-            updateChangeSet(adjustmentsChangeSet)
-            filledTopology
-          case false if counter <= 3 =>
-            updateChangeSet(adjustmentsChangeSet)
-            val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty)
-            adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust.groupBy(_.linkId), typeId, None, counter + 1)
-        }
 
-    //updateChangeSet(changeSet.get)
-    //(linearAssets.values.flatten.toSeq, changeSet.get)
-    (filledTopology, adjustmentsChangeSet)
+    val (filledTopology, changedSetUpdated) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
+    val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSetUpdated, linearAssets.values.flatten.toSeq)
+    adjustmentsChangeSet.isEmpty match { // TODO fix this hack
+      case true => filledTopology
+      case false if counter > 3 =>
+        updateChangeSet(adjustmentsChangeSet)
+        filledTopology
+      case false if counter <= 3 =>
+        updateChangeSet(adjustmentsChangeSet)
+        val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty)
+        adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust.groupBy(_.linkId), typeId, None, counter + 1)
+    }
+    
+    (filledTopology, changedSetUpdated)
   }
 
-  def convertToPersisted(asset:PieceWiseLinearAsset): PersistedLinearAsset = {
-    PersistedLinearAsset(asset.id,asset.linkId,asset.sideCode.value,
-      asset.value,asset.startMeasure,asset.endMeasure,asset.createdBy,
-      asset.createdDateTime,asset.modifiedBy,asset.modifiedDateTime,asset.expired,asset.typeId,asset.timeStamp,
-      asset.geomModifiedDate,asset.linkSource,asset.verifiedBy,asset.verifiedDate,asset.informationSource)
+  def convertToPersisted(asset: PieceWiseLinearAsset): PersistedLinearAsset = {
+    PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value,
+      asset.value, asset.startMeasure, asset.endMeasure, asset.createdBy,
+      asset.createdDateTime, asset.modifiedBy, asset.modifiedDateTime, asset.expired, asset.typeId, asset.timeStamp,
+      asset.geomModifiedDate, asset.linkSource, asset.verifiedBy, asset.verifiedDate, asset.informationSource)
   }
 
 
   def updateChangeSet(changeSet: ChangeSet): Unit = {
     dao.floatLinearAssets(changeSet.droppedAssetIds)
+    // TODO there is possibility that one change overtake other. , merge these change
+    if (changeSet.adjustedVVHChanges.nonEmpty)
+      println("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId + " startmeasure: " + a.startMeasure + " endmeasure: " + a.endMeasure).mkString(", "))
+    changeSet.adjustedVVHChanges.foreach { adjustment =>
+      dao.updateMValuesChangeInfo(adjustment.assetId, adjustment.linkId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.timeStamp, AutoGeneratedUsername.generatedInUpdate)
+    }
 
     if (changeSet.adjustedMValues.nonEmpty)
-      println("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+      println("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId + " startmeasure: " + a.startMeasure + " endmeasure: " + a.endMeasure).mkString(", "))
 
     changeSet.adjustedMValues.foreach { adjustment =>
       dao.updateMValues(adjustment.assetId, adjustment.linkId, (adjustment.startMeasure, adjustment.endMeasure))
     }
-
-    if (changeSet.adjustedVVHChanges.nonEmpty)
-      println("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
-
-    changeSet.adjustedVVHChanges.foreach { adjustment =>
-      dao.updateMValuesChangeInfo(adjustment.assetId, adjustment.linkId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.timeStamp, AutoGeneratedUsername.generatedInUpdate)
-    }
+    
     val ids = changeSet.expiredAssetIds.toSeq
+    
     if (ids.nonEmpty)
       println("Expiring ids " + ids.mkString(", "))
     ids.foreach(dao.updateExpiration(_, expired = true, AutoGeneratedUsername.generatedInUpdate))
@@ -375,7 +323,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       println("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
     changeSet.valueAdjustments.foreach { adjustment =>
       service.updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
-
     }
   }
 
@@ -464,7 +411,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                                                        changeSet: ChangeSet, existingAssets: Seq[PersistedLinearAsset]): (Seq[PersistedLinearAsset], ChangeSet) = {
     (Seq(), initChangeSet2)
   }
-  
+
   def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
     val oldAsset = service.getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).headOption
       .getOrElse(throw new IllegalStateException("Old asset " + adjustment.assetId + " of type " + adjustment.typeId + " no longer available"))
@@ -481,70 +428,99 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       Some(roadLink), false, Some(AutoGeneratedUsername.generatedInUpdate), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
 
   }
-  
+
   /**
     * calculator is based on old change info, does not totally work anymore. Need to add math for splitting and joining, work with lengthening and shortening.
     *
     * @param asset
     * @param projection
-    * @param roadLinkLength
+    * @param newLinksLength
     * @return
     */
-  def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: ProjectionForSamuutus, roadLinkLength: Double, info: InfoForCalculation = InfoForCalculation()): (Double, Double, Int) = {
-    
-    val oldStartPosition = GeometryUtils.calculatePointFromLinearReference(projection.oldGeometry, asset.startMeasure)
-    val oldEndPosition = GeometryUtils.calculatePointFromLinearReference(projection.oldGeometry,  asset.endMeasure)
-    val newStartMValue = GeometryUtils.calculateLinearReferenceFromPoint(oldStartPosition.get, projection.newGeometry)
-    val newEndMValue = GeometryUtils.calculateLinearReferenceFromPoint(oldEndPosition.get, projection.newGeometry)
-    
-    println(s"asset: ${asset.id}")
-    println(s"link length: $roadLinkLength")
-    println(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
-    println(s"new start $newStartMValue, new end $newEndMValue, new length ${newEndMValue - newStartMValue}")
-    println(info.toString)
-    
-      val meters: (Double, Double, Int) = info match {
-        case InfoForCalculation(true, false, false, false) => (0, roadLinkLength, asset.sideCode)
-        case InfoForCalculation(false, true, false, false) => (newStartMValue, roadLinkLength, asset.sideCode) //lenthen end, Need more thinking
-        case InfoForCalculation(false, false, true, false) => (0, roadLinkLength, asset.sideCode) //lenthen begind
-        case InfoForCalculation(false, false, false, true) => (newStartMValue, asset.endMeasure, asset.sideCode)
-        case _ => (roundMeasure(newStartMValue), roundMeasure(newEndMValue), asset.sideCode)
-      }
-      val (newStart2, newEnd2, _) = meters
-      println("test after match id: " + asset.id)
-      println(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
-      println(s"new start $newStart2, new end $newEnd2, new length ${newEnd2 - newStart2}")
+  def calculateNewMValues(asset: AssetLinearReference, projection: ProjectionForSamuutus, newLinksLength: Double) = {
+    val oldLength = projection.oldEnd - projection.oldStart
+    val newLength = projection.newEnd - projection.newStart
 
-      if (newEnd2 - newStart2 <= 0) {
+    val factor = Math.abs(newLength / oldLength)
+    val newStartMValue = projection.newStart + (asset.startMeasure - projection.oldStart) * factor
+    val newEndMValue = projection.newEnd + (asset.endMeasure - projection.oldEnd) * factor
+
+    logger.debug(s"new start $newStartMValue, new end $newEndMValue, factor number $factor")
+
+    // Test if asset is affected by projection
+    if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
+      (asset.startMeasure, asset.endMeasure, asset.sideCode)
+    } else {
+      val start = Math.min(newLinksLength, Math.max(0.0, newStartMValue)) // take new start if it is greater than zero and smaller than roadLinkLength
+      val end = Math.max(0.0, Math.min(newLinksLength, newEndMValue)) // take new end if it is greater than zero and smaller than roadLinkLength
+
+
+      if (end - start <= 0) {
         logger.warn(s"new size is zero")
       }
 
-      if (newStart2 > newEnd2) {
-        throw new Exception(s"invalid meters start: ${newStart2} , end ${newEnd2}")
+      if (start > end) {
+        logger.warn(s"invalid meters start: ${start} , end ${end}")
       }
-      (roundMeasure(meters._1), roundMeasure(meters._2), meters._3)
+      logger.debug(s"adjusting asset: ${asset.id}")
+      logger.debug(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
+      logger.debug(s"new start $start, new end $end, new length ${end - start}")
+      (roundMeasure(start), roundMeasure(end), asset.sideCode)
+    }
+
   }
-  
-  def sideCodeSwitch(sideCode:Int):Int = {
-     SideCode.apply(sideCode) match {
+
+  private def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: ProjectionForSamuutus, roadLinkLength: Double, newStart: Double, newEnd: Double) = {
+    val newSideCode = sideCodeSwitch(asset.sideCode)
+    val oldLength = projection.oldEnd - projection.oldStart
+    val newLength = projection.newEnd - projection.newStart
+
+    val factor = Math.abs(newLength / oldLength)
+    
+    val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * factor
+    val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * factor
+    logger.debug(s"new start $newStart, new end $newEnd, factor number $factor")
+    if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
+      (asset.startMeasure, asset.endMeasure, newSideCode)
+    } else {
+      val start = Math.min(roadLinkLength, Math.max(0.0, newStart))
+      val end = Math.max(0.0, Math.min(roadLinkLength, newEnd))
+      
+      if (end - start <= 0) {
+        logger.warn(s"new size is zero")
+      }
+
+      if (start > end) {
+        logger.warn(s"invalid meters start: ${start} , end ${end}")
+      }
+      
+      logger.debug(s"adjusting asset: ${asset.id}")
+      logger.debug(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
+      logger.debug(s"new start $start, new end $end, new length ${end - start}")
+      (roundMeasure(start), roundMeasure(end), newSideCode)
+    }
+
+  }
+  def sideCodeSwitch(sideCode: Int): Int = {
+    SideCode.apply(sideCode) match {
       case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing.value
       case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing.value
       case _ => sideCode
     }
   }
-  
+
   def roundMeasure(measure: Double, numberOfDecimals: Int = 3): Double = {
     val exponentOfTen = Math.pow(10, numberOfDecimals)
     Math.round(measure * exponentOfTen).toDouble / exponentOfTen
   }
 
-  def projectLinearAsset(asset: PersistedLinearAsset, to: LinkAndLength, projection: ProjectionForSamuutus,additionalInfo: InfoForCalculation, changedSet: ChangeSet): (PersistedLinearAsset, ChangeSet) = {
+  def projectLinearAsset(asset: PersistedLinearAsset, to: LinkAndLength, projection: ProjectionForSamuutus, changedSet: ChangeSet): (PersistedLinearAsset, ChangeSet) = {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
       case _ => 0
     }
-    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length,additionalInfo)
+    val (newStart, newEnd, newSideCode) = calculateNewMValuesAndSideCode(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
 
     val changeSet = assetId match {
       case 0 => changedSet
