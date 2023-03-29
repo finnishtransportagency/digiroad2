@@ -44,7 +44,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     withDynTransaction {
       val latesSuccess = Queries.getLatestSuccessfulSamuutus(typeId)
       val changes = roadLinkChangeClient.getRoadLinkChanges(latesSuccess)
-      updateByRoadLinks2(typeId, changes)
+      updateByRoadLinks(typeId, changes)
     }
   }
 
@@ -56,15 +56,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     })
     changeSet.copy(adjustedMValues = redundantFiltered)
   }
-
-  val initChangeSet2 = ChangeSet(droppedAssetIds = Set.empty[Long],
-    expiredAssetIds = Set.empty[Long],
-    adjustedMValues = Seq.empty[MValueAdjustment],
-    adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-    adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-    valueAdjustments = Seq.empty[ValueAdjustment])
-
-
+  
   val isDeleted: RoadLinkChange => Boolean = (change: RoadLinkChange) => {
     change.changeType.value == RoadLinkChangeType.Remove.value
   }
@@ -90,7 +82,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     RoadLinkForFiltopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = roadLink.trafficDirection /*non override version */ , administrativeClass = roadLink.adminClass /*non override version */ ,
       linkSource = NormalLinkInterface, linkType = UnknownLinkType, constructionType = UnknownConstructionType, geometry = roadLink.geometry) // can there be link of different sourse ?
   }
-  def updateByRoadLinks2(typeId: Int, changes: Seq[RoadLinkChange]) = {
+  def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]) = {
 
     val oldIds = changes.filterNot(isDeleted).map(_.oldLink.get.linkId)
     val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
@@ -103,7 +95,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
 
-    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData2(existingAssets, changes, initChangeSet)
+    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(existingAssets, changes, initChangeSet)
     val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology))
     val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(projectedAssets, convertedLink).groupBy(_.linkId)
     val adjusted = adjustLinearAssetsOnChangesGeometry(convertedLink, groupedAssets, typeId, Some(changedSet))
@@ -201,7 +193,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  protected def fillNewRoadLinksWithPreviousAssetsData2(assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange], changeSets: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+  protected def fillNewRoadLinksWithPreviousAssetsData(assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange], changeSets: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val result = changes.flatMap(change => {
       val oldLink = change.oldLink.get
       val oldId = oldLink.linkId
@@ -406,13 +398,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }
     }
   }
-
-  protected def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
-                                                       currentAssets: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange],
-                                                       changeSet: ChangeSet, existingAssets: Seq[PersistedLinearAsset]): (Seq[PersistedLinearAsset], ChangeSet) = {
-    (Seq(), initChangeSet2)
-  }
-
+  
   def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
     val oldAsset = service.getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).headOption
       .getOrElse(throw new IllegalStateException("Old asset " + adjustment.assetId + " of type " + adjustment.typeId + " no longer available"))

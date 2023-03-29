@@ -14,8 +14,7 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUpdater(service) {
 
   val speedLimitDao = service.speedLimitDao
-
-
+  
    def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Unit = {
   /*  val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)

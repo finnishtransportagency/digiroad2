@@ -224,13 +224,13 @@ trait LinearAssetOperations {
     if (!notVerifiedUser.contains(userName) && verifiableAssetType.contains(assetType)) Some(userName) else None
   }
 
-  def fetchExistingAssetsByLinksIdsString(typeId: Int, linksId: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+  def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     val existingAssets = if (newTransaction) {
       withDynTransaction {
-        dao.fetchLinearAssetsByLinkIds(typeId, (linksId ++ removedLinkIds).toSeq, LinearAssetTypes.numericValuePropertyId)
+        dao.fetchLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq, LinearAssetTypes.numericValuePropertyId)
       }.filterNot(_.expired)
     } else {
-      dao.fetchLinearAssetsByLinkIds(typeId, (linksId ++ removedLinkIds).toSeq, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+      dao.fetchLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
     }
     existingAssets
   }

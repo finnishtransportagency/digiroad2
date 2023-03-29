@@ -310,6 +310,9 @@ class PostGISLinearAssetDao() {
     }.toSeq
   }
 
+  
+  
+  
   /**
     * Iterates a set of link ids with prohibition asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     * and CsvGenerator.generateDroppedProhibitions.

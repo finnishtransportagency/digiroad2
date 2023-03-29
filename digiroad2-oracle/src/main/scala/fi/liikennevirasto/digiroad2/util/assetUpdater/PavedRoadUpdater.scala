@@ -1,14 +1,22 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.{PavedRoad, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.client.RoadLinkChange
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
 
+
+  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+    // TODO here logic to generate paved road
+    // hint getPavedRoadAssetChanges
+    
+    Seq.empty[(PersistedLinearAsset, ChangeSet)]
+  }
   def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) = {
 /*    try {
       val linkIds = roadLinks.map(_.linkId)
