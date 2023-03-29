@@ -208,6 +208,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           })
         case RoadLinkChangeType.Split => sliceLoop(change, assetsAll, changeSets)
         case RoadLinkChangeType.Add => operationForNewLink(change, assetsAll, changeSets) //TODO own add method  which can be override
+        case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
       }
     })
@@ -218,7 +219,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
-
+  def additionalRemoveOperation(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+    Seq.empty[(PersistedLinearAsset, ChangeSet)]
+  }
   def foldChangeSet(mergedChangeSet: Seq[ChangeSet], foldTo: ChangeSet): ChangeSet = {
     mergedChangeSet.foldLeft(foldTo) { (a, z) =>
       a.copy(
@@ -281,8 +284,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       asset.createdDateTime, asset.modifiedBy, asset.modifiedDateTime, asset.expired, asset.typeId, asset.timeStamp,
       asset.geomModifiedDate, asset.linkSource, asset.verifiedBy, asset.verifiedDate, asset.informationSource)
   }
-
-
+  
   def updateChangeSet(changeSet: ChangeSet): Unit = {
     dao.floatLinearAssets(changeSet.droppedAssetIds)
     // TODO there is possibility that one change overtake other. , merge these change

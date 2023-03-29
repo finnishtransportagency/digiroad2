@@ -22,6 +22,11 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
+
+  override def additionalRemoveOperation(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+  //Todo here purge unknown speedlimit logic
+    Seq.empty[(PersistedLinearAsset, ChangeSet)]
+  }
   // TODO standardize speedlimit
    def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Unit = {
   /*  val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
