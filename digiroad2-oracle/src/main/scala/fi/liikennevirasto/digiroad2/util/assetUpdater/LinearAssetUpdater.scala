@@ -17,15 +17,12 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionTy
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import org.slf4j.LoggerFactory
 
-case class ProjectionForSamuutus(timeStamp: Long = 0, oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double)
 
 case class CalculateMValueChangesInfo(assetId: Long, oldId: Option[String], newId: Option[String],
                                       oldLinksLength: Option[Double],
                                       newLinksLength: Option[Double],
                                       oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double
                                      ) {}
-
-case class AssetLinearReference(id: Long, startMeasure: Double, endMeasure: Double, sideCode: Int)
 
 case class LinkAndLength(linkId: String, length: Double)
 
@@ -236,8 +233,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   private def projecting(changeSets: ChangeSet, asset: PersistedLinearAsset, info: CalculateMValueChangesInfo) = {
     projectLinearAsset(asset.copy(linkId = info.newId.get), LinkAndLength(info.newId.get, info.newLinksLength.get),
-      ProjectionForSamuutus(LinearAssetUtils.createTimeStamp(), 
-        info.oldStart, info.oldEnd, info.newStart, info.newEnd
+      Projection( 
+        info.oldStart, info.oldEnd, info.newStart, info.newEnd,LinearAssetUtils.createTimeStamp()
       ), changeSets)
   }
   def selectCorrectReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
@@ -418,100 +415,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   }
 
-  /**
-    * calculator is based on old change info, does not totally work anymore. Need to add math for splitting and joining, work with lengthening and shortening.
-    *
-    * @param asset
-    * @param projection
-    * @param newLinksLength
-    * @return
-    */
-  def calculateNewMValues(asset: AssetLinearReference, projection: ProjectionForSamuutus, newLinksLength: Double) = {
-    val oldLength = projection.oldEnd - projection.oldStart
-    val newLength = projection.newEnd - projection.newStart
-
-    val factor = Math.abs(newLength / oldLength)
-    val newStartMValue = projection.newStart + (asset.startMeasure - projection.oldStart) * factor
-    val newEndMValue = projection.newEnd + (asset.endMeasure - projection.oldEnd) * factor
-
-    logger.debug(s"new start $newStartMValue, new end $newEndMValue, factor number $factor")
-
-    // Test if asset is affected by projection
-    if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
-      (asset.startMeasure, asset.endMeasure, asset.sideCode)
-    } else {
-      val start = Math.min(newLinksLength, Math.max(0.0, newStartMValue)) // take new start if it is greater than zero and smaller than roadLinkLength
-      val end = Math.max(0.0, Math.min(newLinksLength, newEndMValue)) // take new end if it is greater than zero and smaller than roadLinkLength
-
-
-      if (end - start <= 0) {
-        logger.warn(s"new size is zero")
-      }
-
-      if (start > end) {
-        logger.warn(s"invalid meters start: ${start} , end ${end}")
-      }
-      logger.debug(s"adjusting asset: ${asset.id}")
-      logger.debug(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
-      logger.debug(s"new start $start, new end $end, new length ${end - start}")
-      (roundMeasure(start), roundMeasure(end), asset.sideCode)
-    }
-
-  }
-
-  def calculateNewMValuesAndSideCode(asset: AssetLinearReference, projection: ProjectionForSamuutus, newLinksLength: Double) = {
-    val newSideCode = sideCodeSwitch(asset.sideCode)
-    val oldLength = projection.oldEnd - projection.oldStart
-    val newLength = projection.newEnd - projection.newStart
-
-    val factor = Math.abs(newLength / oldLength)
-    
-    val newStart = projection.newStart - (asset.endMeasure - projection.oldStart) * factor
-    val newEnd = projection.newEnd - (asset.startMeasure - projection.oldEnd) * factor
-    logger.debug(s"new start $newStart, new end $newEnd, factor number $factor")
-    
-    if (asset.endMeasure <= projection.oldStart || asset.startMeasure >= projection.oldEnd) {
-      (asset.startMeasure, asset.endMeasure, newSideCode)
-    } else {
-      
-      val start = Math.min(newLinksLength, Math.max(0.0, newStart))
-      val end = Math.max(0.0, Math.min(newLinksLength, newEnd))
-      
-      if (end - start <= 0) {
-        logger.warn(s"new size is zero")
-      }
-
-      if (start > end) {
-        logger.warn(s"invalid meters start: ${start} , end ${end}")
-      }
-      
-      logger.debug(s"adjusting asset: ${asset.id}")
-      logger.debug(s"old start ${asset.startMeasure}, old end ${asset.endMeasure}, old length ${asset.endMeasure - asset.startMeasure}")
-      logger.debug(s"new start $start, new end $end, new length ${end - start}")
-      (roundMeasure(start), roundMeasure(end), newSideCode)
-    }
-
-  }
-  def sideCodeSwitch(sideCode: Int): Int = {
-    SideCode.apply(sideCode) match {
-      case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing.value
-      case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing.value
-      case _ => sideCode
-    }
-  }
-
-  def roundMeasure(measure: Double, numberOfDecimals: Int = 3): Double = {
-    val exponentOfTen = Math.pow(10, numberOfDecimals)
-    Math.round(measure * exponentOfTen).toDouble / exponentOfTen
-  }
-
-  def projectLinearAsset(asset: PersistedLinearAsset, to: LinkAndLength, projection: ProjectionForSamuutus, changedSet: ChangeSet): (PersistedLinearAsset, ChangeSet) = {
+  def projectLinearAsset(asset: PersistedLinearAsset, to: LinkAndLength, projection: Projection, changedSet: ChangeSet): (PersistedLinearAsset, ChangeSet) = {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
       case _ => 0
     }
-    val (newStart, newEnd, newSideCode) = calculateNewMValues(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
+    val (newStart, newEnd, newSideCode) = MValueCalculator.calculateNewMValues(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
 
     val changeSet = assetId match {
       case 0 => changedSet

@@ -15,8 +15,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 import java.util.UUID
-import scala.collection.Seq
-import scala.collection.immutable.Set
 import scala.collection.mutable.ListBuffer
 
 class LinearAssetUpdaterSpec extends FunSuite with Matchers {
@@ -428,7 +426,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
+      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByIds(TrafficVolume.typeId, Seq(id1).toSet, false)
       assetsAfter.size should be(1)
       
@@ -460,7 +458,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks2(TrafficVolume.typeId, Seq(change))
+      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linkIdVersion2), false)
       assetsAfter.size should be(1)
       assetsAfter.head.linkId should be(linkIdVersion2)
@@ -470,80 +468,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
     }
-  }
-
-  test("Test calculator: link lengthen, asset was half in old") {
-    val newPosition4 = TestLinearAssetUpdater.calculateNewMValues(
-      AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2),
-      ProjectionForSamuutus(
-        oldStart=0, oldEnd= 10, newStart= 0, newEnd= 20), 20)
-
-    newPosition4._1 should be(0)
-    newPosition4._2 should be(10)
-    
-  }
-
-  test("Test calculator: link lengthened , asset fill whole link") {
-    val newPosition5 = TestLinearAssetUpdater.calculateNewMValues(
-      AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 10, sideCode = 2),
-      ProjectionForSamuutus(
-        oldStart = 0, oldEnd = 10, newStart = 0, newEnd = 20), 20)
-    
-    newPosition5._1 should be(0)
-    newPosition5._2 should be(20)
-
-  }
-
-  test("Test calculator: link lengthened , asset is split from start") {
-    val newPosition5 = TestLinearAssetUpdater.calculateNewMValues(
-      AssetLinearReference(id = 1, startMeasure = 5, endMeasure = 10, sideCode = 2),
-      ProjectionForSamuutus(
-        oldStart = 0, oldEnd = 10, newStart = 0, newEnd = 20), 20)
-    newPosition5._1 should be(10)
-    newPosition5._2 should be(20)
-  }
-
-  test("Test calculator: link lengthened , asset is split from end") {
-    val newPosition5 = TestLinearAssetUpdater.calculateNewMValues(
-      AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 5, sideCode = 2),
-      ProjectionForSamuutus(
-        oldStart = 0, oldEnd = 10, newStart = 0, newEnd = 20), 20)
-    
-    newPosition5._1 should be(0)
-    newPosition5._2 should be(10)
-  }
-
-  test("Test calculator: link shortened , asset is bigger than new location") {
-    val newPosition5 = TestLinearAssetUpdater.calculateNewMValues(
-      AssetLinearReference(id = 1, startMeasure = 0, endMeasure = 10, sideCode = 2),
-      ProjectionForSamuutus(
-        oldStart = 0, oldEnd = 10, newStart = 0, newEnd = 5), 5)
-    
-    newPosition5._1 should be(0)
-    newPosition5._2 should be(5)
-  }
-
-  test("Test calculator: asset middle of link, keep relative size") {
-
-    val newPosition2 = TestLinearAssetUpdater.calculateNewMValues(
-      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 4, sideCode = 2),
-      ProjectionForSamuutus(
-        oldStart=0, oldEnd= 10, newStart= 0, newEnd= 20), 20)
-
-    newPosition2._1 should be(4)
-    newPosition2._2 should be(8)
-    
-  }
-
-  test("Test calculator: link split from begin,  asset cover link only partially") {
-    val newPosition3 = TestLinearAssetUpdater.calculateNewMValues(
-      AssetLinearReference(id = 1, startMeasure = 2, endMeasure = 10, sideCode = 2),
-      ProjectionForSamuutus(
-        oldStart=0, oldEnd= 10, newStart= 0, newEnd= 20), 20)
-
-    newPosition3._1 should be(4)
-    newPosition3._2 should be(20)
-    
   }
 
   test("case 8, link is removed") {
