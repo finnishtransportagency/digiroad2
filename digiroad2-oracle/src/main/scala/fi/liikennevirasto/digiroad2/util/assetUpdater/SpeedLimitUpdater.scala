@@ -18,7 +18,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
   override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
     // TODO here logic to generate speedlimi road
-    // hint fillNewRoadLinksWithPreviousSpeedLimitData
+    // hint newPieceWiseChangeAsset
 
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
@@ -56,15 +56,26 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
 
     val (filledTopology, changedSetUpdated) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
     val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSetUpdated, linearAssets.values.flatten.toSeq)
-    adjustmentsChangeSet.isEmpty match { // TODO fix this hack
-      case true => filledTopology
+    val roadLinksByLinkId = roadLinks.groupBy(_.linkId).mapValues(_.head)
+    val newSpeedLimitsWithValue = filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
+    //val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
+//TODO shift where unknownLimits is generatated
+    adjustmentsChangeSet.isEmpty match {
+      case true =>
+        persistProjectedLimit(newSpeedLimitsWithValue)
+       // persistUnknown(unknownLimits)
+        filledTopology
       case false if counter > 3 =>
         updateChangeSet(adjustmentsChangeSet)
+        persistProjectedLimit(newSpeedLimitsWithValue)
+        //purgeUnknown(adjustmentsChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
+       // persistUnknown(unknownLimits)
         filledTopology
       case false if counter <= 3 =>
         updateChangeSet(adjustmentsChangeSet)
-        val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty)
-        adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust.groupBy(_.linkId), typeId, None, counter + 1)
+        //purgeUnknown(adjustmentsChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
+        val speedLimitsToAdjust = filledTopology.filterNot(speedLimit => speedLimit.id <= 0 && speedLimit.value.isEmpty).groupBy(_.linkId)
+        adjustLinearAssetsOnChangesGeometry(roadLinks, speedLimitsToAdjust,typeId, None, counter + 1)
     }
 
     (filledTopology, changedSetUpdated)
@@ -152,7 +163,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     speedLimitDao.persistUnknownSpeedLimits(limits)
   }
 
-  protected def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[PieceWiseLinearAsset], currentSpeedLimits: Seq[PieceWiseLinearAsset], changes: Seq[ChangeInfo],
+ /* protected def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[PieceWiseLinearAsset], currentSpeedLimits: Seq[PieceWiseLinearAsset], changes: Seq[ChangeInfo],
                                                            changeSet: ChangeSet, existingSpeedLimit: Seq[PieceWiseLinearAsset]) : (Seq[PieceWiseLinearAsset], ChangeSet) = {
 
     val speedLimitsAndChanges = mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes).flatMap {
@@ -176,9 +187,9 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     } else Seq()
 
     (speedLimits ++ newLinearAsset, changeSetF)
-  }
+  }*/
 
-  private def mapReplacementProjections(oldSpeedLimits: Seq[PieceWiseLinearAsset], currentSpeedLimits: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink],
+/*  private def mapReplacementProjections(oldSpeedLimits: Seq[PieceWiseLinearAsset], currentSpeedLimits: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink],
                                         changes: Seq[ChangeInfo]) : Seq[(PieceWiseLinearAsset, (Option[RoadLink], Option[Projection]))] = {
     val targetLinks = changes.flatMap(_.newId).toSet
     val newRoadLinks = roadLinks.filter(rl => targetLinks.contains(rl.linkId)).groupBy(_.linkId)
@@ -239,7 +250,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
         }
       case _ => None
     }
-  }
+  }*/
 
   protected def createUnknownLimits(speedLimits: Seq[PieceWiseLinearAsset], roadLinksByLinkId: Map[String, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
