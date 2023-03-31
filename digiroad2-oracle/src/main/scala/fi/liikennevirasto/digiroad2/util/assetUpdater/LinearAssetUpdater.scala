@@ -208,8 +208,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
       }
-      val additionalChanges = additionalUpdateOrChange(changes, result.map(_._1), foldChangeSet(result.map(_._2), changeSets))
-    // TODO after updating asset into new position do needed additional change to asset or some it other feature
+      val additionalChanges = additionalUpdateOrChange(change, result.map(_._1), foldChangeSet(result.map(_._2), changeSets))
+      // TODO after updating asset into new position do needed additional change to asset or some it other feature,
+      // TODO Make sure there is no duplicate changes
       result ++ additionalChanges
     })
     
@@ -226,13 +227,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
   // TODO override with your needed additional logic
-  def additionalUpdateOrChange(changes: Seq[RoadLinkChange], assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
-    
-    changes.flatMap(change => {
+  def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
     change.changeType match {
-        case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
-      }
-    })
+      case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
+    }
   }
   def foldChangeSet(mergedChangeSet: Seq[ChangeSet], foldTo: ChangeSet): ChangeSet = {
     mergedChangeSet.foldLeft(foldTo) { (a, z) =>
