@@ -44,21 +44,24 @@ case class DirectionalTrafficSign(id: Long, linkId: String,
                                   modifiedAt: Option[DateTime] = None,
                                   geometry: Seq[Point] = Nil,
                                   linkSource: LinkGeomSource,
-                                  externalId: Option[String] = None) extends PersistedPointAsset
+                                  externalId: Option[String] = None) extends PersistedPointAsset {
+  override def getValidityDirection: Option[Int] = Some(this.validityDirection)
+  override def getBearing: Option[Int] = this.bearing
+}
 
 object PostGISDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
     val query =
       s"""
-         select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, lrm.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
+         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
           case
             when ev.name_fi is not null then ev.name_fi
             when tpv.value_fi is not null then tpv.value_fi
             else null
-          end as display_value, lrm.side_code, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, lrm.link_source, a.external_id
+          end as display_value, pos.side_code, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, pos.link_source, a.external_id
          from asset a
          join asset_link al on a.id = al.asset_id
-         join lrm_position lrm on al.position_id = lrm.id
+         join lrm_position pos on al.position_id = pos.id
          join property p on a.asset_type_id = p.asset_type_id
          left join text_property_value tpv on (tpv.property_id = p.id AND tpv.asset_id = a.id)
          left join multiple_choice_value mcv ON mcv.asset_id = a.id and mcv.property_id = p.id AND p.PROPERTY_TYPE = 'checkbox'
