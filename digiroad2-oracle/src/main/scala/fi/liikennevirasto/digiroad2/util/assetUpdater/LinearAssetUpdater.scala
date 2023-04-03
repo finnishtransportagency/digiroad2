@@ -195,7 +195,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val oldLink = change.oldLink.get
       val oldId = oldLink.linkId
       val assets = assetsAll.filter(_.linkId == oldId)
-      val result =  change.changeType match {
+      val result2 =  change.changeType match {
         //  case RoadLinkChangeType.Replace if recognizeVersionUpgrade(change)  =>  Seq.empty[(PersistedLinearAsset, ChangeSet)] // TODO just update version
         case RoadLinkChangeType.Replace =>
           assets.flatMap(asset => {
@@ -208,18 +208,26 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
       }
-      val additionalChanges = additionalUpdateOrChange(change, result.map(_._1), foldChangeSet(result.map(_._2), changeSets))
+      val additionalChanges = additionalUpdateOrChange(change, result2.map(_._1), foldChangeSet(result2.map(_._2), changeSets))
       // TODO after updating asset into new position do needed additional change to asset or some it other feature,
       // TODO Make sure there is no duplicate changes
-      result ++ additionalChanges
+      result2 ++ additionalChanges
     })
-    
+
+   // val prep =  result.map(_._1).groupBy(_.linkId)
+    //val changes2 = foldChangeSet(result.map(_._2), changeSets)
+
     // TODO write merger logic so that fillTopology does not need to merge consecutive asset.
     // TODO Check for small 0.001 wholes fill theses
     
     (result.map(_._1), foldChangeSet(result.map(_._2), changeSets))
   }
 
+  def recognizeMerger(change: (RoadLinkChangeType, Seq[RoadLinkChange])): Boolean = {
+    //change._1 == RoadLinkChangeType.Replace && change._2.map(_.newLinks)
+    true
+  }
+  
   def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }

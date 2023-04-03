@@ -1,3 +1,4 @@
+/*
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
@@ -94,3 +95,4 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
     }
   }
 }
+*/

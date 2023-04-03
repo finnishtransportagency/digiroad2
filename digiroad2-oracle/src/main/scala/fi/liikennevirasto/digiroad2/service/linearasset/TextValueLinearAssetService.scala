@@ -30,13 +30,13 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
     }.filterNot(_.expired)
   }
 
-  def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+  override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     val existingAssets = if (newTransaction) {
       withDynTransaction {
-        dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linksIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
+        dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linksIds.toSeq ++ removedLinkIds.toSeq, LinearAssetTypes.getValuePropertyId(typeId))
       }.filterNot(_.expired)
     } else {
-      dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linksIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId)).filterNot(_.expired)
+      dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linksIds.toSeq ++ removedLinkIds.toSeq, LinearAssetTypes.getValuePropertyId(typeId)).filterNot(_.expired)
     }
     existingAssets
   }

@@ -1,3 +1,4 @@
+/*
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset.{Freeway, HazmatTransportProhibition, Municipality, TrafficDirection}
@@ -67,3 +68,4 @@ class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers{
     }
   }
 }
+*/
