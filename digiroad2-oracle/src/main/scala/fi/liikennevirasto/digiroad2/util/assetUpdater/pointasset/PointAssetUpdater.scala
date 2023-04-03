@@ -69,20 +69,20 @@ class PointAssetUpdater(service: PointAssetOperations) {
     }
   }
 
-  private def snapAssetToNewLink(asset: PersistedPointAsset, link: RoadLinkInfo, oldLink: RoadLinkInfo,
+  private def snapAssetToNewLink(asset: PersistedPointAsset, newLink: RoadLinkInfo, oldLink: RoadLinkInfo,
                                  digitizationChange: Boolean): AssetUpdate = {
-    if (isVersionChange(asset.linkId, link.linkId) && link.linkLength == oldLink.linkLength) {
-      toAssetUpdate(asset.id, Point(asset.lon, asset.lat), link.linkId, asset.mValue,
+    if (isVersionChange(asset.linkId, newLink.linkId) && newLink.linkLength == oldLink.linkLength) {
+      toAssetUpdate(asset.id, Point(asset.lon, asset.lat), newLink.linkId, asset.mValue,
                     asset.getValidityDirection, asset.getBearing)
     } else {
       val oldLocation = Point(asset.lon, asset.lat)
-      val newMValue = GeometryUtils.calculateLinearReferenceFromPoint(oldLocation, link.geometry)
-      val newPoint = GeometryUtils.calculatePointFromLinearReference(link.geometry, newMValue)
+      val newMValue = GeometryUtils.calculateLinearReferenceFromPoint(oldLocation, newLink.geometry)
+      val newPoint = GeometryUtils.calculatePointFromLinearReference(newLink.geometry, newMValue)
       newPoint match {
         case Some(point) if point.distance2DTo(oldLocation) <= MaxDistanceDiffAllowed =>
-          val calculatedBearing = calculateBearing(point, link.geometry)
+          val calculatedBearing = calculateBearing(point, newLink.geometry)
           val fixedValidityDirection = adjustValidityDirection(asset.getValidityDirection, digitizationChange)
-          toAssetUpdate(asset.id, point, link.linkId, newMValue, fixedValidityDirection, calculatedBearing)
+          toAssetUpdate(asset.id, point, newLink.linkId, newMValue, fixedValidityDirection, calculatedBearing)
         case _ =>
           setAssetAsFloating(asset, Some(FloatingReason.DistanceToRoad))
       }
