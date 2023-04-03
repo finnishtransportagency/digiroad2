@@ -589,9 +589,9 @@
         "newLinkId": "eca24369-a77b-4e6f-875e-57dc85176003:1",
         "oldFromMValue": 0,
         "oldToMValue": 18.082,
-        "newFromMValue": 0,
-        "newToMValue": 18.082,
-        "digitizationChange": false
+        "newFromMValue": 18.082,
+        "newToMValue": 0,
+        "digitizationChange": true
       }
     ]
   },

@@ -40,7 +40,10 @@ case class TrafficLight(id: Long, linkId: String,
                         modifiedBy: Option[String] = None,
                         modifiedAt: Option[DateTime] = None,
                         linkSource: LinkGeomSource,
-                        externalId: Option[String] = None) extends PersistedPointAsset
+                        externalId: Option[String] = None) extends PersistedPointAsset {
+  override def getValidityDirection: Option[Int] = Try(getProperty("sidecode").map(_.propertyValue).getOrElse("").toInt).toOption
+  override def getBearing: Option[Int] = Try(getProperty("bearing").map(_.propertyValue).getOrElse("").toDouble.toInt).toOption
+}
 
 object PostGISTrafficLightDao {
   def fetchByFilter(queryFilter: String => String): Seq[TrafficLight] = {
