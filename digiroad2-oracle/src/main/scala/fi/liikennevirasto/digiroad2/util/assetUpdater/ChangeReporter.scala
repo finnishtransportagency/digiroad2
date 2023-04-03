@@ -4,7 +4,7 @@ import com.github.tototoshi.csv.CSVWriter
 import fi.liikennevirasto.digiroad2.asset.RoadLinkProperties
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{FloatingReason, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats}
@@ -213,6 +213,26 @@ object ChangeReporter {
       newFunctionalClass, fcSource, oldLinkType, newLinkType, ltSource, oldAttributes, newAttributes)
   }
 
+  private def getCSVRowForAssetChanges(change: ReportedChange, assetTypeId: Int) = {
+    try {
+      val changedAsset = change.asInstanceOf[ChangedAsset]
+      val (startMValue, endMValue, length) = changedAsset.before.linearReference match {
+        case Some(linearReference: LinearReference) =>
+          val linRefEndMValue = linearReference.endMValue match {
+            case Some(value) => Some(value)
+            case _ => None
+          }
+          (linearReference.startMValue, linRefEndMValue.getOrElse(null), linearReference.length)
+        case _ =>
+          (null, null, null)
+      }
+      Seq(changedAsset.assetId, assetTypeId, changedAsset.before.geometry, changedAsset.before.values, changedAsset.before.municipalityCode, "", changedAsset.changeType,
+        changedAsset.linkId, startMValue, endMValue, length, getUrl(changedAsset.linkId))
+    } catch {
+      case e => Seq()
+    }
+  }
+
   def generateCSV(changeReport: ChangeReport) = {
     val stringWriter = new StringWriter()
     val csvWriter = new CSVWriter(stringWriter)
@@ -235,7 +255,12 @@ object ChangeReporter {
           }
         }
       case _ =>
-        //implement logic for other assets
+        val labels = Seq("asset_id", "asset_type_id", "geometry", "values", "municipality_code", "side_code", "change_type", "link_id", "start_m_value", "end_m_value", "length", "roadlink_url")
+        csvWriter.writeRow(labels)
+        changes.foreach {change =>
+          val csvRow = getCSVRowForAssetChanges(change, assetTypeId)
+          csvWriter.writeRow(csvRow)
+        }
     }
     (stringWriter.toString, linkIds.size)
   }
