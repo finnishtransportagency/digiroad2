@@ -41,8 +41,8 @@ case class TrafficLight(id: Long, linkId: String,
                         modifiedAt: Option[DateTime] = None,
                         linkSource: LinkGeomSource,
                         externalId: Option[String] = None) extends PersistedPointAsset {
-  override def getValidityDirection: Option[Int] = getProperty("sidecode").map(_.propertyValue.toInt)
-  override def getBearing: Option[Int] = getProperty("bearing").map(_.propertyValue.toDouble.toInt)
+  override def getValidityDirection: Option[Int] = Try(getProperty("sidecode").map(_.propertyValue).getOrElse("").toInt).toOption
+  override def getBearing: Option[Int] = Try(getProperty("bearing").map(_.propertyValue).getOrElse("").toDouble.toInt).toOption
 }
 
 object PostGISTrafficLightDao {

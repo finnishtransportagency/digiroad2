@@ -71,7 +71,9 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
 
   def getValidityDirection: Option[Int] = None
   def getBearing: Option[Int] = None
-  def getProperty(property: String) : Option[PropertyValue] = this.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  def getProperty(property: String) : Option[PropertyValue] =
+    this.propertyData.find(_.publicId == property).getOrElse(throw new NoSuchElementException("Property not found"))
+      .values.map(_.asInstanceOf[PropertyValue]).headOption
 }
 
 trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
