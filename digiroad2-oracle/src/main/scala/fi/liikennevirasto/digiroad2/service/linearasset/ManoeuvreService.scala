@@ -43,12 +43,12 @@ object ElementTypes {
 }
 class ManoeuvreCreationException(val response: Set[String]) extends RuntimeException {}
 
-class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
-  val logger = LoggerFactory.getLogger(getClass)
+class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) extends LinearAssetOperations {
+  override val logger = LoggerFactory.getLogger(getClass)
 
   def dao: ManoeuvreDao = new ManoeuvreDao()
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
+  override def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksByMunicipalityUsingCache(municipalityNumber)
