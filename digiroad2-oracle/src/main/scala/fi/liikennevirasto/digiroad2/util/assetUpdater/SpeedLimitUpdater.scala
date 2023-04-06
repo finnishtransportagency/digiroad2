@@ -3,14 +3,15 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkChange
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, toRoadLinkForFiltopology}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import org.joda.time.DateTime
 
 class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUpdater(service) {
 
@@ -20,13 +21,39 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     // TODO here logic to generate speedlimi road
     // hint newPieceWiseChangeAsset
 
+    //      newPieceWiseChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes) //Temporarily disabled according to DROTH-2327
+    persistUnknown(Seq(UnknownSpeedLimit(change.newLinks.head.linkId, change.newLinks.head.municipality, change.newLinks.head.adminClass)))
+    
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
 
-  override def additionalRemoveOperation(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+  override def additionalRemoveOperationMass(expiredLinks:Seq[String]): Unit = {
   //Todo here purge unknown speedlimit logic
+
+    service.purgeUnknown(Set(),expiredLinks)
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
+
+  override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+    
+    
+    change.changeType match {
+      case RoadLinkChangeType.Replace |RoadLinkChangeType.Split => {
+        //TODO update unknowSpeedlimit into new version
+        Seq.empty[(PersistedLinearAsset, ChangeSet)]
+      }
+    }
+  }
+
+
+  override def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]) = {
+    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(changes.filterNot(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet)
+    val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
+    val (add, other) = changes.partition(_.changeType == RoadLinkChangeType.Add)
+    val filterchanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
+    super.updateByRoadLinks(typeId, filterchanges ++ add)
+  }
+  
   // TODO standardize speedlimit
    def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Unit = {
   /*  val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))

@@ -9,27 +9,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measu
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 
 class ProhibitionUpdater(service: ProhibitionService) extends LinearAssetUpdater(service) {
-// TODO add service layers for Prohibition
-  override def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]) = {
-
-    val oldIds = changes.filterNot(isDeleted).map(_.oldLink.get.linkId)
-    val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
-    val existingAssets = dao.fetchProhibitionsByLinkIds(typeId, oldIds ++ deletedLinks, includeFloating = false).filterNot(_.expired)
-
-    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = existingAssets.filter(asset => deletedLinks.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
-
-    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(existingAssets, changes, initChangeSet)
-    val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology))
-    val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(projectedAssets, convertedLink).groupBy(_.linkId)
-    val adjusted = adjustLinearAssetsOnChangesGeometry(convertedLink, groupedAssets, typeId, Some(changedSet))
-    persistProjectedLinearAssets(adjusted._1.map(convertToPersisted).filter(_.id == 0L))
-  }
-
+  // check if we can remove this overrride, by creating service level method
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(newLinearAssets.map(_.linkId).toSet, newTransaction = false)

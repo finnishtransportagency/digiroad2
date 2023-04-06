@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 class DynamicLinearAssetUpdater(service: DynamicLinearAssetService) extends LinearAssetUpdater(service) {
 
   def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
-
+  // check if we can remove these overrride, by creating service level method
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(newLinearAssets.map(_.linkId).toSet, newTransaction = false)

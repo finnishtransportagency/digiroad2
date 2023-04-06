@@ -6,17 +6,19 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PersistedLinearAsset, PieceWiseLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, MaintenanceService, Measures}
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
+import fi.liikennevirasto.digiroad2.util.{KgvUtil, LinearAssetUtils}
 
 class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearAssetUpdater(service) {
 
-  override def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]) = {
+  override def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]): Unit = {
     val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(changes.filterNot(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet)
     val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
     val (add, other) = changes.partition(_.changeType == RoadLinkChangeType.Add)
     val filterchanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
     super.updateByRoadLinks(typeId, filterchanges ++ add)
+    // TODO check this filtering, check also new links, maybe some filter injection is needed
   }
+  // check if we can remove this overrride
   override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset]): Unit = {
     val (toInsert, toUpdate) = newMaintenanceAssets.partition(_.id == 0L)
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(newMaintenanceAssets.map(_.linkId).toSet, newTransaction = false)
