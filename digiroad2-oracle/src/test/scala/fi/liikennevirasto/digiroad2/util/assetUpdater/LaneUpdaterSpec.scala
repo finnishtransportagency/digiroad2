@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Remove
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Remove, Replace}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient, VKMClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
@@ -58,6 +58,34 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       startMeasure = startM, endMeasure = endM, createdBy = Some(testUserName), createdDateTime = None, modifiedBy = None,
       modifiedDateTime = None, expiredBy = None, expiredDateTime = None, expired = false, timeStamp = DateTime.now().minusMonths(6).getMillis,
       geomModifiedDate = None, attributes = attributes)
+  }
+
+  def debugPrint(lanesAfterChanges: Seq[PersistedLane], existingLanes: Seq[PersistedLane], relevantChange: Seq[RoadLinkChange]): Unit = {
+    lanesAfterChanges.foreach(lane => {
+      val newLink = relevantChange.head.newLinks.find(_.linkId == lane.linkId).get
+      val oldLink = relevantChange.head.oldLink.get
+      val parentLane = existingLanes.find(pl => pl.laneCode == lane.laneCode && pl.sideCode == lane.sideCode).get
+
+      val newLaneLength = lane.endMeasure - lane.startMeasure
+      val oldLaneLength = parentLane.endMeasure - parentLane.startMeasure
+      println("New ID: " + lane.id)
+      println("Old ID: " + parentLane.id)
+      println("LaneCode: " + lane.laneCode)
+      println("New LinkId: " + lane.linkId)
+      println("Old LinkId: " + parentLane.linkId)
+      println("New Link Length: " + newLink.linkLength)
+      println("Old Link Length: " + oldLink.linkLength)
+      println("New Lane Length: " + newLaneLength)
+      println("Old Lane Length: " + oldLaneLength)
+      println("New Fill percentage: " + ((newLaneLength / newLink.linkLength) * 100) + "%")
+      println("Old Fill percentage: " + ((oldLaneLength / oldLink.linkLength) * 100) + "%")
+      println("SideCode: " + lane.sideCode)
+      println("New StartM: " + lane.startMeasure)
+      println("Old StartM: " + parentLane.startMeasure)
+      println("New EndM: " + lane.endMeasure)
+      println("Old EndM: " + parentLane.endMeasure)
+      println("-----------------------------------")
+    })
   }
 
   val mainLaneLaneProperties = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))),
@@ -135,7 +163,6 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val relevantChange = testChanges.filter(_.oldLink.nonEmpty).filter(_.oldLink.get.linkId == oldLinkId)
       val newRoadLink = roadLinkService.getRoadLinksByLinkIds(Set(newLinkId), newTransaction = false).head
 
-
       // Main lane towards digitizing
       val mainLane11 = NewLane(0, 0.0, 36.18939714, 49, isExpired = false, isDeleted = false, mainLaneLaneProperties)
       LaneServiceWithDao.create(Seq(mainLane11), Set(oldLinkId), SideCode.TowardsDigitizing.value, testUserName)
@@ -212,13 +239,18 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       LaneUpdater.handleChanges(relevantChange)
 
       // All 3 lanes should be split between two new links, main lane measures should equal new link length
-      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID1, newLinkID2))
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID1, newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
+
+      debugPrint(lanesAfterChanges, existingLanes, relevantChange)
+
       lanesAfterChanges.size should equal (6)
       lanesAfterChanges.count(_.linkId == newLinkID1) should equal (3)
       lanesAfterChanges.count(_.linkId == newLinkID2) should equal (3)
       val (mainLanesAfterChanges, additionalLanesAfterChanges) = lanesAfterChanges.partition(_.laneCode == MainLane.oneDigitLaneCode)
 
       // Verify main lane changes
+      mainLanesAfterChanges.count(mainLane => mainLane.sideCode == AgainstDigitizing.value) should equal(2)
+      mainLanesAfterChanges.count(mainLane => mainLane.sideCode == TowardsDigitizing.value) should equal(2)
       mainLanesAfterChanges.foreach(mainLane => {
         val newRoadLink = relevantChange.flatMap(_.newLinks).find(_.linkId == mainLane.linkId).get
         mainLane.startMeasure should equal (0.0)
@@ -226,6 +258,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       })
 
       // Verify additional lane changes
+      mainLanesAfterChanges.count(additionalLane => additionalLane.sideCode == AgainstDigitizing.value) should equal(2)
+      mainLanesAfterChanges.count(additionalLane => additionalLane.sideCode == TowardsDigitizing.value) should equal(2)
       val originalAdditionalLane = existingLanes.find(_.laneCode == 2).get
       val originalAdditionalLaneLength = originalAdditionalLane.endMeasure - originalAdditionalLane.startMeasure
       val additionalLaneLengths = additionalLanesAfterChanges.map(additionalLane => additionalLane.endMeasure - additionalLane.startMeasure)

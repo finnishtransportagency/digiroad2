@@ -212,52 +212,7 @@ class LaneFiller {
 
 
 
-   def calculateNewMValuesAndSideCode(lane: PersistedLane, historyRoadLink: Option[RoadLink], projection: Projection,
-                                      roadLinkLength: Double, isLengthened: Boolean = false): (Double, Double, Int) = {
 
-     val isCutAdditionalLane = historyRoadLink match {
-       case Some(historyLink) => lane.laneCode != 1 && (lane.startMeasure != 0 ||
-         !areMeasuresCloseEnough(lane.endMeasure, historyLink.length, 0.5))
-       case _ => false
-     }
-
-    val oldLength = projection.oldEnd - projection.oldStart
-    val newLength = projection.newEnd - projection.newStart
-
-    // Test if the direction has changed -> side code will be affected, too
-    if (GeometryUtils.isDirectionChangeProjection(projection)) {
-      val newSideCode = SideCode.apply(lane.sideCode) match {
-        case (SideCode.AgainstDigitizing) => SideCode.TowardsDigitizing.value
-        case (SideCode.TowardsDigitizing) => SideCode.AgainstDigitizing.value
-        case _ => lane.sideCode
-      }
-
-      if(isCutAdditionalLane && isLengthened)
-        (lane.startMeasure, lane.endMeasure, newSideCode)
-      else {
-        val newStart = projection.newStart - (lane.endMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
-        val newEnd = projection.newEnd - (lane.startMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
-
-        // Test if asset is affected by projection
-        if (lane.endMeasure <= projection.oldStart || lane.startMeasure >= projection.oldEnd)
-          (lane.startMeasure, lane.endMeasure, newSideCode)
-        else
-          (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), newSideCode)
-
-      }} else {
-      val newStart = projection.newStart + (lane.startMeasure - projection.oldStart) * Math.abs(newLength / oldLength)
-      val newEnd = projection.newEnd + (lane.endMeasure - projection.oldEnd) * Math.abs(newLength / oldLength)
-
-      if(isCutAdditionalLane && isLengthened)
-        (lane.startMeasure, lane.endMeasure, lane.sideCode)
-      // Test if asset is affected by projection
-      else if (lane.endMeasure <= projection.oldStart || lane.startMeasure >= projection.oldEnd) {
-        (lane.startMeasure, lane.endMeasure, lane.sideCode)
-      } else {
-        (Math.min(roadLinkLength, Math.max(0.0, newStart)), Math.max(0.0, Math.min(roadLinkLength, newEnd)), lane.sideCode)
-      }
-    }
-  }
 
   private def combine(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
 
