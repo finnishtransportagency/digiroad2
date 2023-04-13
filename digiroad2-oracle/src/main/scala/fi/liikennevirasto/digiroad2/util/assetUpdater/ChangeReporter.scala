@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import com.github.tototoshi.csv.CSVWriter
-import fi.liikennevirasto.digiroad2.asset.RoadLinkProperties
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, RoadLinkProperties, UnknownAssetTypeId}
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import fi.liikennevirasto.digiroad2.{FloatingReason, GeometryUtils, Point}
@@ -17,10 +18,11 @@ import java.io.StringWriter
   * @param linkId Road Link id
   * @param startMValue start point
   * @param endMValue end point
-  * @param sideCode                 
+  * @param sideCode for linear assets
+  * @param validityDirection for point assets
   * @param length 
   */
-sealed case class LinearReference(linkId: String, startMValue: Double, endMValue: Option[Double],sideCode: Int, length: Double)
+sealed case class LinearReference(linkId: String, startMValue: Double, endMValue: Option[Double],sideCode: Option[Int] = None, validityDirection: Option[Int] = None, length: Double)
 
 /**
   * 
@@ -32,7 +34,7 @@ sealed case class LinearReference(linkId: String, startMValue: Double, endMValue
   * @param isPointAsset
   */
 sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[Int], geometry: Option[Seq[Point]],
-                        linearReference: Option[LinearReference], isPointAsset: Boolean = false) {
+                        linearReference: Option[LinearReference], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val logger = LoggerFactory.getLogger(getClass)
@@ -127,7 +129,7 @@ case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Opti
   * @param before     situation before samuutus
   * @param after      after samuutus
   * */
-case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, before: Asset, after: Seq[Asset]) extends ReportedChange
+case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Asset, after: Seq[Asset]) extends ReportedChange
 
 /**
   *
@@ -141,11 +143,12 @@ object ChangeReporter {
   lazy val awsService = new AwsService
   lazy val s3Service: awsService.S3.type = awsService.S3
   lazy val s3Bucket: String = Digiroad2Properties.samuutusReportsBucketName
+  val logger = LoggerFactory.getLogger(getClass)
   implicit lazy val serializationFormats: Formats = DefaultFormats
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
 
   def getUrl(linkId: String) = {
-    s"""$directLink#linkProperty/${linkId}"""
+    if (linkId != null) s"""$directLink#linkProperty/${linkId}""" else null
   }
 
   private def getCSVRowForRoadLinkPropertyChanges(linkId: String, changeType: Int, changes: Seq[ReportedChange]) = {
@@ -213,34 +216,73 @@ object ChangeReporter {
       newFunctionalClass, fcSource, oldLinkType, newLinkType, ltSource, oldAttributes, newAttributes)
   }
 
-  private def getCSVRowForAssetChanges(change: ReportedChange, assetTypeId: Int) = {
+  private def getCSVRowForPointAssetChanges(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false) = {
     try {
       val changedAsset = change.asInstanceOf[ChangedAsset]
-      val (startMValue, endMValue, length) = changedAsset.before.linearReference match {
+      val assetBefore = changedAsset.before
+      val (beforeLinkId, beforeStartMValue, beforeEndMValue, beforeValidityDirection, beforeLength) = assetBefore.linearReference match {
         case Some(linearReference: LinearReference) =>
           val linRefEndMValue = linearReference.endMValue match {
             case Some(value) => Some(value)
             case _ => None
           }
-          (linearReference.startMValue, linRefEndMValue.getOrElse(null), linearReference.length)
+          (linearReference.linkId,linearReference.startMValue, linRefEndMValue.getOrElse(null),
+            linearReference.validityDirection.getOrElse(null), linearReference.length)
         case _ =>
-          (null, null, null)
+          (null, null, null, null, null)
       }
-      Seq(changedAsset.assetId, assetTypeId, changedAsset.before.geometry, changedAsset.before.values, changedAsset.before.municipalityCode, "", changedAsset.changeType,
-        changedAsset.linkId, startMValue, endMValue, length, getUrl(changedAsset.linkId))
+      val beforeGeometry = assetBefore.geometry match {
+        case Some(geometry: Seq[Point]) => s"POINTZM(${geometry.head.x} ${geometry.head.y} ${geometry.head.z} ${beforeStartMValue})"
+        case _ => null
+      }
+      changedAsset.after.map { assetAfter =>
+        val (afterLinkId, afterStartMValue, afterEndMValue, afterValidityDirection, afterLength) = assetAfter.linearReference match {
+          case Some(linearReference: LinearReference) =>
+            val linRefEndMValue = linearReference.endMValue match {
+              case Some(value) => Some(value)
+              case _ => None
+            }
+            (linearReference.linkId, linearReference.startMValue, linRefEndMValue.getOrElse(null),
+              linearReference.validityDirection.getOrElse(null), linearReference.length)
+          case _ =>
+            (null, null, null, null, null)
+        }
+        val afterGeometry = assetAfter.geometry match {
+          case Some(geometry: Seq[Point]) => s"POINTZM(${geometry.head.x} ${geometry.head.y} ${geometry.head.z} ${afterStartMValue})"
+          case _ => null
+        }
+        val floatingReason = assetAfter.floatingReason match {
+          case Some(fr) => fr.value
+          case _ => null
+        }
+        val csvRow = Seq(assetTypeId, changedAsset.changeType.value, floatingReason, changedAsset.roadLinkChangeType.value,
+          assetBefore.assetId, assetAfter.assetId, beforeGeometry, afterGeometry, assetBefore.values, assetAfter.values,
+          assetBefore.municipalityCode.getOrElse(null), assetAfter.municipalityCode.getOrElse(null), beforeValidityDirection,
+          afterValidityDirection, beforeLinkId, afterLinkId, beforeStartMValue, afterStartMValue, beforeEndMValue,
+          afterEndMValue, beforeLength, afterLength, getUrl(beforeLinkId), getUrl(afterLinkId))
+        if (withGeometry) {
+          csvRow
+        } else {
+          csvRow.slice(0,6) ++ csvRow.slice(8, csvRow.size)
+        }
+      }
     } catch {
-      case e => Seq()
+      case e =>
+        logger.error(s"csv conversion failed due to ${e.getMessage}")
+        Seq(Seq())
     }
   }
 
-  def generateCSV(changeReport: ChangeReport) = {
+  def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false) = {
     val stringWriter = new StringWriter()
     val csvWriter = new CSVWriter(stringWriter)
+    csvWriter.writeRow(Seq("sep=,"))
 
     val (assetTypeId, changes) = (changeReport.assetType, changeReport.changes)
     val linkIds = changes.map(_.linkId).toSet
-    assetTypeId match {
-      case RoadLinkProperties.typeId =>
+    AssetTypeInfo(assetTypeId) match {
+      case UnknownAssetTypeId => throw new IllegalArgumentException("Can not generate report for unknown asset type")
+      case RoadLinkProperties =>
         val labels = Seq("linkId", "url", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
           "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes")
         csvWriter.writeRow(labels)
@@ -254,13 +296,20 @@ object ChangeReporter {
             case _ => //do nothing
           }
         }
-      case _ =>
-        val labels = Seq("asset_id", "asset_type_id", "geometry", "values", "municipality_code", "side_code", "change_type", "link_id", "start_m_value", "end_m_value", "length", "roadlink_url")
-        csvWriter.writeRow(labels)
-        changes.foreach {change =>
-          val csvRow = getCSVRowForAssetChanges(change, assetTypeId)
-          csvWriter.writeRow(csvRow)
+      case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point"  =>
+        val labels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change", "before_asset_id", "after_asset_id",
+        "before_geometry", "after_geometry", "before_value", "after_value", "before_municipality_code", "after_municipality_code",
+        "before_validity_direction", "after_validity_direction", "before_link_id", "after_link_id", "before_start_m_value", "after_start_m_value",
+        "before_end_m_value", "after_end_m_value", "before_length", "after_length", "before_roadlink_url", "after_roadlink_url")
+        val labelsWithoutGeometry = labels.slice(0,6) ++ labels.slice(8, labels.size)
+        if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
+        changes.foreach { change =>
+          val csvRows = getCSVRowForPointAssetChanges(change, assetTypeId, withGeometry)
+          csvRows.foreach { csvRow =>
+            csvWriter.writeRow(csvRow)
+          }
         }
+      case assetTypeInfo: AssetTypeInfo => //to be implemented
     }
     (stringWriter.toString, linkIds.size)
   }

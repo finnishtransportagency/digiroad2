@@ -1,10 +1,15 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
-import fi.liikennevirasto.digiroad2.{AssetUpdate, FloatingReason, GeometryUtils, PersistedPointAsset, Point, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.asset.AssetTypeInfo
+import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
+import fi.liikennevirasto.digiroad2.util.assetUpdater._
+import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
+import org.json4s.JsonDSL._
+import org.json4s.jackson.compactJson
 
 class PointAssetUpdater(service: PointAssetOperations) {
   val roadLinkChangeClient = new RoadLinkChangeClient
@@ -24,20 +29,46 @@ class PointAssetUpdater(service: PointAssetOperations) {
       val changedLinkIds = linkChanges.flatMap(change => change.oldLink).map(_.linkId).toSet
 
       val changedAssets = service.getPersistedAssetsByLinkIdsWithoutTransaction(changedLinkIds).toSet
-      changedAssets.map(asset => {
+      val reportedChanges = changedAssets.map(asset => {
         val linkChange = linkChanges.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == asset.linkId).get
         correctPersistedAsset(asset, linkChange) match {
           case adjustment if adjustment.floating =>
             service.floatingUpdate(asset.id, adjustment.floating, adjustment.floatingReason)
-            service.createOperation(asset, adjustment)
+            val newAsset = service.createOperation(asset, adjustment)
+            Some(reportChange(asset, newAsset, Floating, linkChange, adjustment))
           case adjustment =>
             val link = linkChange.newLinks.find(_.linkId == adjustment.linkId)
             val assetId = service.adjustmentOperation(asset, adjustment, link.get)
-            service.createOperation(asset, adjustment.copy(assetId = assetId))
+            val newAsset = service.createOperation(asset, adjustment.copy(assetId = assetId))
+            Some(reportChange(asset, newAsset, Move, linkChange, adjustment))
         }
       })
+      val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
+      ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBody, contentRowCount)
+      val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
+      ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBodyWithGeom, contentRowCount, true)
       Queries.updateLatestSuccessfulSamuutus(typeId)
     }
+  }
+
+  def reportChange(oldPersistedAsset: PersistedPointAsset, newPersistedAsset: PersistedPointAsset,
+                   changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate) = {
+    val oldLinearReference = LinearReference(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, roadLinkChange.oldLink.get.linkLength)
+    val oldValues = compactJson(oldPersistedAsset.propertyData.map(_.toJson))
+    val oldAsset = Asset(oldPersistedAsset.id, oldValues, Some(oldPersistedAsset.municipalityCode),
+      Some(Seq(Point(oldPersistedAsset.lon, oldPersistedAsset.lat))), Some(oldLinearReference), true, None)
+
+    val newValues = compactJson(newPersistedAsset.propertyData.map(_.toJson))
+    val newAsset = changeType match {
+      case Floating =>
+        Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode), None, None, true, assetUpdate.floatingReason)
+      case _ =>
+        val newLink = roadLinkChange.newLinks.find(_.linkId == newPersistedAsset.linkId).get
+        val newLinearReference = LinearReference(newLink.linkId, newPersistedAsset.mValue, None, None, assetUpdate.validityDirection, newLink.linkLength)
+        Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode),
+          Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference), true, None)
+    }
+    ChangedAsset(oldPersistedAsset.linkId, oldPersistedAsset.id, changeType, roadLinkChange.changeType, oldAsset, Seq(newAsset))
   }
 
   def correctPersistedAsset(asset: PersistedPointAsset, roadLinkChange: RoadLinkChange): AssetUpdate = {
