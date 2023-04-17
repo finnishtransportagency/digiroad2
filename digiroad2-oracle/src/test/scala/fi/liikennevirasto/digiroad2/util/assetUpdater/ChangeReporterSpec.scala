@@ -30,13 +30,13 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     val changedAsset = ChangedAsset("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1",1,Floating,Remove,
       Asset(1,s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
         Some(49),Some(List(Point(366414.9482441691,6674451.461887036))),
-        Some(LinearReference("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1",14.033238836181871,None,None,None,30.92807173)),true,None),
+        Some(LinearReference("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1",14.033238836181871,None,None,None, 0.0)),true,None),
       List(Asset(1,s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
         Some(49),None,None,true,Some(NoRoadLinkFound))))
     val changeReport = ChangeReport(PedestrianCrossings.typeId, Seq(changedAsset))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport, true)
     val contents = csv.split("\\\n")(2)
-    contents.startsWith(s"200,8,2,remove,1,1,POINTZM(366414.9482441691 6674451.461887036 0.0 14.033238836181871)") should be(true)
+    contents.startsWith(s"200,8,2,remove,1,POINT (366414.9482441691 6674451.461887036),") should be(true)
     contentRows should be(1)
   }
 
@@ -44,13 +44,13 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     val changedAsset = ChangedAsset("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1",1,Floating,Remove,
       Asset(1,s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
         Some(49),Some(List(Point(366414.9482441691,6674451.461887036))),
-        Some(LinearReference("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1",14.033238836181871,None,None,None,30.92807173)),true,None),
+        Some(LinearReference("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1",14.033238836181871,None,None,None, 0.0)),true,None),
       List(Asset(1,s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""",
         Some(49),None,None,true,Some(NoRoadLinkFound))))
     val changeReport = ChangeReport(PedestrianCrossings.typeId, Seq(changedAsset))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport)
     val contents = csv.split("\\\n")(2)
-    contents.startsWith(s"""200,8,2,remove,1,1,"[{""id"":1,""publicId"":""suggest_box"",""") should be(true)
+    contents.startsWith(s"""200,8,2,remove,1,"[{""id"":1,""publicId"":""suggest_box"",""") should be(true)
     contentRows should be(1)
   }
 }
