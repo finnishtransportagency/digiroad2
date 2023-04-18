@@ -53,7 +53,7 @@ export class KgvClient extends ClientBase {
             const props = feature.properties;
             const geometry = this.extractLinkGeometry(feature.geometry);
             return new KgvLink(props.id, geometry, props.sourceid, props.adminclass, props.municipalitycode,
-                props.roadclass, props.horizontallength, props.directiontype, props.roadnamefin, props.roadnameswe,
+                props.horizontallength, props.directiontype, props.roadclass, props.roadnamefin, props.roadnameswe,
                 props.roadnamesme, props.roadnamesmn, props.roadnamesms, props.roadnumber, props.roadpartnumber,
                 props.surfacetype, props.lifecyclestatus, props.surfacerelation, props.xyaccuracy, props.zaccuracy,
                 props.geometryflip, props.addressfromleft, props.addresstoleft, props.addressfromright,
