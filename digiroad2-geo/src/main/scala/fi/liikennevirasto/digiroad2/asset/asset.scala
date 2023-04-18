@@ -6,6 +6,8 @@ import java.util.Base64
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import org.json4s.JsonAST.JString
+import org.json4s._
 import scala.util.Try
 
 
@@ -743,13 +745,18 @@ abstract class AbstractProperty {
 }
 
 sealed trait PointAssetValue {
-  def toJson: Any
+  def toJson: JValue
 }
 
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None, groupedId: Long = 0) extends AbstractProperty
+case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None, groupedId: Long = 0) extends AbstractProperty {
+  def toJson = JObject(JField("id", JLong(id)), JField("publicId", JString(publicId)), JField("propertyType", JString(propertyType)),
+    JField("required", JBool(required)), JField("values", JArray(values.map(_.toJson).toList)), JField("groupedId", JLong(groupedId)))
+}
 
 case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
-  override def toJson: Any = this
+  override def toJson: JValue = JObject(JField("id", JInt(panelType)), JField("panelInfo", JString(panelInfo)), JField("panelValue", JString(panelValue)),
+    JField("formPosition", JInt(formPosition)), JField("text", JString(text)), JField("size", JInt(size)), JField("coating_type", JInt(coating_type)),
+    JField("additional_panel_color", JInt(additional_panel_color)))
   def verifyCorrectInputOnAdditionalPanel: Unit = {
     if(AdditionalPanelColor.apply(additional_panel_color).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel color: ${additional_panel_color}")
     if(AdditionalPanelSize.apply(size).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel size: ${size}")
@@ -810,7 +817,8 @@ case object ColorOption2 extends AdditionalPanelColor { def value = 2; def prope
 case object ColorOption99 extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
-  override def toJson: Any = this
+  def toJson: JValue = JObject(JField("propertyValue", JString(propertyValue)), JField("propertyDisplayValue",
+    JString(propertyDisplayValue.getOrElse(null))))
 }
 
 case class DynamicPropertyValue(value: Any)
