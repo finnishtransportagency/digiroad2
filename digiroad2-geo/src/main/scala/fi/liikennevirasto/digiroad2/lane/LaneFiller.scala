@@ -14,19 +14,24 @@ object LaneFiller {
   // TODO MValueAdjustment ja SideCodeAdjustment korvaaminen LanePositionAdjustment fillTopologyssä.
   case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double)
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
-  case class LaneSplit(laneToCreate: PersistedLane, oldLane: PersistedLane)
+  case class LaneMerge(laneToCreate: PersistedLane, originalLanes: Seq[PersistedLane])
+  case class LaneSplit(lanesToCreate: Seq[PersistedLane], originalLane: PersistedLane)
   case class LanePositionAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode)
   case class ChangeSet(adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
                        adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
                        positionAdjustments: Seq[LanePositionAdjustment] = Seq.empty[LanePositionAdjustment],
                        expiredLaneIds: Set[Long] = Set.empty[Long],
                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane],
-                       splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit]) {
+                       splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit],
+                       mergedLanes: Seq[LaneMerge] = Seq.empty[LaneMerge]) {
     def isEmpty: Boolean = {
-      this.positionAdjustments.isEmpty &&
+      this.adjustedMValues.isEmpty &&
+        this.adjustedSideCodes.isEmpty &&
+        this.positionAdjustments.isEmpty &&
         this.expiredLaneIds.isEmpty &&
         this.generatedPersistedLanes.isEmpty &&
-        this.splitLanes.isEmpty
+        this.splitLanes.isEmpty &&
+        this.mergedLanes.isEmpty
     }
   }
 
@@ -34,7 +39,8 @@ object LaneFiller {
     changeSet1.copy(positionAdjustments = changeSet1.positionAdjustments ++ changeSet2.positionAdjustments,
       expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
       generatedPersistedLanes = changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes,
-      splitLanes = changeSet1.splitLanes ++ changeSet2.splitLanes
+      splitLanes = changeSet1.splitLanes ++ changeSet2.splitLanes,
+      mergedLanes = changeSet1.mergedLanes ++ changeSet2.mergedLanes
     )
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])

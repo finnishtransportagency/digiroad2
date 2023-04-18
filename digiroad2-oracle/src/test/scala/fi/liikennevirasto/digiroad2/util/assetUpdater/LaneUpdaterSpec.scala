@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneProperty, LanePropertyValue, NewLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneNumber, LaneProperty, LanePropertyValue, NewLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
@@ -88,8 +88,24 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     })
   }
 
-  val mainLaneLaneProperties = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))),
-    LaneProperty("lane_type", Seq(LanePropertyValue("1")))
+  val mainLaneLanePropertiesA = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))),
+    LaneProperty("lane_type", Seq(LanePropertyValue("1"))),
+    LaneProperty("start_date", Seq(LanePropertyValue("1.1.1970")))
+  )
+
+  val mainLaneLanePropertiesB = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))),
+    LaneProperty("lane_type", Seq(LanePropertyValue("1"))),
+    LaneProperty("start_date", Seq(LanePropertyValue("29.11.2008")))
+  )
+
+  val mainLaneLanePropertiesC = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))),
+    LaneProperty("lane_type", Seq(LanePropertyValue("1"))),
+    LaneProperty("start_date", Seq(LanePropertyValue("16.8.2015")))
+  )
+
+  val mainLaneLanePropertiesD = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))),
+    LaneProperty("lane_type", Seq(LanePropertyValue("1"))),
+    LaneProperty("start_date", Seq(LanePropertyValue("12.10.1998")))
   )
 
   val subLane2Properties = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(2))),
@@ -103,13 +119,13 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     val oldLinkIds = relevantChanges.map(_.oldLink.get.linkId)
     runWithRollback {
       // Lanes on link 7766bff4-5f02-4c30-af0b-42ad3c0296aa:1
-      val mainLaneLink1 = NewLane(0, 0.0, 30.92807173, 49, isExpired = false, isDeleted = false, mainLaneLaneProperties)
+      val mainLaneLink1 = NewLane(0, 0.0, 30.92807173, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       LaneServiceWithDao.create(Seq(mainLaneLink1), Set("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"), SideCode.TowardsDigitizing.value, testUserName)
       val subLane2Link1 = NewLane(0, 0.0, 30.92807173, 49, isExpired = false, isDeleted = false, subLane2Properties)
       LaneServiceWithDao.create(Seq(subLane2Link1), Set("7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"), SideCode.TowardsDigitizing.value, testUserName)
 
       // Lanes on link 78e1984d-7dbc-4a7c-bd91-cb68f82ffccb:1
-      val mainLaneLink2 = NewLane(0, 0.0, 55.71735255, 49, isExpired = false, isDeleted = false, mainLaneLaneProperties)
+      val mainLaneLink2 = NewLane(0, 0.0, 55.71735255, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       LaneServiceWithDao.create(Seq(mainLaneLink2), Set("78e1984d-7dbc-4a7c-bd91-cb68f82ffccb:1"), SideCode.TowardsDigitizing.value, testUserName)
       val subLane2Link2 = NewLane(0, 0.0, 55.71735255, 49, isExpired = false, isDeleted = false, subLane2Properties)
       LaneServiceWithDao.create(Seq(subLane2Link2), Set("78e1984d-7dbc-4a7c-bd91-cb68f82ffccb:1"), SideCode.TowardsDigitizing.value, testUserName)
@@ -164,11 +180,11 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val newRoadLink = roadLinkService.getRoadLinksByLinkIds(Set(newLinkId), newTransaction = false).head
 
       // Main lane towards digitizing
-      val mainLane11 = NewLane(0, 0.0, 36.18939714, 49, isExpired = false, isDeleted = false, mainLaneLaneProperties)
+      val mainLane11 = NewLane(0, 0.0, 36.18939714, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       LaneServiceWithDao.create(Seq(mainLane11), Set(oldLinkId), SideCode.TowardsDigitizing.value, testUserName)
 
       // Main lane against digitizing
-      val mainLane21 = NewLane(0, 0.0, 36.18939714, 49, isExpired = false, isDeleted = false, mainLaneLaneProperties)
+      val mainLane21 = NewLane(0, 0.0, 36.18939714, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       LaneServiceWithDao.create(Seq(mainLane21), Set(oldLinkId), SideCode.AgainstDigitizing.value, testUserName)
 
       // Cut additional lane towards digitizing
@@ -220,11 +236,11 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val relevantChange = testChanges.filter(change => change.changeType == RoadLinkChangeType.Split && change.oldLink.get.linkId == "3a832249-d3b9-4c22-9b08-c7e9cd98cbd7:1")
 
       // Main lane towards digitizing
-      val mainLane11 = NewLane(0, 0.0, 432.23526228, 49, isExpired = false, isDeleted = false, mainLaneLaneProperties)
+      val mainLane11 = NewLane(0, 0.0, 432.23526228, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       LaneServiceWithDao.create(Seq(mainLane11), Set(oldLinkID), SideCode.TowardsDigitizing.value, testUserName)
 
       // Main lane against digitizing
-      val mainLane21 = NewLane(0, 0.0, 432.23526228, 49, isExpired = false, isDeleted = false, mainLaneLaneProperties)
+      val mainLane21 = NewLane(0, 0.0, 432.23526228, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
       LaneServiceWithDao.create(Seq(mainLane21), Set(oldLinkID), SideCode.AgainstDigitizing.value, testUserName)
 
       // Cut additional lane towards digitizing
@@ -278,6 +294,60 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
         oldLaneIds.contains(historyLane.oldId) should equal (true)
         newLaneIds.contains(historyLane.newId) should equal (true)
       })
+    }
+  }
+
+  test("Merge. ") {
+    runWithRollback {
+      val newLinkId  = "fbea6a9c-6682-4a1b-9807-7fb11a67e227:1"
+      val oldLinkId1 = "9d23b85a-d7bf-4c6f-83ff-aa391ff4879f:1"
+      val oldLinkId2 = "41a67ca5-886f-44ff-a9ca-92d7d9bea129:1"
+      val oldLinkId3 = "b05075a5-45e1-447e-9813-752ba3e07fe5:1"
+      val oldLinkId4 = "7ce91531-42e8-424b-a528-b72af5cb1180:1"
+
+      // Get merge changes
+      val relevantChanges = testChanges.filter(change => change.changeType == Replace && change.newLinks.head.linkId == newLinkId)
+      val oldLinks = relevantChanges.flatMap(_.oldLink)
+
+      // Create test main lanes for all old links
+      oldLinks.foreach(oldLink => {
+        // Give different start dates to test inheriting latest date for merged main lane
+        val propertiesToUse = oldLink.linkId match {
+          case linkId if linkId == oldLinkId1 => mainLaneLanePropertiesA
+          case linkId if linkId == oldLinkId2 => mainLaneLanePropertiesB
+          case linkId if linkId == oldLinkId3 => mainLaneLanePropertiesC
+          case linkId if linkId == oldLinkId4 => mainLaneLanePropertiesD
+        }
+        val oldLinkLengthRounded = Math.round(oldLink.linkLength * 1000).toDouble / 1000
+        val mainLane11 = NewLane(0, 0.0, oldLinkLengthRounded, 49, isExpired = false, isDeleted = false, propertiesToUse)
+        LaneServiceWithDao.create(Seq(mainLane11), Set(oldLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
+        val mainLane21 = NewLane(0, 0.0, oldLinkLengthRounded, 49, isExpired = false, isDeleted = false, propertiesToUse)
+        LaneServiceWithDao.create(Seq(mainLane21), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+      })
+
+      // Cut additional lane against digitizing
+      val subLane12a = NewLane(0, 0.0, 91.5, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(subLane12a), Set(oldLinkId1), SideCode.AgainstDigitizing.value, testUserName)
+
+      // Cut additional lane towards digitizing, ending at the end of link
+      val subLane12b = NewLane(0, 80.5, 580.215, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(subLane12b), Set(oldLinkId1), SideCode.TowardsDigitizing.value, testUserName)
+
+      // Cut additional lane towards digitizing, starting from start of link
+      val subLane12c = NewLane(0, 0.0, 21.7, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(subLane12c), Set(oldLinkId2), SideCode.TowardsDigitizing.value, testUserName)
+
+      // Verify lanes are created
+      val existingLanes = LaneServiceWithDao.fetchExistingLanesByLinkIds(oldLinks.map(_.linkId))
+      existingLanes.size should equal (11)
+
+      // Apply changes to lanes
+      LaneUpdater.handleChanges(relevantChanges)
+
+      // Only 4 lanes should exist on new roadLink, Main lanes and connected additional lanes with the same attributes should combine
+      val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId)).sortBy(lane => (lane.laneCode, lane.sideCode))
+      val (mainLanesAfterChanges, additionalLanesAfterChanges) = lanesAfterChanges.partition(_.laneCode == LaneNumber.MainLane.oneDigitLaneCode)
+      debugPrint(lanesAfterChanges, existingLanes, relevantChanges)
     }
   }
 
