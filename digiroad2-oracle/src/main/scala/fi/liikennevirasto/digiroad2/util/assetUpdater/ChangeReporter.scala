@@ -147,11 +147,13 @@ object ChangeReporter {
   implicit lazy val serializationFormats: Formats = DefaultFormats
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
 
-  def getUrl(linkId: String) = {
-    if (linkId != null) s"""$directLink#linkProperty/${linkId}""" else null
-  }
+
 
   private def getCSVRowForRoadLinkPropertyChanges(linkId: String, changeType: Int, changes: Seq[ReportedChange]) = {
+    def getUrl(linkId: String) = {
+      if (linkId != null) s"""$directLink#linkProperty/${linkId}""" else null
+    }
+
     val trafficDirectionChange = changes.find(_.isInstanceOf[TrafficDirectionChange])
     val (oldTrafficDirection, newTrafficDirection) = trafficDirectionChange match {
       case trChange: Some[TrafficDirectionChange] =>
