@@ -48,7 +48,7 @@ object MainLanePopulationProcess {
     val startMeasure = 0.0
     // Use three decimals
     val endMeasure = Math.round(roadLink.length * 1000).toDouble / 1000
-    val dateFormat = new SimpleDateFormat("dd.M.yyyy")
+    val dateFormat = new SimpleDateFormat("d.M.yyyy")
     val startDate = dateFormat.format(DateTime.now().toDate)
 
     val laneProperties = Seq(
