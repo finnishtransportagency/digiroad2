@@ -172,17 +172,7 @@ object LaneUpdater {
 
   }
 
-  def partitionMergeChanges(roadLinkChanges: Seq[RoadLinkChange]): (Seq[RoadLinkChange], Seq[RoadLinkChange]) = {
-    roadLinkChanges.partition(roadLinkChange => {
-      val otherRoadLinkChanges = roadLinkChanges.filterNot(change => change == roadLinkChange)
-      val newLinkIds = roadLinkChange.newLinks.map(_.linkId)
-      val numberOfMessagesWithSameNewRoadLinkID = if(newLinkIds.nonEmpty) {
-        otherRoadLinkChanges.count(otherChange => otherChange.newLinks.map(_.linkId).contains(newLinkIds.head))
-      } else 0
 
-      newLinkIds.size == 1 && numberOfMessagesWithSameNewRoadLinkID > 0
-    })
-  }
 
   def updateLanes(): Unit = {
     val roadLinkChanges = roadLinkChangeClient.getRoadLinkChanges()
@@ -194,7 +184,11 @@ object LaneUpdater {
     val lanesOnChangedLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
 
     // Merge changes consist of multiple messages, group them and handle separately from rest of the changes
-    val (mergeChanges, singleMessageChanges) = partitionMergeChanges(roadLinkChanges)
+    val (mergeChanges, singleMessageChanges) = roadLinkChanges.partition(roadLinkChange => {
+      val otherRoadLinkChanges = roadLinkChanges.filterNot(change => change == roadLinkChange)
+      roadLinkChangeClient.partitionMergeChanges(roadLinkChange, otherRoadLinkChanges)
+    })
+
     val mergeChangesGrouped = mergeChanges.groupBy(_.newLinks).values.toSeq
     val mergeChangeSets = mergeChangesGrouped.map(mergeChanges => {
       val oldLinkIds = mergeChanges.flatMap(_.oldLink).map(_.linkId)
@@ -208,22 +202,22 @@ object LaneUpdater {
       change.changeType match {
         case RoadLinkChangeType.Add =>
           val addedLinkIds = change.newLinks.map(_.linkId)
+          // Need to fetch RoadLinks because Link Type is needed for main lane creation
           val addedRoadLinks = roadLinkService.getRoadLinksByLinkIds(addedLinkIds.toSet)
           val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
           ChangeSet(generatedPersistedLanes = createdMainLanes)
         case RoadLinkChangeType.Remove =>
           val removedLinkId = change.oldLink.get.linkId
-          val expiredLaneIds = lanesOnChangedLinks.filter(_.linkId == removedLinkId).map(_.id).toSet
-          ChangeSet(expiredLaneIds = expiredLaneIds)
+          val lanesToExpireOnRemovedLink = lanesOnChangedLinks.filter(_.linkId == removedLinkId).map(_.id).toSet
+          ChangeSet(expiredLaneIds = lanesToExpireOnRemovedLink)
         case RoadLinkChangeType.Replace =>
           val lanesOnReplacedLink = lanesOnChangedLinks.filter(lane => change.oldLink.get.linkId == lane.linkId)
           val allLanePositionAdjustments = fillReplacementLinksWithExistingLanes(lanesOnReplacedLink, change)
           ChangeSet(positionAdjustments = allLanePositionAdjustments)
         case RoadLinkChangeType.Split =>
-          val newRoadLinkIds = change.newLinks.map(_.linkId)
           val oldRoadLink = change.oldLink.get
-          val lanesOnOldLink = lanesOnChangedLinks.filter(_.linkId == oldRoadLink.linkId)
-          val lanesOnSplitLinks = fillSplitLinksWithExistingLanes(lanesOnOldLink, change)
+          val lanesOnSplitLink = lanesOnChangedLinks.filter(_.linkId == oldRoadLink.linkId)
+          val lanesOnSplitLinks = fillSplitLinksWithExistingLanes(lanesOnSplitLink, change)
           ChangeSet(splitLanes = lanesOnSplitLinks)
       }
     })
