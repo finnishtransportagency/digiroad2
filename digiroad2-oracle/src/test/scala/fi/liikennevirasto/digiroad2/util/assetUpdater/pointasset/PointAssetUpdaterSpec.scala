@@ -1,12 +1,15 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
+import fi.liikennevirasto.digiroad2.FloatingReason.NoRoadLinkFound
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, FloatingReason, PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{ObstacleService, PedestrianCrossingService, RailwayCrossingService}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
+import fi.liikennevirasto.digiroad2._
+import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
@@ -15,6 +18,14 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
   case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String,
                                      mValue: Double, floating: Boolean, timeStamp: Long, linkSource: LinkGeomSource,
                                      propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
+
+  case class testPedestrianCrossing(override val id: Long, override val linkId: String,
+                                    override val lon: Double, override val lat: Double, override val mValue: Double,
+                                    override val floating: Boolean, override val timeStamp: Long, override val municipalityCode: Int,
+                                    override val propertyData: Seq[Property], override val createdBy: Option[String] = None,
+                                    override val createdAt: Option[DateTime] = None, override val modifiedBy: Option[String] = None,
+                                    override val modifiedAt: Option[DateTime] = None, override val expired: Boolean = false,
+                                    override val linkSource: LinkGeomSource) extends PersistedPoint
 
   val roadLinkChangeClient = new RoadLinkChangeClient
   val source: scala.io.BufferedSource = scala.io.Source.fromFile("digiroad2-oracle/src/test/resources/smallChangeSet.json")
@@ -171,5 +182,40 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
 
     corrected.floating should be(true)
     corrected.floatingReason should be(Some(FloatingReason.DistanceToRoad))
+  }
+
+  test("correct change report is formed for floating asset") {
+    val oldLinkId = "7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"
+    val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+    val property = Property(1, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+    val oldAsset = testPedestrianCrossing(1, oldLinkId, 366414.9482441691, 6674451.461887036, 14.033238836181871, false,
+      0L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val assetUpdate = AssetUpdate(1,366414.9482441691,6674451.461887036,oldLinkId,14.033238836181871,None,None,1680689415467L,true,Some(NoRoadLinkFound))
+    val newAsset = testPedestrianCrossing(1, oldLinkId, assetUpdate.lon, assetUpdate.lat, assetUpdate.mValue, true,
+      1L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val reportedChange = updater.reportChange(oldAsset, newAsset, Floating, change, assetUpdate)
+    reportedChange.linkId should be(oldLinkId)
+    reportedChange.before.assetId should be(1)
+    reportedChange.after.head.assetId should be(1)
+    reportedChange.after.head.floatingReason.get should be(NoRoadLinkFound)
+    reportedChange.after.head.values should be(s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""")
+  }
+
+  test("correct change report is formed for moved asset") {
+    val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+    val newLinkId = "6eec9a4a-bcac-4afb-afc8-f4e6d40ec571:1"
+    val property = Property(1, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+    val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+    val oldAsset = testPedestrianCrossing(1, oldLinkId, 370243.9245965985, 6670363.935476765, 35.83348978134948549, false,
+      0L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val assetUpdate = AssetUpdate(1,370243.8824352341,6670361.792711945, newLinkId,35.2122522338214,None,None,1L,false,None)
+    val newAsset = testPedestrianCrossing(1, newLinkId, assetUpdate.lon, assetUpdate.lat, assetUpdate.mValue, false,
+      1L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val reportedChange = updater.reportChange(oldAsset, newAsset, Move, change, assetUpdate)
+    reportedChange.linkId should be(oldLinkId)
+    reportedChange.before.assetId should be(1)
+    reportedChange.after.head.assetId should be(1)
+    reportedChange.after.head.floatingReason should be(None)
+    reportedChange.after.head.values should be(s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""")
   }
 }
