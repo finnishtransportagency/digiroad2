@@ -22,7 +22,7 @@ describe('Change Set', function () {
             "new": [
                 {
                     "linkId": newLinkId,
-                    "linkLength": 16.93706266,
+                    "linkLength": 16.937,
                     "geometry": testLinkGeom1,
                     "roadClass": 12141,
                     "adminClass": 3,
@@ -54,7 +54,7 @@ describe('Change Set', function () {
             "changeType": "remove",
             "old": {
                 "linkId": linkId,
-                "linkLength": 16.93706266,
+                "linkLength": 16.937,
                 "geometry": testLinkGeom1,
                 "roadClass": 12141,
                 "adminClass": 3,
@@ -81,14 +81,14 @@ describe('Change Set', function () {
         const oldLinkId = "link:1";
         const newLinkId = "link:2";
         const oldLink = new KgvLink(oldLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, undefined);
-        const newLink = new KgvLink(newLinkId, testLinkGeom1, 124, 3, 149, 16.93706266, 0, 12141);
+        const newLink = new KgvLink(newLinkId, testLinkGeom1, 124, 3, 149, 16.93786266, 0, 12141);
         const change = new ReplaceInfo(oldLinkId, newLinkId, 0, 16.937, 0, 16.937);
         const changeSet = new ChangeSet([oldLink], [newLink], [change]);
         const expected = [{
             "changeType": "replace",
             "old": {
                 "linkId": oldLinkId,
-                "linkLength": 16.93706266,
+                "linkLength": 16.937,
                 "geometry": testLinkGeom1,
                 "roadClass": null,
                 "adminClass": 3,
@@ -98,7 +98,7 @@ describe('Change Set', function () {
             "new": [
                 {
                     "linkId": newLinkId,
-                    "linkLength": 16.93706266,
+                    "linkLength": 16.938,
                     "geometry": testLinkGeom1,
                     "roadClass": 12141,
                     "adminClass": 3,

@@ -101,6 +101,7 @@ export class KgvLink {
                 surfaceType?: number, lifeCycleStatus?: number, surfaceRelation?: number, xyAccuracy?: number,
                 zAccuracy?: number, geomFlip?: boolean, fromLeft?: number, toLeft?: number, fromRight?: number,
                 toRight?: number, startTime?: string, versionStartTime?: string) {
+        const roundedLength     = length?.toFixed(3);
         this.id                 = id;
         this.sourceId           = this.extractNumberOrNull(sourceId);
         this.adminClass         = this.extractNumberOrNull(adminClass);
@@ -119,7 +120,7 @@ export class KgvLink {
         this.surfaceRelation    = this.extractNumberOrNull(surfaceRelation);
         this.xyAccuracy         = this.extractNumberOrNull(xyAccuracy);
         this.zAccuracy          = this.extractNumberOrNull(zAccuracy);
-        this.length             = this.extractNumberOrNull(length);
+        this.length             = roundedLength == undefined ? null : parseFloat(roundedLength);
         this.geometryFlip       = geomFlip == undefined ? null : JSON.parse(geomFlip.toString().toLowerCase()) ? 1 : 0;
         this.fromLeft           = this.extractNumberOrNull(fromLeft);
         this.toLeft             = this.extractNumberOrNull(toLeft);
