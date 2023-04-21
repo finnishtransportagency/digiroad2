@@ -14,33 +14,33 @@ object LaneFiller {
   // TODO MValueAdjustment ja SideCodeAdjustment korvaaminen LanePositionAdjustment fillTopologyssä.
   case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double)
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
-  case class LaneMerge(laneToCreate: PersistedLane, originalLanes: Seq[PersistedLane])
   case class LaneSplit(lanesToCreate: Seq[PersistedLane], originalLane: PersistedLane)
-  case class LanePositionAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode)
+  case class LanePositionAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode,
+                                    attributesToUpdate: Option[Seq[LaneProperty]] = None)
   case class ChangeSet(adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
                        adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
                        positionAdjustments: Seq[LanePositionAdjustment] = Seq.empty[LanePositionAdjustment],
                        expiredLaneIds: Set[Long] = Set.empty[Long],
                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane],
-                       splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit],
-                       mergedLanes: Seq[LaneMerge] = Seq.empty[LaneMerge]) {
+                       splitLanes: Seq[LaneSplit] = Seq.empty[LaneSplit]) {
     def isEmpty: Boolean = {
       this.adjustedMValues.isEmpty &&
         this.adjustedSideCodes.isEmpty &&
         this.positionAdjustments.isEmpty &&
         this.expiredLaneIds.isEmpty &&
         this.generatedPersistedLanes.isEmpty &&
-        this.splitLanes.isEmpty &&
-        this.mergedLanes.isEmpty
+        this.splitLanes.isEmpty
     }
   }
 
   def combineChangeSets: (ChangeSet, ChangeSet) => ChangeSet = (changeSet1, changeSet2) =>
-    changeSet1.copy(positionAdjustments = changeSet1.positionAdjustments ++ changeSet2.positionAdjustments,
+    changeSet1.copy(
+      adjustedMValues = changeSet1.adjustedMValues ++ changeSet2.adjustedMValues,
+      adjustedSideCodes = changeSet1.adjustedSideCodes ++ changeSet2.adjustedSideCodes,
+      positionAdjustments = changeSet1.positionAdjustments ++ changeSet2.positionAdjustments,
       expiredLaneIds = changeSet1.expiredLaneIds ++ changeSet2.expiredLaneIds,
       generatedPersistedLanes = changeSet1.generatedPersistedLanes ++ changeSet2.generatedPersistedLanes,
-      splitLanes = changeSet1.splitLanes ++ changeSet2.splitLanes,
-      mergedLanes = changeSet1.mergedLanes ++ changeSet2.mergedLanes
+      splitLanes = changeSet1.splitLanes ++ changeSet2.splitLanes
     )
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
@@ -371,7 +371,7 @@ class LaneFiller {
     }
   }
 
-  private def modifiedSort(left: PersistedLane, right: PersistedLane): Boolean = {
+  def modifiedSort(left: PersistedLane, right: PersistedLane): Boolean = {
     val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
     val rightStamp = right.modifiedDateTime.orElse(right.createdDateTime)
 

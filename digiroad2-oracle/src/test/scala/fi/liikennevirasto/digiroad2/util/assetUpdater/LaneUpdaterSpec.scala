@@ -133,7 +133,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       val existingLanes = LaneServiceWithDao.fetchExistingLanesByLinkIds(oldLinkIds)
       existingLanes.size should equal(4)
-      LaneUpdater.handleChanges(relevantChanges)
+      val changeSet = LaneUpdater.handleChanges(relevantChanges)
+      LaneUpdater.updateChangeSet(changeSet)
 
       val existingLanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(oldLinkIds)
       existingLanesAfterChanges.size should equal(0)
@@ -154,7 +155,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val newRoadLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet, newTransaction = false)
       existingLanesOnNewLinks.size should equal(0)
 
-      LaneUpdater.handleChanges(relevantChanges)
+      val changeSet = LaneUpdater.handleChanges(relevantChanges)
+      LaneUpdater.updateChangeSet(changeSet)
 
       val createdLanesOnNewLinks = LaneServiceWithDao.fetchExistingLanesByLinkIds(newLinkIds)
       createdLanesOnNewLinks.size should equal(4)
@@ -197,7 +199,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       existingLanes.size should equal(3)
 
       // Apply Changes
-      LaneUpdater.handleChanges(relevantChange)
+      val changeSet = LaneUpdater.handleChanges(relevantChange)
+      LaneUpdater.updateChangeSet(changeSet)
 
       // Same amount of lanes should persist
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
@@ -220,7 +223,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val laneHistory = LaneServiceWithDao.historyDao.getHistoryLanesChangedSince(DateTime.now().minusDays(1), DateTime.now().plusDays(1), withAdjust = true)
       laneHistory.size should equal(3)
       laneHistory.foreach(historyLane => {
-        historyLane.expired should equal (false)
+        // Old lanes are expired and replaced by new lanes with correct measures, history newId references new lane
+        historyLane.expired should equal (true)
         oldLaneIds.contains(historyLane.oldId) should equal (true)
         newLaneIds.contains(historyLane.newId) should equal (true)
       })
@@ -252,7 +256,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       existingLanes.size should equal (3)
 
       // Apply Changes
-      LaneUpdater.handleChanges(relevantChange)
+      val changeSet = LaneUpdater.handleChanges(relevantChange)
+      LaneUpdater.updateChangeSet(changeSet)
 
       // All 3 lanes should be split between two new links, main lane measures should equal new link length
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID1, newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
@@ -297,7 +302,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Merge. ") {
+  test("Merge. 4 links merged together. Main lanes and two additional lanes should fuse together.") {
     runWithRollback {
       val newLinkId  = "fbea6a9c-6682-4a1b-9807-7fb11a67e227:1"
       val oldLinkId1 = "9d23b85a-d7bf-4c6f-83ff-aa391ff4879f:1"
@@ -308,6 +313,9 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       // Get merge changes
       val relevantChanges = testChanges.filter(change => change.changeType == Replace && change.newLinks.head.linkId == newLinkId)
       val oldLinks = relevantChanges.flatMap(_.oldLink)
+
+      val newRoadLinkLength = 700.537
+      val oldLink1Length = 580.215
 
       // Create test main lanes for all old links
       oldLinks.foreach(oldLink => {
@@ -330,7 +338,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       LaneServiceWithDao.create(Seq(subLane12a), Set(oldLinkId1), SideCode.AgainstDigitizing.value, testUserName)
 
       // Cut additional lane towards digitizing, ending at the end of link
-      val subLane12b = NewLane(0, 80.5, 580.215, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      val subLane12b = NewLane(0, 80.5, oldLink1Length, 49, isExpired = false, isDeleted = false, subLane2Properties)
       LaneServiceWithDao.create(Seq(subLane12b), Set(oldLinkId1), SideCode.TowardsDigitizing.value, testUserName)
 
       // Cut additional lane towards digitizing, starting from start of link
@@ -342,12 +350,43 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       existingLanes.size should equal (11)
 
       // Apply changes to lanes
-      LaneUpdater.handleChanges(relevantChanges)
+      val changeSet = LaneUpdater.handleChanges(relevantChanges)
+      LaneUpdater.updateChangeSet(changeSet)
 
       // Only 4 lanes should exist on new roadLink, Main lanes and connected additional lanes with the same attributes should combine
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId)).sortBy(lane => (lane.laneCode, lane.sideCode))
       val (mainLanesAfterChanges, additionalLanesAfterChanges) = lanesAfterChanges.partition(_.laneCode == LaneNumber.MainLane.oneDigitLaneCode)
-      debugPrint(lanesAfterChanges, existingLanes, relevantChanges)
+
+      // Validate main lane changes. New road link should have 2 main lanes fused together from the original main lanes
+      mainLanesAfterChanges.size should equal(2)
+      mainLanesAfterChanges.foreach(mainLane => {
+        mainLane.startMeasure should equal(0.0)
+        mainLane.endMeasure should equal(newRoadLinkLength)
+        val startDate = LaneServiceWithDao.getPropertyValue(mainLane, "start_date")
+        // Main lanes on original links had different start dates, latest one should be inherited
+        startDate.get.value should equal("16.8.2015")
+      })
+
+      // Validate additional lane changes: additional lanes 12b and 12c should be fused together
+      // and additional lane 12a should stay the same
+      additionalLanesAfterChanges.size should equal(2)
+      val fusedLaneTowardsDigitizing = additionalLanesAfterChanges.find(_.sideCode == TowardsDigitizing.value).get
+      val originalSublane12bLength = subLane12b.endMeasure - subLane12b.startMeasure
+      val originalSublane12cLength = subLane12c.endMeasure - subLane12c.startMeasure
+      fusedLaneTowardsDigitizing.startMeasure should equal(subLane12b.startMeasure)
+      val endMDiff = fusedLaneTowardsDigitizing.endMeasure - (originalSublane12bLength + originalSublane12cLength + fusedLaneTowardsDigitizing.startMeasure)
+      endMDiff < 0.1 should equal(true)
+
+      // Validate history information created due to changes
+      val historyLanes = laneHistoryDao.fetchAllHistoryLanesByLinkIds(Seq(oldLinkId1, oldLinkId2, oldLinkId3, oldLinkId4), includeExpired = true)
+      historyLanes.size should equal(11)
+      // All original lanes get expired, only the lengthened lane gets to reference the newId
+      historyLanes.count(_.expired) should equal(11)
+      historyLanes.count(_.newId == 0) should equal(7)
+      // There should be 1 history row referencing to current lanes with new ID
+      lanesAfterChanges.foreach(lane => {
+        historyLanes.count(_.newId == lane.id) should equal(1)
+      })
     }
   }
 
