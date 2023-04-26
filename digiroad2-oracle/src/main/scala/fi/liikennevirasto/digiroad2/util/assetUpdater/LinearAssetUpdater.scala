@@ -29,14 +29,14 @@ import org.slf4j.LoggerFactory
 "inaccurate_asset", ??
 
 "unknown_speed_limit",
-InaccurateAssetDAO, other updater for this one?
+InaccurateAssetDAO, this table is created every time again each day so need to adjust
 
 
 )*/
 case class CalculateMValueChangesInfo(assetId: Long, oldId: Option[String], newId: Option[String],
                                       oldLinksLength: Option[Double],
                                       newLinksLength: Option[Double],
-                                      oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double
+                                      oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double,digitizationChange:Boolean
                                      ) {}
 
 case class LinkAndLength(linkId: String, length: Double)
@@ -46,7 +46,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def eventBus: DigiroadEventBus = new DummyEventBus
   def roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
-  def assetFiller: AssetFiller = new AssetFiller
+  def assetFiller: UpdateChangesGeometryWIP = new UpdateChangesGeometryWIP
   def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val logger = LoggerFactory.getLogger(getClass)
@@ -73,6 +73,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     change.changeType.value == RoadLinkChangeType.Remove.value
   }
 
+  protected val isDeletedOrNew: RoadLinkChange => Boolean = (change: RoadLinkChange) => {
+    change.changeType.value == RoadLinkChangeType.Remove.value || change.changeType.value == RoadLinkChangeType.Add.value
+  }
+
   private  def splitLinkId(linkId: String): (String, Int) = {
     val split = linkId.split(":")
     (split(0), split(1).toInt)
@@ -94,9 +98,16 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     RoadLinkForFiltopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = roadLink.trafficDirection /*non override version */ , administrativeClass = roadLink.adminClass /*non override version */ ,
       linkSource = NormalLinkInterface, linkType = UnknownLinkType, constructionType = UnknownConstructionType, geometry = roadLink.geometry) // can there be link of different sourse ?
   }
-  def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]): Unit = {
+  
+  // TODO where shoud we do rounding,when creating or when updating?
 
-    val oldIds = changes.filterNot(isDeleted).map(_.oldLink.get.linkId)
+
+  def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+    changes
+  }
+  def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]): Unit = {
+    val changes = filterChanges(changes)
+    val oldIds = changes.filterNot(isDeletedOrNew).map(_.oldLink.get.linkId)
     val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
 
@@ -207,31 +218,36 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   protected def fillNewRoadLinksWithPreviousAssetsData(assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange], changeSets: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val result = changes.flatMap(change => {
-      val oldLink = change.oldLink.get
-      val oldId = oldLink.linkId
-      val assets = assetsAll.filter(_.linkId == oldId)
-      val result2 =  change.changeType match {
-        //  case RoadLinkChangeType.Replace if recognizeVersionUpgrade(change)  =>  Seq.empty[(PersistedLinearAsset, ChangeSet)] // TODO just update version
-        case RoadLinkChangeType.Replace =>
-          assets.flatMap(asset => {
-            convertToForCalculation(change, asset).map(dataForCalculation => {
-              projecting(changeSets, asset, dataForCalculation)
-            })
-          })
-        case RoadLinkChangeType.Split => sliceLoop(change, assetsAll, changeSets)
+      val result2 = change.changeType match {
         case RoadLinkChangeType.Add => operationForNewLink(change, assetsAll, changeSets) //TODO own add method  which can be override
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
-        case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
+        case _ => {
+          val oldLink = change.oldLink.get
+          val oldId = oldLink.linkId
+          val assets = assetsAll.filter(_.linkId == oldId)
+          change.changeType match {
+            //  case RoadLinkChangeType.Replace if recognizeVersionUpgrade(change)  =>  Seq.empty[(PersistedLinearAsset, ChangeSet)] // TODO just update version
+            case RoadLinkChangeType.Replace =>
+              assets.flatMap(asset => {
+                convertToForCalculation(change, asset).map(dataForCalculation => {
+                  projecting(changeSets, asset, dataForCalculation)
+                })
+              })
+            case RoadLinkChangeType.Split => sliceLoop(change, assetsAll, changeSets)
+            case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
+          }
+        }
       }
+      
       val additionalChanges = additionalUpdateOrChange(change, result2.map(_._1), foldChangeSet(result2.map(_._2), changeSets))
       // TODO after updating asset into new position do needed additional change to asset or some it other feature,
       // TODO Make sure there is no duplicate changes
+      
       result2 ++ additionalChanges
     })
 
    // val prep =  result.map(_._1).groupBy(_.linkId)
     //val changes2 = foldChangeSet(result.map(_._2), changeSets)
-
     // TODO write merger logic so that fillTopology does not need to merge consecutive asset.
     // TODO Check for small 0.001 wholes fill theses
     
@@ -275,7 +291,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     projectLinearAsset(asset.copy(linkId = info.newId.get), LinkAndLength(info.newId.get, info.newLinksLength.get),
       Projection( 
         info.oldStart, info.oldEnd, info.newStart, info.newEnd,LinearAssetUtils.createTimeStamp()
-      ), changeSets)
+      ), changeSets,info.digitizationChange)
   }
   private def selectCorrectReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
    replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
@@ -293,14 +309,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       info.oldFromMValue,
       info.oldToMValue,
       info.newFromMValue,
-      info.newToMValue
+      info.newToMValue,
+      info.digitizationChange
     ))
   }
   def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                                           typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
 
     val (filledTopology, changedSetUpdated) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
-    val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSetUpdated, linearAssets.values.flatten.toSeq)
+/*    val adjustmentsChangeSet = cleanRedundantMValueAdjustments(changedSetUpdated, linearAssets.values.flatten.toSeq)
     adjustmentsChangeSet.isEmpty match { // TODO fix this hack
       case true => filledTopology
       case false if counter > 3 =>
@@ -311,7 +328,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val linearAssetsToAdjust = filledTopology.filterNot(asset => asset.id <= 0 && asset.value.isEmpty)
         adjustLinearAssetsOnChangesGeometry(roadLinks, linearAssetsToAdjust.groupBy(_.linkId), typeId, None, counter + 1)
     }
-    
+    */
+    updateChangeSet(changedSetUpdated)
     (filledTopology, changedSetUpdated)
   }
 
@@ -329,13 +347,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       println("Saving adjustments for asset/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.assetId + "/" + a.linkId + " startmeasure: " + a.startMeasure + " endmeasure: " + a.endMeasure).mkString(", "))
     changeSet.adjustedVVHChanges.foreach { adjustment =>
       dao.updateMValuesChangeInfo(adjustment.assetId, adjustment.linkId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.timeStamp, AutoGeneratedUsername.generatedInUpdate)
-    }
-
-    if (changeSet.adjustedMValues.nonEmpty)
-      println("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId + " startmeasure: " + a.startMeasure + " endmeasure: " + a.endMeasure).mkString(", "))
-
-    changeSet.adjustedMValues.foreach { adjustment =>
-      dao.updateMValues(adjustment.assetId, adjustment.linkId, (adjustment.startMeasure, adjustment.endMeasure))
     }
     
     val ids = changeSet.expiredAssetIds.toSeq
@@ -398,11 +409,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         (linearAsset.createdBy, linearAsset.createdDateTime) match {
           case (Some(createdBy), Some(createdDateTime)) =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), AutoGeneratedUsername.generatedInUpdate, linearAsset.timeStamp,
+              Measures(linearAsset.startMeasure, linearAsset.endMeasure).roundMeasures(), AutoGeneratedUsername.generatedInUpdate, linearAsset.timeStamp,
               service.getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = service.getGeometry(roadlink))
           case _ =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), AutoGeneratedUsername.generatedInUpdate, linearAsset.timeStamp,
+              Measures(linearAsset.startMeasure, linearAsset.endMeasure).roundMeasures(), AutoGeneratedUsername.generatedInUpdate, linearAsset.timeStamp,
               service.getLinkSource(roadlink), geometry = service.getGeometry(roadlink))
         }
 
@@ -455,13 +466,17 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
   }
 
-  def projectLinearAsset(asset: PersistedLinearAsset, to: LinkAndLength, projection: Projection, changedSet: ChangeSet): (PersistedLinearAsset, ChangeSet) = {
+  def projectLinearAsset(asset: PersistedLinearAsset, to: LinkAndLength, projection: Projection, changedSet: ChangeSet,digitizationChanges:Boolean): (PersistedLinearAsset, ChangeSet) = {
     val newLinkId = to.linkId
     val assetId = asset.linkId match {
       case to.linkId => asset.id
       case _ => 0
     }
-    val (newStart, newEnd, newSideCode) = MValueCalculator.calculateNewMValues(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
+    val (newStart, newEnd, newSideCode) = { 
+      if(digitizationChanges) {
+        MValueCalculator.calculateNewMValuesAndSideCode(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
+      } else MValueCalculator.calculateNewMValues(AssetLinearReference(asset.id, asset.startMeasure, asset.endMeasure, asset.sideCode), projection, to.length)
+    }
 
     val changeSet = assetId match {
       case 0 => changedSet

@@ -14,9 +14,7 @@ import org.joda.time.DateTime
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
   
   override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
-    // TODO here logic to generate paved road
-    // hint getPavedRoadAssetChanges, remove this method 
-
+    
     val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(change.newLinks.head.linkId), newTransaction = false).head
     
     if(roadLink.isPaved) {
@@ -43,13 +41,16 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     
   }
 
-  override def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]): Unit = {
-    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(changes.filterNot(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet)
-    val filteredLinks = links.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+  override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+    val linksOther = changes.filter(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet
+    // assume than in add case there is always one links.
+    val linksNew = changes.filter(_.changeType == RoadLinkChangeType.Add).map(_.newLinks.head.linkId).toSet
+    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksNew++linksOther)
+    val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
     val (add, other) = changes.partition(_.changeType == RoadLinkChangeType.Add)
-    val filterchanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
-    super.updateByRoadLinks(typeId, filterchanges ++ add)
-    // TODO check this filtering, check also new links
+    val filterChanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
+    val filterChangesNews = add.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
+    filterChanges ++ filterChangesNews
   }
 
 }

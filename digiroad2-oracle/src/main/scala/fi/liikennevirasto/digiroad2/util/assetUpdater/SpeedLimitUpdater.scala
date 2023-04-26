@@ -46,12 +46,16 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   }
 
 
-  override def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]) = {
-    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(changes.filterNot(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet)
+  override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
+    val linksOther = changes.filter(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet
+    // assume than in add case there is always one links.
+    val linksNew = changes.filter(_.changeType == RoadLinkChangeType.Add).map(_.newLinks.head.linkId).toSet
+    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksNew ++ linksOther)
     val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
     val (add, other) = changes.partition(_.changeType == RoadLinkChangeType.Add)
-    val filterchanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
-    super.updateByRoadLinks(typeId, filterchanges ++ add)
+    val filterChanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
+    val filterChangesNews = add.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
+    filterChanges ++ filterChangesNews
   }
   
   // TODO standardize speedlimit
