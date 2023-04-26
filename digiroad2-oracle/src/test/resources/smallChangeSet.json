@@ -589,9 +589,9 @@
         "newLinkId": "eca24369-a77b-4e6f-875e-57dc85176003:1",
         "oldFromMValue": 0,
         "oldToMValue": 18.082,
-        "newFromMValue": 0,
-        "newToMValue": 18.082,
-        "digitizationChange": false
+        "newFromMValue": 18.082,
+        "newToMValue": 0,
+        "digitizationChange": true
       }
     ]
   },
@@ -722,12 +722,12 @@
     ],
     "replaceInfo": [
       {
-        "oldLinkId": "b05075a5-45e1-447e-9813-752ba3e07fe5:1",
+        "oldLinkId": "9d23b85a-d7bf-4c6f-83ff-aa391ff4879f:1",
         "newLinkId": "fbea6a9c-6682-4a1b-9807-7fb11a67e227:1",
         "oldFromMValue": 0.0,
-        "oldToMValue": 42.5908355484,
-        "newFromMValue": 623.5620521019,
-        "newToMValue": 666.1528876503,
+        "oldToMValue": 580.2148170854,
+        "newFromMValue": 0.0,
+        "newToMValue": 580.2148170854,
         "digitizationChange": false
       }
     ]

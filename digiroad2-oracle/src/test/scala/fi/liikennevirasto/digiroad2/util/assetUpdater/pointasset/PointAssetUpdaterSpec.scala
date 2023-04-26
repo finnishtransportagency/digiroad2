@@ -1,12 +1,15 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
+import fi.liikennevirasto.digiroad2.FloatingReason.NoRoadLinkFound
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, FloatingReason, PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PostGISPedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{ObstacleService, PedestrianCrossingService, RailwayCrossingService}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
+import fi.liikennevirasto.digiroad2._
+import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
@@ -15,6 +18,14 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
   case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: String,
                                      mValue: Double, floating: Boolean, timeStamp: Long, linkSource: LinkGeomSource,
                                      propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
+
+  case class testPedestrianCrossing(override val id: Long, override val linkId: String,
+                                    override val lon: Double, override val lat: Double, override val mValue: Double,
+                                    override val floating: Boolean, override val timeStamp: Long, override val municipalityCode: Int,
+                                    override val propertyData: Seq[Property], override val createdBy: Option[String] = None,
+                                    override val createdAt: Option[DateTime] = None, override val modifiedBy: Option[String] = None,
+                                    override val modifiedAt: Option[DateTime] = None, override val expired: Boolean = false,
+                                    override val linkSource: LinkGeomSource) extends PersistedPoint
 
   val roadLinkChangeClient = new RoadLinkChangeClient
   val source: scala.io.BufferedSource = scala.io.Source.fromFile("digiroad2-oracle/src/test/resources/smallChangeSet.json")
@@ -50,18 +61,14 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
     val corrected1 = updater.correctPersistedAsset(asset1, change)
     val corrected2 = updater.correctPersistedAsset(asset2, change)
 
-    corrected1.nonEmpty should be(true)
-    val update1 = corrected1.get
-    val distanceToOldLocation1 = Point(update1.lon, update1.lat).distance2DTo(Point(asset1.lon, asset1.lat))
-    update1.linkId should be(newLinkId1)
-    update1.floating should be(false)
+    val distanceToOldLocation1 = Point(corrected1.lon, corrected1.lat).distance2DTo(Point(asset1.lon, asset1.lat))
+    corrected1.linkId should be(newLinkId1)
+    corrected1.floating should be(false)
     distanceToOldLocation1 should be < updater.MaxDistanceDiffAllowed
 
-    corrected2.nonEmpty should be(true)
-    val update2 = corrected2.get
-    val distanceToOldLocation2 = Point(update2.lon, update2.lat).distance2DTo(Point(asset2.lon, asset2.lat))
-    update2.linkId should be(newLinkId2)
-    update2.floating should be(false)
+    val distanceToOldLocation2 = Point(corrected2.lon, corrected2.lat).distance2DTo(Point(asset2.lon, asset2.lat))
+    corrected2.linkId should be(newLinkId2)
+    corrected2.floating should be(false)
     distanceToOldLocation2 should be < updater.MaxDistanceDiffAllowed
   }
 
@@ -75,21 +82,17 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
     val asset1 = testPersistedPointAsset(1, 391925.80082758254, 6672841.181664083, 91, oldLinkId1,
       7.114809035180554, true, 0, NormalLinkInterface)
     val corrected1 = updater.correctPersistedAsset(asset1, change1)
-    corrected1.nonEmpty should be(true)
-    val update1 = corrected1.get
-    update1.floating should be(false)
-    update1.linkId should be(newLinkId)
-    val distanceToOldLocation1 = Point(update1.lon, update1.lat).distance2DTo(Point(asset1.lon, asset1.lat))
+    corrected1.floating should be(false)
+    corrected1.linkId should be(newLinkId)
+    val distanceToOldLocation1 = Point(corrected1.lon, corrected1.lat).distance2DTo(Point(asset1.lon, asset1.lat))
     distanceToOldLocation1 should be < updater.MaxDistanceDiffAllowed
 
     val asset2 = testPersistedPointAsset(1, 391943.08929429477, 6672846.323852181, 91, oldLinkId2,
       14.134182055427011, true, 0, NormalLinkInterface)
     val corrected2 = updater.correctPersistedAsset(asset2, change2)
-    corrected2.nonEmpty should be(true)
-    val update2 = corrected2.get
-    update2.floating should be(false)
-    update2.linkId should be(newLinkId)
-    val distanceToOldLocation2 = Point(update2.lon, update2.lat).distance2DTo(Point(asset2.lon, asset2.lat))
+    corrected2.floating should be(false)
+    corrected2.linkId should be(newLinkId)
+    val distanceToOldLocation2 = Point(corrected2.lon, corrected2.lat).distance2DTo(Point(asset2.lon, asset2.lat))
     distanceToOldLocation2 should be < updater.MaxDistanceDiffAllowed
   }
 
@@ -100,11 +103,10 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
     val asset = testPersistedPointAsset(1, 379539.5523067349, 6676588.239922434, 49, oldLinkId,
       0.7993821710321284, true, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
-    corrected.nonEmpty should be(true)
-    val update = corrected.get
-    update.floating should be(false)
-    update.linkId should be(newLinkId)
-    val distanceToOldLocation = Point(update.lon, update.lat).distance2DTo(Point(asset.lon, asset.lat))
+
+    corrected.floating should be(false)
+    corrected.linkId should be(newLinkId)
+    val distanceToOldLocation = Point(corrected.lon, corrected.lat).distance2DTo(Point(asset.lon, asset.lat))
     distanceToOldLocation should be < updater.MaxDistanceDiffAllowed
   }
 
@@ -114,11 +116,9 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
     val asset = testPersistedPointAsset(1, 370243.9245965985, 6670363.935476765, 49, oldLinkId,
       35.833489781349485, true, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
-    corrected.nonEmpty should be(true)
 
-    val update = corrected.get
-    val distanceToOldLocation = Point(update.lon, update.lat).distance2DTo(Point(asset.lon, asset.lat))
-    update.floating should be(false)
+    val distanceToOldLocation = Point(corrected.lon, corrected.lat).distance2DTo(Point(asset.lon, asset.lat))
+    corrected.floating should be(false)
     distanceToOldLocation should be < updater.MaxDistanceDiffAllowed
   }
 
@@ -128,9 +128,9 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
     val asset = testPersistedPointAsset(1, 370235.4591063613, 6670366.945428849, 49, oldLinkId,
       44.83222354244527, false, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
-    corrected.nonEmpty should be(true)
-    corrected.get.floating should be(true)
-    corrected.get.floatingReason should be(Some(FloatingReason.DistanceToRoad))
+
+    corrected.floating should be(true)
+    corrected.floatingReason should be(Some(FloatingReason.DistanceToRoad))
   }
 
 
@@ -142,12 +142,11 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       123.74459961959604, true, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
 
-    corrected.nonEmpty should be(true)
-    corrected.get.floating should be(false)
-    corrected.get.linkId should not be oldLinkId
-    corrected.get.linkId should be(newLinkId)
-    corrected.get.lon should be(asset.lon)
-    corrected.get.lat should be(asset.lat)
+    corrected.floating should be(false)
+    corrected.linkId should not be oldLinkId
+    corrected.linkId should be(newLinkId)
+    corrected.lon should be(asset.lon)
+    corrected.lat should be(asset.lat)
   }
 
   test("New link has different municipality than asset: asset is marked as floating") {
@@ -158,10 +157,9 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       123.74459961959604, true, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
 
-    corrected.nonEmpty should be(true)
-    corrected.get.floating should be(true)
-    corrected.get.floatingReason should be(Some(FloatingReason.DifferentMunicipalityCode))
-    corrected.get.linkId should be(oldLinkId)
+    corrected.floating should be(true)
+    corrected.floatingReason should be(Some(FloatingReason.DifferentMunicipalityCode))
+    corrected.linkId should be(oldLinkId)
   }
 
   test("Link removed without no replacement: asset is marked as floating") {
@@ -171,9 +169,8 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       14.033238836181871, true, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
 
-    corrected.nonEmpty should be(true)
-    corrected.get.floating should be(true)
-    corrected.get.floatingReason should be(Some(FloatingReason.NoRoadLinkFound))
+    corrected.floating should be(true)
+    corrected.floatingReason should be(Some(FloatingReason.NoRoadLinkFound))
   }
 
   test("New link is too far from asset and no new location can be calculated: asset is marked as floating") {
@@ -183,8 +180,42 @@ class PointAssetUpdaterSpec extends FunSuite with Matchers {
       7.114809035180554, false, 0, NormalLinkInterface)
     val corrected = updater.correctPersistedAsset(asset, change)
 
-    corrected.nonEmpty should be(true)
-    corrected.get.floating should be(true)
-    corrected.get.floatingReason should be(Some(FloatingReason.DistanceToRoad))
+    corrected.floating should be(true)
+    corrected.floatingReason should be(Some(FloatingReason.DistanceToRoad))
+  }
+
+  test("correct change report is formed for floating asset") {
+    val oldLinkId = "7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"
+    val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+    val property = Property(1, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+    val oldAsset = testPedestrianCrossing(1, oldLinkId, 366414.9482441691, 6674451.461887036, 14.033238836181871, false,
+      0L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val assetUpdate = AssetUpdate(1,366414.9482441691,6674451.461887036,oldLinkId,14.033238836181871,None,None,1680689415467L,true,Some(NoRoadLinkFound))
+    val newAsset = testPedestrianCrossing(1, oldLinkId, assetUpdate.lon, assetUpdate.lat, assetUpdate.mValue, true,
+      1L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val reportedChange = updater.reportChange(oldAsset, newAsset, Floating, change, assetUpdate)
+    reportedChange.linkId should be(oldLinkId)
+    reportedChange.before.assetId should be(1)
+    reportedChange.after.head.assetId should be(1)
+    reportedChange.after.head.floatingReason.get should be(NoRoadLinkFound)
+    reportedChange.after.head.values should be(s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""")
+  }
+
+  test("correct change report is formed for moved asset") {
+    val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+    val newLinkId = "6eec9a4a-bcac-4afb-afc8-f4e6d40ec571:1"
+    val property = Property(1, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+    val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+    val oldAsset = testPedestrianCrossing(1, oldLinkId, 370243.9245965985, 6670363.935476765, 35.83348978134948549, false,
+      0L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val assetUpdate = AssetUpdate(1,370243.8824352341,6670361.792711945, newLinkId,35.2122522338214,None,None,1L,false,None)
+    val newAsset = testPedestrianCrossing(1, newLinkId, assetUpdate.lon, assetUpdate.lat, assetUpdate.mValue, false,
+      1L, 49, Seq(property), None, None, None, None, false, NormalLinkInterface)
+    val reportedChange = updater.reportChange(oldAsset, newAsset, Move, change, assetUpdate)
+    reportedChange.linkId should be(oldLinkId)
+    reportedChange.before.assetId should be(1)
+    reportedChange.after.head.assetId should be(1)
+    reportedChange.after.head.floatingReason should be(None)
+    reportedChange.after.head.values should be(s"""[{"id":1,"publicId":"suggest_box","propertyType":"checkbox","required":false,"values":[{"propertyValue":"0","propertyDisplayValue":null}],"groupedId":0}]""")
   }
 }

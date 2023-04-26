@@ -68,6 +68,12 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val timeStamp: Long
   val linkSource: LinkGeomSource
   val propertyData: Seq[Property]
+
+  def getValidityDirection: Option[Int] = None
+  def getBearing: Option[Int] = None
+  def getProperty(property: String) : Option[PropertyValue] =
+    this.propertyData.find(_.publicId == property).getOrElse(throw new NoSuchElementException("Property not found"))
+      .values.map(_.asInstanceOf[PropertyValue]).headOption
 }
 
 trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
@@ -95,8 +101,8 @@ trait LightGeometry {
 }
 
 case class AssetUpdate(assetId: Long, lon: Double, lat: Double, linkId: String, mValue: Double,
-                       timeStamp: Long, floating: Boolean, floatingReason: Option[FloatingReason] = None)
-
+                       validityDirection: Option[Int], bearing: Option[Int], timeStamp: Long,
+                       floating: Boolean, floatingReason: Option[FloatingReason] = None)
 
 trait  PointAssetOperations{
   type IncomingAsset <: IncomingPointAsset
