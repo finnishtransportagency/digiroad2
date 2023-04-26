@@ -4,10 +4,12 @@ const assert = chai.assert;
 
 const {S3Service} = require('../../dist/service/s3-service');
 
+// Non-existent bucket used so that S3Service constructor won't throw error
+process.env.CHANGE_BUCKET = "test";
+
 describe('S3 service', function() {
     // Set up test service
-    const testService = sinon.createStubInstance(S3Service);
-    testService.getChangeTimeframe.restore()
+    const testService = new S3Service();
 
     afterEach(function() {
         sinon.restore();

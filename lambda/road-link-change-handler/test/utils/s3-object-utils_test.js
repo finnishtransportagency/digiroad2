@@ -2,7 +2,7 @@ const assert = require('chai').assert;
 
 const {S3ObjectUtils} = require('../../dist/utils/s3-object-utils');
 
-describe('S3 service', function() {
+describe('S3 object utils', function() {
     it('Create s3 object name from valid dates', function () {
         const oneDigitSince = '1.2.2023';
         const twoDigitUntil = '13.12.2023';
