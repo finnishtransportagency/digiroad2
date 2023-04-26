@@ -38,7 +38,12 @@ object LinearAssetTypes {
 }
 
 case class ChangedLinearAsset(linearAsset: PieceWiseLinearAsset, link: RoadLink)
-case class Measures(startMeasure: Double, endMeasure: Double)
+case class Measures(startMeasure: Double, endMeasure: Double){
+  def roundMeasures(): Measures = {
+    val exponentOfTen = Math.pow(10, 3)
+    Measures(Math.round(startMeasure * exponentOfTen).toDouble / exponentOfTen,Math.round(endMeasure * exponentOfTen).toDouble / exponentOfTen)
+  }
+}
 
 trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
