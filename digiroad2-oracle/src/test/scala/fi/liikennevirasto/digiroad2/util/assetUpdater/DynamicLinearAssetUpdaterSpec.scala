@@ -1,4 +1,4 @@
-/*
+/* TODO add test for dynamic properties
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._

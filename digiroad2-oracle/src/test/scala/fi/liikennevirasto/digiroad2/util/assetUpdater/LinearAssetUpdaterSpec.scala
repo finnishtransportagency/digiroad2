@@ -863,6 +863,23 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
 
+  
+  test("case 8 Road changes to two ways "){
+    fail("Need to be implemented")
+  }
+  test("case 9 Road changes to one ways, only one asset") {
+    fail("Need to be implemented")
+  }
+
+  test("case 10 Road changes to one ways and there more than one asset to both direction ") {
+    fail("Need to be implemented")
+  }
+
+  test("case 11 Roads digitization direction changes") {
+    fail("Need to be implemented")
+  }
+  
+  
   test("case 5 asset retain all it old values, group 1 (position)") {
     fail("Need to be implemented")
   }
