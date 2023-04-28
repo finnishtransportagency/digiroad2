@@ -5,12 +5,10 @@ import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{BusStopType, MassTransitStopOperations, MassTransitStopService}
 import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedPointAsset}
-import org.slf4j.LoggerFactory
 
 class MassTransitStopUpdater(service: MassTransitStopService) extends DirectionalPointAssetUpdater(service: MassTransitStopService) {
 
   val massTransitStopDao = new MassTransitStopDao
-  val logger = LoggerFactory.getLogger(getClass)
 
   override def shouldFloat(asset: PersistedPointAsset, replaceInfo: ReplaceInfo, newLink: Option[RoadLinkInfo]): (Boolean, Option[FloatingReason]) = {
     val assetAdministrativeClass = MassTransitStopOperations.getAdministrationClass(asset.propertyData).getOrElse(Unknown)
