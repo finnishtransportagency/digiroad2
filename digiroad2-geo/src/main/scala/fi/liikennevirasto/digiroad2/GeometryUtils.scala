@@ -2,15 +2,51 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 
+
+sealed case class GeometryString( format:String,string: String)
 object GeometryUtils {
 
   // Default value of minimum distance where locations are considered to be same
   final private val DefaultEpsilon = 0.01
   final private val adjustmentTolerance = 2.0
+  final private val defaultDecimalPrecision = 3
 
   def getDefaultEpsilon(): Double = {
     DefaultEpsilon
   }
+
+  def doubleToDefaultPrecision(value: Double): Double = {
+    BigDecimal(value).setScale(defaultDecimalPrecision, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
+
+  def toDefaultPrecision(geometry: Seq[Point]): Seq[Point] = {
+    geometry.map(point => {
+      val x = doubleToDefaultPrecision(point.x)
+      val y = doubleToDefaultPrecision(point.y)
+      val z = doubleToDefaultPrecision(point.z)
+      Point(x, y, z)
+    })
+  }
+
+  def toWktLineString(geometry: Seq[Point]): GeometryString = {
+    if (geometry.nonEmpty) {
+      val segments = geometry.zip(geometry.tail)
+      val runningSum = segments.scanLeft(0.0)((current, points) => current + points._1.distance2DTo(points._2)).map(doubleToDefaultPrecision)
+      val mValuedGeometry = geometry.zip(runningSum.toList)
+      val wktString = mValuedGeometry.map {
+        case (p, newM) => p.x + " " + p.y + " " + p.z + " " + newM
+      }.mkString(", ")
+      GeometryString( "geometryWKT", "LINESTRING ZM (" + wktString + ")")
+    }
+    else
+      GeometryString("geometryWKT","")
+  }
+
+  def toWktPoint(lon: Double, lat: Double): GeometryString = {
+    val geometryWKT = "POINT (" + lon + " " + lat + ")"
+    GeometryString( "geometryWKT", geometryWKT)
+  }
+  
 
   def areMeasuresCloseEnough(measure1: Double, measure2: Double, tolerance: Double): Boolean ={
     val difference = math.abs(measure2 - measure1)
