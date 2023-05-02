@@ -609,15 +609,14 @@ class PostGISLinearAssetDao() {
   /**
     * Updates from Change Info in db.
     */
-  def updateMValuesChangeInfo(id: Long,linkId:String, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
+  def updateMValuesChangeInfo(id: Long,linkId:String, linkMeasures: Measures, timeStamp: Long, username: String): Unit = {
     println("asset_id -> " + id)
-    val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
       update LRM_POSITION
       set
         link_id = $linkId,
-        start_measure = $startMeasure,
-        end_measure = $endMeasure,
+        start_measure = ${linkMeasures.startMeasure},
+        end_measure = ${linkMeasures.endMeasure},
         modified_date = current_timestamp,
         adjusted_timestamp = $timeStamp
       where id = (
