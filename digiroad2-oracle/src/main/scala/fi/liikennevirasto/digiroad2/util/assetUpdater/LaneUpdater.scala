@@ -27,7 +27,6 @@ object LaneUpdater {
   lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
   lazy val laneService: LaneService = new LaneService(roadLinkService, new DummyEventBus, roadAddressService)
   lazy val laneWorkListService: LaneWorkListService = new LaneWorkListService()
-  val username: String = "samuutus"
   private val logger = LoggerFactory.getLogger(getClass)
   lazy val laneFiller: LaneFiller = new LaneFiller
 
