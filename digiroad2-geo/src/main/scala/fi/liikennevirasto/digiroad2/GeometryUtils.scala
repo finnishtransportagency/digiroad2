@@ -116,22 +116,6 @@ object GeometryUtils {
     else (secondSplit, firstSplit)
   }
 
-  def calculateMValueOnNewGeometry(measure: Double, oldGeometry: Seq[Point], newGeometry: Seq[Point]): Double = {
-    val point = GeometryUtils.calculatePointFromLinearReference(oldGeometry, measure).get
-    val measureOnNewGeometry = GeometryUtils.calculateLinearReferenceFromPoint(point, newGeometry)
-    measureOnNewGeometry
-  }
-
-  def calculateMValuesOnNewGeometry(startMeasure: Double, endMeasure: Double, oldGeometry: Seq[Point], newGeometry: Seq[Point]): (Double, Double) = {
-    val startPoint = GeometryUtils.calculatePointFromLinearReference(oldGeometry, startMeasure).get
-    val endPoint = GeometryUtils.calculatePointFromLinearReference(oldGeometry, endMeasure).get
-
-    val startMeasureOnNewGeometry = GeometryUtils.calculateLinearReferenceFromPoint(startPoint, newGeometry)
-    val endMeasureOnNewGeometry = GeometryUtils.calculateLinearReferenceFromPoint(endPoint, newGeometry)
-
-    (startMeasureOnNewGeometry, endMeasureOnNewGeometry)
-  }
-
   def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
     case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
     if (geometry.size < 2 || measure < 0) { None }
