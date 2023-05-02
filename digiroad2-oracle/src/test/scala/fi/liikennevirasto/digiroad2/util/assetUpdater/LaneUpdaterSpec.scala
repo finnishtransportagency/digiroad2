@@ -1,17 +1,17 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer}
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Remove, Replace}
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient, VKMClient}
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Replace
+import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneNumber, LaneProperty, LanePropertyValue, NewLane, PersistedLane}
-import fi.liikennevirasto.digiroad2.service.lane.LaneService
+import fi.liikennevirasto.digiroad2.lane._
+import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.mockito.MockitoSugar.mock
@@ -32,6 +32,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
   val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
   val roadLinkService = new RoadLinkService(mockRoadLinkClient, new DummyEventBus, new DummySerializer)
+  val laneWorkListService = new LaneWorkListService
 
 
   object LaneServiceWithDao extends LaneService(mockRoadLinkService, new DummyEventBus, mockRoadAddressService) {
@@ -387,6 +388,49 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       lanesAfterChanges.foreach(lane => {
         historyLanes.count(_.newId == lane.id) should equal(1)
       })
+    }
+  }
+
+  test("TrafficDirection changed on link, generate new main lanes, raise to work list if it has additional lanes") {
+    runWithRollback {
+      val newLinkId = "1438d48d-dde6-43db-8aba-febf3d2220c0:2"
+      val relevantChange = testChanges.find(change => change.changeType == Replace && change.newLinks.head.linkId == newLinkId).get
+      val oldLinkWithAgainstDigitizingTD = Option(relevantChange.oldLink.get.copy(trafficDirection = TrafficDirection.apply(3)))
+      val trafficDirectionChange: RoadLinkChange = relevantChange.copy(oldLink = oldLinkWithAgainstDigitizingTD)
+      val oldLink = trafficDirectionChange.oldLink.get
+
+      // Main lane towards digitizing
+      val mainLane1 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, mainLaneLanePropertiesA)
+      LaneServiceWithDao.create(Seq(mainLane1), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      // Main lane towards digitizing
+      val additionalLane2 = NewLane(0, 0.0, oldLink.linkLength, 49, isExpired = false, isDeleted = false, subLane2Properties)
+      LaneServiceWithDao.create(Seq(additionalLane2), Set(oldLink.linkId), SideCode.AgainstDigitizing.value, testUserName)
+
+      val currentItems = laneWorkListService.getLaneWorkList
+      currentItems.size should equal(0)
+
+      LaneUpdater.updateTrafficDirectionChangesLaneWorkList(Seq(trafficDirectionChange))
+
+      val itemsAfterUpdate = laneWorkListService.workListDao.getAllItems
+      itemsAfterUpdate.size should equal(1)
+
+      val lanesOnOldLinkBefore = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
+      // Old link has one main lane and one additional lane
+      lanesOnOldLinkBefore.size should equal(2)
+
+      val changeSet = LaneUpdater.handleChanges(Seq(), Seq(trafficDirectionChange))
+      LaneUpdater.updateChangeSet(changeSet)
+
+      val lanesOnOldLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
+      // Additional lane should stay on old link
+      lanesOnOldLinkAfter.size should equal(1)
+
+      val lanesOnNewLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
+      // Two main lanes should be generated for new link
+      lanesOnNewLinkAfter.size should equal(2)
+      lanesOnNewLinkAfter.foreach(lane => LaneNumber.isMainLane(lane.laneCode) should equal(true))
+
     }
   }
 
