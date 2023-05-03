@@ -660,12 +660,10 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val linksid3 = "1d231ff5-1133-4d7d-b688-374ebcdb8f21:1"
       val change = roadLinkChangeClient.convertToRoadLinkChange(source)
 
-      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid1).get
       val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(linksid2).get
       val oldRoadLink3 = roadLinkService.getExpiredRoadLinkByLinkId(linksid3).get
       val oldMaxLength2 = 16.568
       val oldMaxLength3 = 202.283
-      val newMaxLength = 223.87217891 // ff8f3894-6312-4f38-9b51-e68ee919043a:1
 
       val id1 = createAsset(Measures(0, 8), NumericValue(5), oldRoadLink2)
       val id2 = createAsset(Measures(8, oldMaxLength2), NumericValue(6), oldRoadLink2)
@@ -706,7 +704,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-
   test("case 7, asset is split into multiple part, link merged, use Veturikatu, link position is moved into different place") {
     runWithRollback {
       val linksid1 = "1e2390ff-0910-4ffe-b1e7-2b281428e855:1"
@@ -715,8 +712,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val change = roadLinkChangeClient.convertToRoadLinkChange(source)
 
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid1).get
-      val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(linksid2).get
-      val oldRoadLink3 = roadLinkService.getExpiredRoadLinkByLinkId(linksid3).get
       val oldMaxLength = 11.715
 
       val id1 = createAsset(Measures(0, 5), NumericValue(3), oldRoadLink)
@@ -764,7 +759,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
     val oldMaxLength = linkGeometry1._2
     val oldMaxLength2 = linkGeometry2._2
-    val newMaxLength = change.head.newLinks.head.linkLength
 
     runWithRollback {
       val id1 = createAsset(Measures(0, 3), NumericValue(3), oldRoadLink)
@@ -817,7 +811,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceLenghenedFromEnd(linksid)
 
     val oldMaxLength = geometry._2
-    val newMaxLength = change.newLinks.head.linkLength
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
@@ -857,7 +850,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     val change = changeReplaceShortenedFromEnd(linksid)
     val oldMaxLength = geometry._2
-    val newMaxLength = change.newLinks.head.linkLength
+    
     runWithRollback {
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
       val id1 = createAsset(Measures(0, 6), NumericValue(3), oldRoadLink)
@@ -879,8 +872,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsAfter.head.value.get should be(NumericValue(3))
     }
   }
-
-
   
   test("case 8.1 Road changes to two ways "){
 
