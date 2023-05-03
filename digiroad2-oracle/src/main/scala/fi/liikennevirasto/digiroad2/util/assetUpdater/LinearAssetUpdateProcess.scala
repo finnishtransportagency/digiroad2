@@ -123,6 +123,7 @@ object LinearAssetUpdateProcess {
         case "road_width" => getAssetUpdater(RoadWidth.typeId).updateLinearAssets(RoadWidth.typeId)
         case "speed_limit" => getAssetUpdater(SpeedLimitAsset.typeId).updateLinearAssets(SpeedLimitAsset.typeId)
         case "road_link_properties" => roadLinkPropertyUpdater.updateProperties()
+        case "lanes" => LaneUpdater.updateLanes()
         case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
