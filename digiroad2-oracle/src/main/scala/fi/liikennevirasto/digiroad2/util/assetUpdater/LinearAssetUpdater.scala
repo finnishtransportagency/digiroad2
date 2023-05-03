@@ -345,16 +345,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     if (!oneWayTrafficDirection) {
       (segments, changeSet)
     } else {
-      val (twoSided, oneSided) = segments.partition { s => s.sideCode == SideCode.BothDirections }
+      //val (twoSided, oneSided) = segments.filter(_.id!=0).partition { s => s.sideCode == SideCode.BothDirections }
       // this assume that asset on wrong side is already dropped
+      val (generated,exist) = segments.partition(_.id==0)
+      
       val adjusted = roadLink.trafficDirection match {
-        case TrafficDirection.BothDirections => segments.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
-        case TrafficDirection.AgainstDigitizing => segments.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
-        case TrafficDirection.TowardsDigitizing => segments.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
+        case TrafficDirection.BothDirections => exist.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
+        case TrafficDirection.AgainstDigitizing => exist.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
+        case TrafficDirection.TowardsDigitizing => exist.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
       }
       //val adjusted = oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
       // TODO in old implementation side code there has not been correction when link changes to one direction, douple check do we want create it
-      (twoSided ++ adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
+      (generated++adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
     }
   }
   

@@ -334,25 +334,18 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
   test("case 1 links under asset is split") {
     val linksid = "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1"
-    
-    val newLinks = Set( 
-      roadLinkService.getRoadLinkAndComplementaryByLinkId("753279ca-5a4d-4713-8609-0bd35d6a30fa:1").get,
-      roadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1").get,
-      roadLinkService.getRoadLinkAndComplementaryByLinkId("c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1").get)
+    val newLinks = Seq( "753279ca-5a4d-4713-8609-0bd35d6a30fa:1","c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1")
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
+    
     runWithRollback {
-      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId("f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1").get
-      
-      // TODO check these mock and add method to fech expired links when needed
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(newLinks.map(_.linkId), false)).thenReturn(newLinks.toSeq)
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid).get
       val id = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.BothDirections.value, Measures(0, 56.06107671), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, changes)
-      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, newLinks.map(_.linkId).toSeq, false)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, newLinks, false)
       assetsAfter.size should be(3)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
@@ -380,13 +373,12 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid1, NumericValue(3), SideCode.BothDirections.value, Measures(0, 23.48096698), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid2, NumericValue(3), SideCode.BothDirections.value, Measures(0, 66.25297685), "testuser", 0L, Some(oldRoadLink2), false, None, None)
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
+      
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, change)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("524c67d9-b8af-4070-a4a1-52d7aec0526c:1"), false)
       assetsAfter.size should be(1)
 
@@ -636,13 +628,11 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val id4 = createAsset(Measures(30, oldMaxLength2), NumericValue(6), oldRoadLink2)
       
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2, id3, id4), false)
-
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
+      
       assetsBefore.size should be(4)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, change._1)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change._1)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("524c67d9-b8af-4070-a4a1-52d7aec0526c:1"), false)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.size should be(4)
@@ -691,38 +681,22 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val id3 = createAsset(Measures(0, 100), NumericValue(7), oldRoadLink3)
       val id4 = createAsset(Measures(100, oldMaxLength3), NumericValue(8), oldRoadLink3)
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2, id3, id4), false)
-
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid3, false)).thenReturn(Some(oldRoadLink3))
+      
       assetsBefore.size should be(4)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, change)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("ff8f3894-6312-4f38-9b51-e68ee919043a:1"), false)
-      println("before")
-      assetsBefore.sortBy(_.linkId).foreach(p => {
-        val link = Seq(oldRoadLink, oldRoadLink2, oldRoadLink3).find(_.linkId == p.linkId).get
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${link.length}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
-
-      println("after")
       val sorted = assetsAfter.sortBy(_.endMeasure)
-      sorted.foreach(p => {
-        //val link = roadLinks.find(_.linkId == p.linkId)
-        println(s"id: ${p.id}, value: ${p.value.get} , linkId: ${p.linkId}, link measure: ${newMaxLength}, startMeasure: ${p.startMeasure}, endMeasure: ${p.endMeasure}")
-      })
 
       sorted.size should be(4)
       sorted.map(v => v.value.isEmpty should be(false))
-
-      println(s"testing: ${sorted(0).id}")
+      
       // from link "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"
       sorted(0).startMeasure should be(0)
       sorted(0).endMeasure should be(102.482)
       sorted(0).value.get should be(NumericValue(7))
-
-      println(s"testing: ${sorted(1).id}")
+      
       sorted(1).startMeasure should be(102.482)
       sorted(1).endMeasure should be(207.304)
       sorted(1).value.get should be(NumericValue(8))
@@ -753,19 +727,15 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val oldRoadLink2 = roadLinkService.getExpiredRoadLinkByLinkId(linksid2).get
       val oldRoadLink3 = roadLinkService.getExpiredRoadLinkByLinkId(linksid3).get
       val oldMaxLength = 11.715
-      val newMaxLength = 223.87217891 // ff8f3894-6312-4f38-9b51-e68ee919043a:1
 
       val id1 = createAsset(Measures(0, 5), NumericValue(3), oldRoadLink)
       val id2 = createAsset(Measures(5, oldMaxLength), NumericValue(4), oldRoadLink)
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
-
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid1, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid2, false)).thenReturn(Some(oldRoadLink2))
-      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid3, false)).thenReturn(Some(oldRoadLink3))
+      
       assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, change)
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("619d3fb8-056c-4745-8988-d143c29af659:1"), false)
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
