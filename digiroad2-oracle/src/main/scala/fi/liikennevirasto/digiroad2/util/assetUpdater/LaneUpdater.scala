@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.lane.LaneNumber.isMainLane
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, MainLanePopulationProcess}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, MainLanePopulationProcess}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -313,7 +313,7 @@ object LaneUpdater {
 
     val oldLength = replaceInfo.oldToMValue - replaceInfo.oldFromMValue
     val newLength = replaceInfo.newToMValue - replaceInfo.newFromMValue
-    val roadLinkLengthRounded = (Math.round(roadLinkLength * 1000).toDouble / 1000)
+    val roadLinkLengthRounded = LaneUtils.roundMeasure(roadLinkLength)
 
     // Test if the direction has changed -> side code will be affected, too
     if (replaceInfo.digitizationChange) {
@@ -326,8 +326,8 @@ object LaneUpdater {
       if (lane.endMeasure <= replaceInfo.oldFromMValue || lane.startMeasure >= replaceInfo.oldToMValue)
         (lane.startMeasure, lane.endMeasure, newSideCode)
       else {
-        val newStartMRounded = (Math.round(newStart * 1000).toDouble / 1000)
-        val newEndMRounded = (Math.round(newEnd * 1000).toDouble / 1000)
+        val newStartMRounded = LaneUtils.roundMeasure(newStart)
+        val newEndMRounded = LaneUtils.roundMeasure(newEnd)
         (Math.min(roadLinkLengthRounded, Math.max(0.0, newStartMRounded)), Math.max(0.0, Math.min(roadLinkLengthRounded, newEndMRounded)), newSideCode)
       }
     } else {
@@ -338,8 +338,8 @@ object LaneUpdater {
       if (lane.endMeasure <= replaceInfo.oldFromMValue || lane.startMeasure >= replaceInfo.oldToMValue) {
         (lane.startMeasure, lane.endMeasure, lane.sideCode)
       } else {
-        val newStartMRounded = (Math.round(newStart * 1000).toDouble / 1000)
-        val newEndMRounded = (Math.round(newEnd * 1000).toDouble / 1000)
+        val newStartMRounded = LaneUtils.roundMeasure(newStart)
+        val newEndMRounded = LaneUtils.roundMeasure(newEnd)
         (Math.min(roadLinkLengthRounded, Math.max(0.0, newStartMRounded)), Math.max(0.0, Math.min(roadLinkLengthRounded, newEndMRounded)), lane.sideCode)
       }
     }
@@ -367,7 +367,7 @@ object LaneUpdater {
         val newSideCode = if(replaceInfo.digitizationChange) switch(SideCode.apply(originalMainLane.sideCode)).value
         else originalMainLane.sideCode
         val splitLaneStartMeasure = 0.0
-        val splitLaneEndMeasure = Math.round(replaceInfo.newToMValue * 1000).toDouble / 1000
+        val splitLaneEndMeasure = LaneUtils.roundMeasure(replaceInfo.newToMValue)
         originalMainLane.copy(id = 0, linkId = replaceInfo.newLinkId, sideCode = newSideCode, startMeasure = splitLaneStartMeasure, endMeasure = splitLaneEndMeasure)
       })
       LaneSplit(splitMainLanesToCreate, originalMainLane)

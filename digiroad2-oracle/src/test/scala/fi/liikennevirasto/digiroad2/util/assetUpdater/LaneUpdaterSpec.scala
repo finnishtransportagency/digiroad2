@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
 import org.scalatest.mockito.MockitoSugar
@@ -167,7 +167,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       createdLanesOnNewLinks.foreach(lane => {
         val roadLink = newRoadLinks.find(_.linkId == lane.linkId).get
         lane.startMeasure should equal(0)
-        lane.endMeasure should equal(Math.round(roadLink.length * 1000).toDouble / 1000)
+        lane.endMeasure should equal(LaneUtils.roundMeasure(roadLink.length))
         lane.laneCode should equal(1)
         val laneType = LaneServiceWithDao.getPropertyValue(lane, "lane_type").get.value
         laneType should equal("1")
@@ -211,7 +211,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val mainLanesAfterChanges = lanesAfterChanges.filter(_.laneCode == MainLane.oneDigitLaneCode)
       mainLanesAfterChanges.foreach(mainLane => {
         mainLane.startMeasure should equal(0.0)
-        mainLane.endMeasure should equal(Math.round(newRoadLink.length * 1000).toDouble / 1000)
+        mainLane.endMeasure should equal(LaneUtils.roundMeasure(newRoadLink.length))
       })
 
       // Additional lane measures or side code should have not changed
@@ -276,7 +276,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       mainLanesAfterChanges.foreach(mainLane => {
         val newRoadLink = relevantChange.flatMap(_.newLinks).find(_.linkId == mainLane.linkId).get
         mainLane.startMeasure should equal (0.0)
-        mainLane.endMeasure should equal (Math.round(newRoadLink.linkLength * 1000).toDouble / 1000)
+        mainLane.endMeasure should equal (LaneUtils.roundMeasure(newRoadLink.linkLength))
       })
 
       // Verify additional lane changes
@@ -327,7 +327,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
           case linkId if linkId == oldLinkId3 => mainLaneLanePropertiesC
           case linkId if linkId == oldLinkId4 => mainLaneLanePropertiesD
         }
-        val oldLinkLengthRounded = Math.round(oldLink.linkLength * 1000).toDouble / 1000
+        val oldLinkLengthRounded = LaneUtils.roundMeasure(oldLink.linkLength)
         val mainLane11 = NewLane(0, 0.0, oldLinkLengthRounded, 49, isExpired = false, isDeleted = false, propertiesToUse)
         LaneServiceWithDao.create(Seq(mainLane11), Set(oldLink.linkId), SideCode.TowardsDigitizing.value, testUserName)
         val mainLane21 = NewLane(0, 0.0, oldLinkLengthRounded, 49, isExpired = false, isDeleted = false, propertiesToUse)
