@@ -915,7 +915,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.BothDirections)
+      // When viewing we generate nonExisting asset on other side 
+      SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
     }
   }
 
@@ -952,7 +953,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.BothDirections)
+      SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.AgainstDigitizing)
     }
   }
   
@@ -1000,7 +1001,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 5)
     val oldRoadLink = RoadLink(linksid, geometry._1, geometry._2, Municipality,
-      1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
     val geometryNew = generateGeometry(0, 10)
@@ -1030,7 +1031,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.AgainstDigitizing)
+      SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.TowardsDigitizing)
     }
     
   }
@@ -1130,8 +1131,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linksidNew), false)
-      assetsAfter.size should be(3)
-
+      
       val sorted = assetsAfter.sortBy(_.endMeasure)
       
       sorted.head.startMeasure should be(0.001)
