@@ -79,28 +79,6 @@ object LaneUpdater {
     }
   }
 
-  def moveLanesToMergedRoadLink(mergeChanges: Seq[RoadLinkChange], lanesOnOldLinks: Seq[PersistedLane], newMergedRoadLink: RoadLinkInfo): ChangeSet = {
-    val newLinkId = newMergedRoadLink.linkId
-    val newLinkLength = newMergedRoadLink.linkLength
-
-    val projectedLanesAndAdjustments = lanesOnOldLinks.map(lane => {
-      val relevantChange = mergeChanges.find(_.oldLink.get.linkId == lane.linkId).get
-      val relevantReplaceInfo = relevantChange.replaceInfo.find(_.oldLinkId == lane.linkId).get
-
-      val (newStartM, newEndM, newSideCode) = calculateNewMValuesAndSideCode(lane, relevantReplaceInfo, newLinkLength)
-      val laneOnMergedLink = lane.copy(linkId = newLinkId, startMeasure = newStartM, endMeasure = newEndM, sideCode = newSideCode)
-      val lanePositionAdjustment = LanePositionAdjustment(lane.id, newLinkId, newStartM, newEndM, SideCode.apply(newSideCode))
-      (laneOnMergedLink, lanePositionAdjustment)
-    })
-
-    val projectedLanes = projectedLanesAndAdjustments.map(_._1)
-    val lanePositionAdjustments = projectedLanesAndAdjustments.map(_._2)
-
-    val (fusedLanes, changeSetWithFusedLanes) = fuseLanesOnMergedRoadLink(projectedLanes, ChangeSet(positionAdjustments = lanePositionAdjustments))
-    changeSetWithFusedLanes
-  }
-
-
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
 
     def saveLanePositionAdjustments(positionAdjustments: Seq[LanePositionAdjustment]): Unit = {
@@ -258,6 +236,9 @@ object LaneUpdater {
     val oldLinkIds = roadLinkChanges.flatMap(_.oldLink).map(_.linkId)
     val oldWorkListLinkIds = workListChanges.flatMap(_.oldLink).map(_.linkId)
 
+    val newLinkIds = roadLinkChanges.flatMap(_.newLinks.map(_.linkId))
+    val newRoadLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet)
+
     val lanesOnOldRoadLinks = laneService.fetchAllLanesByLinkIds(oldLinkIds, newTransaction = false)
     val lanesOnWorkListLinks = laneService.fetchAllLanesByLinkIds(oldWorkListLinkIds, newTransaction = false)
 
@@ -265,48 +246,48 @@ object LaneUpdater {
     val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
     val trafficDirectionChangeSets = handleTrafficDirectionChange(workListChanges, workListMainLanes)
 
-    // Merge changes consist of multiple messages, group them and handle separately from rest of the changes
-    val (mergeChanges, singleMessageChanges) = roadLinkChanges.partition(roadLinkChange => {
-      val otherRoadLinkChanges = roadLinkChanges.filterNot(change => change == roadLinkChange)
-      roadLinkChangeClient.partitionMergeChanges(roadLinkChange, otherRoadLinkChanges)
-    })
-
-    val mergeChangesGrouped = mergeChanges.groupBy(_.newLinks).values.toSeq
-    val mergeChangeSets = mergeChangesGrouped.map(mergeChanges => {
-      val oldLinkIds = mergeChanges.flatMap(_.oldLink).map(_.linkId)
-      val newMergedRoadLink = mergeChanges.head.newLinks.head
-      val lanesOnOldLinks = lanesOnOldRoadLinks.filter(lane => oldLinkIds.contains(lane.linkId))
-      val changeSetWithMergeChanges = moveLanesToMergedRoadLink(mergeChanges, lanesOnOldLinks, newMergedRoadLink)
-      changeSetWithMergeChanges
-    })
-
-    val otherChangeSets = singleMessageChanges.map(change => {
+    val changeSetsAndAdjustedLanes = roadLinkChanges.map(change => {
       change.changeType match {
         case RoadLinkChangeType.Add =>
           val newLinkIds = change.newLinks.map(_.linkId)
-          // Need to fetch RoadLinks because Link Type is needed for main lane creation
-          val addedRoadLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet)
+          val addedRoadLinks = newRoadLinks.filter(roadLink => newLinkIds.contains(roadLink.linkId))
           val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
-          ChangeSet(generatedPersistedLanes = createdMainLanes)
+          (ChangeSet(generatedPersistedLanes = createdMainLanes), createdMainLanes)
         case RoadLinkChangeType.Remove =>
           val removedLinkId = change.oldLink.get.linkId
           val lanesToExpireOnRemovedLink = lanesOnOldRoadLinks.filter(_.linkId == removedLinkId).map(_.id).toSet
-          ChangeSet(expiredLaneIds = lanesToExpireOnRemovedLink)
+          (ChangeSet(expiredLaneIds = lanesToExpireOnRemovedLink), Seq())
         case RoadLinkChangeType.Replace =>
           val lanesOnReplacedLink = lanesOnOldRoadLinks.filter(lane => change.oldLink.get.linkId == lane.linkId)
-          val allLanePositionAdjustments = fillReplacementLinksWithExistingLanes(lanesOnReplacedLink, change)
-          ChangeSet(positionAdjustments = allLanePositionAdjustments)
+          val adjustmentsAndAdjustedLanes = fillReplacementLinksWithExistingLanes(lanesOnReplacedLink, change)
+          val adjustments = adjustmentsAndAdjustedLanes.map(_._1)
+          val adjustedLanes = adjustmentsAndAdjustedLanes.map(_._2)
+          (ChangeSet(positionAdjustments = adjustments), adjustedLanes)
         case RoadLinkChangeType.Split =>
           val oldRoadLink = change.oldLink.get
           val lanesOnSplitLink = lanesOnOldRoadLinks.filter(_.linkId == oldRoadLink.linkId)
-          val lanesOnSplitLinks = fillSplitLinksWithExistingLanes(lanesOnSplitLink, change)
-          ChangeSet(splitLanes = lanesOnSplitLinks)
+          val adjustmentsAndAdjustedLanes = fillSplitLinksWithExistingLanes(lanesOnSplitLink, change)
+          val adjustments = adjustmentsAndAdjustedLanes._1
+          val adjustedLanes = adjustmentsAndAdjustedLanes._2
+          (ChangeSet(splitLanes = adjustments), adjustedLanes)
       }
     })
 
+    val changeSets = changeSetsAndAdjustedLanes.map(_._1)
+    val adjustedLanes = changeSetsAndAdjustedLanes.flatMap(_._2)
+    val changeSet = (changeSets ++ trafficDirectionChangeSets).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
 
-    val changeSet = (otherChangeSets ++ mergeChangeSets ++ trafficDirectionChangeSets).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
-    changeSet
+    val lanesGroupedByLink = adjustedLanes.groupBy(_.linkId)
+
+    val fusedLanesAndChangeSet = newRoadLinks.foldLeft(Seq.empty[PersistedLane], changeSet) { case (accumulatedAdjustments, roadLink) =>
+      val (existingAssets, changedSet) = accumulatedAdjustments
+      val assetsOnRoadLink = lanesGroupedByLink.getOrElse(roadLink.linkId, Nil)
+      val (adjustedAssets, assetAdjustments) = fuseLanesOnMergedRoadLink(assetsOnRoadLink, changedSet)
+
+      (existingAssets ++ adjustedAssets, assetAdjustments)
+    }
+
+    fusedLanesAndChangeSet._2
   }
   // In case main lane's parent lanes have different start dates, we want to inherit the latest date
   def getLatestStartDatePropertiesForFusedLanes(lanesToMerge: Seq[PersistedLane]): Seq[LaneProperty] = {
@@ -391,23 +372,26 @@ object LaneUpdater {
     })
   }
 
-  def fillSplitLinksWithExistingLanes(lanesToUpdate: Seq[PersistedLane], change: RoadLinkChange): Seq[LaneSplit] = {
+  def fillSplitLinksWithExistingLanes(lanesToUpdate: Seq[PersistedLane], change: RoadLinkChange): (Seq[LaneSplit], Seq[PersistedLane]) = {
     val (mainLanesOnOldLink, additionalLanesOnOldLink) = lanesToUpdate.partition(lane => isMainLane(lane.laneCode))
     val mainLaneSplits = createSplitMainLanes(mainLanesOnOldLink, change)
     val additionalLaneSplits = calculateAdditionalLanePositionsOnSplitLinks(additionalLanesOnOldLink, change)
-    mainLaneSplits ++ additionalLaneSplits
+    val adjustments = mainLaneSplits ++ additionalLaneSplits
+    val splitLanes = adjustments.flatMap(_.lanesToCreate)
+    (adjustments, splitLanes)
   }
 
-  def fillReplacementLinksWithExistingLanes(lanesToUpdate: Seq[PersistedLane], change: RoadLinkChange): Seq[LanePositionAdjustment] = {
+  def fillReplacementLinksWithExistingLanes(lanesToUpdate: Seq[PersistedLane], change: RoadLinkChange): Seq[(LanePositionAdjustment, PersistedLane)] = {
     val newRoadLinks = change.newLinks
-    val allLaneAdjustments = newRoadLinks.flatMap(newRoadlink => {
+    newRoadLinks.flatMap(newRoadlink => {
       val replaceInfo = change.replaceInfo.find(_.newLinkId == newRoadlink.linkId).get
       val laneAdjustmentsOnLink = lanesToUpdate.map(lane => {
         val (newStartM, newEndM, newSideCode) = calculateNewMValuesAndSideCode(lane, replaceInfo, newRoadlink.linkLength)
-        LanePositionAdjustment(lane.id, newRoadlink.linkId, newStartM, newEndM, SideCode.apply(newSideCode))
+        val adjustment = LanePositionAdjustment(lane.id, newRoadlink.linkId, newStartM, newEndM, SideCode.apply(newSideCode))
+        val adjustedLane = lane.copy(linkId = newRoadlink.linkId, startMeasure = newStartM, endMeasure = newEndM, sideCode = newSideCode)
+        (adjustment, adjustedLane)
       })
       laneAdjustmentsOnLink
     })
-    allLaneAdjustments
   }
 }
