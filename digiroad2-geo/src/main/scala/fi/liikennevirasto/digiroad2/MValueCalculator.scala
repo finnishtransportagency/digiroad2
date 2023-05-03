@@ -19,7 +19,7 @@ object MValueCalculator {
     * @param newLinksLength
     * @return
     */
-  def calculateNewMValues(asset: AssetLinearReference, projection: Projection, newLinksLength: Double) = {
+  def calculateNewMValues(asset: AssetLinearReference, projection: Projection, newLinksLength: Double,digitizationChange :Boolean = false) = {
     val oldLength = projection.oldEnd - projection.oldStart
     val newLength = projection.newEnd - projection.newStart
     val linksLenght = roundMeasure(newLinksLength)
@@ -28,7 +28,7 @@ object MValueCalculator {
     val newEndMValue = projection.newEnd + (asset.endMeasure - projection.oldEnd) * factor
 
     println(s"new start $newStartMValue, new end $newEndMValue, factor number $factor")
-    if (GeometryUtils.isDirectionChangeProjection(projection)) {
+    if (digitizationChange) {
       calculateNewMValuesAndSideCode(asset,projection,linksLenght)
     }else {
       // Test if asset is affected by projection
