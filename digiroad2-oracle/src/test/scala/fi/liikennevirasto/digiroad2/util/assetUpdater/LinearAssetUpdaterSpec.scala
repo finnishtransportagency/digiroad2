@@ -1,28 +1,19 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionType
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkInfo, _}
+import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset, PieceWiseLinearAsset, RoadLink, RoadLinkForFiltopology, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, RoadLink, Value}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
-import fi.liikennevirasto.digiroad2.util.DataFixture.linearAssetService.assetFiller
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
-import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
 import java.util.UUID
-import scala.collection.immutable.Set
 import scala.collection.mutable.ListBuffer
 
 class LinearAssetUpdaterSpec extends FunSuite with Matchers {
