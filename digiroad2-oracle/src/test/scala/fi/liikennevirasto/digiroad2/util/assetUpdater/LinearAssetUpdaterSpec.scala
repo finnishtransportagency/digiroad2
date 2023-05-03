@@ -72,8 +72,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     (points.toList, GeometryUtils.geometryLength(points))
   }
 
-  def createAsset(measures: Measures, value: Value, link: RoadLink): Long = {
-    service.createWithoutTransaction(TrafficVolume.typeId, link.linkId, value, SideCode.BothDirections.value,
+  def createAsset(measures: Measures, value: Value, link: RoadLink, sideCode:SideCode = SideCode.BothDirections ): Long = {
+    service.createWithoutTransaction(TrafficVolume.typeId, link.linkId, value, sideCode.value,
       measures, "testuser", 0L, Some(link), false, None, None)
   }
 
@@ -1073,7 +1073,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
     
   }
-
+  // check for split situation
+  // and merge
   test("case 10.1 Road changes to one ways and there more than one asset to both direction ") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 5)
@@ -1095,7 +1096,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(4), SideCode.TowardsDigitizing.value, Measures(0, geometry._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1,id2), false)
-      assetsBefore.size should be(1)
+      assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdater.updateByRoadLinks(TrafficVolume.typeId, Seq(change))
@@ -1109,7 +1110,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(3))
-      SideCode.apply(assetsAfter.head.sideCode)  should be(SideCode.AgainstDigitizing)
+      SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
     }
   }
 
@@ -1148,7 +1149,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted.head.endMeasure should be(9)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get should be(NumericValue(4))
-      SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.AgainstDigitizing)
+      SideCode.apply(assetsAfter.head.sideCode) should be(SideCode.TowardsDigitizing)
     }
   }
 
