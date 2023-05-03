@@ -104,7 +104,7 @@ object SpeedLimitFiller extends AssetFiller {
     }
   }
 
-  override protected def dropShortSegments(roadLink: RoadLinkForFiltopology, speedLimits: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  override def dropShortSegments(roadLink: RoadLinkForFiltopology, speedLimits: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MinAllowedSpeedLimitLength &&
       roadLink.length > MinAllowedSpeedLimitLength }.map(_.id).toSet
     val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
@@ -136,7 +136,7 @@ object SpeedLimitFiller extends AssetFiller {
     * @param changeSet Changes done previously
     * @return List of speed limits and a change set
     */
-  override protected def fuse(roadLink: RoadLinkForFiltopology, speedLimits: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  override def fuse(roadLink: RoadLinkForFiltopology, speedLimits: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val sortedList = speedLimits.sortBy(_.startMeasure)
     if (speedLimits.nonEmpty) {
       val origin = sortedList.head
