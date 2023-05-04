@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater.pointasset
 
-import fi.liikennevirasto.digiroad2.FloatingReason.{RoadOwnerChanged, TerminalChildless}
+import fi.liikennevirasto.digiroad2.FloatingReason.{NoRoadLinkFound, RoadOwnerChanged, TerminalChildless}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
@@ -17,6 +17,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Move}
 
 class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
 
@@ -327,5 +328,75 @@ class MassTransitStopUpdaterSpec extends FunSuite with Matchers {
 
     corrected.floating should be(true)
     corrected.floatingReason should be(Some(FloatingReason.NoRoadLinkFound))
+  }
+
+  test("Correct change report is formed for floating asset") {
+    runWithRollback {
+      val oldLinkId = "7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val oldLinkInfo = change.oldLink.get
+      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality,
+        oldLinkInfo.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+      val stopId = massTransitStopService.create(NewMassTransitStop(378759.66525429586, 6672990.60914197, oldLinkId, 351,
+        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink, false)
+      val createdStop = massTransitStopService.getPersistedAssetsByIds(Set(stopId)).head
+      val corrected = updater.correctPersistedAsset(createdStop, change)
+      val newAsset = massTransitStopService.createOperation(createdStop, corrected)
+      val reportedChange = updater.reportChange(createdStop, newAsset, Floating, change, corrected)
+      reportedChange.linkId should be(oldLinkId)
+      reportedChange.before.assetId should be(stopId)
+      reportedChange.after.head.assetId should be(stopId)
+      reportedChange.after.head.floatingReason.get should be(NoRoadLinkFound)
+      reportedChange.after.head.values.nonEmpty should be(true)
+    }
+  }
+
+  test("Correct change report is formed for moved asset") {
+    runWithRollback {
+      val oldLinkId = "875766ca-83b1-450b-baf1-db76d59176be:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+      val oldLinkInfo = change.oldLink.get
+      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality,
+        oldLinkInfo.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(49)))
+      val stopId = massTransitStopService.create(NewMassTransitStop(370243.9245965985, 6670363.935476765, oldLinkId, 3289,
+        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink, false)
+      val createdStop = massTransitStopService.getPersistedAssetsByIds(Set(stopId)).head
+      val corrected = updater.correctPersistedAsset(createdStop, change)
+      val newAsset = massTransitStopService.createOperation(createdStop, corrected)
+      val reportedChange = updater.reportChange(createdStop, newAsset, Move, change, corrected)
+      reportedChange.linkId should be(oldLinkId)
+      reportedChange.before.assetId should be(stopId)
+      reportedChange.after.head.assetId should be(stopId)
+      reportedChange.after.head.floatingReason should be(None)
+      reportedChange.after.head.values.nonEmpty should be(true)
+      reportedChange.after.head.values.contains(s"""vaikutussuunta","propertyType":"single_choice","required":false,"values":[{"propertyValue":"2""") should be(true)
+    }
+  }
+
+  test("Validity direction is changed in the report") {
+    runWithRollback {
+      val oldLinkId = "291f7e18-a48a-4afc-a84b-8485164288b2:1"
+      val change = changes.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == oldLinkId).get
+
+      val oldLinkInfo = change.oldLink.get
+      val oldLink = RoadLink(oldLinkId, oldLinkInfo.geometry, oldLinkInfo.linkLength, oldLinkInfo.adminClass, oldLinkInfo.municipality,
+        oldLinkInfo.trafficDirection, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
+
+      val stopId = massTransitStopService.create(NewMassTransitStop(391942.45320008986, 6672844.827758611, oldLinkId, 23,
+        Seq(SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))))), "test", oldLink, false)
+      val createdStop = massTransitStopService.getPersistedAssetsByIds(Set(stopId)).head
+
+      val corrected = updater.correctPersistedAsset(createdStop, change)
+
+      val newAsset = massTransitStopService.createOperation(createdStop, corrected)
+      val reportedChange = updater.reportChange(createdStop, newAsset, Move, change, corrected)
+      reportedChange.linkId should be(oldLinkId)
+      reportedChange.before.assetId should be(stopId)
+      reportedChange.after.head.assetId should be(stopId)
+      reportedChange.after.head.floatingReason should be(None)
+      reportedChange.after.head.linearReference.get.validityDirection.get should be(SideCode.AgainstDigitizing.value)
+      reportedChange.after.head.values.nonEmpty should be(true)
+      reportedChange.after.head.values.contains(s"""vaikutussuunta","propertyType":"single_choice","required":false,"values":[{"propertyValue":"3""") should be(true)
+    }
   }
 }
