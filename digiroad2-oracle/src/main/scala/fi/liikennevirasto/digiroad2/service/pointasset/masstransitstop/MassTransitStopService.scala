@@ -560,10 +560,23 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.updateNumberPropertyValue(assetId, "kellumisen_syy", floatingReason.value)
   }
 
-  private def createPersistedAssetObject(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
+  override def createOperation(asset: PersistedAsset, adjustment: AssetUpdate): PersistedAsset = {
+    val adjustedProperties = asset.propertyData.map { property =>
+      (property.publicId, adjustment.validityDirection) match {
+        case ("vaikutussuunta", Some(validityDirection)) if property.values.nonEmpty =>
+          val propertyValue = property.values.head.asInstanceOf[PropertyValue]
+          if (propertyValue.propertyValue.toInt != validityDirection) {
+            property.copy(values = Seq(PropertyValue(validityDirection.toString, Some(SideCode(validityDirection).toString), propertyValue.checked)))
+          } else {
+            property
+          }
+        case _ =>
+          property
+      }
+    }
     new PersistedAsset(adjustment.assetId, asset.nationalId, adjustment.linkId, asset.stopTypes, asset.municipalityCode, adjustment.lon, adjustment.lat,
-      adjustment.mValue, asset.validityDirection, asset.bearing, asset.validityPeriod, asset.floating, asset.timeStamp,
-      asset.created, asset.modified, asset.propertyData, asset.linkSource, asset.terminalId)
+      adjustment.mValue, adjustment.validityDirection, adjustment.bearing, asset.validityPeriod, adjustment.floating, adjustment.timeStamp,
+      asset.created, asset.modified, adjustedProperties, asset.linkSource, asset.terminalId)
   }
 
   override def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetUpdate, link: RoadLinkInfo): Long = {
