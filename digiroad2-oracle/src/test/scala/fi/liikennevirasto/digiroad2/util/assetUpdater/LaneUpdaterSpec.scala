@@ -61,34 +61,6 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       geomModifiedDate = None, attributes = attributes)
   }
 
-  def debugPrint(lanesAfterChanges: Seq[PersistedLane], existingLanes: Seq[PersistedLane], relevantChange: Seq[RoadLinkChange]): Unit = {
-    lanesAfterChanges.foreach(lane => {
-      val newLink = relevantChange.head.newLinks.find(_.linkId == lane.linkId).get
-      val oldLink = relevantChange.head.oldLink.get
-      val parentLane = existingLanes.find(pl => pl.laneCode == lane.laneCode && pl.sideCode == lane.sideCode).get
-
-      val newLaneLength = lane.endMeasure - lane.startMeasure
-      val oldLaneLength = parentLane.endMeasure - parentLane.startMeasure
-      println("New ID: " + lane.id)
-      println("Old ID: " + parentLane.id)
-      println("LaneCode: " + lane.laneCode)
-      println("New LinkId: " + lane.linkId)
-      println("Old LinkId: " + parentLane.linkId)
-      println("New Link Length: " + newLink.linkLength)
-      println("Old Link Length: " + oldLink.linkLength)
-      println("New Lane Length: " + newLaneLength)
-      println("Old Lane Length: " + oldLaneLength)
-      println("New Fill percentage: " + ((newLaneLength / newLink.linkLength) * 100) + "%")
-      println("Old Fill percentage: " + ((oldLaneLength / oldLink.linkLength) * 100) + "%")
-      println("SideCode: " + lane.sideCode)
-      println("New StartM: " + lane.startMeasure)
-      println("Old StartM: " + parentLane.startMeasure)
-      println("New EndM: " + lane.endMeasure)
-      println("Old EndM: " + parentLane.endMeasure)
-      println("-----------------------------------")
-    })
-  }
-
   val mainLaneLanePropertiesA = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(1))),
     LaneProperty("lane_type", Seq(LanePropertyValue("1"))),
     LaneProperty("start_date", Seq(LanePropertyValue("1.1.1970")))
@@ -262,8 +234,6 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       // All 3 lanes should be split between two new links, main lane measures should equal new link length
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID1, newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
-
-      debugPrint(lanesAfterChanges, existingLanes, relevantChange)
 
       lanesAfterChanges.size should equal (6)
       lanesAfterChanges.count(_.linkId == newLinkID1) should equal (3)
