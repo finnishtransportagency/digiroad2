@@ -175,6 +175,7 @@ object LaneUpdater {
       }
     }
 
+    // Save fillTopology m-value adjustments
     if (changeSet.adjustedMValues.nonEmpty) {
       logger.info("Saving M-Value adjustments for lane Ids: " + changeSet.adjustedMValues.map(a => "" + a.laneId).mkString(", "))
       saveMValueAdjustment(changeSet.adjustedMValues)
