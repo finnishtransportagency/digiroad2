@@ -168,7 +168,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val overridedAdmin = AdministrativeClassDao.getExistingValues(newIds.map(_.linkId))
     val overridedTrafficDirection = TrafficDirectionDao.getExistingValues(newIds.map(_.linkId))
     val linkTypes = LinkTypeDao.getExistingValues(newIds.map(_.linkId))
-    val constructionType = ConstructionTypeDao.getExistingValues(newIds.map(_.linkId))
     
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
     
@@ -192,13 +191,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def mapChangeInfoToAsset(changes: RoadLinkChange, asset: PersistedLinearAsset) = {
     val info = changes.replaceInfo.find(fallInReplaceInfo(_, asset)).getOrElse(throw new Exception("Did not found replace info for asset"))
     val link = changes.newLinks.find(_.linkId == info.newLinkId).get
-    Some(CalculateMValueChangesInfo(
+    CalculateMValueChangesInfo(
       asset.id,
       Some(info.oldLinkId), Some(info.newLinkId),
       Some(changes.oldLink.get.linkLength), Some(link.linkLength),
       info.oldFromMValue, info.oldToMValue,
       info.newFromMValue, info.newToMValue, info.digitizationChange
-    ))
+    )
   }
   
   protected def fillNewRoadLinksWithPreviousAssetsData(assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange], changeSets: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
@@ -213,10 +212,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           change.changeType match {
             //  case RoadLinkChangeType.Replace if recognizeVersionUpgrade(change)  =>  Seq.empty[(PersistedLinearAsset, ChangeSet)] // TODO just update version
             case RoadLinkChangeType.Replace =>
-              assets.flatMap(asset => {
-                mapChangeInfoToAsset(change, asset).map(dataForCalculation => {
-                  projecting(changeSets, asset, dataForCalculation)
-                })
+              assets.map(asset => {
+                val dataForCalculation = mapChangeInfoToAsset(change, asset)
+                projecting(changeSets, asset, dataForCalculation)
               })
             case RoadLinkChangeType.Split => sliceLoop(change, assetsAll, changeSets)
             case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
@@ -244,8 +242,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val projected = change.replaceInfo.map(replaceInfo => { // slicing
         assets.head.copy(id = 0, linkId = replaceInfo.oldLinkId, startMeasure = replaceInfo.oldFromMValue, endMeasure = replaceInfo.oldToMValue)
       }).flatMap(asset => {
-        val mapping = mapChangeInfoToAsset(change, asset)
-        val findProjection = mapping.head
+        val findProjection = mapChangeInfoToAsset(change, asset)
         Seq(projecting(changeSets, asset, findProjection))
       })
       val returnedChangeSet = foldChangeSet(projected.map(_._2), changeSets)
@@ -304,10 +301,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
       val sliced: Seq[PersistedLinearAsset] = slicer(assets, change)
 
-      sliced.flatMap(asset => {
-        mapChangeInfoToAsset(change, asset).map(dataForCalculation => {
-          projecting(changeSets, asset, (dataForCalculation))
-        })
+      sliced.map(asset => {
+        val dataForCalculation=  mapChangeInfoToAsset(change, asset)
+        projecting(changeSets, asset, dataForCalculation)
       })
     }
   }
