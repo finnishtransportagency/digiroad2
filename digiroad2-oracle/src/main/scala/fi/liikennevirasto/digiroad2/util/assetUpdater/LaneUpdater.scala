@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.lane.LaneWorkListItem
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.isMainLane
 import fi.liikennevirasto.digiroad2.lane._
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, MainLanePopulationProcess}
@@ -30,6 +31,7 @@ object LaneUpdater {
   lazy val laneWorkListService: LaneWorkListService = new LaneWorkListService()
   private val logger = LoggerFactory.getLogger(getClass)
   lazy val laneFiller: LaneFiller = new LaneFiller
+  def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
   def fuseLanesOnMergedRoadLink(lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
 
@@ -162,13 +164,15 @@ object LaneUpdater {
 
 
   def updateLanes(): Unit = {
-    val lastSuccessfulSamuutus = Queries.getLatestSuccessfulSamuutus(Lanes.typeId)
-    val allRoadLinkChanges = roadLinkChangeClient.getRoadLinkChanges(lastSuccessfulSamuutus)
-    updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
-    val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
-    val changeSet = handleChanges(roadLinkChanges, workListChanges)
-    updateChangeSet(changeSet)
-    Queries.updateLatestSuccessfulSamuutus(Lanes.typeId)
+    withDynTransaction {
+      val lastSuccessfulSamuutus = Queries.getLatestSuccessfulSamuutus(Lanes.typeId)
+      val allRoadLinkChanges = roadLinkChangeClient.getRoadLinkChanges(lastSuccessfulSamuutus)
+      updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+      val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
+      val changeSet = handleChanges(roadLinkChanges, workListChanges)
+      updateChangeSet(changeSet)
+      Queries.updateLatestSuccessfulSamuutus(Lanes.typeId)
+    }
   }
 
   def updateTrafficDirectionChangesLaneWorkList(roadLinkChanges: Seq[RoadLinkChange]): Unit = {
