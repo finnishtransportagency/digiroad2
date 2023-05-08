@@ -275,28 +275,28 @@
       {
         "oldLinkId": "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1",
         "newLinkId": "753279ca-5a4d-4713-8609-0bd35d6a30fa:1",
-        "oldFromMValue": 21.1620899565,
-        "oldToMValue": 56.0610767139,
+        "oldFromMValue": 21.162,
+        "oldToMValue": 56.061,
         "newFromMValue": 0.0,
-        "newToMValue": 34.9057365328,
+        "newToMValue": 34.906,
         "digitizationChange": false
       },
       {
         "oldLinkId": "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1",
         "newLinkId": "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1",
         "oldFromMValue": 0.0,
-        "oldToMValue": 9.3336939748,
+        "oldToMValue": 9.334,
         "newFromMValue": 0.0,
-        "newToMValue": 9.333696213,
+        "newToMValue": 9.334,
         "digitizationChange": false
       },
       {
         "oldLinkId": "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1",
         "newLinkId": "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1",
-        "oldFromMValue": 9.3336939748,
-        "oldToMValue": 21.1620899565,
+        "oldFromMValue": 9.334,
+        "oldToMValue": 21.162,
         "newFromMValue": 0.0,
-        "newToMValue": 11.8412127232,
+        "newToMValue": 11.841,
         "digitizationChange": false
       }
     ]
@@ -520,9 +520,9 @@
         "oldLinkId": "d6a67594-6069-4295-a4d3-8495b7f76ef0:1",
         "newLinkId": "524c67d9-b8af-4070-a4a1-52d7aec0526c:1",
         "oldFromMValue": 0.0,
-        "oldToMValue": 23.4809669837,
+        "oldToMValue": 23.481,
         "newFromMValue": 0.0,
-        "newToMValue": 23.4762173445,
+        "newToMValue": 23.476,
         "digitizationChange": false
       }
     ]
@@ -554,9 +554,9 @@
         "oldLinkId": "7c21ce6f-d81b-481f-a67e-14778ad2b59c:1",
         "newLinkId": "524c67d9-b8af-4070-a4a1-52d7aec0526c:1",
         "oldFromMValue": 0.0,
-        "oldToMValue": 66.252976853,
-        "newFromMValue": 23.4762173445,
-        "newToMValue": 89.7282531237,
+        "oldToMValue": 66.253,
+        "newFromMValue": 23.476,
+        "newToMValue": 89.728,
         "digitizationChange": false
       }
     ]
@@ -623,7 +623,7 @@
         "newLinkId": "eca24369-a77b-4e6f-875e-57dc85176003:1",
         "oldFromMValue": 0,
         "oldToMValue": 18.701,
-        "newFromMValue": 18.082077071919834,
+        "newFromMValue": 18.082,
         "newToMValue": 36.783,
         "digitizationChange": false
       }
@@ -656,9 +656,9 @@
         "oldLinkId": "41a67ca5-886f-44ff-a9ca-92d7d9bea129:1",
         "newLinkId": "fbea6a9c-6682-4a1b-9807-7fb11a67e227:1",
         "oldFromMValue": 0.0,
-        "oldToMValue": 43.3472350165,
-        "newFromMValue": 580.2148170854,
-        "newToMValue": 623.5620521019,
+        "oldToMValue": 43.347,
+        "newFromMValue": 580.215,
+        "newToMValue": 623.562,
         "digitizationChange": false
       }
     ]
