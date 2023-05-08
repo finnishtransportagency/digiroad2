@@ -330,7 +330,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid).get
-      val id = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.BothDirections.value, Measures(0, 56.06107671), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
@@ -610,8 +610,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       val change = (changes, Seq(linksid1, linksid2).map(p => roadLinkService.getExpiredRoadLinkByLinkId(p).get))
       val oldRoadLink = change._2.find(_.linkId == linksid1).get
       val oldRoadLink2 = change._2.find(_.linkId == linksid2).get
-      val oldMaxLength = 23.48096698
-      val oldMaxLength2 = 66.25297685
+      val oldMaxLength = 23.481
+      val oldMaxLength2 = 66.253
       
       val id1 = createAsset(Measures(0, 10), NumericValue(3), oldRoadLink)
       val id2 = createAsset(Measures(10, oldMaxLength), NumericValue(4), oldRoadLink)
