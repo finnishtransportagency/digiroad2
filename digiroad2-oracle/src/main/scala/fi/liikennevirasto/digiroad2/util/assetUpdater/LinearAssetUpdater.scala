@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
 import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -57,8 +58,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       updateByRoadLinks(typeId, changes)
     }
   }
-
-  //TODO Remove after bug in combine and fuse operations is fixed
+  
   def cleanRedundantMValueAdjustments(changeSet: ChangeSet, originalAssets: Seq[PieceWiseLinearAsset]): ChangeSet = {
     val redundantFiltered = changeSet.adjustedMValues.filterNot(adjustment => {
       val originalAsset = originalAssets.find(_.id == adjustment.assetId).get
@@ -92,14 +92,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       true
     } else false
   }
+  
   protected def toRoadLinkForFilltopology(roadLink: RoadLinkInfo): RoadLinkForFiltopology = {
     RoadLinkForFiltopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = roadLink.trafficDirection /*non override version */ , administrativeClass = roadLink.adminClass /*non override version */ ,
       linkSource = NormalLinkInterface, linkType = UnknownLinkType, constructionType = UnknownConstructionType, geometry = roadLink.geometry) // can there be link of different sourse ?
   }
   
-  // TODO where shoud we do rounding,when creating or when updating?
-
-
   def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
     changes
   }
@@ -107,15 +105,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val changes = filterChanges(changesAll)
     val oldIds = changes.filterNot(isDeletedOrNew).map(_.oldLink.get.linkId)
     val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
+    
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
-
+    
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
       expiredAssetIds = existingAssets.filter(asset => deletedLinks.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
       adjustedMValues = Seq.empty[MValueAdjustment],
       adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
+    
     additionalRemoveOperationMass(deletedLinks)
+    
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(existingAssets, changes, initChangeSet)
     val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology))
     val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(projectedAssets, convertedLink).groupBy(_.linkId)
@@ -131,6 +132,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def roundMeasure(measure: Double, numberOfDecimals: Int = 3): Double = {
     val exponentOfTen = Math.pow(10, numberOfDecimals)
     Math.round(measure * exponentOfTen).toDouble / exponentOfTen
+  }
+  
+  def fallInWhenSlicing(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
+    asset.linkId == replaceInfo.oldLinkId && asset.endMeasure >= replaceInfo.oldToMValue && asset.startMeasure >= replaceInfo.oldFromMValue
+  }
+
+  def fallInReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
+    replaceInfo.oldLinkId == asset.linkId &&  replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
   }
 
   private def sliceLoop(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
@@ -162,17 +171,12 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       // Repeat operation on next links
 
       val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
-
-      def selectNearestReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
-        val condition = asset.linkId == replaceInfo.oldLinkId && asset.endMeasure >= replaceInfo.oldToMValue || asset.endMeasure <= replaceInfo.oldToMValue && asset.startMeasure >= replaceInfo.oldFromMValue
-        if (!condition) condition else condition
-      }
-
+      
       def partitioner(asset: PersistedLinearAsset, change: RoadLinkChange): Boolean = {
         // order list by oldToMValue and start looking for right replace info by looking first highest number
         // and then checking lower number until correct one is found.
         val sortedInfo = change.replaceInfo.sortBy(_.oldToMValue).reverse
-        val selectInfo = sortedInfo.find(selectNearestReplaceInfo(_, asset)).get
+        val selectInfo = sortedInfo.find(fallInWhenSlicing(_, asset)).get
         val condition = asset.endMeasure >= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
         if (condition) condition else condition
       }
@@ -182,7 +186,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         val sliced = assetGoOver._1.flatMap(a1 => {
           // order list by oldToMValue and start looking for right replace info by looking first highest number
           // and then checking lower number until correct one is found.
-          val selectInfo = change.replaceInfo.sortBy(_.oldToMValue).reverse.find(r => a1.linkId == r.oldLinkId && a1.endMeasure >= r.oldToMValue && a1.startMeasure >= r.oldFromMValue).get
+          val selectInfo = change.replaceInfo.sortBy(_.oldToMValue).reverse.find(r =>fallInWhenSlicing(r,a1)).get
           val shorted = a1.copy(endMeasure = selectInfo.oldToMValue)
           val newPart = a1.copy(id = 0, startMeasure = selectInfo.oldToMValue)
           val shortedLength = shorted.endMeasure - shorted.startMeasure
@@ -222,7 +226,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   protected def fillNewRoadLinksWithPreviousAssetsData(assetsAll: Seq[PersistedLinearAsset], changes: Seq[RoadLinkChange], changeSets: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val result = changes.flatMap(change => {
       val result2 = change.changeType match {
-        case RoadLinkChangeType.Add => operationForNewLink(change, assetsAll, changeSets) //TODO own add method  which can be override
+        case RoadLinkChangeType.Add => operationForNewLink(change, assetsAll, changeSets)
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ => {
           val oldLink = change.oldLink.get
@@ -289,12 +293,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         info.oldStart, info.oldEnd, info.newStart, info.newEnd,LinearAssetUtils.createTimeStamp()
       ), changeSets,info.digitizationChange)
   }
-  private def selectCorrectReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
-   replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
-  }
-
+  
   private def convertToForCalculation(changes: RoadLinkChange, asset: PersistedLinearAsset) = {
-    val info = changes.replaceInfo.find(selectCorrectReplaceInfo(_, asset)).getOrElse(throw new Exception("Did not found replace info for asset"))
+    val info = changes.replaceInfo.find(fallInReplaceInfo(_, asset)).getOrElse(throw new Exception("Did not found replace info for asset"))
     val link = changes.newLinks.find(_.linkId == info.newLinkId).get
     Some(CalculateMValueChangesInfo(
       asset.id,
@@ -339,14 +340,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
     }
   }
+  
   protected def adjustSegmentSideCodes(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val oneWayTrafficDirection =
       (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) || (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
     if (!oneWayTrafficDirection) {
       (segments, changeSet)
     } else {
-      //val (twoSided, oneSided) = segments.filter(_.id!=0).partition { s => s.sideCode == SideCode.BothDirections }
-      // this assume that asset on wrong side is already dropped
+   
       val (generated,exist) = segments.partition(_.id==0)
       
       val adjusted = roadLink.trafficDirection match {
@@ -354,8 +355,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         case TrafficDirection.AgainstDigitizing => exist.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
         case TrafficDirection.TowardsDigitizing => exist.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
       }
-      //val adjusted = oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
-      // TODO in old implementation side code there has not been correction when link changes to one direction, douple check do we want create it
+      
       (generated++adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
     }
   }
