@@ -80,6 +80,9 @@ object GeometryUtils {
   }
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
+    if (geometry.isEmpty) {
+      throw new Exception("Geometry is empty")
+    }
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
     (firstPoint, lastPoint)
@@ -112,7 +115,7 @@ object GeometryUtils {
       firstPoint + directionVector
     }
 
-    if (startMeasure > endMeasure) throw new IllegalArgumentException
+    if (startMeasure > endMeasure) throw new IllegalArgumentException(s"start measure is greater than end, start: ${startMeasure} end: ${endMeasure}")
     if (geometry.length == 1) throw new IllegalArgumentException
     if (geometry.isEmpty) return Nil
 

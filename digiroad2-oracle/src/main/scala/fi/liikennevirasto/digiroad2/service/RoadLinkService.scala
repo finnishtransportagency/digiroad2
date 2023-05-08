@@ -902,7 +902,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
 
       RoadLink(link.linkId, link.geometry,
-        GeometryUtils.geometryLength(link.geometry),
+        link.length,
         propertyRows.administrativeClassValue(link.linkId).getOrElse(link.administrativeClass),
         propertyRows.functionalClassValue(link.linkId),
         propertyRows.trafficDirectionValue(link.linkId).getOrElse(link.trafficDirection),
