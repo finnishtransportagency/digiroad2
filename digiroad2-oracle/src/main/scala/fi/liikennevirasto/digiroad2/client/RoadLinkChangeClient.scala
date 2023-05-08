@@ -43,15 +43,6 @@ class RoadLinkChangeClient {
   lazy val s3Bucket: String = Digiroad2Properties.roadLinkChangeS3BucketName
   val logger = LoggerFactory.getLogger(getClass)
 
-  def partitionMergeChanges(roadLinkChange: RoadLinkChange, otherRoadLinkChanges: Seq[RoadLinkChange]): Boolean = {
-    val newLinkIds = roadLinkChange.newLinks.map(_.linkId)
-    val numberOfMessagesWithSameNewRoadLinkID = if(newLinkIds.nonEmpty) {
-      otherRoadLinkChanges.count(otherChange => otherChange.newLinks.map(_.linkId).contains(newLinkIds.head))
-    } else 0
-
-    newLinkIds.size == 1 && numberOfMessagesWithSameNewRoadLinkID > 0
-  }
-
   private def lineStringToPoints(lineString: String): List[Point] = {
     val geometry = PGgeometry.geomFromString(lineString)
     val pointsList = ListBuffer[List[Double]]()
