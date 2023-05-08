@@ -162,7 +162,8 @@ object LaneUpdater {
 
 
   def updateLanes(): Unit = {
-    val allRoadLinkChanges = roadLinkChangeClient.getRoadLinkChanges()
+    val lastSuccessfulSamuutus = Queries.getLatestSuccessfulSamuutus(Lanes.typeId)
+    val allRoadLinkChanges = roadLinkChangeClient.getRoadLinkChanges(lastSuccessfulSamuutus)
     updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
     val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
     val changeSet = handleChanges(roadLinkChanges, workListChanges)
