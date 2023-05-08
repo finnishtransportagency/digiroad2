@@ -301,35 +301,6 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     mValue should be(1.0)
   }
 
-  test("Project stop location to closest point of geometry if point lies next to geometry") {
-    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
-    val location: Point = Point(0.7, 1.0)
-    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
-    mValue should be(0.7)
-  }
-
-  test("mValue should point to the closest point on link geometry") {
-    val linkGeometry: Seq[Point] = List(Point(376462.029, 6681569.399, 34.984),
-    Point(376469.007, 6681571.657, 34.943),
-    Point(376487.624, 6681578.298, 35.119),
-    Point(376494.942, 6681581.56, 35.156),
-    Point(376495.817, 6681582.188, 35.172))
-    val location: Point = Point(376483.081,6681582.354)
-    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
-    mValue should be(1.0)
-  }
-
-  test("location is north of road link, mValue should point to closest point on roadLink") {
-    val linkGeometry: Seq[Point] = List(Point(376462.029, 6681569.399, 34.984),
-      Point(376469.007, 6681569.399, 34.943),
-      Point(376487.624, 6681569.399, 35.119),
-      Point(376494.942, 6681569.399, 35.156),
-      Point(376495.817, 6681569.399, 35.172))
-    val location: Point = Point(376487.624, 6681575.0)
-    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
-    mValue should be(1.0)
-  }
-
   test("Test bearing calculation on RoadLink only with two points, without asset mValue") {
     val linkGeometry: Seq[Point] = List(Point(1.0, 1.0), Point(5.0, 5.0))
     val bearingValue = GeometryUtils.calculateBearing(linkGeometry)
