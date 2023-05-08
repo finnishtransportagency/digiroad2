@@ -7,9 +7,6 @@
         </encoder>
     </appender>
     
-    <logger name="org.apache.http" level="TRACE"/>
-    <logger name="fi.liikennevirasto.digiroad2.client" level="info"/>
-    
     <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
