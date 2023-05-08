@@ -90,14 +90,14 @@ object ChangeTypeReport {
     * For point asset
     * */
   case object Move extends ChangeType {
-    def value: Int = 7
+    def value: Int = 6
   }
 
   /**
     * For point asset
     * */
   case object Floating extends ChangeType {
-    def value: Int = 8
+    def value: Int = 7
   }
 }
 
