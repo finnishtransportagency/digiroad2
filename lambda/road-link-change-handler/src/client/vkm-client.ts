@@ -1,16 +1,10 @@
-import {AxiosInstance} from "axios";
-import array from "lodash";
 import {ClientBase} from "./client-base";
-import {Utils} from "../utils/utils";
 
 export class VkmClient extends ClientBase {
     private readonly url: string;
     private readonly apiKey: string;
 
-    private readonly convertPath  = "muunna";
     private readonly changesPath  = "tiekamu";
-
-    private readonly maxBatchSize = 100;
 
     constructor() {
         if (!process.env.VKM_API_URL || !process.env.VKM_API_KEY) {
@@ -21,83 +15,38 @@ export class VkmClient extends ClientBase {
         this.apiKey = process.env.VKM_API_KEY;
     }
 
-
     /**
      * Fetch changes happened during time period
      * @param since
      * @param until
      */
-    async fetchChanges(since: string, until: string): Promise<string[]> {
+    async fetchChanges(since: string, until: string): Promise<ReplaceInfo[]> {
         const instance = await this.createInstance(this.url, this.apiKey);
-        // TODO: Add new parameters for filtering road address changes and for pagination of results(?)
         const json = {
             tilannepvm: since,
-            asti: until,
-            palautusarvot: "6"
+            kohdepvm: until,
+            palautusarvot: "7"
         };
         const response = await this.getRequest(instance, this.changesPath, json) as TiekamuResponse;
-        return response.features.reduce((array: string[], feature: TiekamuFeature) => {
-            if (feature.properties.virheet) console.error(`Tiekamu responded with error: ${feature.properties.virheet}`);
-            else array.push(feature.properties.kmtk_id);
+        return response.features.reduce((array: ReplaceInfo[], feature: TiekamuFeature) => {
+            if (feature.properties.virheet) {
+                console.error(`Tiekamu responded with error: ${feature.properties.virheet}`);
+            } else if (feature.properties.link_id === feature.properties.link_id_kohdepvm) {
+                console.error(`Skipping change. Kmtk_id and kmtk_id_historia are both: ${feature.properties.link_id }`);
+            } else array.push(this.tiekamuResponseToReplaceInfo(feature.properties));
             return array;
         }, []);
     }
 
-    /**
-     * Get new situation for changed link ids
-     */
-    async replacementsForLinks(since: string, until: string, oldLinkIds: string[]): Promise<ReplaceInfo[]> {
-        if (!oldLinkIds.length) return [];
-
-        const instance = await this.createInstance(this.url, this.apiKey, "application/x-www-form-urlencoded; charset=UTF-8");
-
-        const uniqueIds = [...new Set(oldLinkIds)];
-        const batches = array.chunk(uniqueIds, this.maxBatchSize);
-        const promises = batches.map(batch => this.fetchReplacements(batch, since, until, instance));
-        const results = await Promise.allSettled(promises);
-        const succeeded = Utils.checkResultsForErrors(results, "Unable to fetch road links") as QueryResult[];
-        return this.extractReplacements(succeeded);
-    }
-
-    protected async fetchReplacements(linkIds: string[], since: string, until: string, instance: AxiosInstance): Promise<QueryResult> {
-        const json = linkIds.map(linkId => {
-            return {
-                kmtk_id: linkId,
-                tilannepvm: since,
-                palautusarvot: "6",
-                valihaku: "true" };
-        });
-        const result = await this.postRequest(instance, this.convertPath, {json: JSON.stringify(json)});
-        return {
-            featureCollection: result,
-            queryIds: linkIds
-        }
-    }
-
-    protected extractReplacements(results: QueryResult[]): Array<ReplaceInfo> {
-        return results.map(result => {
-            const collection = result.featureCollection;
-            const ids = result.queryIds;
-            let idIndex = 0;
-            return collection.features.reduce((array: Array<ReplaceInfo>, feature: VkmFeature) => {
-                const properties = feature.properties;
-                if (properties.hasOwnProperty('virheet')) {
-                    console.error(`${ids[idIndex]}: ${properties.virheet}`);
-                    idIndex += 1;
-                } else {
-                    if (properties.kmtk_id === properties.kmtk_id_historia) {
-                        console.error(`Skipping change. Kmtk_id and kmtk_id_historia are both: ${properties.kmtk_id}`);
-                    } else array.push(this.propertiesToReplaceInfo(properties));
-                    idIndex = ids.indexOf(properties.kmtk_id_historia) + 1;
-                }
-                return array;
-            }, []);
-        }).flat(1);
-    }
-
-    protected propertiesToReplaceInfo(properties: VkmProperties): ReplaceInfo {
-        return new ReplaceInfo(properties.kmtk_id_historia, properties.kmtk_id, properties.m_arvo_alku_historia,
-            properties.m_arvo_loppu_historia, properties.m_arvo, properties.m_arvo_loppu);
+    protected tiekamuResponseToReplaceInfo(properties: TiekamuProperties): ReplaceInfo {
+        return new ReplaceInfo(
+            properties.link_id,
+            properties.link_id_kohdepvm,
+            properties.m_arvo_alku,
+            properties.m_arvo_loppu,
+            properties.m_arvo_alku_kohdepvm,
+            properties.m_arvo_loppu_kohdepvm
+        );
     }
 }
 
@@ -120,40 +69,10 @@ export class ReplaceInfo {
         this.digitizationChange = this.digitizationHasChanged(oldFromM, oldToM, newFromM, newToM);
     }
 
-    protected digitizationHasChanged(oldStart?: number, oldEnd?: number,
-                                          newStart?: number, newEnd?: number): boolean {
+    protected digitizationHasChanged(oldStart?: number, oldEnd?: number, newStart?: number, newEnd?: number): boolean {
         if (oldStart == undefined || oldEnd == undefined || newStart == undefined || newEnd == undefined) return false;
         return ((oldEnd - oldStart) * (newEnd - newStart)) < 0;
     }
-}
-
-interface QueryResult {
-    featureCollection       : VkmResponse;
-    queryIds                : Array<string>;
-}
-
-interface VkmResponse {
-    type                    : string;
-    features                : Array<VkmFeature>;
-}
-
-interface VkmFeature {
-    type                    : string;
-    geometry                : object;
-    properties              : VkmProperties;
-}
-
-interface VkmProperties {
-    kmtk_id                 : string;
-    kmtk_id_loppu           : string;
-    kmtk_id_historia        : string;
-    m_arvo                  : number;
-    m_arvo_loppu            : number;
-    m_arvo_alku_historia    : number;
-    m_arvo_loppu_historia   : number;
-    vertikaalisuhde         : number;
-    vertikaalisuhde_loppu   : number;
-    virheet                 ?: string;
 }
 
 interface TiekamuResponse {
@@ -168,10 +87,11 @@ interface TiekamuFeature {
 }
 
 interface TiekamuProperties {
-    kmtk_id                 : string;
-    link_id                 ?: number;
-    m_arvo                  : number;
-    m_arvo_loppu            : number;
-    loppupvm                : string;
+    link_id                 ?: string;
+    m_arvo_alku             ?: number;
+    m_arvo_loppu            ?: number;
+    link_id_kohdepvm        ?: string;
+    m_arvo_alku_kohdepvm    ?: number;
+    m_arvo_loppu_kohdepvm   ?: number;
     virheet                 ?: string;
 }
