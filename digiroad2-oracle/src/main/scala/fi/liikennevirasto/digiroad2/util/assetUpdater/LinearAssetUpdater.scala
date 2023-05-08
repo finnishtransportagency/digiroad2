@@ -6,8 +6,8 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.UnknownConstructionTy
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.Queries
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadLinkValue}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, LinkTypeDao, TrafficDirectionDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -105,10 +105,18 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def fallInReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
     replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
   }
-  
-  protected def toRoadLinkForFilltopology(roadLink: RoadLinkInfo): RoadLinkForFiltopology = {
-    RoadLinkForFiltopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = roadLink.trafficDirection /*non override version */ , administrativeClass = roadLink.adminClass /*non override version */ ,
-      linkSource = NormalLinkInterface, linkType = UnknownLinkType, constructionType = UnknownConstructionType, geometry = roadLink.geometry) // can there be link of different sourse ?
+
+  protected def toRoadLinkForFilltopology(roadLink: RoadLinkInfo)(trafficDirectionOverrideds: Seq[RoadLinkValue], adminClassOverrideds: Seq[RoadLinkValue], linkTypes: Seq[RoadLinkValue]): RoadLinkForFiltopology = {
+    val overridedAdminClass = adminClassOverrideds.find(_.linkId == roadLink.linkId)
+    val overridedDirection = trafficDirectionOverrideds.find(_.linkId == roadLink.linkId)
+    val linkType = linkTypes.find(_.linkId == roadLink.linkId)
+    
+    val adminClass = if (overridedAdminClass.nonEmpty) {AdministrativeClass.apply(overridedAdminClass.get.value.get)} else roadLink.adminClass
+    val trafficDirection = if (overridedDirection.nonEmpty) {TrafficDirection.apply(overridedDirection.get.value)} else roadLink.trafficDirection
+    val linkTypeExtract = if (linkType.nonEmpty) {LinkType.apply(linkType.get.value.get)} else UnknownLinkType
+
+    RoadLinkForFiltopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = trafficDirection, administrativeClass = adminClass,
+      linkSource = NormalLinkInterface, linkType = linkTypeExtract, constructionType = UnknownConstructionType, geometry = roadLink.geometry)
   }
   protected def convertToPersisted(asset: PieceWiseLinearAsset): PersistedLinearAsset = {
     PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value,
@@ -118,7 +126,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   // TODO override with your needed additional logic
-  
   def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
     changes
   }
@@ -154,7 +161,14 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]): Unit = {
     val changes = filterChanges(changesAll)
     val oldIds = changes.filterNot(isDeletedOrNew).map(_.oldLink.get.linkId)
+    val newIds = changes.filterNot(isDeletedOrNew).flatMap(_.newLinks)
     val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
+    // here we assume that RoadLinkProperties updater has already remove override if KMTK version traffic direction is same.
+    // still valid overrided has been samuuted also
+    val overridedAdmin = AdministrativeClassDao.getExistingValues(newIds.map(_.linkId))
+    val overridedTrafficDirection = TrafficDirectionDao.getExistingValues(newIds.map(_.linkId))
+    val linkTypes = LinkTypeDao.getExistingValues(newIds.map(_.linkId))
+    val constructionType = ConstructionTypeDao.getExistingValues(newIds.map(_.linkId))
     
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
     
@@ -168,7 +182,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     additionalRemoveOperationMass(deletedLinks)
     
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(existingAssets, changes, initChangeSet)
-    val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology))
+    val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology(_)(overridedAdmin,overridedTrafficDirection,linkTypes)))
     val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(projectedAssets, convertedLink).groupBy(_.linkId)
     val adjusted = adjustLinearAssetsOnChangesGeometry(convertedLink, groupedAssets, typeId, Some(changedSet))
     persistProjectedLinearAssets(adjusted._1.map(convertToPersisted).filter(_.id == 0L))
