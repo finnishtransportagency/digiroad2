@@ -35,7 +35,7 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     val changeReport = ChangeReport(PedestrianCrossings.typeId, Seq(changedAsset))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport, true)
     val contents = csv.split("\\\n")(2)
-    contents.startsWith(s"200,8,2,remove,1,POINT (366414.9482441691 6674451.461887036),") should be(true)
+    contents.startsWith(s"200,7,2,remove,1,POINT (366414.9482441691 6674451.461887036),") should be(true)
     contentRows should be(1)
   }
 
@@ -49,7 +49,7 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     val changeReport = ChangeReport(PedestrianCrossings.typeId, Seq(changedAsset))
     val (csv, contentRows) = ChangeReporter.generateCSV(changeReport)
     val contents = csv.split("\\\n")(2)
-    contents.startsWith(s"""200,8,2,remove,1,"[{""id"":1,""publicId"":""suggest_box"",""") should be(true)
+    contents.startsWith(s"""200,7,2,remove,1,"[{""id"":1,""publicId"":""suggest_box"",""") should be(true)
     contentRows should be(1)
   }
 }
