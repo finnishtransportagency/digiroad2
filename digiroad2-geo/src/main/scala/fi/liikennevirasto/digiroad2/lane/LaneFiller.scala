@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.Point
 
 object LaneFiller {
 
-  // TODO MValueAdjustment ja SideCodeAdjustment korvaaminen LanePositionAdjustment fillTopologyssä.
   case class MValueAdjustment(laneId: Long, linkId: String, startMeasure: Double, endMeasure: Double)
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
   case class LaneSplit(lanesToCreate: Seq[PersistedLane], originalLane: PersistedLane)
