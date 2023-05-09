@@ -116,7 +116,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val linkTypeExtract = if (linkType.nonEmpty) {LinkType.apply(linkType.get.value.get)} else UnknownLinkType
 
     RoadLinkForFiltopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = trafficDirection, administrativeClass = adminClass,
-      linkSource = NormalLinkInterface, linkType = linkTypeExtract, constructionType = UnknownConstructionType, geometry = roadLink.geometry)
+      linkSource = NormalLinkInterface, linkType = linkTypeExtract, constructionType = UnknownConstructionType, geometry = roadLink.geometry,municipalityCode = roadLink.municipality )
   }
   protected def convertToPersisted(asset: PieceWiseLinearAsset): PersistedLinearAsset = {
     PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value,
@@ -145,7 +145,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }
   }
 
-  private def foldChangeSet(mergedChangeSet: Seq[ChangeSet], foldTo: ChangeSet): ChangeSet = {
+  protected def foldChangeSet(mergedChangeSet: Seq[ChangeSet], foldTo: ChangeSet): ChangeSet = {
     mergedChangeSet.foldLeft(foldTo) { (a, z) =>
       a.copy(
         droppedAssetIds = a.droppedAssetIds ++ z.droppedAssetIds,
@@ -178,7 +178,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
     
-    additionalRemoveOperationMass(deletedLinks)
+    //additionalRemoveOperationMass(deletedLinks)
     
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(existingAssets, changes, initChangeSet)
     val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology(_)(overridedAdmin,overridedTrafficDirection,linkTypes)))
@@ -323,11 +323,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val step1 = assetFiller.dropShortSegments(links, step0._1, step0._2)
       val step2 = assetFiller.adjustAssets(links, step1._1, step1._2)
       val step3 = assetFiller.expireOverlappingSegments(links, step2._1, step2._2)
-      val step4 = droppedSegmentWrongDirection(links, step3._1, step3._2)
-      val step5 = adjustSegmentSideCodes(links, step4._1, step4._2)
-
+      val step4 = assetFiller.droppedSegmentWrongDirection(links, step3._1, step3._2)
+      val step5 = assetFiller.adjustSegmentSideCodes(links, step4._1, step4._2)
       // TODO Check for small 0.001 wholes fill theses
-      step5._2.copy(adjustedMValues = step5._2.adjustedMValues.filterNot(p => step3._2.droppedAssetIds.contains(p.assetId)))
       step5
     }).toSeq
 
@@ -336,19 +334,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     updateChangeSet(changeSetFolded)
     (assetOnly, changeSetFolded)
-  }
-  
-  protected def droppedSegmentWrongDirection(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
-      (segments, changeSet)
-    } else {
-      val droppedAssetIds = (roadLink.trafficDirection match {
-        case TrafficDirection.TowardsDigitizing => segments.filter(s => s.sideCode == SideCode.AgainstDigitizing)
-        case _ => segments.filter(s => s.sideCode == SideCode.TowardsDigitizing)
-      }).map(_.id)
-
-      (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
-    }
   }
   
   protected def adjustSegmentSideCodes(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
@@ -361,7 +346,15 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val (generated,exist) = segments.partition(_.id==0)
       
       val adjusted = roadLink.trafficDirection match {
-        case TrafficDirection.BothDirections => exist.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
+    /*    case TrafficDirection.BothDirections => 
+          {
+            val (twoSided, oneSided) = exist.partition { s => s.sideCode == SideCode.BothDirections }
+            //if ()
+            // if there is only one asset side code AgainstDigitizing or TowardsDigitizing maintain its
+              oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
+          }
+          
+       */
         case TrafficDirection.AgainstDigitizing => exist.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
         case TrafficDirection.TowardsDigitizing => exist.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
       }
