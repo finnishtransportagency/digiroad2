@@ -88,7 +88,13 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
-  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  /**
+    * Check if given measure is between the given start and end measures
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
 
@@ -496,7 +502,7 @@ object GeometryUtils {
     connectionPoint(geometries, DefaultEpsilon)
   }
 
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long)
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long = 0)
 
   def getOppositePoint(geometry: Seq[Point], point: Point) : Point = {
     val (headPoint, lastPoint) = geometryEndpoints(geometry)
