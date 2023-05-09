@@ -5,7 +5,7 @@ import software.amazon.awssdk.core.exception.SdkClientException
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.{GetObjectRequest, HeadObjectRequest, PutObjectRequest}
+import software.amazon.awssdk.services.s3.model.{GetObjectRequest, HeadObjectRequest, ListObjectsV2Request, PutObjectRequest}
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 
@@ -20,6 +20,7 @@ class AwsService {
 
     def saveFileToS3(s3Bucket: String, id: String, body: String, responseType: String): Unit = {
       val contentType = responseType match {
+        case "csv" => "text/csv"
         case _ => "application/json"
       }
       try {
@@ -77,6 +78,11 @@ class AwsService {
     def getObjectFromS3(s3bucket: String, key: String) = {
       val getObjectRequest = GetObjectRequest.builder().bucket(s3bucket).key(key).build()
       s3.getObject(getObjectRequest)
+    }
+
+    def listObjects(s3bucket: String) = {
+      val listObjectsRequest = ListObjectsV2Request.builder().bucket(s3bucket).build()
+      s3.listObjectsV2(listObjectsRequest).contents()
     }
   }
 }

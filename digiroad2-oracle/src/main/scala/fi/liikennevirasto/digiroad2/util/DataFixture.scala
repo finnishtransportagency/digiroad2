@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.util.{Date, NoSuchElementException, Properties}
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit, RoadLinkProperties => RoadLinkPropertiesAsset, _}
 import fi.liikennevirasto.digiroad2.client.VKMClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
@@ -2053,7 +2053,7 @@ object DataFixture {
     println(DateTime.now())
 
     val historyService = new HistoryService
-    val excludedAssetTypes = Seq(UnknownAssetTypeId, Lanes, MassTransitStopAsset)
+    val excludedAssetTypes = Seq(UnknownAssetTypeId, Lanes, MassTransitStopAsset, RoadLinkPropertiesAsset)
     val assetTypes = AssetTypeInfo.values.filterNot(excludedAssetTypes.contains)
     val yearGap = 2 //current and previous X years are to maintain (1 = until one year ago, 2 = until two years ago, etc.)
 
@@ -2152,7 +2152,8 @@ object DataFixture {
       "kauniainen_traffic_signs.sql",
       "kauniainen_maximum_x7_restrictions.sql",
       "user_notification_examples.sql",
-      "siilinjarvi_verificationService_test_data.sql"
+      "siilinjarvi_verificationService_test_data.sql",
+      "samuutus_test_links.sql"
     ))
   }
 
@@ -2298,18 +2299,12 @@ object DataFixture {
         moveOldExpiredAssets()
       case Some("new_road_address_from_viite") =>
         newRoadAddressFromViite()
-      case Some("change_lanes_according_to_VVH_changes") =>
-        ChangeLanesAccordingToVvhChanges.process()
-      case Some("validate_lane_changes_according_to_VVH_changes") =>
-        ValidateLaneChangesAccordingToVvhChanges.process()
       case Some("populate_new_link_with_main_lanes") =>
         MainLanePopulationProcess.process()
       case Some("initial_main_lane_population") =>
         MainLanePopulationProcess.initialProcess()
       case Some("redundant_traffic_direction_removal") =>
         withDynTransaction(redundantTrafficDirectionRemoval.deleteRedundantTrafficDirectionFromDB())
-      case Some("update_incomplete_link_list") =>
-        UpdateIncompleteLinkList.runUpdate()
       case Some("refresh_road_link_cache") =>
         RefreshRoadLinkCache.refreshCache()
         exit()  //For a currently unknown reason refreshCache batch doesn't exit automatically upon completion
@@ -2330,8 +2325,8 @@ object DataFixture {
         " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | " +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
-        " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite | change_lanes_according_to_VVH_changes |" +
-        " validate_lane_changes_according_to_VVH_changes | populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal | update_incomplete_link_list |" +
+        " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets | new_road_address_from_viite |" +
+        " populate_new_link_with_main_lanes | initial_main_lane_population | redundant_traffic_direction_removal |" +
         " refresh_road_link_cache | lane_end_date_expirer |")
     }
   }
