@@ -624,6 +624,63 @@ class AssetFillerSpec extends FunSuite with Matchers {
       filledTopology.head.endMeasure should be(11)
     })
   }
+
+  test("Do not fill whole in start of link") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(107.093, 0.0)), 107.093, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(101.42, 103.841), SideCode.BothDirections, None, TrafficDirection.BothDirections),
+      createAsset(2, linkId1, Measure(103.841, 107.093), SideCode.BothDirections, None, TrafficDirection.BothDirections)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFiltopology).head, assets, initChangeSet)
+    
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(2)
+    //107.093
+    sorted(0).startMeasure should be(101.42)
+    sorted(0).endMeasure should be(103.841)
+
+    sorted(1).startMeasure should be(103.841)
+    sorted(1).endMeasure should be(107.093)
+  }
+
+  test("Fill whole in middle of links") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(223.872, 0.0)), 223.872, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0, 102.482), SideCode.BothDirections, None, TrafficDirection.BothDirections),
+      createAsset(2, linkId1, Measure(102.482, 207.303), SideCode.BothDirections, None, TrafficDirection.BothDirections),
+      createAsset(3, linkId1, Measure(207.304, 215.304), SideCode.BothDirections, None, TrafficDirection.BothDirections),
+      createAsset(4, linkId1, Measure(215.304, 223.872), SideCode.BothDirections, None, TrafficDirection.BothDirections)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFiltopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(4)
+    
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(102.482)
+
+    sorted(1).startMeasure should be(102.482)
+    sorted(1).endMeasure should be(207.304)
+    
+    sorted(2).startMeasure should be(207.304)
+    sorted(2).endMeasure should be(215.304)
+    
+    sorted(3).startMeasure should be(215.304)
+    sorted(3).endMeasure should be(223.872)
+    
+  }
   
   private def roadLink(linkId: String, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
     val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)

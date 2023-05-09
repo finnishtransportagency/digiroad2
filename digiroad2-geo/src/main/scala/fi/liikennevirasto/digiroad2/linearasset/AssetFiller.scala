@@ -7,6 +7,8 @@ import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, Cons
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import org.joda.time.DateTime
 
+import scala.util.Try
+
 
 case class RoadLinkForFiltopology(linkId: String, length:Double, trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource,
                                   linkType:LinkType,constructionType:ConstructionType, geometry: Seq[Point],municipalityCode:Int){
@@ -32,7 +34,7 @@ class AssetFiller {
 
   def toRoadLinkForFiltopology(roadLink: RoadLink): RoadLinkForFiltopology = {
     RoadLinkForFiltopology(linkId = roadLink.linkId,length =  roadLink.length,trafficDirection = roadLink.trafficDirection,administrativeClass = roadLink.administrativeClass,
-      linkSource = roadLink.linkSource,linkType = roadLink.linkType,constructionType = roadLink.constructionType, geometry = roadLink.geometry,roadLink.municipalityCode )
+      linkSource = roadLink.linkSource,linkType = roadLink.linkType,constructionType = roadLink.constructionType, geometry = roadLink.geometry,Try(roadLink.municipalityCode).getOrElse(0) )
   }
  
   def printlnOperation(operationName:String)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
@@ -612,7 +614,8 @@ class AssetFiller {
       val (startTowards, endTowards) = firstAndLastLimit(speedLimits, SideCode.TowardsDigitizing)
       val (startAgainst, endAgainst) = firstAndLastLimit(speedLimits, SideCode.AgainstDigitizing)
       val sortedStarts = Seq(startTwoSided, startTowards, startAgainst).flatten.sortBy(_.startMeasure)
-      val startChecks = sortedStarts.filter(sl => Math.abs(sl.startMeasure - sortedStarts.head.startMeasure) < Epsilon && sl.startMeasure > MaxAllowedMValueError)
+      // this code need check for is it actually in middle of roadLink or just end in different location
+      val startChecks = sortedStarts.filter(sl => Math.abs(sl.endMeasure - sortedStarts.head.startMeasure) < Epsilon && sl.startMeasure > MaxAllowedMValueError)
       val newStarts = startChecks.map(sl => sl.copy(startMeasure = 0.0, geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, sl.endMeasure)))
       val sortedEnds = Seq(endTwoSided, endTowards, endAgainst).flatten.sortBy(0.0 - _.endMeasure)
       val endChecks = sortedEnds.filter(sl => Math.abs(sl.endMeasure - sortedEnds.head.endMeasure) < Epsilon &&
