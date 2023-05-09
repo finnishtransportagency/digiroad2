@@ -178,7 +178,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
     
-    //additionalRemoveOperationMass(deletedLinks)
+    additionalRemoveOperationMass(deletedLinks)
     
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(existingAssets, changes, initChangeSet)
     val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology(_)(overridedAdmin,overridedTrafficDirection,linkTypes)))
@@ -325,8 +325,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val step3 = assetFiller.expireOverlappingSegments(links, step2._1, step2._2)
       val step4 = assetFiller.droppedSegmentWrongDirection(links, step3._1, step3._2)
       val step5 = assetFiller.adjustSegmentSideCodes(links, step4._1, step4._2)
+      val step6 = assetFiller.fillHoles(links, step5._1, step5._2)
       // TODO Check for small 0.001 wholes fill theses
-      step5
+      step6
     }).toSeq
 
     val changeSetFolded = foldChangeSet(asset.map(_._2), changeSet.get)

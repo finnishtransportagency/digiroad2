@@ -59,65 +59,6 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     filterChanges ++ filterChangesNews
   }
   
-  // TODO standardize speedlimit
-   def updateByRoadLinks(typeId: Int, municipality: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Unit = {
-  /*  val speedLimitLinks = speedLimitDao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
-    val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
-    val oldRoadLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
-    val oldSpeedLimits = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(oldRoadLinkIds.toSet))
-
-    // filter road links that have already been projected to avoid projecting twice
-    val speedLimitsOnChangedLinks = speedLimitLinks.filter(sl => LinearAssetUtils.newChangeInfoDetected(sl, mappedChanges))
-
-    val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
-
-    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = oldSpeedLimits.map(_.id).toSet,
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
-
-    val (newSpeedLimits, projectedChangeSet) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks,
-      speedLimitsOnChangedLinks, changes, initChangeSet, speedLimitLinks)
-
-    val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
-    handleChangesAndUnknowns(roadLinks, speedLimits, Some(projectedChangeSet), oldRoadLinkIds, geometryChanged = true)*/
-  }
-
-/*  override def updateByRoadLinks(typeId: Int, changesAll: Seq[RoadLinkChange]): Unit = {
-    val changes = filterChanges(changesAll)
-    val oldIds = changes.filterNot(isDeletedOrNew).map(_.oldLink.get.linkId)
-    val newIds = changes.filterNot(isDeletedOrNew).flatMap(_.newLinks)
-    val deletedLinks = changes.filter(isDeleted).map(_.oldLink.get.linkId)
-    // here we assume that RoadLinkProperties updater has already remove override if KMTK version traffic direction is same.
-    // still valid overrided has been samuuted also
-    val overridedAdmin = AdministrativeClassDao.getExistingValues(newIds.map(_.linkId))
-    val overridedTrafficDirection = TrafficDirectionDao.getExistingValues(newIds.map(_.linkId))
-    val linkTypes = LinkTypeDao.getExistingValues(newIds.map(_.linkId))
-
-    val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
-
-    val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-      expiredAssetIds = existingAssets.filter(asset => deletedLinks.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
-
-    additionalRemoveOperationMass(deletedLinks)
-
-    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(existingAssets, changes, initChangeSet)
-    val convertedLink = changes.flatMap(_.newLinks.map(toRoadLinkForFilltopology(_)(overridedAdmin, overridedTrafficDirection, linkTypes)))
-    val groupedAssets = assetFiller.toLinearAssetsOnMultipleLinks(projectedAssets, convertedLink).groupBy(_.linkId)
-    val adjusted = adjustLinearAssetsOnChangesGeometry(convertedLink, groupedAssets, typeId, Some(changedSet))
-    persistProjectedLinearAssets(adjusted._1.map(convertToPersisted).filter(_.id == 0L))
-
-  }*/
-
-
-  
-  // TODO check override
   override def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                                                    typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val asset = linearAssets.map(p => {
@@ -148,35 +89,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     updateChangeSet(changeSetFolded)
     (assetOnly, changeSetFolded)
   }
-/*  def handleChangesAndUnknowns(topology: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
-                               changeSet:Option[ChangeSet] = None, oldRoadLinkIds: Seq[String], geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
-    val (filledTopology, changedSet) = fillTopology(topology.map(toRoadLinkForFiltopology), speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
-    val cleanedChangeSet = cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
-    val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
-    val newSpeedLimitsWithValue = filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
-    val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
-
-    cleanedChangeSet.isEmpty match {
-      case true =>
-        persistProjectedLimit(newSpeedLimitsWithValue)
-        persistUnknown(unknownLimits)
-        filledTopology
-      case false if counter > 3 =>
-        updateChangeSet(cleanedChangeSet)
-        persistProjectedLimit(newSpeedLimitsWithValue)
-        purgeUnknown(cleanedChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
-        persistUnknown(unknownLimits)
-        filledTopology
-      case false if counter <= 3 =>
-        updateChangeSet(cleanedChangeSet)
-        purgeUnknown(cleanedChangeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds)
-        val speedLimitsToAdjust = filledTopology.filterNot(speedLimit => speedLimit.id <= 0 && speedLimit.value.isEmpty).groupBy(_.linkId)
-        handleChangesAndUnknowns(topology, speedLimitsToAdjust, None ,oldRoadLinkIds, geometryChanged, counter + 1)
-    }
-  }*/
-
   
-
   override def updateChangeSet(changeSet: ChangeSet) : Unit = {
     speedLimitDao.floatLinearAssets(changeSet.droppedAssetIds)
 
@@ -218,17 +131,6 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq())
 
   }
-/*  def persistProjectedLimit(limits: Seq[PieceWiseLinearAsset]): Unit = {
-    val (newlimits, changedlimits) = limits.partition(_.id <= 0)
-    newlimits.foreach { limit =>
-
-      speedLimitDao.createSpeedLimit(limit.createdBy.getOrElse(AutoGeneratedUsername.generatedInUpdate), limit.linkId, Measures(limit.startMeasure, limit.endMeasure),
-        limit.sideCode, service.getSpeedLimitValue(limit.value).get, Some(limit.timeStamp), limit.createdDateTime, limit.modifiedBy,
-        limit.modifiedDateTime, limit.linkSource)
-    }
-    purgeUnknown(limits.map(_.linkId).toSet, Seq())
-
-  }*/
 
   def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
     val roadLinks = roadLinkService.fetchRoadlinksByIds(linkIds)
