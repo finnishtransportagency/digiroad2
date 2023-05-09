@@ -91,7 +91,7 @@ class ComplementaryLinkDAO extends RoadLinkDAO {
     }
   }
   
-  override def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
+  override def getLinksWithFilter(filter: String,expiredAlso:Boolean = false): Seq[RoadLinkFetched] = {
     LogUtils.time(logger,"TEST LOG Getting complementery roadlinks" ){
       sql"""select linkid, municipalitycode, shape, adminclass, directiontype, roadclass, roadnamefin, roadnameswe,
                  roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, lifecyclestatus, surfacerelation,

@@ -234,8 +234,8 @@ class RoadLinkDAO {
     * Returns road links by link id.
     * Used by RoadLinkService road link fetch functions.
   */
-  def fetchByLinkIds(linkIds: Set[String]): Seq[RoadLinkFetched] = {
-    getByMultipleValues(linkIds, withLinkIdFilter)
+  def fetchByLinkIds(linkIds: Set[String],expiredAlso:Boolean = false): Seq[RoadLinkFetched] = {
+    getByMultipleValues(linkIds, withLinkIdFilter,expiredAlso)
   }
 
   def fetchByLinkIdsF(linkIds: Set[String]) = {
@@ -315,13 +315,17 @@ class RoadLinkDAO {
     * Calls db operation to fetch roadlinks with given filter.
     */
   private def getByMultipleValues[T, A](values: Set[A],
-                                        filter: Set[A] => String): Seq[T] = {
+                                        filter: Set[A] => String,expiredAlso:Boolean = false): Seq[T] = {
     if (values.nonEmpty) {
-      getLinksWithFilter(filter(values)).asInstanceOf[Seq[T]]
+      getLinksWithFilter(filter(values),expiredAlso).asInstanceOf[Seq[T]]
     } else Seq.empty[T]
   }
 
-  protected def getLinksWithFilter(filter: String): Seq[RoadLinkFetched] = {
+  protected def getLinksWithFilter(filter: String,expiredAlso:Boolean = false): Seq[RoadLinkFetched] = {
+    val expiredAlsoString = if(expiredAlso){
+      ""
+    } else "and expired_date is null"
+    
     LogUtils.time(logger,"TEST LOG Getting roadlinks" ){
       sql"""select linkid, mtkid, mtkhereflip, municipalitycode, shape, adminclass, directiontype, mtkclass, roadname_fi,
                  roadname_se, roadnamesme, roadnamesmn, roadnamesms, roadnumber, roadpartnumber, constructiontype, verticallevel, horizontalaccuracy,
@@ -329,7 +333,7 @@ class RoadLinkDAO {
                  surfacetype, geometrylength
           from kgv_roadlink
           where #$filter
-          and expired_date is null
+          #$expiredAlsoString
           and constructiontype in (${ConstructionType.InUse.value},
                                                   ${ConstructionType.UnderConstruction.value},
                                                   ${ConstructionType.Planned.value},
