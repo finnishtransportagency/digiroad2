@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISSpeedLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, toRoadLinkForFiltopology}
-import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
@@ -17,6 +17,7 @@ import fi.liikennevirasto.digiroad2.util.assetUpdater.SpeedLimitUpdater
 import org.joda.time.DateTime
 
 import java.util.NoSuchElementException
+import scala.util.Try
 
 
 class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) extends DynamicLinearAssetService(roadLinkService, eventbus) {
@@ -178,6 +179,63 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
       speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(roadLink.linkId)))
   }
 
+  def getExistingAssetByRoadLinkId(linkId:String, newTransaction: Boolean = true): Seq[PieceWiseLinearAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(linkId)))
+      }
+    else
+      speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(linkId)))
+  }
+  def getExistingAssetByRoadLinkIds(linkIds: Set[String], newTransaction: Boolean = true): Seq[PieceWiseLinearAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linkIds))
+      }
+    else
+      speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linkIds))
+  }
+
+
+/*  override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val existingAssets = if (newTransaction) {
+      withDynTransaction {
+        enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq))
+      }.filterNot(_.expired)
+    } else {
+      enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq).filterNot(_.expired))
+    }
+    existingAssets
+  }*/
+/*  def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val existingAssets = if (newTransaction) {
+      withDynTransaction {
+        speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linksIds))
+      }.filterNot(_.expired)
+    } else {
+      speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linksIds))
+    }
+    existingAssets
+  }*/
+
+  override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val existingAssets = if (newTransaction) {
+      withDynTransaction {
+        enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq))
+      }.filterNot(_.expired)
+    } else {
+      enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq).filterNot(_.expired))
+    }
+    existingAssets
+  }
+  override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds))
+      } else
+      enrichPersistedLinearAssetProperties(speedLimitDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds))
+  }
+  
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], adjust: Boolean = true, showHistory: Boolean,
                               roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
@@ -410,6 +468,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     newLimits.flatMap { limit =>
       speedLimitDao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), sideCode, value, createTimeStamp(), (_, _) => Unit)
     }
+  }
+
+  override def createWithoutTransaction(typeId: Int, linkId: String, value: Value, sideCode: Int, measures: Measures, username: String, timeStamp: Long = createTimeStamp(), roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+                                        createdByFromUpdate: Option[String] = Some(""),
+                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long={
+    speedLimitDao.createSpeedLimit(username,linkId, measures, SideCode(sideCode),value.asInstanceOf[SpeedLimitValue], timeStamp, (_, _) => Unit).get
   }
 
   def getAssetsAndPoints(existingAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, PieceWiseLinearAsset)] = {
