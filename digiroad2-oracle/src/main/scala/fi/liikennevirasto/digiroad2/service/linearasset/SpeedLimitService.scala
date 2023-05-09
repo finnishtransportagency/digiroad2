@@ -128,10 +128,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   /**
     * Returns unknown speed limits for Digiroad2Api /speedlimits/unknown GET endpoint.
     */
-  def getUnknown(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass]): Map[String, Map[String, Any]] = {
-    withDynSession {
+  def getUnknown(municipalities: Set[Int], administrativeClass: Option[AdministrativeClass], newTransaction: Boolean = true): Map[String, Map[String, Any]] = {
+    if (newTransaction)
+      withDynTransaction {
+        speedLimitDao.getUnknownSpeedLimits(municipalities, administrativeClass)
+      }
+    else
       speedLimitDao.getUnknownSpeedLimits(municipalities, administrativeClass)
-    }
   }
 
   def hideUnknownSpeedLimits(linkIds: Set[String]): Set[String] = {
@@ -140,10 +143,14 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     }
   }
 
-  def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
-    withDynSession {
+  def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass], newTransaction: Boolean = true): Seq[(Long, String)] = {
+    
+    if (newTransaction)
+      withDynTransaction {
+        speedLimitDao.getMunicipalitiesWithUnknown(administrativeClass)
+      }
+    else
       speedLimitDao.getMunicipalitiesWithUnknown(administrativeClass)
-    }
   }
 
   /**
