@@ -39,11 +39,11 @@ class AssetFiller {
  
   def printlnOperation(operationName:String)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
     println(operationName)
-    /*println(s"side code adjuctment count: ${changeSet.adjustedSideCodes.size}") 
+    println(s"side code adjuctment count: ${changeSet.adjustedSideCodes.size}") 
     println(s"mvalue adjuctment count: ${changeSet.adjustedMValues.size}")
     println(s"vvh change adjuctment count: ${changeSet.adjustedVVHChanges.size}")
     println(s"expire adjuctment count: ${changeSet.expiredAssetIds.size}")
-    println(s"dropped adjuctment count: ${changeSet.droppedAssetIds.size}")*/
+    println(s"dropped adjuctment count: ${changeSet.droppedAssetIds.size}")
     (segments, changeSet)
   }
   
@@ -500,27 +500,29 @@ class AssetFiller {
     val sortedList = linearAssets.sortBy(_.startMeasure)
     if (linearAssets.nonEmpty) {
       val origin = sortedList.head
-      val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < 0.1 &&
-          sl.value == origin.value && sl.sideCode == origin.sideCode)
+      val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < MaxAllowedMValueError &&
+        sl.value.equals(origin.value) && sl.sideCode.equals(origin.sideCode))
       if (target.nonEmpty) {
         // pick id if it already has one regardless of which one is newer
         val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
         val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
-        val modified =  toBeFused.head.copy(id = newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure)
+        val modified = toBeFused.head.copy(id = newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure,
+          geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, origin.startMeasure, target.get.endMeasure),
+          timeStamp = latestTimestamp(toBeFused.head, target))
         val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to expire id zero
-        val mValueAdjustment = Seq(changeSet.adjustedMValues.find(a => a.assetId == modified.id) match {
-          case Some(adjustment) => adjustment.copy(startMeasure = modified.startMeasure, endMeasure = modified.endMeasure)
-          case _ => MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure)
-        })
+        val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
         // Replace origin and target with this new item in the list and recursively call itself again
         fuse(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
-          changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(a => a.assetId > 0 && a.assetId != modified.id) ++ mValueAdjustment))
+          changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(a=>a.assetId > 0 && a.assetId != modified.id) ++ mValueAdjustment))
       } else {
         val fused = fuse(roadLink, sortedList.tail, changeSet)
         (Seq(origin) ++ fused._1, fused._2)
       }
     } else {
-      (linearAssets, changeSet)
+      val redundantFiltered = changeSet.adjustedMValues.filterNot(adjustment => {
+        changeSet.droppedAssetIds.contains(adjustment.assetId) || changeSet.expiredAssetIds.contains(adjustment.assetId)
+      })
+      (linearAssets, changeSet.copy(adjustedMValues = redundantFiltered))
     }
   }
   /**
