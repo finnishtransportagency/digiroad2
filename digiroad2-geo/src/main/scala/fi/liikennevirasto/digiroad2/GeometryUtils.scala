@@ -88,7 +88,13 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
-  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  /**
+    * Check if given measure is between the given start and end measures
+    * @param measure m-value to check
+    * @param interval First element of tuple is start measure, second element is the end measure of the interval
+    * @return true if m-value lies between the given start and end measures, else false
+    */
+  def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
 

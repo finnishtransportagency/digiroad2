@@ -168,6 +168,15 @@ object TrafficDirection {
     values.find(_.toString == stringValue).getOrElse(UnknownDirection)
   }
 
+  def switch(trafficDirection: TrafficDirection): TrafficDirection = {
+    trafficDirection match {
+      case TowardsDigitizing => AgainstDigitizing
+      case AgainstDigitizing => TowardsDigitizing
+      case UnknownDirection => UnknownDirection
+      case BothDirections => BothDirections
+    }
+  }
+
   def toSideCode(trafficDirection: TrafficDirection): SideCode = {
     trafficDirection match {
       case TowardsDigitizing => SideCode.TowardsDigitizing

@@ -132,8 +132,9 @@ object LinearAssetUpdateProcess {
         case "cycling_and_walking" => getAssetUpdater(CyclingAndWalking.typeId).updateLinearAssets(CyclingAndWalking.typeId)
         
         case "road_link_properties" => roadLinkPropertyUpdater.updateProperties()
-
-
+        //special case       
+        case "lanes" => LaneUpdater.updateLanes()
+        case "test" => testFetchChangesFromS3()
         case _ => throw new IllegalArgumentException("Invalid asset name.")
       }
     }
