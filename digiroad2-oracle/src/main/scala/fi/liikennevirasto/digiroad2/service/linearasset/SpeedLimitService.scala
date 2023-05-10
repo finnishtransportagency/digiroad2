@@ -231,29 +231,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
     else
       speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linkIds))
   }
-
-
-/*  override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    val existingAssets = if (newTransaction) {
-      withDynTransaction {
-        enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq))
-      }.filterNot(_.expired)
-    } else {
-      enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, (linksIds ++ removedLinkIds).toSeq).filterNot(_.expired))
-    }
-    existingAssets
-  }*/
-/*  def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    val existingAssets = if (newTransaction) {
-      withDynTransaction {
-        speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linksIds))
-      }.filterNot(_.expired)
-    } else {
-      speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(linksIds))
-    }
-    existingAssets
-  }*/
-
+  
   override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     val existingAssets = if (newTransaction) {
       withDynTransaction {
