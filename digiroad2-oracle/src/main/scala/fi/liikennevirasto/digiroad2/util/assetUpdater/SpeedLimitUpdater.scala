@@ -80,19 +80,18 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     val asset = linearAssets.map(p => {
       val links = roadLinks.find(_.linkId == p._1).get
       val step0 = SpeedLimitFiller.fuse(links, p._2, changeSet.get)
-      val step1 = SpeedLimitFiller.adjustSegmentMValues(links, step0._1, step0._2)
-      val step2 = SpeedLimitFiller.adjustLopsidedLimit(links, step1._1, step1._2)
-      val step3 = SpeedLimitFiller.dropShortSegments(links, step2._1, step2._2)
-      val step4 = SpeedLimitFiller.adjustAssets(links, step3._1, step3._2)
-      val step5 = SpeedLimitFiller.expireOverlappingSegments(links, step4._1, step4._2)
-      val step6 = SpeedLimitFiller.droppedSegmentWrongDirection(links, step5._1, step5._2)
-      val step7 = adjustSegmentSideCodes(links, step6._1, step6._2)
-      val step8 = SpeedLimitFiller.fillHoles(links, step7._1, step7._2)
-      val step9 = SpeedLimitFiller.clean(links, step8._1, step8._2)
+      val step1 = SpeedLimitFiller.adjustAssets(links, step0._1, step0._2)
+      val step2 = SpeedLimitFiller.dropShortSegments(links, step1._1, step1._2)
+      val step3 = SpeedLimitFiller.adjustAssets(links, step2._1, step2._2)
+      val step4 = SpeedLimitFiller.expireOverlappingSegments(links, step3._1, step3._2)
+      val step5 = SpeedLimitFiller.droppedSegmentWrongDirection(links, step4._1, step4._2)
+      val step6 = SpeedLimitFiller.adjustSegmentSideCodes(links, step5._1, step5._2)
+      val step7 = SpeedLimitFiller.fillHoles(links, step6._1, step6._2)
+      val step8 = SpeedLimitFiller.clean(links, step7._1, step7._2)
       
       // TODO Check for small 0.001 wholes fill theses
-      step9._2.copy(adjustedMValues = step9._2.adjustedMValues.filterNot(p => step9._2.droppedAssetIds.contains(p.assetId)))
-      step9
+      step8._2.copy(adjustedMValues = step8._2.adjustedMValues.filterNot(p => step8._2.droppedAssetIds.contains(p.assetId)))
+      step8
     }).toSeq
 
 
