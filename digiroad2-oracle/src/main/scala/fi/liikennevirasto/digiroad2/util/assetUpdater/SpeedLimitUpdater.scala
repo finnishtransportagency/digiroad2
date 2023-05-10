@@ -1,18 +1,13 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.{AssetLinearReference, GeometryUtils, MValueCalculator, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{AdministrativeClassDao, LinkTypeDao, TrafficDirectionDao}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{fillTopology, toRoadLinkForFiltopology}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, SpeedLimitService}
-import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
-import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.{AssetLinearReference, GeometryUtils, MValueCalculator}
 
 class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUpdater(service) {
 
@@ -23,7 +18,7 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     // hint newPieceWiseChangeAsset
 
     //      newPieceWiseChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes) //Temporarily disabled according to DROTH-2327
-    persistUnknown(Seq(UnknownSpeedLimit(change.newLinks.head.linkId, change.newLinks.head.municipality, change.newLinks.head.adminClass)))
+    service.persistUnknown(Seq(UnknownSpeedLimit(change.newLinks.head.linkId, change.newLinks.head.municipality, change.newLinks.head.adminClass)),newTransaction = false)
     
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
@@ -31,20 +26,41 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   override def additionalRemoveOperationMass(expiredLinks:Seq[String]): Unit = {
   //Todo here purge unknown speedlimit logic // if uknow links is still valid uodate reference
 
-    service.purgeUnknown(Set(),expiredLinks)
+    service.purgeUnknown(Set(),expiredLinks,newTransaction = false)
     Seq.empty[(PersistedLinearAsset, ChangeSet)]
   }
 
   override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
-    
-    
     change.changeType match {
+      // if become two direstional rise into  unknowSpeedlimit
       case RoadLinkChangeType.Replace |RoadLinkChangeType.Split => {
-        //TODO update unknowSpeedlimit into new version
+        val oldLinkIds = change.oldLink.get.linkId
+        val trafficDirectionChanged = isRealTrafficDirectionChange(change)
+        val oldUnknownLSpeedLimit = service.getUnknownByLinkIds(Set(oldLinkIds),newTransaction = false)
+        if (oldUnknownLSpeedLimit.nonEmpty || trafficDirectionChanged) {
+          service.purgeUnknown(Set(),oldUnknownLSpeedLimit.map(_.linkId),newTransaction = false) // recreate unknown speedlimit
+          service.persistUnknown(change.newLinks.map(l=>UnknownSpeedLimit(l.linkId, l.municipality, l.adminClass)),newTransaction = false)
+        }
         Seq.empty[(PersistedLinearAsset, ChangeSet)]
       }
       case _ =>Seq.empty[(PersistedLinearAsset, ChangeSet)]
     }
+  }
+  
+  def isRealTrafficDirectionChange(change: RoadLinkChange): Boolean = {
+    change.newLinks.exists(newLink => {
+      val oldOriginalTrafficDirection = change.oldLink.get.trafficDirection
+      val newOriginalTrafficDirection = newLink.trafficDirection
+      val replaceInfo = change.replaceInfo.find(_.newLinkId == newLink.linkId).get
+      val isDigitizationChange = replaceInfo.digitizationChange
+      val overWrittenTdValueOnNewLink = TrafficDirectionDao.getExistingValue(newLink.linkId)
+
+      if (overWrittenTdValueOnNewLink.nonEmpty) false
+      else {
+        if (isDigitizationChange) oldOriginalTrafficDirection != TrafficDirection.switch(newOriginalTrafficDirection)
+        else oldOriginalTrafficDirection != newOriginalTrafficDirection
+      }
+    })
   }
   
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
@@ -83,8 +99,8 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     val changeSetFolded = super.foldChangeSet(asset.map(_._2), changeSet.get)
     val assetOnly = asset.flatMap(_._1)
     val roadLinksByLinkId = roadLinks.groupBy(_.linkId).mapValues(_.head)
-    val newSpeedLimitsWithValue = assetOnly.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
-    val unknownLimits = createUnknownLimits(assetOnly, roadLinksByLinkId)
+    //val newSpeedLimitsWithValue = assetOnly.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
+    //val unknownLimits = service.createUnknownLimits(assetOnly, roadLinksByLinkId)
 
     updateChangeSet(changeSetFolded)
     (assetOnly, changeSetFolded)
@@ -123,35 +139,16 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     val (newlimits, changedlimits) = newLinearAssets.partition(_.id <= 0)
     newlimits.foreach { limit =>
-
+// create service level method ?
       speedLimitDao.createSpeedLimit(limit.createdBy.getOrElse(AutoGeneratedUsername.generatedInUpdate), limit.linkId, Measures(limit.startMeasure, limit.endMeasure).roundMeasures(),
         SideCode(limit.sideCode), service.getSpeedLimitValue(limit.value).get, Some(limit.timeStamp), limit.createdDateTime, limit.modifiedBy,
         limit.modifiedDateTime, limit.linkSource)
     }
-    purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq())
+    service.purgeUnknown(newLinearAssets.map(_.linkId).toSet, Seq())
 
   }
 
-  def purgeUnknown(linkIds: Set[String], expiredLinkIds: Seq[String]): Unit = {
-    val roadLinks = roadLinkService.fetchRoadlinksByIds(linkIds)
-    roadLinks.foreach { rl =>
-      speedLimitDao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
-    }
-    if (expiredLinkIds.nonEmpty)
-      speedLimitDao.deleteUnknownSpeedLimits(expiredLinkIds)
-  }
 
-  def persistUnknown(limits: Seq[UnknownSpeedLimit]): Unit = {
-    speedLimitDao.persistUnknownSpeedLimits(limits)
-  }
-  
-  protected def createUnknownLimits(speedLimits: Seq[PieceWiseLinearAsset], roadLinksByLinkId: Map[String, RoadLinkForFiltopology]): Seq[UnknownSpeedLimit] = {
-    val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
-    generatedLimits.map { limit =>
-      val roadLink = roadLinksByLinkId(limit.linkId)
-      UnknownSpeedLimit(roadLink.linkId, roadLink.municipalityCode, roadLink.administrativeClass)
-    }
-  }
 
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
     val oldSpeedLimit = service.getPersistedSpeedLimitById(adjustment.assetId, newTransaction = false).getOrElse(throw new IllegalStateException("Asset no longer available"))
