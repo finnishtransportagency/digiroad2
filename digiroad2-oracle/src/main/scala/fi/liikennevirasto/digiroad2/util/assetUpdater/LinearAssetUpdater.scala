@@ -337,33 +337,6 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     (assetOnly, changeSetFolded)
   }
   
-  protected def adjustSegmentSideCodes(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val oneWayTrafficDirection =
-      (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) || (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
-    if (!oneWayTrafficDirection) {
-      (segments, changeSet)
-    } else {
-   
-      val (generated,exist) = segments.partition(_.id==0)
-      
-      val adjusted = roadLink.trafficDirection match {
-    /*    case TrafficDirection.BothDirections => 
-          {
-            val (twoSided, oneSided) = exist.partition { s => s.sideCode == SideCode.BothDirections }
-            //if ()
-            // if there is only one asset side code AgainstDigitizing or TowardsDigitizing maintain its
-              oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
-          }
-          
-       */
-        case TrafficDirection.AgainstDigitizing => exist.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
-        case TrafficDirection.TowardsDigitizing => exist.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
-      }
-      
-      (generated++adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
-    }
-  }
-  
   def updateChangeSet(changeSet: ChangeSet): Unit = {
     dao.floatLinearAssets(changeSet.droppedAssetIds)
     // TODO there is possibility that one change overtake other. , merge these change
