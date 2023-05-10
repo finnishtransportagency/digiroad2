@@ -625,6 +625,27 @@ class AssetFillerSpec extends FunSuite with Matchers {
     })
   }
 
+  test("Adjust start and end m-value when difference is 0.001") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(36.783, 0.0)), 36.783, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0.001, 36.782), SideCode.BothDirections, None, TrafficDirection.BothDirections)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.adjustAssets(roadLinks.map(assetFiller.toRoadLinkForFiltopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(1)
+    //107.093
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(36.783)
+
+  }
+
   test("Do not fill whole in start of link") {
     val roadLinks = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(107.093, 0.0)), 107.093, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
@@ -647,6 +668,27 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     sorted(1).startMeasure should be(103.841)
     sorted(1).endMeasure should be(107.093)
+  }
+
+  test("Do not fill whole in end of link") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(36.783, 0.0)), 36.783, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0.001, 18.082), SideCode.BothDirections, None, TrafficDirection.BothDirections)
+    )
+
+    val (methodTest, combineTestChangeSet) = assetFiller.fillHoles(roadLinks.map(assetFiller.toRoadLinkForFiltopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(1)
+    //107.093
+    sorted(0).startMeasure should be(0.001)
+    sorted(0).endMeasure should be(18.082)
+
   }
 
   test("Fill whole in middle of links") {
