@@ -16,10 +16,10 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
-
+case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
 class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends DynamicLinearAssetDao {
   def MassQueryThreshold = 500
-  case class UnknownLimit(linkId: String, municipality: String, administrativeClass: String)
+ 
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
@@ -254,6 +254,21 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       }
 
     addCountsFor(limitsByMunicipality)
+  }
+
+  def getUnknownSpeedLimits(links: Set[String]): Seq[UnknownLimit] = {
+    if (links.isEmpty) {
+      throw new Exception("Parameters is empty")
+    }
+   
+    val sql =
+      s"""
+      select s.link_id, m.name_fi, s.administrative_class
+      from unknown_speed_limit s
+      join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0 and s.link_id in (${links.map(t=>s"'$t'").mkString(",")}) """
+    
+    Q.queryNA[UnknownLimit](sql).list
   }
 
   def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
