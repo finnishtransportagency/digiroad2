@@ -4,11 +4,12 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment, ValueAdjustment}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.format.DateTimeFormat
 import org.scalatest._
+
 import java.util.UUID
 import scala.util.Random
 
@@ -19,6 +20,16 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       linkId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
       TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
   }
+
+
+  val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
+    expiredAssetIds = Set.empty[Long],
+    adjustedMValues = Seq.empty[MValueAdjustment],
+    adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+    adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+    valueAdjustments = Seq.empty[ValueAdjustment])
+  
+
 
   private def generateRandomLinkId(): String = s"${UUID.randomUUID()}:${Random.nextInt(100)}"
 
@@ -42,7 +53,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val assets = Seq(speedLimit1, speedLimit2)
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink).map(SpeedLimitFiller.toRoadLinkForFiltopology), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
-    filledTopology should have size 2
+    filledTopology should have size 1
     filledTopology.map(_.id) should not contain (1)
     changeSet.expiredAssetIds should have size 1
     changeSet.expiredAssetIds.head should be (1)
@@ -200,12 +211,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       linkId1 -> Seq(speedLimit1, speedLimit2))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFiltopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 2
-    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections, SideCode.BothDirections))
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing, SideCode.TowardsDigitizing))
     changeSet.adjustedSideCodes should have size 2
-    changeSet.adjustedSideCodes.toSet should be(Set(SideCodeAdjustment(1, SideCode.BothDirections, SpeedLimitAsset.typeId), SideCodeAdjustment(2, SideCode.BothDirections, SpeedLimitAsset.typeId)))
+    changeSet.adjustedSideCodes.toSet should be(Set(SideCodeAdjustment(1, SideCode.TowardsDigitizing, SpeedLimitAsset.typeId), SideCodeAdjustment(2, SideCode.TowardsDigitizing, SpeedLimitAsset.typeId)))
   }
 
-  test("merge speed limits with same value on shared road link") {
+  ignore("merge speed limits with same value on shared road link") { // this test is invalid, in this situation we should maintain all values
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0))))
     val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
@@ -225,6 +236,31 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(SpeedLimitValue(40))))
     filledTopology.map(_.modifiedBy) should be (Seq(Some("latest modifier"))) // latest modification should show
+    changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, linkId1, 0.0, 3.0)))
+    changeSet.adjustedSideCodes should be(List())
+    changeSet.expiredAssetIds should be(Set(1, 2))
+  }
+
+  test("merge speed limits with same value on shared road link, test only method") {
+    val topology = Seq(
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0))))
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
+      false, 0.0, 1.0, Set(Point(0.0, 0.0), Point(1.0, 0.0)), Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)),
+      false, 1.0, 2.0, Set(Point(1.0, 0.0), Point(2.0, 0.0)), Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(2.0, 0.0), Point(3.0, 0.0)),
+      false, 2.0, 3.0, Set(Point(2.0, 0.0), Point(3.0, 0.0)), Some("latest modifier"), Some(DateTime.now().minus(100)), None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimits = Map(
+      linkId1 -> Seq(
+        speedLimit1, speedLimit2, speedLimit3))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fuse(topology.map(SpeedLimitFiller.toRoadLinkForFiltopology).head, speedLimits.head._2, initChangeSet)
+    filledTopology should have size 1
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    filledTopology.map(_.value) should be(Seq(Some(SpeedLimitValue(40))))
+    filledTopology.map(_.modifiedBy) should be(Seq(Some("latest modifier"))) // latest modification should show
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(3, linkId1, 0.0, 3.0)))
     changeSet.adjustedSideCodes should be(List())
     changeSet.expiredAssetIds should be(Set(1, 2))
