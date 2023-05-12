@@ -11,12 +11,10 @@ const ChangeTypes = {
 export class ChangeSet {
     changeEntries: ChangeEntry[];
 
-    private readonly oldLinks: KeyLinkProperties[];
-    private readonly newLinks: KeyLinkProperties[];
+    private readonly links: KeyLinkProperties[];
 
-    constructor(oldLinks: KgvLink[], newLinks: KgvLink[], replaceInfo: ReplaceInfo[]) {
-        this.oldLinks = oldLinks.map(link => this.extractKeyLinkProperties(link));
-        this.newLinks = newLinks.map(link => this.extractKeyLinkProperties(link));
+    constructor(links: KgvLink[], replaceInfo: ReplaceInfo[]) {
+        this.links = links.map(link => this.extractKeyLinkProperties(link));
         const groupedByOldLinkId = replaceInfo.reduce((group: GroupedReplaces, replace: ReplaceInfo) => {
             const groupKey = replace.oldLinkId;
             if (groupKey) {
@@ -41,8 +39,8 @@ export class ChangeSet {
 
         return {
             changeType:     this.extractChangeType(newLinkIds, oldLinkId),
-            old:            this.oldLinks.find(link => link.linkId == oldLinkId) ?? null,
-            new:            this.newLinks.filter(link => newLinkIds.includes(link.linkId)),
+            old:            this.links.find(link => link.linkId == oldLinkId) ?? null,
+            new:            this.links.filter(link => newLinkIds.includes(link.linkId)),
             replaceInfo:    change
         }
     }

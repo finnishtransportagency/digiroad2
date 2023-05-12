@@ -7,7 +7,7 @@ const testLinkGeom1 = "SRID=3067;LINESTRING ZM(331703.099 6668799.208 44.23 0,33
 
 describe('Change Set', function () {
     it('Change set without changes', function () {
-        const emptyChangeSet = new ChangeSet([], [], []);
+        const emptyChangeSet = new ChangeSet([], []);
         assert.equal(emptyChangeSet.toJson(), '[]');
     });
 
@@ -15,7 +15,7 @@ describe('Change Set', function () {
         const newLinkId = "testi:1";
         const newLink = new KgvLink(newLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, 12141);
         const change = new ReplaceInfo(undefined, newLinkId, undefined, undefined, 0, 16.937);
-        const changeSet = new ChangeSet([], [newLink], [change]);
+        const changeSet = new ChangeSet([newLink], [change]);
         const expected = [{
             "changeType": "add",
             "old": null,
@@ -49,7 +49,7 @@ describe('Change Set', function () {
         const linkId = "testi:1";
         const oldLink = new KgvLink(linkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, 12141);
         const change = new ReplaceInfo(linkId, undefined, 0, 16.937, undefined, undefined);
-        const changeSet = new ChangeSet([oldLink], [], [change]);
+        const changeSet = new ChangeSet([oldLink], [change]);
         const expected = [{
             "changeType": "remove",
             "old": {
@@ -83,7 +83,7 @@ describe('Change Set', function () {
         const oldLink = new KgvLink(oldLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, undefined);
         const newLink = new KgvLink(newLinkId, testLinkGeom1, 124, 3, 149, 16.93786266, 0, 12141);
         const change = new ReplaceInfo(oldLinkId, newLinkId, 0, 16.937, 0, 16.937);
-        const changeSet = new ChangeSet([oldLink], [newLink], [change]);
+        const changeSet = new ChangeSet([oldLink, newLink], [change]);
         const expected = [{
             "changeType": "replace",
             "old": {
@@ -138,7 +138,7 @@ describe('Change Set', function () {
             new ReplaceInfo(oldLink.id, newLink3.id, 120.426, 115.458, 0, 4.968)
         ];
 
-        const changeSet = new ChangeSet([oldLink], [newLink1, newLink2, newLink3], changes);
+        const changeSet = new ChangeSet([oldLink, newLink1, newLink2, newLink3], changes);
         const expected = [{
             "changeType": "split",
             "old": {
@@ -227,7 +227,7 @@ describe('Change Set', function () {
             new ReplaceInfo(oldLink2.id, newLink.id, 0, 32.136, 64.828, 96.964),
         ];
 
-        const changeSet = new ChangeSet([oldLink1, oldLink2], [newLink], changes);
+        const changeSet = new ChangeSet([oldLink1, oldLink2, newLink], changes);
         const expected = [
             {
                 "changeType": "replace",
