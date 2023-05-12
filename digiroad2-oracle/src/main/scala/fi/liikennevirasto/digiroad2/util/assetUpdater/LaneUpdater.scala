@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.lane.{LaneService, LaneWorkListService}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation, Deletion, Divided, Replaced}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, MainLanePopulationProcess}
 import fi.liikennevirasto.digiroad2.{AssetLinearReference, DummyEventBus, DummySerializer, GeometryUtils, MValueCalculator}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -279,19 +280,18 @@ object LaneUpdater {
     })
   }
 
-  def handleTrafficDirectionChange(workListChanges: Seq[RoadLinkChange], workListMainLanes: Seq[PersistedLane]): Seq[ChangeSet] = {
-    val laneIds = workListMainLanes.map(_.id).toSet
-    val changeSetWithExpired = ChangeSet(expiredLaneIds = laneIds)
+  def handleTrafficDirectionChange(workListChanges: Seq[RoadLinkChange], workListMainLanes: Seq[PersistedLane]): (ChangeSet, Seq[PersistedLane]) = {
+    val laneIdsToExpire = workListMainLanes.map(_.id).toSet
 
-    val changeSetsWithAddedMainLanes = workListChanges.map(change => {
+    val createdMainLanes = workListChanges.flatMap(change => {
       val newLinkIds = change.newLinks.map(_.linkId)
       // Need to fetch RoadLinks because Link Type is needed for main lane creation
       val addedRoadLinks = roadLinkService.getRoadLinksByLinkIds(newLinkIds.toSet)
       val createdMainLanes = MainLanePopulationProcess.createMainLanesForRoadLinks(addedRoadLinks, saveResult = false)
-      ChangeSet(generatedPersistedLanes = createdMainLanes)
+      createdMainLanes
     })
 
-    changeSetsWithAddedMainLanes :+ changeSetWithExpired
+    (ChangeSet(expiredLaneIds = laneIdsToExpire, generatedPersistedLanes = createdMainLanes), createdMainLanes)
   }
 
   def reportLaneChanges(oldLane: Option[PersistedLane], newLanes: Seq[PersistedLane], changeType: ChangeType, roadLinkChanges: Seq[RoadLinkChange]): ChangedLane = {
@@ -310,7 +310,7 @@ object LaneUpdater {
 
     // Additional lanes can't be processed if link is on the lane work list, only handle main lanes on those links
     val workListMainLanes = lanesOnWorkListLinks.filter(lane => LaneNumber.isMainLane(lane.laneCode))
-    val trafficDirectionChangeSets = handleTrafficDirectionChange(workListChanges, workListMainLanes)
+    val (trafficDirectionChangeSet, trafficDirectionCreatedMainLanes) = handleTrafficDirectionChange(workListChanges, workListMainLanes)
 
     val changeSetsAndAdjustedLanes = roadLinkChanges.map(change => {
       change.changeType match {
@@ -340,12 +340,12 @@ object LaneUpdater {
     })
 
     val changeSets = changeSetsAndAdjustedLanes.map(_._1)
-    val adjustedLanes = changeSetsAndAdjustedLanes.flatMap(_._2)
-    val changeSet = (changeSets ++ trafficDirectionChangeSets).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
+    val adjustedLanes = changeSetsAndAdjustedLanes.flatMap(_._2) ++ trafficDirectionCreatedMainLanes
+    val changeSet = (changeSets :+ trafficDirectionChangeSet).foldLeft(ChangeSet())(LaneFiller.combineChangeSets)
 
     val lanesGroupedByLink = adjustedLanes.groupBy(_.linkId)
 
-    val fusedLanesAndChangeSet = newRoadLinks.foldLeft(Seq.empty[PersistedLane], changeSet) { case (accumulatedAdjustments, roadLink) =>
+    val (fusedLanes, finalChangeSet) = newRoadLinks.foldLeft(Seq.empty[PersistedLane], changeSet) { case (accumulatedAdjustments, roadLink) =>
       val (existingAssets, changedSet) = accumulatedAdjustments
       val assetsOnRoadLink = lanesGroupedByLink.getOrElse(roadLink.linkId, Nil)
       val (adjustedAssets, assetAdjustments) = fuseLanesOnMergedRoadLink(assetsOnRoadLink, changedSet)
@@ -353,7 +353,7 @@ object LaneUpdater {
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
 
-    fusedLanesAndChangeSet._2
+    finalChangeSet
   }
   // In case main lane's parent lanes have different start dates, we want to inherit the latest date
   def getLatestStartDatePropertiesForFusedLanes(lanesToMerge: Seq[PersistedLane]): Seq[LaneProperty] = {
