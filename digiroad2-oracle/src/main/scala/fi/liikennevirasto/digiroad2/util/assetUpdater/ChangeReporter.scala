@@ -130,6 +130,7 @@ case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Opti
   * @param after      after samuutus
   * */
 case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Asset, after: Seq[Asset]) extends ReportedChange
+case class ChangedLane(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Option[Asset], after: Seq[Asset]) extends ReportedChange
 
 /**
   *
