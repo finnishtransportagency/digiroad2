@@ -395,7 +395,7 @@ object LaneUpdater {
           originalAdditionalLane.endMeasure, originalAdditionalLane.sideCode)
         val projection = Projection(replaceInfo.oldFromMValue, replaceInfo.oldToMValue, replaceInfo.newFromMValue, replaceInfo.newToMValue)
         val (newStartM, newEndM, newSideCode) = MValueCalculator.calculateNewMValues(laneLinearReference, projection, newRoadLinkLength, replaceInfo.digitizationChange)
-        originalAdditionalLane.copy(startMeasure = newStartM, endMeasure = newEndM, linkId = replaceInfo.newLinkId, sideCode = newSideCode)
+        originalAdditionalLane.copy(id = 0 ,startMeasure = newStartM, endMeasure = newEndM, linkId = replaceInfo.newLinkId, sideCode = newSideCode)
       })
       LaneSplit(lanesSplitFromOriginal, originalAdditionalLane)
     })
