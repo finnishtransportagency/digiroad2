@@ -317,23 +317,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   
   def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                                           typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val asset = linearAssets.map(p => {
-      val links = roadLinks.find(_.linkId == p._1).get
-      val step0 = assetFiller.fuse(links, p._2, changeSet.get)
-      val step1 = assetFiller.dropShortSegments(links, step0._1, step0._2)
-      val step2 = assetFiller.adjustAssets(links, step1._1, step1._2)
-      val step3 = assetFiller.expireOverlappingSegments(links, step2._1, step2._2)
-      val step4 = assetFiller.droppedSegmentWrongDirection(links, step3._1, step3._2)
-      val step5 = assetFiller.adjustSegmentSideCodes(links, step4._1, step4._2)
-      val step6 = assetFiller.fillHoles(links, step5._1, step5._2)
-      // TODO Check for small 0.001 wholes fill theses
-      step6
-    }).toSeq
-
-    val changeSetFolded = foldChangeSet(asset.map(_._2), changeSet.get)
-    val filterExpiredAway =changeSetFolded.copy(adjustedMValues = changeSetFolded.adjustedMValues.filterNot(p => changeSetFolded.droppedAssetIds.contains(p.assetId)))
-    val assetOnly = asset.flatMap(_._1)
-
+     val (assetOnly,filterExpiredAway)=assetFiller.fillTopologyChangesGeometry(roadLinks,linearAssets,typeId,changeSet)
     updateChangeSet(filterExpiredAway)
     (assetOnly, filterExpiredAway)
   }

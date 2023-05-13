@@ -1,10 +1,9 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, ConstructionType, CycleOrPedestrianPath, LinkGeomSource, LinkType, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SideCode, SpecialTransportWithGate, SpecialTransportWithoutGate, SpeedLimitAsset, State, TractorRoad, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.joda.time.DateTime
 
 import scala.util.Try
@@ -656,32 +655,24 @@ class AssetFiller {
       (existingAssets ++ adjustedAssets, assetAdjustments)
     }
   }
-
- /* def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
+  def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                                   changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    //println("start running fillTopology")
-    val fillOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      printlnOperation("start running fillTopology state now"),
-    /*  expireSegmentsOutsideGeometry,
-      printlnOperation("expireSegmentsOutsideGeometry"),
-      capToGeometry,
-      printlnOperation("capToGeometry"),*/
-      expireOverlappingSegments,
-      printlnOperation("expireOverlappingSegments"),
-      //combine,
-      //printlnOperation("combine"),
+    val operations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+      printlnOperation("operation start"),
       fuse,
       printlnOperation("fuse"),
       dropShortSegments,
       printlnOperation("dropShortSegments"),
       adjustAssets,
       printlnOperation("adjustAssets"),
+      expireOverlappingSegments,
+      printlnOperation("expireOverlappingSegments"),
       droppedSegmentWrongDirection,
       printlnOperation("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
-      printlnOperation("adjustSegmentSideCodes")
-/*      updateValues,
-      printlnOperation("updateValues")*/
+      printlnOperation("adjustSegmentSideCodes"),
+      fillHoles,
+      printlnOperation("fillHoles")
     )
 
     val changeSet = changedSet match {
@@ -693,16 +684,26 @@ class AssetFiller {
         adjustedSideCodes = Seq.empty[SideCodeAdjustment],
         valueAdjustments = Seq.empty[ValueAdjustment])
     }
-    //There is some king of bug becouse it loop two time, combine method generate multiple uneended side code changes
-    // seems to be same duplication error
-    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+    // if links does not have any asset filter it away 
+    topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
-      val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      (existingAssets ++ adjustedAssets, assetAdjustments)
+      val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p =>
+        assetAdjustments.droppedAssetIds.contains(p.assetId) ||
+          assetAdjustments.expiredAssetIds.contains(p.assetId)))
+
+      val noDuplicate = filterExpiredAway.copy(
+        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
+        adjustedVVHChanges = filterExpiredAway.adjustedVVHChanges.distinct,
+        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
+        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
+      )
+
+      (existingAssets ++ adjustedAssets, noDuplicate)
     }
-  }*/
+  }
 }

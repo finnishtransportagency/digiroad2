@@ -185,22 +185,26 @@ object SpeedLimitFiller extends AssetFiller {
     }
   }
 
-/*  override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                                           changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
+                                  changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      combine,
+      printlnOperation("operation start"),
       fuse,
-      adjustSegmentMValues,
-      capToGeometry,
-      adjustLopsidedLimit,
-      droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
+      printlnOperation("fuse"),
       dropShortSegments,
+      printlnOperation("dropShortSegments"),
+      adjustAssets,
+      printlnOperation("adjustAssets"),
+      expireOverlappingSegments,
+      printlnOperation("expireOverlappingSegments"),
+      droppedSegmentWrongDirection,
+      printlnOperation("droppedSegmentWrongDirection"),
+      adjustSegmentSideCodes,
+      printlnOperation("adjustSegmentSideCodes"),
       fillHoles,
+      printlnOperation("fillHoles"),
       clean
     )
-
     val changeSet = changedSet match {
       case Some(change) => change
       case None => ChangeSet(droppedAssetIds = Set.empty[Long],
@@ -210,19 +214,29 @@ object SpeedLimitFiller extends AssetFiller {
         adjustedSideCodes = Seq.empty[SideCodeAdjustment],
         valueAdjustments = Seq.empty[ValueAdjustment])
     }
+    // if links does not have any asset filter it away 
+    topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
+      val (existingAssets, changeSet) = acc
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
 
-    topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
-      val (existingSegments, changeSet) = acc
-      val segments = linearAssets.getOrElse(roadLink.linkId, Nil)
-      val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
-
-      val (adjustedSegments, segmentAdjustments) = operations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+      val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
-      (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
+      val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p =>
+        assetAdjustments.droppedAssetIds.contains(p.assetId) ||
+          assetAdjustments.expiredAssetIds.contains(p.assetId)))
+
+      val noDuplicate = filterExpiredAway.copy(
+        adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
+        adjustedVVHChanges = filterExpiredAway.adjustedVVHChanges.distinct,
+        adjustedSideCodes = filterExpiredAway.adjustedSideCodes.distinct,
+        valueAdjustments = filterExpiredAway.valueAdjustments.distinct
+      )
+
+      (existingAssets ++ adjustedAssets, noDuplicate)
     }
-  }*/
+  }
+
 
   /**
     * For debugging; print speed limit relevant data
