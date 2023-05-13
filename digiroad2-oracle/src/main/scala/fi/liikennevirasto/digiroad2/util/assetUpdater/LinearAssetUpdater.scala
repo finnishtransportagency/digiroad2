@@ -331,10 +331,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     }).toSeq
 
     val changeSetFolded = foldChangeSet(asset.map(_._2), changeSet.get)
+    val filterExpiredAway =changeSetFolded.copy(adjustedMValues = changeSetFolded.adjustedMValues.filterNot(p => changeSetFolded.droppedAssetIds.contains(p.assetId)))
     val assetOnly = asset.flatMap(_._1)
 
-    updateChangeSet(changeSetFolded)
-    (assetOnly, changeSetFolded)
+    updateChangeSet(filterExpiredAway)
+    (assetOnly, filterExpiredAway)
   }
   
   def updateChangeSet(changeSet: ChangeSet): Unit = {
@@ -385,6 +386,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     println(s"insert assets count: ${toInsert.size}")
     println(s"update assets count: ${toUpdate.size}")
+    
+    // TODO remove this call
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
     if (toUpdate.nonEmpty) {
       val toUpdateText = toUpdate.filter(a =>

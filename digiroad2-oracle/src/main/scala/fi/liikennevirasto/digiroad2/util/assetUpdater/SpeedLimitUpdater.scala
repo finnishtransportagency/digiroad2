@@ -90,19 +90,20 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
       val step8 = SpeedLimitFiller.clean(links, step7._1, step7._2)
       
       // TODO Check for small 0.001 wholes fill theses
-      step8._2.copy(adjustedMValues = step8._2.adjustedMValues.filterNot(p => step8._2.droppedAssetIds.contains(p.assetId)))
       step8
     }).toSeq
 
 
     val changeSetFolded = super.foldChangeSet(asset.map(_._2), changeSet.get)
+    val filterExpiredAway = changeSetFolded.copy(adjustedMValues = changeSetFolded.adjustedMValues.filterNot(p => changeSetFolded.droppedAssetIds.contains(p.assetId)))
+
     val assetOnly = asset.flatMap(_._1)
     val roadLinksByLinkId = roadLinks.groupBy(_.linkId).mapValues(_.head)
     //val newSpeedLimitsWithValue = assetOnly.filter(sl => sl.id <= 0 && sl.value.nonEmpty)
     //val unknownLimits = service.createUnknownLimits(assetOnly, roadLinksByLinkId)
 
-    updateChangeSet(changeSetFolded)
-    (assetOnly, changeSetFolded)
+    updateChangeSet(filterExpiredAway)
+    (assetOnly, filterExpiredAway)
   }
   
   override def updateChangeSet(changeSet: ChangeSet) : Unit = {
