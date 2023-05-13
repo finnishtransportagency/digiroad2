@@ -25,13 +25,11 @@ class AssetFiller {
   val MaxAllowedError = 0.001
   val MinAllowedLength = 2.0
   private val MaxAllowedMValueError = 0.1
-  private val Epsilon = 1E-6
+  
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
-                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
-                             */
-  private val MinAllowedSpeedLimitLength = 2.0
-
-
+     See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems */
+  private val Epsilon = 1E-6
+  
   def toRoadLinkForFiltopology(roadLink: RoadLink): RoadLinkForFiltopology = {
     RoadLinkForFiltopology(linkId = roadLink.linkId,length =  roadLink.length,trafficDirection = roadLink.trafficDirection,administrativeClass = roadLink.administrativeClass,
       linkSource = roadLink.linkSource,linkType = roadLink.linkType,constructionType = roadLink.constructionType, geometry = roadLink.geometry,Try(roadLink.municipalityCode).getOrElse(0) )
@@ -561,11 +559,11 @@ class AssetFiller {
     * Removes obsoleted mvalue adjustments and side code adjustments from the list
     *
     * @param roadLink
-    * @param speedLimits
+    * @param assets
     * @param changeSet
     * @return
     */
-  def clean(roadLink: RoadLinkForFiltopology, speedLimits: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  def clean(roadLink: RoadLinkForFiltopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     /**
       * Remove adjustments that were overwritten later (new version appears later in the sequence)
       *
@@ -599,53 +597,51 @@ class AssetFiller {
     val droppedIds = changeSet.droppedAssetIds
     val adjustments = prune(changeSet.adjustedMValues.filterNot(a => droppedIds.contains(a.assetId)))
     val sideAdjustments = pruneSideCodes(changeSet.adjustedSideCodes.filterNot(a => droppedIds.contains(a.assetId)))
-    (speedLimits, changeSet.copy(droppedAssetIds = Set(), expiredAssetIds = (changeSet.expiredAssetIds ++ changeSet.droppedAssetIds) -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
+    (assets, changeSet.copy(droppedAssetIds = Set(), expiredAssetIds = (changeSet.expiredAssetIds ++ changeSet.droppedAssetIds) -- Set(0), adjustedMValues = adjustments, adjustedSideCodes = sideAdjustments))
 
   }
 
   /**
-    * Fills any missing pieces in the middle of speed limits.
-    * - If the gap is smaller than minimum allowed speed limit length the first speed limit is extended
+    * Fills any missing pieces in the middle of asset.
+    * - If the gap is smaller than minimum allowed asset length the first asset is extended
     * !!! But if it is smaller than 1E-6 we let it be and treat it as a rounding error to avoid repeated writes !!!
-    * - If the gap is larger it's let to be and will be generated as unknown speed limit later
+    * - If the gap is larger it's let to be and will be generated as unknown asset later
     *
     * @param roadLink    Road link being handled
-    * @param speedLimits List of speed limits
+    * @param assets List of asset limits
     * @param changeSet   Set of changes
-    * @return List of speed limits and change set so that there are no small gaps between speed limits
+    * @return List of asset and change set so that there are no small gaps between asset
     */
-  def fillHoles(roadLink: RoadLinkForFiltopology, speedLimits: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    def firstAndLastLimit(speedLimits: Seq[PieceWiseLinearAsset], sideCode: SideCode) = {
-      val filtered = speedLimits.filter(_.sideCode == sideCode)
+  def fillHoles(roadLink: RoadLinkForFiltopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    def firstAndLastLimit(assets: Seq[PieceWiseLinearAsset], sideCode: SideCode) = {
+      val filtered = assets.filter(_.sideCode == sideCode)
       (filtered.sortBy(_.startMeasure).headOption,
         filtered.sortBy(0 - _.endMeasure).headOption)
     }
     
-    def fillBySideCode(speedLimits: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFiltopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-      if (speedLimits.size > 1) {
-        val left = speedLimits.head
-        val right = speedLimits.find(sl => sl.startMeasure >= left.endMeasure)
-        if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedSpeedLimitLength &&
+    def fillBySideCode(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFiltopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+      if (assets.size > 1) {
+        val left = assets.head
+        val right = assets.find(sl => sl.startMeasure >= left.endMeasure)
+        if (right.nonEmpty && Math.abs(left.endMeasure - right.get.startMeasure) < MinAllowedLength &&
           Math.abs(left.endMeasure - right.get.startMeasure) >= Epsilon) {
           val adjustedLeft = left.copy(endMeasure = right.get.startMeasure,
             geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, left.startMeasure, right.get.startMeasure),
             timeStamp = latestTimestamp(left, right))
           val adj = MValueAdjustment(adjustedLeft.id, adjustedLeft.linkId, adjustedLeft.startMeasure, adjustedLeft.endMeasure)
-          val recurse = fillBySideCode(speedLimits.tail, roadLink, changeSet)
+          val recurse = fillBySideCode(assets.tail, roadLink, changeSet)
           (Seq(adjustedLeft) ++ recurse._1, recurse._2.copy(adjustedMValues = recurse._2.adjustedMValues ++ Seq(adj)))
         } else {
-          val recurse = fillBySideCode(speedLimits.tail, roadLink, changeSet)
+          val recurse = fillBySideCode(assets.tail, roadLink, changeSet)
           (Seq(left) ++ recurse._1, recurse._2)
         }
       } else {
-        (speedLimits, changeSet)
+        (assets, changeSet)
       }
     }
-
-    //val (extended, newChangeSet) = extendToGeometry(speedLimits, roadLink, changeSet)
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(speedLimits, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set(), Nil))
-    (geometrySegments.toSeq,
-      geometryAdjustments)
+    
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(assets, roadLink, changeSet)
+    (geometrySegments, geometryAdjustments)
   }
 
   def fillTopology(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
