@@ -48,6 +48,12 @@ object SpeedLimitFiller extends AssetFiller {
       adjustSegmentSideCodes,
       dropShortSegments,
       fillHoles,
+      generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
+      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
       clean)
 
     if(geometryChanged) fillOperations
@@ -122,8 +128,39 @@ object SpeedLimitFiller extends AssetFiller {
     val limits = assets.filterNot { x => limitsToDrop.contains(x.id) }
     (limits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ limitsToDrop))
   }
+
+
+  //TODO should be moved into generator class or Object
+  override protected def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
+    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
+    val generatedLinearAssets =   if (roadLink.isSimpleCarTrafficRoad) {
+      val generated = remainders.map { segment =>
+        PersistedLinearAsset(0L, roadLink.linkId, 1, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None, None)
+      }
+      toLinearAsset(generated, roadLink)
+    } else Seq.empty[PieceWiseLinearAsset]
+    (segments ++ generatedLinearAssets, changeSet)
+  }
+
+  //TODO should be moved into generator class or Object
+  override protected def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    val generated = if (roadLink.trafficDirection == TrafficDirection.BothDirections && roadLink.isSimpleCarTrafficRoad) {
+      val lrmPositions: Seq[(Double, Double)] = segments
+        .filter { s => s.sideCode == sideCode || s.sideCode == SideCode.BothDirections }
+        .map { x => (x.startMeasure, x.endMeasure) }
+      val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
+      val persisted = remainders.map { segment =>
+        PersistedLinearAsset(0L, roadLink.linkId, sideCode.value, None, segment._1, segment._2, None, None, None, None, false, typeId, 0, None, roadLink.linkSource, None, None, None)
+      }
+      toLinearAsset(persisted, roadLink)
+    } else {
+      Nil
+    }
+    (segments ++ generated, changeSet)
+  }
   
-  def generateUnknownSpeedLimitsForLink(roadLink: RoadLinkForFiltopology, assets: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] = {
+/*  def generateUnknownSpeedLimitsForLink(roadLink: RoadLinkForFiltopology, assets: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] = {
     val lrmPositions: Seq[(Double, Double)] = assets.map { x => (x.startMeasure, x.endMeasure) }
 
     if(roadLink.isSimpleCarTrafficRoad) {
@@ -137,7 +174,7 @@ object SpeedLimitFiller extends AssetFiller {
       }
     } else
       Seq()
-  }
+  }*/
   
   override def fillTopology(roadLinks: Seq[RoadLinkForFiltopology], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId:Int, changedSet: Option[ChangeSet] = None,
                    geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
