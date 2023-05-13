@@ -1,10 +1,14 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
+import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, RoadLink, Value}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, MTKClassWidth, NumericValue, PersistedLinearAsset, PieceWiseLinearAsset, RoadLink, SpeedLimitFiller, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
@@ -66,6 +70,11 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   def createAsset(measures: Measures, value: Value, link: RoadLink, sideCode:SideCode = SideCode.BothDirections ): Long = {
     service.createWithoutTransaction(TrafficVolume.typeId, link.linkId, value, sideCode.value,
       measures, "testuser", 0L, Some(link), false, None, None)
+  }
+
+  def createRoadLink(id: String, length: Double) = {
+    RoadLink(id, Seq(Point(0.0, 0.0), Point(length, 0.0)), length, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
   }
 
   def changeAdd(newID: String): RoadLinkChange = {
@@ -1072,7 +1081,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("case 10.2 Road changes to one ways and there more than one asset to both direction ") {
+  test("case 10.2 Road changes to one ways and there more than one asset to both direction , case 2") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 5)
     val oldRoadLink = RoadLink(linksid, geometry._1, geometry._2, Municipality,
@@ -1087,6 +1096,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceLenghenedFromEndTowardsDigitizing(linksid)
 
     runWithRollback {
+      fail("Need to be implemented")
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, geometry._2), "testuser", 0L, Some(oldRoadLink), false, None, None)
@@ -1112,7 +1122,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   }
 
 
-  test("case 10.2 each sides has two value and mirroring ") {
+  test("case 10.3 each sides has two value and mirroring, case 4 ") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 5) //4
     val oldRoadLink = RoadLink(linksid, geometry._1, geometry._2, Municipality,
@@ -1127,12 +1137,13 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceLenghenedFromEndTowardsDigitizing(linksid)
 
     runWithRollback {
+      fail("Need to be implemented")
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(4), SideCode.TowardsDigitizing.value, Measures(2,4), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id3 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id4 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(4), SideCode.AgainstDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id3 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(5), SideCode.TowardsDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id4 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(6), SideCode.AgainstDigitizing.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2,id3,id4), false)
       assetsBefore.size should be(2)
@@ -1153,7 +1164,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("case 10.2 consecutive with different side code but same value") {
+  test("case 10.4 consecutive with different side code but same value") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 5) //4
     val oldRoadLink = RoadLink(linksid, geometry._1, geometry._2, Municipality,
@@ -1168,6 +1179,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceLenghenedFromEndTowardsDigitizing(linksid)
 
     runWithRollback {
+      fail("Need to be implemented")
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
@@ -1193,7 +1205,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("case 10.2 one side full length but but other side splitted") {
+  test("case 10.5 one side full length but but other side splitted") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 5) //4
     val oldRoadLink = RoadLink(linksid, geometry._1, geometry._2, Municipality,
@@ -1208,6 +1220,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceLenghenedFromEndTowardsDigitizing(linksid)
 
     runWithRollback {
+      fail("Need to be implemented")
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.AgainstDigitizing.value, Measures(0, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
@@ -1233,7 +1246,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("case 10.2 consecutive with different side code ") {
+  test("case 10.6 consecutive with different value, case 3 ") {
     val linksid = generateRandomLinkId()
     val geometry = generateGeometry(0, 5) //4
     val oldRoadLink = RoadLink(linksid, geometry._1, geometry._2, Municipality,
@@ -1248,6 +1261,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceLenghenedFromEndTowardsDigitizing(linksid)
 
     runWithRollback {
+      fail("Need to be implemented")
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linksid, false)).thenReturn(Some(oldRoadLink))
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.BothDirections.value, Measures(0, 2), "testuser", 0L, Some(oldRoadLink), false, None, None)
@@ -1272,6 +1286,63 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
   
+  test("case 11 Roads digitization direction changes, case 3b") {
+    val linksid = "291f7e18-a48a-4afc-a84b-8485164288b2:1"
+    val linksidNew = "eca24369-a77b-4e6f-875e-57dc85176003:1"
+
+    val change = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      fail("Need to be implemented")
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid).get
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.BothDirections.value, Measures(0, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(4), SideCode.BothDirections.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linksidNew), false)
+
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(18.082)
+      sorted.head.value.isEmpty should be(false)
+      sorted.head.value.get should be(NumericValue(3))
+      SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
+    }
+  }
+
+  test("case 11 Roads digitization direction changes, case 3c") {
+    val linksid = "291f7e18-a48a-4afc-a84b-8485164288b2:1"
+    val linksidNew = "eca24369-a77b-4e6f-875e-57dc85176003:1"
+
+    val change = roadLinkChangeClient.convertToRoadLinkChange(source)
+
+    runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid).get
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(3), SideCode.TowardsDigitizing.value,Measures(0, 10.081) , "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linksid, NumericValue(4), SideCode.AgainstDigitizing.value,Measures(10.081, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linksidNew), false)
+
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(18.082)
+      sorted.head.value.isEmpty should be(false)
+      sorted.head.value.get should be(NumericValue(3))
+      SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
+    }
+  }
+  
   test("case 11 Roads digitization direction changes") {
     val linksid = "291f7e18-a48a-4afc-a84b-8485164288b2:1"
     val linksidNew = "eca24369-a77b-4e6f-875e-57dc85176003:1"
@@ -1291,7 +1362,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       
       val sorted = assetsAfter.sortBy(_.endMeasure)
       
-      sorted.head.startMeasure should be(0.001) 
+      sorted.head.startMeasure should be(0) 
       sorted.head.endMeasure should be(18.082)
       sorted.head.value.isEmpty should be(false)
       sorted.head.value.get should be(NumericValue(3))
@@ -1323,54 +1394,4 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   test("case 5 asset retain all it old values,group 5, (external id)") {
     fail("Need to be implemented")
   }
-
-
-  /*
-  
-
-  test("Should map winter speed limits of old link to three new road links, asset covers part of road link") {
-    val oldLinkId = LinkIdGenerator.generateRandom()
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val newLinkId2 = LinkIdGenerator.generateRandom()
-    val newLinkId3 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-    val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-
-    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
-
-    val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(newLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
-      RoadLink(newLinkId3, List(Point(20.0, 0.0), Point(25.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
-
-    val change = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 5, Some(10), Some(20), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 5, Some(20), Some(25), Some(0), Some(5), 144000000))
-
-    runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(oldLinkId), false)).thenReturn(Seq(oldRoadLink))
-      val id = service.createWithoutTransaction(WinterSpeedLimit.typeId, oldRoadLink.linkId, NumericValue(80), 1, Measures(0, 25), "testuser", 0L, Some(oldRoadLink), false)
-      val assetsBefore = service.getPersistedAssetsByIds(WinterSpeedLimit.typeId, Set(id), false)
-      assetsBefore.size should be(1)
-      assetsBefore.foreach(asset => asset.expired should be(false))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(newLinkId1, newLinkId2, newLinkId3), false)).thenReturn(newRoadLinks)
-      TestLinearAssetUpdater.updateByRoadLinks(WinterSpeedLimit.typeId, 1, newRoadLinks, change)
-      val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(WinterSpeedLimit.typeId, Seq(oldLinkId, newLinkId1, newLinkId2, newLinkId3), "mittarajoitus", true)
-      val (expiredAssets, validAssets) = assetsAfter.partition(_.expired)
-      expiredAssets.size should be(1)
-      expiredAssets.head.linkId should be(oldLinkId)
-      validAssets.size should be(3)
-      validAssets.map(_.linkId).sorted should be(List(newLinkId1, newLinkId2, newLinkId3).sorted)
-      val sortedValidAssets = validAssets.sortBy(asset => (asset.startMeasure, asset.endMeasure))
-      sortedValidAssets.head.startMeasure should be(0)
-      sortedValidAssets.head.endMeasure should be(5)
-      sortedValidAssets(1).startMeasure should be(0)
-      sortedValidAssets(1).endMeasure should be(10)
-      sortedValidAssets.last.startMeasure should be(0)
-      sortedValidAssets.last.endMeasure should be(10)
-    }
-  }*/
 }

@@ -112,9 +112,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.linkId) should be(Seq(linkId1))
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
   }
-
   
-  // move these into linearAsset updater or projection class
   test("generate two-sided asset when two-way road link is half-covered") {
     val topology = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -146,15 +144,10 @@ class AssetFillerSpec extends FunSuite with Matchers {
         Set(Point(10.0, 0.0), Point(15.0, 0.0)), None, None, None, None, 110, TrafficDirection.BothDirections, 0, None, linkSource = NormalLinkInterface, Municipality, Map(), None, None, None)))
 
     val (methodTest, methodTestChangeSet) = assetFiller.expireSegmentsOutsideGeometry(assetFiller.toRoadLinkForFiltopology(roadLink), assets.head._2, initChangeSet)
-    //val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink).map(assetFiller.toRoadLinkForFiltopology), Map(linkId1 -> assets.head._2), 110)
-
+   
     methodTestChangeSet.expiredAssetIds should be(Set(1l))
     methodTestChangeSet.droppedAssetIds should be(Set())
-   /* Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      val changeSet = item._2
-      changeSet.expiredAssetIds should be(Set(1l))
-      changeSet.droppedAssetIds should be(Set())
-    })*/
+
   }
 
   test("cap assets that go over roadlink geometry") {
@@ -165,7 +158,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
         Set(Point(0.0, 0.0), Point(15.0, 0.0)), None, None, None, None, 110, TrafficDirection.BothDirections, 0, None, linkSource = NormalLinkInterface, Municipality, Map(), None, None, None)))
 
     val (methodTest, methodTestChangeSet) = assetFiller.capToGeometry(assetFiller.toRoadLinkForFiltopology(roadLink), assets.head._2, initChangeSet)
-    //val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink).map(assetFiller.toRoadLinkForFiltopology), Map(linkId1 -> assets.head._2), 110)
 
     val filledTopology = methodTest
     val changeSet = methodTestChangeSet
@@ -180,20 +172,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
     changeSet.expiredAssetIds should be(Set())
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(1l, linkId1, 0.0, 10.0)))
     
-/*    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      val filledTopology = item._1
-      val changeSet = item._2
-      filledTopology should have size 1
-      filledTopology.map(_.sideCode) should be(Seq(BothDirections))
-      filledTopology.map(_.value) should be(Seq(Some(NumericValue(1))))
-      filledTopology.map(_.id) should be(Seq(1))
-      filledTopology.map(_.linkId) should be(Seq(linkId1))
-      filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-
-      changeSet.droppedAssetIds should be(Set())
-      changeSet.expiredAssetIds should be(Set())
-      changeSet.adjustedMValues should be(Seq(MValueAdjustment(1l, linkId1, 0.0, 10.0)))
-    })*/
   }
   
   test("drop segments less than 2 meters"){
@@ -250,10 +228,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
     filledTopology should have size 2
     GeometryUtils.overlap(toSegment(filledTopology.head), toSegment(filledTopology.last)).nonEmpty should be(false)
     
-  /*  val (testWholeProcess, _) = assetFiller.fillTopology(Seq(roadLink).map(assetFiller.toRoadLinkForFiltopology), Map(linkId1 -> assets), 140)
-    testWholeProcess should have size 2
-    GeometryUtils.overlap(toSegment(testWholeProcess.head), toSegment(testWholeProcess.last)).nonEmpty should be(false)*/
-
   }
   
   test("Fuse two consecutive segments  with same value in same RoadLink") {
@@ -567,13 +541,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
     
   }
   
-  private def roadLink(linkId: String, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
-    val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
-    RoadLink(
-      linkId, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1,
-      TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode))
-  }
-
   private def makeAssetsList(linkId: String) = {
     Seq(
       (18083292,linkId,1,None,0,85.545,0,"04.05.2016 14:32:37,294105000"),
