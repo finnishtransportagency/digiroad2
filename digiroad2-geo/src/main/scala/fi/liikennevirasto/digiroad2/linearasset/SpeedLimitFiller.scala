@@ -1,19 +1,13 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object SpeedLimitFiller extends AssetFiller {
   private val MaxAllowedMValueError = 0.1
-  private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
-                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
-                             */
   private val MinAllowedSpeedLimitLength = 2.0
-
-  /*      updateValues,
-  printlnOperation("updateValues")*/
+  
   def getOperations(geometryChanged: Boolean): Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val fillOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       printlnOperation("start running fillTopology state now"),
@@ -23,7 +17,6 @@ object SpeedLimitFiller extends AssetFiller {
       printlnOperation("combine"),
       fuse,
       printlnOperation("fuse"),
-      //adjustSegmentMValues,
       adjustAssets,
       printlnOperation("adjustAssets"),
       capToGeometry,
@@ -36,6 +29,12 @@ object SpeedLimitFiller extends AssetFiller {
       printlnOperation("dropShortSegments"),
       fillHoles,
       printlnOperation("fillHoles"),
+      generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
+      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
       clean,
       printlnOperation("clean")
     )
@@ -160,22 +159,6 @@ object SpeedLimitFiller extends AssetFiller {
     (segments ++ generated, changeSet)
   }
   
-/*  def generateUnknownSpeedLimitsForLink(roadLink: RoadLinkForFiltopology, assets: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] = {
-    val lrmPositions: Seq[(Double, Double)] = assets.map { x => (x.startMeasure, x.endMeasure) }
-
-    if(roadLink.isSimpleCarTrafficRoad) {
-      val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength }
-      remainders.map { segment =>
-        val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
-        PieceWiseLinearAsset(0, roadLink.linkId, SideCode.BothDirections, None, geometry, false, //TODO fix this
-          segment._1, segment._2, geometry.toSet, None, None, None, None,
-          SpeedLimitAsset.typeId, roadLink.trafficDirection, 0, None,
-          roadLink.linkSource, roadLink.administrativeClass, Map(), None, None, None)
-      }
-    } else
-      Seq()
-  }*/
-  
   override def fillTopology(roadLinks: Seq[RoadLinkForFiltopology], speedLimits: Map[String, Seq[PieceWiseLinearAsset]], typeId:Int, changedSet: Option[ChangeSet] = None,
                    geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations = getOperations(geometryChanged)
@@ -198,8 +181,7 @@ object SpeedLimitFiller extends AssetFiller {
       val (adjustedSegments, segmentAdjustments) = operations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
-      (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
+      (existingSegments ++ adjustedSegments, segmentAdjustments)
     }
   }
 
