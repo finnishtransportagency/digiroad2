@@ -53,7 +53,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val assets = Seq(speedLimit1, speedLimit2)
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink).map(SpeedLimitFiller.toRoadLinkForFiltopology), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
-    filledTopology should have size 1
+    filledTopology should have size 2
     filledTopology.map(_.id) should not contain (1)
     changeSet.expiredAssetIds should have size 1
     changeSet.expiredAssetIds.head should be (1)
@@ -119,6 +119,33 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.endMeasure) should be(Seq(10.0, 10.0))
     changeSet.adjustedMValues should have size 2
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, linkId1, 0, 10.0), MValueAdjustment(2, linkId1, 0, 10.0)))
+  }
+  case class Measure(startMeasure: Double, endMeasure: Double)
+  def createAsset(id: Long, linkId1: String, measure: Measure, sideCode: SideCode, value: Option[Value], trafficDirection: TrafficDirection = TrafficDirection.BothDirections) = {
+    PieceWiseLinearAsset(id = id, linkId = linkId1, sideCode = sideCode, value = value, geometry = Nil, expired = false, startMeasure = measure.startMeasure, endMeasure = measure.endMeasure,
+      endpoints = Set(Point(measure.endMeasure, 0.0)), modifiedBy = None, modifiedDateTime = None, createdBy = Some("guy"),
+      createdDateTime = Some(DateTime.now()), typeId = 140, trafficDirection = trafficDirection, timeStamp = 0L,
+      geomModifiedDate = None, linkSource = NormalLinkInterface, administrativeClass = State, attributes = Map(), verifiedBy = None, verifiedDate = None, informationSource = None)
+  }
+  test("Adjust start and end m-value when difference is 0.001") {
+    val roadLinks = Seq(
+      RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(36.783, 0.0)), 36.783, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+        TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    )
+
+    val assets = Seq(
+      createAsset(1, linkId1, Measure(0.001, 36.782), SideCode.BothDirections, None, TrafficDirection.BothDirections)
+    )
+
+    val (methodTest, combineTestChangeSet) = SpeedLimitFiller.adjustAssets(roadLinks.map(SpeedLimitFiller.toRoadLinkForFiltopology).head, assets, initChangeSet)
+
+    val sorted = methodTest.sortBy(_.endMeasure)
+
+    sorted.size should be(1)
+    //107.093
+    sorted(0).startMeasure should be(0)
+    sorted(0).endMeasure should be(36.783)
+
   }
 
   test("cap speed limit to road link geometry") {
