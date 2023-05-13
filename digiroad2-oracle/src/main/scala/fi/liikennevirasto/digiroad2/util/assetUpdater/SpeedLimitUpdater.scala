@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.TrafficDirectionDao
+import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.{FunctionalClassDao, TrafficDirectionDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
@@ -60,8 +60,8 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
     val linksOther = changes.filter(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet
     // assume than in add case there is always one links.
     val linksNew = changes.filter(_.changeType == RoadLinkChangeType.Add).map(_.newLinks.head.linkId).toSet
-    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksNew ++ linksOther,expiredAlso = true)
-    val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
+    val links =  FunctionalClassDao.getExistingValues((linksNew ++ linksOther).toSeq)
+    val filteredLinks = links.filter(_.value.get > 4).map(_.linkId)
     val (add, other) = changes.partition(_.changeType == RoadLinkChangeType.Add)
     val filterChanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
     val filterChangesNews = add.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
