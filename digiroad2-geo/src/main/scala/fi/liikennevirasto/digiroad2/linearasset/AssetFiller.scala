@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, ConstructionType, CycleOrPedestrianPath, LinkGeomSource, LinkType, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SideCode, SpecialTransportWithGate, SpecialTransportWithoutGate, State, TractorRoad, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, CableFerry, ConstructionType, CycleOrPedestrianPath, LinkGeomSource, LinkType, PedestrianZone, RestArea, ServiceAccess, ServiceOrEmergencyRoad, SideCode, SpecialTransportWithGate, SpecialTransportWithoutGate, SpeedLimitAsset, State, TractorRoad, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import org.joda.time.DateTime
 
@@ -71,7 +71,7 @@ class AssetFiller {
     adjustmentAndNonExistingOperations
   }
 
-  private def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFiltopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
+  protected def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFiltopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure >= MaxAllowedError) Some(0.0) else None
     val endMeasureDifference: Double = roadLinkLength - asset.endMeasure
@@ -136,29 +136,17 @@ class AssetFiller {
     if (!oneWayTrafficDirection) {
       (segments, changeSet)
     } else {
-
-      val (generated, exist) = segments.partition(_.id == 0)
-
       val adjusted = roadLink.trafficDirection match {
-        /*    case TrafficDirection.BothDirections => 
-              {
-                val (twoSided, oneSided) = exist.partition { s => s.sideCode == SideCode.BothDirections }
-                //if ()
-                // if there is only one asset side code AgainstDigitizing or TowardsDigitizing maintain its
-                  oneSided.map { s => (s.copy(sideCode = SideCode.BothDirections), SideCodeAdjustment(s.id, SideCode.BothDirections, s.typeId)) }
-              }
-              
-           */
-        case TrafficDirection.AgainstDigitizing => exist.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
-        case TrafficDirection.TowardsDigitizing => exist.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
+        case TrafficDirection.AgainstDigitizing => segments.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
+        case TrafficDirection.TowardsDigitizing => segments.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
       }
-
-      (generated ++ adjusted.map(_._1), changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2)))
+      (adjusted.map(_._1),
+        changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2).filterNot(_.assetId == 0)))
     }
   }
 
   //TODO should be moved into generator class or Object
-  private def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     val generated = remainders.map { segment =>
@@ -169,7 +157,7 @@ class AssetFiller {
   }
 
   //TODO should be moved into generator class or Object
-  private def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+  protected def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val generated = if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       val lrmPositions: Seq[(Double, Double)] = segments
         .filter { s => s.sideCode == sideCode || s.sideCode == SideCode.BothDirections }
