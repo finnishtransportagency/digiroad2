@@ -22,7 +22,7 @@ case class RoadLinkForFiltopology(linkId: String, length:Double, trafficDirectio
 
 class AssetFiller {
   val AllowedTolerance = 2.0
-  val MaxAllowedError = 0.01
+  val MaxAllowedError = 0.001
   val MinAllowedLength = 2.0
   private val MaxAllowedMValueError = 0.1
   private val Epsilon = 1E-6
@@ -50,24 +50,34 @@ class AssetFiller {
   def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val adjustmentAndNonExistingOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       combine,
+      printlnOperation("combine"),
       fuse,
+      printlnOperation("fuse"),
       dropShortSegments,
+      printlnOperation("dropShortSegments"),
       adjustAssets,
+      printlnOperation("adjustAssets"),
       droppedSegmentWrongDirection,
+      printlnOperation("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
+      printlnOperation("adjustSegmentSideCodes"),
       generateTwoSidedNonExistingLinearAssets(typeId),
+      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      updateValues
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      updateValues,
+      printlnOperation("updateValues")
     )
     adjustmentAndNonExistingOperations
   }
 
   private def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFiltopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure > MaxAllowedError) Some(0.0) else None
+    val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure >= MaxAllowedError) Some(0.0) else None
     val endMeasureDifference: Double = roadLinkLength - asset.endMeasure
-    val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference > MaxAllowedError) Some(roadLinkLength) else None
+    val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference >= MaxAllowedError) Some(roadLinkLength) else None
     val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
       case (None, None) => Nil
       case (s, e)       => Seq(MValueAdjustment(asset.id, asset.linkId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
@@ -526,7 +536,7 @@ class AssetFiller {
     }
   }
   /**
-    * Finally adjust asset length by increasing endMValue. <br> <pre> 
+    * Finally adjust asset length by snapping to links start and endpoint. <br> <pre> 
     * RoadLink -------
     * Asset    ----    
     * to                
@@ -610,24 +620,7 @@ class AssetFiller {
       (filtered.sortBy(_.startMeasure).headOption,
         filtered.sortBy(0 - _.endMeasure).headOption)
     }
-
-    def extendToGeometry(speedLimits: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFiltopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-      val (startTwoSided, endTwoSided) = firstAndLastLimit(speedLimits, SideCode.BothDirections)
-      val (startTowards, endTowards) = firstAndLastLimit(speedLimits, SideCode.TowardsDigitizing)
-      val (startAgainst, endAgainst) = firstAndLastLimit(speedLimits, SideCode.AgainstDigitizing)
-      val sortedStarts = Seq(startTwoSided, startTowards, startAgainst).flatten.sortBy(_.startMeasure)
-      // this code need check for is it actually in middle of roadLink or just end in different location
-      val startChecks = sortedStarts.filter(sl => Math.abs(sl.endMeasure - sortedStarts.head.startMeasure) < Epsilon && sl.startMeasure > MaxAllowedMValueError)
-      val newStarts = startChecks.map(sl => sl.copy(startMeasure = 0.0, geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, 0, sl.endMeasure)))
-      val sortedEnds = Seq(endTwoSided, endTowards, endAgainst).flatten.sortBy(0.0 - _.endMeasure)
-      val endChecks = sortedEnds.filter(sl => Math.abs(sl.endMeasure - sortedEnds.head.endMeasure) < Epsilon &&
-        Math.abs(roadLink.length - sl.endMeasure) > MaxAllowedMValueError)
-      val newEnds = endChecks.map(sl => sl.copy(endMeasure = roadLink.length, geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, sl.startMeasure, roadLink.length)))
-      val newLimits = newStarts ++ newEnds
-      (speedLimits.filterNot(sl => newLimits.map(_.id).contains(sl.id)) ++ newLimits,
-        changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ newLimits.map(sl => MValueAdjustment(sl.id, roadLink.linkId, sl.startMeasure, sl.endMeasure))))
-    }
-
+    
     def fillBySideCode(speedLimits: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFiltopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       if (speedLimits.size > 1) {
         val left = speedLimits.head
@@ -649,10 +642,10 @@ class AssetFiller {
       }
     }
 
-    val (extended, newChangeSet) = extendToGeometry(speedLimits, roadLink, changeSet)
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set(), Nil))
+    //val (extended, newChangeSet) = extendToGeometry(speedLimits, roadLink, changeSet)
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(speedLimits, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set(), Nil))
     (geometrySegments.toSeq,
-      newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ geometryAdjustments.adjustedMValues))
+      geometryAdjustments)
   }
 
   def fillTopology(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
