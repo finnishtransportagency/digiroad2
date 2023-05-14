@@ -668,34 +668,4 @@ class PostGISSpeedLimitDao(val roadLinkService: RoadLinkService) extends Dynamic
       }
     }
   }
-
-  /**
-    * Updates from Change Info in db.
-    */
-  def updateMValuesChangeInfo(id: Long, linkMeasures: (Double, Double), timeStamp: Long, username: String): Unit = {
-    println("asset_id -> " + id)
-    val (startMeasure, endMeasure) = linkMeasures
-    sqlu"""
-      update LRM_POSITION
-      set
-        start_measure = $startMeasure,
-        end_measure = $endMeasure,
-        modified_date = current_timestamp,
-        adjusted_timestamp = $timeStamp
-      where id = (
-        select lrm.id
-          from asset a
-          join asset_link al on a.ID = al.ASSET_ID
-          join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $id)
-    """.execute
-
-    sqlu"""
-      update ASSET
-      set modified_by = $username,
-          modified_date = current_timestamp
-      where id = $id
-    """.execute
-  }
-
 }
