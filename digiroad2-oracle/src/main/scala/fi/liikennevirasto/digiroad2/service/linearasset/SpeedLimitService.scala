@@ -271,7 +271,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkSer
   def adjustSpeedLimitsAndGenerateUnknowns(roadLinks: Seq[RoadLink], speedLimits: Map[String, Seq[PieceWiseLinearAsset]],
                         changeSet:Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val (filledTopology, changedSet) = fillTopology(roadLinks.map(toRoadLinkForFiltopology), speedLimits, SpeedLimitAsset.typeId, changeSet, geometryChanged)
-    val cleanedChangeSet = speedLimitUpdater.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
+    val cleanedChangeSet = LinearAssetFiller.cleanRedundantMValueAdjustments(changedSet, speedLimits.values.flatten.toSeq).filterGeneratedAssets
 
     cleanedChangeSet.isEmpty match {
       case true => filledTopology

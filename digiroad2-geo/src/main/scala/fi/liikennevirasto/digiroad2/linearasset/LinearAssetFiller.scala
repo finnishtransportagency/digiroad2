@@ -31,4 +31,12 @@ object LinearAssetFiller {
         this.valueAdjustments.filterNot(_.asset.id <= 0))
     }
   }
+
+  def cleanRedundantMValueAdjustments(changeSet: ChangeSet, originalAssets: Seq[PieceWiseLinearAsset]): ChangeSet = {
+    val redundantFiltered = changeSet.adjustedMValues.filterNot(adjustment => {
+      val originalAsset = originalAssets.find(_.id == adjustment.assetId).get
+      originalAsset.startMeasure == adjustment.startMeasure && originalAsset.endMeasure == adjustment.endMeasure
+    })
+    changeSet.copy(adjustedMValues = redundantFiltered)
+  }
 }

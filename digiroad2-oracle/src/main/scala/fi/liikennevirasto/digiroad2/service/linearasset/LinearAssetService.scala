@@ -275,7 +275,7 @@ trait LinearAssetOperations {
                          typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val assetUpdater = getAssetUpdater(typeId)
     val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFiltopology), linearAssets,  typeId, changeSet, geometryChanged)
-    val adjustmentsChangeSet = assetUpdater.cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
+    val adjustmentsChangeSet = LinearAssetFiller.cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
     adjustmentsChangeSet.isEmpty match {
       case true => filledTopology
       case false if counter > 3 =>
