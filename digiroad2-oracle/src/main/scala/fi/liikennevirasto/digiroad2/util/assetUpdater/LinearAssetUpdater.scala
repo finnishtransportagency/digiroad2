@@ -17,6 +17,8 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetOperations, 
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinearAssetUtils}
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
+
 /*val tableNames = Seq (
 "lane_history_position", 
 "lane_position",
@@ -32,10 +34,10 @@ InaccurateAssetDAO, this table is created every time again each day so need to a
 
 
 )*/
-case class CalculateMValueChangesInfo(assetId: Long, oldId: Option[String], newId: Option[String],
-                                      oldLinksLength: Option[Double],
-                                      newLinksLength: Option[Double],
-                                      oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double,digitizationChange:Boolean
+case class ReplaseInfoForAsset(assetId: Long, oldId: Option[String], newId: Option[String],
+                               oldLinksLength: Option[Double],
+                               newLinksLength: Option[Double],
+                               oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, digitizationChange:Boolean
                                      ) {}
 
 case class LinkAndLength(linkId: String, length: Double)
@@ -97,11 +99,22 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def isFullLinkLength(asset: PersistedLinearAsset, linkMeasure: Double): Boolean = {
     asset.startMeasure == 0 && asset.endMeasure == linkMeasure
   }
-
+  
+  /**
+    * order list by oldToMValue and start looking for right replace info by looking first highest number
+    * and then checking lower number until correct one is found.
+    * @param change
+    * @param asset
+    * @param finder
+    * @return
+    */
+  private def sortAndFind(change: RoadLinkChange, asset: PersistedLinearAsset, finder: (ReplaceInfo, PersistedLinearAsset) => Boolean): Option[ReplaceInfo] = {
+    change.replaceInfo.sortBy(_.oldToMValue).reverse.find(finder(_, asset))
+  }
   def fallInWhenSlicing(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
     asset.linkId == replaceInfo.oldLinkId && asset.endMeasure >= replaceInfo.oldToMValue && asset.startMeasure >= replaceInfo.oldFromMValue
   }
-
+  
   def fallInReplaceInfo(replaceInfo: ReplaceInfo, asset: PersistedLinearAsset): Boolean = {
     replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
   }
@@ -187,11 +200,11 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     persistProjectedLinearAssets(adjusted._1.map(convertToPersisted).filter(_.id == 0L))
 
   }
-
+  
   private def mapChangeInfoToAsset(changes: RoadLinkChange, asset: PersistedLinearAsset) = {
-    val info = changes.replaceInfo.find(fallInReplaceInfo(_, asset)).getOrElse(throw new Exception("Did not found replace info for asset"))
+    val info = sortAndFind(changes,asset,fallInReplaceInfo).getOrElse(throw new Exception("Did not found replace info for asset"))
     val link = changes.newLinks.find(_.linkId == info.newLinkId).get
-    CalculateMValueChangesInfo(
+    ReplaseInfoForAsset(
       asset.id,
       Some(info.oldLinkId), Some(info.newLinkId),
       Some(changes.oldLink.get.linkLength), Some(link.linkLength),
@@ -230,85 +243,62 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   }
 
   private def sliceLoop(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
-    val linkWhichIsSplitted = change.oldLink.get.linkId
-    val assets = assetsAll.filter(p => linkWhichIsSplitted.contains(p.linkId))
-
-    val valuesAndSideCodesAreSame = assets.flatMap(_.value).toSet.size == 1 && assets.map(_.sideCode).toSet.size == 1
-    val assetLengthStatus = assets.map(p2 => isFullLinkLength(p2, change.oldLink.get.linkLength)).toSet
-
-    val allAreFullLinkLength = assetLengthStatus.size == 1 && assetLengthStatus.head
-    if (valuesAndSideCodesAreSame && allAreFullLinkLength) {
       val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
-      val projected = change.replaceInfo.map(replaceInfo => { // slicing
-        assets.head.copy(id = 0, linkId = replaceInfo.oldLinkId, startMeasure = replaceInfo.oldFromMValue, endMeasure = replaceInfo.oldToMValue)
-      }).flatMap(asset => {
-        val findProjection = mapChangeInfoToAsset(change, asset)
-        Seq(projecting(changeSets, asset, findProjection))
-      })
-      val returnedChangeSet = foldChangeSet(projected.map(_._2), changeSets)
-      val update = returnedChangeSet.copy(expiredAssetIds = returnedChangeSet.expiredAssetIds ++ assets.map(_.id))
-      // optimize so that there is no nested seq , check in end
-      projected.map(p => (p._1, update))
-    } else {
-      // partition asset which endMeasure is greater than oldFromMValue
-      // slice these asset to end at oldFromMValue
-      // create new part which has startMValue as oldFromMValue
-      // shift these into next links
-      // Repeat operation on next links
-
-      val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
-
-      def partitioner(asset: PersistedLinearAsset, change: RoadLinkChange): Boolean = {
-        // order list by oldToMValue and start looking for right replace info by looking first highest number
-        // and then checking lower number until correct one is found.
-        val sortedInfo = change.replaceInfo.sortBy(_.oldToMValue).reverse
-        val selectInfo = sortedInfo.find(fallInWhenSlicing(_, asset)).get
-        val condition = asset.endMeasure >= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
-        if (condition) condition else condition
-      }
-
-      def slicer(assets: Seq[PersistedLinearAsset], change: RoadLinkChange, cycle: Int = 0): Seq[PersistedLinearAsset] = {
-        val assetGoOver = assets.partition(partitioner(_, change))
-        val sliced = assetGoOver._1.flatMap(a1 => {
-          // order list by oldToMValue and start looking for right replace info by looking first highest number
-          // and then checking lower number until correct one is found.
-          val selectInfo = change.replaceInfo.sortBy(_.oldToMValue).reverse.find(r => fallInWhenSlicing(r, a1)).get
-          val shorted = a1.copy(endMeasure = selectInfo.oldToMValue)
-          val newPart = a1.copy(id = 0, startMeasure = selectInfo.oldToMValue)
-          val shortedLength = shorted.endMeasure - shorted.startMeasure
-          val newPartLength = newPart.endMeasure - newPart.startMeasure
-
-          val shortedFilter = if (shortedLength > 0) {
-            Option(shorted)
-          } else None
-
-          val newPartFilter = if (newPartLength > 0) {
-            Option(newPart)
-          } else None
-
-          logger.debug(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
-          logger.debug(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
-
-          (shortedFilter, newPartFilter) match {
-            case (None, None) => Seq()
-            case (Some(shortedSome), None) => Seq(shortedSome)
-            case (None, Some(newParSome)) => Seq(newParSome)
-            case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
-          }
-        })
-        sliced ++ assetGoOver._2.filterNot(a => sliced.map(_.id).toSet.contains(a.id))
-      }
-
-      val sliced: Seq[PersistedLinearAsset] = slicer(assets, change)
-
+      val sliced: Seq[PersistedLinearAsset] = slicer(assets,Seq(), change)
       sliced.map(asset => {
-        val dataForCalculation=  mapChangeInfoToAsset(change, asset)
+        val dataForCalculation= mapChangeInfoToAsset(change, asset)
         projecting(changeSets, asset, dataForCalculation)
       })
+  }
+  
+  @tailrec
+  private def slicer(assets: Seq[PersistedLinearAsset], fitIntRoadLinkPrevious: Seq[PersistedLinearAsset], change: RoadLinkChange): Seq[PersistedLinearAsset] = {
+    def slice(change: RoadLinkChange, asset: PersistedLinearAsset) = {
+      val selectInfo = sortAndFind(change,asset,fallInWhenSlicing).get
+      val shorted = asset.copy(endMeasure = selectInfo.oldToMValue)
+      val newPart = asset.copy(id = 0, startMeasure = selectInfo.oldToMValue)
+      val shortedLength = shorted.endMeasure - shorted.startMeasure
+      val newPartLength = newPart.endMeasure - newPart.startMeasure
+
+      val shortedFilter = if (shortedLength > 0) {
+        Option(shorted)
+      } else None
+
+      val newPartFilter = if (newPartLength > 0) {
+        Option(newPart)
+      } else None
+
+      logger.debug(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
+      logger.debug(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
+
+      (shortedFilter, newPartFilter) match {
+        case (None, None) => Seq()
+        case (Some(shortedSome), None) => Seq(shortedSome)
+        case (None, Some(newParSome)) => Seq(newParSome)
+        case (Some(shortedSome), Some(newPartSome)) => Seq(shortedSome, newPartSome)
+      }
+    }
+    
+    def partitioner(asset: PersistedLinearAsset, change: RoadLinkChange): Boolean = {
+      val selectInfoOpt = sortAndFind(change, asset, fallInReplaceInfo)
+      if (selectInfoOpt.nonEmpty) {
+        val selectInfo = selectInfoOpt.get
+        val assetIsAlreadySlicedOrFitIn = asset.endMeasure <= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
+        assetIsAlreadySlicedOrFitIn
+      } else false
+
+    }
+    
+    val sliced = assets.flatMap(a1 => {slice(change, a1) })
+    val (fitIntoRoadLink, assetGoOver) = sliced.partition(partitioner(_, change))
+    if (assetGoOver.nonEmpty) {
+      slicer(assetGoOver, fitIntoRoadLink ++ fitIntRoadLinkPrevious, change)
+    } else {
+      fitIntRoadLinkPrevious ++ fitIntoRoadLink
     }
   }
-
-  private def projecting(changeSets: ChangeSet, asset: PersistedLinearAsset, info: CalculateMValueChangesInfo) = {
+  
+  private def projecting(changeSets: ChangeSet, asset: PersistedLinearAsset, info: ReplaseInfoForAsset) = {
     projectLinearAsset(asset.copy(linkId = info.newId.get), LinkAndLength(info.newId.get, info.newLinksLength.get),
       Projection( 
         info.oldStart, info.oldEnd, info.newStart, info.newEnd,LinearAssetUtils.createTimeStamp()
