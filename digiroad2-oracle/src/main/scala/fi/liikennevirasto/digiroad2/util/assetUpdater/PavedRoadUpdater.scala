@@ -46,8 +46,11 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     val linksOther = changes.filter(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet
     // assume than in add case there is always one links.
     val linksNew = changes.filter(_.changeType == RoadLinkChangeType.Add).map(_.newLinks.head.linkId).toSet
-    val links = FunctionalClassDao.getExistingValues((linksNew ++ linksOther).toSeq)
-    val filteredLinks = links.filter(_.value.get > 4).map(_.linkId)
+    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksNew ++ linksOther, expiredAlso = true)
+    val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
+    //TODO check mocking or insert ?
+    //val links =  FunctionalClassDao.getExistingValues((linksNew ++ linksOther).toSeq)
+    //val filteredLinks = links.filter(_.value.get > 4).map(_.linkId)
     val (add, other) = changes.partition(_.changeType == RoadLinkChangeType.Add)
     val filterChanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
     val filterChangesNews = add.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
