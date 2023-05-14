@@ -2,10 +2,9 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client._
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, RoadLinkOverrideDAO, RoadLinkValue}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.FunctionalClassDao
-import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NewLimit, NumericValue, RoadLink, SpeedLimitValue, UnknownSpeedLimit, Value}
+import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
@@ -27,6 +26,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
   val speedLimitDao = new PostGISLinearAssetDao()
   val mockDynamicLinearAssetDao: DynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val service = new SpeedLimitService(mockEventBus,mockRoadLinkService)
+  val serviceNoMock = new SpeedLimitService(mockEventBus,roadLinkService)
   lazy val roadLinkClient: RoadLinkClient = {
     new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
@@ -39,12 +39,11 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
   object TestLinearAssetUpdater extends SpeedLimitUpdater(service) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override val speedLimitDao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkService)
     override def eventBus: DigiroadEventBus = mockEventBus
     override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
   }
 
-  object TestLinearAssetUpdaterNoRoadLinkMock extends SpeedLimitUpdater(service) {
+  object TestLinearAssetUpdaterNoRoadLinkMock extends SpeedLimitUpdater(serviceNoMock) {
     override def withDynTransaction[T](f: => T): T = f
     override def eventBus: DigiroadEventBus = mockEventBus
   }
@@ -148,8 +147,6 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid).get
       val oldRoadLinkRaw = roadLinkService. getExpiredRoadLinkByLinkIdNonEncrished(linksid)
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(linksid)).thenReturn(oldRoadLinkRaw)
-      //when(mockRoadLinkService.fetchRoadlinkAndComplementary("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")).thenReturn(oldRoadLinkRaw)
-      // c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       //when(mockFunctionalClassDao.getExistingValues(any[Seq[String]])).thenReturn(Seq.empty[RoadLinkValue])
       val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, linksid,
