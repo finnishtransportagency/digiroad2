@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.FloatingReason.NoRoadLinkFound
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Remove
-import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Floating, Replaced}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Deletion, Floating, Replaced}
 import org.scalatest.{FunSuite, Matchers}
 
 class ChangeReporterSpec extends FunSuite with Matchers{
@@ -51,5 +51,26 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     val contents = csv.split("\\\n")(2)
     contents.startsWith(s"""200,7,2,remove,1,"[{""id"":1,""publicId"":""suggest_box"",""") should be(true)
     contentRows should be(1)
+  }
+
+  test("create csv with geometry for linear asset deletion change") {
+    val linkId = "7766bff4-5f02-4c30-af0b-42ad3c0296aa:1"
+    val assetId1 = 123
+    val assetId2  = 124
+    val geometry1 = Some(List(Point(366408.515,6674439.018,3.933), Point(366409.675,6674441.156,4.082), Point(366413.518,6674448.237,4.573), Point(366418.695,6674459.91,5.805), Point(366425.83199998754,6674457.102000005,5.956999999734991)))
+    val geometry2 = Some(List(Point(378371.653,6675257.813,10.874), Point(378371.4270000001,6675265.207,11.077), Point(378373.873,6675279.028,12.0), Point(378375.164,6675294.114,13.166), Point(378375.838,6675302.261,13.648), Point(378379.8780000001,6675312.458,13.945)))
+    val values1 = s"""{"publicId":"lane_type","values":["2"],"publicId":"start_date","values":["1.1.1970"],"publicId":"lane_code","values":["2"]}"""
+    val values2 = s"""{"publicId":"lane_type","values":["1"],"publicId":"start_date","values":["1.1.1970"],"publicId":"lane_code","values":["1"]}"""
+    val linearReference1 = LinearReference(linkId, 0.0, Some(30.928), Some(2), None, 30.928)
+    val linearReference2 = LinearReference(linkId, 0.0, Some(55.717), Some(2), None, 55.757)
+    val before1 = Asset(assetId1, values1, Some(49), geometry1, Some(linearReference1), isPointAsset = false, None)
+    val before2 = Asset(assetId2, values2, Some(49), geometry2, Some(linearReference2), isPointAsset = false, None)
+
+    val changedAsset1 = ChangedAsset(linkId = linkId, assetId = assetId1, changeType = Deletion, roadLinkChangeType = Remove, before = Some(before1), after = Seq())
+    val changedAsset2 = ChangedAsset(linkId = linkId, assetId = assetId2, changeType = Deletion, roadLinkChangeType = Remove, before = Some(before2), after = Seq())
+    val changeReport = ChangeReport(Lanes.typeId, Seq(changedAsset1, changedAsset2))
+
+    val (csv, contentRows) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
+    contentRows should be(2)
   }
 }
