@@ -17,7 +17,7 @@
   },
   {
     "ParameterKey": "ECRImageTag",
-    "ParameterValue": "prod"
+    "ParameterValue": "latest"
   },
   {
     "ParameterKey": "NetworkStackName",
