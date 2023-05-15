@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "NetworkStackName",
-    "ParameterValue": "DigiroadTest"
+    "ParameterValue": "Digiroad-prod"
   },
   {
     "ParameterKey": "BatchJobRoleArn",
