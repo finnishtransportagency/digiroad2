@@ -270,6 +270,43 @@ object ChangeReporter {
     }
   }
 
+  private def getCSVRowForLinearAssetChanges(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false) = {
+    try {
+      val changedAsset = change.asInstanceOf[ChangedAsset]
+      val assetBefore = changedAsset.before
+      val metaFields = Seq(assetTypeId, changedAsset.changeType.value, changedAsset.roadLinkChangeType.value)
+      val beforeFields = assetBefore match {
+        case Some(before) =>
+          val linearReference = before.linearReference.get
+          Seq(before.assetId, before.geometry, before.municipalityCode, linearReference.sideCode.get, linearReference.linkId,
+            linearReference.startMValue, linearReference.endMValue.get, linearReference.length, before.getUrl)
+        case None => Seq(null, null, null, null, null, null, null, null, null)
+      }
+      val beforeFieldsWithoutGeometry = beforeFields.patch(1, Nil, 1)
+      if (changedAsset.after.isEmpty) {
+        val emptyAfterFields = Seq(null, null, null, null, null, null, null, null, null)
+        if(withGeometry) Seq(metaFields ++ beforeFields ++ emptyAfterFields)
+        else Seq(metaFields ++ beforeFieldsWithoutGeometry ++ emptyAfterFields)
+      } else {
+        changedAsset.after.map { after =>
+          val linearReference = after.linearReference.get
+          val afterFields = Seq(after.assetId, after.geometry, after.municipalityCode, linearReference.sideCode.get, linearReference.linkId,
+            linearReference.startMValue, linearReference.endMValue.get, linearReference.length, after.getUrl)
+          val afterFieldsWithoutGeometry = afterFields.patch(1, Nil, 1)
+          if (withGeometry) {
+            metaFields ++ beforeFields ++ afterFields
+          } else {
+            metaFields ++ beforeFieldsWithoutGeometry ++ afterFieldsWithoutGeometry
+          }
+        }
+      }
+    } catch {
+      case e =>
+        logger.error(s"csv conversion failed due to ${e.getMessage}")
+        Seq(Seq())
+    }
+  }
+
   def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false) = {
     val stringWriter = new StringWriter()
     val csvWriter = new CSVWriter(stringWriter)
@@ -308,6 +345,19 @@ object ChangeReporter {
           }
         }
       case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "linear" =>
+        val labels = Seq("asset_type_id", "change_type", "roadlink_change", "before_asset_id",
+          "before_geometry", "before_value", "before_municipality_code", "before_side_code", "before_link_id",
+          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url","after_asset_id",
+          "after_geometry",  "after_value",  "after_municipality_code", "after_side_code",  "after_link_id",
+          "after_start_m_value", "after_end_m_value",  "after_length",  "after_roadlink_url")
+        val labelsWithoutGeometry = labels.filterNot(_.contains("geometry"))
+        if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
+        changes.foreach { change =>
+          val csvRows = getCSVRowForLinearAssetChanges(change, assetTypeId, withGeometry)
+          csvRows.foreach { csvRow =>
+            csvWriter.writeRow(csvRow)
+          }
+        }
     }
     (stringWriter.toString, linkIds.size)
   }
