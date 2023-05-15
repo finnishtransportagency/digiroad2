@@ -19,6 +19,8 @@ import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LaneUtils, MainLa
 import fi.liikennevirasto.digiroad2.{AssetLinearReference, DummyEventBus, DummySerializer, GeometryUtils, MValueCalculator}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
+import org.json4s.JsonAST.JObject
+import org.json4s.jackson.compactJson
 import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
@@ -258,8 +260,17 @@ object LaneUpdater {
       val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
       val changeSet = handleChanges(roadLinkChanges, workListChanges)
       val changedLanes = updateChangeSet(changeSet, allRoadLinkChanges, generateReports = true)
+      val changeReport = ChangeReport(Lanes.typeId, changedLanes)
+      generateAndSaveReport(changeReport)
       Queries.updateLatestSuccessfulSamuutus(Lanes.typeId)
     }
+  }
+
+  def generateAndSaveReport(changeReport: ChangeReport): Unit = {
+    val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
+    ChangeReporter.saveReportToS3(Lanes.label, reportBody, contentRowCount)
+    val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
+    ChangeReporter.saveReportToS3(Lanes.label, reportBodyWithGeom, contentRowCount, hasGeometry = true)
   }
 
   def updateTrafficDirectionChangesLaneWorkList(roadLinkChanges: Seq[RoadLinkChange]): Unit = {
@@ -326,7 +337,44 @@ object LaneUpdater {
   }
 
   def reportLaneChanges(oldLane: Option[PersistedLane], newLanes: Seq[PersistedLane], changeType: ChangeType, roadLinkChanges: Seq[RoadLinkChange]): ChangedLane = {
-    ???
+    val linkId = if (oldLane.nonEmpty) oldLane.get.linkId else newLanes.head.linkId
+    val assetId = if (oldLane.nonEmpty) oldLane.get.id else 0
+
+    val relevantRoadLinkChange = roadLinkChanges.find(change => {
+      val roadLinkChangeOldLinkId = change.oldLink match {
+        case Some(oldLink) => Some(oldLink.linkId)
+        case None => None
+      }
+      val laneOldLinkId = oldLane match {
+        case Some(lane) => Some(lane.linkId)
+        case None => None
+      }
+      val roadLinkChangeNewLinkIds = change.newLinks.map(_.linkId).sorted
+      val lanesNewLinkIds = newLanes.map(_.linkId).sorted
+
+      roadLinkChangeOldLinkId == laneOldLinkId && roadLinkChangeNewLinkIds == lanesNewLinkIds
+    }).get
+
+    val before = oldLane match {
+      case Some(ol) =>
+        val values = compactJson(JObject(ol.attributes.flatMap(_.toJson).toList))
+        val linkGeometry = relevantRoadLinkChange.oldLink.get.geometry
+        val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, ol.startMeasure, ol.endMeasure)
+        val linearReference = LinearReference(ol.linkId, ol.startMeasure, Some(ol.endMeasure), Some(ol.sideCode), None, ol.endMeasure - ol.startMeasure)
+        Some(Asset(ol.id, values, Some(ol.municipalityCode.toInt), Some(laneGeometry), Some(linearReference)))
+      case None => None
+    }
+
+    val after = newLanes.map(nl => {
+      val newLink = relevantRoadLinkChange.newLinks.find(_.linkId == nl.linkId).get
+      val values = compactJson(JObject(nl.attributes.flatMap(_.toJson).toList))
+      val linkGeometry = newLink.geometry
+      val laneGeometry = GeometryUtils.truncateGeometry3D(linkGeometry, nl.startMeasure, nl.endMeasure)
+      val linearReference = LinearReference(nl.linkId, nl.startMeasure, Some(nl.endMeasure), Some(nl.sideCode), None, nl.endMeasure - nl.startMeasure)
+      Asset(nl.id, values, Some(nl.municipalityCode.toInt), Some(laneGeometry), Some(linearReference))
+    })
+
+    ChangedLane(linkId, assetId, changeType, relevantRoadLinkChange.changeType, before, after)
   }
 
   def handleChanges(roadLinkChanges: Seq[RoadLinkChange], workListChanges: Seq[RoadLinkChange] = Seq()): ChangeSet = {

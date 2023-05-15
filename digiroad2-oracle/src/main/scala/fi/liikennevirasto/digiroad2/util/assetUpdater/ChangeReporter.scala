@@ -12,6 +12,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.slf4j.LoggerFactory
 
 import java.io.StringWriter
+import scala.annotation.tailrec
 
 /**
   *  For point like asset mark [[endMValue]] None
@@ -130,6 +131,7 @@ case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Opti
   * @param after      after samuutus
   * */
 case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Asset, after: Seq[Asset]) extends ReportedChange
+//TODO Get rid of ChangedLane, refactor ChangedAsset to use optional before asset
 case class ChangedLane(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Option[Asset], after: Seq[Asset]) extends ReportedChange
 
 /**
@@ -270,6 +272,16 @@ object ChangeReporter {
     }
   }
 
+  private def getCSVRowForLinearAssetChanges(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false): Seq[Seq[Any]] = {
+    try {
+      ???
+    } catch {
+      case e =>
+        logger.error(s"csv conversion failed due to ${e.getMessage}")
+        Seq(Seq())
+    }
+  }
+
   def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false) = {
     val stringWriter = new StringWriter()
     val csvWriter = new CSVWriter(stringWriter)
@@ -307,7 +319,36 @@ object ChangeReporter {
             csvWriter.writeRow(csvRow)
           }
         }
-      case assetTypeInfo: AssetTypeInfo => //to be implemented
+      case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "linear" =>
+        @tailrec
+        def generateNewAssetsLabelsRecursively(labels: Seq[Seq[String]] = Seq(), max: Int): Seq[Seq[String]] = {
+          val assetNumber = labels.size
+          if (assetNumber <= max) {
+            val labelsForNewAsset = Seq("after_asset_id_" + assetNumber, "after_geometry_" + assetNumber,  "after_value_" + assetNumber,
+              "after_municipality_code_" + assetNumber, "after_validity_direction_" + assetNumber, "after_link_id_" + assetNumber,
+              "after_start_m_value_" + assetNumber, "after_end_m_value_" + assetNumber, "after_length_" + assetNumber,  "after_roadlink_url_" + assetNumber)
+            generateNewAssetsLabelsRecursively(labels :+ labelsForNewAsset, max)
+          } else labels
+        }
+
+        val metaInfoLabels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change")
+        val oldAssetLabels = Seq("before_asset_id", "before_geometry", "before_value", "before_municipality_code", "before_validity_direction",
+          "before_link_id", "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url")
+        // Get max number of new divided assets in report data to determine how many new asset fields are needed
+        val maxNumberOfNewAssets = changes.map(change => change.asInstanceOf[ChangedLane].after.size).max
+        val newAssetsLabels = generateNewAssetsLabelsRecursively(max = maxNumberOfNewAssets).flatten
+        val allLabels = metaInfoLabels ++ oldAssetLabels ++ newAssetsLabels
+        val labelsWithoutGeometry = metaInfoLabels ++ oldAssetLabels.filterNot(label => label.contains("geometry")) ++
+          newAssetsLabels.filterNot(label => label.contains("geometry"))
+
+        if (withGeometry) csvWriter.writeRow(allLabels) else csvWriter.writeRow(labelsWithoutGeometry)
+        changes.foreach { change =>
+          val csvRows = getCSVRowForLinearAssetChanges(change, assetTypeId, withGeometry)
+          csvRows.foreach { csvRow =>
+            csvWriter.writeRow(csvRow)
+          }
+        }
+
     }
     (stringWriter.toString, linkIds.size)
   }
