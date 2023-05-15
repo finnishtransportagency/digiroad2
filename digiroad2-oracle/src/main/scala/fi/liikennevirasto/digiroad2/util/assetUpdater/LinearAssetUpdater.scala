@@ -244,19 +244,19 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }
     }
 
+    def assetIsAlreadySlicedOrFitIn(asset: PersistedLinearAsset, selectInfo: ReplaceInfo): Boolean = {
+      asset.endMeasure <= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
+    }
+
     def partitioner(asset: PersistedLinearAsset, change: RoadLinkChange): Boolean = {
       val selectInfoOpt = sortAndFind(change, asset, fallInReplaceInfo)
-      if (selectInfoOpt.nonEmpty) {
-        val selectInfo = selectInfoOpt.get
-        val assetIsAlreadySlicedOrFitIn = asset.endMeasure <= selectInfo.oldToMValue && asset.startMeasure >= selectInfo.oldFromMValue
-        assetIsAlreadySlicedOrFitIn
-      } else false
+      if (selectInfoOpt.nonEmpty)
+        assetIsAlreadySlicedOrFitIn(asset, selectInfoOpt.get)
+      else false
 
     }
 
-    val sliced = assets.flatMap(a1 => {
-      slice(change, a1)
-    })
+    val sliced = assets.flatMap(slice(change,_))
     val (fitIntoRoadLink, assetGoOver) = sliced.partition(partitioner(_, change))
     if (assetGoOver.nonEmpty) {
       slicer(assetGoOver, fitIntoRoadLink ++ fitIntRoadLinkPrevious, change)
