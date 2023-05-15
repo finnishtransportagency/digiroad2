@@ -1,7 +1,7 @@
 
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
-import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibition, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibition, Prohibition, SideCode}
 import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkClient, RoadLinkFetched}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions}
@@ -61,9 +61,8 @@ class HazMatTransportProhibitionUpdaterSpec extends FunSuite with Matchers{
 
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
-      //why are we interested about expired? in old test
       TestHazMatProhibitionUpdater.updateByRoadLinks(HazmatTransportProhibition.typeId, changes)
-      val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(HazmatTransportProhibition.typeId, newLinks, LinearAssetTypes.getValuePropertyId(HazmatTransportProhibition.typeId))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(HazmatTransportProhibition.typeId, newLinks,false)
       assetsAfter.size should be(3)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)

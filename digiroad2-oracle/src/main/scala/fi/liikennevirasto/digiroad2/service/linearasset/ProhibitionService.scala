@@ -38,10 +38,19 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     if (newTransaction)
       withDynTransaction {
-        dao.fetchProhibitionsByLinkIds(typeId, linkIds)
+       dao.fetchProhibitionsByLinkIds(typeId, linkIds)
       }
     else
       dao.fetchProhibitionsByLinkIds(typeId, linkIds)
+  }
+
+  override def fetchExistingAssetsByLinksIdsString(typeId: Int, linksIds: Set[String], removedLinkIds: Set[String], newTransaction: Boolean = true): Seq[PersistedLinearAsset] ={
+    if (newTransaction)
+      withDynTransaction {
+        dao.fetchProhibitionsByLinkIds(typeId, (linksIds++removedLinkIds).toSeq)
+      }
+    else
+      dao.fetchProhibitionsByLinkIds(typeId, (linksIds++removedLinkIds).toSeq)
   }
 
   override def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {

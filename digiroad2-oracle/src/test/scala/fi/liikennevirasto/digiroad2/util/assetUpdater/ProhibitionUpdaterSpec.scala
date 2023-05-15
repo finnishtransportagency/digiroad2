@@ -60,10 +60,11 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
 
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
+      assetsBefore.map(v => v.value.isEmpty should be(false))
 
       TestProhibitionUpdater.updateByRoadLinks(Prohibition.typeId, changes)
       
-      val assetsAfter = service.dao.fetchLinearAssetsByLinkIds(Prohibition.typeId, newLinks, "parking_prohibition")
+      val assetsAfter = service.getPersistedAssetsByLinkIds(Prohibition.typeId, newLinks,false)
       assetsAfter.size should be(3)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.head.startMeasure should be(0)
