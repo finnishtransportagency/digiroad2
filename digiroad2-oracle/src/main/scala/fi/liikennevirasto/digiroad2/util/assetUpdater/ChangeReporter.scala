@@ -130,9 +130,7 @@ case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Opti
   * @param before     situation before samuutus
   * @param after      after samuutus
   * */
-case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Asset, after: Seq[Asset]) extends ReportedChange
-//TODO Get rid of ChangedLane, refactor ChangedAsset to use optional before asset
-case class ChangedLane(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Option[Asset], after: Seq[Asset]) extends ReportedChange
+case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Option[Asset], after: Seq[Asset]) extends ReportedChange
 
 /**
   *
@@ -224,7 +222,7 @@ object ChangeReporter {
   private def getCSVRowForPointAssetChanges(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false) = {
     try {
       val changedAsset = change.asInstanceOf[ChangedAsset]
-      val assetBefore = changedAsset.before
+      val assetBefore = changedAsset.before.get
       val (beforeLinkId, beforeStartMValue, beforeEndMValue, beforeValidityDirection, beforeLength) = assetBefore.linearReference match {
         case Some(linearReference: LinearReference) =>
           val linRefEndMValue = linearReference.endMValue match {
@@ -335,7 +333,7 @@ object ChangeReporter {
         val oldAssetLabels = Seq("before_asset_id", "before_geometry", "before_value", "before_municipality_code", "before_validity_direction",
           "before_link_id", "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url")
         // Get max number of new divided assets in report data to determine how many new asset fields are needed
-        val maxNumberOfNewAssets = changes.map(change => change.asInstanceOf[ChangedLane].after.size).max
+        val maxNumberOfNewAssets = changes.map(change => change.asInstanceOf[ChangedAsset].after.size).max
         val newAssetsLabels = generateNewAssetsLabelsRecursively(max = maxNumberOfNewAssets).flatten
         val allLabels = metaInfoLabels ++ oldAssetLabels ++ newAssetsLabels
         val labelsWithoutGeometry = metaInfoLabels ++ oldAssetLabels.filterNot(label => label.contains("geometry")) ++
