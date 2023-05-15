@@ -205,7 +205,9 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       }
 
       val additionalChanges = additionalUpdateOrChange(change, defaultOperationResult.map(_._1), foldChangeSet(defaultOperationResult.map(_._2), changeSets))
-      defaultOperationResult ++ additionalChanges
+      
+      if (additionalChanges.nonEmpty ) additionalChanges else defaultOperationResult
+      
     })
 
     (finalResult.map(_._1), foldChangeSet(finalResult.map(_._2), changeSets))
@@ -330,8 +332,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     logger.info(s"insert assets count: ${toInsert.size}")
     logger.info(s"update assets count: ${toUpdate.size}")
-
-    // TODO remove this call
+    
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesByLinkIds(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
     if (toUpdate.nonEmpty) {
       val toUpdateText = toUpdate.filter(a =>
