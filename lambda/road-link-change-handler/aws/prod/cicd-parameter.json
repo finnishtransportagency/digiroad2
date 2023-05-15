@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "PipelineName",
+    "ParameterValue": "prod-digiroad2-road-link-change-pipeline"
+  },
+  {
+    "ParameterKey": "EcrRepositoryName",
+    "ParameterValue": "qa-digiroad2-road-link-change-lambda"
+  },
+  {
+    "ParameterKey": "ProdEcrRepositoryName",
+    "ParameterValue": "digiroad2-road-link-change-lambda"
+  },
+  {
+    "ParameterKey": "ProdAccountId",
+    "ParameterValue": "920408837790"
+  },
+  {
+    "ParameterKey": "ProdAccountRegion",
+    "ParameterValue": "eu-west-1"
+  },
+  {
+    "ParameterKey": "CodeBuildImage",
+    "ParameterValue": "aws/codebuild/standard:5.0"
+  },
+  {
+    "ParameterKey": "EcrTag",
+    "ParameterValue": "prod"
+  },
+  {
+    "ParameterKey": "LambdaName",
+    "ParameterValue": "prod-digiroad2-road-link-change-handler"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "ParameterKey": "ApplicationName",
+    "ParameterValue": "digiroad2"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "prod"
+  },
+  {
+    "ParameterKey": "OrganizationPrefix",
+    "ParameterValue": "vaylapilvi"
+  },
+  {
+    "ParameterKey": "ECRRepository",
+    "ParameterValue": "digiroad2-road-link-change-lambda"
+  },
+  {
+    "ParameterKey": "ECRImageTag",
+    "ParameterValue": "prod"
+  },
+  {
+    "ParameterKey": "NetworkStackName",
+    "ParameterValue": "DigiroadTest"
+  },
+  {
+    "ParameterKey": "BatchJobRoleArn",
+    "ParameterValue": "arn:aws:iam::920408837790:role/PROD-digiroad2-JobRole"
+  },
+  {
+    "ParameterKey": "VkmApi",
+    "ParameterValue": "https://api.vaylapilvi.fi/viitekehysmuunnin/"
+  },
+  {
+    "ParameterKey": "VkmApiKeySSM",
+    "ParameterValue": "/prod/apikey/viitekehysmuunnin"
+  },
+  {
+    "ParameterKey": "KgvApi",
+    "ParameterValue": "https://api.vaylapilvi.fi/paikkatiedot/ogc/features/collections/"
+  },
+  {
+    "ParameterKey": "KgvApiKeySSM",
+    "ParameterValue": "/prod/apikey/kgv.apikey"
+  },
+  {
+    "ParameterKey": "PgHost",
+    "ParameterValue": "rdspg13prod.chw6qe2cqnfv.eu-west-1.rds.amazonaws.com"
+  },
+  {
+    "ParameterKey": "PgPort",
+    "ParameterValue": "5432"
+  },
+  {
+    "ParameterKey": "PgDatabase",
+    "ParameterValue": "digiroad"
+  },
+  {
+    "ParameterKey": "PgUser",
+    "ParameterValue": "digiroad"
+  }
+]
