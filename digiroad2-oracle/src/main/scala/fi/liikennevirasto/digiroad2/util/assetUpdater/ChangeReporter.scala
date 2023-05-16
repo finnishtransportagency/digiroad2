@@ -322,18 +322,16 @@ object ChangeReporter {
           "newFunctionalClass", "functionalClassSource", "oldLinkType", "newLinkType", "linkTypeSource", "oldLinkAttributes", "newLinkAttributes")
         csvWriter.writeRow(labels)
         val groupedChanges = changes.groupBy(_.linkId)
-        var contentRowCount = 0
         linkIds.foreach { linkId =>
           groupedChanges.get(linkId) match {
             case Some(propertyChangesForLink) =>
               val changeType = propertyChangesForLink.head.changeType
               val csvRow = getCSVRowForRoadLinkPropertyChanges(linkId, changeType.value, propertyChangesForLink)
               csvWriter.writeRow(csvRow)
-              contentRowCount += 1
             case _ => //do nothing
           }
         }
-        contentRowCount
+        linkIds.size
       case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point" =>
         val labels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change", "before_asset_id",
           "before_geometry", "before_value", "before_municipality_code", "before_validity_direction", "before_link_id",
