@@ -53,7 +53,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def eventBus: DigiroadEventBus = new DummyEventBus
   def roadLinkClient: RoadLinkClient = new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   def roadLinkService: RoadLinkService = new RoadLinkService(roadLinkClient, eventBus, new DummySerializer)
-  def assetFiller: AssetFiller = new AssetFiller
+  def assetFiller: AssetFiller = service.assetFiller
   def dao: PostGISLinearAssetDao = new PostGISLinearAssetDao()
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val logger = LoggerFactory.getLogger(getClass)
