@@ -231,6 +231,68 @@ class AssetFillerSpec extends FunSuite with Matchers {
     GeometryUtils.overlap(toSegment(filledTopology.head), toSegment(filledTopology.last)).nonEmpty should be(false)
     
   }
+
+  test("Adjust segments and drop wrong direction of asset and retain correct side code") {
+    val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+      TrafficDirection.TowardsDigitizing, LinkType.apply(3), None, None, Map())
+    val assets = assetFiller.toLinearAsset(Seq(
+      PersistedLinearAsset(1, linkId1, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 0.0, 10, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(2, linkId1, SideCode.AgainstDigitizing.value, Some(NumericValue(3)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None))
+      , assetFiller.toRoadLinkForFillTopology(roadLink))
+
+    val (methodTest1, methodTestChangeSet1) =  assetFiller.droppedSegmentWrongDirection(assetFiller.toRoadLinkForFillTopology(roadLink),assets,initChangeSet)
+    val (methodTest, methodTestChangeSet) = assetFiller.adjustSegmentSideCodes(assetFiller.toRoadLinkForFillTopology(roadLink), methodTest1, methodTestChangeSet1)
+
+    methodTest should have size 1
+    methodTest.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing))
+    methodTest.map(_.value) should be(Seq(Some(NumericValue(2))))
+    methodTestChangeSet.droppedAssetIds should have size 1
+    methodTestChangeSet.droppedAssetIds.head should be(2)
+
+  }
+
+  test("Adjust segments and drop wrong direction of asset and retain correct side versio 2") {
+    val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+      TrafficDirection.AgainstDigitizing, LinkType.apply(3), None, None, Map())
+    val assets = assetFiller.toLinearAsset(Seq(
+      PersistedLinearAsset(1, linkId1, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 0.0, 10, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(2, linkId1, SideCode.AgainstDigitizing.value, Some(NumericValue(3)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None))
+      , assetFiller.toRoadLinkForFillTopology(roadLink))
+
+    val (methodTest1, methodTestChangeSet1) = assetFiller.droppedSegmentWrongDirection(assetFiller.toRoadLinkForFillTopology(roadLink), assets, initChangeSet)
+    val (methodTest, methodTestChangeSet) = assetFiller.adjustSegmentSideCodes(assetFiller.toRoadLinkForFillTopology(roadLink), methodTest1, methodTestChangeSet1)
+    
+    methodTest should have size 1
+    methodTest.map(_.sideCode) should be(Seq(SideCode.AgainstDigitizing))
+    methodTest.map(_.value) should be(Seq(Some(NumericValue(3))))
+    methodTestChangeSet.droppedAssetIds should have size 1
+    methodTestChangeSet.droppedAssetIds.head should be(1)
+
+  }
+
+  test("Adjust segments and drop wrong direction of asset and retain correct side versio 3") {
+    val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+      TrafficDirection.AgainstDigitizing, LinkType.apply(3), None, None, Map())
+    val assets = assetFiller.toLinearAsset(Seq(
+      PersistedLinearAsset(1, linkId1, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 0.0, 4.5, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(2, linkId1, SideCode.AgainstDigitizing.value, Some(NumericValue(3)), 4.5, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None))
+      , assetFiller.toRoadLinkForFillTopology(roadLink))
+
+    val (methodTest1, methodTestChangeSet1) = assetFiller.droppedSegmentWrongDirection(assetFiller.toRoadLinkForFillTopology(roadLink), assets, initChangeSet)
+    val (methodTest, methodTestChangeSet) = assetFiller.adjustSegmentSideCodes(assetFiller.toRoadLinkForFillTopology(roadLink), methodTest1, methodTestChangeSet1)
+
+    methodTest should have size 1
+    methodTest.map(_.sideCode) should be(Seq(SideCode.AgainstDigitizing))
+    methodTest.map(_.value) should be(Seq(Some(NumericValue(3))))
+    methodTestChangeSet.droppedAssetIds should have size 1
+    methodTestChangeSet.droppedAssetIds.head should be(1)
+  }
   
   test("Fuse two consecutive segments  with same value in same RoadLink") {
     val roadLink = RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
