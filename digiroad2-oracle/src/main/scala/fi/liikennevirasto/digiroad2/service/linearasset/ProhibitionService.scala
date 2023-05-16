@@ -72,7 +72,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         dao.fetchProhibitionsByLinkIds(typeId, linkIds)
       }.filterNot(_.expired)
 
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFiltopology))
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFilTopology))
 
     if(adjust) {
       val groupedAssets = linearAssets.groupBy(_.linkId)
