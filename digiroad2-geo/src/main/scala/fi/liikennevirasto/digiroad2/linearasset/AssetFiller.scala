@@ -232,11 +232,11 @@ class AssetFiller {
     }
 
     /**
-      * Creates Numerical limits from orphaned segments (segments originating from a linear assets but no longer connected
+      * Creates assets from orphaned segments (segments originating from a linear assets but no longer connected
       * to them)
-      * @param origin Segments Lanes that was split by overwriting a segment piece(s)
+      * @param origin Segments that was split by overwriting a segment piece(s)
       * @param orphans List of orphaned segment pieces
-      * @return New segments Lanes for orphaned segment pieces
+      * @return New segments for orphaned segment pieces
       */
     def generateLimitsForOrphanSegments(origin: PieceWiseLinearAsset, orphans: Seq[SegmentPiece]): Seq[PieceWiseLinearAsset] = {
       if (orphans.nonEmpty) {
@@ -244,7 +244,7 @@ class AssetFiller {
         if (orphans.tail.nonEmpty) {
           // Try to extend this segment as far as possible: if SegmentPieces are consecutive produce just one Segments
           val t = extendOrDivide(orphans, origin.copy(startMeasure = segmentPiece.startM, endMeasure = segmentPiece.endM, sideCode = segmentPiece.sideCode))
-          // t now has a Numerical limit and any orphans it left behind: recursively call this method again
+          // t now has a asset and any orphans it left behind: recursively call this method again
           return Seq(t._1.copy(id = 0L)) ++ generateLimitsForOrphanSegments(origin, t._2)
         }
         // Only orphan in the list, create a new segment Lane for it
@@ -263,19 +263,19 @@ class AssetFiller {
       }
     }
     /**
-      * Make sure that no two segments lanes share the same id, rewrite the ones appearing later with id=0
-      * @param toProcess List of Numerical limits to go thru
-      * @param processed List of processed Numerical limits
+      * Make sure that no two segments share the same id, rewrite the ones appearing later with id=0
+      * @param toProcess List of assets to go thru
+      * @param processed List of processed assets
       * @return List of segments with unique or zero ids
       */
-    def cleanNumericalLimitIds(toProcess: Seq[PieceWiseLinearAsset], processed: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] = {
+    def cleanAssetIds(toProcess: Seq[PieceWiseLinearAsset], processed: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] = {
       val (current, rest) = (toProcess.head, toProcess.tail)
       val modified = processed.exists(_.id == current.id) || current.id < 0L match {
         case true => current.copy(id = 0L)
         case _ => current
       }
       if (rest.nonEmpty) {
-        cleanNumericalLimitIds(rest, processed ++ Seq(modified))
+        cleanAssetIds(rest, processed ++ Seq(modified))
       } else {
         processed ++ Seq(modified)
       }
@@ -296,10 +296,10 @@ class AssetFiller {
     val changedSideCodes = combinedSegment.filter(cl =>
       assets.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
       map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode.value), sl.typeId))
-    val resultingNumericalLimits = updatedAssetsAndMValueAdjustments.map(n => n._1) ++ updateGeometry(newSegments, roadLink).map(_._1)
-    val expiredIds = assets.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
+    val resultingAssets = updatedAssetsAndMValueAdjustments.map(n => n._1) ++ updateGeometry(newSegments, roadLink).map(_._1)
+    val expiredIds = assets.map(_.id).toSet.--(resultingAssets.map(_.id).toSet)
 
-    val returnSegments = cleanNumericalLimitIds(resultingNumericalLimits, Seq())
+    val returnSegments = cleanAssetIds(resultingAssets, Seq())
     (returnSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
   }
