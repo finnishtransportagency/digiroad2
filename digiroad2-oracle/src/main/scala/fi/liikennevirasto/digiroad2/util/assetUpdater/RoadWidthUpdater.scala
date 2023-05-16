@@ -70,7 +70,7 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
       updateProjected(toUpdate, persisted)
 
       if (newLinearAssets.nonEmpty)
-        logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+        logger.info(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
     }
 
     toInsert.foreach { linearAsset =>
@@ -97,11 +97,11 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
           service.validateRequiredProperties(linearAsset.typeId, props)
           dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
 
-        case _ => logger.error("Updating asset's " + linearAsset.id + " properties failed")
+        case _ => logger.error(s"Updating asset's ${linearAsset.id} properties failed")
       }
     }
     if (newLinearAssets.nonEmpty)
-      logger.info("Added assets for linkids " + toInsert.map(_.linkId))
+      logger.info(s"Added assets for linkids ${toInsert.map(_.linkId)}")
   }
 
 }

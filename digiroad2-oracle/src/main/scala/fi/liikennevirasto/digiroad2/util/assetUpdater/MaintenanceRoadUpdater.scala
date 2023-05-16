@@ -13,7 +13,6 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
 
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
     val linksOther = changes.filter(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet
-    // assume than in add case there is always one links.
     val linksNew = changes.filter(_.changeType == RoadLinkChangeType.Add).map(_.newLinks.head.linkId).toSet
     val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksNew ++ linksOther, expiredAlso = true)
     val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
@@ -31,7 +30,7 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
       val persisted = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(toUpdate.map(_.id).toSet).groupBy(_.id)
       updateProjected(toUpdate, persisted)
       if (newMaintenanceAssets.nonEmpty)
-        logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+        logger.info(s"Updated ids/linkids ${toUpdate.map(a => (a.id, a.linkId))}")
     }
     toInsert.foreach { linearAsset =>
       val roadLink = roadLinks.find(_.linkId == linearAsset.linkId)
@@ -47,6 +46,6 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
       }
     }
     if (newMaintenanceAssets.nonEmpty)
-      logger.info("Added assets for linkids " + toInsert.map(_.linkId))
+      logger.info(s"Added assets for linkids ${toInsert.map(_.linkId)}")
   }
 }

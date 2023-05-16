@@ -44,7 +44,6 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
 
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
     val linksOther = changes.filter(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet
-    // assume than in add case there is always one links.
     val linksNew = changes.filter(_.changeType == RoadLinkChangeType.Add).map(_.newLinks.head.linkId).toSet
     val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksNew ++ linksOther, expiredAlso = true)
     val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
