@@ -23,7 +23,7 @@ class AssetFiller {
   val AllowedTolerance = 2.0
   val MaxAllowedError = 0.001
   val MinAllowedLength = 2.0
-  private val MaxAllowedMValueError = 0.1
+  protected val MaxAllowedMValueError = 0.1
   
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
      See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems */
@@ -136,11 +136,25 @@ class AssetFiller {
       (segments, changeSet)
     } else {
       val adjusted = roadLink.trafficDirection match {
-        case TrafficDirection.AgainstDigitizing => segments.map { s => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId)) }
-        case TrafficDirection.TowardsDigitizing => segments.map { s => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId)) }
+        case TrafficDirection.AgainstDigitizing => segments.map { s =>
+          s.sideCode match {
+            case SideCode.BothDirections => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId))
+            case SideCode.TowardsDigitizing => (s.copy(sideCode = SideCode.AgainstDigitizing), SideCodeAdjustment(s.id, SideCode.AgainstDigitizing, s.typeId))
+            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
+          }
+        }
+        case TrafficDirection.TowardsDigitizing => segments.map { s =>
+          s.sideCode match {
+            case SideCode.BothDirections => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId))
+            case SideCode.AgainstDigitizing => (s.copy(sideCode = SideCode.TowardsDigitizing), SideCodeAdjustment(s.id, SideCode.TowardsDigitizing, s.typeId))
+            case _ => (s,SideCodeAdjustment(-1,SideCode.TowardsDigitizing,s.typeId))
+          }
+        }
       }
+      
       (adjusted.map(_._1),
-        changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ adjusted.map(_._2).filterNot(_.assetId == 0)))
+        changeSet.copy(adjustedSideCodes = changeSet.adjustedSideCodes ++ 
+          adjusted.map(_._2).filterNot(s=>s.assetId == 0 || s.assetId == -1 )))
     }
   }
 
