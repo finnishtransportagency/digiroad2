@@ -162,11 +162,23 @@ class AssetFiller {
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
   //   causes an infinite loop when fillTopology is called recursively, this function might need total rework
   /**
-    * Combine asset which are in same place. Value, side code, startMValue and endMValue are same. <br> <pre> 
+    * Combines assets so that there is no overlapping, no consecutive assets with same values and
+    * that the speed limits with both directions are preferred.
+    * Assets go through the following process
+    * - squash: road link is cut to small one-sided pieces defined by the startMeasures and endMeasures of all assets
+    * - combine: squashed pieces are turned into two-sided (SideCode.BothDirections) where speed limit is equal,
+    * keeping the latest edited assets id and timestamps
+    * - extend: combined pieces are merged if they have the same side code, speed limit value and one starts where another ends
+    * - orphans: pieces that are orphans (as newer, projected asset may overwrite another in the middle!) are collected
+    * and then extended just like above.
+    * - geometry update: all the result geometries and side codes are revised and written in the change set
+    * 
+    * <br> <pre> 
     * asset 1 ----
     * asset 2 ----
     *   to
     * asset 1 ----
+    *
     * @param roadLink which we are processing
     * @param segments assets in link
     * @param changeSet record of changes for final saving stage
