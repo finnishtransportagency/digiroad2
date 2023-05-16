@@ -124,9 +124,7 @@ object SpeedLimitFiller extends AssetFiller {
     val limits = assets.filterNot { x => limitsToDrop.contains(x.id) }
     (limits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ limitsToDrop))
   }
-
-
-  //TODO should be moved into generator class or Object
+  
   override protected def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5 }
@@ -138,8 +136,7 @@ object SpeedLimitFiller extends AssetFiller {
     } else Seq.empty[PieceWiseLinearAsset]
     (segments ++ generatedLinearAssets, changeSet)
   }
-
-  //TODO should be moved into generator class or Object
+  
   override protected def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val generated = if (roadLink.trafficDirection == TrafficDirection.BothDirections && roadLink.isSimpleCarTrafficRoad) {
       val lrmPositions: Seq[(Double, Double)] = segments
