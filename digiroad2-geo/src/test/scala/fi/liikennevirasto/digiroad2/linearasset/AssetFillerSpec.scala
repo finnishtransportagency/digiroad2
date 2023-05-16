@@ -189,13 +189,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (methodTest, methodTestChangeSet) = assetFiller.dropShortSegments(assetFiller.toRoadLinkForFillTopology(roadLink), assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink).map(assetFiller.toRoadLinkForFillTopology), Map(linkId1 -> assets), 140)
+    
+    methodTestChangeSet.expiredAssetIds should have size 1
+    methodTestChangeSet.expiredAssetIds.head should be(1)
 
-    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      val changeSet = item._2
-      changeSet.droppedAssetIds should have size 1
-      changeSet.droppedAssetIds.head should be(1)
-    })
-   
+    changeSet.expiredAssetIds should have size 1
+    changeSet.expiredAssetIds.head should be(1)
   }
 
   test("Don't drop segments less than 2 meters on a road link with length less that 2 meters"){
@@ -213,8 +212,8 @@ class AssetFillerSpec extends FunSuite with Matchers {
     methodTest.map(_.id) should be(Seq(1))
     methodTestChangeSet.droppedAssetIds should have size 0
 
-    testWholeProcess should have size 2
-    testWholeProcess.map(_.id) should be(Seq(1, 0))
+    testWholeProcess should have size 1
+    testWholeProcess.map(_.id) should be(Seq(1))
     changeSet.droppedAssetIds should have size 0
   }
   
@@ -255,7 +254,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     methodTestChangeSet.adjustedMValues should have size 1
     methodTestChangeSet.adjustedSideCodes should be(List())
 
-    testWholeProcess should have size 2
+    testWholeProcess should have size 1
     testWholeProcess.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     testWholeProcess.map(_.value) should be(Seq(Some(NumericValue(2))))
     testWholeProcess.map(_.typeId) should be(List(140))
@@ -280,18 +279,25 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (methodTest, methodTestChangeSet) = assetFiller.fuse(assetFiller.toRoadLinkForFillTopology(roadLink), assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink).map(assetFiller.toRoadLinkForFillTopology), Map(linkId1 -> assets), 160)
-    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      val filledTopology = item._1
-      val changeSet = item._2
-      filledTopology.length should be(1)
-      filledTopology.head.id should be(1)
-      filledTopology.head.endMeasure should be(15.0)
-      filledTopology.head.startMeasure should be(0.0)
-      changeSet.adjustedMValues.length should be(1)
-      changeSet.adjustedMValues.head.endMeasure should be(15.0)
-      changeSet.adjustedMValues.head.startMeasure should be(0.0)
-      changeSet.expiredAssetIds should be(Set(2, 3))
-    })
+
+    methodTest.length should be(1)
+    methodTest.head.id should be(1)
+    methodTest.head.endMeasure should be(15.0)
+    methodTest.head.startMeasure should be(0.0)
+    methodTestChangeSet.adjustedMValues.length should be(1)
+    methodTestChangeSet.adjustedMValues.head.endMeasure should be(15.0)
+    methodTestChangeSet.adjustedMValues.head.startMeasure should be(0.0)
+    methodTestChangeSet.expiredAssetIds should be(Set(2, 3))
+
+    testWholeProcess.length should be(1)
+    testWholeProcess.head.id should be(1)
+    testWholeProcess.head.endMeasure should be(15.0)
+    testWholeProcess.head.startMeasure should be(0.0)
+    changeSet.adjustedMValues.length should be(1)
+    changeSet.adjustedMValues.head.endMeasure should be(15.0)
+    changeSet.adjustedMValues.head.startMeasure should be(0.0)
+    changeSet.expiredAssetIds should be(Set(2, 3))
+    
   }
 
   test("Fuse asset when value and side code are sames, three consecutive") {
@@ -398,22 +404,31 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val (methodTest, methodTestChangeSet) = assetFiller.combine(roadLinks.map(assetFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFillTopology), Map(linkId1 -> assets), 140)
 
-    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      val filledTopology = item._1
-      val changeSet = item._2
-      filledTopology should have size 1
-      filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
-      filledTopology.map(_.value) should be(Seq(None))
-      filledTopology.map(_.createdBy) should be(Seq(Some("guy")))
-      filledTopology.map(_.typeId) should be(List(140))
-      filledTopology.map(_.startMeasure) should be(List(0.0))
-      filledTopology.map(_.endMeasure) should be(List(10.0))
-      changeSet.adjustedMValues should be(List())
-      changeSet.adjustedSideCodes.length should be(1)
-      changeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
-      changeSet.droppedAssetIds should be(Set())
-      changeSet.expiredAssetIds.size should be(1)
-    })
+    methodTest should have size 1
+    methodTest.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    methodTest.map(_.value) should be(Seq(None))
+    methodTest.map(_.createdBy) should be(Seq(Some("guy")))
+    methodTest.map(_.typeId) should be(List(140))
+    methodTest.map(_.startMeasure) should be(List(0.0))
+    methodTest.map(_.endMeasure) should be(List(10.0))
+    methodTestChangeSet.adjustedMValues should be(List())
+    methodTestChangeSet.adjustedSideCodes.length should be(1)
+    methodTestChangeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
+    methodTestChangeSet.droppedAssetIds should be(Set())
+    methodTestChangeSet.expiredAssetIds.size should be(1)
+
+    testWholeProcess should have size 1
+    testWholeProcess.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    testWholeProcess.map(_.value) should be(Seq(None))
+    testWholeProcess.map(_.createdBy) should be(Seq(Some("guy")))
+    testWholeProcess.map(_.typeId) should be(List(140))
+    testWholeProcess.map(_.startMeasure) should be(List(0.0))
+    testWholeProcess.map(_.endMeasure) should be(List(10.0))
+    changeSet.adjustedMValues should be(List())
+    changeSet.adjustedSideCodes.length should be(1)
+    changeSet.adjustedSideCodes.map(_.sideCode) should be(List(SideCode.BothDirections))
+    changeSet.droppedAssetIds should be(Set())
+    changeSet.expiredAssetIds.size should be(1)
   }
 
   test("Adjust asset length when it is shorter than link, from end") {

@@ -299,30 +299,42 @@ class AssetFiller {
     * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
     */
   protected def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PieceWiseLinearAsset]): Seq[SegmentPiece] = {
-    def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
+    def chooseSegment(seg1: SegmentPiece, seg2: SegmentPiece, combine: Boolean = false): Seq[SegmentPiece] = {
       val sl1 = segments.find(_.id == seg1.assetId).get
       val sl2 = segments.find(_.id == seg2.assetId).get
       if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) { // if start and measure are same, values over each other
         val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
           s.endMeasure - s.startMeasure).head
-        Seq(segmentPieces.head.copy(assetId = winner.id))
+        if (combine) {
+          Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
+        } else {
+          Seq(segmentPieces.head.copy(assetId = winner.id))
+        }
       } else {
         segmentPieces
       }
     }
 
+    def isInBothSide(sideCodes: Seq[Int]): Boolean = {
+      sideCodes.equals(Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value)) || sideCodes.toSet.head == SideCode.BothDirections.value
+    }
+
     val seg1 = segmentPieces.head
     val seg2 = segmentPieces.last
+
+    val sideCodes = Seq(seg1, seg2).map(_.sideCode.value).sorted
+
     (seg1.value, seg2.value) match {
       case (Some(v1), Some(v2)) =>
-        if (v1.equals(v2)) {
-          chooseSegment(seg1, seg2)
-        } else
-          segmentPieces
+        if (v1.equals(v2) && isInBothSide(sideCodes))
+          chooseSegment(seg1, seg2, combine = true)
+        else segmentPieces
       case (Some(v1), None) => Seq(segmentPieces.head)
       case (None, Some(v2)) => Seq(segmentPieces.last)
       case (None, None) =>
-        chooseSegment(seg1, seg2)
+        if (isInBothSide(sideCodes))
+          chooseSegment(seg1, seg2, combine = true)
+        else chooseSegment(seg1, seg2)
       case _ => segmentPieces
     }
   }
@@ -436,7 +448,7 @@ class AssetFiller {
       (segments, changeSet)
   }
   /**
-    *  Drop asset which are shorter than minimal length.
+    *  Expire asset which are shorter than minimal length.
     *
     * @see [[MinAllowedLength]]
     * @param roadLink  which we are processing
@@ -446,8 +458,8 @@ class AssetFiller {
     */
   def dropShortSegments(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val (shortSegments, linearSegments) = assets.partition(a => (a.endMeasure - a.startMeasure) < MinAllowedLength && roadLink.length >= MinAllowedLength )
-    val droppedAssetIds = shortSegments.map(_.id).toSet
-    (linearSegments, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
+    val expiredAssetIds = shortSegments.map(_.id).toSet
+    (linearSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
   }
 
 
@@ -640,7 +652,7 @@ class AssetFiller {
       printlnOperation("generateOneSidedNonExistingLinearAssets"),
       updateValues,
       printlnOperation("updateValues"),
-        clean
+      clean
     )
     
     val changeSet = changedSet match {
