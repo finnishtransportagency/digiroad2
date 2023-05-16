@@ -278,7 +278,7 @@ object ChangeReporter {
       val beforeFields = assetBefore match {
         case Some(before) =>
           val linearReference = before.linearReference.get
-          Seq(before.assetId, before.geometry, before.values, before.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
+          Seq(before.assetId, before.geometryToString, before.values, before.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
             linearReference.startMValue, linearReference.endMValue.get, linearReference.length, before.getUrl)
         case None => Seq(null, null, null, null, null, null, null, null, null)
       }
@@ -290,7 +290,7 @@ object ChangeReporter {
       } else {
         changedAsset.after.map { after =>
           val linearReference = after.linearReference.get
-          val afterFields = Seq(after.assetId, after.geometry, after.values, after.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
+          val afterFields = Seq(after.assetId, after.geometryToString, after.values, after.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
             linearReference.startMValue, linearReference.endMValue.get, linearReference.length, after.getUrl)
           val afterFieldsWithoutGeometry = afterFields.patch(1, Nil, 1)
           if (withGeometry) {
