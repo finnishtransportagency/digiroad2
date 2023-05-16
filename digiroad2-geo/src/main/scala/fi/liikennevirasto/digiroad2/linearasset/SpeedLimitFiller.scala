@@ -134,7 +134,7 @@ object SpeedLimitFiller extends AssetFiller {
       }
       toLinearAsset(generated, roadLink)
     } else Seq.empty[PieceWiseLinearAsset]
-    (segments.size ++ generatedLinearAssets, changeSet)
+    (segments ++ generatedLinearAssets, changeSet)
   }
   
   override protected def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {

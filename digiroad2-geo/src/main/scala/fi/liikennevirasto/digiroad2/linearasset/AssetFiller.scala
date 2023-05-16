@@ -188,7 +188,7 @@ class AssetFiller {
       val a = sl.filter(sl => sl.sideCode.equals(SideCode.AgainstDigitizing) || sl.sideCode.equals(SideCode.BothDirections)).sortWith(modifiedSort).headOption
       val t = sl.filter(sl => sl.sideCode.equals(SideCode.TowardsDigitizing) || sl.sideCode.equals(SideCode.BothDirections)).sortWith(modifiedSort).headOption
 
-      (a, t) match {
+      (a, t) match { //TODO fix splitting becouse it  re writing side code
         case (Some(x),Some(y)) => Seq(SegmentPiece(x.id, startM, endM, SideCode.AgainstDigitizing, x.value), SegmentPiece(y.id, startM, endM, SideCode.TowardsDigitizing, y.value))
         case (Some(x),None) => Seq(SegmentPiece(x.id, startM, endM, SideCode.AgainstDigitizing, x.value))
         case (None,Some(y)) => Seq(SegmentPiece(y.id, startM, endM, SideCode.TowardsDigitizing, y.value))
@@ -305,7 +305,7 @@ class AssetFiller {
       if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) { // if start and measure are same, values over each other
         val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
           s.endMeasure - s.startMeasure).head
-        Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
+        Seq(segmentPieces.head.copy(assetId = winner.id))
       } else {
         segmentPieces
       }
@@ -319,8 +319,8 @@ class AssetFiller {
           chooseSegment(seg1, seg2)
         } else
           segmentPieces
-      case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
-      case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
+      case (Some(v1), None) => Seq(segmentPieces.head)
+      case (None, Some(v2)) => Seq(segmentPieces.last)
       case (None, None) =>
         chooseSegment(seg1, seg2)
       case _ => segmentPieces
@@ -639,7 +639,8 @@ class AssetFiller {
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
       printlnOperation("generateOneSidedNonExistingLinearAssets"),
       updateValues,
-      printlnOperation("updateValues")
+      printlnOperation("updateValues"),
+        clean
     )
     
     val changeSet = changedSet match {
@@ -679,7 +680,8 @@ class AssetFiller {
       adjustSegmentSideCodes,
       printlnOperation("adjustSegmentSideCodes"),
       fillHoles,
-      printlnOperation("fillHoles")
+      printlnOperation("fillHoles"),
+      clean
     )
 
     val changeSet = changedSet match {

@@ -113,12 +113,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
   }
   
-  test("generate two-sided asset when two-way road link is half-covered") {
+  test("generate unknown asset when two-way road link is half-covered") {
     val topology = Seq(
       RoadLink(linkId1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
 
-    val assets = assetFiller.toLinearAssetsOnMultipleLinks(Seq(PersistedLinearAsset(1l, linkId1, 2, Some(NumericValue(1)),
+    val assets = assetFiller.toLinearAssetsOnMultipleLinks(Seq(PersistedLinearAsset(1l, linkId1, SideCode.TowardsDigitizing.value, Some(NumericValue(1)),
       0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)),
       topology.map(assetFiller.toRoadLinkForFillTopology))
 
@@ -126,13 +126,16 @@ class AssetFillerSpec extends FunSuite with Matchers {
       linkId1 -> assets)
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(topology.map(assetFiller.toRoadLinkForFillTopology), linearAssets, 110)
-    filledTopology should have size 1
+    filledTopology should have size 2
 
-    filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(BothDirections))
+    filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing))
     filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(NumericValue(1))))
     filledTopology.filter(_.id == 1).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
-    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(1,BothDirections,110)), Set.empty[Long], Nil))
+    filledTopology.filter(_.id == 0).map(_.sideCode) should be(Seq(SideCode.AgainstDigitizing))
+    filledTopology.filter(_.id == 0).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+
+    changeSet.adjustedSideCodes.size should be(0)
   }
 
   test("expire assets that fall completely outside topology") {
@@ -205,14 +208,14 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (methodTest, methodTestChangeSet) = assetFiller.dropShortSegments(assetFiller.toRoadLinkForFillTopology(roadLink), assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink).map(assetFiller.toRoadLinkForFillTopology), Map(linkId1 -> assets), 140)
-    
-    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      val filledTopology = item._1
-      val changeSet = item._2
-      filledTopology should have size 1
-      filledTopology .map(_.id) should be(Seq(1))
-      changeSet .droppedAssetIds should have size 0
-    })
+
+    methodTest should have size 1
+    methodTest.map(_.id) should be(Seq(1))
+    methodTestChangeSet.droppedAssetIds should have size 0
+
+    testWholeProcess should have size 2
+    testWholeProcess.map(_.id) should be(Seq(1, 0))
+    changeSet.droppedAssetIds should have size 0
   }
   
   test("adjust two overlapping segments") {
@@ -243,16 +246,24 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val (methodTest, methodTestChangeSet) = assetFiller.fuse(assetFiller.toRoadLinkForFillTopology(roadLink),  assets, initChangeSet)
     val (testWholeProcess, changeSet) = assetFiller.fillTopology(Seq(roadLink).map(assetFiller.toRoadLinkForFillTopology), Map(linkId1 -> assets), 160)
 
-    Seq((methodTest, methodTestChangeSet), (testWholeProcess, changeSet)).foreach(item => {
-      item._1 should have size 1
-      item._1.map(_.sideCode) should be(Seq(SideCode.BothDirections))
-      item._1.map(_.value) should be(Seq(Some(NumericValue(2))))
-      item._1.map(_.typeId) should be(List(140))
-      item._1.map(_.startMeasure) should be(List(0.0))
-      item._1.map(_.endMeasure) should be(List(10.0))
-      item._2.adjustedMValues should have size 1
-      item._2.adjustedSideCodes should be(List())
-    })
+    methodTest should have size 1
+    methodTest.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    methodTest.map(_.value) should be(Seq(Some(NumericValue(2))))
+    methodTest.map(_.typeId) should be(List(140))
+    methodTest.map(_.startMeasure) should be(List(0.0))
+    methodTest.map(_.endMeasure) should be(List(10.0))
+    methodTestChangeSet.adjustedMValues should have size 1
+    methodTestChangeSet.adjustedSideCodes should be(List())
+
+    testWholeProcess should have size 2
+    testWholeProcess.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    testWholeProcess.map(_.value) should be(Seq(Some(NumericValue(2))))
+    testWholeProcess.map(_.typeId) should be(List(140))
+    testWholeProcess.map(_.startMeasure) should be(List(0.0))
+    testWholeProcess.map(_.endMeasure) should be(List(10.0))
+    changeSet.adjustedMValues should have size 1
+    changeSet.adjustedSideCodes should be(List())
+    
   }
 
   test("Fuse asset when values are None and side code are sames, three consecutive") {
