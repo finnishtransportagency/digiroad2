@@ -270,7 +270,7 @@ object ChangeReporter {
     }
   }
 
-  private def getCSVRowForLinearAssetChanges(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false) = {
+  private def getCSVRowsForLinearAssetChange(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false) = {
     try {
       val changedAsset = change.asInstanceOf[ChangedAsset]
       val assetBefore = changedAsset.before
@@ -358,7 +358,7 @@ object ChangeReporter {
         val labelsWithoutGeometry = labels.filterNot(_.contains("geometry"))
         if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
         val contentRowCount = changes.map { change =>
-          val csvRows = getCSVRowForLinearAssetChanges(change, assetTypeId, withGeometry)
+          val csvRows = getCSVRowsForLinearAssetChange(change, assetTypeId, withGeometry)
           csvRows.foreach { csvRow =>
             csvWriter.writeRow(csvRow)
           }
