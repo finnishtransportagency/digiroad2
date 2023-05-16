@@ -34,6 +34,11 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub "${PipelineName}-artifact-bucket"
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireAfter180Days
+            ExpirationInDays: 180
+            Status: Enabled
       Tags:
         - Key: Name
           Value: !Sub ${PipelineName}-artifact-bucket
