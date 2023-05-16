@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2.util.assetUpdater
 import fi.liikennevirasto.digiroad2.FloatingReason.NoRoadLinkFound
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.Remove
-import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Deletion, Floating, Replaced}
+import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Remove, Split}
+import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Deletion, Divided, Floating, Replaced}
 import org.scalatest.{FunSuite, Matchers}
 
 class ChangeReporterSpec extends FunSuite with Matchers{
@@ -70,7 +70,34 @@ class ChangeReporterSpec extends FunSuite with Matchers{
     val changedAsset2 = ChangedAsset(linkId = linkId, assetId = assetId2, changeType = Deletion, roadLinkChangeType = Remove, before = Some(before2), after = Seq())
     val changeReport = ChangeReport(Lanes.typeId, Seq(changedAsset1, changedAsset2))
 
-    val (csv, contentRows) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
-    contentRows should be(2)
+    val (csv, contentRowCount) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
+    contentRowCount should be(2)
+  }
+
+  test ("create csv without geometry for linear asset divided change") {
+    val oldLinkId = "3a832249-d3b9-4c22-9b08-c7e9cd98cbd7:1"
+    val newLinkId1 = "581687d9-f4d5-4fa5-9e44-87026eb74774:1"
+    val newLinkId2 = "6ceeebf4-2351-46f0-b151-3ed02c7cfc05:1"
+    val values = s"""{"publicId":"lane_type","values":["1"],"publicId":"start_date","values":["1.1.1970"],"publicId":"lane_code","values":["1"]}"""
+    val beforeLinearRef = LinearReference(linkId = oldLinkId, startMValue = 0.0, endMValue = Some(432.253),
+      sideCode = Some(2), validityDirection = None, length = 423.235)
+    val after1LinearRef = LinearReference(linkId = newLinkId1, startMValue = 0.0, endMValue = Some(156.867),
+      sideCode = Some(2), validityDirection = None, length = 156.867)
+    val after2LinearRef = LinearReference(linkId = newLinkId2, startMValue = 0.0, endMValue = Some(275.368),
+      sideCode = Some(2), validityDirection = None, length = 275.368)
+    val beforeAsset = Asset(assetId = 123, values = values, municipalityCode = Some(49), geometry = None,
+      linearReference = Some(beforeLinearRef), isPointAsset = false, floatingReason = None)
+    val afterAsset1 = Asset(assetId = 124, values = values, municipalityCode = Some(49), geometry = None,
+      linearReference = Some(after1LinearRef), isPointAsset = false, floatingReason = None)
+    val afterAsset2 = Asset(assetId = 125, values = values, municipalityCode = Some(49), geometry = None,
+      linearReference = Some(after2LinearRef), isPointAsset = false, floatingReason = None)
+
+    val changedAsset = ChangedAsset(linkId = oldLinkId, assetId = beforeAsset.assetId, changeType = Divided,
+      roadLinkChangeType = Split, before = Some(beforeAsset), after = Seq(afterAsset1, afterAsset2))
+    val changeReport = ChangeReport(Lanes.typeId, Seq(changedAsset))
+
+    val (csv, contentRowCount) = ChangeReporter.generateCSV(changeReport, withGeometry = false)
+    contentRowCount should be(2)
+
   }
 }
