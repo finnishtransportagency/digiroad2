@@ -8,7 +8,6 @@ import org.joda.time.DateTime
 
 import scala.util.Try
 
-
 case class RoadLinkForFiltopology(linkId: String, length:Double, trafficDirection:TrafficDirection, administrativeClass:AdministrativeClass, linkSource:LinkGeomSource,
                                   linkType:LinkType,constructionType:ConstructionType, geometry: Seq[Point],municipalityCode:Int){
   def isSimpleCarTrafficRoad: Boolean = {
@@ -42,32 +41,6 @@ class AssetFiller {
     println(s"expire adjuctment count: ${changeSet.expiredAssetIds.size}")
     println(s"dropped adjuctment count: ${changeSet.droppedAssetIds.size}")
     (segments, changeSet)
-  }
-  
-  def getOperations(typeId: Int, geometryChanged: Boolean): Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
-    val adjustmentAndNonExistingOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      combine,
-      printlnOperation("combine"),
-      fuse,
-      printlnOperation("fuse"),
-      dropShortSegments,
-      printlnOperation("dropShortSegments"),
-      adjustAssets,
-      printlnOperation("adjustAssets"),
-      droppedSegmentWrongDirection,
-      printlnOperation("droppedSegmentWrongDirection"),
-      adjustSegmentSideCodes,
-      printlnOperation("adjustSegmentSideCodes"),
-      generateTwoSidedNonExistingLinearAssets(typeId),
-      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
-      updateValues,
-      printlnOperation("updateValues")
-    )
-    adjustmentAndNonExistingOperations
   }
 
   protected def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFiltopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
@@ -115,7 +88,7 @@ class AssetFiller {
     }
     (passThroughSegments ++ cappedSegments.map(_._1), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ cappedSegments.map(_._2)))
   }
-  //TODO move this to be part of linearAsset updater
+  
   def droppedSegmentWrongDirection(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       (segments, changeSet)
@@ -128,7 +101,7 @@ class AssetFiller {
       (segments.filterNot(s => droppedAssetIds.contains(s.id)), changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds++ droppedAssetIds))
     }
   }
-  //TODO move this to be part of linearAsset updater
+  
   def adjustSegmentSideCodes(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val oneWayTrafficDirection =
       (roadLink.trafficDirection == TrafficDirection.TowardsDigitizing) || (roadLink.trafficDirection == TrafficDirection.AgainstDigitizing)
@@ -157,8 +130,7 @@ class AssetFiller {
           adjusted.map(_._2).filterNot(s=>s.assetId == 0 || s.assetId == -1 )))
     }
   }
-
-  //TODO should be moved into generator class or Object
+  
   protected def generateTwoSidedNonExistingLinearAssets(typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val lrmPositions: Seq[(Double, Double)] = segments.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
@@ -168,8 +140,7 @@ class AssetFiller {
     val generatedLinearAssets = toLinearAsset(generated, roadLink)
     (segments ++ generatedLinearAssets, changeSet)
   }
-
-  //TODO should be moved into generator class or Object
+  
   protected def generateOneSidedNonExistingLinearAssets(sideCode: SideCode, typeId: Int)(roadLink: RoadLinkForFiltopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val generated = if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
       val lrmPositions: Seq[(Double, Double)] = segments
@@ -647,8 +618,30 @@ class AssetFiller {
 
   def fillTopology(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                    changedSet: Option[ChangeSet] = None, geometryChanged: Boolean = true): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val operations = getOperations(typeId, geometryChanged)
-
+    
+    val operations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
+      combine,
+      printlnOperation("combine"),
+      fuse,
+      printlnOperation("fuse"),
+      dropShortSegments,
+      printlnOperation("dropShortSegments"),
+      adjustAssets,
+      printlnOperation("adjustAssets"),
+      droppedSegmentWrongDirection,
+      printlnOperation("droppedSegmentWrongDirection"),
+      adjustSegmentSideCodes,
+      printlnOperation("adjustSegmentSideCodes"),
+      generateTwoSidedNonExistingLinearAssets(typeId),
+      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
+      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      updateValues,
+      printlnOperation("updateValues")
+    )
+    
     val changeSet = changedSet match {
       case Some(change) => change
       case None => ChangeSet( droppedAssetIds = Set.empty[Long],
