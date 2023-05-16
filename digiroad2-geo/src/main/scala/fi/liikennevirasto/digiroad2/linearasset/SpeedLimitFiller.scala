@@ -5,8 +5,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object SpeedLimitFiller extends AssetFiller {
-  private val MaxAllowedMValueError = 0.1
-  private val MinAllowedSpeedLimitLength = 2.0
   
   def getOperations(geometryChanged: Boolean): Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val fillOperations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
@@ -62,9 +60,9 @@ object SpeedLimitFiller extends AssetFiller {
   override def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFiltopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
     val startError = asset.startMeasure
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val endError = roadLinkLength - asset.endMeasure
+    val endMeasureDifference = roadLinkLength - asset.endMeasure
     val mAdjustment =
-      if (startError > MaxAllowedMValueError || endError > MaxAllowedMValueError)
+      if (startError > MaxAllowedMValueError || endMeasureDifference > MaxAllowedMValueError)
         Seq(MValueAdjustment(asset.id, asset.linkId, 0, roadLinkLength))
       else
         Nil
@@ -121,8 +119,7 @@ object SpeedLimitFiller extends AssetFiller {
   }
   override def dropShortSegments(roadLink: RoadLinkForFiltopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val limitsToDrop = assets.filter { limit =>
-      GeometryUtils.geometryLength(limit.geometry) < MinAllowedSpeedLimitLength &&
-        roadLink.length > MinAllowedSpeedLimitLength
+      GeometryUtils.geometryLength(limit.geometry) < MinAllowedLength && roadLink.length > MinAllowedLength
     }.map(_.id).toSet
     val limits = assets.filterNot { x => limitsToDrop.contains(x.id) }
     (limits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ limitsToDrop))
@@ -186,7 +183,7 @@ object SpeedLimitFiller extends AssetFiller {
   }
 
   override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFiltopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
-                                  changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+                                           changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations: Seq[(RoadLinkForFiltopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       printlnOperation("operation start"),
       fuse,
@@ -236,8 +233,7 @@ object SpeedLimitFiller extends AssetFiller {
       (existingAssets ++ adjustedAssets, noDuplicate)
     }
   }
-
-
+  
   /**
     * For debugging; print speed limit relevant data
     * @param speedLimit speedlimit to print
