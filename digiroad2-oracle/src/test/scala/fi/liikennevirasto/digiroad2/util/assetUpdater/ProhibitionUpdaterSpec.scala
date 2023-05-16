@@ -44,17 +44,17 @@ class ProhibitionUpdaterSpec extends FunSuite with Matchers{
   val assetValues = Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))
   
   test("case 1 links under asset is split, smoke test") {
-    val linksid = "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1"
+    val linkId = "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1"
     val newLinks = Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1", "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1")
     val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
 
     runWithRollback {
-      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linksid).get
-      val oldRoadLinkRaw = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(linksid)
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linksid)).thenReturn(oldRoadLinkRaw)
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
+      val oldRoadLinkRaw = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(linkId)
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(oldRoadLinkRaw)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
 
-      val id = service.createWithoutTransaction(Prohibition.typeId, linksid,
+      val id = service.createWithoutTransaction(Prohibition.typeId, linkId,
         assetValues, SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val assetsBefore = service.getPersistedAssetsByIds(Prohibition.typeId, Set(id), false)
 

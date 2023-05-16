@@ -54,8 +54,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
 
   private def generateRandomKmtkId(): String = s"${UUID.randomUUID()}"
   private def generateRandomLinkId(): String = LinkIdGenerator.generateRandom()
-
-  // pseudo geometry 
+  
   def generateGeometry(startPoint: Double, numberPoint: Long): (List[Point], Double) = {
     val points = new ListBuffer[Point]
     for (i <- 1 to numberPoint.toInt) {
