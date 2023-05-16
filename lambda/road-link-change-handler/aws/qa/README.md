@@ -1,4 +1,4 @@
-# Kehitysympäristön pystytys
+# Testiympäristön pystytys
 
 ## Siirry Digiroad projektin juuresta lambda funktion omaan kansioon
 ```
@@ -63,7 +63,7 @@ aws cloudformation create-stack \
 ```
 
 
-# Kehitysympäristön päivitys
+# Testiympäristön päivitys
 
 ## AWS CLI komennot
 
