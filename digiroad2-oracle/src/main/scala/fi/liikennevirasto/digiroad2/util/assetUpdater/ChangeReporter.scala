@@ -11,8 +11,8 @@ import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats}
 import org.slf4j.LoggerFactory
 
-import java.io.StringWriter
-import scala.annotation.tailrec
+import java.io.{PrintWriter, StringWriter}
+import java.nio.file.{Files, Paths}
 
 /**
   *  For point like asset mark [[endMValue]] None
@@ -147,6 +147,7 @@ object ChangeReporter {
   val logger = LoggerFactory.getLogger(getClass)
   implicit lazy val serializationFormats: Formats = DefaultFormats
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
+  val localReportDirectoryName = "samuutus-reports-local-test"
 
 
 
@@ -374,5 +375,18 @@ object ChangeReporter {
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     val path = s"${date}/${assetName}_${date}_${contentRowCount}content_rows${withGeometry}.csv"
     s3Service.saveFileToS3(s3Bucket, path, body, "csv")
+  }
+
+  // Used for testing CSV report. Saves file locally to directory 'samuutus-reports-local-test' created in project root directory
+  def saveReportToLocalFile(assetName: String, body: String, contentRowCount: Int, hasGeometry: Boolean = false): Unit = {
+    val date = DateTime.now().toString("YYYY-MM-dd")
+    val withGeometry = if (hasGeometry) "_withGeometry" else ""
+    Files.createDirectories(Paths.get(localReportDirectoryName))
+    val path = s"$localReportDirectoryName/${assetName}_${date}_${contentRowCount}content_rows${withGeometry}.csv"
+
+    new PrintWriter(path) {
+      write(body)
+      close()
+    }
   }
 }
