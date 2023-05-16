@@ -129,7 +129,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       withDynTransaction {
         dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, linkIds).filterNot(_.expired)
       }
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFilTopology))
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
     if(adjust) {
       val groupedAssets = linearAssets.groupBy(_.linkId)
       val adjustedAssets = withDynTransaction {
@@ -151,16 +151,16 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   def getByZoomLevel :Seq[Seq[PieceWiseLinearAsset]] = {
     val potentialAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFilTopology))
-    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFilTopology), linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
+    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFillTopology), linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
     val potentialAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(potentialAssets.map(_.linkId).toSet)
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFilTopology))
-    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFilTopology), linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(potentialAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
+    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFillTopology), linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 

@@ -257,7 +257,7 @@ trait LinearAssetOperations {
                                roadLinkFilter: RoadLink => Boolean = _ => true): Seq[PieceWiseLinearAsset] = {
 
     val existingAssets = fetchExistingAssetsByLinksIds(typeId, roadLinks, Seq())
-    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFilTopology))
+    val linearAssets = assetFiller.toLinearAssetsOnMultipleLinks(existingAssets, roadLinks.map(assetFiller.toRoadLinkForFillTopology))
     if (adjust){
       val groupedAssets = linearAssets.groupBy(_.linkId)
       val adjustedAssets = withDynTransaction {
@@ -274,7 +274,7 @@ trait LinearAssetOperations {
   def adjustLinearAssets(roadLinks: Seq[RoadLink], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                          typeId: Int, changeSet: Option[ChangeSet] = None, geometryChanged: Boolean, counter: Int = 1): Seq[PieceWiseLinearAsset] = {
     val assetUpdater = getAssetUpdater(typeId)
-    val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFilTopology), linearAssets,  typeId, changeSet, geometryChanged)
+    val (filledTopology, changedSet) = assetFiller.fillTopology(roadLinks.map(assetFiller.toRoadLinkForFillTopology), linearAssets,  typeId, changeSet, geometryChanged)
     val adjustmentsChangeSet = LinearAssetFiller.cleanRedundantMValueAdjustments(changedSet, linearAssets.values.flatten.toSeq)
     adjustmentsChangeSet.isEmpty match {
       case true => filledTopology

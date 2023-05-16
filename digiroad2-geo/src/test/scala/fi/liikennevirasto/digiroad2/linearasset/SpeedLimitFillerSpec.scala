@@ -49,7 +49,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val assets = Seq(speedLimit1, speedLimit2)
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
     filledTopology.filter(_.id != 0) should have size 1
     filledTopology.map(_.id) should not contain (1)
     changeSet.expiredAssetIds should have size 1
@@ -64,7 +64,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val assets = Seq(speedLimit)
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> assets), SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.id) should be(Seq(1))
     changeSet.droppedAssetIds should have size 0
@@ -77,7 +77,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       false, 2.15, 2.35, Set(Point(1.0, 0.0), Point(2.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(linkId2 -> Seq(speedLimit))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     changeSet.expiredAssetIds should be(Set(1))
   }
 
@@ -88,7 +88,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       false, 0.0, 1.9, Set(Point(0.0, 0.0), Point(1.9, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(linkId1 -> Seq(speedLimit))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology.length should be(1)
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
@@ -107,7 +107,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(speedLimit1, speedLimit2))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 2
     filledTopology.map(_.geometry) should be(Seq(
       Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
@@ -136,7 +136,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       createAsset(1, linkId1, Measure(0.001, 36.782), SideCode.BothDirections, None, TrafficDirection.BothDirections)
     )
 
-    val (methodTest, combineTestChangeSet) = SpeedLimitFiller.adjustAssets(roadLinks.map(SpeedLimitFiller.toRoadLinkForFilTopology).head, assets, initChangeSet)
+    val (methodTest, combineTestChangeSet) = SpeedLimitFiller.adjustAssets(roadLinks.map(SpeedLimitFiller.toRoadLinkForFillTopology).head, assets, initChangeSet)
 
     val sorted = methodTest.sortBy(_.endMeasure)
 
@@ -157,7 +157,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       false, 90.0, 110.0, Set(Point(90.0, 0.0), Point(110.0, 0.0)), None, None, None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(linkId1 -> Seq(speedLimit1, speedLimit2))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology.length should be(2)
 
     filledTopology.find(_.id == 2).map(_.geometry) should be(Some(Seq(Point(90.0, 0.0), Point(100.0, 0.0))))
@@ -177,7 +177,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(speedLimit1, speedLimit2))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     changeSet.expiredAssetIds should be(Set(speedLimit2.id))
   }
@@ -190,7 +190,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(speedLimit))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     changeSet.droppedAssetIds should be(Set())
   }
@@ -203,7 +203,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(speedLimit))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.id) should be(Seq(speedLimit.id))
     changeSet.droppedAssetIds shouldBe empty
@@ -217,7 +217,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(speedLimit))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 1
@@ -235,7 +235,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(speedLimit1, speedLimit2))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing, SideCode.TowardsDigitizing))
     changeSet.adjustedSideCodes should have size 2
@@ -257,7 +257,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val speedLimits = Map(
       linkId1 -> Seq(
         speedLimit1, speedLimit2, speedLimit3))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(SpeedLimitValue(40))))
@@ -282,7 +282,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val speedLimits = Map(
       linkId1 -> Seq(
         speedLimit1, speedLimit2, speedLimit3))
-    val (filledTopology, changeSet) = SpeedLimitFiller.fuse(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology).head, speedLimits.head._2, initChangeSet)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fuse(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology).head, speedLimits.head._2, initChangeSet)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(SpeedLimitValue(40))))
@@ -296,7 +296,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), State))
     val speedLimits = Map.empty[String, Seq[PieceWiseLinearAsset]]
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimits, SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
@@ -379,7 +379,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     )
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
 
     changeSet.expiredAssetIds should have size 4
     filledTopology.count(_.id != 0) should be(6)
@@ -391,7 +391,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     var topology = filledTopology
     while (counter < 100 && unstable) {
       counter = counter + 1
-      val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> topology.map(sl => sl.copy(id = sl.id + 1))), SpeedLimitAsset.typeId)
+      val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> topology.map(sl => sl.copy(id = sl.id + 1))), SpeedLimitAsset.typeId)
       unstable = refill.size != topology.size || !refill.forall(sl => topology.find(_.id == sl.id - 1).get.copy(id = sl.id).equals(sl))
       topology = refill
     }
@@ -413,7 +413,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         false, 10.0, 26.67, Set(Point(10.00, 0.0), Point(26.67, 0.0)), None, None, Some("red bd"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
         0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
 
     changeSet.droppedAssetIds should be(Set())
     filledTopology.length should be(3)
@@ -429,7 +429,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     oldLink2.endMeasure should be(26.67)
     oldLink2.value should be(Some(SpeedLimitValue(50)))
 
-    val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> filledTopology), SpeedLimitAsset.typeId)
+    val (refill, newChangeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> filledTopology), SpeedLimitAsset.typeId)
     refill should have size 3
     newChangeSet.adjustedMValues should have size 0
   }
@@ -450,7 +450,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         false, 26.74, 50, Set(Point(26.8, 0.0), Point(50, 0.0)), None, None, Some("red bd"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
         0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
     changeSet.expiredAssetIds should be(Set(3))
     filledTopology.length should be(2)
     val oldLink0 = filledTopology.find(_.startMeasure == 0.0).get
@@ -483,7 +483,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         false, 0, 42.545, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion), Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
         0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
     changeSet.expiredAssetIds should have size (2)
     changeSet.adjustedSideCodes should have size (2)
   }
@@ -502,7 +502,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         false, 199.502, 323.203, Set(), None, None, Option(AutoGeneratedUsername.dr1Conversion), Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
         0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
     changeSet.droppedAssetIds should have size (0)
   }
 
@@ -525,7 +525,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         false, 0, 42.545, geom2.toSet, None, None, Option(AutoGeneratedUsername.dr1Conversion), Option(parse("28.10.2014 14:56")), SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
         0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimit.groupBy(_.linkId), SpeedLimitAsset.typeId)
     changeSet.droppedAssetIds should have size (0)
     changeSet.adjustedSideCodes should have size (0)
     changeSet.adjustedMValues should have size (0)
@@ -547,7 +547,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
         false, 30.0, 50.0, Set(Point(30.0, 0.0), Point(50.0, 0.0)), None, None, Some("blue ad"), edit2, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
         0, None, NormalLinkInterface, Unknown, Map(), None, None, None))
 
-    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFilTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(rLink).map(SpeedLimitFiller.toRoadLinkForFillTopology), Map(linkId1 -> speedLimit), SpeedLimitAsset.typeId)
 
     filledTopology.length should be(3)
     val oldLink1 = filledTopology.find(_.value.contains(SpeedLimitValue(50))).get

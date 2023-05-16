@@ -91,7 +91,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     replaceInfo.oldLinkId == asset.linkId && replaceInfo.oldFromMValue <= asset.startMeasure && replaceInfo.oldToMValue >= asset.endMeasure
   }
 
-  protected def toRoadLinkForFillTopology(roadLink: RoadLinkInfo)(trafficDirectionOverrideds: Seq[RoadLinkValue], adminClassOverrideds: Seq[RoadLinkValue], linkTypes: Seq[RoadLinkValue]): RoadLinkForFilTopology = {
+  protected def toRoadLinkForFillTopology(roadLink: RoadLinkInfo)(trafficDirectionOverrideds: Seq[RoadLinkValue], adminClassOverrideds: Seq[RoadLinkValue], linkTypes: Seq[RoadLinkValue]): RoadLinkForFillTopology = {
     val overridedAdminClass = adminClassOverrideds.find(_.linkId == roadLink.linkId)
     val overridedDirection = trafficDirectionOverrideds.find(_.linkId == roadLink.linkId)
     val linkType = linkTypes.find(_.linkId == roadLink.linkId)
@@ -100,7 +100,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val trafficDirection = if (overridedDirection.nonEmpty) TrafficDirection.apply(overridedDirection.get.value) else roadLink.trafficDirection
     val linkTypeExtract = if (linkType.nonEmpty)  LinkType.apply(linkType.get.value.get) else UnknownLinkType
 
-    RoadLinkForFilTopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = trafficDirection, administrativeClass = adminClass,
+    RoadLinkForFillTopology(linkId = roadLink.linkId, length = roadLink.linkLength, trafficDirection = trafficDirection, administrativeClass = adminClass,
       linkSource = NormalLinkInterface, linkType = linkTypeExtract, constructionType = UnknownConstructionType, geometry = roadLink.geometry, municipalityCode = roadLink.municipality)
   }
   protected def convertToPersisted(asset: PieceWiseLinearAsset): PersistedLinearAsset = {
@@ -272,7 +272,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       , changeSets, info.digitizationChange)
   }
 
-  protected def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFilTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
+  protected def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
                                                     typeId: Int, changeSet: Option[ChangeSet] = None, counter: Int = 1): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val (assetOnly, filterExpiredAway) = assetFiller.fillTopologyChangesGeometry(roadLinks, linearAssets, typeId, changeSet)
     updateChangeSet(filterExpiredAway)
