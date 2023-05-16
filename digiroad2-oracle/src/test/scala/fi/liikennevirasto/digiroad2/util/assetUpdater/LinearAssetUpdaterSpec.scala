@@ -1371,8 +1371,6 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
     }
   }
   
-
-  
   test("case 11 Roads digitization direction changes, case 3b") {
     val linkId = "291f7e18-a48a-4afc-a84b-8485164288b2:1"
     val linkIdNew = "eca24369-a77b-4e6f-875e-57dc85176003:1"
@@ -1455,30 +1453,5 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted.head.value.get should be(NumericValue(3))
       SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
     }
-  }
-  
-  
-  test("case 5 asset retain all it old values, group 1 (position)") {
-    fail("Need to be implemented")
-  }
-
-  test("case 5 asset retain all it old values,group 2, (position,value, different value types)") {
-    fail("Need to be implemented")
-  }
-
-  test("case 5 asset retain all it old values,group 3, (position,value, side code)") {
-    fail("Need to be implemented")
-  }
-
-  test("case 5 asset retain all it old values,group 4, (position,value, side code, validity period)") {
-    fail("Need to be implemented")
-  }
-
-  test("case 5 asset retain all it old values,group 4, (position,value, side code, validity period, exception)") {
-    fail("Need to be implemented")
-  }
-
-  test("case 5 asset retain all it old values,group 5, (external id)") { // TODO Persisted linear asset does not have external id value
-    fail("Need to be implemented")
   }
 }
