@@ -161,7 +161,7 @@ class AssetFiller {
 
   //  TODO Due to a bug in combine, the operation divides asset to smaller segments which are then combined in fuse operation back together
   //   causes an infinite loop when fillTopology is called recursively, this function might need total rework
-  /**
+  /**<br> <pre> 
     * Combines assets so that there is no overlapping, no consecutive assets with same values and
     * that the speed limits with both directions are preferred.
     * Assets go through the following process
@@ -172,8 +172,7 @@ class AssetFiller {
     * - orphans: pieces that are orphans (as newer, projected asset may overwrite another in the middle!) are collected
     * and then extended just like above.
     * - geometry update: all the result geometries and side codes are revised and written in the change set
-    * 
-    * <br> <pre> 
+    *
     * asset 1 ----
     * asset 2 ----
     *   to
