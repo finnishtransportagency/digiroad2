@@ -213,10 +213,13 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val oldRoadLink = RoadLink(linkIdVersion1, geometry._1, geometry._2, Municipality,
       5, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(60), "SURFACETYPE" -> BigInt(2)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val newRoadLink = RoadLink(linkIdVersion2, geometry._1, geometry._2, Municipality,
+      5, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(60), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     val change = changeReplaceNewVersion(linkIdVersion1, linkIdVersion2)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion1))).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion2))).thenReturn(Seq(newRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       service.persistUnknown(Seq(UnknownSpeedLimit(linkIdVersion1, 60, Municipality)))
       val unknownBefore = service.getUnknownByLinkIds(Set(linkIdVersion1))
@@ -242,7 +245,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId))).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"))).thenReturn(Seq(newLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, Seq(change))
