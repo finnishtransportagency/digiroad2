@@ -724,9 +724,7 @@ class AssetFiller {
       val (adjustedAssets, assetAdjustments) = operations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
         operation(roadLink, currentSegments, currentAdjustments)
       }
-      val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p =>
-        assetAdjustments.droppedAssetIds.contains(p.assetId) ||
-          assetAdjustments.expiredAssetIds.contains(p.assetId)))
+      val filterExpiredAway = assetAdjustments.copy(adjustedMValues = assetAdjustments.adjustedMValues.filterNot(p => assetAdjustments.expiredAssetIds.contains(p.assetId)))
 
       val noDuplicate = filterExpiredAway.copy(
         adjustedMValues = filterExpiredAway.adjustedMValues.distinct,
