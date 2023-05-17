@@ -317,15 +317,15 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     
     sortedHumanCreated(0).sideCode should be(SideCode.TowardsDigitizing)
     sortedHumanCreated(0).value should be(Some(SpeedLimitValue(41)))
-    sortedHumanCreated(0).modifiedBy should be(Some("earlier modifier")) // latest modification should show
+    sortedHumanCreated(0).modifiedBy should be(Some("earlier modifier"))
 
     sortedHumanCreated(1).sideCode should be(SideCode.AgainstDigitizing)
     sortedHumanCreated(1).value should be(Some(SpeedLimitValue(42)))
-    sortedHumanCreated(1).modifiedBy should be(Some("earlier modifier")) // latest modification should show
+    sortedHumanCreated(1).modifiedBy should be(Some("earlier modifier"))
 
     sortedHumanCreated(2).sideCode should be(SideCode.BothDirections)
     sortedHumanCreated(2).value should be(Some(SpeedLimitValue(43)))
-    sortedHumanCreated(2).modifiedBy should be(Some("latest modifier")) // latest modification should show
+    sortedHumanCreated(2).modifiedBy should be(Some("latest modifier"))
 
     changeSet.adjustedSideCodes.size should be (0)
     
