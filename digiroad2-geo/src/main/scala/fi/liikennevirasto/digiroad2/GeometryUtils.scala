@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import com.sun.org.slf4j.internal.LoggerFactory
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 
 
@@ -10,6 +11,8 @@ object GeometryUtils {
   final private val DefaultEpsilon = 0.01
   final private val adjustmentTolerance = 2.0
   final private val defaultDecimalPrecision = 3
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   def getDefaultEpsilon(): Double = {
     DefaultEpsilon
@@ -81,7 +84,7 @@ object GeometryUtils {
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     if (geometry.isEmpty) {
-      throw new Exception("Geometry is empty")
+      logger.warn("Geometry is empty")
     }
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last

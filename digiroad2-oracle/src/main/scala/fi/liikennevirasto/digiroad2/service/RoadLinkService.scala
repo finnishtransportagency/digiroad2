@@ -135,8 +135,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
 
   def getRoadLinkAndComplementaryByLinkId(linkId: String, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksAndComplementariesByLinkIds(Set(linkId), newTransaction: Boolean).headOption
 
-  def getRoadLinksAndComplementariesByLinkIds(linkIds: Set[String], newTransaction: Boolean = true,expiredAlso:Boolean = false): Seq[RoadLink] = {
-    val fetchedRoadLinks = fetchRoadlinksAndComplementaries(linkIds,expiredAlso)
+  def getRoadLinksAndComplementariesByLinkIds(linkIds: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val fetchedRoadLinks = fetchRoadlinksAndComplementaries(linkIds)
     if (newTransaction)
       withDynTransaction {
         enrichFetchedRoadLinks(fetchedRoadLinks)
@@ -362,8 +362,8 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       LinkAttributesDao.getValuesByRoadAssociationName(roadAssociationName, privateRoadAssociationPublicId)
   }
 
-  def fetchRoadlinksAndComplementaries(linkIds: Set[String],expiredAlso:Boolean = false): Seq[RoadLinkFetched] = {
-    if (linkIds.nonEmpty) withDbConnection {roadLinkDAO.fetchByLinkIds(linkIds,expiredAlso) ++ complementaryLinkDAO.fetchByLinkIds(linkIds)}
+  def fetchRoadlinksAndComplementaries(linkIds: Set[String]): Seq[RoadLinkFetched] = {
+    if (linkIds.nonEmpty) withDbConnection {roadLinkDAO.fetchByLinkIds(linkIds) ++ complementaryLinkDAO.fetchByLinkIds(linkIds)}
     else Seq.empty[RoadLinkFetched]
   }
 

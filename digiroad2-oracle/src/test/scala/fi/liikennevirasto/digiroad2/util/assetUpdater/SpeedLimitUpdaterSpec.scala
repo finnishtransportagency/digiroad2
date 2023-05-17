@@ -194,7 +194,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val change = changeRemove(linkId)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId), expiredAlso = true)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId))).thenReturn(Seq(oldRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       service.persistUnknown(Seq(UnknownSpeedLimit(linkId,60,Municipality)))
       val unknownBefore = service.getUnknownByLinkIds(Set(linkId))
@@ -216,7 +216,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val change = changeReplaceNewVersion(linkIdVersion1, linkIdVersion2)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion1), expiredAlso = true)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion1))).thenReturn(Seq(oldRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       service.persistUnknown(Seq(UnknownSpeedLimit(linkIdVersion1, 60, Municipality)))
       val unknownBefore = service.getUnknownByLinkIds(Set(linkIdVersion1))
@@ -242,7 +242,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
-      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId), expiredAlso = true)).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId))).thenReturn(Seq(oldRoadLink))
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
       TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, Seq(change))
