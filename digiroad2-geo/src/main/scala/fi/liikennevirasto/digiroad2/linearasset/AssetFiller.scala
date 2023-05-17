@@ -611,12 +611,6 @@ class AssetFiller {
     * @return List of asset and change set so that there are no small gaps between asset
     */
   def fillHoles(roadLink: RoadLinkForFillTopology, assets: Seq[PieceWiseLinearAsset], changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    def firstAndLastLimit(assets: Seq[PieceWiseLinearAsset], sideCode: SideCode) = {
-      val filtered = assets.filter(_.sideCode == sideCode)
-      (filtered.sortBy(_.startMeasure).headOption,
-        filtered.sortBy(0 - _.endMeasure).headOption)
-    }
-    
     def fillBySideCode(assets: Seq[PieceWiseLinearAsset], roadLink: RoadLinkForFillTopology, changeSet: ChangeSet): (Seq[PieceWiseLinearAsset], ChangeSet) = {
       if (assets.size > 1) {
         val left = assets.head
