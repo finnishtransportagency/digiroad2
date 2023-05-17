@@ -57,16 +57,12 @@ class SpeedLimitUpdater(service: SpeedLimitService) extends DynamicLinearAssetUp
   }
   
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
-    val linksOther = changes.filter(_.changeType != RoadLinkChangeType.Add).map(_.oldLink.get.linkId).toSet
-    val linksNew = changes.filter(_.changeType == RoadLinkChangeType.Add).map(_.newLinks.head.linkId).toSet
-    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksNew ++ linksOther, expiredAlso = true)
+    val (remove, other) = changes.partition(_.changeType == RoadLinkChangeType.Remove)
+    val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
+    val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksOther)
     val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
-    //val links =  FunctionalClassDao.getExistingValues((linksNew ++ linksOther).toSeq)
-    //val filteredLinks = links.filter(_.value.get > 4).map(_.linkId)
-    val (add, other) = changes.partition(_.changeType == RoadLinkChangeType.Add)
     val filterChanges = other.filter(p => filteredLinks.contains(p.oldLink.get.linkId))
-    val filterChangesNews = add.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
-    filterChanges ++ filterChangesNews
+    filterChanges ++ remove
   }
   
   override def adjustLinearAssetsOnChangesGeometry(roadLinks: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]],
