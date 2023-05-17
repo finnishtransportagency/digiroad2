@@ -240,17 +240,32 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing, SideCode.TowardsDigitizing))
   }
 
-  ignore("merge speed limits with same value on shared road link") { // this test is invalid, in this situation we should maintain all values
+  ignore("merge speed limits with same value on shared road link2") { // check janne are we going maintain this logic
     val topology = Seq(
-      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0))))
-    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
-      false, 0.0, 1.0, Set(Point(0.0, 0.0), Point(1.0, 0.0)), Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(9.0, 0.0))))
+    
+    
+    val point1 =  Set(Point(0.0, 0.0), Point(3.0, 0.0))
+    val point2 =  Set(Point(3.0, 0.0), Point(6.0, 0.0))
+    val point3 =  Set(Point(6.0, 0.0), Point(9.0, 0.0))
+    
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(40)), 
+      geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
+      false, 
+      startMeasure = 0.0,endMeasure =  3.0, endpoints = Set(Point(0.0, 0.0), Point(3.0, 0.0)), 
+      Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
-    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(40)), Seq(Point(1.0, 0.0), Point(2.0, 0.0)),
-      false, 1.0, 2.0, Set(Point(1.0, 0.0), Point(2.0, 0.0)), Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(40)),
+      geometry =  Seq(Point(3.0, 0.0), Point(6.0, 0.0)),
+      false,
+      startMeasure = 3.0,endMeasure =  6.0,endpoints =  Set(Point(3.0, 0.0), Point(6.0, 0.0)),
+      Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
-    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)), Seq(Point(2.0, 0.0), Point(3.0, 0.0)),
-      false, 2.0, 3.0, Set(Point(2.0, 0.0), Point(3.0, 0.0)), Some("latest modifier"), Some(DateTime.now().minus(100)), None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(40)),  
+      geometry = Seq(Point(6.0, 0.0), Point(9.0, 0.0)),
+      false,
+      startMeasure = 6.0,endMeasure =  9.0, endpoints =  Set(Point(6.0, 0.0), Point(9.0, 0.0)), 
+      Some("latest modifier"), Some(DateTime.now().minus(100)), None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
       0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
     val speedLimits = Map(
       linkId1 -> Seq(
@@ -265,6 +280,57 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     changeSet.expiredAssetIds should be(Set(1, 2))
   }
 
+  test("generate unknown and retain asset") { // this test is invalid, in this situation we should maintain all values
+    val topology = Seq(
+      roadLink(linkId1, Seq(Point(0.0, 0.0), Point(9.0, 0.0))))
+
+    val speedLimit1 = PieceWiseLinearAsset(1, linkId1, SideCode.TowardsDigitizing, Some(SpeedLimitValue(41)),
+      geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
+      false,
+      startMeasure = 0.0, endMeasure = 3.0, endpoints = Set(Point(0.0, 0.0), Point(3.0, 0.0)),
+      Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit2 = PieceWiseLinearAsset(2, linkId1, SideCode.AgainstDigitizing, Some(SpeedLimitValue(42)),
+      geometry = Seq(Point(3.0, 0.0), Point(6.0, 0.0)),
+      false,
+      startMeasure = 3.0, endMeasure = 6.0, endpoints = Set(Point(3.0, 0.0), Point(6.0, 0.0)),
+      Some("earlier modifier"), Some(DateTime.now().minus(1000)), None, None, SpeedLimitAsset.typeId, TrafficDirection.BothDirections,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimit3 = PieceWiseLinearAsset(3, linkId1, SideCode.BothDirections, Some(SpeedLimitValue(43)),
+      geometry = Seq(Point(6.0, 0.0), Point(9.0, 0.0)),
+      false,
+      startMeasure = 6.0, endMeasure = 9.0, endpoints = Set(Point(6.0, 0.0), Point(9.0, 0.0)),
+      Some("latest modifier"), Some(DateTime.now().minus(100)), None, None, SpeedLimitAsset.typeId, TrafficDirection.TowardsDigitizing,
+      0, None, NormalLinkInterface, Unknown, Map(), None, None, None)
+    val speedLimits = Map(
+      linkId1 -> Seq(
+        speedLimit1, speedLimit2, speedLimit3))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
+    filledTopology should have size 5
+    val (generated, humanCreated) =filledTopology.partition(_.id == 0)
+
+    val sortedGenerated = generated.sortBy(_.startMeasure)
+    sortedGenerated.size should be(2)
+    val sortedHumanCreated = humanCreated.sortBy(_.startMeasure)
+
+    sortedHumanCreated.size should be(3)
+    
+    sortedHumanCreated(0).sideCode should be(SideCode.TowardsDigitizing)
+    sortedHumanCreated(0).value should be(Some(SpeedLimitValue(41)))
+    sortedHumanCreated(0).modifiedBy should be(Some("earlier modifier")) // latest modification should show
+
+    sortedHumanCreated(1).sideCode should be(SideCode.AgainstDigitizing)
+    sortedHumanCreated(1).value should be(Some(SpeedLimitValue(42)))
+    sortedHumanCreated(1).modifiedBy should be(Some("earlier modifier")) // latest modification should show
+
+    sortedHumanCreated(2).sideCode should be(SideCode.BothDirections)
+    sortedHumanCreated(2).value should be(Some(SpeedLimitValue(43)))
+    sortedHumanCreated(2).modifiedBy should be(Some("latest modifier")) // latest modification should show
+
+    changeSet.adjustedSideCodes.size should be (0)
+    
+  }
+  
   test("merge speed limits with same value on shared road link, test only method") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(3.0, 0.0))))
