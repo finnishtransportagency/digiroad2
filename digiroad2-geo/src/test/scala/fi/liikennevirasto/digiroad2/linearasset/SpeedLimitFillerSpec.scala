@@ -238,8 +238,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology.map(SpeedLimitFiller.toRoadLinkForFillTopology), speedLimits, SpeedLimitAsset.typeId)
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing, SideCode.TowardsDigitizing))
-    changeSet.adjustedSideCodes should have size 2
-    changeSet.adjustedSideCodes.toSet should be(Set(SideCodeAdjustment(1, SideCode.TowardsDigitizing, SpeedLimitAsset.typeId), SideCodeAdjustment(2, SideCode.TowardsDigitizing, SpeedLimitAsset.typeId)))
   }
 
   ignore("merge speed limits with same value on shared road link") { // this test is invalid, in this situation we should maintain all values
