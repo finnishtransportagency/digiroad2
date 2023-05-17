@@ -107,7 +107,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       val existingLanes = LaneServiceWithDao.fetchExistingLanesByLinkIds(oldLinkIds)
       existingLanes.size should equal(4)
       val changeSet = LaneUpdater.handleChanges(relevantChanges)
-      LaneUpdater.updateChangeSet(changeSet)
+      LaneUpdater.updateSamuutusChangeSet(changeSet)
 
       val existingLanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(oldLinkIds)
       existingLanesAfterChanges.size should equal(0)
@@ -129,7 +129,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       existingLanesOnNewLinks.size should equal(0)
 
       val changeSet = LaneUpdater.handleChanges(relevantChanges)
-      LaneUpdater.updateChangeSet(changeSet)
+      LaneUpdater.updateSamuutusChangeSet(changeSet)
 
       val createdLanesOnNewLinks = LaneServiceWithDao.fetchExistingLanesByLinkIds(newLinkIds)
       createdLanesOnNewLinks.size should equal(4)
@@ -173,7 +173,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       // Apply Changes
       val changeSet = LaneUpdater.handleChanges(relevantChange)
-      LaneUpdater.updateChangeSet(changeSet)
+      LaneUpdater.updateSamuutusChangeSet(changeSet)
 
       // Same amount of lanes should persist
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId))
@@ -230,7 +230,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       // Apply Changes
       val changeSet = LaneUpdater.handleChanges(relevantChange)
-      LaneUpdater.updateChangeSet(changeSet)
+      LaneUpdater.updateSamuutusChangeSet(changeSet)
 
       // All 3 lanes should be split between two new links, main lane measures should equal new link length
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkID1, newLinkID2)).sortBy(lane => (lane.laneCode, lane.sideCode))
@@ -322,7 +322,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
 
       // Apply changes to lanes
       val changeSet = LaneUpdater.handleChanges(relevantChanges)
-      LaneUpdater.updateChangeSet(changeSet)
+      LaneUpdater.updateSamuutusChangeSet(changeSet)
 
       // Only 4 lanes should exist on new roadLink, Main lanes and connected additional lanes with the same attributes should combine
       val lanesAfterChanges = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(newLinkId)).sortBy(lane => (lane.laneCode, lane.sideCode))
@@ -390,7 +390,7 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       lanesOnOldLinkBefore.size should equal(2)
 
       val changeSet = LaneUpdater.handleChanges(Seq(), Seq(trafficDirectionChange))
-      LaneUpdater.updateChangeSet(changeSet)
+      LaneUpdater.updateSamuutusChangeSet(changeSet)
 
       val lanesOnOldLinkAfter = LaneServiceWithDao.fetchExistingLanesByLinkIds(Seq(oldLink.linkId))
       // Additional lane should stay on old link
