@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
+import com.sun.org.slf4j.internal.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
@@ -27,19 +28,21 @@ class AssetFiller {
   /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
      See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems */
   private val Epsilon = 1E-6
+
+  val logger = LoggerFactory.getLogger(getClass)
   
   def toRoadLinkForFillTopology(roadLink: RoadLink): RoadLinkForFillTopology = {
     RoadLinkForFillTopology(linkId = roadLink.linkId,length =  roadLink.length,trafficDirection = roadLink.trafficDirection,administrativeClass = roadLink.administrativeClass,
       linkSource = roadLink.linkSource,linkType = roadLink.linkType,constructionType = roadLink.constructionType, geometry = roadLink.geometry,Try(roadLink.municipalityCode).getOrElse(0) )
   }
  
-  def printlnOperation(operationName:String)(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
-    println(operationName)
-    println(s"side code adjuctment count: ${changeSet.adjustedSideCodes.size}") 
-    println(s"mvalue adjuctment count: ${changeSet.adjustedMValues.size}")
-    println(s"vvh change adjuctment count: ${changeSet.adjustedVVHChanges.size}")
-    println(s"expire adjuctment count: ${changeSet.expiredAssetIds.size}")
-    println(s"dropped adjuctment count: ${changeSet.droppedAssetIds.size}")
+  def debugLogging(operationName:String)(roadLink: RoadLinkForFillTopology, segments: Seq[PieceWiseLinearAsset], changeSet: ChangeSet) ={
+    logger.debug(operationName)
+    logger.debug(s"side code adjustment count: ${changeSet.adjustedSideCodes.size}")
+    logger.debug(s"mValue adjustment count: ${changeSet.adjustedMValues.size}")
+    logger.debug(s"vvh change adjustment count: ${changeSet.adjustedVVHChanges.size}")
+    logger.debug(s"expire adjustment count: ${changeSet.expiredAssetIds.size}")
+    logger.debug(s"dropped adjustment count: ${changeSet.droppedAssetIds.size}")
     (segments, changeSet)
   }
 
@@ -61,7 +64,7 @@ class AssetFiller {
   /**
     * Remove asset which is no longer in geometry
     *
-    * @param RoadLinkForFiltopology  which we are processing
+    * @param roadLink  which we are processing
     * @param assets    assets in link
     * @param changeSet record of changes for final saving stage
     * @return assets and changeSet
@@ -644,25 +647,25 @@ class AssetFiller {
     
     val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
       combine,
-      printlnOperation("combine"),
+      debugLogging("combine"),
       fuse,
-      printlnOperation("fuse"),
+      debugLogging("fuse"),
       dropShortSegments,
-      printlnOperation("dropShortSegments"),
+      debugLogging("dropShortSegments"),
       adjustAssets,
-      printlnOperation("adjustAssets"),
+      debugLogging("adjustAssets"),
       droppedSegmentWrongDirection,
-      printlnOperation("droppedSegmentWrongDirection"),
+      debugLogging("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
-      printlnOperation("adjustSegmentSideCodes"),
+      debugLogging("adjustSegmentSideCodes"),
       generateTwoSidedNonExistingLinearAssets(typeId),
-      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
+      debugLogging("generateTwoSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       updateValues,
-      printlnOperation("updateValues"),
+      debugLogging("updateValues"),
       clean
     )
     
@@ -689,21 +692,21 @@ class AssetFiller {
   def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                                   changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      printlnOperation("operation start"),
+      debugLogging("operation start"),
       fuse,
-      printlnOperation("fuse"),
+      debugLogging("fuse"),
       dropShortSegments,
-      printlnOperation("dropShortSegments"),
+      debugLogging("dropShortSegments"),
       adjustAssets,
-      printlnOperation("adjustAssets"),
+      debugLogging("adjustAssets"),
       expireOverlappingSegments,
-      printlnOperation("expireOverlappingSegments"),
+      debugLogging("expireOverlappingSegments"),
       droppedSegmentWrongDirection,
-      printlnOperation("droppedSegmentWrongDirection"),
+      debugLogging("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
-      printlnOperation("adjustSegmentSideCodes"),
+      debugLogging("adjustSegmentSideCodes"),
       fillHoles,
-      printlnOperation("fillHoles"),
+      debugLogging("fillHoles"),
       clean
     )
 

@@ -8,33 +8,33 @@ object SpeedLimitFiller extends AssetFiller {
   
   def getOperations(geometryChanged: Boolean): Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = {
     val fillOperations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      printlnOperation("start running fillTopology state now"),
+      debugLogging("start running fillTopology state now"),
       expireSegmentsOutsideGeometry,
-      printlnOperation("expireSegmentsOutsideGeometry"),
+      debugLogging("expireSegmentsOutsideGeometry"),
       combine,
-      printlnOperation("combine"),
+      debugLogging("combine"),
       fuse,
-      printlnOperation("fuse"),
+      debugLogging("fuse"),
       adjustAssets,
-      printlnOperation("adjustAssets"),
+      debugLogging("adjustAssets"),
       capToGeometry,
-      printlnOperation("capToGeometry"),
+      debugLogging("capToGeometry"),
       droppedSegmentWrongDirection,
-      printlnOperation("droppedSegmentWrongDirection"),
+      debugLogging("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
-      printlnOperation("adjustSegmentSideCodes"),
+      debugLogging("adjustSegmentSideCodes"),
       dropShortSegments,
-      printlnOperation("dropShortSegments"),
+      debugLogging("dropShortSegments"),
       fillHoles,
-      printlnOperation("fillHoles"),
+      debugLogging("fillHoles"),
       generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
-      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
+      debugLogging("generateTwoSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       clean,
-      printlnOperation("clean")
+      debugLogging("clean")
     )
 
     val adjustmentOperations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
@@ -46,11 +46,11 @@ object SpeedLimitFiller extends AssetFiller {
       dropShortSegments,
       fillHoles,
       generateTwoSidedNonExistingLinearAssets(SpeedLimitAsset.typeId),
-      printlnOperation("generateTwoSidedNonExistingLinearAssets"),
+      debugLogging("generateTwoSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, SpeedLimitAsset.typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, SpeedLimitAsset.typeId),
-      printlnOperation("generateOneSidedNonExistingLinearAssets"),
+      debugLogging("generateOneSidedNonExistingLinearAssets"),
       clean)
 
     if(geometryChanged) fillOperations
@@ -182,21 +182,21 @@ object SpeedLimitFiller extends AssetFiller {
   override def fillTopologyChangesGeometry(topology: Seq[RoadLinkForFillTopology], linearAssets: Map[String, Seq[PieceWiseLinearAsset]], typeId: Int,
                                            changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val operations: Seq[(RoadLinkForFillTopology, Seq[PieceWiseLinearAsset], ChangeSet) => (Seq[PieceWiseLinearAsset], ChangeSet)] = Seq(
-      printlnOperation("operation start"),
+      debugLogging("operation start"),
       fuse,
-      printlnOperation("fuse"),
+      debugLogging("fuse"),
       dropShortSegments,
-      printlnOperation("dropShortSegments"),
+      debugLogging("dropShortSegments"),
       adjustAssets,
-      printlnOperation("adjustAssets"),
+      debugLogging("adjustAssets"),
       expireOverlappingSegments,
-      printlnOperation("expireOverlappingSegments"),
+      debugLogging("expireOverlappingSegments"),
       droppedSegmentWrongDirection,
-      printlnOperation("droppedSegmentWrongDirection"),
+      debugLogging("droppedSegmentWrongDirection"),
       adjustSegmentSideCodes,
-      printlnOperation("adjustSegmentSideCodes"),
+      debugLogging("adjustSegmentSideCodes"),
       fillHoles,
-      printlnOperation("fillHoles"),
+      debugLogging("fillHoles"),
       clean
     )
     val changeSet = changedSet match {
