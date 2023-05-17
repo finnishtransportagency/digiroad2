@@ -235,8 +235,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
         Option(newPart)
       } else None
 
-      logger.debug(s"asset old start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
-      logger.debug(s"asset new start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
+      logger.debug(s"asset old part start ${shorted.startMeasure}, asset end ${shorted.endMeasure}")
+      logger.debug(s"asset new part start ${newPart.startMeasure} asset end ${newPart.endMeasure}")
 
       (shortedFilter, newPartFilter) match {
         case (None, None) => Seq()
