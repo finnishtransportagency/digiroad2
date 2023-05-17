@@ -1372,17 +1372,15 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
   }
   
   test("case 11 Roads digitization direction changes, case 3b") {
-    val linkId = "291f7e18-a48a-4afc-a84b-8485164288b2:1"
-    val linkIdNew = "eca24369-a77b-4e6f-875e-57dc85176003:1"
+    val linkId = "6d283aeb-a0f5-4606-8154-c6702bd69f2e:1"
+    val linkIdNew = "769e6848-e77b-44d3-9d38-e63cdc7b1677:1"
 
     val change = roadLinkChangeClient.convertToRoadLinkChange(source)
 
     runWithRollback {
-      fail("Need to be implemented")
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(4), SideCode.BothDirections.value, Measures(2, 4), "testuser", 0L, Some(oldRoadLink), false, None, None)
-
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.BothDirections.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
+ 
       val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
       assetsBefore.size should be(1)
       assetsBefore.head.expired should be(false)
@@ -1392,39 +1390,45 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
 
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
-      sorted.head.startMeasure should be(0)
-      sorted.head.endMeasure should be(18.082)
+      sorted.head.startMeasure should be(55.502)
+      sorted.head.endMeasure should be(71.924)
       sorted.head.value.isEmpty should be(false)
       sorted.head.value.get should be(NumericValue(3))
-      SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
+      SideCode.apply(sorted.head.sideCode) should be(SideCode.BothDirections)
     }
   }
 
-  test("case 11 Roads digitization direction changes, case 3c") {
-    val linkId = "291f7e18-a48a-4afc-a84b-8485164288b2:1"
-    val linkIdNew = "eca24369-a77b-4e6f-875e-57dc85176003:1"
+  test("case 11 Roads digitization direction changes, case 3b2") {
+    val linkId = "6d283aeb-a0f5-4606-8154-c6702bd69f2e:1"
+    val linkIdNew = "769e6848-e77b-44d3-9d38-e63cdc7b1677:1"
 
     val change = roadLinkChangeClient.convertToRoadLinkChange(source)
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value,Measures(0, 10.081) , "testuser", 0L, Some(oldRoadLink), false, None, None)
-      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(4), SideCode.AgainstDigitizing.value,Measures(10.081, 18.081), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id1 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(3), SideCode.TowardsDigitizing.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val id2 = service.createWithoutTransaction(TrafficVolume.typeId, linkId, NumericValue(4), SideCode.AgainstDigitizing.value, Measures(0, 221.892), "testuser", 0L, Some(oldRoadLink), false, None, None)
 
-      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1), false)
-      assetsBefore.size should be(1)
+      val assetsBefore = service.getPersistedAssetsByIds(TrafficVolume.typeId, Set(id1, id2), false)
+      assetsBefore.size should be(2)
       assetsBefore.head.expired should be(false)
 
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq(linkIdNew), false)
 
-      val sorted = assetsAfter.sortBy(_.endMeasure)
+      val sorted = assetsAfter.sortBy(_.sideCode)
 
-      sorted.head.startMeasure should be(0)
-      sorted.head.endMeasure should be(18.082)
-      sorted.head.value.isEmpty should be(false)
-      sorted.head.value.get should be(NumericValue(3))
-      SideCode.apply(sorted.head.sideCode) should be(SideCode.AgainstDigitizing)
+      sorted(0).startMeasure should be(55.502)
+      sorted(0).endMeasure should be(71.924)
+      sorted(0).value.isEmpty should be(false)
+      sorted(0).value.get should be(NumericValue(4))
+      SideCode.apply(sorted(0).sideCode) should be(SideCode.TowardsDigitizing)
+
+      sorted(1).startMeasure should be(55.502)
+      sorted(1).endMeasure should be(71.924)
+      sorted(1).value.isEmpty should be(false)
+      sorted(1).value.get should be(NumericValue(3))
+      SideCode.apply(sorted(1).sideCode) should be(SideCode.AgainstDigitizing)
     }
   }
   
