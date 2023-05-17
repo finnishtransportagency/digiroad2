@@ -48,7 +48,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
      //remove pavement
       case RoadLinkChangeType.Replace | RoadLinkChangeType.Split =>
         val newLinksMapped = change.newLinks.map(_.linkId)
-        val systemEditedUpdated = assetsAll.filter(a => newLinksMapped.contains(a.linkId)).map(asset => {
+        val expiredPavement = assetsAll.filter(a => newLinksMapped.contains(a.linkId)).map(asset => {
           val replace = newLinksMapped.find(_ == asset.linkId).get
           val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(replace), newTransaction = false).head
           if (asset.id != 0 && roadLink.isNotPaved) {
@@ -58,7 +58,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
             (asset, changeSets)
           }
         })
-        systemEditedUpdated
+        expiredPavement
       case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
     }
   }
