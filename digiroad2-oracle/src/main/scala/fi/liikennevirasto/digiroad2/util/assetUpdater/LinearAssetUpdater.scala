@@ -19,21 +19,6 @@ import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 
-/*val tableNames = Seq (
-"lane_history_position", 
-"lane_position",
-"lane_work_list",
-
-"lrm_position",
-"lrm_position_history", 
-
-"inaccurate_asset", ??
-
-"unknown_speed_limit",
-InaccurateAssetDAO, this table is created every time again each day so need to adjust
-
-
-)*/
 case class ReplaceInfoForAsset(assetId: Long, 
                                oldId: Option[String], newId: Option[String],
                                oldLinksLength: Option[Double],
