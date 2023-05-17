@@ -42,6 +42,27 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
     
   }
 
+
+  override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+    change.changeType match {
+     //remove pavement
+      case RoadLinkChangeType.Replace | RoadLinkChangeType.Split =>
+        val newLinksMapped = change.newLinks.map(_.linkId)
+        val systemEditedUpdated = assetsAll.filter(a => newLinksMapped.contains(a.linkId)).map(asset => {
+          val replace = newLinksMapped.find(_ == asset.linkId).get
+          val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(replace), newTransaction = false).head
+          if (asset.id != 0 && roadLink.isNotPaved) {
+            (asset.copy(id = -1),
+              changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)))
+          } else {
+            (asset, changeSets)
+          }
+        })
+        systemEditedUpdated
+      case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
+    }
+  }
+
   override def filterChanges(changes: Seq[RoadLinkChange]): Seq[RoadLinkChange] = {
     val (remove, other) = changes.partition(_.changeType == RoadLinkChangeType.Remove)
     val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
