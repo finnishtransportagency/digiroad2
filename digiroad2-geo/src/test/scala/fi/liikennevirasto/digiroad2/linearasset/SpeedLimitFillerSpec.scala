@@ -280,7 +280,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     changeSet.expiredAssetIds should be(Set(1, 2))
   }
 
-  test("generate unknown and retain asset") { // this test is invalid, in this situation we should maintain all values
+  test("generate unknown and retain asset") {
     val topology = Seq(
       roadLink(linkId1, Seq(Point(0.0, 0.0), Point(9.0, 0.0))))
 
