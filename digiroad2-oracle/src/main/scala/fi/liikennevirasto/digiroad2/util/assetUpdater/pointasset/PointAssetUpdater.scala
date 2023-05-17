@@ -68,7 +68,7 @@ class PointAssetUpdater(service: PointAssetOperations) {
         Asset(newPersistedAsset.id, newValues, Some(newPersistedAsset.municipalityCode),
           Some(Seq(Point(newPersistedAsset.lon, newPersistedAsset.lat))), Some(newLinearReference), true, None)
     }
-    ChangedAsset(oldPersistedAsset.linkId, oldPersistedAsset.id, changeType, roadLinkChange.changeType, oldAsset, Seq(newAsset))
+    ChangedAsset(oldPersistedAsset.linkId, oldPersistedAsset.id, changeType, roadLinkChange.changeType, Some(oldAsset), Seq(newAsset))
   }
 
   def correctPersistedAsset(asset: PersistedPointAsset, roadLinkChange: RoadLinkChange): AssetUpdate = {

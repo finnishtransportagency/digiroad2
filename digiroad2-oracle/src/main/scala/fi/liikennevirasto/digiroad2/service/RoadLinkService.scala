@@ -867,7 +867,7 @@ class RoadLinkService(val roadLinkClient: RoadLinkClient, val eventbus: Digiroad
       if (roadLinks.isEmpty) Seq.empty[RoadLink]
       else  enrichFetchedRoadLinks(roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0))
 
-    if (forCarTraffic) closestRoadLinks.filter(_.linkType != CycleOrPedestrianPath )
+    if (forCarTraffic) closestRoadLinks.filter(roadLink => roadLink.linkType != CycleOrPedestrianPath && roadLink.linkType != PedestrianZone)
     else closestRoadLinks
   }
 

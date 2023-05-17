@@ -11,7 +11,8 @@ import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats}
 import org.slf4j.LoggerFactory
 
-import java.io.StringWriter
+import java.io.{PrintWriter, StringWriter}
+import java.nio.file.{Files, Paths}
 
 /**
   *  For point like asset mark [[endMValue]] None
@@ -129,7 +130,7 @@ case class LinkTypeChange(linkId: String, changeType: ChangeType, oldValue: Opti
   * @param before     situation before samuutus
   * @param after      after samuutus
   * */
-case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Asset, after: Seq[Asset]) extends ReportedChange
+case class ChangedAsset(linkId: String, assetId: Long, changeType: ChangeType, roadLinkChangeType: RoadLinkChangeType, before: Option[Asset], after: Seq[Asset]) extends ReportedChange
 
 /**
   *
@@ -146,6 +147,7 @@ object ChangeReporter {
   val logger = LoggerFactory.getLogger(getClass)
   implicit lazy val serializationFormats: Formats = DefaultFormats
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
+  val localReportDirectoryName = "samuutus-reports-local-test"
 
 
 
@@ -221,7 +223,7 @@ object ChangeReporter {
   private def getCSVRowForPointAssetChanges(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false) = {
     try {
       val changedAsset = change.asInstanceOf[ChangedAsset]
-      val assetBefore = changedAsset.before
+      val assetBefore = changedAsset.before.get
       val (beforeLinkId, beforeStartMValue, beforeEndMValue, beforeValidityDirection, beforeLength) = assetBefore.linearReference match {
         case Some(linearReference: LinearReference) =>
           val linRefEndMValue = linearReference.endMValue match {
@@ -269,6 +271,43 @@ object ChangeReporter {
     }
   }
 
+  private def getCSVRowsForLinearAssetChange(change: ReportedChange, assetTypeId: Int, withGeometry: Boolean = false) = {
+    try {
+      val changedAsset = change.asInstanceOf[ChangedAsset]
+      val assetBefore = changedAsset.before
+      val metaFields = Seq(assetTypeId, changedAsset.changeType.value, changedAsset.roadLinkChangeType.value)
+      val beforeFields = assetBefore match {
+        case Some(before) =>
+          val linearReference = before.linearReference.get
+          Seq(before.assetId, before.geometryToString, before.values, before.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
+            linearReference.startMValue, linearReference.endMValue.get, linearReference.length, before.getUrl)
+        case None => Seq(null, null, null, null, null, null, null, null, null)
+      }
+      val beforeFieldsWithoutGeometry = beforeFields.patch(1, Nil, 1)
+      if (changedAsset.after.isEmpty) {
+        val emptyAfterFields = Seq(null, null, null, null, null, null, null, null, null)
+        if(withGeometry) Seq(metaFields ++ beforeFields ++ emptyAfterFields)
+        else Seq(metaFields ++ beforeFieldsWithoutGeometry ++ emptyAfterFields)
+      } else {
+        changedAsset.after.map { after =>
+          val linearReference = after.linearReference.get
+          val afterFields = Seq(after.assetId, after.geometryToString, after.values, after.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
+            linearReference.startMValue, linearReference.endMValue.get, linearReference.length, after.getUrl)
+          val afterFieldsWithoutGeometry = afterFields.patch(1, Nil, 1)
+          if (withGeometry) {
+            metaFields ++ beforeFields ++ afterFields
+          } else {
+            metaFields ++ beforeFieldsWithoutGeometry ++ afterFieldsWithoutGeometry
+          }
+        }
+      }
+    } catch {
+      case e =>
+        logger.error(s"csv conversion failed due to ${e.getMessage}")
+        Seq(Seq())
+    }
+  }
+
   def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false) = {
     val stringWriter = new StringWriter()
     val csvWriter = new CSVWriter(stringWriter)
@@ -276,7 +315,7 @@ object ChangeReporter {
 
     val (assetTypeId, changes) = (changeReport.assetType, changeReport.changes)
     val linkIds = changes.map(_.linkId).toSet
-    AssetTypeInfo(assetTypeId) match {
+    val contentRows = AssetTypeInfo(assetTypeId) match {
       case UnknownAssetTypeId => throw new IllegalArgumentException("Can not generate report for unknown asset type")
       case RoadLinkProperties =>
         val labels = Seq("linkId", "url", "changeType", "oldTrafficDirection", "newTrafficDirection", "oldAdminClass", "newAdminClass", "oldFunctionalClass",
@@ -292,23 +331,41 @@ object ChangeReporter {
             case _ => //do nothing
           }
         }
-      case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point"  =>
+        linkIds.size
+      case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "point" =>
         val labels = Seq("asset_type_id", "change_type", "floating_reason", "roadlink_change", "before_asset_id",
           "before_geometry", "before_value", "before_municipality_code", "before_validity_direction", "before_link_id",
-          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url","after_asset_id",
-          "after_geometry",  "after_value",  "after_municipality_code", "after_validity_direction",  "after_link_id",
-          "after_start_m_value", "after_end_m_value",  "after_length",  "after_roadlink_url")
-        val labelsWithoutGeometry = labels.slice(0,5) ++ labels.slice(6, 15) ++ labels.slice(16, labels.size)
+          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "after_asset_id",
+          "after_geometry", "after_value", "after_municipality_code", "after_validity_direction", "after_link_id",
+          "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url")
+        val labelsWithoutGeometry = labels.slice(0, 5) ++ labels.slice(6, 15) ++ labels.slice(16, labels.size)
         if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
-        changes.foreach { change =>
+        val contentRowCount = changes.map { change =>
           val csvRows = getCSVRowForPointAssetChanges(change, assetTypeId, withGeometry)
           csvRows.foreach { csvRow =>
             csvWriter.writeRow(csvRow)
           }
-        }
-      case assetTypeInfo: AssetTypeInfo => //to be implemented
+          csvRows.size
+        }.sum
+        contentRowCount
+      case assetTypeInfo: AssetTypeInfo if assetTypeInfo.geometryType == "linear" =>
+        val labels = Seq("asset_type_id", "change_type", "roadlink_change", "before_asset_id",
+          "before_geometry", "before_value", "before_municipality_code", "before_side_code", "before_link_id",
+          "before_start_m_value", "before_end_m_value", "before_length", "before_roadlink_url", "after_asset_id",
+          "after_geometry", "after_value", "after_municipality_code", "after_side_code", "after_link_id",
+          "after_start_m_value", "after_end_m_value", "after_length", "after_roadlink_url")
+        val labelsWithoutGeometry = labels.filterNot(_.contains("geometry"))
+        if (withGeometry) csvWriter.writeRow(labels) else csvWriter.writeRow(labelsWithoutGeometry)
+        val contentRowCount = changes.map { change =>
+          val csvRows = getCSVRowsForLinearAssetChange(change, assetTypeId, withGeometry)
+          csvRows.foreach { csvRow =>
+            csvWriter.writeRow(csvRow)
+          }
+          csvRows.size
+        }.sum
+        contentRowCount
     }
-    (stringWriter.toString, linkIds.size)
+    (stringWriter.toString, contentRows)
   }
 
   def saveReportToS3(assetName: String, body: String, contentRowCount: Int, hasGeometry: Boolean = false) = {
@@ -316,5 +373,18 @@ object ChangeReporter {
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     val path = s"${date}/${assetName}_${date}_${contentRowCount}content_rows${withGeometry}.csv"
     s3Service.saveFileToS3(s3Bucket, path, body, "csv")
+  }
+
+  // Used for testing CSV report. Saves file locally to directory 'samuutus-reports-local-test' created in project root directory
+  def saveReportToLocalFile(assetName: String, body: String, contentRowCount: Int, hasGeometry: Boolean = false): Unit = {
+    val date = DateTime.now().toString("YYYY-MM-dd")
+    val withGeometry = if (hasGeometry) "_withGeometry" else ""
+    Files.createDirectories(Paths.get(localReportDirectoryName))
+    val path = s"$localReportDirectoryName/${assetName}_${date}_${contentRowCount}content_rows${withGeometry}.csv"
+
+    new PrintWriter(path) {
+      write(body)
+      close()
+    }
   }
 }

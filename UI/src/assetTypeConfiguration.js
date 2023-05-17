@@ -1383,7 +1383,7 @@
         allowComplementaryLinks: true,
         newAsset: { validityDirection: 2, propertyData: [
           {'name': 'Liikenteenvastainen', 'propertyType': 'single_choice', 'publicId': "opposite_side_sign", values: [] },
-          {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 36} ] },
+          {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [] },
           {'name': 'Päämerkin teksti', 'propertyType': 'text', 'publicId': 'main_sign_text', values: []},
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
@@ -1431,9 +1431,9 @@
             /* sppedLimits */
             { types: [1, 2, 3, 4, 170, 237, 238], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
             /* number (int) */
-            { types: [8, 30, 31, 32, 33, 34, 35, 174, 175, 176, 177, 290, 291, 292, 400], validate: function (someValue) { return /^\d*$/.test(someValue) ; }},
+            { types: [8, 30, 31, 32, 33, 34, 35, 174, 175, 176, 177, 223, 290, 291, 292, 400], validate: function (someValue) { return /^-?\d+$/.test(someValue) ; }},
             /* decimal number */
-            { types: [45, 46, 138, 139, 148, 149, 308, 347, 348, 376], validate: function (someValue) { return /^\d*(,\d+)?$/.test(someValue) ; }},
+            { types: [45, 46, 138, 139, 148, 149, 308, 347, 348, 376], validate: function (someValue) { return /^\d+(,\d+)?$/.test(someValue) ; }},
             /* Number and special marks */
             { types: [49, 50, 145], validate: dateRestrictionValidator, regexToUse: /^([(]?)([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])([)]?)$/},
             /* Number and special marks extended */

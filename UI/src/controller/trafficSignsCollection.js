@@ -49,10 +49,12 @@
       return _.includes(trafficSignsTypeLinearGenerators, parseInt(getValue(current)));
     };
 
-    var signTypesAllowedInPedestrianCyclingLinks= ['70','71','72', '235', '236'];
+    this.signTypesAllowedInPedestrianCyclingLinks = ['70', '71', '72', '235', '236', '85', '89', '9', '98', '99', '14', '30',
+      '31', '32', '111', '112', '163', '164', '280', '281', '282', '283', '284', '285', '398', '118', '119', '187', '298',
+      '188', '299', '300', '301', '189', '302', '190', '303', '362', '61'];
 
     this.isAllowedSignInPedestrianCyclingLinks = function (signType) {
-      return _.includes(signTypesAllowedInPedestrianCyclingLinks, signType);
+      return _.includes(this.signTypesAllowedInPedestrianCyclingLinks, signType);
     };
 
     var getValue = function(current) {

@@ -4,6 +4,9 @@
     var me = this;
     var defaultAdditionalPanelValue = null;
     var additionalPanelWithTextCode = '61';
+    var additionalPanelTwoWayBikePath2 = '362';
+
+    var additionalPanelsAllowedOnPedestrianCycling = [additionalPanelWithTextCode, additionalPanelTwoWayBikePath2];
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -287,35 +290,34 @@
     }
 
     var singleChoiceTrafficSignTypeHandler = function (property, collection) {
+      if((_.isUndefined(property) || property.values.length === 0) ){
+        property.values = (isPedestrianOrCyclingRoadLink() ? [ {propertyValue: "85"} ] : [ {propertyValue: "36"} ]);
+      }
+
       var propertyValue = me.extractPropertyValue(property);
       var signTypes = getValuesFromEnumeratedProperty(property.publicId);
       var auxProperty = property;
       var groups =  collection.getGroup(signTypes);
       var groupKeys = Object.keys(groups);
-      var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
+      var mainTypeDefaultValueIndex = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
 
       if (isPedestrianOrCyclingRoadLink()) {
         var mandatorySignsDefaultValue = "70";
+        var allAllowedSigns = collection.signTypesAllowedInPedestrianCyclingLinks;
         /* get the correct index for group to be used in subSingleChoice */
-        mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == mandatorySignsDefaultValue;});}), true);
+        mainTypeDefaultValueIndex = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
 
         /* Only after get the correct index of the group (mainTypeDefaultValue) I can reset the values for the */
         /* correct one to be used in the 'main singleChoice field' */
-        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(val) {return val.propertyValue == mandatorySignsDefaultValue;});  });
+        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(val) {return _.includes(allAllowedSigns, val.propertyValue);});  });
         groups =  collection.getGroup(signTypes);
         groupKeys = _.keys(groups);
-
-        /* Case asset is new...we will ignore the property value from parameter to load the subSingleChoice */
-        if (me.selectedAsset.getId() === 0) {
-          me.selectedAsset.setPropertyByPublicId("trafficSigns_type", mandatorySignsDefaultValue);
-          auxProperty  = undefined;
-        }
       }
 
       var counter = 0;
       var mainTypesTrafficSigns = _.map(groupKeys, function (label) {
         return $('<option>',
-          { selected: counter === mainTypeDefaultValue,
+          { selected: counter === mainTypeDefaultValueIndex,
             value: counter++,
             text: label}
         )[0].outerHTML; }).join('');
@@ -323,12 +325,12 @@
       return '' +
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
-        '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
+        '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValueIndex] || '-') + '</p>' +
         '      <select class="form-control" id=main-' + property.publicId +'>' +
         mainTypesTrafficSigns +
         '      </select>' +
         '    </div>' +
-        singleChoiceSubType( collection, mainTypeDefaultValue, auxProperty );
+        singleChoiceSubType( collection, mainTypeDefaultValueIndex, auxProperty );
     };
 
     var sortPanelKeys = function(properties) {
@@ -404,7 +406,7 @@
       var propertyDisplayValue;
 
       if (isPedestrianOrCyclingRoadLink()) {
-        panels = _.filter(panels, function(p) { if (p.propertyValue == additionalPanelWithTextCode ) return p;} );
+        panels = _.filter(panels, function(p) { if (additionalPanelsAllowedOnPedestrianCycling.includes(p.propertyValue)) return p;} );
         propertyDisplayValue = _.isUndefined(panels) || _.isEmpty(panels.length) ? "" : panels[0].propertyDisplayValue;
       }
       else {
