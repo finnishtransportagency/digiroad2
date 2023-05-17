@@ -2,19 +2,22 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.{RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient, RoadLinkFetched}
+import fi.liikennevirasto.digiroad2.client.{ReplaceInfo, RoadLinkChange, RoadLinkChangeClient, RoadLinkChangeType, RoadLinkClient, RoadLinkFetched, RoadLinkInfo}
 import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, PostGISAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, MTKClassWidth, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+
+import java.util.UUID
+import scala.collection.mutable.ListBuffer
 
 class PavedRoadUpdaterSpec extends FunSuite with Matchers{
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -43,12 +46,55 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
     override def withDynTransaction[T](f: => T): T = f
     override def dao: PostGISLinearAssetDao = linearAssetDao
   }
+
+  object TestPavedRoadUpdaterMock extends PavedRoadUpdater(Service) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def dao: PostGISLinearAssetDao = linearAssetDao
+    
+    override def roadLinkService = mockRoadLinkService
+  }
   
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(roadLinkClient, mockEventBus, new DummySerializer)
   }
   
   val roadLinkChangeClient = new RoadLinkChangeClient
+
+
+  def changeReplaceNewVersion(oldRoadLinkId: String, newRoadLikId: String): RoadLinkChange = {
+    val (oldLinkGeometry, oldId) = (generateGeometry(0, 9), oldRoadLinkId)
+    val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 9), newRoadLikId)
+
+    RoadLinkChange(
+      changeType = RoadLinkChangeType.Replace,
+      oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
+        geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_IIb.value,
+        adminClass = Municipality,
+        municipality = 0,
+        trafficDirection = TrafficDirection.BothDirections)),
+      newLinks = Seq(
+        RoadLinkInfo(
+          linkId = newLinkId1,
+          linkLength = newLinkGeometry1._2,
+          geometry = newLinkGeometry1._1,
+          roadClass = MTKClassWidth.CarRoad_IIb.value,
+          adminClass = Municipality,
+          municipality = 0,
+          trafficDirection = TrafficDirection.BothDirections
+        )),
+      replaceInfo =
+        List(
+          ReplaceInfo(oldId, newLinkId1,
+            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+    )
+  }
+  def generateGeometry(startPoint: Double, numberPoint: Long): (List[Point], Double) = {
+    val points = new ListBuffer[Point]
+    for (i <- 1 to numberPoint.toInt) {
+      points.append(Point(i + startPoint, 0))
+    }
+    (points.toList, GeometryUtils.geometryLength(points))
+  }
   
   lazy val source = scala.io.Source.fromFile("digiroad2-oracle/src/test/resources/smallChangeSet.json").mkString
   val assetValues = DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka","single_choice",false,List(DynamicPropertyValue(99)))
@@ -71,6 +117,35 @@ class PavedRoadUpdaterSpec extends FunSuite with Matchers{
       val properties = assetsAfter.head.value.get.asInstanceOf[DynamicValue].value.properties
       properties.head.values.head.value should be("99")
       
+    }
+  }
+  private def generateRandomKmtkId(): String = s"${UUID.randomUUID()}"
+  test("case 6 links version and no pavement, expire") {
+    val linkId = generateRandomKmtkId()
+    val linkIdVersion1 = s"$linkId:1"
+    val linkIdVersion2 = s"$linkId:2"
+    val geometry = generateGeometry(0, 9)
+    val oldRoadLink = RoadLink(linkIdVersion1, geometry._1, geometry._2, Municipality,
+      60, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val newRoadLink = RoadLink(linkIdVersion2, geometry._1, geometry._2, Municipality,
+      60, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(1)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceNewVersion(linkIdVersion1, linkIdVersion2)
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkIdVersion1, false)).thenReturn(Some(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion2), false)).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion2), false)).thenReturn(Seq(newRoadLink))
+      val id1 = service.createWithoutTransaction(PavedRoad.typeId, linkIdVersion1, assetValues, SideCode.BothDirections.value, Measures(0, geometry._2), AutoGeneratedUsername.mtkClassDefault, 0L, Some(oldRoadLink), false, None, None)
+
+      val assetsBefore = service.getPersistedAssetsByIds(PavedRoad.typeId, Set(id1), false)
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
+
+      TestPavedRoadUpdaterMock.updateByRoadLinks(PavedRoad.typeId, Seq(change))
+      val assetsAfter = service.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(linkIdVersion2), false)
+      assetsAfter.size should be(0)
     }
   }
 

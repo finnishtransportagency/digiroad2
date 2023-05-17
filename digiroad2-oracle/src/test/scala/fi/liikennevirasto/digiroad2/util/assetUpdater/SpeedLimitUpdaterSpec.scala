@@ -144,10 +144,9 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
 
     runWithRollback {
       val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
-      val oldRoadLinkRaw = roadLinkService. getExpiredRoadLinkByLinkIdNonEncrished(linkId)
+      val oldRoadLinkRaw = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(linkId)
       when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(oldRoadLinkRaw)
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
-      //when(mockFunctionalClassDao.getExistingValues(any[Seq[String]])).thenReturn(Seq.empty[RoadLinkValue])
       val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, linkId,
         SpeedLimitValue(30), SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
       val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
@@ -180,7 +179,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
       val newLink = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
       when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
       TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
-    val unknown =  service.getUnknownByLinkIds(Set(newLink),newTransaction = false)
+      val unknown =  service.getUnknownByLinkIds(Set(newLink),newTransaction = false)
       unknown.size should be(1)
     }
   }
@@ -210,9 +209,6 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val linkIdVersion1 = s"$linkId:1"
     val linkIdVersion2 = s"$linkId:2"
     val geometry = generateGeometry(0, 9)
-    val oldRoadLink = RoadLink(linkIdVersion1, geometry._1, geometry._2, Municipality,
-      5, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(60), "SURFACETYPE" -> BigInt(2)),
-      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
     val newRoadLink = RoadLink(linkIdVersion2, geometry._1, geometry._2, Municipality,
       5, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(60), "SURFACETYPE" -> BigInt(2)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)

@@ -15,7 +15,7 @@ class MaintenanceRoadUpdater(service: MaintenanceService) extends DynamicLinearA
     val (remove, other) = changes.partition(_.changeType == RoadLinkChangeType.Remove)
     val linksOther = other.flatMap(_.newLinks.map(_.linkId)).toSet
     val filterChanges = if (linksOther.nonEmpty) {
-      val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksOther)
+      val links = roadLinkService.getRoadLinksAndComplementariesByLinkIds(linksOther,false)
       val filteredLinks = links.filter(_.functionalClass > 4).map(_.linkId)
       other.filter(p => filteredLinks.contains(p.newLinks.head.linkId))
     } else Seq()
