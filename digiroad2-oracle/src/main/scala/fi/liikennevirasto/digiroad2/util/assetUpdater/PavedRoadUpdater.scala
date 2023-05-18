@@ -31,7 +31,6 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         modifiedBy = None, modifiedDateTime = None, expired = false, 
         typeId = LinearAssetTypes.PavedRoadAssetTypeId,
         timeStamp = LinearAssetUtils.createTimeStamp(), geomModifiedDate = Some(DateTime.now())
-        /** validate this* */
         , linkSource = LinkGeomSource.NormalLinkInterface, 
         verifiedBy =None, verifiedDate = None,
         informationSource = Some(MmlNls))
@@ -51,9 +50,13 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         val expiredPavement = assetsAll.filter(a => newLinksMapped.contains(a.linkId)).map(asset => {
           val replace = newLinksMapped.find(_ == asset.linkId).get
           val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(replace), newTransaction = false).head
-          if (asset.id != 0 && roadLink.isNotPaved) {
-            (asset,
-              changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)))
+          if (roadLink.isNotPaved) {
+            if (asset.id !=0){
+              (asset,
+                changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)))
+            } else {
+              (asset.copy(id = removePart), changeSets)
+            }
           } else {
             (asset, changeSets)
           }

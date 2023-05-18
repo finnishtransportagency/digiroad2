@@ -43,6 +43,8 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
   val logger = LoggerFactory.getLogger(getClass)
   val roadLinkChangeClient = new RoadLinkChangeClient
+  
+  protected val removePart: Int = -1 
 
   def updateLinearAssets(typeId: Int): Unit = {
     withDynTransaction {
@@ -195,7 +197,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       
     })
 
-    (finalResult.map(_._1), foldChangeSet(finalResult.map(_._2), changeSets))
+    (finalResult.map(_._1).filterNot(_.id == removePart), foldChangeSet(finalResult.map(_._2), changeSets))
   }
 
   private def operationForSplit(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
