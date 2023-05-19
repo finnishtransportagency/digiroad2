@@ -16,7 +16,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
   val changes = roadLinkChangeClient.convertToRoadLinkChange(jsonFile)
 
   test("test json convert with whole set") {
-    changes.size should be(31)
+    changes.size should be(35)
   }
 
   test("RoadLinkChange for 'add' contains correct info") {

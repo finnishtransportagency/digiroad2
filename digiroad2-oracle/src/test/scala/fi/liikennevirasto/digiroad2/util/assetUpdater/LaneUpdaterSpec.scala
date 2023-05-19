@@ -118,8 +118,8 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
     }
   }
 
-  test ("Add. 2 Road Link added, generate correct main lanes") {
-    // 2 road links Added
+  test ("Add. 4 Road Link added, generate correct main lanes") {
+    // 4 road links Added
     val relevantChanges = testChanges.filter(_.changeType == RoadLinkChangeType.Add)
     val newLinkIds = relevantChanges.flatMap(_.newLinks.map(_.linkId))
 
@@ -132,9 +132,16 @@ class LaneUpdaterSpec extends FunSuite with Matchers {
       LaneUpdater.updateSamuutusChangeSet(changeSet, relevantChanges)
 
       val createdLanesOnNewLinks = LaneServiceWithDao.fetchExistingLanesByLinkIds(newLinkIds)
-      createdLanesOnNewLinks.size should equal(4)
+      createdLanesOnNewLinks.size should equal(6)
+
+      // BothDirections traffic direction link should have 2 main lanes
       createdLanesOnNewLinks.count(_.linkId == "f2eba575-f306-4c37-b49d-a4d27a3fc049:1") should equal(2)
+      // BothDirections traffic direction link should have 2 main lanes
       createdLanesOnNewLinks.count(_.linkId == "a15cf59b-c17c-4b6d-8e9b-a558143d0d47:1") should equal(2)
+      // AgainstDigitizing traffic direction link should have 1 main lane
+      createdLanesOnNewLinks.count(_.linkId == "624df3a8-b403-4b42-a032-41d4b59e1840:1") should equal(1)
+      // TowardsDigitizing traffic direction link should have 1 main lane
+      createdLanesOnNewLinks.count(_.linkId == "00bb2656-6da1-433a-84ec-ebfd8144bb43:1") should equal(1)
 
       createdLanesOnNewLinks.foreach(lane => {
         val roadLink = newRoadLinks.find(_.linkId == lane.linkId).get
