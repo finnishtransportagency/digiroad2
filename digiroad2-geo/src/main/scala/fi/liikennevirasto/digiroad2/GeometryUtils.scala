@@ -81,7 +81,7 @@ object GeometryUtils {
 
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     if (geometry.isEmpty) {
-      throw new Exception("Geometry is empty")
+      throw new NoSuchElementException("Geometry is empty")
     }
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
