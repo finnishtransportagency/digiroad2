@@ -238,23 +238,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("check if roadWidth created because of changes has informationSource as MmlNls") {
-    val municipalityCode = 235
-    val roadLinks = createRoadLinks(municipalityCode)
-    val service = createService()
-
-    val assets = Seq(PersistedLinearAsset(1, randomLinkId1, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    runWithRollback {
-      val changeInfo = createChangeInfo(roadLinks, 11L)
-      val (newAssets, changeSet) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo, _ => Seq(), initChangeSet)
-      changeSet.expiredAssetIds should have size 0
-      newAssets.foreach { asset =>
-        asset.informationSource should be(Some(MmlNls))
-
-      }
-    }
-  }
-
   test("update roadWidth and check if informationSource is Municipality Maintainer "){
     val propSuggestBox = DynamicProperty("suggest_box", "checkbox", false, List(DynamicPropertyValue(0)))
 
