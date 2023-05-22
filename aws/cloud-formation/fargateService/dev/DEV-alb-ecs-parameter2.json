@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "TaskDefinitionForService",
-    "ParameterValue": "digiroad2-dev"
+    "ParameterValue": "digiroad2-dev-test"
   },
   {
     "ParameterKey": "Environment",
