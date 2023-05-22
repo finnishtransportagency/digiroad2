@@ -7,6 +7,10 @@ Parameters:
   ApplicationName:
     Description: Name of the application (no whitespace or special characters)
     Type: String
+  ContainerName:
+    Description: Name of the application (no whitespace or special characters)
+    Type: String
+    Default: digiroad2
   Environment:
     Description: "Environment of the application, that these resources are created for. Used when tagging and naming the resources"
     Type: String
@@ -146,7 +150,7 @@ Resources:
       LaunchType: FARGATE
       TaskDefinition: !Ref TaskDefinitionForService
       LoadBalancers:
-        - ContainerName: !Ref ApplicationName
+        - ContainerName: !Ref ContainerName
           ContainerPort: !Ref ContainerPort
           TargetGroupArn: !Ref TargetGroup
       Tags:
