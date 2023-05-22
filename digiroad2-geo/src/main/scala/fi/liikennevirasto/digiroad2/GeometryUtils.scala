@@ -502,7 +502,7 @@ object GeometryUtils {
     connectionPoint(geometries, DefaultEpsilon)
   }
 
-  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long = 0)
+  case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, timeStamp: Long = 0, linkId:String = "", linkLength:Double = 0)
 
   def getOppositePoint(geometry: Seq[Point], point: Point) : Point = {
     val (headPoint, lastPoint) = geometryEndpoints(geometry)

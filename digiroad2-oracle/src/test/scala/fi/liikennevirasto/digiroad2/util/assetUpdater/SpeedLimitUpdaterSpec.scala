@@ -1,110 +1,252 @@
 package fi.liikennevirasto.digiroad2.util.assetUpdater
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.FeatureClass.CarRoad_IIIa
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
-import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, RoadLinkFetched}
-import fi.liikennevirasto.digiroad2.dao.linearasset.{PostGISLinearAssetDao, PostGISSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLink, SpeedLimitValue}
+import fi.liikennevirasto.digiroad2.client._
+import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.linearasset.PostGISLinearAssetDao
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.SpeedLimitService
-import fi.liikennevirasto.digiroad2.util.{LinkIdGenerator, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
+import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, LinkIdGenerator, TestTransactions}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-class SpeedLimitUpdaterSpec extends FunSuite with Matchers{
+import java.util.UUID
+import scala.collection.mutable.ListBuffer
 
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val mockRoadLinkClient = MockitoSugar.mock[RoadLinkClient]
-  val linearAssetDao = new PostGISLinearAssetDao()
-  val service = new SpeedLimitService(mockEventBus, mockRoadLinkService)
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
 
-  object TestSpeedLimitUpdater extends SpeedLimitUpdater(service) {
-    override val speedLimitDao: PostGISSpeedLimitDao = new PostGISSpeedLimitDao(mockRoadLinkService)
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockRoadLinkClient: RoadLinkClient = MockitoSugar.mock[RoadLinkClient]
+  //val mockFunctionalClassDao: RoadLinkOverrideDAO = MockitoSugar.mock[RoadLinkOverrideDAO.FunctionalClassDao]
+  val speedLimitDao = new PostGISLinearAssetDao()
+  val mockDynamicLinearAssetDao: DynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
+  val service = new SpeedLimitService(mockEventBus,mockRoadLinkService)
+  val serviceNoMock = new SpeedLimitService(mockEventBus,roadLinkService)
+  lazy val roadLinkClient: RoadLinkClient = {
+    new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint)
   }
 
-  test("Should map the speed limit of an old link to three new links") {
+  lazy val roadLinkService: RoadLinkService = {
+    new RoadLinkService(roadLinkClient, mockEventBus, new DummySerializer)
+  }
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+  
+  object TestLinearAssetUpdater extends SpeedLimitUpdater(service) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def eventBus: DigiroadEventBus = mockEventBus
+    override def roadLinkClient: RoadLinkClient = mockRoadLinkClient
+  }
 
-    val oldLinkId = LinkIdGenerator.generateRandom()
-    val newLinkId1 = LinkIdGenerator.generateRandom()
-    val newLinkId2 = LinkIdGenerator.generateRandom()
-    val newLinkId3 = LinkIdGenerator.generateRandom()
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
+  object TestLinearAssetUpdaterNoRoadLinkMock extends SpeedLimitUpdater(serviceNoMock) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def eventBus: DigiroadEventBus = mockEventBus
+  }
 
-    val oldRoadLink = RoadLink(oldLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+  val roadLinkChangeClient = new RoadLinkChangeClient
 
-    val newRoadLinks = Seq(RoadLink(newLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(newLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(newLinkId3, List(Point(0.0, 0.0), Point(5.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
+  lazy val source = scala.io.Source.fromFile("digiroad2-oracle/src/test/resources/smallChangeSet.json").mkString
 
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId), Some(newLinkId1), 12345, 5, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId2), 12346, 6, Some(10), Some(20), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
+  private def generateRandomKmtkId(): String = s"${UUID.randomUUID()}"
+  private def generateRandomLinkId(): String = LinkIdGenerator.generateRandom()
+  
+  def generateGeometry(startPoint: Double, numberPoint: Long): (List[Point], Double) = {
+    val points = new ListBuffer[Point]
+    for (i <- 1 to numberPoint.toInt) {
+      points.append(Point(i + startPoint, 0))
+    }
+    (points.toList, GeometryUtils.geometryLength(points))
+  }
 
+  def createAsset(measures: Measures, value: Value, link: RoadLink, sideCode:SideCode = SideCode.BothDirections ): Long = {
+    service.createWithoutTransaction(TrafficVolume.typeId, link.linkId, value, sideCode.value,
+      measures, "testuser", 0L, Some(link), false, None, None)
+  }
+
+  def changeRemove(oldRoadLinkId: String): RoadLinkChange = {
+    val generatedGeometry = generateGeometry(0, 10)
+    RoadLinkChange(
+      changeType = RoadLinkChangeType.Remove,
+      oldLink = Some(RoadLinkInfo(linkId = oldRoadLinkId, linkLength = generatedGeometry._2,
+        geometry = generatedGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+        adminClass = Municipality,
+        municipality = 0,
+        trafficDirection = TrafficDirection.BothDirections)),
+      newLinks = Seq.empty[RoadLinkInfo],
+      replaceInfo = Seq.empty[ReplaceInfo])
+  }
+
+  def changeReplaceNewVersion(oldRoadLinkId: String, newRoadLikId: String): RoadLinkChange = {
+    val (oldLinkGeometry, oldId) = (generateGeometry(0, 9), oldRoadLinkId)
+    val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 9), newRoadLikId)
+
+    RoadLinkChange(
+      changeType = RoadLinkChangeType.Replace,
+      oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
+        geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+        adminClass = Municipality,
+        municipality = 60,
+        trafficDirection = TrafficDirection.BothDirections)),
+      newLinks = Seq(
+        RoadLinkInfo(
+          linkId = newLinkId1,
+          linkLength = newLinkGeometry1._2,
+          geometry = newLinkGeometry1._1,
+          roadClass = MTKClassWidth.CarRoad_Ia.value,
+          adminClass = Municipality,
+          municipality = 60,
+          trafficDirection = TrafficDirection.BothDirections
+        )),
+      replaceInfo =
+        List(
+          ReplaceInfo(oldId, newLinkId1,
+            oldFromMValue = 0.0, oldToMValue = 8, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+    )
+  }
+  
+  def changeReplacechangeReplaceLengthenedFromEndBothDirections(oldRoadLinkId: String): RoadLinkChange = {
+    val (oldLinkGeometry, oldId) = (generateGeometry(0, 5), oldRoadLinkId)
+    val (newLinkGeometry1, newLinkId1) = (generateGeometry(0, 10), "c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1")
+
+    RoadLinkChange(
+      changeType = RoadLinkChangeType.Replace,
+      oldLink = Some(RoadLinkInfo(linkId = oldId, linkLength = oldLinkGeometry._2,
+        geometry = oldLinkGeometry._1, roadClass = MTKClassWidth.CarRoad_Ia.value,
+        adminClass = Municipality,
+        municipality = 60,
+        trafficDirection = TrafficDirection.TowardsDigitizing)),
+      newLinks = Seq(
+        RoadLinkInfo(
+          linkId = newLinkId1,
+          linkLength = newLinkGeometry1._2,
+          geometry = newLinkGeometry1._1,
+          roadClass = MTKClassWidth.CarRoad_Ia.value,
+          adminClass = Municipality,
+          municipality = 60,
+          trafficDirection = TrafficDirection.BothDirections
+        )),
+      replaceInfo =
+        List(
+          ReplaceInfo(oldRoadLinkId, newLinkId1,
+            oldFromMValue = 0.0, oldToMValue = 4, newFromMValue = 0.0, newToMValue = newLinkGeometry1._2, false))
+    )
+  }
+  
+  test("case 1 links under asset is split, smoke test") {
+    val linkId = "f8fcc994-6e3e-41b5-bb0f-ae6089fe6acc:1"
+    val newLinks = Seq("753279ca-5a4d-4713-8609-0bd35d6a30fa:1","c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", "c3beb1ca-05b4-44d6-8d69-2a0e09f22580:1")
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source)
 
     runWithRollback {
+      val oldRoadLink = roadLinkService.getExpiredRoadLinkByLinkId(linkId).get
+      val oldRoadLinkRaw = roadLinkService.getExpiredRoadLinkByLinkIdNonEncrished(linkId)
+      when(mockRoadLinkService.fetchRoadlinkAndComplementary(linkId)).thenReturn(oldRoadLinkRaw)
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      val id = service.createWithoutTransaction(SpeedLimitAsset.typeId, linkId,
+        SpeedLimitValue(30), SideCode.BothDirections.value, Measures(0, 56.061), "testuser", 0L, Some(oldRoadLink), false, None, None)
+      val assetsBefore = service.getPersistedAssetsByIds(SpeedLimitAsset.typeId, Set(id), false)
+      
+      assetsBefore.size should be(1)
+      assetsBefore.head.expired should be(false)
 
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId)).thenReturn(Some(RoadLinkFetched(oldLinkId, oldRoadLink.municipalityCode, oldRoadLink.geometry,
-        administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 25)))
-      service.create(Seq(NewLimit(oldLinkId, 0.0, 25.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq())
-      TestSpeedLimitUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, municipalityCode, newRoadLinks, changeInfo)
-      newRoadLinks.sortBy(_.linkId).foreach { roadLink =>
-        val asset = service.getExistingAssetByRoadLink(roadLink, false)
-        asset.head.linkId should be(roadLink.linkId)
-        asset.head.expired should be(false)
-        asset.head.value.get should be(SpeedLimitValue(30))
-      }
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val assetsAfter = service.getPersistedAssetsByLinkIds(SpeedLimitAsset.typeId, newLinks, false)
+      assetsAfter.size should be(3)
+      val sorted = assetsAfter.sortBy(_.endMeasure)
+      sorted.head.startMeasure should be(0)
+      sorted.head.endMeasure should be(9.334)
+
+      sorted(1).startMeasure should be(0)
+      sorted(1).endMeasure should be(11.841)
+
+      sorted(2).startMeasure should be(0)
+      sorted(2).endMeasure should be(34.906)
+
+      assetsAfter.map(v => v.value.isEmpty should be(false))
+      assetsAfter.map(v => v.value.get should be(SpeedLimitValue(30)))
+    }
+  }
+  
+  test("Create unknown speed limit when there is new links"){
+    val changes = roadLinkChangeClient.convertToRoadLinkChange(source).filter(_.changeType == RoadLinkChangeType.Add)
+
+    runWithRollback {
+      val newLink = "624df3a8-b403-4b42-a032-41d4b59e1840:1"
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(SpeedLimitAsset.typeId, changes)
+      val unknown =  service.getUnknownByLinkIds(Set(newLink),newTransaction = false)
+      unknown.size should be(1)
+    }
+  }
+  
+  test("Remove unknown speed limit when links is removed") {
+    val linkId = generateRandomLinkId()
+    val geometry = generateGeometry(0, 10)
+    val oldRoadLink = RoadLink(linkId, geometry._1, geometry._2, Municipality,
+      5, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(60), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeRemove(linkId)
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkId))).thenReturn(Seq(oldRoadLink))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      service.persistUnknown(Seq(UnknownSpeedLimit(linkId,60,Municipality)))
+      val unknownBefore = service.getUnknownByLinkIds(Set(linkId))
+      unknownBefore .size should be(1)
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, Seq(change))
+      val unknown = service.getUnknownByLinkIds(Set(linkId), newTransaction = false)
+      unknown .size should be(0)
     }
   }
 
-  test("Should map the speed limit of three old links to one new link") {
-    val oldLinkId1 = LinkIdGenerator.generateRandom()
-    val oldLinkId2 = LinkIdGenerator.generateRandom()
-    val oldLinkId3 = LinkIdGenerator.generateRandom()
-    val newLinkId = LinkIdGenerator.generateRandom()
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-
-    val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(oldLinkId2, List(Point(10.0, 0.0), Point(20.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(oldLinkId3, List(Point(20.0, 0.0), Point(25.0, 0.0)), 5.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))))
-
-    val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-
-    val changeInfo = Seq(ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(10), Some(0), Some(10), 144000000),
-      ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000),
-      ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
+  test("Move unknown speed limit into new links") {
+    val linkId = generateRandomKmtkId()
+    val linkIdVersion1 = s"$linkId:1"
+    val linkIdVersion2 = s"$linkId:2"
+    val geometry = generateGeometry(0, 9)
+    val newRoadLink = RoadLink(linkIdVersion2, geometry._1, geometry._2, Municipality,
+      5, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(60), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplaceNewVersion(linkIdVersion1, linkIdVersion2)
 
     runWithRollback {
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId1)).thenReturn(Some(RoadLinkFetched(oldLinkId1, oldRoadLinks(0).municipalityCode, oldRoadLinks(0).geometry,
-        administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 10)))
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId2)).thenReturn(Some(RoadLinkFetched(oldLinkId2, oldRoadLinks(1).municipalityCode, oldRoadLinks(1).geometry,
-        administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 10)))
-      when(mockRoadLinkService.fetchRoadlinkAndComplementary(oldLinkId3)).thenReturn(Some(RoadLinkFetched(oldLinkId3, oldRoadLinks(2).municipalityCode, oldRoadLinks(2).geometry,
-        administrativeClass, trafficDirection, CarRoad_IIIa, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface, 5)))
-      service.create(Seq(NewLimit(oldLinkId1, 0.0, 10.0), NewLimit(oldLinkId2, 0.0, 10.0),
-        NewLimit(oldLinkId2, 0.0, 5.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
-      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq())
-      TestSpeedLimitUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, municipalityCode, Seq(newRoadLink), changeInfo)
-      val newAsset = service.getExistingAssetByRoadLink(newRoadLink, false).head
-      newAsset.linkId should be(newRoadLink.linkId)
-      newAsset.expired should be(false)
-      newAsset.value.get should be(SpeedLimitValue(30))
-      newAsset.startMeasure should be(0.0)
-      newAsset.endMeasure should be(25.0)
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(linkIdVersion2))).thenReturn(Seq(newRoadLink))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      service.persistUnknown(Seq(UnknownSpeedLimit(linkIdVersion1, 60, Municipality)))
+      val unknownBefore = service.getUnknownByLinkIds(Set(linkIdVersion1))
+      unknownBefore.size should be(1)
+
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, Seq(change))
+      val unknown = service.getUnknownByLinkIds(Set(linkIdVersion2),newTransaction = false)
+      unknown.size should be(1)
+    }
+  }
+  
+  test("case 8.1 Road changes to two ways raise links into work list"){
+    val linkId = generateRandomLinkId()
+    val geometry = generateGeometry(0, 5)
+    val geometryNew = generateGeometry(0, 10)
+    val oldRoadLink = RoadLink(linkId, geometry._1, geometry._2, Municipality,
+      60, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val newLink = RoadLink("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", geometryNew._1, geometryNew._2, Municipality,
+      60, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(1), "SURFACETYPE" -> BigInt(2)),
+      ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    val change = changeReplacechangeReplaceLengthenedFromEndBothDirections(linkId)
+
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId(linkId, false)).thenReturn(Some(oldRoadLink))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesByLinkIds(Set("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"))).thenReturn(Seq(newLink))
+      when(mockRoadLinkService.fetchRoadlinksByIds(any[Set[String]])).thenReturn(Seq.empty[RoadLinkFetched])
+      when(mockRoadLinkService.getRoadLinkAndComplementaryByLinkId("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1", false)).thenReturn(Some(newLink))
+      TestLinearAssetUpdater.updateByRoadLinks(SpeedLimitAsset.typeId, Seq(change))
+      val unknown =  service.getUnknownByLinkIds(Set("c83d66e9-89fe-4b19-8f5b-f9f2121e3db7:1"),newTransaction = false)
+      unknown .size should be(1)
     }
   }
 }

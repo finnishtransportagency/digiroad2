@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibit
 import fi.liikennevirasto.digiroad2.util.DataFixture.dynamicLinearAssetService.getLinkSource
 
 class HazMatTransportProhibitionUpdater(service: HazmatTransportProhibitionService) extends ProhibitionUpdater(service) {
-
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     if (newLinearAssets.nonEmpty)
       logger.info("Saving projected prohibition assets")
