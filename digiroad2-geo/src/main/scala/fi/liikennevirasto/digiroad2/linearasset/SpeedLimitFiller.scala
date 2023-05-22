@@ -56,7 +56,7 @@ object SpeedLimitFiller extends AssetFiller {
     if(geometryChanged) fillOperations
     else adjustmentOperations
   }
-// TODO can we generalize this for all other assets also
+  
   override def adjustAsset(asset: PieceWiseLinearAsset, roadLink: RoadLinkForFillTopology): (PieceWiseLinearAsset, Seq[MValueAdjustment]) = {
     val startError = asset.startMeasure
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
