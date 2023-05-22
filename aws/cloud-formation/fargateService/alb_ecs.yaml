@@ -8,7 +8,7 @@ Parameters:
     Description: Name of the application (no whitespace or special characters)
     Type: String
   ContainerName:
-    Description: Name of the application (no whitespace or special characters)
+    Description: Name of the container (no whitespace or special characters)
     Type: String
     Default: digiroad2
   Environment:
