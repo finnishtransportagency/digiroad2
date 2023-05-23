@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{DateTime, LocalDate}
+import org.json4s.{JArray, JBool, JField, JInt, JObject, JString}
 
 trait LinearAsset extends PolyLine {
   val id: Long
@@ -14,22 +15,22 @@ trait LinearAsset extends PolyLine {
 }
 
 sealed trait Value {
-  def toJson: Any
+  def toJson: JObject
 }
 
 case class SpeedLimitValue(value: Int, isSuggested: Boolean = false) extends Value {
-  override def toJson: Any = value
+  override def toJson: JObject = JObject(JField("value", JInt(value)), JField("isSuggested", JBool(isSuggested)))
 }
 
 case class NumericValue(value: Int) extends Value {
-  override def toJson: Any = value
+  override def toJson = JObject(JField("value", JInt(value)))
 }
 case class TextualValue(value: String) extends Value {
-  override def toJson: Any = value
+  override def toJson = JObject(JField("value", JString(value)))
 }
 
 case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolean = false) extends Value {
-  override def toJson: Any = prohibitions
+  override def toJson = JObject(JField("prohibitions",JArray(prohibitions.map(_.toJson).toList)) , JField("isSuggested", JBool(isSuggested)))
 
   override def equals(obj: scala.Any): Boolean = {
     obj match {
@@ -40,12 +41,14 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolea
   }
 }
 case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
-  override def toJson: Any = massLimitation
+  override def toJson = JObject(JField("massLimitation",JArray(massLimitation.map(_.toJson).toList)))
 }
 
-case class DynamicAssetValue(properties: Seq[DynamicProperty])
+case class DynamicAssetValue(properties: Seq[DynamicProperty]) {
+  def toJson = JObject(JField("properties",JArray(properties.map(_.toJson).toList)))
+}
 case class DynamicValue(value: DynamicAssetValue) extends Value {
-  override def toJson: Any = value
+  override def toJson: JObject = value.toJson
 
   override def equals(obj: scala.Any): Boolean = {
     obj match {
@@ -64,13 +67,19 @@ case class DynamicValue(value: DynamicAssetValue) extends Value {
   }
 }
 
-case class AssetTypes(typeId: Int, value: String, isSuggested: Int)
+case class AssetTypes(typeId: Int, value: String, isSuggested: Int) {
+  def toJson = JObject(JField("typeId", JInt(typeId)),JField("isSuggested", JBool(isSuggested)))
+}
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
 
-case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
+case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "") {
+  def toJson = JObject(JField("typeId", JInt(typeId)), JField("validityPeriods", JArray(validityPeriods.map(_.toJson).toList)),JField("exceptions", JArray(exceptions.map(JInt(_)).toList)),JField("additionalInfo", JString(additionalInfo)))
+}
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {
+  def toJson = JObject(JField("startHour", JInt(startHour)),JField("endHour", JInt(endHour)),JField("startMinute", JInt(startMinute)),JField("endMinute", JInt(endMinute)),JField("days",days.toJson))
+
   def and(b: ValidityPeriod): Option[ValidityPeriod] = {
     if (overlaps(b)) {
       Some(ValidityPeriod(math.max(startHour, b.startHour), math.min(endHour, b.endHour), ValidityPeriodDayOfWeek.moreSpecific(days, b.days), math.min(startMinute, b.startMinute), math.min(endMinute, b.endMinute)))
@@ -122,7 +131,9 @@ case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: Validi
   }
 }
 
-sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int }
+sealed trait ValidityPeriodDayOfWeek extends Equals { def value: Int
+  def toJson = JObject(JField("value", JInt(value)))
+}
 object ValidityPeriodDayOfWeek {
   def apply(value: Int) = Seq(Weekday, Saturday, Sunday).find(_.value == value).getOrElse(Unknown)
   def apply(value: String) = value match {
