@@ -74,7 +74,9 @@ Resources:
             AbortIncompleteMultipartUpload:
               DaysAfterInitiation: 1
             Status: Enabled
-      # TODO: NotificationConfiguration: -- add notification configuration to new object notify uploads
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
       Tags:
         - Key: Name
           Value: !Sub ${ApplicationName}-${Environment}-road-link-change-bucket
@@ -182,7 +184,6 @@ Resources:
 
 
   ### EVENTS ###
-
   StartLambdaEvent:
     Type: AWS::Events::Rule
     Properties:
@@ -194,8 +195,6 @@ Resources:
         - Arn: !GetAtt Lambda.Arn
           Id: !Sub "${Environment}-${ApplicationName}-road-link-change-event-target"
 
-
-  # TODO: Add event to handle s3 put events
 
   ### IAM ###
   LambdaRole:
