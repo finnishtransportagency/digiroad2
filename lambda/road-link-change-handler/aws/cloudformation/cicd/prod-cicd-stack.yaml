@@ -195,11 +195,11 @@ Resources:
             build:
               commands:
                 - echo Build started on `date`
-                - echo Pull latest image...        
-                - docker pull $ECR_REPOSITORY_URI:latest
-                - docker tag $ECR_REPOSITORY_URI:latest $PROD_REPOSITORY_URI:$PROD_ID
-                - docker tag $ECR_REPOSITORY_URI:latest $PROD_REPOSITORY_URI:latest
-                - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$PROD_ID
+                - echo Pull qa image...        
+                - docker pull $ECR_REPOSITORY_URI:qa
+                - docker tag $ECR_REPOSITORY_URI:qa $PROD_REPOSITORY_URI:$PROD_ID
+                - docker tag $ECR_REPOSITORY_URI:qa $PROD_REPOSITORY_URI:latest
+                - docker tag $ECR_REPOSITORY_URI:qa $ECR_REPOSITORY_URI:$PROD_ID
             post_build:
               commands:
                 - echo Build completed on `date`
