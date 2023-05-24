@@ -368,7 +368,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !ImportValue 'BatchLambdaID'
       Principal: events.amazonaws.com
-      SourceArn: !Sub arn:aws:s3:::${SamuutusBucketName}
+      SourceArn: !GetAtt RunSamuutusBatch.Arn
 
 Outputs:
   BatchTaskRoleARN:
