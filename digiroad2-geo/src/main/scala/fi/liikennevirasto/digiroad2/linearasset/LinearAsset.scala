@@ -5,6 +5,8 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{DateTime, LocalDate}
 import org.json4s.{JArray, JBool, JField, JInt, JObject, JString}
 
+import scala.util.Try
+
 trait LinearAsset extends PolyLine {
   val id: Long
   val linkId: String
@@ -17,7 +19,9 @@ trait LinearAsset extends PolyLine {
 sealed trait Value {
   def toJson: JObject
 }
-
+case class EmptyValue() extends Value {
+  def toJson: JObject = JObject()
+}
 case class SpeedLimitValue(value: Int, isSuggested: Boolean = false) extends Value {
   override def toJson: JObject = JObject(JField("value", JInt(value)), JField("isSuggested", JBool(isSuggested)))
 }
@@ -68,7 +72,7 @@ case class DynamicValue(value: DynamicAssetValue) extends Value {
 }
 
 case class AssetTypes(typeId: Int, value: String, isSuggested: Int) {
-  def toJson = JObject(JField("typeId", JInt(typeId)),JField("isSuggested", JBool(isSuggested)))
+  def toJson = JObject(JField("typeId", JInt(typeId)),JField("isSuggested", JInt(isSuggested)))
 }
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
@@ -185,7 +189,18 @@ case class PersistedLinearAsset(id: Long, linkId: String, sideCode: Int, value: 
                                 startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean, typeId: Int,
                                 timeStamp: Long, geomModifiedDate: Option[DateTime], linkSource: LinkGeomSource, verifiedBy: Option[String], verifiedDate: Option[DateTime],
-                                informationSource: Option[InformationSource])
+                                informationSource: Option[InformationSource]){
+  def toJson: JObject = JObject(
+    JField("modifiedBy", JString(modifiedBy.getOrElse(""))),
+    JField("createdBy", JString(createdBy.getOrElse(""))),
+    JField("createdDateTime", JString(Try(createdDateTime.get.toString()).getOrElse(""))),
+    JField("modifiedDateTime", JString(Try(modifiedDateTime.get.toString()).getOrElse(""))),
+    JField("verifiedBy", JString(verifiedBy.getOrElse(""))),
+    JField("verifiedDate", JString(Try(verifiedDate.get.toString()).getOrElse(""))),
+    JField("informationSource", JInt(informationSource.getOrElse(UnknownSource).value)),
+    JField("value", value.getOrElse(EmptyValue()).toJson)
+  )
+}
 
 case class NewLinearAsset(linkId: String, startMeasure: Double, endMeasure: Double, value: Value, sideCode: Int,
                           timeStamp: Long, geomModifiedDate: Option[DateTime])
