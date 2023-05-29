@@ -48,9 +48,9 @@ class RoadWidthUpdater(service: RoadWidthService) extends DynamicLinearAssetUpda
              Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id),
                replacedAssetIds = changeSets.replacedAssetIds ++ Set(asset.id)))
            )
-           reportAssetChanges(Some(asset), Seq(change), operation)
+           reportAssetChanges(Some(asset), Seq(change), operation,ChangeTypeReport.PropertyChange)
          }else {
-           reportAssetChanges(Some(asset), Seq(change),  OperationStep (Seq(asset.copy(value = Some(NumericValue(replace._3.width)))),Some(changeSets)))
+           reportAssetChanges(Some(asset), Seq(change),  OperationStep (Seq(asset.copy(value = Some(NumericValue(replace._3.width)))),Some(changeSets)),ChangeTypeReport.PropertyChange)
          }
         }).foldLeft(OperationStep(assetsAll,Some(changeSets)))((a, b) => {
          OperationStep(a.assets ++ b.assets, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)))
