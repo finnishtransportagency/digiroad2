@@ -609,7 +609,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsBefore.size should be(4)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change._1)
+    val report =  TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change._1)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("524c67d9-b8af-4070-a4a1-52d7aec0526c:1"), false)
       val sorted = assetsAfter.sortBy(_.endMeasure)
       sorted.size should be(4)
@@ -634,6 +634,8 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       asset4.startMeasure should be(53.476)
       asset4.endMeasure should be(89.728)
       asset4.value.get should be(NumericValue(6))
+      
+     // TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
 
     }
   }
@@ -659,7 +661,7 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       assetsBefore.size should be(4)
       assetsBefore.head.expired should be(false)
 
-      TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
+      val report = TestLinearAssetUpdaterNoRoadLinkMock.updateByRoadLinks(TrafficVolume.typeId, change)
       val assetsAfter = service.getPersistedAssetsByLinkIds(TrafficVolume.typeId, Seq("ff8f3894-6312-4f38-9b51-e68ee919043a:1"), false)
       val sorted = assetsAfter.sortBy(_.endMeasure)
 
@@ -681,6 +683,9 @@ class LinearAssetUpdaterSpec extends FunSuite with Matchers {
       sorted(3).startMeasure should be(215.304)
       sorted(3).endMeasure should be(223.872)
       sorted(3).value.get should be(NumericValue(6))
+
+     // val changeReport = ChangeReport(TrafficVolume.typeId, report)
+     // TestLinearAssetUpdaterNoRoadLinkMock.generateAndSaveReport(TrafficVolume.typeId)
 
     }
   }

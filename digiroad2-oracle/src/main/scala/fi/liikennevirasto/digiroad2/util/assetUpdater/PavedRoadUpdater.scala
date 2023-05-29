@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.{RoadLinkChange, RoadLinkChangeType}
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeInfo
 import fi.liikennevirasto.digiroad2.dao.RoadLinkOverrideDAO.FunctionalClassDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, PersistedLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, LinearAssetFiller, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.PavedRoadService
 import fi.liikennevirasto.digiroad2.util.LinearAssetUtils
@@ -14,7 +14,7 @@ import org.joda.time.DateTime
 
 class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpdater(service) {
   
-  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+  override def operationForNewLink(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
     
     val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(change.newLinks.head.linkId), newTransaction = false).head
     
@@ -34,15 +34,15 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         , linkSource = LinkGeomSource.NormalLinkInterface, 
         verifiedBy =None, verifiedDate = None,
         informationSource = Some(MmlNls))
-      Seq((newAsset, changeSets))
+      Some(OperationStep(Seq(newAsset), Some(changeSets)))
     }else {
-      Seq.empty[(PersistedLinearAsset, ChangeSet)]
+      None
     }
     
   }
 
 
-  override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Seq[(PersistedLinearAsset, ChangeSet)] = {
+  override def additionalUpdateOrChange(change: RoadLinkChange, assetsAll: Seq[PersistedLinearAsset], changeSets: ChangeSet): Option[OperationStep] = {
     change.changeType match {
      //remove pavement
       case RoadLinkChangeType.Replace | RoadLinkChangeType.Split =>
@@ -52,17 +52,22 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
           val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(replace), newTransaction = false).head
           if (roadLink.isNotPaved) {
             if (asset.id !=0){
-              (asset,
-                changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)))
+              OperationStep(Seq(asset),
+                Some(changeSets.copy(
+                  expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id),
+                  replacedAssetIds = changeSets.replacedAssetIds ++ Set(asset.id)
+                )))
             } else {
-              (asset.copy(id = removePart), changeSets)
+              OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets))
             }
           } else {
-            (asset, changeSets)
+            OperationStep(Seq(asset), Some(changeSets))
           }
+        }).foldLeft(OperationStep(assetsAll,Some(changeSets)))((a, b) => {
+          OperationStep(a.assets ++ b.assets, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)))
         })
-        expiredPavement
-      case _ => Seq.empty[(PersistedLinearAsset, ChangeSet)]
+        Some(expiredPavement)
+      case _ => None
     }
   }
 
