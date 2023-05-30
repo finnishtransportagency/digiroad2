@@ -43,6 +43,10 @@ case class Measures(startMeasure: Double, endMeasure: Double){
     val exponentOfTen = Math.pow(10, 3)
     Measures(Math.round(startMeasure * exponentOfTen).toDouble / exponentOfTen,Math.round(endMeasure * exponentOfTen).toDouble / exponentOfTen)
   }
+  def length():Double  ={
+    val exponentOfTen = Math.pow(10, 3)
+    Math.round((endMeasure - startMeasure) * exponentOfTen).toDouble / exponentOfTen
+  }
 }
 
 trait LinearAssetOperations {
