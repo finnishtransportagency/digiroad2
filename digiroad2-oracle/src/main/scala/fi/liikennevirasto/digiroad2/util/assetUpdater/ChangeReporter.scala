@@ -281,11 +281,11 @@ object ChangeReporter {
           val linearReference = before.linearReference.get
           Seq(before.assetId, before.geometryToString, before.values, before.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
             linearReference.startMValue.toString, linearReference.endMValue.get.toString, linearReference.length.toString, before.getUrl)
-        case None => Seq("", "", "", "", "", "", "", "", "")
+        case None => Seq("", "", "", "", "", "", "","", "", "")
       }
       val beforeFieldsWithoutGeometry = beforeFields.patch(1, Nil, 1)
       if (changedAsset.after.isEmpty) {
-        val emptyAfterFields =  Seq("", "", "", "", "", "", "", "", "")
+        val emptyAfterFields =  Seq("", "", "", "", "", "", "","", "", "")
         if(withGeometry) Seq(metaFields ++ beforeFields ++ emptyAfterFields)
         else Seq(metaFields ++ beforeFieldsWithoutGeometry ++ emptyAfterFields)
       } else {
