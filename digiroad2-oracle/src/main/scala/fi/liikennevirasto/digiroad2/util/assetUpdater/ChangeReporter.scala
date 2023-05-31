@@ -280,19 +280,19 @@ object ChangeReporter {
         case Some(before) =>
           val linearReference = before.linearReference.get
           Seq(before.assetId, before.geometryToString, before.values, before.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
-            linearReference.startMValue, linearReference.endMValue.get, linearReference.length, before.getUrl)
-        case None => Seq(null, null, null, null, null, null, null, null, null)
+            linearReference.startMValue.toString, linearReference.endMValue.get.toString, linearReference.length.toString, before.getUrl)
+        case None => Seq("", "", "", "", "", "", "", "", "")
       }
       val beforeFieldsWithoutGeometry = beforeFields.patch(1, Nil, 1)
       if (changedAsset.after.isEmpty) {
-        val emptyAfterFields = Seq(null, null, null, null, null, null, null, null, null)
+        val emptyAfterFields =  Seq("", "", "", "", "", "", "", "", "")
         if(withGeometry) Seq(metaFields ++ beforeFields ++ emptyAfterFields)
         else Seq(metaFields ++ beforeFieldsWithoutGeometry ++ emptyAfterFields)
       } else {
         changedAsset.after.map { after =>
           val linearReference = after.linearReference.get
           val afterFields = Seq(after.assetId, after.geometryToString, after.values, after.municipalityCode.get, linearReference.sideCode.get, linearReference.linkId,
-            linearReference.startMValue, linearReference.endMValue.get, linearReference.length, after.getUrl)
+            linearReference.startMValue.toString, linearReference.endMValue.get.toString, linearReference.length.toString, after.getUrl)
           val afterFieldsWithoutGeometry = afterFields.patch(1, Nil, 1)
           if (withGeometry) {
             metaFields ++ beforeFields ++ afterFields
