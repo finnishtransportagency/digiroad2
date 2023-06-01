@@ -222,8 +222,8 @@ class RoadLinkPropertyUpdater {
     val transferredProperties = ListBuffer[ReportedChange]()
     changes.foreach { change =>
       val oldLink = change.oldLink.get
-      // transfer traffic direction and administrative class only in case of version change
-      if (oldLink.linkId.substring(0, 36) == change.newLinks.head.linkId.substring(0, 36)) {
+      val versionChange = oldLink.linkId.substring(0, 36) == change.newLinks.head.linkId.substring(0, 36)
+      if (versionChange) {
         val optionalOverriddenTrafficDirection = TrafficDirectionDao.getExistingValue(oldLink.linkId)
         optionalOverriddenTrafficDirection match {
           case Some(overriddenTrafficDirection) =>
