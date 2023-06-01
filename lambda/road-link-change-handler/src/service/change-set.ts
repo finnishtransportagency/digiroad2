@@ -60,6 +60,7 @@ export class ChangeSet {
             roadClass:          link.roadClass,
             adminClass:         link.adminClass,
             municipality:       link.municipality,
+            surfaceType:        link.surfaceType,
             trafficDirection:   link.directionType
         }
     }
@@ -83,5 +84,6 @@ export interface KeyLinkProperties {
     roadClass               : number | null;
     adminClass              : number | null;
     municipality            : number | null;
+    surfaceType             : number | null;
     trafficDirection        : number | null;
 }

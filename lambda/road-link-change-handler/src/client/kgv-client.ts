@@ -53,9 +53,9 @@ export class KgvClient extends ClientBase {
             const props = feature.properties;
             const geometry = this.extractLinkGeometry(feature.geometry);
             return new KgvLink(props.id, geometry, props.sourceid, props.adminclass, props.municipalitycode,
-                props.horizontallength, props.directiontype, props.roadclass, props.roadnamefin, props.roadnameswe,
-                props.roadnamesme, props.roadnamesmn, props.roadnamesms, props.roadnumber, props.roadpartnumber,
-                props.surfacetype, props.lifecyclestatus, props.surfacerelation, props.xyaccuracy, props.zaccuracy,
+                props.horizontallength, props.directiontype, props.roadclass, props.surfacetype, props.roadnamefin,
+                props.roadnameswe, props.roadnamesme, props.roadnamesmn, props.roadnamesms, props.roadnumber,
+                props.roadpartnumber, props.lifecyclestatus, props.surfacerelation, props.xyaccuracy, props.zaccuracy,
                 props.geometryflip, props.addressfromleft, props.addresstoleft, props.addressfromright,
                 props.addresstoright, props.starttime, props.versionstarttime);
         })).flat(1);
@@ -96,9 +96,9 @@ export class KgvLink {
     geometry: string;
 
     constructor(id: string, geometry: string, sourceId?: number, adminClass?: number, municipality?: number,
-                length?: number, directionType?: number, roadClass?: number, nameFin?: string, nameSwe?: string,
-                nameSme?: string, nameSmn?: string, nameSms?: string, roadNumber?: number, roadPartNumber?: number,
-                surfaceType?: number, lifeCycleStatus?: number, surfaceRelation?: number, xyAccuracy?: number,
+                length?: number, directionType?: number, roadClass?: number, surfaceType?: number, nameFin?: string,
+                nameSwe?: string, nameSme?: string, nameSmn?: string, nameSms?: string, roadNumber?: number,
+                roadPartNumber?: number, lifeCycleStatus?: number, surfaceRelation?: number, xyAccuracy?: number,
                 zAccuracy?: number, geomFlip?: boolean, fromLeft?: number, toLeft?: number, fromRight?: number,
                 toRight?: number, startTime?: string, versionStartTime?: string) {
         const roundedLength     = length?.toFixed(3);
@@ -107,6 +107,7 @@ export class KgvLink {
         this.adminClass         = this.extractNumberOrNull(adminClass);
         this.municipality       = this.extractNumberOrNull(municipality);
         this.roadClass          = this.extractNumberOrNull(roadClass);
+        this.surfaceType        = this.extractNumberOrNull(surfaceType);
         this.roadNameFin        = nameFin;
         this.roadNameSwe        = nameSwe;
         this.roadNameSme        = nameSme;
@@ -114,7 +115,6 @@ export class KgvLink {
         this.roadNameSms        = nameSms;
         this.roadNumber         = this.extractNumberOrNull(roadNumber);
         this.roadPartNumber     = this.extractNumberOrNull(roadPartNumber);
-        this.surfaceType        = this.extractNumberOrNull(surfaceType);
         this.lifeCycleStatus    = this.extractNumberOrNull(lifeCycleStatus);
         this.directionType      = this.extractNumberOrNull(directionType);
         this.surfaceRelation    = this.extractNumberOrNull(surfaceRelation);

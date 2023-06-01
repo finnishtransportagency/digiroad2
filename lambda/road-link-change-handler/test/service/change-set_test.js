@@ -27,6 +27,7 @@ describe('Change Set', function () {
                     "roadClass": 12141,
                     "adminClass": 3,
                     "municipality": 149,
+                    "surfaceType": null,
                     "trafficDirection": 0
                 }
             ],
@@ -59,6 +60,7 @@ describe('Change Set', function () {
                 "roadClass": 12141,
                 "adminClass": 3,
                 "municipality": 149,
+                "surfaceType": null,
                 "trafficDirection": 0
             },
             "new": [],
@@ -80,8 +82,8 @@ describe('Change Set', function () {
     it('Link replaced', function () {
         const oldLinkId = "link:1";
         const newLinkId = "link:2";
-        const oldLink = new KgvLink(oldLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, undefined);
-        const newLink = new KgvLink(newLinkId, testLinkGeom1, 124, 3, 149, 16.93786266, 0, 12141);
+        const oldLink = new KgvLink(oldLinkId, testLinkGeom1, 123, 3, 149, 16.93706266, 0, undefined, 1);
+        const newLink = new KgvLink(newLinkId, testLinkGeom1, 124, 3, 149, 16.93786266, 0, 12141, 2);
         const change = new ReplaceInfo(oldLinkId, newLinkId, 0, 16.937, 0, 16.937);
         const changeSet = new ChangeSet([oldLink, newLink], [change]);
         const expected = [{
@@ -93,6 +95,7 @@ describe('Change Set', function () {
                 "roadClass": null,
                 "adminClass": 3,
                 "municipality": 149,
+                "surfaceType": 1,
                 "trafficDirection": 0
             },
             "new": [
@@ -103,6 +106,7 @@ describe('Change Set', function () {
                     "roadClass": 12141,
                     "adminClass": 3,
                     "municipality": 149,
+                    "surfaceType": 2,
                     "trafficDirection": 0
                 }
             ],
@@ -148,6 +152,7 @@ describe('Change Set', function () {
                 "roadClass": oldLink.roadClass,
                 "adminClass": oldLink.adminClass,
                 "municipality": oldLink.municipality,
+                "surfaceType": null,
                 "trafficDirection": oldLink.directionType
             },
             "new": [
@@ -158,6 +163,7 @@ describe('Change Set', function () {
                     "roadClass": newLink1.roadClass,
                     "adminClass": newLink1.adminClass,
                     "municipality": newLink1.municipality,
+                    "surfaceType": null,
                     "trafficDirection": newLink1.directionType
                 },
                 {
@@ -167,6 +173,7 @@ describe('Change Set', function () {
                     "roadClass": newLink2.roadClass,
                     "adminClass": newLink2.adminClass,
                     "municipality": newLink2.municipality,
+                    "surfaceType": null,
                     "trafficDirection": newLink2.directionType
                 },
                 {
@@ -176,6 +183,7 @@ describe('Change Set', function () {
                     "roadClass": newLink3.roadClass,
                     "adminClass": newLink3.adminClass,
                     "municipality": newLink3.municipality,
+                    "surfaceType": null,
                     "trafficDirection": newLink3.directionType
                 }
             ],
@@ -238,6 +246,7 @@ describe('Change Set', function () {
                     "roadClass": oldLink1.roadClass,
                     "adminClass": oldLink1.adminClass,
                     "municipality": oldLink1.municipality,
+                    "surfaceType": null,
                     "trafficDirection": oldLink1.directionType
                 },
                 "new": [
@@ -248,6 +257,7 @@ describe('Change Set', function () {
                         "roadClass": newLink.roadClass,
                         "adminClass": newLink.adminClass,
                         "municipality": newLink.municipality,
+                        "surfaceType": null,
                         "trafficDirection": newLink.directionType
                     }
                 ],
@@ -272,6 +282,7 @@ describe('Change Set', function () {
                     "roadClass": oldLink2.roadClass,
                     "adminClass": oldLink2.adminClass,
                     "municipality": oldLink2.municipality,
+                    "surfaceType": null,
                     "trafficDirection": oldLink2.directionType
                 },
                 "new": [
@@ -282,6 +293,7 @@ describe('Change Set', function () {
                         "roadClass": newLink.roadClass,
                         "adminClass": newLink.adminClass,
                         "municipality": newLink.municipality,
+                        "surfaceType": null,
                         "trafficDirection": newLink.directionType
                     }
                 ],
