@@ -233,22 +233,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
                   filter(_.nonEmpty).map(p => Some(p.get.copy(roadLinkChange = Some(change)))).
                   foldLeft(Some(initStep))(mergerOperations)
               case RoadLinkChangeType.Split =>
-                val operation = operationForSplit(change, assets, changeSets).map(adjustAssets(typeId, convertedLink, _)).get
-                operation.assetsAfter.flatMap(a => {
-                  val info = operation.roadLinkChange.get.replaceInfo.find(_.newLinkId == a.linkId).get
-                  createPairForSplit(info, operation.assetsAfter
-                    .filter(_.linkId == info.newLinkId), assets.
-                    filter(_.linkId == info.oldLinkId))
-                }).distinct.filter(_.newAsset.isDefined).map(p => {
-                  val fromWhichSplit = if (p.oldAsset.isDefined) p.oldAsset else {
-                    if (p.newAsset.get.id == 0 && assets.size == 1) {
-                      assets.headOption
-                    } else {
-                      assets.find(_.id == p.newAsset.get.id)
-                    }
-                  }
-                  Some(reportAssetChanges(fromWhichSplit, Seq(p.newAsset.get), Seq(change), operation, ChangeTypeReport.Divided))
-                }).foldLeft(Some(initStep))(mergerOperations)
+                handleSplits(typeId, convertedLink, changeSets, initStep, change, assets)
               case _ => None
             }
           } else None
@@ -270,6 +255,24 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val OperationStep(assetsOperated, changeInfo, _, _, _) = mergingOperations.get
     (assetsOperated, changeInfo.get)
+  }
+  private def handleSplits(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology], changeSets: ChangeSet, initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset]): Option[OperationStep] = {
+    val operation = operationForSplit(change, assets, changeSets).map(adjustAssets(typeId, convertedLink, _)).get
+    operation.assetsAfter.flatMap(a => {
+      val info = operation.roadLinkChange.get.replaceInfo.find(_.newLinkId == a.linkId).get
+      createPairForSplit(info, operation.assetsAfter
+        .filter(_.linkId == info.newLinkId), assets.
+        filter(_.linkId == info.oldLinkId))
+    }).distinct.filter(_.newAsset.isDefined).map(p => {
+      val fromWhichSplit = if (p.oldAsset.isDefined) p.oldAsset else {
+        if (p.newAsset.get.id == 0 && assets.size == 1) {
+          assets.headOption
+        } else {
+          assets.find(_.id == p.newAsset.get.id)
+        }
+      }
+      Some(reportAssetChanges(fromWhichSplit, Seq(p.newAsset.get), Seq(change), operation, ChangeTypeReport.Divided))
+    }).foldLeft(Some(initStep))(mergerOperations)
   }
   def splitReplacement(changes: Seq[RoadLinkChange]): (Map[String, Seq[RoadLinkChange]], Map[String, Seq[RoadLinkChange]]) = {
     val p = changes.groupBy(_.changeType).partition(recognizeMerger)
