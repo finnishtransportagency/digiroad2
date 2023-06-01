@@ -44,6 +44,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadLinkService.getRoadLinksByMunicipality(312, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(Seq())
+    when(mockRoadAddressService.groupRoadAddress(Seq())).thenReturn(Seq())
 
     val roadLinksTemp = Seq(RoadAddressTEMP(linkId1,7421,1,Combined,1312,1332,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")),
       RoadAddressTEMP(linkId2,7421,1,Combined,1332,1500,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")))
@@ -101,6 +102,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadLinkService.getRoadLinksByMunicipality(216, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
+    when(mockRoadAddressService.groupRoadAddress(viiteRoadAddress)).thenReturn(viiteRoadAddress)
 
     when(mockVKMClient.coordsToAddresses(Seq(Point(415512.9400000004, 6989434.033), Point(415976.358,6989464.984999999)), Some(77), Some(8), includePedestrian = Some(true)))
       .thenReturn( Seq(RoadAddress(Some("216"), 77, 8, Track.Combined, 0), RoadAddress(Some("216"), 77, 8, Track.Combined, 468)))
@@ -168,6 +170,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadLinkService.getRoadLinksByMunicipality(312, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
+    when(mockRoadAddressService.groupRoadAddress(viiteRoadAddress)).thenReturn(viiteRoadAddress)
 
     when(mockVKMClient.coordsToAddresses(Seq(Point(376585.751,6992711.448,159.9759999999951),Point(376569.312,6992714.125,160.19400000000314)),
       Some(16), Some(29), includePedestrian = Some(true))).thenThrow(new NullPointerException);
@@ -230,10 +233,12 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadAddressService.getAllByLinkIds(any[Seq[String]])).thenReturn(address)
 
-    val missingRoadLinks = Map((Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875), road3) -> Seq(road1, road4, road5),
-      (Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875), road1) -> Seq(road2, road3))
+    val first = Point(376519.312, 6992724.148, 161.00800000000163)
+    val last = Point(376534.023, 6992725.668, 160.875)
+    val roadLinkWithPoints = RoadLinkWithPoints(first, last, road3)
+    val missingRoadLinks = RoadLinkWithPointsAndAdjacents(roadLinkWithPoints, Seq(road1, road4, road5))
 
-    val result = ResolvingFrozenRoadLinksTest.cleanning(missingRoadLinks, Seq(), Seq())
+    val result = ResolvingFrozenRoadLinksTest.cleanning(Seq(missingRoadLinks), Seq(), Seq())
     result.size should be (0)
 
   }
@@ -281,8 +286,12 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
       }
     }
 
-    val result = ResolvingFrozenRoadLinksTest.cleanning(
-      Map((Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875), road3) -> Seq(road1, road4, road5)), mappedAddresses, Seq())
+    val first = Point(376519.312, 6992724.148, 161.00800000000163)
+    val last = Point(376534.023, 6992725.668, 160.875)
+    val roadLinkWithPoints = RoadLinkWithPoints(first, last, road3)
+    val missingRoadLinks = RoadLinkWithPointsAndAdjacents(roadLinkWithPoints, Seq(road1, road4, road5))
+
+    val result = ResolvingFrozenRoadLinksTest.cleanning(Seq(missingRoadLinks), mappedAddresses, Seq())
 
     result.size should be (1)
     result.exists(x => x.track == LeftSide && x.sideCode.contains(SideCode.TowardsDigitizing))
