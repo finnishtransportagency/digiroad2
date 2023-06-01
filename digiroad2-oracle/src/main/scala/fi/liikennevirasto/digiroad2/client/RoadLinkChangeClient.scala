@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.client
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
@@ -33,7 +34,9 @@ object RoadLinkChangeType {
   case object Unknown extends RoadLinkChangeType { def value = "unknown" }
 }
 
-case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int, adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection)
+case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point], roadClass: Int,
+                        adminClass: AdministrativeClass, municipality: Int, trafficDirection: TrafficDirection,
+                        surfaceType: SurfaceType = SurfaceType.Unknown)
 case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double, digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
 
@@ -101,6 +104,26 @@ class RoadLinkChangeClient {
   }
   ))
 
+  object SurfaceTypeSerializer extends CustomSerializer[SurfaceType](_ => (
+  {
+    case JInt(directionValue) =>
+      directionValue.toInt match {
+        case 1 => SurfaceType.None
+        case 2 => SurfaceType.Paved
+        case _ => SurfaceType.Unknown
+      }
+  },
+  {
+    case surfaceType: SurfaceType =>
+      surfaceType match {
+        case SurfaceType.Unknown => JInt(0)
+        case SurfaceType.None => JInt(1)
+        case SurfaceType.Paved => JInt(2)
+        case _ => JNull
+      }
+  }
+  ))
+
   object GeometrySerializer extends CustomSerializer[List[Point]](_ => (
     {
       case JString(lineString) =>
@@ -113,14 +136,14 @@ class RoadLinkChangeClient {
   ))
 
   implicit val formats = DefaultFormats + changeItemSerializer + RoadLinkChangeTypeSerializer + GeometrySerializer +
-    AdminClassSerializer + TrafficDirectionSerializer
+    AdminClassSerializer + TrafficDirectionSerializer + SurfaceTypeSerializer
 
   def fetchLatestSuccessfulUpdateDate(): DateTime = {
     // placeholder value as long as fetching this date from db is possible
     DateTime.parse("2022-05-10")
   }
 
-  def listFilesAccordingToDates(since: DateTime, until: DateTime) = {
+  def listFilesAccordingToDates(since: DateTime, until: DateTime): List[String] = {
     def isValidKey(key: String): Boolean = {
       try {
         val keyParts = key.replace(".json", "").split("_")
@@ -128,7 +151,7 @@ class RoadLinkChangeClient {
         val keyUntil = DateTime.parse(keyParts.last)
         !(keySince.isBefore(since) || keyUntil.isAfter(until)) // get no changes before or after the requested period
       } catch {
-        case illegalArgument: IllegalArgumentException =>
+        case _: IllegalArgumentException =>
           logger.error("Key provides no valid dates.")
           false
         case e: Exception =>
@@ -141,7 +164,7 @@ class RoadLinkChangeClient {
     objects.map(_.key()).filter(key => isValidKey(key))
   }
 
-  def fetchChangeSetFromS3(filename: String) = {
+  def fetchChangeSetFromS3(filename: String): String = {
     val s3Object = s3Service.getObjectFromS3(s3Bucket, filename)
     fromInputStream(s3Object).mkString
   }
@@ -152,7 +175,7 @@ class RoadLinkChangeClient {
     try {
       json.extract[Seq[RoadLinkChange]]
     } catch {
-      case e =>
+      case e: Throwable =>
         logger.error(e.getMessage)
         Seq.empty[RoadLinkChange]
     }

@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{Municipality, State, Unknown}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.client.RoadLinkChangeType.{Add, Remove, Replace, Split}
+import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
 import scala.io.Source
 
 class RoadLinkChangeClientSpec extends FunSuite with Matchers {
@@ -33,6 +34,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     addChange.newLinks.head.adminClass should be(State)
     addChange.newLinks.head.municipality should be(49)
     addChange.newLinks.head.trafficDirection should be(BothDirections)
+    addChange.newLinks.head.surfaceType should be(SurfaceType.Paved)
     addChange.replaceInfo should be(Seq.empty)
   }
 
@@ -48,6 +50,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     removeChange.oldLink.get.adminClass should be(Unknown)
     removeChange.oldLink.get.municipality should be(49)
     removeChange.oldLink.get.trafficDirection should be(BothDirections)
+    removeChange.oldLink.get.surfaceType should be(SurfaceType.Paved)
     removeChange.replaceInfo should be(Seq.empty)
   }
 
@@ -63,6 +66,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceChange.oldLink.get.adminClass should be(Municipality)
     replaceChange.oldLink.get.municipality should be(49)
     replaceChange.oldLink.get.trafficDirection should be(BothDirections)
+    replaceChange.oldLink.get.surfaceType should be(SurfaceType.Paved)
 
     replaceChange.newLinks.size should be(1)
     replaceChange.newLinks.head.linkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:2")
@@ -74,6 +78,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     replaceChange.newLinks.head.adminClass should be(Municipality)
     replaceChange.newLinks.head.municipality should be(49)
     replaceChange.newLinks.head.trafficDirection should be(BothDirections)
+    replaceChange.newLinks.head.surfaceType should be(SurfaceType.Paved)
 
     replaceChange.replaceInfo.size should be(1)
     replaceChange.replaceInfo.head.oldLinkId should be("4f8a33d6-a939-4934-847d-d7b10193b7e9:1")
@@ -97,6 +102,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.oldLink.get.adminClass should be(State)
     splitChange.oldLink.get.municipality should be(49)
     splitChange.oldLink.get.trafficDirection should be(TowardsDigitizing)
+    splitChange.oldLink.get.surfaceType should be(SurfaceType.Paved)
 
     splitChange.newLinks.size should be(3)
 
@@ -109,6 +115,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.newLinks.head.adminClass should be(State)
     splitChange.newLinks.head.municipality should be(49)
     splitChange.newLinks.head.trafficDirection should be(AgainstDigitizing)
+    splitChange.newLinks.head.surfaceType should be(SurfaceType.Paved)
 
     splitChange.newLinks(1).linkId should be("d59dd3a9-a94d-4f26-b311-6b9b8361c717:1")
     splitChange.newLinks(1).linkLength should be(86.941)
@@ -119,6 +126,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.newLinks(1).adminClass should be(State)
     splitChange.newLinks(1).municipality should be(49)
     splitChange.newLinks(1).trafficDirection should be(TowardsDigitizing)
+    splitChange.newLinks(1).surfaceType should be(SurfaceType.Paved)
 
     splitChange.newLinks.last.linkId should be("e92c98c9-5a62-4995-a9c0-e40ae0b65747:1")
     splitChange.newLinks.last.linkLength should be(17.432)
@@ -129,6 +137,7 @@ class RoadLinkChangeClientSpec extends FunSuite with Matchers {
     splitChange.newLinks.last.adminClass should be(State)
     splitChange.newLinks.last.municipality should be(49)
     splitChange.newLinks.last.trafficDirection should be(TowardsDigitizing)
+    splitChange.newLinks.last.surfaceType should be(SurfaceType.Paved)
 
     splitChange.replaceInfo.size should be(3)
 
