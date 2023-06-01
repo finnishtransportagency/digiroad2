@@ -665,12 +665,7 @@ class AssetFiller {
     
     val changeSet = changedSet match {
       case Some(change) => change
-      case None => ChangeSet( droppedAssetIds = Set.empty[Long],
-                              expiredAssetIds = Set.empty[Long],
-                              adjustedMValues = Seq.empty[MValueAdjustment],
-                              adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                              adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-                              valueAdjustments = Seq.empty[ValueAdjustment])
+      case None => LinearAssetFiller.emptyChangeSet
     }
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
@@ -706,12 +701,7 @@ class AssetFiller {
 
     val changeSet = changedSet match {
       case Some(change) => change
-      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
-        expiredAssetIds = Set.empty[Long],
-        adjustedMValues = Seq.empty[MValueAdjustment],
-        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-        valueAdjustments = Seq.empty[ValueAdjustment])
+      case None => LinearAssetFiller.emptyChangeSet
     }
     // if links does not have any asset filter it away 
     topology.filter(p => linearAssets.keySet.contains(p.linkId)).foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>

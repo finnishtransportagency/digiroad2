@@ -11,7 +11,6 @@ object LinearAssetFiller {
                        adjustedVVHChanges: Seq[VVHChangesAdjustment],
                        adjustedSideCodes: Seq[SideCodeAdjustment],
                        expiredAssetIds: Set[Long],
-                       replacedAssetIds: Set[Long] = Set(),
                        valueAdjustments: Seq[ValueAdjustment]){
     def isEmpty: Boolean = {
       this.droppedAssetIds.isEmpty &&
@@ -28,7 +27,6 @@ object LinearAssetFiller {
         this.adjustedVVHChanges.filterNot(_.assetId <= 0),
         this.adjustedSideCodes.filterNot(_.assetId <= 0),
         this.expiredAssetIds.filterNot(_ <= 0),
-        this.replacedAssetIds.filterNot(_ <= 0),
         this.valueAdjustments.filterNot(_.asset.id <= 0))
     }
   }
@@ -51,7 +49,6 @@ object LinearAssetFiller {
     a.copy(
       droppedAssetIds = a.droppedAssetIds ++ z.droppedAssetIds,
       expiredAssetIds = (a.expiredAssetIds ++ z.expiredAssetIds),
-      replacedAssetIds = (a.replacedAssetIds ++ z.replacedAssetIds),
       adjustedMValues = (a.adjustedMValues ++ z.adjustedMValues).distinct,
       adjustedVVHChanges = (a.adjustedVVHChanges ++ z.adjustedVVHChanges).distinct,
       adjustedSideCodes = (a.adjustedSideCodes ++ z.adjustedSideCodes).distinct,
