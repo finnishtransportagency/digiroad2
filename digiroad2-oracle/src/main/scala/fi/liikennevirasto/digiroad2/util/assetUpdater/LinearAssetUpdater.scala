@@ -199,7 +199,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     val linkTypes = LinkTypeDao.getExistingValues(newIds.map(_.linkId))
 
     val existingAssets = service.fetchExistingAssetsByLinksIdsString(typeId, oldIds.toSet, deletedLinks.toSet, newTransaction = false)
-
+    //TODO report deleted assets
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
       expiredAssetIds = existingAssets.filter(asset => deletedLinks.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
       adjustedMValues = Seq.empty[MValueAdjustment],
