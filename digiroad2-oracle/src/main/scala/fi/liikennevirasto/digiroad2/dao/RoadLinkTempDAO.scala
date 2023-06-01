@@ -51,7 +51,8 @@ class RoadLinkTempDAO {
   }
 
   def deleteInfoByLinkIds(linkIds: Set[String]): Unit = {
+    val linkIdList = linkIds.map(id => s"'$id'").mkString(",")
     sqlu"""delete from temp_road_address_info
-           where link_id in (#${linkIds.mkString(",")})""".execute
+           where link_id in ($linkIdList)""".execute
   }
 }
