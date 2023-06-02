@@ -31,7 +31,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
         linkSource = LinkGeomSource.NormalLinkInterface,
         verifiedBy = None, verifiedDate = None,
         informationSource = Some(MmlNls))
-      Some(OperationStep(Seq(newAsset), Some(changeSets)))
+      Some(OperationStep(Seq(newAsset), Some(changeSets),Some(change),newLink.linkId,Seq()))
     } else {
       None
     }
@@ -47,15 +47,15 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
           val replace = change.newLinks.find(_.linkId == asset.linkId).get
           if (replace.surfaceType == SurfaceType.None) {
             if (asset.id != 0){
-              OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
+              OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))),Some(change),replace.linkId,Seq(asset))
             } else {
-              reportAssetChanges(Some(asset),None, Seq(change),   OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets)),ChangeTypeReport.Deletion)
+              reportAssetChanges(Some(asset),None, Seq(change),   OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets),Some(change),replace.linkId,Seq(asset)),ChangeTypeReport.Deletion)
             }
           } else {
-            OperationStep(Seq(asset), Some(changeSets))
+            OperationStep(Seq(asset), Some(changeSets),Some(change),replace.linkId,Seq(asset))
           }
-        }).foldLeft(OperationStep(assetsAll,Some(changeSets)))((a, b) => {
-          OperationStep(a.assetsAfter ++ b.assetsAfter, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)))
+        }).foldLeft(OperationStep(assetsAll,Some(changeSets),Some(change)))((a, b) => {
+          OperationStep(a.assetsAfter ++ b.assetsAfter, Some(LinearAssetFiller.combineChangeSets(a.changeInfo.get, b.changeInfo.get)),a.roadLinkChange,b.newLinkId,b.assetsBefore)
         })
         Some(expiredPavement)
       case _ => None
