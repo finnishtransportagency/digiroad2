@@ -1991,6 +1991,8 @@ Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin valtakunnallisella ID:
 
 jossa numerosarja 164599 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustietoikkuna (3) aukeaa sivun oikealle puolelle. 
 
+Pysäkkejä voi hakea myös hakukentästä syöttämällä hakukenttään valtakunnallisen ID:n. Jos haluaa etsiä pysäkkiä pysäkin matkustajatunnuksen perusteella (esim. H2234), tulee hakukenttään kirjoittaa aluksi "mt" ja sitten pysäkin matkustajatunnus (esim. mt H2234).
+
 ![Pys&auml;kkien haku](pysäkit_2_2.png)
 
 _Joukkoliikenteen pys&auml;kkien haku._
