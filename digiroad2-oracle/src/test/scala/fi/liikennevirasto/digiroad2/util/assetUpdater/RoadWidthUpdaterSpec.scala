@@ -11,13 +11,13 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, Geometry
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
 
 
-class RoadWidthUpdaterSpec extends FunSuite with Matchers {
+class RoadWidthUpdaterSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -41,6 +41,10 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
   val roadLinkChangeClient = new RoadLinkChangeClient
 
   lazy val source = scala.io.Source.fromFile("digiroad2-oracle/src/test/resources/smallChangeSet.json").mkString
+
+  before {
+    TestRoadWidthUpdater.resetReport()
+  }
 
   def generateGeometry(startPoint: Double, numberPoint: Long): (List[Point], Double) = {
     val points = new ListBuffer[Point]
@@ -163,6 +167,15 @@ class RoadWidthUpdaterSpec extends FunSuite with Matchers {
       sorted.head.endMeasure should be(8)
       assetsAfter.head.value.isEmpty should be(false)
       assetsAfter.head.value.get.equals(valueDynamic2)
+
+     /* val oldIds = Seq(id1)
+      val assets = TestRoadWidthUpdater.changesForReport.map(a => PairAsset(a.before, a.after.headOption))
+      assets.size should be(1)
+      TestRoadWidthUpdater.changesForReport.head.changeType should be(ChangeTypeReport.PropertyChange)
+      assets.map(a => {
+        a.oldAsset.isDefined should be(true)
+        oldIds.contains(a.oldAsset.get.assetId) should be(true)
+      })*/
     }
   }
 
