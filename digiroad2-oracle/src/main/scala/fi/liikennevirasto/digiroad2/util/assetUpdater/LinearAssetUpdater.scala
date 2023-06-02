@@ -126,7 +126,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       asset.geomModifiedDate, asset.linkSource, asset.verifiedBy, asset.verifiedDate, asset.informationSource)
   }
   //TODO change newAssets: Seq[PersistedLinearAsset] to newAssets: Option[PersistedLinearAsset] 
-  def reportAssetChanges(oldAssets: Option[PersistedLinearAsset], newAssets: Seq[PersistedLinearAsset], roadLinkChanges: Seq[RoadLinkChange], operationSteps: OperationStep, rowType: ChangeType): OperationStep = {
+  def reportAssetChanges(oldAssets: Option[PersistedLinearAsset], newAssets: Option[PersistedLinearAsset], roadLinkChanges: Seq[RoadLinkChange], operationSteps: OperationStep, rowType: ChangeType): OperationStep = {
     //val newAssets = operationSteps.assetsAfter
 
     if (oldAssets.isEmpty && newAssets.isEmpty)
@@ -156,7 +156,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       Asset(asset.id, values, Some(newLink.municipality), Some(assetGeometry), Some(linearReference))
     })
 
-    changesForReport.append(ChangedAsset(linkId, assetId, rowType, relevantRoadLinkChange.changeType, before, after))
+    changesForReport.append(ChangedAsset(linkId, assetId, rowType, relevantRoadLinkChange.changeType, before, after.toSeq))
     operationSteps
   }
 
@@ -222,7 +222,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
       val defaultResult = change.changeType match {
         case RoadLinkChangeType.Add =>
           val operation = operationForNewLink(change, assetsAll, changeSets).getOrElse(initStep).copy(roadLinkChange = Some(change))
-          Some(reportAssetChanges(None, operation.assetsAfter, Seq(change), operation, ChangeTypeReport.Creation))
+          Some(reportAssetChanges(None, operation.assetsAfter.headOption, Seq(change), operation, ChangeTypeReport.Creation))
         case RoadLinkChangeType.Remove => additionalRemoveOperation(change, assetsAll, changeSets)
         case _ =>
           val assets = assetsAll.filter(_.linkId == change.oldLink.get.linkId)
@@ -271,7 +271,7 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
           assets.find(_.id == p.newAsset.get.id)
         }
       }
-      Some(reportAssetChanges(fromWhichSplit, Seq(p.newAsset.get), Seq(change), operation, ChangeTypeReport.Divided))
+      Some(reportAssetChanges(fromWhichSplit, p.newAsset, Seq(change), operation, ChangeTypeReport.Divided))
     }).foldLeft(Some(initStep))(mergerOperations)
   }
   def splitReplacement(changes: Seq[RoadLinkChange]): (Map[String, Seq[RoadLinkChange]], Map[String, Seq[RoadLinkChange]]) = {
@@ -296,8 +296,10 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
     oldAssets.flatMap(asset => {
       val change = extractChanges.find(_.oldLink.get.linkId == asset.linkId).get
       change.replaceInfo.flatMap(createPair(_, adjustedList, oldAssets, change.newLinks.head.linkLength, nonMerge))
-    }).distinct.filter(_.newAsset.isDefined).map(a => reportAssetChanges(a.oldAsset, Seq(a.newAsset.get), extractChanges, adjusted, ChangeTypeReport.Replaced)).headOption
+    }).distinct.filter(_.newAsset.isDefined).map(a => reportAssetChanges(a.oldAsset, a.newAsset, extractChanges, adjusted, ChangeTypeReport.Replaced)).headOption
   }
+  
+  //TODO some how limit creation of duplicated row so we do not need to run distinct and goes over whole list
   private def createPair(info: ReplaceInfo, updatedAssets: Seq[PersistedLinearAsset], oldAssets: Seq[PersistedLinearAsset], wholeLinkLenth: Double, nonMerge: Boolean = false) = {
     val oldAssetsSet = oldAssets.filter(_.linkId == info.oldLinkId).filter(fallInReplaceInfoOld(info, _)).map(Some(_))
     val newAssetsSet = if (nonMerge) {

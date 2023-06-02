@@ -52,14 +52,14 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
           val roadLink = roadLinkService.getRoadLinksAndComplementariesByLinkIds(Set(replace), newTransaction = false).head
           if (roadLink.isNotPaved) {
             if (asset.id !=0){
-              reportAssetChanges(Some(asset),Seq(), Seq(change), 
+              reportAssetChanges(Some(asset),None, Seq(change), 
                 OperationStep(Seq(),
                 Some(changeSets.copy(
                   expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)
                 ))),ChangeTypeReport.Deletion)
               
             } else {
-              reportAssetChanges(Some(asset),Seq(), Seq(change),   OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets)),ChangeTypeReport.Deletion)
+              reportAssetChanges(Some(asset),None, Seq(change),   OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets)),ChangeTypeReport.Deletion)
             }
           } else {
             OperationStep(Seq(asset), Some(changeSets))
