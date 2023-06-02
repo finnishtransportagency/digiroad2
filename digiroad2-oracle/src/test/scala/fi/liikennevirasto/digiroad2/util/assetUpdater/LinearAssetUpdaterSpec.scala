@@ -1286,7 +1286,7 @@ class LinearAssetUpdaterSpec extends FunSuite with BeforeAndAfter with Matchers 
       TestLinearAssetUpdater.changesForReport.groupBy(_.changeType).find(_._1 == ChangeTypeReport.Deletion).get._2.size should be(1)
     }
   }
-  //TODO report when we drop side codes
+  
   test("case 10.3 each sides has two value and mirroring, case 4 ") {
     val linkId = generateRandomLinkId()
     val geometry = generateGeometry(0, 5) //4
