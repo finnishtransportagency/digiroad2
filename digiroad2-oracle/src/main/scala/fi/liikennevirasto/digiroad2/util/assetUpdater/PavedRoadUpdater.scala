@@ -47,11 +47,7 @@ class PavedRoadUpdater(service: PavedRoadService) extends DynamicLinearAssetUpda
           val replace = change.newLinks.find(_.linkId == asset.linkId).get
           if (replace.surfaceType == SurfaceType.None) {
             if (asset.id != 0){
-              reportAssetChanges(Some(asset),None, Seq(change), 
-                OperationStep(Seq(), Some(changeSets.copy(
-                  expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id)
-                ))),ChangeTypeReport.Deletion)
-              
+              OperationStep(Seq(), Some(changeSets.copy(expiredAssetIds = changeSets.expiredAssetIds ++ Set(asset.id))))
             } else {
               reportAssetChanges(Some(asset),None, Seq(change),   OperationStep(Seq(asset.copy(id = removePart)), Some(changeSets)),ChangeTypeReport.Deletion)
             }
