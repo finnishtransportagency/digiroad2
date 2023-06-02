@@ -280,12 +280,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
   private def handleSplits(typeId: Int, convertedLink: Seq[RoadLinkForFillTopology], changeSets: ChangeSet,
                            initStep: OperationStep, change: RoadLinkChange, assets: Seq[PersistedLinearAsset]): Option[OperationStep] = {
     val operation = operationForSplit(change, assets, changeSets).map(adjustAssets(typeId, convertedLink, _)).get
-    operation.assetsAfter.flatMap(a => {
+    val pairs = operation.assetsAfter.flatMap(a => {
       val info = operation.roadLinkChange.get.replaceInfo.find(_.newLinkId == a.linkId).get
       createPairForSplit(info, operation.assetsAfter
         .filter(_.linkId == info.newLinkId), assets.
         filter(_.linkId == info.oldLinkId))
-    }).distinct.filter(_.newAsset.isDefined).map(p => {
+    }).distinct
+    pairs.filter(_.newAsset.isDefined).map(p => {
       val fromWhichSplit = if (p.oldAsset.isDefined) p.oldAsset else {
         if (p.newAsset.get.id == 0 && assets.size == 1) {
           assets.headOption
@@ -315,12 +316,13 @@ class LinearAssetUpdater(service: LinearAssetOperations) {
 
     val adjustedList = adjusted.assetsAfter.sortBy(_.endMeasure)
     val oldAssets = assetsAll.filter(a => oldLinks.contains(a.linkId)).sortBy(_.endMeasure)
-    oldAssets.flatMap(asset => {
+    val pairs=oldAssets.flatMap(asset => {
       val change = extractChanges.find(_.oldLink.get.linkId == asset.linkId).get
       change.replaceInfo.flatMap(a => {
         if (nonMerge) createPair(a, adjustedList, oldAssets) else createPairMerge(a, adjustedList, oldAssets, change.newLinks.head.linkLength)
       })
-    }).distinct.filter(_.newAsset.isDefined).map(a => reportAssetChanges(a.oldAsset, a.newAsset, extractChanges, adjusted, ChangeTypeReport.Replaced)).headOption
+    }).distinct
+    pairs.filter(_.newAsset.isDefined).map(a => reportAssetChanges(a.oldAsset, a.newAsset, extractChanges, adjusted, ChangeTypeReport.Replaced)).headOption
   }
 
   //TODO somehow limit creation of duplicated row so we do not need to run distinct and goes over whole list or find better implementation
