@@ -11,7 +11,7 @@ import org.json4s.JsonAST.JString
 import org.json4s.jackson.parseJson
 import org.json4s.{CustomSerializer, _}
 import org.postgis.PGgeometry
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
@@ -44,7 +44,9 @@ class RoadLinkChangeClient {
   lazy val awsService = new AwsService
   lazy val s3Service: awsService.S3.type = awsService.S3
   lazy val s3Bucket: String = Digiroad2Properties.roadLinkChangeS3BucketName
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
   private def lineStringToPoints(lineString: String): List[Point] = {
     val geometry = PGgeometry.geomFromString(lineString)
@@ -144,29 +146,33 @@ class RoadLinkChangeClient {
   }
 
   def listFilesAccordingToDates(since: DateTime, until: DateTime): List[String] = {
-    def isValidKey(key: String): Boolean = {
+    case class ChangeSetId(key: String, since: DateTime, until: DateTime)
+
+    def isValidKey(key: String): Option[ChangeSetId] = {
       try {
         val keyParts = key.replace(".json", "").split("_")
         val keySince = DateTime.parse(keyParts.head)
         val keyUntil = DateTime.parse(keyParts.last)
-        !(keySince.isBefore(since) || keyUntil.isAfter(until)) // get no changes before or after the requested period
+        if (!(keySince.isBefore(since) || keyUntil.isAfter(until))) {
+          Some(ChangeSetId(key, keySince, keyUntil))
+        } else None
       } catch {
         case _: IllegalArgumentException =>
-          logger.error("Key provides no valid dates.")
-          false
-        case e: Exception =>
+          logger.error(s"Key ($key) provides no valid dates.")
+          None
+        case e: Throwable =>
           logger.error(e.getMessage)
-          false
+          None
       }
     }
 
-    val objects = s3Service.listObjects(s3Bucket).asScala.toList
-    objects.map(_.key()).filter(key => isValidKey(key))
+    val objects = s3Service.listObjects(s3Bucket)
+    val sortedObjects = objects.flatMap(s3Object => isValidKey(s3Object.key())).sortBy(_.since)
+    sortedObjects.map(_.key)
   }
 
   def fetchChangeSetFromS3(filename: String): String = {
-    val s3Object = s3Service.getObjectFromS3(s3Bucket, filename)
-    fromInputStream(s3Object).mkString
+    s3Service.getObjectFromS3(s3Bucket, filename)
   }
 
 
