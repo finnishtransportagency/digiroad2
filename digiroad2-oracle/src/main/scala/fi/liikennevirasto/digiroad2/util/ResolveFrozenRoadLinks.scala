@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -12,6 +12,10 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.Try
+
+case class RoadAddressTEMP(linkId: String, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long,
+                           startMValue: Double, endMValue: Double, geom: Seq[Point] = Seq(), sideCode: Option[SideCode] = None,
+                           municipalityCode: Option[Int] = None, createdDate: Option[String] = None)
 
 case class RoadAddressTEMPwithPoint(firstP: Point, lastP: Point, roadAddress: RoadAddressTEMP)
 
@@ -54,17 +58,14 @@ trait ResolvingFrozenRoadLinks {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def getSideCode(adjacentOrder: Option[RoadAddressTEMPwithPoint], adjacentReverse: Option[RoadAddressTEMPwithPoint]): Option[SideCode] = {
-    if (adjacentOrder.nonEmpty && adjacentOrder.head.roadAddress.sideCode.nonEmpty) {
-      adjacentOrder.head.roadAddress.sideCode
-    } else if (adjacentReverse.nonEmpty && adjacentReverse.head.roadAddress.sideCode.nonEmpty) {
-      Some(SideCode.switch(adjacentReverse.head.roadAddress.sideCode.head))
-    } else
-      None
+  def calculateSideCodeUsingEndPointAddrs(addrAtStart: RoadAddress, addrAtEnd: RoadAddress): SideCode = {
+    if(addrAtStart.addrM < addrAtEnd.addrM) SideCode.TowardsDigitizing
+    else if (addrAtStart.addrM > addrAtEnd.addrM) SideCode.AgainstDigitizing
+    else SideCode.Unknown
   }
 
   // Compare temp address to digitizing direction start adjacent link
-  def getTrackAndSideCodeFirst(tempAddressToCalculate: RoadAddressTEMPwithPoint, viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  def calculateTrackUsingFirstPoint(tempAddressToCalculate: RoadAddressTEMPwithPoint, viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
     val adjacentOrder = viiteAddressesWithPoints.filter { address =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.firstP, address.lastP)
     }
@@ -78,41 +79,31 @@ trait ResolvingFrozenRoadLinks {
     }
     val adjacents = adjacentOrder ++ adjacentReverse
 
-    val trackAndSideInfo = (adjacents.size, frozenAdjacents.size) match {
+    val tempAddressTrack = (adjacents.size, frozenAdjacents.size) match {
       case (2, 0) =>
-        val track: Option[Track] =
           if (adjacents.exists(_.roadAddress.track == Track.RightSide) && adjacents.exists(_.roadAddress.track == Track.LeftSide))
             Some(Track.Combined)
           else if (adjacents.exists(_.roadAddress.track == Track.Combined) && adjacents.exists(_.roadAddress.track == Track.LeftSide))
             Some(Track.RightSide)
           else
             Some(Track.LeftSide)
-
-        (track, getSideCode(adjacentOrder.headOption, adjacentReverse.headOption))
-
       case (1, 0) =>
-        val track = Some(adjacents.head.roadAddress.track)
-
-        (track, getSideCode(adjacentOrder.headOption, adjacentReverse.headOption))
-
+        Some(adjacents.head.roadAddress.track)
       case _ =>
-        (None, None)
+        None
     }
 
-    trackAndSideInfo match {
-      case (Some(track), Some(sideCode)) =>
-        Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track, sideCode = Some(sideCode))))
-
-      case (_, Some(sideCode)) =>
-        Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(sideCode = Some(sideCode))))
+    tempAddressTrack match {
+      case Some(track) =>
+        Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
 
       case _ => Seq()
     }
   }
 
   // Compare temp address to digitizing direction end adjacent link
-  def getTrackAndSideCodeLast(tempAddressToCalculate: RoadAddressTEMPwithPoint, viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint],
-                              tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  def calculateTrackUsingLastPoint(tempAddressToCalculate: RoadAddressTEMPwithPoint, viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint],
+                                   tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
 
     val adjacentOrder = viiteAddressesWithPoints.filter { address =>
       GeometryUtils.areAdjacent(tempAddressToCalculate.lastP, address.firstP)
@@ -128,32 +119,23 @@ trait ResolvingFrozenRoadLinks {
 
     val adjacents = adjacentOrder ++ adjacentReverse
 
-    val trackAndSideInfo = (adjacents.size, frozenAdjacents.size) match {
+    val tempAddressTrack = (adjacents.size, frozenAdjacents.size) match {
       case (2, 1) =>
-        val track = if (adjacents.exists(_.roadAddress.track == Track.RightSide) && adjacents.exists(_.roadAddress.track == Track.LeftSide))
+        if (adjacents.exists(_.roadAddress.track == Track.RightSide) && adjacents.exists(_.roadAddress.track == Track.LeftSide))
           Some(Track.Combined)
         else if (adjacents.exists(_.roadAddress.track == Track.Combined) && adjacents.exists(_.roadAddress.track == Track.LeftSide))
           Some(Track.RightSide)
         else
           Some(Track.LeftSide)
-
-        (track, getSideCode(adjacentOrder.headOption, adjacentReverse.headOption))
-
       case (1, 1) =>
-        val track = Some(adjacents.head.roadAddress.track)
-
-        (track, getSideCode(adjacentOrder.headOption, adjacentReverse.headOption))
+        Some(adjacents.head.roadAddress.track)
       case _ =>
-        (None, None)
+        None
     }
 
-    trackAndSideInfo match {
-      case (Some(track), Some(sideCode)) =>
-        Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track, sideCode = Some(sideCode))))
-
-      case (_, Some(sideCode)) =>
-        Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(sideCode = Some(sideCode))))
-
+    tempAddressTrack match {
+      case Some(track) =>
+        Seq(tempAddressToCalculate.copy(roadAddress = tempAddressToCalculate.roadAddress.copy(track = track)))
       case _ => Seq()
     }
   }
@@ -242,7 +224,7 @@ trait ResolvingFrozenRoadLinks {
         } else
           None
 
-      recalculateTrackAndSideCode(mappedAddresses, frozenAddress.toSeq, Seq())
+      recalculateTrack(mappedAddresses, frozenAddress.toSeq, Seq())
 
     }
   }
@@ -297,7 +279,22 @@ trait ResolvingFrozenRoadLinks {
           val roadPartNumber = Try(roadLinkMissingAddress.roadPartNumber.map(_.toInt).head).toOption
 
           // Fetch Road Address info for road link end points from VKM
-          val vkmAddresses = vkmClient.coordsToAddresses(Seq(first, last), roadNumber, roadPartNumber, includePedestrian = Some(true))
+          val vkmAddressAtRoadLinkStart = try {
+            Some(vkmClient.coordToAddress(first, roadNumber, roadPartNumber, includePedestrian = Some(true)))
+          } catch {
+            case roadAddressException: RoadAddressException =>
+              logger.error(roadAddressException.getMessage)
+              None
+          }
+          val vkmAddressAtRoadLinkEnd = try {
+            Some(vkmClient.coordToAddress(last, roadNumber, roadPartNumber, includePedestrian = Some(true)))
+          } catch {
+            case roadAddressException: RoadAddressException =>
+              logger.error(roadAddressException.getMessage)
+              None
+          }
+
+          val vkmAddresses = Seq(vkmAddressAtRoadLinkStart, vkmAddressAtRoadLinkEnd).flatten
           if (vkmAddresses.isEmpty || (vkmAddresses.nonEmpty && vkmAddresses.size != 2)) {
             logger.error("VKM did not return address for both end points of linkID: " + roadLinkMissingAddress.linkId)
             Seq()
@@ -311,9 +308,10 @@ trait ResolvingFrozenRoadLinks {
               val orderedAddress = vkmAddresses.sortBy(_.addrM)
               // If start and end point road address Track values are not equal, Track needs to be calculated later
               val track = if (orderedAddress.head.track == orderedAddress.last.track) orderedAddress.head.track else Track.Unknown
+              val tempRoadAddressSideCode = calculateSideCodeUsingEndPointAddrs(vkmAddressAtRoadLinkStart.get, vkmAddressAtRoadLinkEnd.get)
               Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(roadLinkMissingAddress.linkId, orderedAddress.head.road,
                 orderedAddress.head.roadPart, track, orderedAddress.head.addrM, orderedAddress.last.addrM,
-                0, GeometryUtils.geometryLength(roadLinkMissingAddress.geometry), roadLinkMissingAddress.geometry, municipalityCode = Some(roadLinkMissingAddress.municipalityCode))))
+                0, GeometryUtils.geometryLength(roadLinkMissingAddress.geometry), roadLinkMissingAddress.geometry, Some(tempRoadAddressSideCode), municipalityCode = Some(roadLinkMissingAddress.municipalityCode))))
             }
           }
         } catch {
@@ -323,38 +321,36 @@ trait ResolvingFrozenRoadLinks {
         }
       }
 
-      recalculateTrackAndSideCode(viiteAddressesWithPoints, tempAddresses, Seq())
-
+      recalculateTrack(viiteAddressesWithPoints, tempAddresses, Seq())
     }.toSeq
-
 
     (newAddress, stateRoadLinksMissingAddress.filterNot(frozen => newAddress.map(_.roadAddress.linkId).contains(frozen.linkId)))
   }
 
-  def recalculateTrackAndSideCode(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint], result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
-
-    val newResult = calculateTrackAndSideCode(viiteAddressesWithPoints, tempAddresses).filterNot(x => x.roadAddress.track == Track.Unknown || x.roadAddress.sideCode.isEmpty)
+  def recalculateTrack(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint],
+                       result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+    val newResult = calculateTrack(viiteAddressesWithPoints, tempAddresses).filterNot(x => x.roadAddress.track == Track.Unknown)
 
     if (newResult.isEmpty) {
       result
     } else {
       val newResultLinkIds = newResult.map(_.roadAddress.linkId)
-      recalculateTrackAndSideCode(newResult ++ viiteAddressesWithPoints, tempAddresses.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
+      recalculateTrack(newResult ++ viiteAddressesWithPoints, tempAddresses.filterNot(x => newResultLinkIds.contains(x.roadAddress.linkId)), result ++ newResult)
     }
   }
 
-  // Try to calculate road address Track and sideCode using adjacent road address info
-  def calculateTrackAndSideCode(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  // Try to calculate temp road address Track using adjacent road address info
+  def calculateTrack(viiteAddressesWithPoints: Seq[RoadAddressTEMPwithPoint], tempAddresses: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
 
     tempAddresses.flatMap { tempAddressToCalculate =>
       val missingFrozen = tempAddresses.filterNot(x => x.roadAddress.linkId == tempAddressToCalculate.roadAddress.linkId)
 
-      val frozenAddrFirst = getTrackAndSideCodeFirst(tempAddressToCalculate, viiteAddressesWithPoints, missingFrozen)
+      val frozenAddrFirst = calculateTrackUsingFirstPoint(tempAddressToCalculate, viiteAddressesWithPoints, missingFrozen)
 
       if (frozenAddrFirst.nonEmpty) {
         frozenAddrFirst
       } else
-        getTrackAndSideCodeLast(tempAddressToCalculate, viiteAddressesWithPoints, tempAddresses)
+        calculateTrackUsingLastPoint(tempAddressToCalculate, viiteAddressesWithPoints, tempAddresses)
     }
   }
 
