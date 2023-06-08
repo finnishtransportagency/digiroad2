@@ -28,13 +28,14 @@ class PointAssetUpdater(service: PointAssetOperations) {
     changeSets.foreach(changeSet => {
       logger.info(s"Started processing change set ${changeSet.key}")
       PostGISDatabase.withDynTransaction {
-        updateByRoadLinks(typeId, changeSet.changes)
+        updateByRoadLinks(typeId, changeSet)
         Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
       }
     })
   }
 
-  protected def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]): Unit = {
+  protected def updateByRoadLinks(typeId: Int, changeSet: RoadLinkChangeSet): Unit = {
+    val changes = changeSet.changes
     val linkChanges = changes.filterNot(_.changeType == RoadLinkChangeType.Add)
     val changedLinkIds = linkChanges.flatMap(change => change.oldLink).map(_.linkId).toSet
 
@@ -54,9 +55,9 @@ class PointAssetUpdater(service: PointAssetOperations) {
       }
     })
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
-    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBody, contentRowCount)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
-    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBodyWithGeom, contentRowCount, true)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, changeSet.targetDate, reportBodyWithGeom, contentRowCount, true)
   }
 
   def reportChange(oldPersistedAsset: PersistedPointAsset, newPersistedAsset: PersistedPointAsset,

@@ -287,7 +287,7 @@ class RoadLinkPropertyUpdater {
         val deletedProperties = removePropertiesFromOldLinks(removeChanges ++ otherChanges)
         val changeReport = ChangeReport(RoadLinkProperties.typeId, transferredProperties ++ createdProperties ++ deletedProperties)
         val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-        ChangeReporter.saveReportToS3("roadLinkProperties", reportBody, contentRowCount)
+        ChangeReporter.saveReportToS3("roadLinkProperties", changeSet.targetDate, reportBody, contentRowCount)
         Queries.updateLatestSuccessfulSamuutus(RoadLinkProperties.typeId, changeSet.targetDate)
       }
     })

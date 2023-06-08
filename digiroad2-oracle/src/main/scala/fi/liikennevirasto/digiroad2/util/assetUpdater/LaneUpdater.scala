@@ -217,17 +217,17 @@ object LaneUpdater {
         val changeSet = handleChanges(roadLinkChanges, workListChanges)
         val changedLanes = updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
         val changeReport = ChangeReport(Lanes.typeId, changedLanes)
-        generateAndSaveReport(changeReport)
+        generateAndSaveReport(changeReport, roadLinkChangeSet.targetDate)
         Queries.updateLatestSuccessfulSamuutus(Lanes.typeId, roadLinkChangeSet.targetDate)
       }
     })
   }
 
-  def generateAndSaveReport(changeReport: ChangeReport): Unit = {
+  def generateAndSaveReport(changeReport: ChangeReport, processedTo: DateTime): Unit = {
     val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-    ChangeReporter.saveReportToS3(Lanes.label, reportBody, contentRowCount)
+    ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBody, contentRowCount)
     val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(changeReport, withGeometry = true)
-    ChangeReporter.saveReportToS3(Lanes.label, reportBodyWithGeom, contentRowCount, hasGeometry = true)
+    ChangeReporter.saveReportToS3(Lanes.label, processedTo, reportBodyWithGeom, contentRowCount, hasGeometry = true)
   }
 
   def updateTrafficDirectionChangesLaneWorkList(roadLinkChanges: Seq[RoadLinkChange]): Unit = {

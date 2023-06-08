@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.{FloatingReason, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, Formats}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{PrintWriter, StringWriter}
 import java.nio.file.{Files, Paths}
@@ -38,7 +38,7 @@ sealed case class Asset(assetId: Long, values: String, municipalityCode: Option[
                         linearReference: Option[LinearReference], isPointAsset: Boolean = false, floatingReason: Option[FloatingReason] = None) {
 
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
   def geometryToString: String = {
     if (geometry.nonEmpty) {
       if (!isPointAsset) {
@@ -144,7 +144,7 @@ object ChangeReporter {
   lazy val awsService = new AwsService
   lazy val s3Service: awsService.S3.type = awsService.S3
   lazy val s3Bucket: String = Digiroad2Properties.samuutusReportsBucketName
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
   implicit lazy val serializationFormats: Formats = DefaultFormats
   def directLink: String = Digiroad2Properties.feedbackAssetsEndPoint
   val localReportDirectoryName = "samuutus-reports-local-test"
@@ -152,7 +152,7 @@ object ChangeReporter {
 
 
   private def getCSVRowForRoadLinkPropertyChanges(linkId: String, changeType: Int, changes: Seq[ReportedChange]) = {
-    def getUrl(linkId: String) = {
+    def getUrl(linkId: String): String = {
       if (linkId != null) s"""$directLink#linkProperty/${linkId}""" else null
     }
 
@@ -265,7 +265,7 @@ object ChangeReporter {
         }
       }
     } catch {
-      case e =>
+      case e: Throwable =>
         logger.error(s"csv conversion failed due to ${e.getMessage}")
         Seq(Seq())
     }
@@ -302,13 +302,13 @@ object ChangeReporter {
         }
       }
     } catch {
-      case e =>
+      case e: Throwable =>
         logger.error(s"csv conversion failed due to ${e.getMessage}")
         Seq(Seq())
     }
   }
 
-  def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false) = {
+  def generateCSV(changeReport: ChangeReport, withGeometry: Boolean = false): (String, Int) = {
     val stringWriter = new StringWriter()
     val csvWriter = new CSVWriter(stringWriter)
     csvWriter.writeRow(Seq("sep=,"))
@@ -368,19 +368,22 @@ object ChangeReporter {
     (stringWriter.toString, contentRows)
   }
 
-  def saveReportToS3(assetName: String, body: String, contentRowCount: Int, hasGeometry: Boolean = false) = {
+  def saveReportToS3(assetName: String, changesProcessedUntil: DateTime, body: String, contentRowCount: Int,
+                     hasGeometry: Boolean = false): Unit = {
     val date = DateTime.now().toString("YYYY-MM-dd")
+    val untilDate = changesProcessedUntil.toString("YYYY-MM-dd")
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
-    val path = s"${date}/${assetName}_${date}_${contentRowCount}content_rows${withGeometry}.csv"
+    val path = s"$date/${assetName}_${untilDate}_${contentRowCount}content_rows$withGeometry.csv"
     s3Service.saveFileToS3(s3Bucket, path, body, "csv")
   }
 
   // Used for testing CSV report. Saves file locally to directory 'samuutus-reports-local-test' created in project root directory
-  def saveReportToLocalFile(assetName: String, body: String, contentRowCount: Int, hasGeometry: Boolean = false): Unit = {
-    val date = DateTime.now().toString("YYYY-MM-dd")
+  def saveReportToLocalFile(assetName: String, changesProcessedUntil: DateTime, body: String, contentRowCount: Int,
+                            hasGeometry: Boolean = false): Unit = {
+    val untilDate = changesProcessedUntil.toString("YYYY-MM-dd")
     val withGeometry = if (hasGeometry) "_withGeometry" else ""
     Files.createDirectories(Paths.get(localReportDirectoryName))
-    val path = s"$localReportDirectoryName/${assetName}_${date}_${contentRowCount}content_rows${withGeometry}.csv"
+    val path = s"$localReportDirectoryName/${assetName}_${untilDate}_${contentRowCount}content_rows$withGeometry.csv"
 
     new PrintWriter(path) {
       write(body)
