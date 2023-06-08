@@ -2,7 +2,9 @@ package fi.liikennevirasto.digiroad2.client
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.SurfaceType
+import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.AwsService
 import fi.liikennevirasto.digiroad2.util.Digiroad2Properties
 import org.joda.time.DateTime
@@ -13,9 +15,7 @@ import org.json4s.{CustomSerializer, _}
 import org.postgis.PGgeometry
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
-import scala.io.Source.fromInputStream
 
 trait RoadLinkChangeType {
   def value: String
@@ -39,6 +39,8 @@ case class RoadLinkInfo(linkId: String, linkLength: Double, geometry: List[Point
                         surfaceType: SurfaceType = SurfaceType.Unknown)
 case class ReplaceInfo(oldLinkId: String, newLinkId: String, oldFromMValue: Double, oldToMValue: Double, newFromMValue: Double, newToMValue: Double, digitizationChange: Boolean)
 case class RoadLinkChange(changeType: RoadLinkChangeType, oldLink: Option[RoadLinkInfo], newLinks: Seq[RoadLinkInfo], replaceInfo: Seq[ReplaceInfo])
+case class ChangeSetId(key: String, statusDate: DateTime, targetDate: DateTime)
+case class RoadLinkChangeSet(key: String, statusDate: DateTime, targetDate: DateTime, changes: Seq[RoadLinkChange])
 
 class RoadLinkChangeClient {
   lazy val awsService = new AwsService
@@ -145,16 +147,14 @@ class RoadLinkChangeClient {
     DateTime.parse("2022-05-10")
   }
 
-  def listFilesAccordingToDates(since: DateTime, until: DateTime): List[String] = {
-    case class ChangeSetId(key: String, since: DateTime, until: DateTime)
-
+  def listFilesAccordingToDates(since: DateTime): List[ChangeSetId] = {
     def isValidKey(key: String): Option[ChangeSetId] = {
       try {
         val keyParts = key.replace(".json", "").split("_")
-        val keySince = DateTime.parse(keyParts.head)
-        val keyUntil = DateTime.parse(keyParts.last)
-        if (!(keySince.isBefore(since) || keyUntil.isAfter(until))) {
-          Some(ChangeSetId(key, keySince, keyUntil))
+        val keyStatusDate = DateTime.parse(keyParts.head)
+        val keyTargetDate = DateTime.parse(keyParts.last)
+        if (!(keyStatusDate.isBefore(since) || keyTargetDate.isAfterNow)) {
+          Some(ChangeSetId(key, keyStatusDate, keyTargetDate))
         } else None
       } catch {
         case _: IllegalArgumentException =>
@@ -167,8 +167,7 @@ class RoadLinkChangeClient {
     }
 
     val objects = s3Service.listObjects(s3Bucket)
-    val sortedObjects = objects.flatMap(s3Object => isValidKey(s3Object.key())).sortBy(_.since)
-    sortedObjects.map(_.key)
+    objects.flatMap(s3Object => isValidKey(s3Object.key())).sortBy(_.statusDate)
   }
 
   def fetchChangeSetFromS3(filename: String): String = {
@@ -187,9 +186,11 @@ class RoadLinkChangeClient {
     }
   }
 
-  def getRoadLinkChanges(since: DateTime = fetchLatestSuccessfulUpdateDate(), until: DateTime = DateTime.now()): Seq[RoadLinkChange] = {
-    val keys = listFilesAccordingToDates(since, until)
-    val changes = keys.map(key => fetchChangeSetFromS3(key))
-    changes.map(change => convertToRoadLinkChange(change)).flatten
+  def getRoadLinkChanges(since: DateTime = fetchLatestSuccessfulUpdateDate()): Seq[RoadLinkChangeSet] = {
+    val keys = listFilesAccordingToDates(since)
+    keys.map(key => {
+      val changes = fetchChangeSetFromS3(key.key)
+      RoadLinkChangeSet(key.key, key.statusDate, key.targetDate, convertToRoadLinkChange(changes))
+    })
   }
 }

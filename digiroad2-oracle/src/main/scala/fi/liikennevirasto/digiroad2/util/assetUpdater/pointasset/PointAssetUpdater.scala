@@ -10,49 +10,57 @@ import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.json4s.JsonDSL._
 import org.json4s.jackson.compactJson
+import org.slf4j.{Logger, LoggerFactory}
 
 class PointAssetUpdater(service: PointAssetOperations) {
   val roadLinkChangeClient = new RoadLinkChangeClient
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+
   val MaxDistanceDiffAllowed = 3.0 // Meters
 
   def adjustValidityDirection(assetDirection: Option[Int], digitizationChange: Boolean): Option[Int] = None
   def calculateBearing(point: Point, geometry: Seq[Point]): Option[Int] = None
 
-  def getRoadLinkChanges(typeId: Int): Seq[RoadLinkChange] = {
-    val latestSuccess = Queries.getLatestSuccessfulSamuutus(typeId)
-    roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
+  def updatePointAssets(typeId: Int): Unit = {
+    val latestSuccess = PostGISDatabase.withDynSession ( Queries.getLatestSuccessfulSamuutus(typeId) )
+    val changeSets = roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
+
+    changeSets.foreach(changeSet => {
+      logger.info(s"Started processing change set ${changeSet.key}")
+      PostGISDatabase.withDynTransaction {
+        updateByRoadLinks(typeId, changeSet.changes)
+        Queries.updateLatestSuccessfulSamuutus(typeId, changeSet.targetDate)
+      }
+    })
   }
 
-  def updatePointAssets(typeId: Int): Unit = {
-    PostGISDatabase.withDynTransaction {
-      val linkChanges = getRoadLinkChanges(typeId).filterNot(_.changeType == RoadLinkChangeType.Add)
-      val changedLinkIds = linkChanges.flatMap(change => change.oldLink).map(_.linkId).toSet
+  protected def updateByRoadLinks(typeId: Int, changes: Seq[RoadLinkChange]): Unit = {
+    val linkChanges = changes.filterNot(_.changeType == RoadLinkChangeType.Add)
+    val changedLinkIds = linkChanges.flatMap(change => change.oldLink).map(_.linkId).toSet
 
-      val changedAssets = service.getPersistedAssetsByLinkIdsWithoutTransaction(changedLinkIds).toSet
-      val reportedChanges = changedAssets.map(asset => {
-        val linkChange = linkChanges.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == asset.linkId).get
-        correctPersistedAsset(asset, linkChange) match {
-          case adjustment if adjustment.floating =>
-            service.floatingUpdate(asset.id, adjustment.floating, adjustment.floatingReason)
-            val newAsset = service.createOperation(asset, adjustment)
-            Some(reportChange(asset, newAsset, Floating, linkChange, adjustment))
-          case adjustment =>
-            val link = linkChange.newLinks.find(_.linkId == adjustment.linkId)
-            val assetId = service.adjustmentOperation(asset, adjustment, link.get)
-            val newAsset = service.createOperation(asset, adjustment.copy(assetId = assetId))
-            Some(reportChange(asset, newAsset, Move, linkChange, adjustment))
-        }
-      })
-      val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
-      ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBody, contentRowCount)
-      val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
-      ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBodyWithGeom, contentRowCount, true)
-      Queries.updateLatestSuccessfulSamuutus(typeId)
-    }
+    val changedAssets = service.getPersistedAssetsByLinkIdsWithoutTransaction(changedLinkIds).toSet
+    val reportedChanges = changedAssets.map(asset => {
+      val linkChange = linkChanges.find(change => change.oldLink.nonEmpty && change.oldLink.get.linkId == asset.linkId).get
+      correctPersistedAsset(asset, linkChange) match {
+        case adjustment if adjustment.floating =>
+          service.floatingUpdate(asset.id, adjustment.floating, adjustment.floatingReason)
+          val newAsset = service.createOperation(asset, adjustment)
+          Some(reportChange(asset, newAsset, Floating, linkChange, adjustment))
+        case adjustment =>
+          val link = linkChange.newLinks.find(_.linkId == adjustment.linkId)
+          val assetId = service.adjustmentOperation(asset, adjustment, link.get)
+          val newAsset = service.createOperation(asset, adjustment.copy(assetId = assetId))
+          Some(reportChange(asset, newAsset, Move, linkChange, adjustment))
+      }
+    })
+    val (reportBody, contentRowCount) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten))
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBody, contentRowCount)
+    val (reportBodyWithGeom, _) = ChangeReporter.generateCSV(ChangeReport(typeId, reportedChanges.toSeq.flatten), true)
+    ChangeReporter.saveReportToS3(AssetTypeInfo(typeId).label, reportBodyWithGeom, contentRowCount, true)
   }
 
   def reportChange(oldPersistedAsset: PersistedPointAsset, newPersistedAsset: PersistedPointAsset,
-                   changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate) = {
+                   changeType: ChangeType, roadLinkChange: RoadLinkChange, assetUpdate: AssetUpdate): ChangedAsset = {
     val oldLinearReference = LinearReference(oldPersistedAsset.linkId,oldPersistedAsset.mValue, None, None, oldPersistedAsset.getValidityDirection, 0.0)
     val oldValues = compactJson(oldPersistedAsset.propertyData.map(_.toJson))
     val oldAsset = Asset(oldPersistedAsset.id, oldValues, Some(oldPersistedAsset.municipalityCode),

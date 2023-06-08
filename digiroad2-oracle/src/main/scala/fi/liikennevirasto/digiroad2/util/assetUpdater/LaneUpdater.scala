@@ -205,17 +205,22 @@ object LaneUpdater {
 
 
   def updateLanes(): Unit = {
-    withDynTransaction {
-      val lastSuccessfulSamuutus = Queries.getLatestSuccessfulSamuutus(Lanes.typeId)
-      val allRoadLinkChanges = roadLinkChangeClient.getRoadLinkChanges(lastSuccessfulSamuutus)
-      updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
-      val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
-      val changeSet = handleChanges(roadLinkChanges, workListChanges)
-      val changedLanes = updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
-      val changeReport = ChangeReport(Lanes.typeId, changedLanes)
-      generateAndSaveReport(changeReport)
-      Queries.updateLatestSuccessfulSamuutus(Lanes.typeId)
-    }
+    val lastSuccess = PostGISDatabase.withDynSession( Queries.getLatestSuccessfulSamuutus(Lanes.typeId) )
+    val changeSets = roadLinkChangeClient.getRoadLinkChanges(lastSuccess)
+
+    changeSets.foreach( roadLinkChangeSet => {
+      withDynTransaction {
+        logger.info(s"Started processing change set ${roadLinkChangeSet.key}")
+        val allRoadLinkChanges = roadLinkChangeSet.changes
+        updateTrafficDirectionChangesLaneWorkList(allRoadLinkChanges)
+        val (workListChanges, roadLinkChanges) = allRoadLinkChanges.partition(change => isOldLinkOnLaneWorkList(change))
+        val changeSet = handleChanges(roadLinkChanges, workListChanges)
+        val changedLanes = updateSamuutusChangeSet(changeSet, allRoadLinkChanges)
+        val changeReport = ChangeReport(Lanes.typeId, changedLanes)
+        generateAndSaveReport(changeReport)
+        Queries.updateLatestSuccessfulSamuutus(Lanes.typeId, roadLinkChangeSet.targetDate)
+      }
+    })
   }
 
   def generateAndSaveReport(changeReport: ChangeReport): Unit = {
