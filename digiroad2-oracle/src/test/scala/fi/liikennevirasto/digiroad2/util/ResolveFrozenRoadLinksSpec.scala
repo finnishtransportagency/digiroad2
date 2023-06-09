@@ -54,7 +54,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(roadLinksTemp)
 
-    ResolvingFrozenRoadLinksTest.processing(312)
+    ResolvingFrozenRoadLinksTest.resolveAddressesOnOverlappingGeometry(312)
 
     // Temp road address on linkId3 should be deleted, because linkId3 does not exist anymore
     val captor = ArgumentCaptor.forClass(classOf[Set[String]])
@@ -120,7 +120,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadLinkTempDao.getByMunicipality(216)).thenReturn(Seq())
 
-    val toCreate = ResolvingFrozenRoadLinksTest.processing(216)._1.map(_.roadAddress)
+    val toCreate = ResolvingFrozenRoadLinksTest.resolveAddressesOnOverlappingGeometry(216)._1.map(_.roadAddress)
 
     toCreate.size should be (2)
     val createdInSininentie = toCreate.find(_.linkId == linkId2)
@@ -207,7 +207,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(Seq())
 
-    val toCreate = ResolvingFrozenRoadLinksTest.processing(312)._1.map(_.roadAddress)
+    val toCreate = ResolvingFrozenRoadLinksTest.resolveAddressesOnOverlappingGeometry(312)._1.map(_.roadAddress)
 
     toCreate.size should be (4)
     toCreate.exists(x => x.linkId == linkId2 && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
