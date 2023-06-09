@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.util.assetUpdater.ChangeTypeReport.{Creation
 import fi.liikennevirasto.digiroad2.util.{Digiroad2Properties, KgvUtil, LinearAssetUtils}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.joda.time.DateTime
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
 
@@ -22,6 +23,7 @@ class RoadLinkPropertyUpdater {
 
   lazy val roadLinkService: RoadLinkService = new RoadLinkService(new RoadLinkClient(Digiroad2Properties.vvhRestApiEndPoint), new DummyEventBus, new DummySerializer)
   lazy val roadLinkChangeClient: RoadLinkChangeClient = new RoadLinkChangeClient
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = PostGISDatabase.withDynTransaction(f)
 
@@ -269,20 +271,25 @@ class RoadLinkPropertyUpdater {
     transferredProperties
   }
 
-  def updateProperties() = {
-    withDynTransaction {
-      val latestSuccess = Queries.getLatestSuccessfulSamuutus(RoadLinkProperties.typeId)
-      val changes = roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
-      val (addChanges, remaining) = changes.partition(_.changeType == Add)
-      val (removeChanges, otherChanges) = remaining.partition(_.changeType == Remove)
+  def updateProperties(): Unit = {
+    val latestSuccess = PostGISDatabase.withDynSession( Queries.getLatestSuccessfulSamuutus(RoadLinkProperties.typeId) )
+    val changeSets = roadLinkChangeClient.getRoadLinkChanges(latestSuccess)
 
-      val transferredProperties = transferOverriddenPropertiesAndPrivateRoadInfo(otherChanges)
-      val createdProperties = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges)
-      val deletedProperties = removePropertiesFromOldLinks(removeChanges ++ otherChanges)
-      val changeReport = ChangeReport(RoadLinkProperties.typeId, transferredProperties ++ createdProperties ++ deletedProperties)
-      val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
-      ChangeReporter.saveReportToS3("roadLinkProperties", reportBody, contentRowCount)
-      Queries.updateLatestSuccessfulSamuutus(RoadLinkProperties.typeId)
-    }
+    changeSets.foreach(changeSet => {
+      withDynTransaction {
+        logger.info(s"Started processing change set ${changeSet.key}")
+        val changes = changeSet.changes
+        val (addChanges, remaining) = changes.partition(_.changeType == Add)
+        val (removeChanges, otherChanges) = remaining.partition(_.changeType == Remove)
+
+        val transferredProperties = transferOverriddenPropertiesAndPrivateRoadInfo(otherChanges)
+        val createdProperties = transferOrGenerateFunctionalClassesAndLinkTypes(addChanges ++ otherChanges)
+        val deletedProperties = removePropertiesFromOldLinks(removeChanges ++ otherChanges)
+        val changeReport = ChangeReport(RoadLinkProperties.typeId, transferredProperties ++ createdProperties ++ deletedProperties)
+        val (reportBody, contentRowCount) = ChangeReporter.generateCSV(changeReport)
+        ChangeReporter.saveReportToS3("roadLinkProperties", changeSet.targetDate, reportBody, contentRowCount)
+        Queries.updateLatestSuccessfulSamuutus(RoadLinkProperties.typeId, changeSet.targetDate)
+      }
+    })
   }
 }
