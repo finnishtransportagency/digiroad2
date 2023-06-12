@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.util.RoadAddressTEMP
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-class RoadLinkTempDAO {
+class RoadAddressTempDAO {
   def getByLinkIds(linkIds: Set[String]): Seq[RoadAddressTEMP] = {
     val linkTypeInfo = MassQuery.withStringIds(linkIds) { idTableName =>
       sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code,to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS')

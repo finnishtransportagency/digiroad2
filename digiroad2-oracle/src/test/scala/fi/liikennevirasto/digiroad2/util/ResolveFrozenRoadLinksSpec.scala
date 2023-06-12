@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Track.{Combined, LeftSide, RightSide}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.VKMClient
-import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
+import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService, RoadAddressForLink => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadAddress, Track}
@@ -20,13 +20,13 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockVKMClient = MockitoSugar.mock[VKMClient]
-  val mockRoadLinkTempDao = MockitoSugar.mock[RoadLinkTempDAO]
+  val mockRoadLinkTempDao = MockitoSugar.mock[RoadAddressTempDAO]
 
   object ResolvingFrozenRoadLinksTest extends ResolvingFrozenRoadLinks {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val vkmClient: VKMClient = mockVKMClient
-    override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao
+    override lazy val roadLinkTempDao: RoadAddressTempDAO = mockRoadLinkTempDao
   }
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
@@ -318,7 +318,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
   test("Postgres drop trailing millisecond zero, add it back by using to_char(created_date, 'YYYY-MM-DD HH:MI:SS.MS')") {
     val linkId = LinkIdGenerator.generateRandom()
-    val roadLinkTempDao = new RoadLinkTempDAO()
+    val roadLinkTempDao = new RoadAddressTempDAO()
     runWithRollback{
       sqlu"""INSERT INTO temp_road_address_info (id,link_id,municipality_code,road_number,road_part,track_code,start_address_m,end_address_m,start_m_value,end_m_value,side_code,created_date,created_by) VALUES (nextval('primary_key_seq'),$linkId,1,1,1,2,1,1,0,11.1,1,'2019-12-01 12:41:21.000','test');""".execute
       val roadAddress1 =  roadLinkTempDao.getByLinkIds(Set(linkId))

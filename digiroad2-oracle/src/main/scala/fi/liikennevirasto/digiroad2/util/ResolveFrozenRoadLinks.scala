@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.{RoadLinkClient, VKMClient}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
+import fi.liikennevirasto.digiroad2.dao.RoadAddressTempDAO
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.postgis.PostGISDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -50,8 +50,8 @@ trait ResolvingFrozenRoadLinks {
     new RoadLinkService(roadLinkClient, eventbus, new DummySerializer)
   }
 
-  lazy val roadLinkTempDao: RoadLinkTempDAO = {
-    new RoadLinkTempDAO
+  lazy val roadLinkTempDao: RoadAddressTempDAO = {
+    new RoadAddressTempDAO
   }
 
   lazy val username: String = "batch_process_temp_road_address"
