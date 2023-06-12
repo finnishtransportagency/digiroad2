@@ -379,6 +379,14 @@ trait ResolvingFrozenRoadLinks {
 
         val adjacentsToCreate = resolveAddressesUsingAdjacentAddresses(missing, overlappingToCreate)
 
+        logger.info(
+          s"""
+             |Resolved ${overlappingToCreate.size} addresses on overlapping geometry
+             |Resolved ${adjacentsToCreate.size} addreses using adjacent addresses
+             |Total: ${(overlappingToCreate ++ adjacentsToCreate).size}
+             |State road links still missing address: ${missing.size - adjacentsToCreate.size}
+             |Municipality: $municipality
+             |""".stripMargin)
         (adjacentsToCreate ++ overlappingToCreate.map(_.roadAddress)).foreach { frozen =>
           roadLinkTempDao.insertInfo(frozen, username)
         }
